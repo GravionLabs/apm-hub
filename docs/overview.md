@@ -31,6 +31,7 @@ This repository addresses those challenges by providing:
 - ✅ Reusable, version‑controlled templates
 - ✅ Review checklists and guidelines
 - ✅ A shared mental model for Copilot usage
+- ✅ Support for JetBrains AI (Junie)
 
 ---
 
@@ -60,6 +61,8 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 - Designing stable instructions
 - Creating safe, useful agents
 - Do’s and don’ts for AI‑assisted development
+- **JetBrains AI Support**
+  - [How Junie uses Copilot templates](jetbrains-ai.md)
 
 ---
 

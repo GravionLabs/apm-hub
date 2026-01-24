@@ -55,3 +55,97 @@ They can be selected in the chat UI and combined with prompts to perform a wide 
 ## 3) Where agents live in this repository
 
 For this repository, we store custom agents here:
+
+```text
+.github/agents/
+```
+
+Typical file name:
+
+```text
+security-reviewer.agent.md
+```
+
+---
+
+## 4) When Should You Use an Agent?
+
+Use an agent when you want to define a **long-term role or persona** rather than a single task.
+
+✅ **Good agent use cases:**
+- **Security Auditor:** Always looking for vulnerabilities and enforcing secure coding patterns.
+- **Architect:** Reviewing designs against architectural principles and patterns.
+- **Test Lead:** Planning test strategies and ensuring comprehensive coverage.
+- **Onboarding Buddy:** Helping new developers understand the codebase and conventions.
+
+❌ **Bad agent use cases:**
+- **Single tasks:** "Explain this function" (use a prompt).
+- **Global rules:** "Always use tabs for indentation" (use instructions).
+- **Temporary context:** Adding one specific file to the conversation (use `@workspace` or `#file`).
+
+---
+
+## 5) Agent vs. Prompt vs. Instructions
+
+| Concept      | Purpose                     | Scope         | Trigger    | Persistence |
+| ------------ | --------------------------- | ------------- | ---------- | ----------- |
+| **Instructions** | Define global rules         | Repository    | Automatic  | High        |
+| **Agents**       | Define roles & capabilities | Session-level | Manual (`@`) | Medium      |
+| **Prompts**      | Define a task               | Single action | Manual (`/`) | Low         |
+
+---
+
+## 6) Anatomy of an Agent File (`*.agent.md`)
+
+An agent file consists of:
+1. **YAML front-matter**: Defines metadata, capabilities, and tools.
+2. **Body**: Defines the persona, behavior, and boundaries.
+
+### Example:
+
+```markdown
+---
+name: Security Auditor
+description: Expert in identifying security risks and proposing safe fixes
+tools:
+  - file-search
+  - code-review
+---
+
+You are a Senior Security Auditor. Your goal is to ensure all code changes meet the highest security standards.
+
+### Behavior
+- Analyze code for common vulnerabilities (OWASP Top 10).
+- Suggest secure alternatives for risky patterns.
+- Prioritize security over performance or brevity.
+
+### Boundaries
+- Do not approve changes; only provide feedback.
+- Do not ignore potential risks, even if they seem minor.
+```
+
+### Key YAML Fields:
+- `name`: The display name of the agent.
+- `description`: A short summary shown in the UI.
+- `tools`: (Optional) Specific capabilities the agent can access.
+
+---
+
+## 7) Designing Good Agents
+
+A high-quality agent should:
+- **Have a clear persona:** Define who the agent is and what its expertise is.
+- **Define boundaries:** Explicitly state what the agent should *not* do.
+- **Specify behavior:** Provide clear guidelines on how the agent should approach tasks.
+- **Be complementary:** Ensure it works well with existing instructions and prompts.
+
+---
+
+## 8) Agents in This Repository
+
+This repository contains:
+- **Production-ready agents** under `.github/agents/`
+- **Examples and usage** under `examples/agents/`
+- **Best practices** in [designing-agents](../best-practices/designing-agents.md)
+
+All agents are designed to provide specialized expertise while adhering to the repository's core principles of safety and clarity.

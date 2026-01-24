@@ -78,11 +78,11 @@ Use a prompt when:
 
 ## Prompt vs. Instructions vs. Agents
 
-| Concept      | Purpose                     | Scope         | Trigger    |
-| ------------ | --------------------------- | ------------- | ---------- |
-| Prompts      | Define a task               | Single action | Manual (/) |
-| Instructions | Define global rules         | Persistent    | Automatic  |
-| Agents       | Define roles & capabilities | Session‑level | Manual (@) |
+| Concept      | Purpose                     | Scope         | Trigger    | Persistence |
+| ------------ | --------------------------- | ------------- | ---------- | ----------- |
+| **Instructions** | Define global rules         | Persistent    | Automatic  | High        |
+| **Agents**       | Define roles & capabilities | Session-level | Manual (`@`) | Medium      |
+| **Prompts**      | Define a task               | Single action | Manual (`/`) | Low         |
 
 ## Anatomy of a Prompt File
 
@@ -192,10 +192,10 @@ This repository contains:
 
 - Production‑ready prompts under .github/prompts/
 - Examples and usage explanations under examples/prompts/
-- Review guidelines in [prompt-review-checklist](../../docs/checklists/prompt-review-checklist.md)
+- Review guidelines in [prompt-review-checklist](../checklists/prompt-review-checklist.md)
 
 All prompts are intended to be:
 
-Reusable
-Safe by default
-Independent of specific projects
+- Reusable
+- Safe by default
+- Independent of specific projects
