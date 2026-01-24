@@ -5,6 +5,18 @@ applyTo: '**/*.py'
 
 # Python Coding Conventions
 
+## Project Structure and Tooling
+
+- Use **uv** as the default package manager and for environment management.
+- Follow the **src layout**:
+  - Application code resides in the `src/` directory.
+  - Tests reside in the `tests/` directory.
+- Use **pytest** as the primary testing framework.
+- Test directory structure:
+  - `tests/unit/`: Pure unit tests.
+  - `tests/integration/`: Integration tests.
+  - `tests/manual/`: Manual tests (must be marked or handled to run only explicitly).
+
 ## Python Instructions
 
 - Write clear and concise comments for each function.
@@ -36,7 +48,11 @@ applyTo: '**/*.py'
 - Always include test cases for critical paths of the application.
 - Account for common edge cases like empty inputs, invalid data types, and large datasets.
 - Include comments for edge cases and the expected behavior in those cases.
-- Write unit tests for functions and document them with docstrings explaining the test cases.
+- **Naming Conventions for Tests**:
+  - Test files must follow the pattern `test_*.py`.
+  - Test functions must follow the pattern `test_*()`.
+- Use `pytest` features like fixtures and markers where appropriate.
+- Manual tests in `tests/manual/` should be skipped by default or require explicit execution.
 
 ## Example of Proper Documentation
 
