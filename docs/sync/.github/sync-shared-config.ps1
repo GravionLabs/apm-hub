@@ -73,7 +73,7 @@ function Sync-Category {
             New-Item -ItemType Directory -Force -Path $dir | Out-Null
         }
         
-        Write-Host "→ Syncing $Category: $filename"
+        Write-Host "→ Syncing ${Category}: $filename"
         
         if ($sourceType -eq "github") {
             Download-File-GitHub-Explicit $sourcePath $destPath
@@ -87,9 +87,27 @@ function Sync-Category {
 # Explicit download helpers
 function Download-File-GitHub-Explicit {
     param([string]$SourcePath, [string]$DestPath)
-    $url = "https://raw.githubusercontent.com/$sourceOrg/$sourceRepo/$sourceBranch/$sourceDir/$SourcePath"
+    
+    $headers = @{}
+    if ($env:GITHUB_TOKEN) {
+        # Use GitHub API for private repos when token is provided
+        $url = "https://api.github.com/repos/$sourceOrg/$sourceRepo/contents/$sourceDir/$SourcePath?ref=$sourceBranch"
+        $headers.Add("Authorization", "Bearer $($env:GITHUB_TOKEN)")
+        $headers.Add("Accept", "application/vnd.github.v3.raw")
+    }
+    else {
+        # Use raw.githubusercontent.com for public repos (no token needed)
+        $url = "https://raw.githubusercontent.com/$sourceOrg/$sourceRepo/$sourceBranch/$sourceDir/$SourcePath"
+    }
+    
     try {
-        Invoke-WebRequest -Uri $url -OutFile $DestPath -UseBasicParsing
+        Write-Host "  Downloading from $url"
+        if ($headers.Count -gt 0) {
+            Invoke-WebRequest -Uri $url -OutFile $DestPath -Headers $headers -UseBasicParsing
+        }
+        else {
+            Invoke-WebRequest -Uri $url -OutFile $DestPath -UseBasicParsing
+        }
         Write-Host "  ✓ Downloaded"
     }
     catch {

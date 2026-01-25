@@ -40,10 +40,23 @@ echo ""
 download_file_github() {
     local source=$1
     local dest=$2
-    local url="https://raw.githubusercontent.com/$SOURCE_ORG/$SOURCE_REPO/$SOURCE_BRANCH/$source"
     
     mkdir -p "$(dirname "$dest")"
-    HTTP_CODE=$(curl -sL -w "%{http_code}" "$url" -o "$dest")
+    
+    if [ -n "$GITHUB_TOKEN" ]; then
+        # Use GitHub API for private repos when token is provided
+        local api_url="https://api.github.com/repos/$SOURCE_ORG/$SOURCE_REPO/contents/$source?ref=$SOURCE_BRANCH"
+        echo "  Using GitHub API to download private file: $source"
+        HTTP_CODE=$(curl -sL -w "%{http_code}" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            "$api_url" -o "$dest")
+    else
+        # Use raw.githubusercontent.com for public repos (no token needed)
+        local url="https://raw.githubusercontent.com/$SOURCE_ORG/$SOURCE_REPO/$SOURCE_BRANCH/$source"
+        echo "  Downloading public file: $source"
+        HTTP_CODE=$(curl -sL -w "%{http_code}" "$url" -o "$dest")
+    fi
     
     if [ "$HTTP_CODE" = "200" ]; then
         echo "  ✓ Downloaded: $dest"
