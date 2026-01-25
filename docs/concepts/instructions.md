@@ -35,9 +35,14 @@ These apply to the entire repository. They are typically used for general coding
 ### 2. Scoped Instructions
 These apply only to specific files or directories, defined by glob patterns. They are useful for technology-specific rules (e.g., frontend vs. backend).
 
-**Location:**
+**Location in your repository:**
 ```text
 .github/instructions/*.instructions.md
+```
+
+**Reusable templates in this repository:**
+```text
+templates/instructions/*.instructions.md
 ```
 
 ---
@@ -96,6 +101,6 @@ Follow the atomic design pattern for component structure.
 ## Instructions in This Repository
 
 This repository contains:
-- **Global instructions** in `.github/copilot-instructions.md`
-- **Scoped instruction templates** under `.github/instructions/`
+- **Global instructions** in `templates/copilot-instructions.md`
+- **Scoped instruction templates** under `templates/instructions/`
 - **Review guidelines** in [instruction-review-checklist](../checklists/instructions-review-checklist.md)

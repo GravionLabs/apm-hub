@@ -6,23 +6,23 @@ This document describes how **JetBrains Junie** (the AI agent in JetBrains IDEs)
 
 ## Overview
 
-Although the files under `.github/` are primarily optimized for **GitHub Copilot**, **Junie** can also use this information to ensure a consistent experience within the JetBrains development environment.
+Although the files under `templates/` are primarily optimized for **GitHub Copilot**, **Junie** can also use this information to ensure a consistent experience within the JetBrains development environment.
 
 The main difference lies in the **method of application**: While Copilot loads many of these files automatically in the background, Junie uses them as explicit project context.
 
 ---
 
-## 1. Usage of Instructions (`.github/instructions/`)
+## 1. Usage of Instructions (`templates/instructions/`)
 
 In GitHub Copilot, `copilot-instructions.md` and profile-specific instructions are automatically applied to every chat contribution.
 
 **How Junie uses them:**
 - **Project Context:** Junie analyzes these files when starting or indexing the repository. They serve as the "ground rules" for code style and security guidelines.
-- **Explicit Reference:** When you ask Junie to write or review code, you can refer to these files (e.g., "Check the code according to our security instructions"). Junie then reads the specific rules (e.g., from `.github/instructions/security.instructions.md`).
+- **Explicit Reference:** When you ask Junie to write or review code, you can refer to these files (e.g., "Check the code according to our security instructions"). Junie then reads the specific rules (e.g., from `templates/instructions/security.instructions.md`).
 
 ---
 
-## 2. Usage of Prompts (`.github/prompts/`)
+## 2. Usage of Prompts (`templates/prompts/`)
 
 Prompts are designed as slash commands (`/`).
 
@@ -32,7 +32,7 @@ Prompts are designed as slash commands (`/`).
 
 ---
 
-## 3. Usage of Agents (`.github/agents/`)
+## 3. Usage of Agents (`templates/agents/`)
 
 Agents define roles and personas (`@`).
 
@@ -52,4 +52,4 @@ Agents define roles and personas (`@`).
 
 ### Best Practice for Junie Users
 To get the most out of these templates with Junie, it is recommended to briefly set the context at the beginning of a complex task:
-> *"Junie, please follow our global instructions for the following task and use the role of the security auditor from `.github/agents/security.agent.md`."*
+> *"Junie, please follow our global instructions for the following task and use the role of the security auditor from `templates/agents/security.agent.md`."*

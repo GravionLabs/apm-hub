@@ -11,11 +11,12 @@ applyTo: '**/*.py'
 - Follow the **src layout**:
   - Application code resides in the `src/` directory.
   - Tests reside in the `tests/` directory.
+- **uv Workspaces**: If using workspaces, tests reside in the `tests/` directory within each respective app or library (e.g., `packages/<name>/tests/` or `apps/<name>/tests/`).
 - Use **pytest** as the primary testing framework.
 - Test directory structure:
-  - `tests/unit/`: Pure unit tests.
-  - `tests/integration/`: Integration tests.
-  - `tests/manual/`: Manual tests (must be marked or handled to run only explicitly).
+  - `unit/`: Pure unit tests.
+  - `integration/`: Integration tests.
+  - `manual/`: Manual tests (must be marked or handled to run only explicitly).
 
 ## Python Instructions
 
@@ -48,11 +49,7 @@ applyTo: '**/*.py'
 - Always include test cases for critical paths of the application.
 - Account for common edge cases like empty inputs, invalid data types, and large datasets.
 - Include comments for edge cases and the expected behavior in those cases.
-- **Naming Conventions for Tests**:
-  - Test files must follow the pattern `test_*.py`.
-  - Test functions must follow the pattern `test_*()`.
-- Use `pytest` features like fixtures and markers where appropriate.
-- Manual tests in `tests/manual/` should be skipped by default or require explicit execution.
+- Refer to `.github/instructions/python-pytest.instructions.md` for detailed testing guidelines.
 
 ## Example of Proper Documentation
 

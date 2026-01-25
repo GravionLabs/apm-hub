@@ -19,7 +19,7 @@ If you have scoped instructions (e.g., for `frontend` or `backend`), you can ver
 
 1.  Opening a file that falls within the scoped directory (e.g., `src/frontend/App.tsx`).
 2.  Asking Copilot a question related to that file.
-3.  The instructions defined for that scope (e.g., `.github/instructions/frontend.instructions.md`) will be used by Copilot to generate the response.
+3.  The instructions defined for that scope (e.g., `templates/instructions/frontend.instructions.md`) will be used by Copilot to generate the response.
 
 ---
 

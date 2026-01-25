@@ -35,10 +35,16 @@ GitHub Copilot supports **reusable prompt files** stored in a repository.
 - Shared across a team
 - Exposed as **slash commands** in supported IDEs
 
-**Typical location**
+**Location in your repository:**
 
 ```text
-.github/prompts/
+.github/prompts/*.prompt.md
+```
+
+**Reusable templates in this repository:**
+
+```text
+templates/prompts/*.prompt.md
 ```
 
 **Typical file name**
@@ -190,7 +196,7 @@ If a rule should always apply, it belongs in instructions, not in a prompt.
 
 This repository contains:
 
-- Production‑ready prompts under .github/prompts/
+- Production‑ready prompts under `templates/prompts/`
 - Examples and usage explanations under examples/prompts/
 - Review guidelines in [prompt-review-checklist](../checklists/prompt-review-checklist.md)
 

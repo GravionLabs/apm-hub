@@ -52,15 +52,21 @@ They can be selected in the chat UI and combined with prompts to perform a wide 
 
 ---
 
-## 3) Where agents live in this repository
+## 3) Where agents live
 
-For this repository, we store custom agents here:
+**Location in your repository:**
 
 ```text
-.github/agents/
+.github/agents/*.agent.md
 ```
 
-Typical file name:
+**Reusable templates in this repository:**
+
+```text
+templates/agents/*.agent.md
+```
+
+**Typical file name:**
 
 ```text
 security-reviewer.agent.md
@@ -144,7 +150,7 @@ A high-quality agent should:
 ## 8) Agents in This Repository
 
 This repository contains:
-- **Production-ready agents** under `.github/agents/`
+- **Production-ready agents** under `templates/agents/`
 - **Examples and usage** under `examples/agents/`
 - **Best practices** in [designing-agents](../best-practices/designing-agents.md)
 

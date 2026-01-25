@@ -12,7 +12,7 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 - TypeScript for type safety
 - Angular CLI or NX for project setup, scaffolding, and workspace management
 - Follow Angular Style Guide (https://angular.dev/style-guide)
-- Use Angular Material or other modern UI libraries for consistent styling (if specified)
+- Use RWE Unity / Angular Material for consistent styling
 
 ## NX Monorepo (if applicable)
 - Organize code into `apps/` and `libs/`
@@ -29,6 +29,8 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 - Implement lazy loading for feature modules to optimize performance
 - Use Angular's built-in dependency injection system effectively
 - Structure components with a clear separation of concerns (smart vs. presentational components)
+- Use Angular Signals for state management and inter-component communication
+- Use Signal stores for centralized state management
 
 ### TypeScript
 - Enable strict mode in `tsconfig.json` for type safety

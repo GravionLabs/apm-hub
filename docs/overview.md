@@ -47,6 +47,7 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 - What instructions are and how scoping works
 - What agents are and how they differ from prompts
 - How all concepts work together
+- [How to use the Shared Configuration Sync](sync/shared-config-sync.md)
 
 **Usage Guides**
 
@@ -61,14 +62,16 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 - Designing stable instructions
 - Creating safe, useful agents
 - Do’s and don’ts for AI‑assisted development
+- **Shared Configuration Sync**
+  - [Centralizing and synchronizing templates](sync/shared-config-sync.md)
 - **JetBrains AI Support**
   - [How Junie uses Copilot templates](jetbrains-ai.md)
 
 ---
 
-### 2. Copilot Configuration Templates (`.github/`)
+### 2. Copilot Configuration Templates (`templates/`)
 
-The `.github/` directory contains **working, reusable configuration files** that GitHub Copilot can consume directly (or serve as examples).
+The `templates/` directory contains **working, reusable configuration files** that GitHub Copilot can consume directly (or serve as examples).
 
 - `copilot-instructions.md`  
   Repository‑wide custom instructions
@@ -167,8 +170,10 @@ GitHub Copilot is a **developer assistant**, not a decision maker.
 ## Where to Go Next
 
 - Start with `docs/concepts/prompts.md`, `instructions.md`, and `agents.md`
-- Review the templates in `.github/`
+- **[Browse All Templates](template-list.md)**
+- Review the templates in `templates/`
 - Explore the review checklists in `docs/best-practices/`
+- Learn about [Shared Configuration Sync](sync/shared-config-sync.md)
 - Read `CONTRIBUTING.md` if you want to add or improve content
 
 ---

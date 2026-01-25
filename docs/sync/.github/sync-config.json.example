@@ -1,0 +1,15 @@
+{
+  "source": {
+    "type": "azure-repos",
+    "org": "yourorg",
+    "project": "AlgoTrader",
+    "repo": "github-copilot-templates",
+    "branch": "main"
+  },
+  "files": [
+    ".github/instructions/python.instructions.md",
+    ".github/instructions/python-pytest.instructions.md",
+    ".github/instructions/python-mcp-server.instructions.md",
+    ".github/instructions/security.instructions.md"
+  ]
+}

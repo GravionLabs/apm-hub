@@ -40,7 +40,7 @@ Some prompts automatically use the **active file** or **current selection** as c
 You can find the source of all available prompts in this repository under:
 
 ```text
-.github/prompts/
+templates/prompts/
 ```
 
 Each file (e.g., `refactor.prompt.md`) corresponds to a slash command (e.g., `/refactor`).

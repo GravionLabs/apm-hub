@@ -1,0 +1,85 @@
+name: Sync Shared Configuration
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Mondays at 2 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read sync configuration
+        id: config
+        run: |
+          if [ ! -f .github/sync-config.json ]; then
+            echo "No sync config found, skipping..."
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          ORG=$(jq -r '.source.org' .github/sync-config.json)
+          REPO=$(jq -r '.source.repo' .github/sync-config.json)
+          BRANCH=$(jq -r '.source.branch' .github/sync-config.json)
+
+          echo "org=$ORG" >> $GITHUB_OUTPUT
+          echo "repo=$REPO" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "skip=false" >> $GITHUB_OUTPUT
+
+      - name: Sync shared files
+        if: steps.config.outputs.skip != 'true'
+        run: |
+          ORG="${{ steps.config.outputs.org }}"
+          REPO="${{ steps.config.outputs.repo }}"
+          BRANCH="${{ steps.config.outputs.branch }}"
+
+          echo "Syncing from: $ORG/$REPO@$BRANCH"
+
+          jq -r '.files[]' .github/sync-config.json | while read -r file; do
+            echo "  → Downloading $file"
+            mkdir -p "$(dirname "$file")"
+
+            URL="https://raw.githubusercontent.com/$ORG/$REPO/$BRANCH/$file"
+            HTTP_CODE=$(curl -sL -w "%{http_code}" "$URL" -o "$file")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "    ✓ Downloaded successfully"
+            else
+              echo "    ✗ Failed (HTTP $HTTP_CODE)"
+              exit 1
+            fi
+          done
+
+          echo ""
+          echo "✓ All files synced successfully"
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          jq -r '.files[]' .github/sync-config.json | while read -r file; do
+            git add "$file"
+          done
+
+          CHANGED_FILES=$(git diff --staged --name-only | wc -l)
+          git commit -m "chore: sync $CHANGED_FILES shared config file(s) [skip ci]"
+          git push
+
+          echo "✓ Changes committed and pushed"
