@@ -641,6 +641,14 @@ The simplest way to configure file synchronization is to define the source and t
 
 ### Manual Sync
 
+**Setup Prompt:**
+
+The easiest way to set up your `.github/sync-config.json` is to use the **Setup Sync Configuration** prompt. 
+
+1. Open Copilot Chat.
+2. Type `/setup-sync-config`.
+3. Copilot will analyze your project and suggest a configuration.
+
 **Scripts:**
 
 If you want to trigger the synchronization manually without using the CI/CD pipelines, you can use the provided scripts in the `docs/sync/.github/` directory.
