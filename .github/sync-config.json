@@ -9,14 +9,6 @@
     {
       "source": "templates/instructions/markdown.instructions.md",
       "dest": ".github/instructions/markdown.instructions.md"
-    },
-    {
-      "source": "templates/copilot-instructions.md",
-      "dest": ".github/copilot-instructions.md"
-    },
-    {
-      "source": "templates/prompts/code-review.prompt.md",
-      "dest": ".github/prompts/code-review.prompt.md"
     }
   ]
 }
