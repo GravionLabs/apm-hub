@@ -29,20 +29,27 @@ $files = $config.files
 Write-Host "Files to sync: $($files.Count)"
 Write-Host ""
 
-foreach ($file in $files) {
-    Write-Host "→ Syncing: $file"
+foreach ($fileEntry in $files) {
+    $sourceFile = $fileEntry.source
+    $destFile = $fileEntry.dest
+    
+    if (-not $destFile) {
+        $destFile = $sourceFile
+    }
+
+    Write-Host "→ Syncing: $sourceFile to $destFile"
     
     # Create directory if it doesn't exist
-    $dir = Split-Path -Path $file -Parent
-    if (-not (Test-Path $dir)) {
+    $dir = Split-Path -Path $destFile -Parent
+    if ($dir -and -not (Test-Path $dir)) {
         New-Item -ItemType Directory -Force -Path $dir | Out-Null
     }
     
     if ($sourceType -eq "github") {
         # GitHub Raw Content
-        $url = "https://raw.githubusercontent.com/$sourceOrg/$sourceRepo/$sourceBranch/$file"
+        $url = "https://raw.githubusercontent.com/$sourceOrg/$sourceRepo/$sourceBranch/$sourceFile"
         try {
-            Invoke-WebRequest -Uri $url -OutFile $file -UseBasicParsing
+            Invoke-WebRequest -Uri $url -OutFile $destFile -UseBasicParsing
             Write-Host "  ✓ Downloaded successfully"
         }
         catch {
@@ -58,7 +65,7 @@ foreach ($file in $files) {
         }
         
         $apiUrl = "https://dev.azure.com/$sourceOrg/$sourceProject/_apis/git/repositories/$sourceRepo/items"
-        $apiUrl += "?path=/$file&versionType=branch&version=$sourceBranch&api-version=7.0"
+        $apiUrl += "?path=/$sourceFile&versionType=branch&version=$sourceBranch&api-version=7.0"
         
         $headers = @{}
         if ($env:AZURE_PERSONAL_ACCESS_TOKEN) {
@@ -67,7 +74,7 @@ foreach ($file in $files) {
         }
         
         try {
-            Invoke-WebRequest -Uri $apiUrl -OutFile $file -Headers $headers -UseBasicParsing
+            Invoke-WebRequest -Uri $apiUrl -OutFile $destFile -Headers $headers -UseBasicParsing
             Write-Host "  ✓ Downloaded successfully"
         }
         catch {

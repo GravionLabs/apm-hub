@@ -2,14 +2,14 @@
   "source": {
     "type": "azure-repos",
     "org": "yourorg",
-    "project": "AlgoTrader",
+    "project": "YourProject",
     "repo": "github-copilot-templates",
     "branch": "main"
   },
   "files": [
-    ".github/instructions/python.instructions.md",
-    ".github/instructions/python-pytest.instructions.md",
-    ".github/instructions/python-mcp-server.instructions.md",
-    ".github/instructions/security.instructions.md"
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
+    { "source": "templates/instructions/python-pytest.instructions.md", "dest": ".github/instructions/python-pytest.instructions.md" },
+    { "source": "templates/instructions/security.instructions.md", "dest": ".github/instructions/security.instructions.md" },
+    { "source": "templates/agents/security.agent.md", "dest": ".github/agents/security.agent.md" }
   ]
 }

@@ -8,16 +8,18 @@ Architecture overview for the Shared Configuration Sync System.
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Central Repository                        │
-│              github-copilot-templates (main)                     │
+│              github-copilot-templates (main)                 │
 │                                                              │
-│  .github/                                                    │
+│  templates/                                                  │
 │  ├── instructions/                                           │
 │  │   ├── python.instructions.md          ◄──── Maintainer   │
 │  │   ├── python-pytest.instructions.md         Updates      │
 │  │   ├── security.instructions.md                           │
 │  │   └── ...                                                 │
-│  └── prompts/                                                │
-│      └── code-review.prompt.md                               │
+│  ├── prompts/                                                │
+│  │   └── code-review.prompt.md                               │
+│  └── agents/                                                 │
+│      └── security.agent.md                                   │
 └─────────────────────────────────────────────────────────────┘
                           │
                           │ HTTP API / Git Protocol
@@ -257,17 +259,17 @@ steps:
 - ✅ Write repository content (commit & push)
 - ❌ Read other repositories (only if public)
 
-### Azure DevOps
+### Azure Pipelines
 
 ```yaml
-- checkout: self
-  persistCredentials: true  # Enables git operations
-
 steps:
-  - bash: |
-      curl -u ":$(System.AccessToken)" ...
-    env:
-      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+- checkout: self
+  persistCredentials: true
+
+- bash: |
+    curl -u ":$(System.AccessToken)" ...
+  env:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 ```
 
 **Token Permissions:**
@@ -423,7 +425,7 @@ az pipelines run --name 'Sync Shared Configuration'  # Azure
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",
-    "ref": "v2.3.1"  // Tag instead of branch
+    "ref": "v2.3.1"
   }
 }
 ```
@@ -439,8 +441,8 @@ az pipelines run --name 'Sync Shared Configuration'  # Azure
 ```json
 {
   "sources": [
-    {"type": "github", "org": "org1", ...},
-    {"type": "azure-repos", "org": "org2", ...}
+    {"type": "github", "org": "org1", "repo": "repo1"},
+    {"type": "azure-repos", "org": "org2", "repo": "repo2"}
   ]
 }
 ```

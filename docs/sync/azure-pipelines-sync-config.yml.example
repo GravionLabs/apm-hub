@@ -75,25 +75,31 @@ steps:
         echo "Files to sync: $FILE_COUNT"
         echo ""
 
-        jq -r '.files[]' "$CONFIG_FILE" | while IFS= read -r file; do
-          echo "→ Syncing: $file"
-          mkdir -p "$(dirname "$file")"
+        jq -c '.files[]' "$CONFIG_FILE" | while IFS= read -r file_entry; do
+          SOURCE=$(echo $file_entry | jq -r '.source')
+          DEST=$(echo $file_entry | jq -r '.dest')
+          
+          # Fallback if dest is not provided
+          if [ "$DEST" = "null" ]; then DEST="$SOURCE"; fi
+
+          echo "→ Syncing: $SOURCE to $DEST"
+          mkdir -p "$(dirname "$DEST")"
 
           if [ "$SOURCE_TYPE" = "azure-repos" ]; then
             API_URL="https://dev.azure.com/$SOURCE_ORG/$SOURCE_PROJECT/_apis/git/repositories/$SOURCE_REPO/items"
-            API_URL="$API_URL?path=/$file&versionType=branch&version=$SOURCE_BRANCH&api-version=7.0"
+            API_URL="$API_URL?path=/$SOURCE&versionType=branch&version=$SOURCE_BRANCH&api-version=7.0"
 
             HTTP_CODE=$(curl -sL -w "%{http_code}" \
               -u ":$(System.AccessToken)" \
               "$API_URL" \
-              -o "$file")
+              -o "$DEST")
 
           elif [ "$SOURCE_TYPE" = "github" ]; then
-            RAW_URL="https://raw.githubusercontent.com/$SOURCE_ORG/$SOURCE_REPO/$SOURCE_BRANCH/$file"
+            RAW_URL="https://raw.githubusercontent.com/$SOURCE_ORG/$SOURCE_REPO/$SOURCE_BRANCH/$SOURCE"
 
             HTTP_CODE=$(curl -sL -w "%{http_code}" \
               "$RAW_URL" \
-              -o "$file")
+              -o "$DEST")
 
           else
             echo "  ✗ Unknown source type: $SOURCE_TYPE"
@@ -123,8 +129,10 @@ steps:
         git config user.email "azure-pipelines[bot]@yourdomain.com"
         git config user.name "Azure Pipelines"
 
-        jq -r '.files[]' .github/sync-config.json | while read -r file; do
-          git add "$file"
+        jq -c '.files[]' .github/sync-config.json | while read -r file_entry; do
+          DEST=$(echo $file_entry | jq -r '.dest')
+          if [ "$DEST" = "null" ]; then DEST=$(echo $file_entry | jq -r '.source'); fi
+          git add "$DEST"
         done
 
         if git diff --staged --quiet; then

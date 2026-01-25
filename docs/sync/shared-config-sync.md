@@ -1,7 +1,7 @@
 # Shared Configuration Sync
 
 
-Documentation for synchronizing shared configuration files (`.github/instructions`, `.github/prompts`) from a central repository.
+Documentation for synchronizing shared configuration files (`.github/instructions`, `.github/prompts`, `.github/agents`) from a central repository.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ Documentation for synchronizing shared configuration files (`.github/instruction
 
 ## Overview
 
-Instead of copying `.github/instructions` and `.github/prompts` into every repository, these files are centrally managed and automatically synchronized.
+Instead of copying `.github/instructions`, `.github/prompts` and `.github/agents` into every repository, these files are centrally managed and automatically synchronized.
 
 ### Benefits
 
@@ -32,15 +32,17 @@ Instead of copying `.github/instructions` and `.github/prompts` into every repos
 ```
 ┌─────────────────────────────────┐
 │  Central Repository             │
-│  github-copilot-templates           │
+│  github-copilot-templates       │
 │                                 │
-│  .github/                       │
+│  templates/                     │
 │  ├── instructions/              │
-│  │   ├── python.instructions.md│
-│  │   ├── python-pytest.*.md    │
-│  │   └── security.*.md         │
-│  └── prompts/                   │
-│      └── code-review.prompt.md │
+│  │   ├── python.instructions.md │
+│  │   ├── python-pytest.*.md     │
+│  │   └── security.*.md          │
+│  ├── prompts/                   │
+│  │   └── code-review.prompt.md  │
+│  └── agents/                    │
+│      └── security.agent.md      │
 └─────────────────────────────────┘
            │
            │ Sync (automatic/manual)
@@ -84,11 +86,12 @@ cd github-copilot-templates
 git init
 
 # Create structure
-mkdir -p .github/instructions
-mkdir -p .github/prompts
+mkdir -p templates/instructions
+mkdir -p templates/prompts
+mkdir -p templates/agents
 
 # Create example files
-cat > .github/instructions/python.instructions.md <<'EOF'
+cat > templates/instructions/python.instructions.md <<'EOF'
 ---
 description: 'Python coding standards'
 applyTo: '**/*.py'
@@ -101,7 +104,7 @@ applyTo: '**/*.py'
 - Maximum line length: 120 characters
 EOF
 
-cat > .github/instructions/python-pytest.instructions.md <<'EOF'
+cat > templates/instructions/python-pytest.instructions.md <<'EOF'
 ---
 description: 'Guidelines for Python testing with pytest'
 applyTo: '**/tests/**/*.py, **/test_*.py'
@@ -137,9 +140,9 @@ Create `.github/sync-config.json`:
     "branch": "main"
   },
   "files": [
-    ".github/instructions/python.instructions.md",
-    ".github/instructions/python-pytest.instructions.md",
-    ".github/instructions/security.instructions.md"
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
+    { "source": "templates/instructions/security.instructions.md", "dest": ".github/instructions/security.instructions.md" },
+    { "source": "templates/agents/security.agent.md", "dest": ".github/agents/security.agent.md" }
   ]
 }
 ```
@@ -205,16 +208,19 @@ jobs:
           echo "Syncing from: $ORG/$REPO@$BRANCH"
 
           # Download each file from config
-          jq -r '.files[]' .github/sync-config.json | while read -r file; do
-            echo "  → Downloading $file"
+          jq -c '.files[]' .github/sync-config.json | while read -r file_entry; do
+            SOURCE=$(echo $file_entry | jq -r '.source')
+            DEST=$(echo $file_entry | jq -r '.dest')
+            
+            echo "  → Downloading $SOURCE to $DEST"
 
             # Create directory if needed
-            mkdir -p "$(dirname "$file")"
+            mkdir -p "$(dirname "$DEST")"
 
             # Download file from GitHub Raw
-            URL="https://raw.githubusercontent.com/$ORG/$REPO/$BRANCH/$file"
+            URL="https://raw.githubusercontent.com/$ORG/$REPO/$BRANCH/$SOURCE"
 
-            HTTP_CODE=$(curl -sL -w "%{http_code}" "$URL" -o "$file")
+            HTTP_CODE=$(curl -sL -w "%{http_code}" "$URL" -o "$DEST")
 
             if [ "$HTTP_CODE" = "200" ]; then
               echo "    ✓ Downloaded successfully"
@@ -239,8 +245,10 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Only add files from sync-config
-          jq -r '.files[]' .github/sync-config.json | while read -r file; do
-            git add "$file"
+          jq -c '.files[]' .github/sync-config.json | while read -r file_entry; do
+            DEST=$(echo $file_entry | jq -r '.dest')
+            if [ "$DEST" = "null" ]; then DEST=$(echo $file_entry | jq -r '.source'); fi
+            git add "$DEST"
           done
 
           CHANGED_FILES=$(git diff --staged --name-only | wc -l)
@@ -310,9 +318,9 @@ Create `.github/sync-config.json`:
     "branch": "main"
   },
   "files": [
-    ".github/instructions/python.instructions.md",
-    ".github/instructions/python-pytest.instructions.md",
-    ".github/instructions/security.instructions.md"
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
+    { "source": "templates/instructions/python-pytest.instructions.md", "dest": ".github/instructions/python-pytest.instructions.md" },
+    { "source": "templates/instructions/security.instructions.md", "dest": ".github/instructions/security.instructions.md" }
   ]
 }
 ```
@@ -402,29 +410,33 @@ steps:
         echo ""
 
         # Synchronize each file
-        jq -r '.files[]' "$CONFIG_FILE" | while IFS= read -r file; do
-          echo "→ Syncing: $file"
+        jq -c '.files[]' "$CONFIG_FILE" | while IFS= read -r file_entry; do
+          SOURCE=$(echo $file_entry | jq -r '.source')
+          DEST=$(echo $file_entry | jq -r '.dest')
+          
+          # Fallback if dest is not provided
+          if [ "$DEST" = "null" ]; then DEST="$SOURCE"; fi
 
-          # Create directory
-          mkdir -p "$(dirname "$file")"
+          echo "→ Syncing: $SOURCE to $DEST"
+          mkdir -p "$(dirname "$DEST")"
 
           if [ "$SOURCE_TYPE" = "azure-repos" ]; then
             # Azure DevOps REST API
             API_URL="https://dev.azure.com/$SOURCE_ORG/$SOURCE_PROJECT/_apis/git/repositories/$SOURCE_REPO/items"
-            API_URL="$API_URL?path=/$file&versionType=branch&version=$SOURCE_BRANCH&api-version=7.0"
+            API_URL="$API_URL?path=/$SOURCE&versionType=branch&version=$SOURCE_BRANCH&api-version=7.0"
 
             HTTP_CODE=$(curl -sL -w "%{http_code}" \
               -u ":$(System.AccessToken)" \
               "$API_URL" \
-              -o "$file")
+              -o "$DEST")
 
           elif [ "$SOURCE_TYPE" = "github" ]; then
             # GitHub Raw Content
-            RAW_URL="https://raw.githubusercontent.com/$SOURCE_ORG/$SOURCE_REPO/$SOURCE_BRANCH/$file"
+            RAW_URL="https://raw.githubusercontent.com/$SOURCE_ORG/$SOURCE_REPO/$SOURCE_BRANCH/$SOURCE"
 
             HTTP_CODE=$(curl -sL -w "%{http_code}" \
               "$RAW_URL" \
-              -o "$file")
+              -o "$DEST")
 
           else
             echo "  ✗ Unknown source type: $SOURCE_TYPE"
@@ -454,9 +466,10 @@ steps:
         git config user.email "azure-pipelines[bot]@yourdomain.com"
         git config user.name "Azure Pipelines"
 
-        # Add all synced files
-        jq -r '.files[]' .github/sync-config.json | while read -r file; do
-          git add "$file"
+        jq -c '.files[]' .github/sync-config.json | while read -r file_entry; do
+          DEST=$(echo $file_entry | jq -r '.dest')
+          if [ "$DEST" = "null" ]; then DEST=$(echo $file_entry | jq -r '.source'); fi
+          git add "$DEST"
         done
 
         if git diff --staged --quiet; then
@@ -528,29 +541,20 @@ az pipelines run \
 ```json
 {
   "source": {
-    // Type of source repository
-    "type": "github" | "azure-repos",
-
-    // Organization/Owner
+    "type": "github",
     "org": "yourorg",
-
-    // Project (Azure DevOps only)
     "project": "YourProject",
-
-    // Repository name
     "repo": "github-copilot-templates",
-
-    // Branch
     "branch": "main"
   },
-
-  // List of files to synchronize
   "files": [
-    ".github/instructions/python.instructions.md",
-    ".github/instructions/python-pytest.instructions.md"
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
+    { "source": "templates/agents/security.agent.md", "dest": ".github/agents/security.agent.md" }
   ]
 }
 ```
+
+The `project` field is only required for `azure-repos`.
 
 ### Example Configurations
 
@@ -666,16 +670,16 @@ Both systems are configured to run **every Monday at 2 AM UTC** automatically.
 
 ```yaml
 # Daily at 3 AM
-cron: '0 3 * * *'
+# cron: '0 3 * * *'
 
 # Every Sunday at 1 AM
-cron: '0 1 * * 0'
+# cron: '0 1 * * 0'
 
 # First day of month
-cron: '0 0 1 * *'
+# cron: '0 0 1 * *'
 
 # Multiple times daily (6, 12, 18 hours)
-cron: '0 6,12,18 * * *'
+# cron: '0 6,12,18 * * *'
 ```
 
 ### Add New File
@@ -703,10 +707,10 @@ git push
 2. **In project repo** (update `.github/sync-config.json`):
 ```json
 {
-  "source": { ... },
+  "source": { "type": "github", "org": "yourorg", "repo": "github-copilot-templates", "branch": "main" },
   "files": [
-    ".github/instructions/python.instructions.md",
-    ".github/instructions/docker.instructions.md"  // ← NEW
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
+    { "source": "templates/instructions/docker.instructions.md", "dest": ".github/instructions/docker.instructions.md" }
   ]
 }
 ```
@@ -719,10 +723,9 @@ Simply remove from `files` list in `.github/sync-config.json`:
 
 ```json
 {
-  "source": { ... },
+  "source": { "type": "github", "org": "yourorg", "repo": "github-copilot-templates", "branch": "main" },
   "files": [
-    ".github/instructions/python.instructions.md"
-    // ".github/instructions/old.instructions.md"  ← Removed
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" }
   ]
 }
 ```
@@ -894,13 +897,13 @@ echo "!.github/instructions/*.md" >> .gitignore
 ```json
 {
   "source": {
-    "type": "github",  // ← GitHub as source
+    "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",
     "branch": "main"
   },
   "files": [
-    ".github/instructions/python.instructions.md"
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" }
   ]
 }
 ```
@@ -950,9 +953,11 @@ For staging/production differences:
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",
-    "branch": "staging"  // ← For project's staging branch
+    "branch": "staging"
   },
-  "files": [ ... ]
+  "files": [
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" }
+  ]
 }
 ```
 

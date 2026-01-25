@@ -1,7 +1,7 @@
 # Shared Configuration Sync - Quick Start
 
 
-Quick start for setting up automatic synchronization of `.github/instructions` files.
+Documentation for synchronizing shared configuration files (`.github/instructions`, `.github/prompts`, `.github/agents`).
 
 ## For Developers in a Hurry
 
@@ -18,9 +18,10 @@ cat > .github/sync-config.json <<'EOF'
     "branch": "main"
   },
   "files": [
-    ".github/instructions/python.instructions.md",
-    ".github/instructions/python-pytest.instructions.md",
-    ".github/instructions/security.instructions.md"
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
+    { "source": "templates/instructions/python-pytest.instructions.md", "dest": ".github/instructions/python-pytest.instructions.md" },
+    { "source": "templates/instructions/security.instructions.md", "dest": ".github/instructions/security.instructions.md" },
+    { "source": "templates/agents/security.agent.md", "dest": ".github/agents/security.agent.md" }
   ]
 }
 EOF
@@ -53,9 +54,9 @@ cat > .github/sync-config.json <<'EOF'
     "branch": "main"
   },
   "files": [
-    ".github/instructions/python.instructions.md",
-    ".github/instructions/python-pytest.instructions.md",
-    ".github/instructions/security.instructions.md"
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
+    { "source": "templates/instructions/python-pytest.instructions.md", "dest": ".github/instructions/python-pytest.instructions.md" },
+    { "source": "templates/instructions/security.instructions.md", "dest": ".github/instructions/security.instructions.md" }
   ]
 }
 EOF
@@ -82,23 +83,19 @@ az pipelines run --name 'Sync Shared Configuration'
 
 ## Customize Configuration
 
-Adapt `.github/sync-config.json` to your needs:
+Adapt `.github/sync-config.json` to your needs. You can choose between `github` and `azure-repos` as source type.
 
 ```json
 {
   "source": {
-    "type": "github",           // or "azure-repos"
-    "org": "yourorg",           // Your organization
+    "type": "github",
+    "org": "yourorg",
     "repo": "github-copilot-templates",
     "branch": "main"
   },
   "files": [
-    // Add only the files you need:
-    ".github/instructions/python.instructions.md",
-    ".github/instructions/python-pytest.instructions.md",
-    ".github/instructions/security.instructions.md"
-    // ".github/instructions/docker.instructions.md",
-    // ".github/prompts/code-review.prompt.md"
+    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
+    { "source": "templates/agents/security.agent.md", "dest": ".github/agents/security.agent.md" }
   ]
 }
 ```
