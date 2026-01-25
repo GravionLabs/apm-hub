@@ -11,17 +11,19 @@ Documentation for synchronizing shared configuration files (`.github/instruction
 # 1. Create sync config
 cat > .github/sync-config.json <<'EOF'
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",
-    "branch": "main"
+    "branch": "main",
+    "sourceDir": "templates",
+    "targetDir": ".github"
   },
   "files": [
-    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
-    { "source": "templates/instructions/python-pytest.instructions.md", "dest": ".github/instructions/python-pytest.instructions.md" },
-    { "source": "templates/instructions/security.instructions.md", "dest": ".github/instructions/security.instructions.md" },
-    { "source": "templates/agents/security.agent.md", "dest": ".github/agents/security.agent.md" }
+    "instructions/python.instructions.md",
+    "instructions/python-pytest.instructions.md",
+    "instructions/security.instructions.md",
+    "agents/security.agent.md"
   ]
 }
 EOF
@@ -46,17 +48,19 @@ gh run watch
 # 1. Create sync config
 cat > .github/sync-config.json <<'EOF'
 {
-  "source": {
+  "syncSettings": {
     "type": "azure-repos",
     "org": "yourorg",
     "project": "YourProject",
     "repo": "github-copilot-templates",
-    "branch": "main"
+    "branch": "main",
+    "sourceDir": "templates",
+    "targetDir": ".github"
   },
   "files": [
-    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
-    { "source": "templates/instructions/python-pytest.instructions.md", "dest": ".github/instructions/python-pytest.instructions.md" },
-    { "source": "templates/instructions/security.instructions.md", "dest": ".github/instructions/security.instructions.md" }
+    "instructions/python.instructions.md",
+    "instructions/python-pytest.instructions.md",
+    "instructions/security.instructions.md"
   ]
 }
 EOF
@@ -87,7 +91,7 @@ Adapt `.github/sync-config.json` to your needs. You can choose between `github` 
 
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",

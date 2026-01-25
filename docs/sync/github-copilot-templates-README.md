@@ -81,7 +81,7 @@ Create `.github/sync-config.json` in your project repository:
 
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",

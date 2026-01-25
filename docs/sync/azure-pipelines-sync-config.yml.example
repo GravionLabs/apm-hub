@@ -34,11 +34,11 @@ steps:
 
         echo "Reading configuration from $CONFIG_FILE"
 
-        SOURCE_TYPE=$(jq -r '.source.type' "$CONFIG_FILE")
-        SOURCE_ORG=$(jq -r '.source.org' "$CONFIG_FILE")
-        SOURCE_PROJECT=$(jq -r '.source.project' "$CONFIG_FILE")
-        SOURCE_REPO=$(jq -r '.source.repo' "$CONFIG_FILE")
-        SOURCE_BRANCH=$(jq -r '.source.branch' "$CONFIG_FILE")
+        SOURCE_TYPE=$(jq -r '.syncSettings.type' "$CONFIG_FILE")
+        SOURCE_ORG=$(jq -r '.syncSettings.org' "$CONFIG_FILE")
+        SOURCE_PROJECT=$(jq -r '.syncSettings.project' "$CONFIG_FILE")
+        SOURCE_REPO=$(jq -r '.syncSettings.repo' "$CONFIG_FILE")
+        SOURCE_BRANCH=$(jq -r '.syncSettings.branch' "$CONFIG_FILE")
 
         echo "Source: $SOURCE_TYPE"
         echo "Organization: $SOURCE_ORG"

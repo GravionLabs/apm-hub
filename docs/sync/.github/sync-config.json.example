@@ -1,15 +1,20 @@
 {
-  "source": {
+  "syncSettings": {
     "type": "azure-repos",
     "org": "yourorg",
     "project": "YourProject",
     "repo": "github-copilot-templates",
-    "branch": "main"
+    "branch": "main",
+    "sourceDir": "templates",
+    "targetDir": ".github"
   },
   "files": [
-    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
-    { "source": "templates/instructions/python-pytest.instructions.md", "dest": ".github/instructions/python-pytest.instructions.md" },
-    { "source": "templates/instructions/security.instructions.md", "dest": ".github/instructions/security.instructions.md" },
-    { "source": "templates/agents/security.agent.md", "dest": ".github/agents/security.agent.md" }
+    "instructions/python.instructions.md",
+    "instructions/python-pytest.instructions.md",
+    "instructions/security.instructions.md",
+    "agents/security.agent.md",
+    "prompts/code-review.prompt.md"
   ]
 }
+
+

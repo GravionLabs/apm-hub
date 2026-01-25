@@ -421,7 +421,7 @@ az pipelines run --name 'Sync Shared Configuration'  # Azure
 1. **Version Pinning**: Lock to specific version
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",

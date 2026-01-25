@@ -1,14 +1,14 @@
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "jkaufmann",
     "repo": "github-copilot-templates",
-    "branch": "main"
+    "branch": "main",
+    "sourceDir": "templates",
+    "targetDir": ".github"
   },
   "files": [
-    {
-      "source": "templates/instructions/markdown.instructions.md",
-      "dest": ".github/instructions/markdown.instructions.md"
-    }
+    "instructions/markdown.instructions.md",
+    "prompts/code-review.prompt.md"
   ]
 }

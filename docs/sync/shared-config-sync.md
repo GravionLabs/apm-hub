@@ -133,7 +133,7 @@ Create `.github/sync-config.json`:
 
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",
@@ -189,9 +189,9 @@ jobs:
           fi
 
           # Extract source info
-          ORG=$(jq -r '.source.org' .github/sync-config.json)
-          REPO=$(jq -r '.source.repo' .github/sync-config.json)
-          BRANCH=$(jq -r '.source.branch' .github/sync-config.json)
+          ORG=$(jq -r '.syncSettings.org' .github/sync-config.json)
+          REPO=$(jq -r '.syncSettings.repo' .github/sync-config.json)
+          BRANCH=$(jq -r '.syncSettings.branch' .github/sync-config.json)
 
           echo "org=$ORG" >> $GITHUB_OUTPUT
           echo "repo=$REPO" >> $GITHUB_OUTPUT
@@ -310,7 +310,7 @@ Create `.github/sync-config.json`:
 
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "azure-repos",
     "org": "yourorg",
     "project": "YourProject",
@@ -367,11 +367,11 @@ steps:
 
         echo "Reading configuration from $CONFIG_FILE"
 
-        SOURCE_TYPE=$(jq -r '.source.type' "$CONFIG_FILE")
-        SOURCE_ORG=$(jq -r '.source.org' "$CONFIG_FILE")
-        SOURCE_PROJECT=$(jq -r '.source.project' "$CONFIG_FILE")
-        SOURCE_REPO=$(jq -r '.source.repo' "$CONFIG_FILE")
-        SOURCE_BRANCH=$(jq -r '.source.branch' "$CONFIG_FILE")
+        SOURCE_TYPE=$(jq -r '.syncSettings.type' "$CONFIG_FILE")
+        SOURCE_ORG=$(jq -r '.syncSettings.org' "$CONFIG_FILE")
+        SOURCE_PROJECT=$(jq -r '.syncSettings.project' "$CONFIG_FILE")
+        SOURCE_REPO=$(jq -r '.syncSettings.repo' "$CONFIG_FILE")
+        SOURCE_BRANCH=$(jq -r '.syncSettings.branch' "$CONFIG_FILE")
 
         echo "Source: $SOURCE_TYPE"
         echo "Organization: $SOURCE_ORG"
@@ -536,76 +536,101 @@ az pipelines run \
 
 ## Configuration
 
-### Sync Config Reference
+### Sync Config Schema
+
+The simplest way to configure file synchronization is to define the source and target directories once, then list only the relative file paths you want to sync.
 
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "project": "YourProject",
     "repo": "github-copilot-templates",
-    "branch": "main"
+    "branch": "main",
+    "sourceDir": "templates",
+    "targetDir": ".github"
   },
   "files": [
-    { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
-    { "source": "templates/agents/security.agent.md", "dest": ".github/agents/security.agent.md" }
+    "instructions/python.instructions.md",
+    "instructions/security.instructions.md",
+    "prompts/code-review.prompt.md",
+    "agents/security.agent.md"
   ]
 }
 ```
 
-The `project` field is only required for `azure-repos`.
+### Configuration Reference
+
+**Sync Configuration:**
+- `type`: `"github"` or `"azure-repos"` (required)
+- `org`: GitHub/Azure organization name (required)
+- `repo`: Repository name (required)
+- `branch`: Branch to sync from (default: `"main"`)
+- `project`: (Azure DevOps only) Project name (required for azure-repos)
+- `sourceDir`: Source directory in repository (default: `"templates"`)
+- `targetDir`: Target directory in project (default: `".github"`)
+
+**Files:**
+- Array of relative file paths within sourceDir
+- Each file is synced to `targetDir/{relativePath}`
 
 ### Example Configurations
 
-**Python Project:**
+**Python Project (all instructions and security agent):**
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",
-    "branch": "main"
+    "branch": "main",
+    "sourceDir": "templates",
+    "targetDir": ".github"
   },
   "files": [
-    ".github/instructions/python.instructions.md",
-    ".github/instructions/python-pytest.instructions.md",
-    ".github/instructions/python-mcp-server.instructions.md",
-    ".github/instructions/security.instructions.md"
+    "instructions/python.instructions.md",
+    "instructions/python-pytest.instructions.md",
+    "instructions/security.instructions.md",
+    "agents/security.agent.md"
   ]
 }
 ```
 
-**TypeScript/React Project:**
+**TypeScript/React Project (selective files):**
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "azure-repos",
     "org": "yourorg",
     "project": "Frontend",
     "repo": "github-copilot-templates",
-    "branch": "main"
+    "branch": "main",
+    "sourceDir": "templates",
+    "targetDir": ".github"
   },
   "files": [
-    ".github/instructions/typescript.instructions.md",
-    ".github/instructions/react.instructions.md",
-    ".github/instructions/jest.instructions.md",
-    ".github/instructions/security.instructions.md"
+    "instructions/typescript.instructions.md",
+    "instructions/react.instructions.md",
+    "instructions/jest.instructions.md",
+    "instructions/security.instructions.md",
+    "prompts/code-review.prompt.md"
   ]
 }
 ```
 
-**Minimal Project (Security only):**
+**Minimal Project (security only, custom directories):**
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",
-    "branch": "main"
+    "branch": "main",
+    "sourceDir": "templates/instructions",
+    "targetDir": ".config/copilot"
   },
   "files": [
-    ".github/instructions/security.instructions.md"
+    "security.instructions.md"
   ]
 }
 ```
@@ -618,7 +643,11 @@ The `project` field is only required for `azure-repos`.
 
 **Scripts:**
 
-If you want to trigger the synchronization manually without using the CI/CD pipelines, you can use the provided scripts in the `docs/sync/.github/` directory:
+If you want to trigger the synchronization manually without using the CI/CD pipelines, you can use the provided scripts in the `docs/sync/.github/` directory.
+
+The scripts can be run from the **project root** or directly from the **`.github/`** directory.
+
+**From Project Root:**
 
 - **Shell Script** (Linux/macOS):
   ```bash
@@ -632,6 +661,20 @@ If you want to trigger the synchronization manually without using the CI/CD pipe
 - **PowerShell Script** (Windows):
   ```powershell
   ./docs/sync/.github/sync-shared-config.ps1
+  ```
+
+**From `.github/` Directory:**
+
+- **Shell Script**:
+  ```bash
+  cd .github
+  ../docs/sync/.github/sync-shared-config.sh
+  ```
+
+- **PowerShell Script**:
+  ```powershell
+  cd .github
+  ../docs/sync/.github/sync-shared-config.ps1
   ```
 
 **GitHub Actions:**
@@ -707,7 +750,7 @@ git push
 2. **In project repo** (update `.github/sync-config.json`):
 ```json
 {
-  "source": { "type": "github", "org": "yourorg", "repo": "github-copilot-templates", "branch": "main" },
+  "syncSettings": { "type": "github", "org": "yourorg", "repo": "github-copilot-templates", "branch": "main" },
   "files": [
     { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
     { "source": "templates/instructions/docker.instructions.md", "dest": ".github/instructions/docker.instructions.md" }
@@ -723,7 +766,7 @@ Simply remove from `files` list in `.github/sync-config.json`:
 
 ```json
 {
-  "source": { "type": "github", "org": "yourorg", "repo": "github-copilot-templates", "branch": "main" },
+  "syncSettings": { "type": "github", "org": "yourorg", "repo": "github-copilot-templates", "branch": "main" },
   "files": [
     { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" }
   ]
@@ -754,7 +797,7 @@ ls -la .github/sync-config.json
 # If not, create it
 cat > .github/sync-config.json <<'EOF'
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",
@@ -896,7 +939,7 @@ echo "!.github/instructions/*.md" >> .gitignore
 
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",
@@ -916,7 +959,7 @@ If you need different configs from different repos:
 
 ```json
 {
-  "sources": [
+  "syncSettings": [
     {
       "type": "github",
       "org": "yourorg",
@@ -949,7 +992,7 @@ For staging/production differences:
 
 ```json
 {
-  "source": {
+  "syncSettings": {
     "type": "github",
     "org": "yourorg",
     "repo": "github-copilot-templates",
