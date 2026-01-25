@@ -67,53 +67,79 @@ steps:
         SOURCE_PROJECT="$(sourceProject)"
         SOURCE_REPO="$(sourceRepo)"
         SOURCE_BRANCH="$(sourceBranch)"
+        SOURCE_DIR=$(jq -r '.syncSettings.sourceDir // "templates"' "$CONFIG_FILE")
+        TARGET_DIR=$(jq -r '.syncSettings.targetDir // ".github"' "$CONFIG_FILE")
 
         echo "Syncing from: $SOURCE_ORG/$SOURCE_PROJECT/$SOURCE_REPO@$SOURCE_BRANCH"
         echo ""
 
-        FILE_COUNT=$(jq '.files | length' "$CONFIG_FILE")
-        echo "Files to sync: $FILE_COUNT"
-        echo ""
-
-        jq -c '.files[]' "$CONFIG_FILE" | while IFS= read -r file_entry; do
-          SOURCE=$(echo $file_entry | jq -r '.source')
-          DEST=$(echo $file_entry | jq -r '.dest')
+        sync_category() {
+          local category=$1
+          local extension=$2
           
-          # Fallback if dest is not provided
-          if [ "$DEST" = "null" ]; then DEST="$SOURCE"; fi
+          echo "Processing category: $category"
+          
+          jq -c ".${category}[] // empty" "$CONFIG_FILE" | while IFS= read -r item; do
+            item=$(echo $item | sed 's/"//g')
+            
+            if [[ "$item" == *".$extension.md" ]]; then
+              filename="$item"
+            else
+              filename="$item.$extension.md"
+            fi
+            
+            SOURCE="$SOURCE_DIR/$category/$filename"
+            DEST="$TARGET_DIR/$category/$filename"
+            
+            echo "  → Downloading $filename to $DEST"
+            mkdir -p "$(dirname "$DEST")"
 
-          echo "→ Syncing: $SOURCE to $DEST"
+            if [ "$SOURCE_TYPE" = "azure-repos" ]; then
+              API_URL="https://dev.azure.com/$SOURCE_ORG/$SOURCE_PROJECT/_apis/git/repositories/$SOURCE_REPO/items"
+              API_URL="$API_URL?path=/$SOURCE&versionType=branch&version=$SOURCE_BRANCH&api-version=7.0"
+              HTTP_CODE=$(curl -sL -w "%{http_code}" -u ":$(System.AccessToken)" "$API_URL" -o "$DEST")
+            else
+              RAW_URL="https://raw.githubusercontent.com/$SOURCE_ORG/$SOURCE_REPO/$SOURCE_BRANCH/$SOURCE"
+              HTTP_CODE=$(curl -sL -w "%{http_code}" "$RAW_URL" -o "$DEST")
+            fi
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "    ✓ Success"
+            else
+              echo "    ✗ Failed (HTTP $HTTP_CODE)"
+              exit 1
+            fi
+          done
+        }
+
+        sync_category "instructions" "instructions"
+        sync_category "prompts" "prompt"
+        sync_category "agents" "agent"
+
+        # Legacy support
+        jq -c '.files[] // empty' "$CONFIG_FILE" | while IFS= read -r file; do
+          file=$(echo $file | sed 's/"//g')
+          SOURCE="$SOURCE_DIR/$file"
+          DEST="$TARGET_DIR/$file"
+          
+          echo "→ Syncing legacy file: $file"
           mkdir -p "$(dirname "$DEST")"
 
           if [ "$SOURCE_TYPE" = "azure-repos" ]; then
             API_URL="https://dev.azure.com/$SOURCE_ORG/$SOURCE_PROJECT/_apis/git/repositories/$SOURCE_REPO/items"
             API_URL="$API_URL?path=/$SOURCE&versionType=branch&version=$SOURCE_BRANCH&api-version=7.0"
-
-            HTTP_CODE=$(curl -sL -w "%{http_code}" \
-              -u ":$(System.AccessToken)" \
-              "$API_URL" \
-              -o "$DEST")
-
-          elif [ "$SOURCE_TYPE" = "github" ]; then
+            HTTP_CODE=$(curl -sL -w "%{http_code}" -u ":$(System.AccessToken)" "$API_URL" -o "$DEST")
+          else
             RAW_URL="https://raw.githubusercontent.com/$SOURCE_ORG/$SOURCE_REPO/$SOURCE_BRANCH/$SOURCE"
-
-            HTTP_CODE=$(curl -sL -w "%{http_code}" \
-              "$RAW_URL" \
-              -o "$DEST")
-
-          else
-            echo "  ✗ Unknown source type: $SOURCE_TYPE"
-            exit 1
+            HTTP_CODE=$(curl -sL -w "%{http_code}" "$RAW_URL" -o "$DEST")
           fi
-
+          
           if [ "$HTTP_CODE" = "200" ]; then
-            echo "  ✓ Downloaded successfully"
+            echo "  ✓ Success"
           else
-            echo "  ✗ Failed (HTTP $HTTP_CODE)"
+            echo "  ✗ Failed"
             exit 1
           fi
-
-          echo ""
         done
 
         echo "✓ All files synced successfully"
@@ -129,10 +155,18 @@ steps:
         git config user.email "azure-pipelines[bot]@yourdomain.com"
         git config user.name "Azure Pipelines"
 
-        jq -c '.files[]' .github/sync-config.json | while read -r file_entry; do
-          DEST=$(echo $file_entry | jq -r '.dest')
-          if [ "$DEST" = "null" ]; then DEST=$(echo $file_entry | jq -r '.source'); fi
-          git add "$DEST"
+        TARGET_DIR=$(jq -r '.syncSettings.targetDir // ".github"' .github/sync-config.json)
+        
+        # Add categorical files
+        for cat in "instructions" "prompts" "agents"; do
+          if [ -d "$TARGET_DIR/$cat" ]; then
+            git add "$TARGET_DIR/$cat"
+          fi
+        done
+
+        # Add legacy files
+        jq -r '.files[] // empty' .github/sync-config.json | while read -r file; do
+          git add "$TARGET_DIR/$file"
         done
 
         if git diff --staged --quiet; then

@@ -8,12 +8,16 @@
     "sourceDir": "templates",
     "targetDir": ".github"
   },
-  "files": [
-    "instructions/python.instructions.md",
-    "instructions/python-pytest.instructions.md",
-    "instructions/security.instructions.md",
-    "agents/security.agent.md",
-    "prompts/code-review.prompt.md"
+  "instructions": [
+    "python",
+    "python-pytest",
+    "security"
+  ],
+  "prompts": [
+    "code-review"
+  ],
+  "agents": [
+    "security"
   ]
 }
 

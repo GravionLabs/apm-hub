@@ -34,104 +34,118 @@ Write-Host "Branch: $sourceBranch"
 Write-Host "Source Directory: $sourceDir"
 Write-Host "Target Directory: $targetDir"
 
-$fileCount = $config.files.Count
+$fileCount = 0
+if ($config.instructions) { $fileCount += $config.instructions.Count }
+if ($config.prompts) { $fileCount += $config.prompts.Count }
+if ($config.agents) { $fileCount += $config.agents.Count }
+if ($config.files) { $fileCount += $config.files.Count }
 Write-Host "Files to sync: $fileCount"
 Write-Host ""
 
-# Helper function to download a file from GitHub
-function Download-File-GitHub {
+# Helper function to sync a category
+function Sync-Category {
     param(
-        [string]$RelativePath
+        [string]$Category,
+        [string]$Extension
     )
     
-    $sourcePath = "$sourceDir/$RelativePath"
+    $items = $config.$Category
+    if ($null -eq $items) { return }
     
-    # If we are in the .github directory, the target is the current directory
-    if ((Split-Path -Leaf $PWD) -eq ".github") {
-        $destPath = $RelativePath
-    }
-    else {
-        $destPath = "$targetDir/$RelativePath"
-    }
-    
-    $dir = Split-Path -Path $destPath -Parent
-    if ($dir -and -not (Test-Path $dir)) {
-        New-Item -ItemType Directory -Force -Path $dir | Out-Null
-    }
-    
-    $url = "https://raw.githubusercontent.com/$sourceOrg/$sourceRepo/$sourceBranch/$sourcePath"
-    try {
-        Invoke-WebRequest -Uri $url -OutFile $destPath -UseBasicParsing
-        Write-Host "  ✓ Downloaded: $destPath"
-        return $true
-    }
-    catch {
-        Write-Host "  ✗ Failed: $($_.Exception.Message)"
-        return $false
+    foreach ($item in $items) {
+        $filename = $item
+        if (-not $filename.EndsWith(".$Extension.md")) {
+            $filename = "$item.$Extension.md"
+        }
+        
+        $sourcePath = "$Category/$filename"
+        
+        # If we are in the .github directory, the target is the current directory
+        if ((Split-Path -Leaf $PWD) -eq ".github") {
+            $destPath = "$Category/$filename"
+        }
+        else {
+            $destPath = "$targetDir/$Category/$filename"
+        }
+        
+        $dir = Split-Path -Path $destPath -Parent
+        if ($dir -and -not (Test-Path $dir)) {
+            New-Item -ItemType Directory -Force -Path $dir | Out-Null
+        }
+        
+        Write-Host "→ Syncing $Category: $filename"
+        
+        if ($sourceType -eq "github") {
+            Download-File-GitHub-Explicit $sourcePath $destPath
+        }
+        elseif ($sourceType -eq "azure-repos") {
+            Download-File-Azure-Explicit $sourcePath $destPath
+        }
     }
 }
 
-# Helper function to download a file from Azure DevOps
-function Download-File-Azure {
-    param(
-        [string]$RelativePath
-    )
-    
-    if (-not $sourceProject) {
-        Write-Host "  ✗ Error: source.project is required for azure-repos"
-        return $false
+# Explicit download helpers
+function Download-File-GitHub-Explicit {
+    param([string]$SourcePath, [string]$DestPath)
+    $url = "https://raw.githubusercontent.com/$sourceOrg/$sourceRepo/$sourceBranch/$sourceDir/$SourcePath"
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $DestPath -UseBasicParsing
+        Write-Host "  ✓ Downloaded"
     }
-    
-    $sourcePath = "$sourceDir/$RelativePath"
-    
-    # If we are in the .github directory, the target is the current directory
-    if ((Split-Path -Leaf $PWD) -eq ".github") {
-        $destPath = $RelativePath
+    catch {
+        Write-Host "  ✗ Failed: $($_.Exception.Message)"
     }
-    else {
-        $destPath = "$targetDir/$RelativePath"
-    }
-    
-    $dir = Split-Path -Path $destPath -Parent
-    if ($dir -and -not (Test-Path $dir)) {
-        New-Item -ItemType Directory -Force -Path $dir | Out-Null
-    }
+}
 
+function Download-File-Azure-Explicit {
+    param([string]$SourcePath, [string]$DestPath)
     $apiUrl = "https://dev.azure.com/$sourceOrg/$sourceProject/_apis/git/repositories/$sourceRepo/items"
-    $apiUrl += "?path=/$sourcePath&versionType=branch&version=$sourceBranch&api-version=7.0"
-
+    $apiUrl += "?path=/$sourceDir/$SourcePath&versionType=branch&version=$sourceBranch&api-version=7.0"
     $headers = @{}
     if ($env:AZURE_PERSONAL_ACCESS_TOKEN) {
         $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($env:AZURE_PERSONAL_ACCESS_TOKEN)"))
         $headers.Add("Authorization", "Basic $base64AuthInfo")
     }
-
     try {
-        Invoke-WebRequest -Uri $apiUrl -OutFile $destPath -Headers $headers -UseBasicParsing
-        Write-Host "  ✓ Downloaded: $destPath"
-        return $true
+        Invoke-WebRequest -Uri $apiUrl -OutFile $DestPath -Headers $headers -UseBasicParsing
+        Write-Host "  ✓ Downloaded"
     }
     catch {
         Write-Host "  ✗ Failed: $($_.Exception.Message)"
-        return $false
     }
 }
 
 Write-Host "Syncing files..."
 Write-Host ""
 
-foreach ($file in $config.files) {
-    Write-Host "→ Syncing: $file"
+Sync-Category "instructions" "instructions"
+Sync-Category "prompts" "prompt"
+Sync-Category "agents" "agent"
 
-    if ($sourceType -eq "github") {
-        Download-File-GitHub $file
-    }
-    elseif ($sourceType -eq "azure-repos") {
-        Download-File-Azure $file
-    }
-    else {
-        Write-Host "  ✗ Error: Unknown source type: $sourceType"
-        exit 1
+# Legacy support
+if ($config.files) {
+    foreach ($file in $config.files) {
+        Write-Host "→ Syncing legacy file: $file"
+        
+        # If we are in the .github directory, the target is the current directory
+        if ((Split-Path -Leaf $PWD) -eq ".github") {
+            $destPath = $file
+        }
+        else {
+            $destPath = "$targetDir/$file"
+        }
+        
+        $dir = Split-Path -Path $destPath -Parent
+        if ($dir -and -not (Test-Path $dir)) {
+            New-Item -ItemType Directory -Force -Path $dir | Out-Null
+        }
+
+        if ($sourceType -eq "github") {
+            Download-File-GitHub-Explicit "$file" "$destPath"
+        }
+        elseif ($sourceType -eq "azure-repos") {
+            Download-File-Azure-Explicit "$file" "$destPath"
+        }
     }
 }
 

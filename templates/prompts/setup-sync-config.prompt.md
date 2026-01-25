@@ -44,16 +44,15 @@ Generate a JSON code block for `.github/sync-config.json` using the following st
     "sourceDir": "templates",
     "targetDir": ".github"
   },
-  "files": [
-    "instructions/security.instructions.md",
-    "prompts/code-review.prompt.md",
-    "..." 
-  ]
+  "instructions": ["security", "..."],
+  "prompts": ["code-review", "..."],
+  "agents": ["..."]
 }
 ```
 
 **Rules:**
-- Use the actual relative paths within the `templates/` directory (e.g., `instructions/csharp.instructions.md`).
+- Use categorized lists for `instructions`, `prompts`, and `agents`.
+- Use short names for the files (e.g., `security` instead of `security.instructions.md`).
 - Only include files that are relevant to the detected project stack.
-- Always include `instructions/security.instructions.md`.
+- Always include `security` in the `instructions` category.
 - Ensure the user knows they should create this file at `.github/sync-config.json`.

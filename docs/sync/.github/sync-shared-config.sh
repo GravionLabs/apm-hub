@@ -84,8 +84,47 @@ download_file_azure() {
     fi
 }
 
-# Process each file
-jq -r '.files[]' "$CONFIG_FILE" | while IFS= read -r file; do
+# Process categorical files
+sync_category() {
+    local category=$1
+    local extension=$2
+    local items=$(jq -r ".${category}[] // empty" "$CONFIG_FILE")
+    
+    for item in $items; do
+        # Check if item already has the full name/extension
+        if [[ "$item" == *".$extension.md" ]]; then
+            filename="$item"
+        else
+            filename="$item.$extension.md"
+        fi
+        
+        # If we are in the .github directory, the target is the current directory
+        if [ "$(basename "$PWD")" = ".github" ]; then
+            dest_file="$category/$filename"
+        else
+            dest_file="$TARGET_DIR/$category/$filename"
+        fi
+        
+        source_file="$SOURCE_DIR/$category/$filename"
+        
+        echo "→ Syncing $category: $filename"
+        
+        if [ "$SOURCE_TYPE" = "github" ]; then
+            download_file_github "$source_file" "$dest_file"
+        elif [ "$SOURCE_TYPE" = "azure-repos" ]; then
+            download_file_azure "$source_file" "$dest_file"
+        fi
+    done
+}
+
+# Sync all categories
+sync_category "instructions" "instructions"
+sync_category "prompts" "prompt"
+sync_category "agents" "agent"
+
+# Keep support for legacy "files" array if needed, but categorical is preferred
+LEGACY_FILES=$(jq -r '.files[] // empty' "$CONFIG_FILE")
+for file in $LEGACY_FILES; do
     # If we are in the .github directory, the target is the current directory
     if [ "$(basename "$PWD")" = ".github" ]; then
         dest_file="$file"
@@ -95,15 +134,12 @@ jq -r '.files[]' "$CONFIG_FILE" | while IFS= read -r file; do
     
     source_file="$SOURCE_DIR/$file"
     
-    echo "→ Syncing: $file"
+    echo "→ Syncing legacy file: $file"
     
     if [ "$SOURCE_TYPE" = "github" ]; then
         download_file_github "$source_file" "$dest_file"
     elif [ "$SOURCE_TYPE" = "azure-repos" ]; then
         download_file_azure "$source_file" "$dest_file"
-    else
-        echo "  ✗ Error: Unknown source type: $SOURCE_TYPE"
-        exit 1
     fi
 done
 

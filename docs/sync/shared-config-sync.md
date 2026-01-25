@@ -538,7 +538,7 @@ az pipelines run \
 
 ### Sync Config Schema
 
-The simplest way to configure file synchronization is to define the source and target directories once, then list only the relative file paths you want to sync.
+Die einfachste Art, die Dateisynchronisation zu konfigurieren, besteht darin, die Quell- und Zielverzeichnisse einmal zu definieren und dann nur die relativen Dateipfade (oder Kurznamen) kategorisiert aufzulisten.
 
 ```json
 {
@@ -550,33 +550,43 @@ The simplest way to configure file synchronization is to define the source and t
     "sourceDir": "templates",
     "targetDir": ".github"
   },
-  "files": [
-    "instructions/python.instructions.md",
-    "instructions/security.instructions.md",
-    "prompts/code-review.prompt.md",
-    "agents/security.agent.md"
+  "instructions": [
+    "python",
+    "security"
+  ],
+  "prompts": [
+    "code-review"
+  ],
+  "agents": [
+    "security"
   ]
 }
 ```
 
-### Configuration Reference
+### Konfigurations-Referenz
 
-**Sync Configuration:**
-- `type`: `"github"` or `"azure-repos"` (required)
-- `org`: GitHub/Azure organization name (required)
-- `repo`: Repository name (required)
-- `branch`: Branch to sync from (default: `"main"`)
-- `project`: (Azure DevOps only) Project name (required for azure-repos)
-- `sourceDir`: Source directory in repository (default: `"templates"`)
-- `targetDir`: Target directory in project (default: `".github"`)
+**Sync-Einstellungen (`syncSettings`):**
+- `type`: `"github"` oder `"azure-repos"` (erforderlich)
+- `org`: Name der GitHub/Azure Organisation (erforderlich)
+- `repo`: Repository-Name (erforderlich)
+- `branch`: Branch, von dem synchronisiert werden soll (Standard: `"main"`)
+- `project`: (Nur Azure DevOps) Projektname (erforderlich für azure-repos)
+- `sourceDir`: Quellverzeichnis im Repository (Standard: `"templates"`)
+- `targetDir`: Zielverzeichnis im Projekt (Standard: `".github"`)
 
-**Files:**
-- Array of relative file paths within sourceDir
-- Each file is synced to `targetDir/{relativePath}`
+**Kategorien:**
+- `instructions`: Liste von Instruktionen (Kurzname wie `python` oder Vollname)
+- `prompts`: Liste von Prompts (Kurzname wie `code-review` oder Vollname)
+- `agents`: Liste von Agents (Kurzname wie `security` oder Vollname)
 
-### Example Configurations
+Dateien werden automatisch nach `targetDir/{kategorie}/{dateiname}` synchronisiert.
 
-**Python Project (all instructions and security agent):**
+**Legacy Support:**
+- `files`: Array von relativen Pfaden (z.B. `"instructions/python.instructions.md"`). Diese werden direkt nach `targetDir/{pfad}` kopiert.
+
+### Beispiel-Konfigurationen
+
+**Python Projekt:**
 ```json
 {
   "syncSettings": {
@@ -587,11 +597,13 @@ The simplest way to configure file synchronization is to define the source and t
     "sourceDir": "templates",
     "targetDir": ".github"
   },
-  "files": [
-    "instructions/python.instructions.md",
-    "instructions/python-pytest.instructions.md",
-    "instructions/security.instructions.md",
-    "agents/security.agent.md"
+  "instructions": [
+    "python",
+    "python-pytest",
+    "security"
+  ],
+  "agents": [
+    "security"
   ]
 }
 ```

@@ -7,8 +7,11 @@
     "sourceDir": "templates",
     "targetDir": ".github"
   },
-  "files": [
-    "instructions/markdown.instructions.md",
-    "prompts/code-review.prompt.md"
-  ]
+  "instructions": [
+    "markdown"
+  ],
+  "prompts": [
+    "code-review"
+  ],
+  "agents": []
 }
