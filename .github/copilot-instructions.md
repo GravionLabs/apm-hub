@@ -1,14 +1,20 @@
-﻿# GitHub Copilot â€“ Repository Instructions
+﻿# Project-Specific Copilot Instructions
 
-## General
-- Prefer readable, maintainable solutions over clever tricks.
-- Write or update unit tests when adding features or fixing bugs.
+## General Principles
+- This repository is a collection of GitHub Copilot templates (Prompts, Instructions, Agents).
+- Always follow the established Markdown standards defined in `docs/concepts/instructions.md` and `templates/instructions/markdown.instructions.md`.
+- Maintain the repository structure: `docs/`, `templates/`, `examples/`, `scripts/`.
+- Ensure all templates are reusable and tech-stack agnostic where possible.
 
-## Security
-- No secrets in code; use environment variables / secret stores.
-- Validate all external input.
+## Documentation Standards
+- Documentation should be clear, concise, and professional.
+- Use internal links between documentation pages to improve navigability.
+- When adding new templates, update the `docs/template-list.md` by running the `scripts/generate-template-list.py` script.
 
-## Build & Test
-- JS/TS: \
-pm ci && npm test\
-- Python: \pip install -r requirements.txt && pytest -q\
+## Automation
+- Python scripts in `scripts/` should follow PEP 8.
+- Scripts should be well-documented and handle errors gracefully.
+
+## Quality Assurance
+- Use the review checklists in `docs/checklists/` before finalizing any new templates.
+- Ensure that scoped instructions have correct `applyTo` patterns in their YAML front-matter.
