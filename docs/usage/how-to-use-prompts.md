@@ -1,5 +1,6 @@
 ﻿# How to Use Prompts
 
+
 Prompts in GitHub Copilot are designed to be explicitly invoked by the user for specific tasks. This guide explains how to find, trigger, and interact with prompts.
 
 ---

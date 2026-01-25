@@ -1,5 +1,6 @@
 ﻿# Writing Effective Prompts
 
+
 A well-written prompt leads to better, more predictable results from GitHub Copilot. Follow these best practices when creating custom `.prompt.md` files.
 
 ---
@@ -53,3 +54,11 @@ Avoid vague verbs like "improve" or "fix". Use specific commands:
 ## 6. Iterative Refinement
 
 If a prompt doesn't give you what you want, don't give up. Adjust the wording, add constraints, or change the output format until it produces consistent, high-quality results.
+
+---
+
+## Learning More
+
+- [What are Prompts?](../concepts/prompts.md)
+- [How to Use Prompts](../usage/how-to-use-prompts.md)
+- [Prompt Review Checklist](../checklists/prompt-review-checklist.md)

@@ -1,5 +1,6 @@
 # Prompt Review Checklist
 
+
 This checklist helps reviewers evaluate the **quality, safety, and usefulness** of GitHub Copilot prompt files (`*.prompt.md`) before they are merged.
 
 Use this checklist during code review to ensure prompts are **clear, reusable, and aligned with best practices**.
@@ -138,3 +139,11 @@ Nice‑to‑Have items are optional and should not block approval.
 > ✅ Prompt purpose is clear and well‑scoped.  
 > ✅ Input placeholders are well defined.  
 > 🔧 Consider tightening the output structure to improve consistency.
+
+---
+
+## Learning More
+
+- [What are Prompts?](../concepts/prompts.md)
+- [How to Use Prompts](../usage/how-to-use-prompts.md)
+- [Writing Effective Prompts](../best-practices/writing-effective-prompts.md)

@@ -1,5 +1,6 @@
 ﻿# Do & Don't for GitHub Copilot
 
+
 Follow these general guidelines to get the most out of GitHub Copilot while ensuring safety and code quality.
 
 ---
@@ -24,3 +25,12 @@ Follow these general guidelines to get the most out of GitHub Copilot while ensu
 -   **Over-rely on AI:** AI is a tool to help you work faster, not a replacement for fundamental programming knowledge and critical thinking.
 -   **Ignore security warnings:** If a custom agent or Copilot flags a security risk, take it seriously and investigate.
 -   **Use the wrong abstraction:** Don't use a global instruction for a one-time task, and don't use a prompt for a rule that should always apply.
+
+---
+
+## Learning More
+
+- [Core Concepts](../overview.md#core-concepts-at-a-glance)
+- [Writing Effective Prompts](writing-effective-prompts.md)
+- [Writing Good Instructions](writing-good-instructions.md)
+- [Designing Agents](designing-agents.md)

@@ -1,5 +1,6 @@
 # Usage by JetBrains AI (Junie)
 
+
 This document describes how **JetBrains Junie** (the AI agent in JetBrains IDEs) uses and interprets the GitHub Copilot configuration files defined in this repository.
 
 ---

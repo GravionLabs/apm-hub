@@ -1,5 +1,6 @@
 ﻿# How to Use Instructions
 
+
 Instructions provide the background rules for Copilot. Unlike prompts, you don't "run" them manually—they are always active. This guide explains how to ensure they are applied correctly.
 
 ---

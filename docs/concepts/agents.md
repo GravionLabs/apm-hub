@@ -1,6 +1,7 @@
 ﻿
 # Agents
 
+
 This document explains what **Agents** are in the context of **GitHub Copilot**, how they differ from prompts and instructions, and how to design, store, and use them in this repository.
 
 > **Mental model**

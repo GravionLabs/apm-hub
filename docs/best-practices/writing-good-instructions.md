@@ -1,5 +1,6 @@
 ﻿# Writing Good Instructions
 
+
 Instructions are the foundation of Copilot's behavior in your repository. Since they are always active, they must be clear, concise, and stable.
 
 ---
@@ -46,3 +47,11 @@ Don't try to document every single detail of your project. Focus on the rules th
 ## 6. Test with Real Queries
 
 After adding or updating instructions, ask Copilot a few questions to see if it follows the new rules without becoming overly restrictive or confused.
+
+---
+
+## Learning More
+
+- [What are Instructions?](../concepts/instructions.md)
+- [How to Use Instructions](../usage/how-to-use-instructions.md)
+- [Instruction Review Checklist](../checklists/instructions-review-checklist.md)

@@ -1,5 +1,6 @@
 # GitHub Copilot Templates
 
+
 Central repository for shared `.github/instructions` and `.github/prompts` files.
 
 > **Note:** This is a template for the central `github-copilot-templates` repository.

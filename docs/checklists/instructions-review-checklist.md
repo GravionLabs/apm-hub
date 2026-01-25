@@ -1,5 +1,6 @@
 # Instruction Review Checklist
 
+
 Use this checklist to review **GitHub Copilot Custom Instructions** before merging.  
 It applies to repository‑wide instructions (`.github/copilot-instructions.md`) and path‑specific files (`.github/instructions/*.instructions.md`).
 
@@ -36,3 +37,11 @@ It applies to repository‑wide instructions (`.github/copilot-instructions.md`)
   applyTo: "**/*.ts,**/*.tsx"
   ---
   ```
+
+---
+
+## Learning More
+
+- [What are Instructions?](../concepts/instructions.md)
+- [How to Use Instructions](../usage/how-to-use-instructions.md)
+- [Writing Good Instructions](../best-practices/writing-good-instructions.md)

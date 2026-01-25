@@ -1,5 +1,6 @@
 ﻿# Prompts (Prompt Files)
 
+
 This document explains what **Prompts** are in the context of **GitHub Copilot**, how they differ from instructions and agents, and how they should be designed and used in this repository.
 
 ---

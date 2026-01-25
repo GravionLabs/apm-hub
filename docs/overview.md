@@ -1,5 +1,6 @@
 ﻿# Overview
 
+
 Welcome to **github-copilot-templates** 👋
 
 This repository is a **shared reference, documentation hub, and template library** for using **GitHub Copilot** effectively and responsibly across teams and projects.
@@ -43,29 +44,34 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 
 **Concepts**
 
-- What prompts are and when to use them
-- What instructions are and how scoping works
-- What agents are and how they differ from prompts
-- How all concepts work together
+- [Prompts](concepts/prompts.md): What prompts are and when to use them
+- [Instructions](concepts/instructions.md): What instructions are and how scoping works
+- [Agents](concepts/agents.md): What agents are and how they differ from prompts
+- [How all concepts work together](concepts/mental-model.md)
 - [How to use the Shared Configuration Sync](sync/shared-config-sync.md)
 
 **Usage Guides**
 
-- How to use prompts in daily development
-- How instructions influence Copilot behavior
-- How and when to switch agents
-- Common Copilot‑assisted workflows
+- [How to use prompts in daily development](usage/how-to-use-prompts.md)
+- [How instructions influence Copilot behavior](usage/how-to-use-instructions.md)
+- [How and when to switch agents](usage/how-to-use-agents.md)
+- [Common Copilot‑assisted workflows](usage/common-workflows.md)
 
 **Best Practices**
 
-- Writing effective prompts
-- Designing stable instructions
-- Creating safe, useful agents
-- Do’s and don’ts for AI‑assisted development
+- [Writing effective prompts](best-practices/writing-effective-prompts.md)
+- [Designing stable instructions](best-practices/writing-good-instructions.md)
+- [Creating safe, useful agents](best-practices/designing-agents.md)
+- [Do’s and don’ts for AI‑assisted development](best-practices/do-and-dont.md)
 - **Shared Configuration Sync**
   - [Centralizing and synchronizing templates](sync/shared-config-sync.md)
 - **JetBrains AI Support**
   - [How Junie uses Copilot templates](jetbrains-ai.md)
+
+**Checklists**
+
+- [Instructions Review Checklist](checklists/instructions-review-checklist.md)
+- [Prompt Review Checklist](checklists/prompt-review-checklist.md)
 
 ---
 

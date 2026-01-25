@@ -1,5 +1,6 @@
 ﻿# Common Copilot Workflows
 
+
 This guide describes how to combine instructions, agents, and prompts to solve common development tasks effectively.
 
 ---

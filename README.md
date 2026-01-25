@@ -11,7 +11,7 @@ A shared **GitHub Copilot** templates repository with:
 
 ## 📖 Documentation
 
-Get started by exploring our comprehensive documentation:
+Get started by exploring our comprehensive documentation.
 
 - **[Overview](docs/overview.md)**: Introduction, core concepts, and guiding principles.
 - **[JetBrains AI Support](docs/jetbrains-ai.md)**: How to use these templates with JetBrains Junie.

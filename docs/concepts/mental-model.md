@@ -1,5 +1,6 @@
 ﻿# Shared Mental Model
 
+
 To get the most out of GitHub Copilot, it helps to understand how the different configuration options work together.
 
 We use a simple mental model to distinguish between **Instructions**, **Agents**, and **Prompts**:

@@ -1,5 +1,6 @@
 ﻿# Designing Agents
 
+
 Designing a good custom agent involves defining a clear role, setting appropriate boundaries, and providing the right tools.
 
 ---
@@ -43,3 +44,10 @@ Agents should define **behavior and boundaries**, not specific task-oriented wor
 ## 5. Complementary Design
 
 Ensure your agent respects the repository's global **Instructions**. Agents should add specialized expertise on top of the existing rules, not contradict them.
+
+---
+
+## Learning More
+
+- [What are Agents?](../concepts/agents.md)
+- [How to Use Agents](../usage/how-to-use-agents.md)

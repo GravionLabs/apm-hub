@@ -1,5 +1,6 @@
 # Shared Configuration Sync
 
+
 Documentation for synchronizing shared configuration files (`.github/instructions`, `.github/prompts`) from a central repository.
 
 ## Table of Contents

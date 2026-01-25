@@ -1,5 +1,6 @@
 # Shared Configuration Architecture
 
+
 Architecture overview for the Shared Configuration Sync System.
 
 ## High-Level Architecture

@@ -1,5 +1,6 @@
 ﻿# Instructions (Custom Instructions)
 
+
 This document explains what **Instructions** are in the context of **GitHub Copilot**, how they differ from prompts and agents, and how to define and use them in this repository.
 
 ---

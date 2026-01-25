@@ -1,5 +1,6 @@
 # Shared Configuration Sync - Quick Start
 
+
 Quick start for setting up automatic synchronization of `.github/instructions` files.
 
 ## For Developers in a Hurry
