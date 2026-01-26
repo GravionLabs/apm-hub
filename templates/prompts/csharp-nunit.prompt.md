@@ -12,7 +12,7 @@ Your goal is to help me write effective unit tests with NUnit, covering both sta
 
 - Use a separate test project with naming convention `[ProjectName].Test`
 - Projects should be located under the `test/` directory
-- Reference Microsoft.NET.Test.Sdk, NUnit, NSubstitute, FluentAssertions, and NUnit3TestAdapter packages
+- Reference Microsoft.NET.Test.Sdk, NUnit, NSubstitute, FluentAssertions or Shouldly, and NUnit3TestAdapter packages
 - Create test classes that match the classes being tested (e.g., `CalculatorTests` for `Calculator`)
 - Use .NET SDK test commands: `dotnet test` for running tests
 
@@ -56,10 +56,12 @@ Your goal is to help me write effective unit tests with NUnit, covering both sta
 
 ## Assertions
 
-- Use **FluentAssertions** for all assertions (preferred): `result.Should().Be(expected)`
-- Use `Assert.That` with constraint model (NUnit style) only if FluentAssertions is not available
+- Use **FluentAssertions** or **Shouldly** for all assertions (preferred):
+  - **FluentAssertions:** `result.Should().Be(expected)`
+  - **Shouldly:** `result.ShouldBe(expected)`
+- Use `Assert.That` with constraint model (NUnit style) only if FluentAssertions or Shouldly is not available
 - Use constraints like `Is.EqualTo`, `Is.SameAs`, `Contains.Item`
-- Use `Assert.Throws<T>` or `Assert.ThrowsAsync<T>` to test exceptions (or `action.Should().Throw<T>()`)
+- Use `Assert.Throws<T>` or `Assert.ThrowsAsync<T>` to test exceptions (or `action.Should().Throw<T>()` for FluentAssertions, `Should.Throw<T>(action)` for Shouldly)
 - Use descriptive messages in assertions for clarity on failure
 
 ## Mocking and Isolation

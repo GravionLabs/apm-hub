@@ -21,7 +21,7 @@ Review the provided C# code for correctness, readability, maintainability, and s
 - **Clean Code:** Verify that `this.` is not used unnecessarily and `nameof` is preferred over string literals.
 
 ### 2. Testing Guidelines (NUnit)
-- **Stack:** Verify usage of **NUnit**, **NSubstitute** (for mocks), and **FluentAssertions**.
+- **Stack:** Verify usage of **NUnit**, **NSubstitute** (for mocks), and **FluentAssertions** or **Shouldly**.
 - **Naming:** Test methods must follow `[MethodName]_Should[ExpectedResult]`.
 - **Categories:**
   - Every `[TestFixture]` must have a `[Category]` attribute.
@@ -29,7 +29,7 @@ Review the provided C# code for correctness, readability, maintainability, and s
   - `"ManualTest"` must also have the `[Explicit]` attribute.
 - **Structure:** 
   - Do **not** use "Arrange", "Act", or "Assert" comments.
-  - Use `result.Should().Be(expected)` for assertions.
+  - Use `result.Should().Be(expected)` (FluentAssertions) or `result.ShouldBe(expected)` (Shouldly) for assertions.
   - Use `Substitute.For<T>()` for mocks.
 
 ### 3. Logic and Security

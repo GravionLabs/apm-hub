@@ -41,11 +41,12 @@ Your task is to ensure .NET/C# code in ${selection} meets the best practices spe
 
 ## Testing Standards
 
-- Use MSTest framework with FluentAssertions for assertions
-- Follow AAA pattern (Arrange, Act, Assert)
-- Use Moq for mocking dependencies
+- Use NUnit framework with FluentAssertions or Shouldly for assertions
+- Follow AAA pattern (Arrange, Act, Assert) but do not include comments for them
+- Use NSubstitute for mocking dependencies
 - Test both success and failure scenarios
 - Include null parameter validation tests
+- Follow the naming convention `[MethodName]_Should[ExpectedResult]`
 
 ## Configuration & Settings
 

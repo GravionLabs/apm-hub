@@ -22,9 +22,10 @@ describe('collection-generator', () => {
     ],
   };
 
-  it('should generate markdown with title, description and tags', () => {
+  it('should generate markdown with title, id, description and tags', () => {
     const markdown = generateMarkdown(mockConfig);
     expect(markdown).toContain('# Test Collection');
+    expect(markdown).toContain('**Collection ID:**\n```\ntest-collection\n```');
     expect(markdown).toContain('A test collection description');
     expect(markdown).toContain('**Tags:** `test`, `jest`');
   });
@@ -80,5 +81,23 @@ description: 'Test Description'
     };
     const markdown = generateMarkdown(customConfig);
     expect(markdown).toContain('| [file.md](custom/file.md) | - | prompt | `custom/file.md` |');
+  });
+
+  it('should keep manual order if ordering is not alpha', () => {
+    const manualConfig: CollectionConfig = {
+      ...mockConfig,
+      items: [
+        { path: 'prompts/c.prompt.md', kind: 'prompt' },
+        { path: 'prompts/a.prompt.md', kind: 'prompt' },
+        { path: 'prompts/b.prompt.md', kind: 'prompt' },
+      ],
+    };
+    const markdown = generateMarkdown(manualConfig);
+    const lines = markdown.split('\n');
+    const tableLines = lines.filter((l) => l.startsWith('| ['));
+
+    expect(tableLines[0]).toContain('[c.prompt.md]');
+    expect(tableLines[1]).toContain('[a.prompt.md]');
+    expect(tableLines[2]).toContain('[b.prompt.md]');
   });
 });

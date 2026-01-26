@@ -21,6 +21,7 @@ export interface CollectionConfig {
 
 export function generateMarkdown(config: CollectionConfig): string {
   let md = `# ${config.name}\n\n`;
+  md += `**Collection ID:**\n\`\`\`\n${config.id}\n\`\`\`\n\n`;
   md += `${config.description}\n\n`;
 
   if (config.tags && config.tags.length > 0) {
@@ -32,6 +33,8 @@ export function generateMarkdown(config: CollectionConfig): string {
   md += `| :--- | :--- | :--- | :--- |\n`;
 
   const items = [...config.items];
+  // Sort alphabetically only if explicitly requested.
+  // By default, use the order from the YAML file (manual).
   if (config.display?.ordering === 'alpha') {
     items.sort((a, b) => {
       const nameA = path.basename(a.path);

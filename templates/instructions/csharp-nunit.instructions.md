@@ -1,6 +1,5 @@
 ---
-description: 'Guidelines for C# testing with NUnit, NSubstitute, and FluentAssertions'
-applyTo: 'test/**/*.cs'
+description: 'Guidelines for C# testing with NUnit, NSubstitute, FluentAssertions, or Shouldly'
 ---
 
 # C# Testing with NUnit
@@ -10,7 +9,7 @@ These instructions apply to all C# test projects located in the `test/` director
 ## Testing Stack
 - **Framework:** NUnit
 - **Mocking:** NSubstitute
-- **Assertions:** FluentAssertions
+- **Assertions:** FluentAssertions or Shouldly
 
 ## Test Naming Convention
 Test method names must follow the pattern: `[MethodName]_Should[ExpectedResult]`.
@@ -30,6 +29,8 @@ Every `[TestFixture]` or test class must define a category using the `[Category]
 
 ## Implementation Guidelines
 - Use NSubstitute for creating mocks: `Substitute.For<IMyService>()`.
-- Use FluentAssertions for all assertions: `result.Should().Be(expected)`.
+- Use FluentAssertions or Shouldly for all assertions:
+  - **FluentAssertions:** `result.Should().Be(expected);`
+  - **Shouldly:** `result.ShouldBe(expected);`
 - Avoid "Act", "Arrange", or "Assert" comments (as per global C# instructions).
 - Keep tests focused and ensure they are easy to read.

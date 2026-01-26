@@ -95,11 +95,12 @@ applyTo: '**/*.cs'
 ## Testing
 
 - Always include test cases for critical paths of the application.
-- Guide users through creating unit tests.
+- Guide users through creating unit tests using **NUnit**, **NSubstitute**, and **FluentAssertions** or **Shouldly**.
 - Do not emit "Act", "Arrange" or "Assert" comments.
 - Copy existing style in nearby files for test method names and capitalization.
+- Use `[MethodName]_Should[ExpectedResult]` naming pattern for tests.
 - Explain integration testing approaches for API endpoints.
-- Demonstrate how to mock dependencies for effective testing.
+- Demonstrate how to mock dependencies using **NSubstitute** for effective testing.
 - Show how to test authentication and authorization logic.
 - Explain test-driven development principles as applied to API development.
 

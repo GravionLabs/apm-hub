@@ -1,5 +1,10 @@
 # C# .NET Development
 
+**Collection ID:**
+```
+csharp-dotnet-development
+```
+
 Essential prompts, instructions, and chat modes for C# and .NET development including testing, documentation, and best practices.
 
 **Tags:** `csharp`, `dotnet`, `aspnet`, `testing`
@@ -8,11 +13,12 @@ Essential prompts, instructions, and chat modes for C# and .NET development incl
 
 | Name | Description | Type | Path |
 | :--- | :--- | :--- | :--- |
-| [ASP.NET Minimal API with OpenAPI](../prompts/aspnet-minimal-api-openapi.prompt.md) | Create ASP.NET Minimal API endpoints with proper OpenAPI documentation | prompt | `prompts/aspnet-minimal-api-openapi.prompt.md` |
-| [C# Async Programming Best Practices](../prompts/csharp-async.prompt.md) | Get best practices for C# async programming | prompt | `prompts/csharp-async.prompt.md` |
-| [csharp-xunit.prompt.md](../prompts/csharp-xunit.prompt.md) | - | prompt | `prompts/csharp-xunit.prompt.md` |
 | [C# Development](../instructions/csharp.instructions.md) | Guidelines for building C# applications | instruction | `instructions/csharp.instructions.md` |
+| [C# Testing with NUnit](../instructions/csharp-nunit.instructions.md) | Guidelines for C# testing with NUnit, NSubstitute, FluentAssertions, or Shouldly | instruction | `instructions/csharp-nunit.instructions.md` |
 | [DDD Systems & .NET Guidelines](../instructions/dotnet-architecture-good-practices.instructions.md) | DDD and .NET architecture guidelines | instruction | `instructions/dotnet-architecture-good-practices.instructions.md` |
+| [C# Async Programming Best Practices](../prompts/csharp-async.prompt.md) | Get best practices for C# async programming | prompt | `prompts/csharp-async.prompt.md` |
+| [NUnit Best Practices](../prompts/csharp-nunit.prompt.md) | Get best practices for NUnit unit testing, including data-driven tests | prompt | `prompts/csharp-nunit.prompt.md` |
 | [.NET/C# Best Practices](../prompts/dotnet-best-practices.prompt.md) | Ensure .NET/C# code meets best practices for the solution/project. | prompt | `prompts/dotnet-best-practices.prompt.md` |
 | [.NET Upgrade Analysis Prompts](../prompts/dotnet-upgrade.prompt.md) | Ready-to-use prompts for comprehensive .NET framework upgrade analysis and execution | prompt | `prompts/dotnet-upgrade.prompt.md` |
+| [ASP.NET Minimal API with OpenAPI](../prompts/aspnet-minimal-api-openapi.prompt.md) | Create ASP.NET Minimal API endpoints with proper OpenAPI documentation | prompt | `prompts/aspnet-minimal-api-openapi.prompt.md` |
 | [Expert .NET software engineer mode instructions](../agents/expert-dotnet-software-engineer.agent.md) | Provide expert .NET software engineering guidance using modern software design patterns. | agent | `agents/expert-dotnet-software-engineer.agent.md` |

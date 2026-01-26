@@ -16,12 +16,13 @@ When invoked:
 - Cover security (authentication, authorization, data protection)
 - Use and explain patterns: Async/Await, Dependency Injection, Unit of Work, CQRS, Gang of Four
 - Apply SOLID principles
-- Plan and write tests (TDD/BDD) with NUnit, NSubstitute and FluentAssertions
+- Plan and write tests (TDD/BDD) with **NUnit**, **NSubstitute** and **FluentAssertions** or **Shouldly**
 - Improve performance (memory, async code, data access)
 
 # General C# Development
 
 - Follow the project's own conventions first, then common C# conventions.
+- Default to **NUnit**, **NSubstitute**, and **FluentAssertions/Shouldly** for new test projects.
 - Keep naming, formatting, and project structure consistent.
 
 ## Code Design Rules
@@ -165,7 +166,22 @@ When invoked:
 
 ## Test framework-specific guidance
 
-- **Use the framework already in the solution** (xUnit/NUnit/MSTest) for new tests.
+- **Use the framework already in the solution** if existing.
+- **Prefer NUnit, NSubstitute, and FluentAssertions/Shouldly** for new tests or if no framework is established.
+
+### NUnit (Preferred)
+
+- Packages: `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit3TestAdapter`, `NSubstitute`, `FluentAssertions` or `Shouldly`
+- Class `[TestFixture]`, test `[Test]`
+- **Naming:** Test methods must follow the pattern `[MethodName]_Should[ExpectedResult]` (e.g., `ToDateOnly_ShouldReturnCorrectDate`).
+- **Categories:** Every `[TestFixture]` or test class must define a category using the `[Category]` attribute.
+  - `"UnitTest"` (Default): For isolated logic tests.
+  - `"IntegrationTest"`: For tests involving external dependencies.
+  - `"ManualTest"`: For tests requiring manual setup (must also be marked with `[Explicit]`).
+- **Mocking:** Use **NSubstitute** (`Substitute.For<T>()`).
+- **Assertions:** Use **FluentAssertions** (`result.Should().Be(expected)`) or **Shouldly** (`result.ShouldBe(expected)`).
+- Parameterized tests: **use `[TestCase]`**
+- **No AAA comments:** Do not use "Arrange", "Act", or "Assert" comments.
 
 ### xUnit
 
@@ -179,20 +195,6 @@ When invoked:
 - Packages: `xunit.v3`, `xunit.runner.visualstudio` 3.x, `Microsoft.NET.Test.Sdk`
 - `ITestOutputHelper` and `[Theory]` are in `Xunit`
 
-### NUnit
-
-- Packages: `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit3TestAdapter`, `NSubstitute`, `FluentAssertions`
-- Class `[TestFixture]`, test `[Test]`
-- **Naming:** Test methods must follow the pattern `[MethodName]_Should[ExpectedResult]` (e.g., `ToDateOnly_ShouldReturnCorrectDate`).
-- **Categories:** Every `[TestFixture]` or test class must define a category using the `[Category]` attribute.
-  - `"UnitTest"` (Default): For isolated logic tests.
-  - `"IntegrationTest"`: For tests involving external dependencies.
-  - `"ManualTest"`: For tests requiring manual setup (must also be marked with `[Explicit]`).
-- **Mocking:** Use **NSubstitute** (`Substitute.For<T>()`).
-- **Assertions:** Use **FluentAssertions** (`result.Should().Be(expected)`).
-- Parameterized tests: **use `[TestCase]`**
-- **No AAA comments:** Do not use "Arrange", "Act", or "Assert" comments.
-
 ### MSTest
 
 - Class `[TestClass]`, test `[TestMethod]`
@@ -201,9 +203,9 @@ When invoked:
 
 ### Assertions
 
-- If **FluentAssertions/AwesomeAssertions** are already used, prefer them.
+- If **FluentAssertions** or **Shouldly** are already used, prefer them.
 - Otherwise, use the framework’s asserts.
-- Use `Throws/ThrowsAsync` (or MSTest `Assert.ThrowsException`) for exceptions.
+- Use `Throws/ThrowsAsync` for exceptions (or `Should().Throw<T>()` for FluentAssertions, `Should.Throw<T>(action)` for Shouldly).
 
 ## Mocking
 
