@@ -11,8 +11,21 @@ __pycache__/
 # OS / IDE
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
+
+# VS Code - share launch and tasks configurations
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# JetBrains IDEs - share run configurations
+.idea/*
+!.idea/runConfigurations/
+!.idea/modules.xml
+!.idea/vcs.xml
+!.idea/codeStyles/
+!.idea/*.iml
 
 # Misc
 *.log
