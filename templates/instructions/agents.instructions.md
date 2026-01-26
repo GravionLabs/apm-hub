@@ -120,7 +120,7 @@ handoffs:
 Each handoff in the list must include the following properties:
 
 | Property | Type | Required | Description |
-|----------|------|----------|-------------|
+|----------|------  |----------|-------------|
 | `label` | string | Yes | The display text shown on the handoff button in the chat interface |
 | `agent` | string | Yes | The target agent identifier to switch to (name or filename without `.agent.md`) |
 | `prompt` | string | No | The prompt text to pre-fill in the target agent's chat input |

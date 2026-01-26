@@ -1,5 +1,6 @@
 ---
 description: 'Guidelines for C# testing with NUnit, NSubstitute, FluentAssertions, or Shouldly'
+applyTo: 'test/**/*.cs'
 ---
 
 # C# Testing with NUnit
