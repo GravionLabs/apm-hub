@@ -10,6 +10,7 @@ Documentation for synchronizing shared configuration files (`.github/instruction
 - [GitHub Setup](#github-setup)
 - [Azure DevOps Setup](#azure-devops-setup)
 - [Configuration](#configuration)
+- [Synchronization with Collections](#synchronization-with-collections)
 - [Usage](#usage)
 - [Troubleshooting](#troubleshooting)
 
@@ -532,13 +533,23 @@ az pipelines run \
 # Or in Web UI: Pipelines → Run Pipeline
 ```
 
+## Automation
+
+To ensure that the documentation and collection definitions are always up to date, it is recommended to automate the generation process.
+
+### GitHub Actions
+A workflow `docs/sync/.github/workflows/generate-docs.yml` is provided. It automatically regenerates the documentation whenever changes are pushed to `main` (within `templates/` or `src/`).
+
+### Azure DevOps
+A pipeline `docs/sync/azure-pipelines-generate-docs.yml` is provided for Azure DevOps users. It offers the same functionality as the GitHub Action.
+
 ---
 
 ## Configuration
 
 ### Sync Config Schema
 
-Die einfachste Art, die Dateisynchronisation zu konfigurieren, besteht darin, die Quell- und Zielverzeichnisse einmal zu definieren und dann nur die relativen Dateipfade (oder Kurznamen) kategorisiert aufzulisten.
+The easiest way to configure file synchronization is to define the source and target directories once and then just list the relative file paths (or short names) categorized.
 
 ```json
 {
@@ -550,6 +561,9 @@ Die einfachste Art, die Dateisynchronisation zu konfigurieren, besteht darin, di
     "sourceDir": "templates",
     "targetDir": ".github"
   },
+  "collections": [
+    "csharp-dotnet-development"
+  ],  
   "instructions": [
     "python",
     "security"
@@ -563,30 +577,59 @@ Die einfachste Art, die Dateisynchronisation zu konfigurieren, besteht darin, di
 }
 ```
 
-### Konfigurations-Referenz
+### Configuration Reference
 
-**Sync-Einstellungen (`syncSettings`):**
-- `type`: `"github"` oder `"azure-repos"` (erforderlich)
-- `org`: Name der GitHub/Azure Organisation (erforderlich)
-- `repo`: Repository-Name (erforderlich)
-- `branch`: Branch, von dem synchronisiert werden soll (Standard: `"main"`)
-- `project`: (Nur Azure DevOps) Projektname (erforderlich für azure-repos)
-- `sourceDir`: Quellverzeichnis im Repository (Standard: `"templates"`)
-- `targetDir`: Zielverzeichnis im Projekt (Standard: `".github"`)
+**Sync Settings (`syncSettings`):**
+- `type`: `"github"` or `"azure-repos"` (required)
+- `org`: Name of the GitHub/Azure organization (required)
+- `repo`: Repository name (required)
+- `branch`: Branch to sync from (default: `"main"`)
+- `project`: (Azure DevOps only) Project name (required for azure-repos)
+- `sourceDir`: Source directory in the repository (default: `"templates"`)
+- `targetDir`: Target directory in the project (default: `".github"`)
 
-**Kategorien:**
-- `instructions`: Liste von Instruktionen (Kurzname wie `python` oder Vollname)
-- `prompts`: Liste von Prompts (Kurzname wie `code-review` oder Vollname)
-- `agents`: Liste von Agents (Kurzname wie `security` oder Vollname)
+**Categories:**
+- `collections`: List of collections (short name like `csharp-dotnet-development` or full name)
+- `instructions`: List of instructions (short name like `python` or full name)
+- `prompts`: List of prompts (short name like `code-review` or full name)
+- `agents`: List of agents (short name like `security` or full name)
 
-Dateien werden automatisch nach `targetDir/{kategorie}/{dateiname}` synchronisiert.
+
+Files are automatically synchronized to `targetDir/{category}/{filename}`.
+
+### Synchronization with Collections
+
+Instead of listing each file individually, you can use [Collections](../concepts/collections.md) to synchronize entire groups of related templates.
+
+**Example with Collections:**
+
+```json
+{
+  "syncSettings": {
+    "type": "github",
+    "org": "yourorg",
+    "repo": "github-copilot-templates",
+    "branch": "main"
+  },
+  "collections": [
+    "csharp-dotnet-development"
+  ]
+}
+```
+
+When a collection is specified, the sync script performs the following steps:
+1. Downloads the collection definition (`.collection.yml`).
+2. Analyzes the included item paths.
+3. Automatically synchronizes each of these items to the appropriate target location in the project.
+
+This is the recommended way for technology stacks, as it ensures that all relevant best practices, prompts, and specialized agents are distributed consistently.
 
 **Legacy Support:**
-- `files`: Array von relativen Pfaden (z.B. `"instructions/python.instructions.md"`). Diese werden direkt nach `targetDir/{pfad}` kopiert.
+- `files`: Array of relative paths (e.g., `"instructions/python.instructions.md"`). These are copied directly to `targetDir/{path}`.
 
-### Beispiel-Konfigurationen
+### Example Configurations
 
-**Python Projekt:**
+**Python Project:**
 ```json
 {
   "syncSettings": {

@@ -1,0 +1,50 @@
+name: Generate Documentation
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - templates/*
+      - src/*
+      - package.json
+      - tsconfig.json
+
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - checkout: self
+    persistCredentials: true
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+    displayName: 'Install Node.js'
+
+  - script: |
+      npm install
+    displayName: 'npm install'
+
+  - script: |
+      npm run build
+    displayName: 'npm build'
+
+  - script: |
+      npm run generate
+    displayName: 'Generate Content'
+
+  - script: |
+      git config user.email "azure-pipelines[bot]@yourdomain.com"
+      git config user.name "Azure Pipelines"
+      git add .
+      if git diff --staged --quiet; then
+        echo "No changes to commit"
+      else
+        git commit -m "chore: auto-generate collections and template list [skip ci]"
+        git push origin HEAD:main
+      fi
+    displayName: 'Commit and push'

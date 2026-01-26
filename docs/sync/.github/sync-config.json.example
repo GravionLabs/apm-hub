@@ -8,6 +8,9 @@
     "sourceDir": "templates",
     "targetDir": ".github"
   },
+  "collections": [
+    "csharp-dotnet-development"
+  ],
   "instructions": [
     "python",
     "python-pytest",

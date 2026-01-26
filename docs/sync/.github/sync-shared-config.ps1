@@ -38,9 +38,63 @@ $fileCount = 0
 if ($config.instructions) { $fileCount += $config.instructions.Count }
 if ($config.prompts) { $fileCount += $config.prompts.Count }
 if ($config.agents) { $fileCount += $config.agents.Count }
+if ($config.collections) { $fileCount += $config.collections.Count }
 if ($config.files) { $fileCount += $config.files.Count }
-Write-Host "Files to sync: $fileCount"
+Write-Host "Items to sync: $fileCount"
 Write-Host ""
+
+# Helper function to get collection items from YAML
+function Sync-CollectionItems {
+    param([string]$CollectionId)
+    
+    $collectionFileName = if ($CollectionId.EndsWith(".collection.yml")) { $CollectionId } else { "$CollectionId.collection.yml" }
+    $sourcePath = "collections/$collectionFileName"
+    
+    # We need to download the collection YAML to a temporary location to parse it
+    $tempYamlPath = Join-Path $env:TEMP ([System.IO.Path]::GetRandomFileName())
+    
+    Write-Host "→ Fetching collection definition: $collectionFileName"
+    if ($sourceType -eq "github") {
+        Download-File-GitHub-Explicit $sourcePath $tempYamlPath
+    }
+    elseif ($sourceType -eq "azure-repos") {
+        Download-File-Azure-Explicit $sourcePath $tempYamlPath
+    }
+    
+    if (Test-Path $tempYamlPath) {
+        try {
+            # Basic YAML parsing for "items:" section using regex since we don't have a YAML parser in standard PowerShell
+            $content = Get-Content $tempYamlPath -Raw
+            
+            # Find the items section
+            if ($content -match "(?s)items:\s*\r?\n(.*?)(?:\r?\n\r?\n|\r?\n\w+:|$)") {
+                $itemsSection = $matches[1]
+                # Extract paths from the items section (look for lines starting with - path: ...)
+                $itemPaths = [regex]::Matches($itemsSection, "(?m)^\s*-\s+path:\s*['""]?(.*?)['""]?\s*$") | ForEach-Object { $_.Groups[1].Value }
+                
+                foreach ($path in $itemPaths) {
+                    Write-Host "  → From collection: $path"
+                    
+                    # Target path depends on whether we are in .github or not
+                    if ((Split-Path -Leaf $PWD) -eq ".github") {
+                        $destPath = $path
+                    }
+                    else {
+                        $destPath = "$targetDir/$path"
+                    }
+                    
+                    Sync-File $path $destPath
+                }
+            }
+            else {
+                Write-Host "  ! No items found in collection $collectionFileName" -ForegroundColor Yellow
+            }
+        }
+        finally {
+            Remove-Item $tempYamlPath -ErrorAction SilentlyContinue
+        }
+    }
+}
 
 # Helper function to sync a category
 function Sync-Category {
@@ -53,13 +107,19 @@ function Sync-Category {
     if ($null -eq $items) { return }
     
     foreach ($item in $items) {
+        if ($Category -eq "collections") {
+            Sync-CollectionItems $item
+            continue
+        }
+
         $filename = $item
         if (-not $filename.EndsWith(".$Extension.md")) {
             $filename = "$item.$Extension.md"
         }
         
         $sourcePath = "$Category/$filename"
-        
+        $destPath = ""
+
         # If we are in the .github directory, the target is the current directory
         if ((Split-Path -Leaf $PWD) -eq ".github") {
             $destPath = "$Category/$filename"
@@ -68,19 +128,29 @@ function Sync-Category {
             $destPath = "$targetDir/$Category/$filename"
         }
         
-        $dir = Split-Path -Path $destPath -Parent
-        if ($dir -and -not (Test-Path $dir)) {
-            New-Item -ItemType Directory -Force -Path $dir | Out-Null
-        }
-        
-        Write-Host "→ Syncing ${Category}: $filename"
-        
-        if ($sourceType -eq "github") {
-            Download-File-GitHub-Explicit $sourcePath $destPath
-        }
-        elseif ($sourceType -eq "azure-repos") {
-            Download-File-Azure-Explicit $sourcePath $destPath
-        }
+        Sync-File $sourcePath $destPath
+    }
+}
+
+# Helper function to sync a single file
+function Sync-File {
+    param(
+        [string]$SourcePath,
+        [string]$DestPath
+    )
+
+    $dir = Split-Path -Path $DestPath -Parent
+    if ($dir -and -not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    }
+    
+    Write-Host "→ Syncing file: $SourcePath"
+    
+    if ($sourceType -eq "github") {
+        Download-File-GitHub-Explicit $SourcePath $DestPath
+    }
+    elseif ($sourceType -eq "azure-repos") {
+        Download-File-Azure-Explicit $SourcePath $DestPath
     }
 }
 
@@ -139,6 +209,7 @@ Write-Host ""
 Sync-Category "instructions" "instructions"
 Sync-Category "prompts" "prompt"
 Sync-Category "agents" "agent"
+Sync-Category "collections" "collection"
 
 # Legacy support
 if ($config.files) {

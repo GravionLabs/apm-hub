@@ -47,6 +47,7 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 - [Prompts](concepts/prompts.md): What prompts are and when to use them
 - [Instructions](concepts/instructions.md): What instructions are and how scoping works
 - [Agents](concepts/agents.md): What agents are and how they differ from prompts
+- [Collections](concepts/collections.md): How to group and synchronize related templates
 - [How all concepts work together](concepts/mental-model.md)
 - [How to use the Shared Configuration Sync](sync/shared-config-sync.md)
 
