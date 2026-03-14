@@ -12,7 +12,7 @@ interface PluginConfigEntry {
 
 interface MarketplaceJson {
   name: string;
-  owner: { login: string };
+  owner: { login: string; name: string };
   description: string;
   plugins: PluginConfigEntry[];
 }
@@ -54,7 +54,7 @@ export function generateMarketplace(pluginsDir = 'plugins', outputPath = '.githu
 
   const marketplace: MarketplaceJson = {
     name: 'copilot-hub',
-    owner: { login: 'GravionLabs' },
+    owner: { login: 'GravionLabs', name: 'Gravion' },
     description:
       'A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team\'s Copilot marketplace.',
     plugins: entries,

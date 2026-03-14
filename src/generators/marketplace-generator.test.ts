@@ -141,7 +141,7 @@ describe('generateMarketplace', () => {
     const expected = JSON.stringify(
       {
         name: 'copilot-hub',
-        owner: { login: 'GravionLabs' },
+        owner: { login: 'GravionLabs', name: 'Gravion' },
         description:
           "A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team's Copilot marketplace.",
         plugins: [
