@@ -1,6 +1,8 @@
 {
   "name": "copilot-hub",
-  "owner": "GravionLabs",
+  "owner": {
+    "login": "GravionLabs"
+  },
   "description": "A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team's Copilot marketplace.",
   "plugins": [
     {
