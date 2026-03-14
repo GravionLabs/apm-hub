@@ -27,7 +27,7 @@ To enable it:
 4. Check **✅ Wikis**
 5. Click Save
 
-Once enabled, the next push to `main` will populate the wiki automatically.
+The workflow handles initialization automatically — on the first run after enabling the wiki it creates the initial `Home.md` page and pushes it, then continues with the full sync. No manual page creation is needed.
 
 ---
 
