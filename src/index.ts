@@ -5,6 +5,7 @@ import { generatePlugin } from './generators/plugin-generator';
 import { generatePluginList } from './generators/plugin-list-generator';
 import { updateReadme } from './generators/readme-generator';
 import { formatAllDocs } from './generators/format-docs-generator';
+import { generateMarketplace } from './generators/marketplace-generator';
 
 function main() {
   const args = process.argv.slice(2);
@@ -38,6 +39,9 @@ function main() {
 
     // 5. Format all markdown tables
     formatAllDocs();
+
+    // 6. Generate marketplace.json
+    generateMarketplace();
     return;
   }
 

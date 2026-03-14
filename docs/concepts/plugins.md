@@ -96,13 +96,39 @@ The generator automatically appends `.instructions.md` if the source does not al
 
 ## How to Use a Plugin
 
-1. Install the plugin via the Copilot CLI:
-   ```bash
-   gh copilot plugin install <path-or-url-to-plugin>
-   ```
-2. Use the bundled agents with `@my-agent` in Copilot Chat.
-3. Use the bundled skills as slash commands.
-4. The bundled instructions are automatically applied to files matching the `applyTo` glob in each instruction file.
+### Option A — Register copilot-hub as a Custom Marketplace *(recommended)*
+
+```bash
+# Register once
+gh copilot plugin marketplace add GravionLabs/copilot-hub
+
+# Browse available plugins
+gh copilot plugin marketplace browse copilot-hub
+
+# Install by name
+gh copilot plugin install csharp-development@copilot-hub
+```
+
+### Option B — Direct Install
+
+```bash
+# Install from a repository subdirectory
+gh copilot plugin install GravionLabs/copilot-hub:plugins/csharp-development
+```
+
+### After Installation
+
+1. Use the bundled **agents** via `@agent-name` in Copilot Chat.
+2. Use the bundled **skills** as slash commands (e.g. `/create-dotnet-solution`).
+3. The bundled **instructions** are automatically applied to files matching their `applyTo` glob.
+
+### Managing Plugins
+
+```bash
+gh copilot plugin list                          # show installed plugins
+gh copilot plugin update csharp-development     # update to latest
+gh copilot plugin uninstall csharp-development  # remove
+```
 
 ---
 
@@ -129,12 +155,13 @@ The generator automatically appends `.instructions.md` if the source does not al
 
 ## Plugin Marketplace
 
-Available plugins in this hub:
+copilot-hub acts as a custom marketplace for the Copilot CLI. A `marketplace.json` in the repo root indexes all available plugins.
 
-| Plugin                                                                     | Description                                                           |
-| :------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
-| [`csharp-development`](../../plugins/csharp-development/plugin.config.yml) | C#/.NET: NUnit tests, async patterns, code review, Helm               |
-| [`gfog-security`](../../plugins/security/plugin.config.yml)                | Security: STRIDE threat modeling, RWEST SSDLC, Disaster Recovery      |
-| [`gfog-devops`](../../plugins/gfog-devops/plugin.config.yml)               | DevOps: Azure DevOps pipelines, PR automation, code review publishing |
+Register and browse:
 
-See the [Plugin Marketplace section in README](../../README.md#-plugin-marketplace) for details.
+```bash
+gh copilot plugin marketplace add GravionLabs/copilot-hub
+gh copilot plugin marketplace browse copilot-hub
+```
+
+See the [Plugin Marketplace section in README](../../README.md#-plugin-marketplace) and [docs/plugin-list.md](../plugin-list.md) for the full list of available plugins.

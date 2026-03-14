@@ -27,9 +27,35 @@ A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI 
    - **Prompts** → `.github/prompts/`
    - **Agents** → `.github/agents/`
 
-### Using a Plugin
+### Installing Plugins via Copilot CLI
 
-Install a plugin via the Copilot CLI and reference its `plugin.config.yml`. See the [Plugin Marketplace](#-plugin-marketplace) section below for available plugins.
+**Option A — Register copilot-hub as a custom marketplace** *(recommended)*
+
+```bash
+# Register once — then browse and install by name
+gh copilot plugin marketplace add GravionLabs/copilot-hub
+gh copilot plugin marketplace browse copilot-hub
+
+# Install a specific plugin
+gh copilot plugin install csharp-development@copilot-hub
+gh copilot plugin install devops@copilot-hub
+gh copilot plugin install security@copilot-hub
+```
+
+**Option B — Direct install** *(no registration needed)*
+
+```bash
+gh copilot plugin install GravionLabs/copilot-hub:plugins/csharp-development
+gh copilot plugin install GravionLabs/copilot-hub:plugins/devops
+```
+
+**Managing plugins**
+
+```bash
+gh copilot plugin list                       # show installed plugins
+gh copilot plugin update csharp-development  # update to latest
+gh copilot plugin uninstall csharp-development
+```
 
 ## 🛠️ Template Library
 

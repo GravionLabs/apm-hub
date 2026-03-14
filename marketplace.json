@@ -1,0 +1,47 @@
+{
+  "name": "copilot-hub",
+  "description": "A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team's Copilot marketplace.",
+  "repository": "GravionLabs/copilot-hub",
+  "plugins": [
+    {
+      "name": "csharp-development",
+      "path": "plugins/csharp-development",
+      "description": "C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.",
+      "version": "1.0.0",
+      "keywords": [
+        "csharp",
+        "dotnet",
+        "nunit",
+        "aspnet",
+        "efcore"
+      ]
+    },
+    {
+      "name": "devops",
+      "path": "plugins/devops",
+      "description": "Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.",
+      "version": "1.0.0",
+      "keywords": [
+        "devops",
+        "azure-devops",
+        "code-review",
+        "pull-request",
+        "github-actions",
+        "ci-cd"
+      ]
+    },
+    {
+      "name": "security",
+      "path": "plugins/security",
+      "description": "Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.",
+      "version": "1.0.0",
+      "keywords": [
+        "security",
+        "threat-model",
+        "stride",
+        "disaster-recovery",
+        "resilience"
+      ]
+    }
+  ]
+}
