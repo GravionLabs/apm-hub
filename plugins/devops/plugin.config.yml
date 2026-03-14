@@ -41,6 +41,8 @@ skills:
   - name: create-node-workflow
   # Add GitVersion.yml configuration for automatic semantic versioning
   - name: add-gitversion
+  # Create a GitHub Actions workflow that syncs docs/**/*.md and README.md to the GitHub Wiki
+  - name: create-wiki-workflow
 
 instructions:
   - source: shell

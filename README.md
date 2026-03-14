@@ -65,7 +65,7 @@ This repository contains a wide range of production-ready templates:
 | Category         | Count | Location                  | Purpose                                  |
 | :--------------- | :---: | :------------------------ | :--------------------------------------- |
 | **Agents**       |  26   | `templates/agents/`       | Specialized expert roles (@-mentions)    |
-| **Prompts**      |  35   | `templates/prompts/`      | Task-specific workflows (slash commands) |
+| **Prompts**      |  36   | `templates/prompts/`      | Task-specific workflows (slash commands) |
 | **Instructions** |  20   | `templates/instructions/` | Persistent project rules and standards   |
 <!-- AUTO:end template-stats -->
 

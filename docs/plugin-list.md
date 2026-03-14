@@ -9,7 +9,7 @@ This page lists all available Copilot CLI plugins in this repository. This file 
 | Plugin                                    | Description                                                                                                                                                                                                                                                         | Skills | Agents | Instructions |
 | :---------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----: | :----: | :----------: |
 | [csharp-development](#csharp-development) | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization. |   13   |   9    |      3       |
-| [devops](#devops)                         | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.               |   7    |   3    |      4       |
+| [devops](#devops)                         | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.               |   8    |   3    |      4       |
 | [security](#security)                     | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                    |   0    |   2    |      1       |
 
 ## csharp-development
@@ -59,7 +59,7 @@ Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or A
 
 **Keywords:** `devops`, `azure-devops`, `code-review`, `pull-request`, `github-actions`, `ci-cd`
 
-**Skills (7):**
+**Skills (8):**
 - [`code-review-publisher`](../plugins/devops/skills/code-review-publisher)
 - [`az-devops-setup`](../plugins/devops/skills/az-devops-setup)
 - [`create-pr`](../plugins/devops/skills/create-pr)
@@ -67,6 +67,7 @@ Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or A
 - [`create-python-workflow`](../plugins/devops/skills/create-python-workflow)
 - [`create-node-workflow`](../plugins/devops/skills/create-node-workflow)
 - [`add-gitversion`](../plugins/devops/skills/add-gitversion)
+- [`create-wiki-workflow`](../plugins/devops/skills/create-wiki-workflow)
 
 **Agents (3):**
 - [`code-review-publisher.agent.md`](../plugins/devops/agents/code-review-publisher.agent.md)
