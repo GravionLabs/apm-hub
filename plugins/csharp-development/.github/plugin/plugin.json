@@ -1,6 +1,6 @@
 {
   "name": "csharp-development",
-  "description": "C#/.NET development plugin. NUnit-only (NSubstitute, FluentAssertions/Shouldly), async/await, code review with best practices.",
+  "description": "C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.",
   "version": "1.0.0",
   "author": {
     "name": "Gravion"
@@ -9,20 +9,31 @@
   "keywords": [
     "csharp",
     "dotnet",
-    "nunit"
+    "nunit",
+    "aspnet",
+    "efcore"
   ],
   "agents": [
     "./agents"
   ],
   "skills": [
-    "./skills/csharp-nunit",
+    "./skills/aspnet-minimal-api-openapi",
+    "./skills/create-dotnet-solution",
     "./skills/csharp-async",
+    "./skills/csharp-docs",
+    "./skills/csharp-mcp-server-generator",
+    "./skills/csharp-nunit",
     "./skills/write-tests",
     "./skills/csharp-code-review",
-    "./skills/dotnet-best-practices"
+    "./skills/dotnet-best-practices",
+    "./skills/dotnet-design-pattern-review",
+    "./skills/dotnet-upgrade",
+    "./skills/ef-core",
+    "./skills/multi-stage-dockerfile"
   ],
   "instructions": [
     "./instructions/csharp.instructions.md",
-    "./instructions/csharp-nunit.instructions.md"
+    "./instructions/csharp-nunit.instructions.md",
+    "./instructions/playwright-dotnet.instructions.md"
   ]
 }

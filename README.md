@@ -1,6 +1,6 @@
 ﻿# copilot-hub
 
-A curated hub for sharing GitHub Copilot instructions, agents, prompts, collections, and CLI plugins — your team's Copilot marketplace.
+A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team's Copilot marketplace.
 
 ---
 
@@ -35,11 +35,13 @@ Install a plugin via the Copilot CLI and reference its `plugin.config.yml`. See 
 
 This repository contains a wide range of production-ready templates:
 
-| Category | Count | Location | Purpose |
-| :--- | :---: | :--- | :--- |
-| **Agents** | 26 | `templates/agents/` | Specialized expert roles (@-mentions) |
-| **Prompts** | 40 | `templates/prompts/` | Task-specific workflows (slash commands) |
-| **Instructions** | 40 | `templates/instructions/` | Persistent project rules and standards |
+<!-- AUTO:start template-stats -->
+| Category         | Count | Location                  | Purpose                                  |
+| :--------------- | :---: | :------------------------ | :--------------------------------------- |
+| **Agents**       |  26   | `templates/agents/`       | Specialized expert roles (@-mentions)    |
+| **Prompts**      |  35   | `templates/prompts/`      | Task-specific workflows (slash commands) |
+| **Instructions** |  20   | `templates/instructions/` | Persistent project rules and standards   |
+<!-- AUTO:end template-stats -->
 
 📄 **[Browse All Templates](docs/template-list.md)**
 
@@ -47,15 +49,17 @@ This repository contains a wide range of production-ready templates:
 
 Copilot CLI **plugins** are installable bundles of agents, skills (prompts), and instructions scoped to a domain. Each plugin is defined by a `plugin.config.yml` and ships a generated `plugin.json` manifest consumed by the Copilot CLI.
 
-📄 **[Learn about Plugins](docs/concepts/plugins.md)**
+📄 **[Learn about Plugins](docs/concepts/plugins.md)** · 📄 **[Browse All Plugins](docs/plugin-list.md)**
 
-| Plugin | Description |
-| :--- | :--- |
-| `gfog-security` | Security & resilience: STRIDE threat modeling, RWEST SSDLC, Disaster Recovery |
-| `gfog-csharp-development` | C# .NET development: tests, code review, Helm, async patterns |
-| `gfog-devops` | DevOps: Azure DevOps pipelines, PR automation, code review publishing |
+<!-- AUTO:start plugin-table -->
+| Plugin                                             | Description                                                                                                                                                                                                                                                         |
+| :------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`csharp-development`](plugins/csharp-development) | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization. |
+| [`devops`](plugins/devops)                         | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.               |
+| [`security`](plugins/security)                     | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                    |
+<!-- AUTO:end plugin-table -->
 
-Plugins live in the `plugins/` folder. Each plugin contains a `plugin.config.yml` describing its agents, skills, and instructions.
+Plugins live in the `plugins/` folder. The template counts and plugin table above are **auto-generated** on every change.
 
 ## 🤝 Contributing
 

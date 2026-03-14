@@ -2,6 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { generateTemplateList } from './generators/template-list-generator';
 import { generatePlugin } from './generators/plugin-generator';
+import { generatePluginList } from './generators/plugin-list-generator';
+import { updateReadme } from './generators/readme-generator';
+import { formatAllDocs } from './generators/format-docs-generator';
 
 function main() {
   const args = process.argv.slice(2);
@@ -26,6 +29,15 @@ function main() {
 
     // 2. Regenerate template list
     generateTemplateList();
+
+    // 3. Regenerate plugin list
+    generatePluginList();
+
+    // 4. Update README.md auto-generated sections
+    updateReadme();
+
+    // 5. Format all markdown tables
+    formatAllDocs();
     return;
   }
 

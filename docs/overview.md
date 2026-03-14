@@ -117,7 +117,7 @@ This section is especially useful for **onboarding**, **training**, and **docume
 ## Core Concepts at a Glance
 
 | Concept      | Purpose                         | Applied When   |
-| ------------ | ------------------------------- | -------------- |
+| :----------- | :------------------------------ | :------------- |
 | Instructions | Persistent project rules        | Automatically  |
 | Prompts      | Task‑specific workflows         | Manually (`/`) |
 | Agents       | Specialized roles & permissions | Manually (`@`) |

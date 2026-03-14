@@ -45,11 +45,11 @@ Agents define roles and personas (`@`).
 
 ## Summary of Differences
 
-| Feature | GitHub Copilot | JetBrains Junie |
-| :--- | :--- | :--- |
+| Feature        | GitHub Copilot         | JetBrains Junie                |
+| :------------- | :--------------------- | :----------------------------- |
 | **Activation** | Automatic (Background) | Context-based (Explicit/Index) |
-| **Validity** | Permanently active | Task-related |
-| **Visibility** | Acts implicitly | Uses files as reference source |
+| **Validity**   | Permanently active     | Task-related                   |
+| **Visibility** | Acts implicitly        | Uses files as reference source |
 
 ### Best Practice for Junie Users
 To get the most out of these templates with Junie, it is recommended to briefly set the context at the beginning of a complex task:

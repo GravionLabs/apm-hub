@@ -85,9 +85,9 @@ Use a prompt when:
 
 ## Prompt vs. Instructions vs. Agents
 
-| Concept      | Purpose                     | Scope         | Trigger    | Persistence |
-| ------------ | --------------------------- | ------------- | ---------- | ----------- |
-| **Instructions** | Define global rules         | Persistent    | Automatic  | High        |
+| Concept          | Purpose                     | Scope         | Trigger      | Persistence |
+| :--------------- | :-------------------------- | :------------ | :----------- | :---------- |
+| **Instructions** | Define global rules         | Persistent    | Automatic    | High        |
 | **Agents**       | Define roles & capabilities | Session-level | Manual (`@`) | Medium      |
 | **Prompts**      | Define a task               | Single action | Manual (`/`) | Low         |
 

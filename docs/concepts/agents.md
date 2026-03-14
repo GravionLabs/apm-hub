@@ -94,9 +94,9 @@ Use an agent when you want to define a **long-term role or persona** rather than
 
 ## 5) Agent vs. Prompt vs. Instructions
 
-| Concept      | Purpose                     | Scope         | Trigger    | Persistence |
-| ------------ | --------------------------- | ------------- | ---------- | ----------- |
-| **Instructions** | Define global rules         | Repository    | Automatic  | High        |
+| Concept          | Purpose                     | Scope         | Trigger      | Persistence |
+| :--------------- | :-------------------------- | :------------ | :----------- | :---------- |
+| **Instructions** | Define global rules         | Repository    | Automatic    | High        |
 | **Agents**       | Define roles & capabilities | Session-level | Manual (`@`) | Medium      |
 | **Prompts**      | Define a task               | Single action | Manual (`/`) | Low         |
 

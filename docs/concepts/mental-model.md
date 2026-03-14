@@ -57,8 +57,8 @@ When you interact with Copilot, all three layers can influence the result:
 
 ## Summary Table
 
-| Layer | Focus | Persistence | Trigger |
-| :--- | :--- | :--- | :--- |
-| **Instructions** | Rules | Persistent | Automatic |
-| **Agents** | Roles | Session | Manual (`@`) |
-| **Prompts** | Tasks | Single Action | Manual (`/`) |
+| Layer            | Focus | Persistence   | Trigger      |
+| :--------------- | :---- | :------------ | :----------- |
+| **Instructions** | Rules | Persistent    | Automatic    |
+| **Agents**       | Roles | Session       | Manual (`@`) |
+| **Prompts**      | Tasks | Single Action | Manual (`/`) |

@@ -330,12 +330,12 @@ steps:
 
 ### Scaling
 
-| Factor | Impact | Mitigation |
-|--------|--------|------------|
-| Number of Projects | Linear | Each project syncs independently |
-| Number of Files | Linear | Only configured files |
-| File Size | Minimal | Instructions are small (< 50KB) |
-| Sync Frequency | Minimal | 1x/week = 52 syncs/year |
+| Factor             | Impact  | Mitigation                       |
+| :----------------- | :------ | :------------------------------- |
+| Number of Projects | Linear  | Each project syncs independently |
+| Number of Files    | Linear  | Only configured files            |
+| File Size          | Minimal | Instructions are small (< 50KB)  |
+| Sync Frequency     | Minimal | 1x/week = 52 syncs/year          |
 
 ### Cost Estimation
 

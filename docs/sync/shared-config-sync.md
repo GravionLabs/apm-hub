@@ -1063,6 +1063,6 @@ For questions or issues:
 
 ## Changelog
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2026-01-25 | Initial documentation |
+| Version | Date       | Changes               |
+| :------ | :--------- | :-------------------- |
+| 1.0     | 2026-01-25 | Initial documentation |

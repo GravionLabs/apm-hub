@@ -106,14 +106,14 @@ Adapt `.github/sync-config.json` to your needs. You can choose between `github` 
 
 ## Common Files
 
-| File | Description | Recommended for |
-|-------|--------------|---------------|
-| `python.instructions.md` | Python Standards | All Python Projects |
-| `python-pytest.instructions.md` | Pytest Testing | Python with Tests |
-| `python-mcp-server.instructions.md` | MCP Server Guidelines | MCP-based Projects |
-| `security.instructions.md` | Security Best Practices | **All Projects** |
-| `docker.instructions.md` | Docker Guidelines | Containerized Apps |
-| `typescript.instructions.md` | TypeScript Standards | TS/JS Projects |
+| File                                | Description             | Recommended for     |
+| :---------------------------------- | :---------------------- | :------------------ |
+| `python.instructions.md`            | Python Standards        | All Python Projects |
+| `python-pytest.instructions.md`     | Pytest Testing          | Python with Tests   |
+| `python-mcp-server.instructions.md` | MCP Server Guidelines   | MCP-based Projects  |
+| `security.instructions.md`          | Security Best Practices | **All Projects**    |
+| `docker.instructions.md`            | Docker Guidelines       | Containerized Apps  |
+| `typescript.instructions.md`        | TypeScript Standards    | TS/JS Projects      |
 
 ## Testing
 

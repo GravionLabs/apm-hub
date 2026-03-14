@@ -12,11 +12,20 @@ export interface PluginSkillConfig {
   /** The skill name used for the directory and SKILL.md name field */
   name: string;
   /**
-   * Source path relative to templates/ directory.
-   * Can be a prompt (e.g. "prompts/csharp-nunit.prompt.md")
-   * or an agent file (e.g. "agents/gfog-helm.agent.md")
+   * Source path relative to templates/ directory. Optional — defaults to `prompts/<name>.prompt.md`.
+   *
+   * Resolution rules (applied in order):
+   * 1. No source → `prompts/<name>.prompt.md`
+   * 2. Contains `/` → used as-is; `.prompt.md` is appended when no file extension is present
+   * 3. No `/` → `prompts/<source>`; `.prompt.md` is appended when no file extension is present
+   *
+   * Examples:
+   *   name: csharp-nunit              → prompts/csharp-nunit.prompt.md
+   *   name: my-skill, source: csharp-nunit          → prompts/csharp-nunit.prompt.md
+   *   name: my-skill, source: csharp-nunit.prompt.md → prompts/csharp-nunit.prompt.md
+   *   name: my-skill, source: agents/gfog-helm.agent.md → agents/gfog-helm.agent.md (unchanged)
    */
-  source: string;
+  source?: string;
   /**
    * Optional additional source paths whose bodies are appended to the primary source body.
    * Useful for combining C#-specific prompt content with a generic review framework.
@@ -27,6 +36,13 @@ export interface PluginSkillConfig {
 export interface PluginInstructionConfig {
   /** Instruction name — resolves to templates/instructions/<source>.instructions.md */
   source: string;
+}
+
+export interface PluginFileConfig {
+  /** Path relative to the repository root (e.g. "editor-configs/.editorconfig-csharp") */
+  source: string;
+  /** Destination path relative to the plugin directory. Defaults to the basename of source. */
+  destination?: string;
 }
 
 export interface PluginConfig {
@@ -40,6 +56,7 @@ export interface PluginConfig {
   agents: PluginAgentConfig[];
   skills: PluginSkillConfig[];
   instructions?: PluginInstructionConfig[];
+  files?: PluginFileConfig[];
 }
 
 /**
@@ -55,6 +72,44 @@ function extractBody(content: string): string {
     }
   }
   return normalized;
+}
+
+/**
+ * Resolves a template path relative to the templates/ directory.
+ * Infers the file extension from the directory prefix when the path has no extension.
+ *
+ * Resolution rules:
+ * - Has `/` and has `.` → used as-is (explicit path)
+ * - Has `/` and no `.` → extension inferred from directory prefix:
+ *     agents/       → .agent.md
+ *     prompts/      → .prompt.md
+ *     instructions/ → .instructions.md
+ *     other         → .prompt.md (fallback)
+ * - No `/` → resolved under prompts/ with .prompt.md
+ *     bare name → prompts/<name>.prompt.md
+ *     name with extension → prompts/<name>
+ */
+export function resolveTemplatePath(raw: string): string {
+  if (raw.includes('/')) {
+    if (raw.includes('.')) return raw;
+
+    if (raw.startsWith('agents/')) return `${raw}.agent.md`;
+    if (raw.startsWith('instructions/')) return `${raw}.instructions.md`;
+    // prompts/ or any other directory — default to .prompt.md
+    return `${raw}.prompt.md`;
+  }
+
+  // Bare name (no directory) → default to prompts/
+  const withExtension = raw.includes('.') ? raw : `${raw}.prompt.md`;
+  return `prompts/${withExtension}`;
+}
+
+/**
+ * Resolves the source path of a skill relative to the templates/ directory.
+ * See PluginSkillConfig.source for full resolution rules.
+ */
+export function resolveSkillSource(name: string, source?: string): string {
+  return resolveTemplatePath(source ?? name);
 }
 
 /**
@@ -136,7 +191,8 @@ export function generatePlugin(configPath: string, templatesDir: string): void {
 
   // Generate skills
   for (const skill of config.skills || []) {
-    const sourcePath = path.join(templatesDir, skill.source);
+    const resolvedSource = resolveSkillSource(skill.name, skill.source);
+    const sourcePath = path.join(templatesDir, resolvedSource);
 
     if (!fs.existsSync(sourcePath)) {
       console.warn(`  ⚠ Skill source not found, skipping: ${sourcePath}`);
@@ -148,7 +204,8 @@ export function generatePlugin(configPath: string, templatesDir: string): void {
     // Load any extended source bodies
     const extendContents: string[] = [];
     for (const extSource of skill.extend || []) {
-      const extPath = path.join(templatesDir, extSource);
+      const resolvedExt = resolveTemplatePath(extSource);
+      const extPath = path.join(templatesDir, resolvedExt);
       if (fs.existsSync(extPath)) {
         extendContents.push(fs.readFileSync(extPath, 'utf8'));
       } else {
@@ -171,10 +228,8 @@ export function generatePlugin(configPath: string, templatesDir: string): void {
   fs.mkdirSync(agentsDir, { recursive: true });
 
   for (const agent of config.agents || []) {
-    const agentFile = agent.source.endsWith('.agent.md')
-      ? agent.source
-      : `${agent.source}.agent.md`;
-    const sourcePath = path.join(templatesDir, 'agents', agentFile);
+    const resolvedAgent = resolveTemplatePath(`agents/${agent.source}`);
+    const sourcePath = path.join(templatesDir, resolvedAgent);
 
     if (!fs.existsSync(sourcePath)) {
       console.warn(`  ⚠ Agent source not found, skipping: ${sourcePath}`);
@@ -182,6 +237,7 @@ export function generatePlugin(configPath: string, templatesDir: string): void {
     }
 
     const agentContent = fs.readFileSync(sourcePath, 'utf8');
+    const agentFile = path.basename(resolvedAgent);
     const destPath = path.join(agentsDir, agentFile);
     fs.writeFileSync(destPath, agentContent, 'utf8');
     console.log(`  ✓ Agent: agents/${agentFile}`);
@@ -194,10 +250,9 @@ export function generatePlugin(configPath: string, templatesDir: string): void {
     fs.mkdirSync(instructionsDir, { recursive: true });
 
     for (const instruction of config.instructions) {
-      const instructionFile = instruction.source.endsWith('.instructions.md')
-        ? instruction.source
-        : `${instruction.source}.instructions.md`;
-      const sourcePath = path.join(templatesDir, 'instructions', instructionFile);
+      const resolvedInstruction = resolveTemplatePath(`instructions/${instruction.source}`);
+      const instructionFile = path.basename(resolvedInstruction);
+      const sourcePath = path.join(templatesDir, resolvedInstruction);
 
       if (!fs.existsSync(sourcePath)) {
         console.warn(`  ⚠ Instruction source not found, skipping: ${sourcePath}`);
@@ -209,6 +264,25 @@ export function generatePlugin(configPath: string, templatesDir: string): void {
       fs.writeFileSync(destPath, instructionContent, 'utf8');
       console.log(`  ✓ Instruction: instructions/${instructionFile}`);
       generatedInstructionPaths.push(`./instructions/${instructionFile}`);
+    }
+  }
+
+  // Copy arbitrary files
+  if (config.files && config.files.length > 0) {
+    const repoRoot = path.dirname(templatesDir);
+    for (const file of config.files) {
+      const sourcePath = path.join(repoRoot, file.source);
+
+      if (!fs.existsSync(sourcePath)) {
+        console.warn(`  ⚠ File source not found, skipping: ${sourcePath}`);
+        continue;
+      }
+
+      const destRelative = file.destination ?? path.basename(file.source);
+      const destPath = path.join(pluginDir, destRelative);
+      fs.mkdirSync(path.dirname(destPath), { recursive: true });
+      fs.copyFileSync(sourcePath, destPath);
+      console.log(`  ✓ File: ${destRelative}`);
     }
   }
 

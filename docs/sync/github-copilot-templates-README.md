@@ -40,38 +40,38 @@ copilot-hub/
 
 ### Backend
 
-| File | Description | Language/Framework |
-|-------|--------------|-------------------|
-| `python.instructions.md` | Python Coding Standards | Python |
-| `python-pytest.instructions.md` | Testing with pytest | Python + pytest |
-| `python-mcp-server.instructions.md` | MCP Server Guidelines | Python MCP |
-| `node.instructions.md` | Node.js Best Practices | Node.js |
-| `go.instructions.md` | Go Guidelines | Go |
+| File                                | Description             | Language/Framework |
+| :---------------------------------- | :---------------------- | :----------------- |
+| `python.instructions.md`            | Python Coding Standards | Python             |
+| `python-pytest.instructions.md`     | Testing with pytest     | Python + pytest    |
+| `python-mcp-server.instructions.md` | MCP Server Guidelines   | Python MCP         |
+| `node.instructions.md`              | Node.js Best Practices  | Node.js            |
+| `go.instructions.md`                | Go Guidelines           | Go                 |
 
 ### Frontend
 
-| File | Description | Language/Framework |
-|-------|--------------|-------------------|
-| `typescript.instructions.md` | TypeScript Standards | TypeScript |
-| `react.instructions.md` | React Best Practices | React |
-| `vue.instructions.md` | Vue.js Guidelines | Vue.js |
-| `nextjs.instructions.md` | Next.js Patterns | Next.js |
+| File                         | Description          | Language/Framework |
+| :--------------------------- | :------------------- | :----------------- |
+| `typescript.instructions.md` | TypeScript Standards | TypeScript         |
+| `react.instructions.md`      | React Best Practices | React              |
+| `vue.instructions.md`        | Vue.js Guidelines    | Vue.js             |
+| `nextjs.instructions.md`     | Next.js Patterns     | Next.js            |
 
 ### DevOps & Infrastructure
 
-| File | Description | Tool/Platform |
-|-------|--------------|---------------|
-| `docker.instructions.md` | Docker Best Practices | Docker |
-| `kubernetes.instructions.md` | K8s Guidelines | Kubernetes |
-| `terraform.instructions.md` | IaC Standards | Terraform |
+| File                         | Description           | Tool/Platform |
+| :--------------------------- | :-------------------- | :------------ |
+| `docker.instructions.md`     | Docker Best Practices | Docker        |
+| `kubernetes.instructions.md` | K8s Guidelines        | Kubernetes    |
+| `terraform.instructions.md`  | IaC Standards         | Terraform     |
 
 ### General
 
-| File | Description | Application |
-|-------|--------------|-----------|
-| `security.instructions.md` | Security Best Practices | **All Projects** |
-| `git.instructions.md` | Git Commit Standards | All |
-| `documentation.instructions.md` | Documentation | All |
+| File                            | Description             | Application      |
+| :------------------------------ | :---------------------- | :--------------- |
+| `security.instructions.md`      | Security Best Practices | **All Projects** |
+| `git.instructions.md`           | Git Commit Standards    | All              |
+| `documentation.instructions.md` | Documentation           | All              |
 
 ## Usage in Projects
 
@@ -254,11 +254,11 @@ git push --tags
 
 List of projects that synchronize this repo:
 
-| Project | Sync Status | Branch | Files |
-|---------|-------------|--------|---------|
-| trading-engine | ✅ Active | main | python, pytest, security |
-| api-gateway | ✅ Active | main | typescript, docker, security |
-| ml-service | ✅ Active | main | python, docker, security |
+| Project        | Sync Status | Branch | Files                        |
+| :------------- | :---------- | :----- | :--------------------------- |
+| trading-engine | ✅ Active    | main   | python, pytest, security     |
+| api-gateway    | ✅ Active    | main   | typescript, docker, security |
+| ml-service     | ✅ Active    | main   | python, docker, security     |
 
 (Automatically generated via [sync-tracker.yml](.github/workflows/sync-tracker.yml))
 

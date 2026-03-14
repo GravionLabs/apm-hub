@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'templates/**'
+      - 'plugins/**/plugin.config.yml'
       - 'src/**'
       - 'package.json'
       - 'tsconfig.json'
@@ -51,5 +52,5 @@ jobs:
       - name: Commit and push
         if: steps.git-check.outputs.changes == 'true'
         run: |
-          git commit -m "chore: auto-generate collections and template list [skip ci]"
+          git commit -m "chore: regenerate plugin artifacts and documentation [skip ci]"
           git push

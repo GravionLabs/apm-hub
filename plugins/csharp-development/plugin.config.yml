@@ -1,7 +1,9 @@
 name: csharp-development
 description: >-
-  C#/.NET development plugin.
-  NUnit-only (NSubstitute, FluentAssertions/Shouldly), async/await, code review with best practices.
+  C#/.NET full-stack development plugin.
+  Covers project setup, NUnit testing, async/await, code review, XML documentation,
+  design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades,
+  modernization, Playwright .NET testing, and containerization.
 version: "1.0.0"
 author:
   name: Gravion
@@ -10,36 +12,51 @@ keywords:
   - csharp
   - dotnet
   - nunit
+  - aspnet
+  - efcore
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: nunit-engineer
-  - source: rwest-ssdlc-reviewer
+  - source: api-architect
+  - source: csharp-expert
+  - source: documentation-writer
+  - source: dotnet-upgrade
   - source: expert-dotnet-software-engineer
-  - source: gfog-helm
-  - source: code-review-cli
+  - source: migration-agent
+  - source: modernization
+  - source: nunit-engineer
+  - source: openapi-to-application
 
 # Skills generated from local prompt/agent templates (local rules take priority over awesome-copilot)
 skills:
-  # NUnit skill derived from local template – enforces NSubstitute, FluentAssertions/Shouldly,
-  # [MethodName]_Should[ExpectedResult] naming, UnitTest/IntegrationTest/ManualTest categories, no AAA comments
-  - name: csharp-nunit
-    source: prompts/csharp-nunit.prompt.md
+  - name: aspnet-minimal-api-openapi
+  # Scaffold a new .NET solution with src/test layout and all build config files
+  - name: create-dotnet-solution
   - name: csharp-async
-    source: prompts/csharp-async.prompt.md
+  # Ensure C# types are documented with XML comments
+  - name: csharp-docs
+  - name: csharp-mcp-server-generator
+  - name: csharp-nunit
   - name: write-tests
-    source: prompts/write-tests.prompt.md
   # C# code review extended with the generic priority system (🔴/🟡/🟢) from code-review-cli
   - name: csharp-code-review
-    source: prompts/csharp-code-review.prompt.md
     extend:
       - agents/code-review-cli.agent.md
   - name: dotnet-best-practices
-    source: prompts/dotnet-best-practices.prompt.md
-  # Helm skill derived from agent (no dedicated prompt exists)
-  - name: gfog-helm
-    source: agents/gfog-helm.agent.md
+  # Review C#/.NET code for design pattern implementation
+  - name: dotnet-design-pattern-review
+  # .NET framework upgrade analysis and execution
+  - name: dotnet-upgrade
+  # Entity Framework Core best practices
+  - name: ef-core
+  # Optimized multi-stage Dockerfiles for .NET containers
+  - name: multi-stage-dockerfile
 
 instructions:
   - source: csharp
   - source: csharp-nunit
+  - source: playwright-dotnet
+
+files:
+  - source: editor-configs/.editorconfig-csharp
+    destination: .editorconfig

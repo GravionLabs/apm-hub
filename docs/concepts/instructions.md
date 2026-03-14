@@ -68,9 +68,9 @@ Use instructions when:
 
 ## Instructions vs. Prompts vs. Agents
 
-| Concept      | Purpose                     | Scope         | Trigger    |
-| ------------ | --------------------------- | ------------- | ---------- |
-| **Instructions** | Define global rules         | Persistent    | Automatic  |
+| Concept          | Purpose                     | Scope         | Trigger      |
+| :--------------- | :-------------------------- | :------------ | :----------- |
+| **Instructions** | Define global rules         | Persistent    | Automatic    |
 | **Agents**       | Define roles & capabilities | Session-level | Manual (`@`) |
 | **Prompts**      | Define a task               | Single action | Manual (`/`) |
 

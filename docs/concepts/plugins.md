@@ -66,22 +66,22 @@ instructions:
 
 ### Field Reference
 
-| Field | Type | Required | Description |
-| :--- | :--- | :---: | :--- |
-| `name` | string | ✅ | Unique plugin identifier (kebab-case) |
-| `description` | string | ✅ | One-sentence description of what the plugin provides |
-| `version` | string | ✅ | Semantic version (e.g. `"1.0.0"`) |
-| `author` | string or object | — | Author name or `{ name, email }` object |
-| `license` | string | — | SPDX license identifier (e.g. `MIT`) |
-| `keywords` | string[] | — | Searchable tags |
-| `agents` | PluginAgentConfig[] | — | List of agents to include |
-| `agents[].source` | string | ✅ | Agent filename without extension — resolves to `templates/agents/<source>.agent.md` |
-| `skills` | PluginSkillConfig[] | — | List of skills to generate |
-| `skills[].name` | string | ✅ | Skill name (used as the directory name under `skills/`) |
-| `skills[].source` | string | ✅ | Source template path relative to `templates/` |
-| `skills[].extend` | string[] | — | Additional source paths whose bodies are appended to the skill |
-| `instructions` | PluginInstructionConfig[] | — | List of instruction files to bundle |
-| `instructions[].source` | string | ✅ | Instruction name — resolves to `templates/instructions/<source>.instructions.md` |
+| Field                   | Type                      | Required | Description                                                                         |
+| :---------------------- | :------------------------ | :------: | :---------------------------------------------------------------------------------- |
+| `name`                  | string                    |    ✅     | Unique plugin identifier (kebab-case)                                               |
+| `description`           | string                    |    ✅     | One-sentence description of what the plugin provides                                |
+| `version`               | string                    |    ✅     | Semantic version (e.g. `"1.0.0"`)                                                   |
+| `author`                | string or object          |    —     | Author name or `{ name, email }` object                                             |
+| `license`               | string                    |    —     | SPDX license identifier (e.g. `MIT`)                                                |
+| `keywords`              | string[]                  |    —     | Searchable tags                                                                     |
+| `agents`                | PluginAgentConfig[]       |    —     | List of agents to include                                                           |
+| `agents[].source`       | string                    |    ✅     | Agent filename without extension — resolves to `templates/agents/<source>.agent.md` |
+| `skills`                | PluginSkillConfig[]       |    —     | List of skills to generate                                                          |
+| `skills[].name`         | string                    |    ✅     | Skill name (used as the directory name under `skills/`)                             |
+| `skills[].source`       | string                    |    ✅     | Source template path relative to `templates/`                                       |
+| `skills[].extend`       | string[]                  |    —     | Additional source paths whose bodies are appended to the skill                      |
+| `instructions`          | PluginInstructionConfig[] |    —     | List of instruction files to bundle                                                 |
+| `instructions[].source` | string                    |    ✅     | Instruction name — resolves to `templates/instructions/<source>.instructions.md`    |
 
 ### Resolving `source` paths
 
@@ -131,10 +131,10 @@ The generator automatically appends `.instructions.md` if the source does not al
 
 Available plugins in this hub:
 
-| Plugin | Description |
-| :--- | :--- |
-| [`csharp-development`](../../plugins/csharp-development/plugin.config.yml) | C#/.NET: NUnit tests, async patterns, code review, Helm |
-| [`gfog-security`](../../plugins/gfog-security/plugin.config.yml) | Security: STRIDE threat modeling, RWEST SSDLC, Disaster Recovery |
-| [`gfog-devops`](../../plugins/gfog-devops/plugin.config.yml) | DevOps: Azure DevOps pipelines, PR automation, code review publishing |
+| Plugin                                                                     | Description                                                           |
+| :------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| [`csharp-development`](../../plugins/csharp-development/plugin.config.yml) | C#/.NET: NUnit tests, async patterns, code review, Helm               |
+| [`gfog-security`](../../plugins/security/plugin.config.yml)                | Security: STRIDE threat modeling, RWEST SSDLC, Disaster Recovery      |
+| [`gfog-devops`](../../plugins/gfog-devops/plugin.config.yml)               | DevOps: Azure DevOps pipelines, PR automation, code review publishing |
 
 See the [Plugin Marketplace section in README](../../README.md#-plugin-marketplace) for details.

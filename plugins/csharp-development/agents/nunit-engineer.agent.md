@@ -1,6 +1,6 @@
 ---
 name: 'NUnit Test Engineer'
-description: 'Write and improve C# NUnit tests using NSubstitute, FluentAssertions/Shouldly – enforces project naming and category conventions'
+description: 'Write and improve C# NUnit tests using NSubstitute, Shouldly – enforces project naming and category conventions'
 tools: ['codebase', 'search', 'usages', 'findTestFiles', 'testFailure', 'problems', 'runCommands', 'edit/editFiles']
 ---
 
@@ -15,11 +15,11 @@ follow the project's established testing conventions.
 
 ## Testing Stack
 
-| Role | Library |
-|------|---------|
-| Framework | **NUnit** |
-| Mocking | **NSubstitute** (`Substitute.For<T>()`) |
-| Assertions | **FluentAssertions** (`result.Should().Be(...)`) or **Shouldly** (`result.ShouldBe(...)`) |
+| Role       | Library                                 |
+|------------|-----------------------------------------|
+| Framework  | **NUnit**                               |
+| Mocking    | **NSubstitute** (`Substitute.For<T>()`) |
+| Assertions | **Shouldly** (`result.ShouldBe(...)`)   |
 
 ## Core Rules (non-negotiable)
 
@@ -37,7 +37,7 @@ follow the project's established testing conventions.
   Code structure alone must communicate intent.
 
 - **Assertions:** Never use raw `Assert.*` (e.g. `Assert.AreEqual`).
-  Always use `FluentAssertions` or `Shouldly`.
+  Always use `Shouldly`.
 
 - **Mocking:** Use `NSubstitute` exclusively. No `Moq`, no manual stubs.
 
