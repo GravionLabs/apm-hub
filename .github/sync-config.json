@@ -7,11 +7,8 @@
     "sourceDir": "templates",
     "targetDir": ".github"
   },
-  "instructions": [
-    "markdown"
-  ],
-  "prompts": [
-    "code-review"
-  ],
+  "collections": ["csharp-dotnet-development"],
+  "instructions": ["markdown"],
+  "prompts": ["code-review"],
   "agents": []
 }

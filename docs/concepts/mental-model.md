@@ -1,5 +1,8 @@
-﻿# Shared Mental Model
+﻿---
+description: 'Understanding how Instructions, Agents, and Prompts work together in GitHub Copilot'
+---
 
+## Shared Mental Model
 
 To get the most out of GitHub Copilot, it helps to understand how the different configuration options work together.
 
@@ -42,9 +45,9 @@ Prompts are specific, repeatable tasks. They are the immediate actions you want 
 
 When you interact with Copilot, all three layers can influence the result:
 
-1.  **Instructions** provide the global constraints.
-2.  **The Agent** provides the perspective and tools.
-3.  **The Prompt** provides the specific objective.
+1. **Instructions** provide the global constraints.
+2. **The Agent** provides the perspective and tools.
+3. **The Prompt** provides the specific objective.
 
 **Example Scenario:**
 > You use the `/review` prompt while the `@security-auditor` agent is active.
