@@ -4,7 +4,7 @@ import { parse as parseYaml } from 'yaml';
 
 interface PluginConfigEntry {
   name: string;
-  path: string;
+  source: string;
   description: string;
   version: string;
   keywords: string[];
@@ -12,8 +12,8 @@ interface PluginConfigEntry {
 
 interface MarketplaceJson {
   name: string;
+  owner: string;
   description: string;
-  repository: string;
   plugins: PluginConfigEntry[];
 }
 
@@ -24,7 +24,7 @@ interface RawPluginConfig {
   keywords?: string[];
 }
 
-export function generateMarketplace(pluginsDir = 'plugins', outputPath = 'marketplace.json'): void {
+export function generateMarketplace(pluginsDir = 'plugins', outputPath = '.github/plugin/marketplace.json'): void {
   if (!fs.existsSync(pluginsDir)) {
     console.warn(`  marketplace-generator: plugins dir not found: ${pluginsDir}`);
     return;
@@ -45,7 +45,7 @@ export function generateMarketplace(pluginsDir = 'plugins', outputPath = 'market
     const raw = parseYaml(fs.readFileSync(configPath, 'utf8')) as RawPluginConfig;
     entries.push({
       name: raw.name ?? dirName,
-      path: `plugins/${dirName}`,
+      source: `plugins/${dirName}`,
       description: (raw.description ?? '').replace(/\s+/g, ' ').trim(),
       version: raw.version ?? '1.0.0',
       keywords: raw.keywords ?? [],
@@ -54,9 +54,9 @@ export function generateMarketplace(pluginsDir = 'plugins', outputPath = 'market
 
   const marketplace: MarketplaceJson = {
     name: 'copilot-hub',
+    owner: 'GravionLabs',
     description:
       'A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team\'s Copilot marketplace.',
-    repository: 'GravionLabs/copilot-hub',
     plugins: entries,
   };
 

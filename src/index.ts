@@ -41,7 +41,7 @@ function main() {
     formatAllDocs();
 
     // 6. Generate marketplace.json
-    generateMarketplace('plugins', '.github/plugin/marketplace.json');
+    generateMarketplace();
     return;
   }
 

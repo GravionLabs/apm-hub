@@ -82,7 +82,7 @@ describe('generateMarketplace', () => {
     expect(parsed.plugins[0].description).not.toContain('\n');
   });
 
-  it('sets correct path for each plugin', () => {
+  it('sets correct source for each plugin', () => {
     (fs.existsSync as ReturnType<typeof vi.fn>).mockImplementation((p: unknown) => {
       if (p === 'plugins') return true;
       if (String(p).endsWith('plugin.config.yml')) return true;
@@ -99,7 +99,7 @@ describe('generateMarketplace', () => {
 
     const calls = (fs.writeFileSync as ReturnType<typeof vi.fn>).mock.calls;
     const parsed = JSON.parse(calls[0][1] as string);
-    expect(parsed.plugins[0].path).toBe('plugins/my-plugin');
+    expect(parsed.plugins[0].source).toBe('plugins/my-plugin');
   });
 
   it('skips directories without plugin.config.yml', () => {
@@ -141,13 +141,13 @@ describe('generateMarketplace', () => {
     const expected = JSON.stringify(
       {
         name: 'copilot-hub',
+        owner: 'GravionLabs',
         description:
           "A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team's Copilot marketplace.",
-        repository: 'GravionLabs/copilot-hub',
         plugins: [
           {
             name: 'alpha-plugin',
-            path: 'plugins/alpha-plugin',
+            source: 'plugins/alpha-plugin',
             description: 'Alpha plugin description',
             version: '1.2.0',
             keywords: ['alpha', 'test'],
