@@ -1,59 +1,148 @@
-﻿# Writing Effective Prompts
+# Writing Effective Prompts
 
-
-A well-written prompt leads to better, more predictable results from GitHub Copilot. Follow these best practices when creating custom `.prompt.md` files.
-
----
-
-## 1. One Task, One Prompt
-
-Keep prompts focused. A prompt that tries to explain, refactor, and test code at the same time will likely produce mediocre results for all three.
-
--   ✅ **Good:** `explain-logic.prompt.md`
--   ❌ **Bad:** `do-everything.prompt.md`
+A well-designed prompt produces consistent, high-quality output every time it is invoked. A
+poorly-designed prompt yields responses that vary wildly with context. This guide shows you the
+difference and gives you the tools to write prompts that work reliably.
 
 ---
 
-## 2. Use Structured Inputs
+## Core Principles
 
-Use `${input:name:description}` to make your prompts interactive and reusable. This ensures the user provides exactly what the prompt needs.
+### 1. One Goal Per Prompt
+
+A prompt that tries to scaffold, document, and test a feature in one pass does each task poorly.
+Split responsibilities across multiple focused prompts.
+
+|        | Example                                                                            |
+| :----- | :--------------------------------------------------------------------------------- |
+| ✅ Good | `create-dotnet-solution.prompt.md` — only scaffolds the solution structure         |
+| ❌ Bad  | `setup-project.prompt.md` — scaffolds + adds CI + configures Docker + writes tests |
+
+### 2. State the Expected Output Explicitly
+
+Tell Copilot exactly what format you want the response in. Without guidance it will guess, and the
+guess varies between runs.
 
 ```markdown
-Review this code for performance issues:
-${input:code:Paste the code here}
-Focus on: ${input:focus:e.g., memory, latency, or CPU}
+Return a single Markdown code block containing the complete `.github/workflows/nuget.yml` file.
+Do not include any explanation outside the code block.
+```
+
+### 3. Use Constraints to Narrow the Solution Space
+
+Constraints remove ambiguity and prevent Copilot from making arbitrary choices that contradict your
+standards.
+
+```markdown
+Constraints:
+- Target .NET 9
+- Use `Microsoft.Extensions.Hosting` for the host builder — not `WebApplication`
+- Do not include Swagger; OpenAPI is configured separately
+- All public types must have XML documentation comments
 ```
 
 ---
 
-## 3. Define the Output Format
+## Use Placeholders for Reusability
 
-Be explicit about how you want the response to look. Use Markdown, lists, or specific sections to guide Copilot.
+Hardcoding values like solution names or feature names inside a prompt makes it a one-off script,
+not a reusable tool. Use `{{variable}}` placeholders so the same prompt works for any project.
 
--   "Provide the answer as a bulleted list."
--   "Wrap the code in a triple-backtick block."
--   "Start with a high-level summary, followed by a detailed analysis."
+```markdown
+---
+description: Scaffold a new .NET solution
+mode: agent
+---
+
+Create a .NET solution called **{{solution_name}}** with the following layout:
+
+- `src/{{solution_name}}/` — main library project
+- `test/{{solution_name}}.Tests/` — NUnit test project
+- Root-level `Directory.Build.props` targeting .NET 9
+```
+
+When the user runs `/create-dotnet-solution`, Copilot asks:
+> *solution_name?*
+
+Common placeholder names:
+
+| Placeholder         | Typical use                       |
+| :------------------ | :-------------------------------- |
+| `{{solution_name}}` | .NET solution or project name     |
+| `{{feature_name}}`  | Feature or module being worked on |
+| `{{entity_name}}`   | Domain entity for CRUD generation |
+| `{{namespace}}`     | Root namespace for generated code |
 
 ---
 
-## 4. Provide Context, but Keep it Relevant
+## Good vs. Bad Examples
 
-While context is good, too much irrelevant information can confuse the model. Focus on the inputs that are strictly necessary for the task.
+### Prompt body — instructions to Copilot
+
+| ❌ Bad                     | ✅ Good                                                                                                                                                                                                 |
+| :------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Help me with this code." | "Identify all potential null-reference exceptions in the selected method and suggest `ArgumentNullException.ThrowIfNull` guard clauses."                                                               |
+| "Review this."            | "Review the selected C# file for violations of SOLID principles. For each violation, state the principle, explain why it is violated, and suggest a minimal refactoring."                              |
+| "Write some tests."       | "Generate NUnit 4 unit tests for the `PaymentProcessor.ProcessAsync` method. Cover: happy path, `ArgumentNullException` for null input, and `InvalidOperationException` when balance is insufficient." |
+
+### YAML front-matter
+
+| ❌ Bad                              | ✅ Good                                                                             |
+| :--------------------------------- | :--------------------------------------------------------------------------------- |
+| No front-matter at all             | `description` field that summarises the prompt for the `/` picker                  |
+| `mode: ask` for a scaffolding task | `mode: agent` so Copilot can create files via tools                                |
+| No `tools` listed                  | `tools: [codebase, new_file, run_command]` to explicitly grant needed capabilities |
 
 ---
 
-## 5. Use Clear, Actionable Language
+## Anti-Patterns
 
-Avoid vague verbs like "improve" or "fix". Use specific commands:
--   "Refactor this into a functional component."
--   "Identify potential null pointer exceptions."
--   "Convert this loop into a stream operation."
+- **Vague verbs.** "Improve", "fix", "help", "update" mean different things to different people.
+  Replace with "extract method", "add null guard", "rename parameter to match convention".
+- **Mixing unrelated tasks.** Combining "generate tests" and "refactor the implementation" in one
+  prompt forces Copilot to guess which takes priority when they conflict.
+- **Restating instructions.** If a rule is in `.github/instructions/csharp.instructions.md`, don't
+  repeat it in every prompt. Let the instructions system carry it.
+- **Assuming context.** Don't write "as discussed earlier" — each prompt invocation starts fresh.
+  Be explicit about what file, class, or method the prompt targets.
 
 ---
 
-## 6. Iterative Refinement
+## When to Use a Prompt vs. an Instruction
 
-If a prompt doesn't give you what you want, don't give up. Adjust the wording, add constraints, or change the output format until it produces consistent, high-quality results.
+| Situation                                               | Use             |
+| :------------------------------------------------------ | :-------------- |
+| "I want to enforce a rule on every chat response"       | **Instruction** |
+| "I want to run a specific task on demand"               | **Prompt**      |
+| "I find myself typing the same request every day"       | **Prompt**      |
+| "I need Copilot to follow our naming convention always" | **Instruction** |
+| "I need a scaffolding workflow for new microservices"   | **Prompt**      |
+
+A useful rule of thumb: if you'd prefix it with "always" or "never", it belongs in instructions.
+If you'd prefix it with "when I ask, do X", it belongs in a prompt.
+
+---
+
+## YAML Front-Matter Reference
+
+```yaml
+---
+description: A short sentence shown in the slash-command picker
+mode: agent          # agent | ask | edit
+tools:
+  - codebase         # search files and symbols
+  - new_file         # create new files
+  - run_command      # execute shell commands
+  - changes          # read staged/unstaged diff
+---
+```
+
+- **`description`** — shown in the `/` picker UI; make it action-oriented ("Scaffold a .NET
+  solution").
+- **`mode: agent`** — enables tool use so the prompt can create files, run commands, and search the
+  codebase. Use for scaffolding and automation. Use `mode: ask` for read-only analysis.
+- **`tools`** — explicitly declare what capabilities the prompt needs. Keeps the prompt safe and
+  auditable.
 
 ---
 

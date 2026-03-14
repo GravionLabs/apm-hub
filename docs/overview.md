@@ -47,7 +47,7 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 - [Prompts](concepts/prompts.md): What prompts are and when to use them
 - [Instructions](concepts/instructions.md): What instructions are and how scoping works
 - [Agents](concepts/agents.md): What agents are and how they differ from prompts
-- [Collections](concepts/collections.md): How to group and synchronize related templates
+- [Plugins](concepts/plugins.md): Installable bundles of agents, skills, and instructions
 - [How all concepts work together](concepts/mental-model.md)
 - [How to use the Shared Configuration Sync](sync/shared-config-sync.md)
 
@@ -76,31 +76,39 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 
 ---
 
-### 2. Copilot Configuration Templates (`templates/`)
+### 2. Copilot CLI Plugin Marketplace (`plugins/`)
+
+The `plugins/` directory contains **installable plugin bundles** — curated sets of agents, skills, and instructions for a specific domain. Plugins are consumed directly by the Copilot CLI.
+
+Available plugins: [`csharp-development`](../plugins/csharp-development/plugin.config.yml), [`devops`](../plugins/devops/plugin.config.yml), [`security`](../plugins/security/plugin.config.yml)
+
+See the [Plugin Marketplace](../README.md#-plugin-marketplace) and the [Plugin Concepts doc](concepts/plugins.md) for installation and creation details.
+
+---
+
+### 3. Copilot Configuration Templates (`templates/`)
 
 The `templates/` directory contains **working, reusable configuration files** that GitHub Copilot can consume directly (or serve as examples).
 
-- `copilot-instructions.md`  
-  Repository‑wide custom instructions
-
-- `instructions/*.instructions.md`  
+- `instructions/*.instructions.md`
   Scoped instructions (frontend, backend, security, etc.)
 
-- `prompts/*.prompt.md`  
+- `prompts/*.prompt.md`
   Reusable prompts exposed as slash commands
 
-- `agents/*.agent.md`  
+- `agents/*.agent.md`
   Custom agents defining specialized roles
 
 These files are intended to be:
 
 - Copied into other repositories
+- Installed as part of a plugin bundle
 - Adapted to specific technology stacks
 - Extended through pull requests
 
 ---
 
-### 3. Examples (`examples/`)
+### 4. Examples (`examples/`)
 
 The `examples/` directory provides **illustrative usage examples** without being production‑critical.
 
@@ -121,6 +129,7 @@ This section is especially useful for **onboarding**, **training**, and **docume
 | Instructions | Persistent project rules        | Automatically  |
 | Prompts      | Task‑specific workflows         | Manually (`/`) |
 | Agents       | Specialized roles & permissions | Manually (`@`) |
+| Plugins      | Installable bundles (CLI)       | On install     |
 
 **Mental model**
 
@@ -146,17 +155,24 @@ No specific programming language or framework is assumed.
 
 You can use this repository in multiple ways:
 
-1. **As documentation**  
+1. **As documentation**
    Read and reference it to understand Copilot concepts and best practices.
 
-2. **As a template library**  
-   Copy prompts, instructions, or agents into your own repositories.
+2. **As a template library**
+   Copy prompts, instructions, or agents into your own repositories from `templates/`.
 
-3. **As a starting point**  
+3. **As a plugin marketplace**
+   Register copilot-hub as a custom marketplace and install domain-specific plugin bundles:
+   ```bash
+   gh copilot plugin marketplace add GravionLabs/copilot-hub
+   gh copilot plugin install csharp-development@copilot-hub
+   ```
+
+4. **As a starting point**
    Fork the repository and adapt it for your organization or team.
 
-4. **As a contribution base**  
-   Add new prompts, improve instructions, or extend documentation via pull requests.
+5. **As a contribution base**
+   Add new templates, improve existing ones, or extend documentation via pull requests.
 
 ---
 
@@ -178,8 +194,9 @@ GitHub Copilot is a **developer assistant**, not a decision maker.
 
 - Start with `docs/concepts/prompts.md`, `instructions.md`, and `agents.md`
 - **[Browse All Templates](template-list.md)**
+- **[Browse All Plugins](plugin-list.md)** — or install via `gh copilot plugin marketplace add GravionLabs/copilot-hub`
 - Review the templates in `templates/`
-- Explore the review checklists in `docs/best-practices/`
+- Explore the review checklists in `docs/checklists/`
 - Learn about [Shared Configuration Sync](sync/shared-config-sync.md)
 - Read `CONTRIBUTING.md` if you want to add or improve content
 

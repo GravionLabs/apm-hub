@@ -165,3 +165,45 @@ gh copilot plugin marketplace browse copilot-hub
 ```
 
 See the [Plugin Marketplace section in README](../../README.md#-plugin-marketplace) and [docs/plugin-list.md](../plugin-list.md) for the full list of available plugins.
+
+---
+
+## marketplace.json
+
+copilot-hub ships a `marketplace.json` file in the repository root. This file makes the repo a first-class **plugin marketplace** for the Copilot CLI — users can register it once and then browse and install plugins by name.
+
+```json
+{
+  "name": "copilot-hub",
+  "description": "...",
+  "repository": "GravionLabs/copilot-hub",
+  "plugins": [
+    {
+      "name": "csharp-development",
+      "path": "plugins/csharp-development",
+      "description": "C#/.NET full-stack development plugin.",
+      "version": "1.0.0",
+      "keywords": ["csharp", "dotnet"]
+    }
+  ]
+}
+```
+
+`marketplace.json` is **auto-generated** by `npm run generate` from the `plugin.config.yml` files in each plugin directory. Do not edit it manually.
+
+---
+
+## Generator Pipeline
+
+Running `npm run generate` (or committing to `main`) triggers a 6-step pipeline in `src/index.ts`:
+
+| Step | Generator                    | Output                                                      |
+| :--- | :--------------------------- | :---------------------------------------------------------- |
+| 1    | `plugin-generator.ts`        | Agents, skills, instructions, `plugin.json` for each plugin |
+| 2    | `template-list-generator.ts` | `docs/template-list.md`                                     |
+| 3    | `plugin-list-generator.ts`   | `docs/plugin-list.md`                                       |
+| 4    | `readme-generator.ts`        | Patches `<!-- AUTO:... -->` blocks in `README.md`           |
+| 5    | `format-docs-generator.ts`   | Formats all Markdown tables in `docs/` and `README.md`      |
+| 6    | `marketplace-generator.ts`   | `marketplace.json`                                          |
+
+The pipeline is also run automatically via [`.github/workflows/generate-docs.yml`](../../.github/workflows/generate-docs.yml) on every push to `main`.

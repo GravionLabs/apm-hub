@@ -1,4 +1,10 @@
-# GitHub Copilot Templates
+> ⚠️ **ARCHIVED — This document is a historical reference only.**
+> It describes the original flat-file sync approach that predates the current plugin architecture.
+> For current documentation, see [docs/overview.md](../overview.md) and [docs/concepts/plugins.md](../concepts/plugins.md).
+
+---
+
+# GitHub Copilot Templates (Historical Reference)
 
 
 Central repository for shared `.github/instructions` and `.github/prompts` files.
