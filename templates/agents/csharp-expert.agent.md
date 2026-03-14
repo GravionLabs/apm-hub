@@ -16,13 +16,13 @@ When invoked:
 - Cover security (authentication, authorization, data protection)
 - Use and explain patterns: Async/Await, Dependency Injection, Unit of Work, CQRS, Gang of Four
 - Apply SOLID principles
-- Plan and write tests (TDD/BDD) with **NUnit**, **NSubstitute** and **FluentAssertions** or **Shouldly**
+- Plan and write tests (TDD/BDD) with **NUnit**, **NSubstitute** and **Shouldly**
 - Improve performance (memory, async code, data access)
 
 # General C# Development
 
 - Follow the project's own conventions first, then common C# conventions.
-- Default to **NUnit**, **NSubstitute**, and **FluentAssertions/Shouldly** for new test projects.
+- Default to **NUnit**, **NSubstitute**, and **Shouldly** for new test projects.
 - Keep naming, formatting, and project structure consistent.
 
 ## Code Design Rules
@@ -86,7 +86,8 @@ When invoked:
 - App type: web / desktop / console / lib.
 - Packages (and multi-targeting).
 - Nullable on? (`<Nullable>enable</Nullable>` / `#nullable enable`)
-- Repo config: `Directory.Build.*`, `Directory.Packages.props`.
+- Repo config: `Directory.Build.props` (root → `src/` → `test/`), `Directory.Packages.props` (Central Package Management — all versions here, never inline in `.csproj`).
+- Layout: source projects under `src/`, test projects under `test/`.
 
 ## C# version
 
@@ -125,7 +126,7 @@ When invoked:
 
 ## Test structure
 
-- Separate test project: **`[ProjectName].Tests`**.
+- Separate test project in **`test/[ProjectName].Tests/`**. `NUnit.Framework` is globally imported via `test/Directory.Build.props` — no explicit `using NUnit.Framework;` needed.
 - Mirror classes: `CatDoor` -> `CatDoorTests`.
 - Name tests by behavior: follow the pattern `[MethodName]_Should[ExpectedResult]` (e.g., `ToDateOnly_ShouldReturnCorrectDate`).
 - Follow existing naming conventions.
@@ -167,11 +168,11 @@ When invoked:
 ## Test framework-specific guidance
 
 - **Use the framework already in the solution** if existing.
-- **Prefer NUnit, NSubstitute, and FluentAssertions/Shouldly** for new tests or if no framework is established.
+- **Prefer NUnit, NSubstitute, and Shouldly** for new tests or if no framework is established.
 
 ### NUnit (Preferred)
 
-- Packages: `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit3TestAdapter`, `NSubstitute`, `FluentAssertions` or `Shouldly`
+- Packages: `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit3TestAdapter`, `NSubstitute`, `Shouldly` (versions managed centrally via `Directory.Packages.props`)
 - Class `[TestFixture]`, test `[Test]`
 - **Naming:** Test methods must follow the pattern `[MethodName]_Should[ExpectedResult]` (e.g., `ToDateOnly_ShouldReturnCorrectDate`).
 - **Categories:** Every `[TestFixture]` or test class must define a category using the `[Category]` attribute.
@@ -179,9 +180,11 @@ When invoked:
   - `"IntegrationTest"`: For tests involving external dependencies.
   - `"ManualTest"`: For tests requiring manual setup (must also be marked with `[Explicit]`).
 - **Mocking:** Use **NSubstitute** (`Substitute.For<T>()`).
-- **Assertions:** Use **FluentAssertions** (`result.Should().Be(expected)`) or **Shouldly** (`result.ShouldBe(expected)`).
+- **Assertions:** Use **Shouldly** (`result.ShouldBe(expected)`).
 - Parameterized tests: **use `[TestCase]`**
 - **No AAA comments:** Do not use "Arrange", "Act", or "Assert" comments.
+- **US English** in test names, comments, and helper symbols (e.g., `Deserialize` not `Deserialise`).
+- **No decorative divider comments** such as `// ---`, `// ===`, or `// ──`; separate test groups with whitespace only.
 
 ### xUnit
 
@@ -203,9 +206,9 @@ When invoked:
 
 ### Assertions
 
-- If **FluentAssertions** or **Shouldly** are already used, prefer them.
+- If **Shouldly** is already used, prefer it; otherwise use the framework's built-in asserts.
 - Otherwise, use the framework’s asserts.
-- Use `Throws/ThrowsAsync` for exceptions (or `Should().Throw<T>()` for FluentAssertions, `Should.Throw<T>(action)` for Shouldly).
+- Use `Throws/ThrowsAsync` for exceptions (or `Should.Throw<T>(action)` for Shouldly).
 
 ## Mocking
 

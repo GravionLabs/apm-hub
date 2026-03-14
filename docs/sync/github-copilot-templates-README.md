@@ -3,7 +3,7 @@
 
 Central repository for shared `.github/instructions` and `.github/prompts` files.
 
-> **Note:** This is a template for the central `github-copilot-templates` repository.
+> **Note:** This is a template for the central `copilot-hub` repository.
 > Copy this content to the root directory of your central repo.
 
 ## Purpose
@@ -17,7 +17,7 @@ These are automatically synchronized to project repositories.
 ## Structure
 
 ```
-github-copilot-templates/
+copilot-hub/
 ├── .github/
 │   ├── instructions/
 │   │   ├── python.instructions.md
@@ -84,7 +84,7 @@ Create `.github/sync-config.json` in your project repository:
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main"
   },
   "files": [

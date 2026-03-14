@@ -1,19 +1,22 @@
 ---
 agent: 'agent'
 tools: ['changes', 'search/codebase', 'edit/editFiles', 'problems']
-description: 'Create ASP.NET Minimal API endpoints with proper OpenAPI documentation'
+description: 'Create ASP.NET Minimal API endpoints using Carter with proper OpenAPI documentation'
 ---
 
-# ASP.NET Minimal API with OpenAPI
+# ASP.NET Minimal API with OpenAPI and Carter
 
-Your goal is to help me create well-structured ASP.NET Minimal API endpoints with correct types and comprehensive OpenAPI/Swagger documentation.
+Your goal is to help me create well-structured ASP.NET Minimal API endpoints using Carter with correct types and comprehensive OpenAPI/Swagger documentation.
 
 ## API Organization
 
-- Group related endpoints using `MapGroup()` extension
-- Use endpoint filters for cross-cutting concerns
-- Structure larger APIs with separate endpoint classes
-- Consider using a feature-based folder structure for complex APIs
+- Use Carter for endpoint organization by implementing `ICarterModule`
+- Register Carter in `Program.cs` using `builder.Services.AddCarter()` and `app.MapCarter()`
+- Group related endpoints within a single module class
+- Leverage Carter's support for `MapGroup()` within modules for better structure
+- Use endpoint filters for cross-cutting concerns within Carter modules
+- Structure larger APIs with separate `ICarterModule` implementations in a `Modules` folder
+- Consider using a feature-based folder structure where each feature has its own Carter module
 
 ## Request and Response Types
 

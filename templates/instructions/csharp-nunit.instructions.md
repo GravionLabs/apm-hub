@@ -1,5 +1,6 @@
 ---
-description: 'Guidelines for C# testing with NUnit, NSubstitute, FluentAssertions, or Shouldly'
+description: 'Guidelines for C# testing with NUnit, NSubstitute and Shouldly'
+applyTo: 'test/**/*.cs'
 ---
 
 # C# Testing with NUnit
@@ -9,7 +10,7 @@ These instructions apply to all C# test projects located in the `test/` director
 ## Testing Stack
 - **Framework:** NUnit
 - **Mocking:** NSubstitute
-- **Assertions:** FluentAssertions or Shouldly
+- **Assertions:** Shouldly
 
 ## Test Naming Convention
 Test method names must follow the pattern: `[MethodName]_Should[ExpectedResult]`.
@@ -32,5 +33,8 @@ Every `[TestFixture]` or test class must define a category using the `[Category]
 - Use FluentAssertions or Shouldly for all assertions:
   - **FluentAssertions:** `result.Should().Be(expected);`
   - **Shouldly:** `result.ShouldBe(expected);`
+- Use US English spelling in test names, comments, and helper symbols (for example, `Deserialize` instead of `Deserialise`).
 - Avoid "Act", "Arrange", or "Assert" comments (as per global C# instructions).
+- Do not add decorative section-divider comments such as `// ---`, `// ===`, or `// ──`; separate test groups with whitespace only.
 - Keep tests focused and ensure they are easy to read.
+

@@ -21,11 +21,11 @@ Key characteristics:
 
 Skills are stored in specific locations:
 
-| Location | Scope | Recommendation |
-|----------|-------|----------------|
-| `.github/skills/<skill-name>/` | Project/repository | Recommended for project skills |
-| `.claude/skills/<skill-name>/` | Project/repository | Legacy, for backward compatibility |
-| `~/.github/skills/<skill-name>/` | Personal (user-wide) | Recommended for personal skills |
+| Location                         | Scope                | Recommendation                     |
+|----------------------------------|----------------------|------------------------------------|
+| `.github/skills/<skill-name>/`   | Project/repository   | Recommended for project skills     |
+| `.claude/skills/<skill-name>/`   | Project/repository   | Legacy, for backward compatibility |
+| `~/.github/skills/<skill-name>/` | Personal (user-wide) | Recommended for personal skills    |
 | `~/.claude/skills/<skill-name>/` | Personal (user-wide) | Legacy, for backward compatibility |
 
 Each skill **must** have its own subdirectory containing at minimum a `SKILL.md` file.

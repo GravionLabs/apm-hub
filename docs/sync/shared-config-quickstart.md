@@ -14,7 +14,7 @@ cat > .github/sync-config.json <<'EOF'
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main",
     "sourceDir": "templates",
     "targetDir": ".github"
@@ -52,7 +52,7 @@ cat > .github/sync-config.json <<'EOF'
     "type": "azure-repos",
     "org": "yourorg",
     "project": "YourProject",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main",
     "sourceDir": "templates",
     "targetDir": ".github"
@@ -94,7 +94,7 @@ Adapt `.github/sync-config.json` to your needs. You can choose between `github` 
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main"
   },
   "files": [

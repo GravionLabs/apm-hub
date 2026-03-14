@@ -1,4 +1,4 @@
-import { parseFrontmatter, getTitle } from './template-list-generator';
+import { parseFrontmatter, getTitle } from '../utils/markdown-parser';
 
 describe('template-list-generator helpers', () => {
   describe('parseFrontmatter', () => {

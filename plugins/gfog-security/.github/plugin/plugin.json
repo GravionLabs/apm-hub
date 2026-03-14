@@ -1,0 +1,25 @@
+{
+  "name": "gfog-security",
+  "description": "Security and resilience tooling for GFOG squad. STRIDE threat modeling, RWEST SSDLC compliance review, and Disaster Recovery planning. Tech-stack agnostic – usable alongside any GFOG language plugin.",
+  "version": "1.0.0",
+  "author": {
+    "name": "GFOG"
+  },
+  "license": "MIT",
+  "keywords": [
+    "security",
+    "threat-model",
+    "stride",
+    "ssdlc",
+    "rwest",
+    "disaster-recovery",
+    "resilience",
+    "gfog"
+  ],
+  "agents": [
+    "./agents"
+  ],
+  "instructions": [
+    "./instructions/security.instructions.md"
+  ]
+}

@@ -10,7 +10,6 @@ Documentation for synchronizing shared configuration files (`.github/instruction
 - [GitHub Setup](#github-setup)
 - [Azure DevOps Setup](#azure-devops-setup)
 - [Configuration](#configuration)
-- [Synchronization with Collections](#synchronization-with-collections)
 - [Usage](#usage)
 - [Troubleshooting](#troubleshooting)
 
@@ -33,7 +32,7 @@ Instead of copying `.github/instructions`, `.github/prompts` and `.github/agents
 ```
 ┌─────────────────────────────────┐
 │  Central Repository             │
-│  github-copilot-templates       │
+│  copilot-hub       │
 │                                 │
 │  templates/                     │
 │  ├── instructions/              │
@@ -61,7 +60,7 @@ Instead of copying `.github/instructions`, `.github/prompts` and `.github/agents
 
 ### Components
 
-1. **Central Repository** (`github-copilot-templates`)
+1. **Central Repository** (`copilot-hub`)
    - Contains all shared configuration files
    - Single Source of Truth
 
@@ -82,8 +81,8 @@ Instead of copying `.github/instructions`, `.github/prompts` and `.github/agents
 
 ```bash
 # Create new repository
-mkdir github-copilot-templates
-cd github-copilot-templates
+mkdir copilot-hub
+cd copilot-hub
 git init
 
 # Create structure
@@ -120,7 +119,7 @@ EOF
 # Commit and push
 git add .
 git commit -m "Initial shared configuration"
-git remote add origin https://github.com/yourorg/github-copilot-templates.git
+git remote add origin https://github.com/yourorg/copilot-hub.git
 git push -u origin main
 ```
 
@@ -137,7 +136,7 @@ Create `.github/sync-config.json`:
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main"
   },
   "files": [
@@ -283,13 +282,13 @@ gh run list --workflow=sync-shared-config.yml
 ```bash
 # Create repository in Azure DevOps
 az repos create \
-  --name github-copilot-templates \
+  --name copilot-hub \
   --project YourProject \
   --org https://dev.azure.com/yourorg
 
 # Initialize locally
-mkdir github-copilot-templates
-cd github-copilot-templates
+mkdir copilot-hub
+cd copilot-hub
 git init
 
 # Create structure as shown in GitHub setup (step 1)
@@ -299,7 +298,7 @@ mkdir -p .github/prompts
 # ... (create files as in GitHub example)
 
 # Add remote and push
-git remote add origin https://dev.azure.com/yourorg/YourProject/_git/github-copilot-templates
+git remote add origin https://dev.azure.com/yourorg/YourProject/_git/copilot-hub
 git add .
 git commit -m "Initial shared configuration"
 git push -u origin main
@@ -315,7 +314,7 @@ Create `.github/sync-config.json`:
     "type": "azure-repos",
     "org": "yourorg",
     "project": "YourProject",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main"
   },
   "files": [
@@ -535,7 +534,7 @@ az pipelines run \
 
 ## Automation
 
-To ensure that the documentation and collection definitions are always up to date, it is recommended to automate the generation process.
+To ensure that the documentation is always up to date, it is recommended to automate the generation process.
 
 ### GitHub Actions
 A workflow `docs/sync/.github/workflows/generate-docs.yml` is provided. It automatically regenerates the documentation whenever changes are pushed to `main` (within `templates/` or `src/`).
@@ -556,14 +555,11 @@ The easiest way to configure file synchronization is to define the source and ta
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main",
     "sourceDir": "templates",
     "targetDir": ".github"
   },
-  "collections": [
-    "csharp-dotnet-development"
-  ],  
   "instructions": [
     "python",
     "security"
@@ -589,40 +585,12 @@ The easiest way to configure file synchronization is to define the source and ta
 - `targetDir`: Target directory in the project (default: `".github"`)
 
 **Categories:**
-- `collections`: List of collections (short name like `csharp-dotnet-development` or full name)
 - `instructions`: List of instructions (short name like `python` or full name)
 - `prompts`: List of prompts (short name like `code-review` or full name)
 - `agents`: List of agents (short name like `security` or full name)
 
 
 Files are automatically synchronized to `targetDir/{category}/{filename}`.
-
-### Synchronization with Collections
-
-Instead of listing each file individually, you can use [Collections](../concepts/collections.md) to synchronize entire groups of related templates.
-
-**Example with Collections:**
-
-```json
-{
-  "syncSettings": {
-    "type": "github",
-    "org": "yourorg",
-    "repo": "github-copilot-templates",
-    "branch": "main"
-  },
-  "collections": [
-    "csharp-dotnet-development"
-  ]
-}
-```
-
-When a collection is specified, the sync script performs the following steps:
-1. Downloads the collection definition (`.collection.yml`).
-2. Analyzes the included item paths.
-3. Automatically synchronizes each of these items to the appropriate target location in the project.
-
-This is the recommended way for technology stacks, as it ensures that all relevant best practices, prompts, and specialized agents are distributed consistently.
 
 **Legacy Support:**
 - `files`: Array of relative paths (e.g., `"instructions/python.instructions.md"`). These are copied directly to `targetDir/{path}`.
@@ -635,7 +603,7 @@ This is the recommended way for technology stacks, as it ensures that all releva
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main",
     "sourceDir": "templates",
     "targetDir": ".github"
@@ -658,7 +626,7 @@ This is the recommended way for technology stacks, as it ensures that all releva
     "type": "azure-repos",
     "org": "yourorg",
     "project": "Frontend",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main",
     "sourceDir": "templates",
     "targetDir": ".github"
@@ -679,7 +647,7 @@ This is the recommended way for technology stacks, as it ensures that all releva
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main",
     "sourceDir": "templates/instructions",
     "targetDir": ".config/copilot"
@@ -790,9 +758,9 @@ Both systems are configured to run **every Monday at 2 AM UTC** automatically.
 
 ### Add New File
 
-1. **In central repo** (`github-copilot-templates`):
+1. **In central repo** (`copilot-hub`):
 ```bash
-cd github-copilot-templates
+cd copilot-hub
 
 # Create new instruction
 cat > .github/instructions/docker.instructions.md <<'EOF'
@@ -813,7 +781,7 @@ git push
 2. **In project repo** (update `.github/sync-config.json`):
 ```json
 {
-  "syncSettings": { "type": "github", "org": "yourorg", "repo": "github-copilot-templates", "branch": "main" },
+  "syncSettings": { "type": "github", "org": "yourorg", "repo": "copilot-hub", "branch": "main" },
   "files": [
     { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" },
     { "source": "templates/instructions/docker.instructions.md", "dest": ".github/instructions/docker.instructions.md" }
@@ -829,7 +797,7 @@ Simply remove from `files` list in `.github/sync-config.json`:
 
 ```json
 {
-  "syncSettings": { "type": "github", "org": "yourorg", "repo": "github-copilot-templates", "branch": "main" },
+  "syncSettings": { "type": "github", "org": "yourorg", "repo": "copilot-hub", "branch": "main" },
   "files": [
     { "source": "templates/instructions/python.instructions.md", "dest": ".github/instructions/python.instructions.md" }
   ]
@@ -863,7 +831,7 @@ cat > .github/sync-config.json <<'EOF'
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main"
   },
   "files": [
@@ -884,12 +852,12 @@ git push
 **Solution**:
 ```bash
 # Check in source repo
-cd github-copilot-templates
+cd copilot-hub
 ls -la .github/instructions/
 
 # Or check via Web UI
-# GitHub: https://github.com/yourorg/github-copilot-templates/tree/main/.github/instructions
-# Azure: https://dev.azure.com/yourorg/YourProject/_git/github-copilot-templates?path=/.github/instructions
+# GitHub: https://github.com/yourorg/copilot-hub/tree/main/.github/instructions
+# Azure: https://dev.azure.com/yourorg/YourProject/_git/copilot-hub?path=/.github/instructions
 ```
 
 Ensure that:
@@ -1005,7 +973,7 @@ echo "!.github/instructions/*.md" >> .gitignore
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main"
   },
   "files": [
@@ -1058,7 +1026,7 @@ For staging/production differences:
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "staging"
   },
   "files": [

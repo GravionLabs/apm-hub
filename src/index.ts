@@ -1,8 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { parse } from 'yaml';
-import { CollectionConfig, generateMarkdown } from './generators/collection-generator';
 import { generateTemplateList } from './generators/template-list-generator';
+import { generatePlugin } from './generators/plugin-generator';
 
 function main() {
   const args = process.argv.slice(2);
@@ -10,12 +9,18 @@ function main() {
   if (args.length === 0) {
     console.log('No parameters provided. Regenerating everything...');
 
-    // 1. Regenerate all collections
-    const collectionsDir = path.join('templates', 'collections');
-    if (fs.existsSync(collectionsDir)) {
-      const files = fs.readdirSync(collectionsDir).filter((f) => f.endsWith('.collection.yml'));
-      for (const file of files) {
-        processFile(path.join(collectionsDir, file));
+    // 1. Regenerate all plugins
+    const pluginsDir = 'plugins';
+    if (fs.existsSync(pluginsDir)) {
+      const pluginDirs = fs
+        .readdirSync(pluginsDir, { withFileTypes: true })
+        .filter((d) => d.isDirectory())
+        .map((d) => d.name);
+      for (const pluginDirName of pluginDirs) {
+        const configPath = path.join(pluginsDir, pluginDirName, 'plugin.config.yml');
+        if (fs.existsSync(configPath)) {
+          processPluginConfig(configPath);
+        }
       }
     }
 
@@ -31,37 +36,55 @@ function main() {
     return;
   }
 
+  if (inputPath === '--plugins') {
+    const pluginsDir = 'plugins';
+    if (fs.existsSync(pluginsDir)) {
+      const pluginDirs = fs
+        .readdirSync(pluginsDir, { withFileTypes: true })
+        .filter((d) => d.isDirectory())
+        .map((d) => d.name);
+      for (const pluginDirName of pluginDirs) {
+        const configPath = path.join(pluginsDir, pluginDirName, 'plugin.config.yml');
+        if (fs.existsSync(configPath)) {
+          processPluginConfig(configPath);
+        }
+      }
+    }
+    return;
+  }
+
   if (!fs.existsSync(inputPath)) {
     console.error(`Error: Path not found: ${inputPath}`);
     process.exit(1);
   }
 
   const stats = fs.statSync(inputPath);
+
+  if (inputPath.endsWith('plugin.config.yml')) {
+    processPluginConfig(inputPath);
+    return;
+  }
+
   if (stats.isDirectory()) {
-    const files = fs.readdirSync(inputPath).filter((f) => f.endsWith('.collection.yml'));
-    for (const file of files) {
-      processFile(path.join(inputPath, file));
+    // Check if it's a plugin directory
+    const pluginConfig = path.join(inputPath, 'plugin.config.yml');
+    if (fs.existsSync(pluginConfig)) {
+      processPluginConfig(pluginConfig);
+      return;
     }
+    console.error(`Error: No plugin.config.yml found in directory: ${inputPath}`);
+    process.exit(1);
   } else {
-    processFile(inputPath);
+    processPluginConfig(inputPath);
   }
 }
 
-function processFile(yamlPath: string) {
+function processPluginConfig(configPath: string) {
   try {
-    const yamlContent = fs.readFileSync(yamlPath, 'utf8');
-    const config = parse(yamlContent) as CollectionConfig;
-
-    const markdown = generateMarkdown(config);
-
-    const outputDir = path.dirname(yamlPath);
-    const outputFileName = `${path.basename(yamlPath, '.collection.yml')}.md`;
-    const outputPath = path.join(outputDir, outputFileName);
-
-    fs.writeFileSync(outputPath, markdown, 'utf8');
-    console.log(`Successfully generated: ${outputPath}`);
+    const templatesDir = path.join(process.cwd(), 'templates');
+    generatePlugin(configPath, templatesDir);
   } catch (error) {
-    console.error(`Error processing collection ${yamlPath}:`, error);
+    console.error(`Error processing plugin config ${configPath}:`, error);
   }
 }
 

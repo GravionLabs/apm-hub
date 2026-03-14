@@ -1,0 +1,45 @@
+name: csharp-development
+description: >-
+  C#/.NET development plugin.
+  NUnit-only (NSubstitute, FluentAssertions/Shouldly), async/await, code review with best practices.
+version: "1.0.0"
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - csharp
+  - dotnet
+  - nunit
+
+# Agents copied as-is from templates/agents/
+agents:
+  - source: nunit-engineer
+  - source: rwest-ssdlc-reviewer
+  - source: expert-dotnet-software-engineer
+  - source: gfog-helm
+  - source: code-review-cli
+
+# Skills generated from local prompt/agent templates (local rules take priority over awesome-copilot)
+skills:
+  # NUnit skill derived from local template – enforces NSubstitute, FluentAssertions/Shouldly,
+  # [MethodName]_Should[ExpectedResult] naming, UnitTest/IntegrationTest/ManualTest categories, no AAA comments
+  - name: csharp-nunit
+    source: prompts/csharp-nunit.prompt.md
+  - name: csharp-async
+    source: prompts/csharp-async.prompt.md
+  - name: write-tests
+    source: prompts/write-tests.prompt.md
+  # C# code review extended with the generic priority system (🔴/🟡/🟢) from code-review-cli
+  - name: csharp-code-review
+    source: prompts/csharp-code-review.prompt.md
+    extend:
+      - agents/code-review-cli.agent.md
+  - name: dotnet-best-practices
+    source: prompts/dotnet-best-practices.prompt.md
+  # Helm skill derived from agent (no dedicated prompt exists)
+  - name: gfog-helm
+    source: agents/gfog-helm.agent.md
+
+instructions:
+  - source: csharp
+  - source: csharp-nunit

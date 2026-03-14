@@ -28,23 +28,94 @@ applyTo: '**/*.cs'
 - Apply code-formatting style defined in `.editorconfig`.
 - Max line length is 120 characters.
 - Prefer file-scoped namespace declarations.
-- Place `using` directives outside of the namespace.
+- Place `using` directives outside the namespace; sort System namespaces first.
 - Do not qualify members with `this.` unless necessary.
 - Braces:
   - Use Allman style (new line before opening brace) for all blocks.
-  - Braces are required for multi-line control statements; they are optional for single-line statements but suggestions prefer them when multiline.
+  - Braces are required for multi-line control statements; optional for single-line but prefer them when multiline.
 - Ensure that the final return statement of a method is on its own line.
+- Use `var` for built-in types, when the type is apparent from context, and elsewhere when it improves readability.
+- Prefer expression-bodied members for constructors, methods, properties, accessors, and indexers when the body is a single expression.
 - Use pattern matching, switch expressions, and primary constructors wherever possible.
 - Use `nameof` instead of string literals when referring to member names.
 - Ensure that XML doc comments are created for any public APIs. When applicable, include `<example>` and `<code>` documentation in the comments.
 
 ## Project Setup and Structure
 
-- Guide users through creating a new .NET project with the appropriate templates.
-- Explain the purpose of each generated file and folder to build understanding of the project structure.
-- Demonstrate how to organize code using feature folders or domain-driven design principles.
-- Show proper separation of concerns with models, services, and data access layers.
-- Explain the Program.cs and configuration system in .NET 10 including environment-specific settings.
+Use the following layout for all .NET projects:
+
+```
+/
+├── Directory.Build.props        # Shared build settings for all projects
+├── Directory.Packages.props     # Central Package Management — all package versions defined here
+├── .editorconfig                # Code style and formatting rules
+├── <Solution>.slnx              # Solution file
+├── src/
+│   ├── Directory.Build.props    # Imports root props; sets OutputPath to $(SolutionDir)bin\$(Configuration)
+│   └── <ProjectName>/
+│       └── <ProjectName>.csproj
+└── test/
+    ├── Directory.Build.props    # Imports root props; adds IsPackable=false and test package references
+    └── <ProjectName>.Tests/
+        └── <ProjectName>.Tests.csproj
+```
+
+**Root `Directory.Build.props`** — applies to all projects:
+```xml
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>Latest</LangVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+</Project>
+```
+
+**`Directory.Packages.props`** — Central Package Management:
+```xml
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="NUnit" Version="4.x.x"/>
+    <PackageVersion Include="NSubstitute" Version="5.x.x"/>
+    <PackageVersion Include="Shouldly" Version="4.x.x"/>
+    <!-- all package versions declared here; never inline in .csproj -->
+  </ItemGroup>
+</Project>
+```
+
+**`test/Directory.Build.props`** — test-specific settings:
+```xml
+<Project>
+  <Import Project="../Directory.Build.props"/>
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector"/>
+    <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+    <PackageReference Include="NUnit"/>
+    <PackageReference Update="NUnit.Analyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="NUnit3TestAdapter"/>
+    <PackageReference Include="NSubstitute"/>
+    <PackageReference Include="Shouldly"/>
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="NUnit.Framework"/>
+  </ItemGroup>
+</Project>
+```
+
+- Test `.csproj` files contain only a `<ProjectReference>` to the corresponding `src/` project — no package references (inherited from `test/Directory.Build.props`).
+- Source `.csproj` files contain only project-specific metadata (PackageId, Authors, Description, etc.) — no version numbers on `<PackageReference>` elements.
+- Never specify package versions inline in `.csproj`; always use `Directory.Packages.props`.
 
 ## Nullable Reference Types
 
@@ -59,50 +130,6 @@ applyTo: '**/*.cs'
 - Demonstrate repository pattern implementation and when it's beneficial.
 - Show how to implement database migrations and data seeding.
 - Explain efficient query patterns to avoid common performance issues.
-
-## Authentication and Authorization
-
-- Guide users through implementing authentication using JWT Bearer tokens.
-- Explain OAuth 2.0 and OpenID Connect concepts as they relate to ASP.NET Core.
-- Show how to implement role-based and policy-based authorization.
-- Demonstrate integration with Microsoft Entra ID (formerly Azure AD).
-- Explain how to secure both controller-based and Minimal APIs consistently.
-
-## Validation and Error Handling
-
-- Guide the implementation of model validation using data annotations and FluentValidation.
-- Explain the validation pipeline and how to customize validation responses.
-- Demonstrate a global exception handling strategy using middleware.
-- Show how to create consistent error responses across the API.
-- Explain problem details (RFC 7807) implementation for standardized error responses.
-
-## API Versioning and Documentation
-
-- Guide users through implementing and explaining API versioning strategies.
-- Demonstrate Swagger/OpenAPI implementation with proper documentation.
-- Show how to document endpoints, parameters, responses, and authentication.
-- Explain versioning in both controller-based and Minimal APIs.
-- Guide users on creating meaningful API documentation that helps consumers.
-
-## Logging and Monitoring
-
-- Guide the implementation of structured logging using Serilog or other providers.
-- Explain the logging levels and when to use each.
-- Demonstrate integration with Application Insights for telemetry collection.
-- Show how to implement custom telemetry and correlation IDs for request tracking.
-- Explain how to monitor API performance, errors, and usage patterns.
-
-## Testing
-
-- Always include test cases for critical paths of the application.
-- Guide users through creating unit tests using **NUnit**, **NSubstitute**, and **FluentAssertions** or **Shouldly**.
-- Do not emit "Act", "Arrange" or "Assert" comments.
-- Copy existing style in nearby files for test method names and capitalization.
-- Use `[MethodName]_Should[ExpectedResult]` naming pattern for tests.
-- Explain integration testing approaches for API endpoints.
-- Demonstrate how to mock dependencies using **NSubstitute** for effective testing.
-- Show how to test authentication and authorization logic.
-- Explain test-driven development principles as applied to API development.
 
 ## Performance Optimization
 

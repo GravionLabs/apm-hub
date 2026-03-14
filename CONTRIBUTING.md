@@ -1,6 +1,6 @@
-﻿# Contributing to github-copilot-templates
+﻿# Contributing to copilot-hub
 
-Thank you for your interest in contributing to **github-copilot-templates** 🎉
+Thank you for your interest in contributing to **copilot-hub** 🎉
 
 This repository serves as a **shared knowledge base and template library** for using GitHub Copilot effectively across teams.  
 To keep the content consistent, maintainable, and high‑quality, please follow the guidelines below.

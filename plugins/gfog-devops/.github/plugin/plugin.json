@@ -1,0 +1,25 @@
+{
+  "name": "gfog-devops",
+  "description": "Cross-cutting DevOps tooling for GFOG squad. Publish code reviews as PR comments to GitHub or Azure DevOps, and configure the az CLI azure-devops extension for pipeline integration.",
+  "version": "1.0.0",
+  "author": {
+    "name": "GFOG"
+  },
+  "license": "MIT",
+  "keywords": [
+    "devops",
+    "azure-devops",
+    "code-review",
+    "pull-request",
+    "gfog"
+  ],
+  "agents": [
+    "./agents"
+  ],
+  "instructions": [
+    "./instructions/shell.instructions.md",
+    "./instructions/powershell.instructions.md",
+    "./instructions/docker.instructions.md",
+    "./instructions/terraform.instructions.md"
+  ]
+}

@@ -1,0 +1,19 @@
+# GitHub Copilot Code Review Settings
+# See: https://docs.github.com/en/copilot/using-github-copilot/code-review/configuring-automatic-code-review-by-copilot
+
+version: 1
+
+review:
+  # Automatically request Copilot review on all pull requests
+  instructions: |
+    You are reviewing changes to the copilot-hub repository — a shared library of GitHub Copilot
+    templates (instructions, prompts, agents), and CLI plugins
+
+    When reviewing:
+    - **Template files** (.instructions.md, .prompt.md, .agent.md): Check that the frontmatter is correct,
+      the content is clear and reusable, and follows the guidelines in docs/best-practices/
+    - **Plugin configs** (plugin.config.yml): Ensure agent/instructions/skill references are valid
+    - **TypeScript src/**: Check for type safety, test coverage, and correctness of generators
+    - **Documentation**: Verify accuracy, clarity, and that links are valid
+
+    Focus on correctness and reusability. Avoid style nits.

@@ -1,7 +1,7 @@
 ﻿# Overview
 
 
-Welcome to **github-copilot-templates** 👋
+Welcome to **copilot-hub** 👋
 
 This repository is a **shared reference, documentation hub, and template library** for using **GitHub Copilot** effectively and responsibly across teams and projects.
 

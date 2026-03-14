@@ -2,7 +2,7 @@
   "syncSettings": {
     "type": "github",
     "org": "jkaufmann",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "branch": "main",
     "sourceDir": "templates",
     "targetDir": ".github"

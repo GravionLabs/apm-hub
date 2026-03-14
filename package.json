@@ -1,5 +1,5 @@
 {
-  "name": "github-copilot-templates-tools",
+  "name": "copilot-hub-tools",
   "version": "1.0.0",
   "description": "Tools for managing GitHub Copilot templates",
   "main": "dist/index.js",
@@ -9,17 +9,16 @@
     "generate-collection": "node dist/index.js",
     "generate-template-list": "node dist/index.js --template-list",
     "format": "prettier --write \"src/**/*.ts\"",
-    "test": "jest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "yaml": "^2.3.4"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
-    "@types/node": "^20.10.0",
-    "jest": "^30.2.0",
+    "@types/node": "^24.0.0",
     "prettier": "^3.8.1",
-    "ts-jest": "^29.4.6",
-    "typescript": "^5.3.2"
+    "typescript": "^5.9.3",
+    "vitest": "^3.0.0"
   }
 }

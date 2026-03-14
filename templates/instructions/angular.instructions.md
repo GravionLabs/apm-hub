@@ -5,14 +5,15 @@ applyTo: '**/*.ts, **/*.html, **/*.scss, **/*.css'
 
 # Angular Development Instructions
 
-Instructions for generating high-quality Angular applications with TypeScript, using Angular Signals for state management, adhering to Angular best practices as outlined at https://angular.dev.
+Instructions for generating high-quality Angular applications with TypeScript, using Angular Signals for state management, 
+adhering to Angular best practices as outlined at https://angular.dev.
 
 ## Project Context
 - Latest Angular version (use standalone components by default)
 - TypeScript for type safety
-- Angular CLI or NX for project setup, scaffolding, and workspace management
+- Angular CLI for project setup, scaffolding, and workspace management
 - Follow Angular Style Guide (https://angular.dev/style-guide)
-- Use RWE Unity / Angular Material for consistent styling
+- Use PrimeNG for consistent styling
 
 ## NX Monorepo (if applicable)
 - Organize code into `apps/` and `libs/`
@@ -30,7 +31,7 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 - Use Angular's built-in dependency injection system effectively
 - Structure components with a clear separation of concerns (smart vs. presentational components)
 - Use Angular Signals for state management and inter-component communication
-- Use Signal stores for centralized state management
+- Use Signal stores (@ngrx/signals) for centralized state management
 
 ### TypeScript
 - Enable strict mode in `tsconfig.json` for type safety
@@ -49,7 +50,7 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 ### Styling
 - Use Angular's component-level CSS encapsulation (default: ViewEncapsulation.Emulated)
 - Prefer SCSS for styling with consistent theming
-- Implement responsive design using CSS Grid, Flexbox, or Angular CDK Layout utilities
+- Implement responsive design using CSS Grid, Flexbox, TailwindCSS or Angular CDK Layout utilities
 - Follow Angular Material's theming guidelines if used
 - Maintain accessibility (a11y) with ARIA attributes and semantic HTML
 
@@ -84,10 +85,10 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 - Leverage NX computation caching (if using NX)
 
 ### Testing
-- Write unit tests for components, services, and pipes using Jasmine and Karma (or Vitest/Jest if using NX)
+- Write unit tests for components, services, and pipes using Vitest or Jest (if specified)
 - Use Angular's `TestBed` for component testing with mocked dependencies
 - Test signal-based state updates using Angular's testing utilities
-- Write end-to-end tests with Cypress or Playwright (if specified)
+- Write end-to-end tests with Playwright or (Cypress if specified)
 - Mock HTTP requests using `provideHttpClientTesting`
 - Ensure high test coverage for critical functionality
 - Use `nx affected:test` to run only relevant tests (if using NX)

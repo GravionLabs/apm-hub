@@ -1,5 +1,3 @@
-import * as fs from 'fs';
-
 export function parseFrontmatter(content: string): Record<string, string> {
   const frontmatter: Record<string, string> = {};
   if (content.startsWith('---')) {

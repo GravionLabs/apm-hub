@@ -8,7 +8,7 @@ Architecture overview for the Shared Configuration Sync System.
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Central Repository                        │
-│              github-copilot-templates (main)                 │
+│              copilot-hub (main)                 │
 │                                                              │
 │  templates/                                                  │
 │  ├── instructions/                                           │
@@ -213,7 +213,7 @@ Maintainer          Central Repo          Project Repos
 GET https://raw.githubusercontent.com/{org}/{repo}/{branch}/{path}
 
 Example:
-GET https://raw.githubusercontent.com/yourorg/github-copilot-templates/main/.github/instructions/python.instructions.md
+GET https://raw.githubusercontent.com/yourorg/copilot-hub/main/.github/instructions/python.instructions.md
 
 Response: File content (text/plain)
 ```
@@ -231,7 +231,7 @@ Headers:
   Authorization: Basic base64(:{PAT})
 
 Example:
-GET https://dev.azure.com/yourorg/YourProject/_apis/git/repositories/github-copilot-templates/items
+GET https://dev.azure.com/yourorg/YourProject/_apis/git/repositories/copilot-hub/items
     ?path=/.github/instructions/python.instructions.md
     &versionType=branch
     &version=main
@@ -368,7 +368,7 @@ steps:
 
 ```bash
 # Success
-✓ Syncing from: yourorg/github-copilot-templates@main
+✓ Syncing from: yourorg/copilot-hub@main
 ✓ Files to sync: 3
 ✓ → Syncing: .github/instructions/python.instructions.md
 ✓   Downloaded successfully
@@ -404,7 +404,7 @@ steps:
 
 ```bash
 # 1. In Central Repo: Revert
-cd github-copilot-templates
+cd copilot-hub
 git revert HEAD
 git push
 
@@ -424,7 +424,7 @@ az pipelines run --name 'Sync Shared Configuration'  # Azure
   "syncSettings": {
     "type": "github",
     "org": "yourorg",
-    "repo": "github-copilot-templates",
+    "repo": "copilot-hub",
     "ref": "v2.3.1"
   }
 }
