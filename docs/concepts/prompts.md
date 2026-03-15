@@ -103,7 +103,7 @@ Example:
 ```Markdown
 
 ---
-agent: agent
+mode: agent
 description: Explain code in a clear and structured way
 ---
 Explain the following code in plain, beginner‑friendly language.
@@ -127,13 +127,35 @@ Include:
 The front-matter defines how Copilot should run the prompt.
 Common fields:
 
-- agent
+- `mode` (recommended)
 
-  Determines which Copilot mode or agent is used (e.g. agent mode).
+  Determines the Copilot execution mode. Use `agent` to allow tool calls, `edit` for
+  in-editor modifications, or `ask` for a plain conversational response.
+  The legacy `agent: agent` form is also accepted for backwards compatibility.
 
-- description
+- `description`
 
   Shown in IDEs to explain what the prompt does.
+
+- `tools`
+
+  List of tools available in `agent` mode. Valid values include: `codebase`, `runCommands`,
+  `editFiles`, `fetch`, `githubRepo`.
+
+- `model` *(optional)*
+
+  Override the active model for this specific prompt execution. Useful to **save premium
+  request quota** by routing operational prompts (setup wizards, sync scripts, CI generation)
+  to a cheaper, faster model rather than the session default.
+
+  ```yaml
+  model: gpt-4o-mini   # cheaper, fast — good for scripted/operational prompts
+  model: gpt-4o        # standard quality
+  model: o3-mini       # reasoning, still cheaper than o1/o3
+  ```
+
+  The model value must be a valid identifier supported by GitHub Copilot (varies by IDE/plan).
+  When omitted, the currently active session model is used.
 
 ✅ Front-matter should be accurate, minimal, and descriptive.
 

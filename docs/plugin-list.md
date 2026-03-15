@@ -6,11 +6,24 @@ This page lists all available Copilot CLI plugins in this repository. This file 
 
 ## Overview
 
-| Plugin                                    | Description                                                                                                                                                                                                                                                         | Skills | Agents | Instructions |
-| :---------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----: | :----: | :----------: |
-| [csharp-development](#csharp-development) | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization. |   13   |   9    |      3       |
-| [devops](#devops)                         | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.               |   8    |   3    |      4       |
-| [security](#security)                     | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                    |   0    |   2    |      1       |
+| Plugin                                    | Description                                                                                                                                                                                                                                                                                                                                                                           | Skills | Agents | Instructions |
+| :---------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----: | :----: | :----------: |
+| [copilot-workspace](#copilot-workspace)   | Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. The standalone copilot-sync.ps1 script is included for manual or scheduled runs without the AI prompt. |   2    |   0    |      0       |
+| [csharp-development](#csharp-development) | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.                                                                                                                   |   13   |   9    |      3       |
+| [devops](#devops)                         | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.                                                                                                                                 |   8    |   3    |      4       |
+| [security](#security)                     | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                                                                                                                                      |   0    |   2    |      1       |
+
+## copilot-workspace
+
+📁 [`plugins/copilot-workspace`](../plugins/copilot-workspace)
+
+Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. The standalone copilot-sync.ps1 script is included for manual or scheduled runs without the AI prompt.
+
+**Keywords:** `copilot`, `github-copilot`, `setup`, `sync`, `workspace`, `configuration`
+
+**Skills (2):**
+- [`gh-copilot-setup`](../plugins/copilot-workspace/skills/gh-copilot-setup)
+- [`gh-copilot-sync`](../plugins/copilot-workspace/skills/gh-copilot-sync)
 
 ## csharp-development
 

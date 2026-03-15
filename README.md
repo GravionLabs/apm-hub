@@ -65,7 +65,7 @@ This repository contains a wide range of production-ready templates:
 | Category         | Count | Location                  | Purpose                                  |
 | :--------------- | :---: | :------------------------ | :--------------------------------------- |
 | **Agents**       |  26   | `templates/agents/`       | Specialized expert roles (@-mentions)    |
-| **Prompts**      |  36   | `templates/prompts/`      | Task-specific workflows (slash commands) |
+| **Prompts**      |  38   | `templates/prompts/`      | Task-specific workflows (slash commands) |
 | **Instructions** |  20   | `templates/instructions/` | Persistent project rules and standards   |
 <!-- AUTO:end template-stats -->
 
@@ -78,11 +78,12 @@ Copilot CLI **plugins** are installable bundles of agents, skills (prompts), and
 📄 **[Learn about Plugins](docs/concepts/plugins.md)** · 📄 **[Browse All Plugins](docs/plugin-list.md)**
 
 <!-- AUTO:start plugin-table -->
-| Plugin                                             | Description                                                                                                                                                                                                                                                         |
-| :------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`csharp-development`](plugins/csharp-development) | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization. |
-| [`devops`](plugins/devops)                         | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.               |
-| [`security`](plugins/security)                     | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                    |
+| Plugin                                             | Description                                                                                                                                                                                                                                                                                                                                                                           |
+| :------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`copilot-workspace`](plugins/copilot-workspace)   | Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. The standalone copilot-sync.ps1 script is included for manual or scheduled runs without the AI prompt. |
+| [`csharp-development`](plugins/csharp-development) | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.                                                                                                                   |
+| [`devops`](plugins/devops)                         | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.                                                                                                                                 |
+| [`security`](plugins/security)                     | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                                                                                                                                      |
 <!-- AUTO:end plugin-table -->
 
 Plugins live in the `plugins/` folder. The template counts and plugin table above are **auto-generated** on every change.

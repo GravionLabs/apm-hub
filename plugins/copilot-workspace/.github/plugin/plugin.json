@@ -1,0 +1,21 @@
+{
+  "name": "copilot-workspace",
+  "description": "Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. The standalone copilot-sync.ps1 script is included for manual or scheduled runs without the AI prompt.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Gravion"
+  },
+  "license": "MIT",
+  "keywords": [
+    "copilot",
+    "github-copilot",
+    "setup",
+    "sync",
+    "workspace",
+    "configuration"
+  ],
+  "skills": [
+    "./skills/gh-copilot-setup",
+    "./skills/gh-copilot-sync"
+  ]
+}
