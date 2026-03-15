@@ -49,7 +49,7 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 - [Agents](concepts/agents.md): What agents are and how they differ from prompts
 - [Plugins](concepts/plugins.md): Installable bundles of agents, skills, and instructions
 - [How all concepts work together](concepts/mental-model.md)
-- [How to use the Shared Configuration Sync](sync/shared-config-sync.md)
+- [copilot-workspace: Setup & Sync](sync/copilot-workspace.md)
 
 **Usage Guides**
 
@@ -64,8 +64,8 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 - [Designing stable instructions](best-practices/writing-good-instructions.md)
 - [Creating safe, useful agents](best-practices/designing-agents.md)
 - [Do’s and don’ts for AI‑assisted development](best-practices/do-and-dont.md)
-- **Shared Configuration Sync**
-  - [Centralizing and synchronizing templates](sync/shared-config-sync.md)
+- **Copilot Workspace (Setup & Sync)**
+  - [copilot-workspace plugin: setup wizard, sync, and standalone script](sync/copilot-workspace.md)
 - **JetBrains AI Support**
   - [How Junie uses Copilot templates](jetbrains-ai.md)
 
@@ -197,7 +197,7 @@ GitHub Copilot is a **developer assistant**, not a decision maker.
 - **[Browse All Plugins](plugin-list.md)** — or install via `gh copilot plugin marketplace add GravionLabs/copilot-hub`
 - Review the templates in `templates/`
 - Explore the review checklists in `docs/checklists/`
-- Learn about [Shared Configuration Sync](sync/shared-config-sync.md)
+- Set up and sync templates using [copilot-workspace](sync/copilot-workspace.md)
 - Read `CONTRIBUTING.md` if you want to add or improve content
 
 ---

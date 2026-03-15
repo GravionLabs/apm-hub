@@ -40,7 +40,7 @@ Wiki pages cannot have subdirectories — paths are flattened using title-case a
 | `README.md`                       | `Home.md`                    |
 | `docs/overview.md`                | `Overview.md`                |
 | `docs/concepts/plugins.md`        | `Concepts-Plugins.md`        |
-| `docs/sync/shared-config-sync.md` | `Sync-Shared-Config-Sync.md` |
+| `docs/sync/copilot-workspace.md`  | `Sync-Copilot-Workspace.md`  |
 | `docs/usage/how-to-use-agents.md` | `Usage-How-To-Use-Agents.md` |
 
 ---

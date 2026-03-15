@@ -14,7 +14,7 @@ A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI 
 
 - **[Overview](docs/overview.md)**: Introduction, core concepts, and guiding principles.
 - **[JetBrains AI Support](docs/jetbrains-ai.md)**: How to use these templates with JetBrains Junie.
-- **[Shared Configuration Sync](docs/sync/shared-config-sync.md)**: How to centralize and sync templates across repositories.
+- **[Shared Configuration Sync](docs/sync/copilot-workspace.md)**: Interactive setup wizard and sync script for keeping your repository's Copilot configuration up to date.
 - **[Plugins](docs/concepts/plugins.md)**: What plugins are, how to use and create them.
 
 ## 🚀 Quick Start
@@ -94,4 +94,4 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ---
 
-> **Tip**: Instead of manual copying, use our [Sync Scripts](docs/sync/shared-config-sync.md#usage) to keep your repository up-to-date with the latest templates automatically.
+> **Tip**: Instead of manual copying, install the [`copilot-workspace`](docs/sync/copilot-workspace.md) plugin and run `/gh-copilot-setup` to get started, then `/gh-copilot-sync` to keep templates up to date.
