@@ -208,7 +208,7 @@ jobs:
       - name: Download latest copilot-sync.ps1
         run: |
           mkdir -p .github/scripts
-          gh api /repos/GravionLabs/copilot-hub/contents/templates/scripts/copilot-sync.ps1 \
+          gh api /repos/GravionLabs/copilot-hub/contents/scripts/copilot-sync.ps1 \
             --jq '.download_url' | xargs curl -sSL -o .github/scripts/copilot-sync.ps1
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

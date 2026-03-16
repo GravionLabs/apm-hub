@@ -10,7 +10,8 @@ In the Copilot Chat window, invoke an agent using the `@` symbol followed by the
 
 - **Built-in agents:** `@workspace`, `@terminal`, `@github`
 - **Custom repo agents:** defined in `.github/agents/` (e.g. `@security-reviewer`)
-- **Plugin agents:** installed via `gh copilot plugin install` — available exactly like custom agents
+- **Plugin-installed:** installed via `gh copilot plugin install` — available exactly like custom agents
+- **Scripts:** standalone automation like `copilot-sync.ps1` in `.github/scripts/` (see [Sync Configuration](../sync/copilot-workspace.md))
 
 **Example:**
 ```

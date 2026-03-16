@@ -105,7 +105,7 @@ Always re-download to ensure the latest version is used.
 
 ```powershell
 New-Item -ItemType Directory -Force -Path .github/scripts | Out-Null
-$ScriptUrl = gh api /repos/GravionLabs/copilot-hub/contents/templates/scripts/copilot-sync.ps1 `
+$ScriptUrl = gh api /repos/GravionLabs/copilot-hub/contents/scripts/copilot-sync.ps1 `
     --jq '.download_url'
 Invoke-WebRequest -Uri $ScriptUrl -OutFile .github/scripts/copilot-sync.ps1
 ```

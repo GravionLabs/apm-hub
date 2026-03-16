@@ -48,7 +48,8 @@ param(
     [string]$GlobalBase,
     [switch]$DryRun,
     [switch]$SkipNew,
-    [switch]$InstallNew
+    [switch]$InstallNew,
+    [switch]$SetupMode  # New: If set, script runs in setup mode (skip stack detection)
 )
 
 Set-StrictMode -Version Latest
@@ -60,13 +61,55 @@ $Repo       = 'GravionLabs/copilot-hub'
 $RemoteBase = 'templates'
 
 $Categories = @(
-    [PSCustomObject]@{ Name = 'instructions'; Filter = '*.instructions.md'; LocalDir = '.github/instructions' }
-    [PSCustomObject]@{ Name = 'prompts';      Filter = '*.prompt.md';       LocalDir = '.github/prompts'      }
-    [PSCustomObject]@{ Name = 'agents';       Filter = '*.agent.md';        LocalDir = '.github/agents'       }
+    @{ Name = 'instructions' = '*.instructions.md'; LocalDir = '.github/instructions' }
+    ,@{ Name = 'prompts' = '*.prompt.md'; LocalDir = '.github/prompts' }
+    ,@{ Name = 'agents' = '*.agent.md'; LocalDir = '.github/agents' }
 )
 
 if (-not $GlobalBase) {
     $GlobalBase = if ($env:COPILOT_GLOBAL_BASE) { $env:COPILOT_GLOBAL_BASE } else { "$HOME/.github" }
+}
+
+# ─── Stack Detection ─────────────────────────────────────────────────────────
+function Detect-ProjectStack {
+    $languages = @()
+    $frameworks = @()
+    $ci = @()
+    $tests = @()
+
+    # Language detection by file extension
+    $exts = Get-ChildItem -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $_.Extension.ToLower() } | Sort-Object -Unique
+    if ('.cs' -in $exts) { $languages += 'C#' }
+    if ('.py' -in $exts) { $languages += 'Python' }
+    if ('.ts' -in $exts) { $languages += 'TypeScript' }
+    if ('.js' -in $exts) { $languages += 'JavaScript' }
+    if ('.tf' -in $exts) { $languages += 'Terraform' }
+
+    # Framework detection by config files
+    if (Test-Path '*.csproj') { $frameworks += 'dotnet' }
+    if (Test-Path 'package.json') { $frameworks += 'Node.js' }
+    if (Test-Path 'requirements.txt') { $frameworks += 'Python (requirements.txt)' }
+    if (Test-Path 'pyproject.toml') { $frameworks += 'Python (pyproject.toml)' }
+    if (Test-Path '*.sln') { $frameworks += 'dotnet solution' }
+    if (Test-Path 'angular.json') { $frameworks += 'Angular' }
+    if (Test-Path 'Dockerfile') { $frameworks += 'Docker' }
+
+    # CI/CD detection
+    if (Test-Path '.github/workflows') { $ci += 'GitHub Actions' }
+    if (Get-ChildItem -Path . -Filter 'azure-pipelines*.yml' -File -ErrorAction SilentlyContinue) { $ci += 'Azure Pipelines' }
+
+    # Test frameworks
+    if (Get-ChildItem -Recurse -File -Include '*NUnit*' -ErrorAction SilentlyContinue) { $tests += 'NUnit' }
+    if (Get-ChildItem -Recurse -File -Include '*xUnit*' -ErrorAction SilentlyContinue) { $tests += 'xUnit' }
+    if (Get-ChildItem -Recurse -File -Include '*pytest*' -ErrorAction SilentlyContinue) { $tests += 'pytest' }
+    if (Get-ChildItem -Recurse -File -Include '*Jest*' -ErrorAction SilentlyContinue) { $tests += 'Jest' }
+    if (Get-ChildItem -Recurse -File -Include '*Playwright*' -ErrorAction SilentlyContinue) { $tests += 'Playwright' }
+
+    Write-Host "\nDetected project stack:"
+    Write-Host "  Languages:   $($languages -join ', ')"
+    Write-Host "  Frameworks:  $($frameworks -join ', ')"
+    Write-Host "  CI/CD:       $($ci -join ', ')"
+    Write-Host "  Test:        $($tests -join ', ')"
 }
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -144,17 +187,18 @@ function Build-SyncList {
     $list = [System.Collections.Generic.List[PSCustomObject]]::new()
 
     foreach ($cat in $Categories) {
-        $globalDir = Join-Path $GlobalBase $cat.Name
+        $catObj = [PSCustomObject]$cat
+        $globalDir = Join-Path $GlobalBase $catObj.Name
 
         # Collect filenames from local and global directories
         $localFiles  = @()
         $globalFiles = @()
 
-        if (Test-Path $cat.LocalDir -PathType Container) {
-            $localFiles = (Get-ChildItem $cat.LocalDir -Filter $cat.Filter -ErrorAction SilentlyContinue).Name
+        if (Test-Path $catObj.LocalDir -PathType Container) {
+            $localFiles = (Get-ChildItem $catObj.LocalDir -Filter $catObj.Filter -ErrorAction SilentlyContinue).Name
         }
         if (Test-Path $globalDir -PathType Container) {
-            $globalFiles = (Get-ChildItem $globalDir -Filter $cat.Filter -ErrorAction SilentlyContinue).Name
+            $globalFiles = (Get-ChildItem $globalDir -Filter $catObj.Filter -ErrorAction SilentlyContinue).Name
         }
 
         $allFiles = ($localFiles + $globalFiles) | Sort-Object -Unique
@@ -170,17 +214,17 @@ function Build-SyncList {
             }
 
             $localPath = if ($inLocal) {
-                Join-Path $cat.LocalDir $file
+                Join-Path $catObj.LocalDir $file
             } else {
                 Join-Path $globalDir $file
             }
 
             $list.Add([PSCustomObject]@{
                 Filename  = $file
-                Category  = $cat.Name
+                Category  = $catObj.Name
                 Scope     = $scope
                 LocalPath = $localPath
-                LocalDir  = $cat.LocalDir
+                LocalDir  = $catObj.LocalDir
                 GlobalDir = $globalDir
             })
         }
@@ -202,14 +246,20 @@ function Compare-AllFiles {
         $tmp = Fetch-ToTemp $entry.Category $entry.Filename
         if (-not $tmp) {
             Write-Host " ⚠️  NOT FOUND in remote"
-            $results.Add($entry | Select-Object *, @{N='Status';E={'NOT_FOUND'}}, @{N='TmpPath';E={$null}})
+            $result = $entry.PSObject.Copy()
+            $result | Add-Member -NotePropertyName Status -NotePropertyValue 'NOT_FOUND' -Force
+            $result | Add-Member -NotePropertyName TmpPath -NotePropertyValue $null -Force
+            $results.Add($result)
             continue
         }
 
         $status = if ($Force) { 'UPDATED' } else { Compare-WithRemote $entry.LocalPath $tmp }
         Write-Host " $(if ($status -eq 'UPDATED') { '🔄 UPDATED' } elseif ($status -eq 'UNCHANGED') { '✅ unchanged' } else { '🆕 new' })"
 
-        $results.Add($entry | Select-Object *, @{N='Status';E={$status}}, @{N='TmpPath';E={$tmp}})
+        $result = $entry.PSObject.Copy()
+        $result | Add-Member -NotePropertyName Status -NotePropertyValue $status -Force
+        $result | Add-Member -NotePropertyName TmpPath -NotePropertyValue $tmp -Force
+        $results.Add($result)
     }
 
     return $results
@@ -374,6 +424,10 @@ function Write-FinalReport {
 Write-Header "GH Copilot Sync$(if ($DryRun) { ' [DRY RUN]' })"
 
 Test-Prerequisites
+
+if ($SetupMode) {
+    Detect-ProjectStack
+}
 
 Write-Host "`nDiscovering installed files..."
 $syncList = Build-SyncList

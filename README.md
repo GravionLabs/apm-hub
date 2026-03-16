@@ -23,9 +23,34 @@ A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI 
 
 1. Browse the [**Template List**](docs/template-list.md) to find what you need.
 2. Copy the relevant `.md` files from `templates/` into your repository:
-   - **Instructions** → `.github/instructions/`
-   - **Prompts** → `.github/prompts/`
-   - **Agents** → `.github/agents/`
+   - **[Instructions](templates/instructions/)** → `.github/instructions/`
+   - **[Prompts](templates/prompts/)** → `.github/prompts/`
+   - **[Agents](templates/agents/)** → `.github/agents/`
+   - **[Scripts](scripts/)** → `.github/scripts/`
+
+### 🔄 Sync & Automation
+
+Keep your local configuration up to date using our standalone sync script or the interactive wizard.
+
+#### copilot-sync.ps1
+
+The `copilot-sync.ps1` script is a PowerShell Core script that compares your local `.github/` templates with the latest versions from this hub.
+
+- **[Download copilot-sync.ps1](https://raw.githubusercontent.com/GravionLabs/copilot-hub/main/scripts/copilot-sync.ps1)**
+- **Usage**:
+  ```powershell
+  # Basic sync (prompts for confirmation)
+  pwsh .github/scripts/copilot-sync.ps1
+
+  # Autopilot mode (no prompts, good for CI or scheduled tasks)
+  pwsh .github/scripts/copilot-sync.ps1 -Autopilot
+
+  # Dry run (show changes without applying)
+  pwsh .github/scripts/copilot-sync.ps1 -DryRun
+
+  # Install new templates automatically
+  pwsh .github/scripts/copilot-sync.ps1 -InstallNew
+  ```
 
 ### Installing Plugins via Copilot CLI
 

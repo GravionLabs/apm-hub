@@ -26,5 +26,5 @@ skills:
 files:
   # Standalone PowerShell Core sync script — can be run directly without the AI prompt:
   #   pwsh .github/scripts/copilot-sync.ps1 [-Autopilot] [-Force] [-DryRun] [-InstallNew]
-  - source: templates/scripts/copilot-sync.ps1
+  - source: scripts/copilot-sync.ps1
     destination: .github/scripts/copilot-sync.ps1
