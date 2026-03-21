@@ -1,116 +1,95 @@
 ---
-description: 'Angular-specific coding standards and best practices'
-applyTo: '**/*.ts, **/*.html, **/*.scss, **/*.css'
+description: 'Angular 21 coding standards and best practices'
+applyTo: '**/*.ts, **/*.html, **/*.scss'
 ---
 
 # Angular Development Instructions
 
-Instructions for generating high-quality Angular applications with TypeScript, using Angular Signals for state management, 
-adhering to Angular best practices as outlined at https://angular.dev.
+Guidelines for building high-quality Angular 21 applications with TypeScript, Angular Signals, and standalone components.
 
-## Project Context
-- Latest Angular version (use standalone components by default)
-- TypeScript for type safety
-- Angular CLI for project setup, scaffolding, and workspace management
-- Follow Angular Style Guide (https://angular.dev/style-guide)
-- Use PrimeNG for consistent styling
+## Project Standards
 
-## NX Monorepo (if applicable)
-- Organize code into `apps/` and `libs/`
-- Use libraries for reusable components, services, and logic
-- Maintain clear boundaries between libraries using NX tags and lint rules
-- Leverage NX affected commands to run tasks only on changed projects
-- Use NX computation caching to speed up builds and tests
+- Use Angular 21 with standalone components (no NgModules unless explicitly required)
+- Enable strict mode in `tsconfig.json`
+- Use Angular CLI for scaffolding; follow the [Angular Style Guide](https://angular.dev/style-guide)
+- Use PrimeNG for UI components (latest version compatible with the project's Angular version)
+- Use TailwindCSS for utility styling
 
-## Development Standards
+## File Naming
 
-### Architecture
-- Use standalone components unless modules are explicitly required
-- Organize code by standalone feature modules or domains for scalability
-- Implement lazy loading for feature modules to optimize performance
-- Use Angular's built-in dependency injection system effectively
-- Structure components with a clear separation of concerns (smart vs. presentational components)
-- Use Angular Signals for state management and inter-component communication
-- Use Signal stores (@ngrx/signals) for centralized state management
+- **No `.component` postfix**: name files `topbar.ts` / `topbar.html` / `topbar.scss`, not `topbar.component.ts`
+- Every component must have **3 separate files**: `name.ts`, `name.html`, `name.scss`
+- Use `templateUrl` and `styleUrl` — never inline `template` or `styles`
+- Services: `user.service.ts`, Guards: `auth.guard.ts`, Pipes: `date-format.pipe.ts`
 
-### TypeScript
-- Enable strict mode in `tsconfig.json` for type safety
-- Define clear interfaces and types for components, services, and models
-- Use type guards and union types for robust type checking
-- Implement proper error handling with RxJS operators (e.g., `catchError`)
-- Use typed forms (e.g., `FormGroup`, `FormControl`) for reactive forms
+## Component Design
 
-### Component Design
-- Follow Angular's component lifecycle hooks best practices
-- When using Angular >= 19, Use `input()` `output()`, `viewChild()`, `viewChildren()`, `contentChild()` and `contentChildren()` functions instead of decorators; otherwise use decorators
-- Leverage Angular's change detection strategy (default or `OnPush` for performance)
-- Keep templates clean and logic in component classes or services
-- Use Angular directives and pipes for reusable functionality
+- All components must be `standalone: true`
+- Use `input()`, `output()`, `viewChild()`, `viewChildren()` functions instead of decorators (`@Input`, `@Output`, `@ViewChild`)
+- Use `inject()` for dependency injection — never constructor injection
+- Apply `OnPush` change detection where practical for performance
+- Keep template logic minimal; move complexity to component class or services
 
-### Styling
-- Use Angular's component-level CSS encapsulation (default: ViewEncapsulation.Emulated)
-- Prefer SCSS for styling with consistent theming
-- Implement responsive design using CSS Grid, Flexbox, TailwindCSS or Angular CDK Layout utilities
-- Follow Angular Material's theming guidelines if used
-- Maintain accessibility (a11y) with ARIA attributes and semantic HTML
+## Naming Conventions
 
-### State Management
-- Use Angular Signals for reactive state management in components and services
-- Leverage `signal()`, `computed()`, and `effect()` for reactive state updates
-- Use writable signals for mutable state and computed signals for derived state
-- Handle loading and error states with signals and proper UI feedback
-- Use Angular's `AsyncPipe` to handle observables in templates when combining signals with RxJS
+- Component selectors: `kebab-case` with project-specific prefix (e.g., `app-`, `gv-`)
+- Component classes: `PascalCase` without `Component` suffix (e.g., `Topbar`, not `TopbarComponent`)
+- Services: `PascalCase` ending in `Service` (e.g., `UserService`)
+- Signals: descriptive camelCase (e.g., `isLoading`, `currentUser`)
 
-### Data Fetching
-- Use Angular's `HttpClient` for API calls with proper typing
-- Implement RxJS operators for data transformation and error handling
-- Use Angular's `inject()` function for dependency injection in standalone components
-- Implement caching strategies (e.g., `shareReplay` for observables)
-- Store API response data in signals for reactive updates
-- Handle API errors with global interceptors for consistent error handling
+## State Management with Signals
 
-### Security
-- Sanitize user inputs using Angular's built-in sanitization
-- Implement route guards for authentication and authorization
-- Use Angular's `HttpInterceptor` for CSRF protection and API authentication headers
-- Validate form inputs with Angular's reactive forms and custom validators
-- Follow Angular's security best practices (e.g., avoid direct DOM manipulation)
+- Use `signal()`, `computed()`, and `effect()` for local reactive state
+- Use NgRx Signal Store (`@ngrx/signals`) for shared/cross-component state
+- Never share mutable state through services with plain properties — use signals
+- Use `toSignal()` to bridge RxJS observables to signals where needed
 
-### Performance
-- Enable production builds with `ng build --prod` or `nx build --prod` for optimization
-- Use lazy loading for routes to reduce initial bundle size
-- Optimize change detection with `OnPush` strategy and signals for fine-grained reactivity
-- Use trackBy in `ngFor` loops to improve rendering performance
-- Implement server-side rendering (SSR) or static site generation (SSG) with Angular Universal (if specified)
-- Leverage NX computation caching (if using NX)
+## Dependency Injection
 
-### Testing
-- Write unit tests for components, services, and pipes using Vitest or Jest (if specified)
-- Use Angular's `TestBed` for component testing with mocked dependencies
-- Test signal-based state updates using Angular's testing utilities
-- Write end-to-end tests with Playwright or (Cypress if specified)
-- Mock HTTP requests using `provideHttpClientTesting`
-- Ensure high test coverage for critical functionality
-- Use `nx affected:test` to run only relevant tests (if using NX)
+```typescript
+// ✅ Correct
+export class UserProfile {
+  private userService = inject(UserService);
+  userId = input<string>();
+}
 
-## Implementation Process
-1. Plan project structure and feature modules
-2. Define TypeScript interfaces and models
-3. Scaffold components, services, and pipes using Angular CLI
-4. Implement data services and API integrations with signal-based state
-5. Build reusable components with clear inputs and outputs
-6. Add reactive forms and validation
-7. Apply styling with SCSS and responsive design
-8. Implement lazy-loaded routes and guards
-9. Add error handling and loading states using signals
-10. Write unit and end-to-end tests
-11. Optimize performance and bundle size
+// ❌ Wrong
+export class UserProfile {
+  constructor(private userService: UserService) {}
+}
+```
 
-## Additional Guidelines
-- Follow the Angular Style Guide for file naming conventions (see https://angular.dev/style-guide), e.g., use `feature.ts` for components and `feature-service.ts` for services. For legacy codebases, maintain consistency with existing pattern.
-- Use Angular CLI or NX commands for generating boilerplate code (e.g., `ng generate` or `nx generate`)
-- Document components and services with clear JSDoc comments
-- Ensure accessibility compliance (WCAG 2.1) where applicable
-- Use Angular's built-in i18n for internationalization (if specified)
-- Keep code DRY by creating reusable utilities and shared modules (especially in `libs/` when using NX)
-- Use signals consistently for state management to ensure reactive updates
+## Templates
+
+- Use `@if`, `@for`, `@switch` (new control flow, Angular 17+)
+- Use `@for` with `track` expression — always provide a unique identity
+- Avoid complex expressions in templates; extract to `computed()` signals
+
+```html
+<!-- ✅ Correct -->
+@for (item of items(); track item.id) {
+  <li>{{ item.name }}</li>
+}
+
+<!-- ❌ Avoid -->
+<li *ngFor="let item of items">{{ item.name }}</li>
+```
+
+## Routing
+
+- Use lazy loading for all feature routes: `loadComponent: () => import(...)`
+- Use `inject()` inside route guards and resolvers
+- Define routes as typed `Routes` arrays in `*.routes.ts` files
+
+## Testing
+
+- Unit tests: Vitest (preferred) or Jest — file naming `*.spec.ts`
+- Use `TestBed` for component tests with minimal mocked dependencies
+- Prefer testing behavior over implementation details
+
+## Performance
+
+- Use `OnPush` change detection with signal-based components
+- Implement `trackBy` (or `track`) in all list renders
+- Lazy-load routes and heavy components
+- Keep initial bundle under 500 kB (compressed) for fast first paint

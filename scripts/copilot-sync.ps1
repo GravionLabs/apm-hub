@@ -61,9 +61,21 @@ $Repo       = 'GravionLabs/copilot-hub'
 $RemoteBase = 'templates'
 
 $Categories = @(
-    @{ Name = 'instructions' = '*.instructions.md'; LocalDir = '.github/instructions' }
-    ,@{ Name = 'prompts' = '*.prompt.md'; LocalDir = '.github/prompts' }
-    ,@{ Name = 'agents' = '*.agent.md'; LocalDir = '.github/agents' }
+    @{
+        Name     = 'instructions'
+        Filter   = '*.instructions.md'
+        LocalDir = '.github/instructions'
+    },
+    @{
+        Name     = 'prompts'
+        Filter   = '*.prompt.md'
+        LocalDir = '.github/prompts'
+    },
+    @{
+        Name     = 'agents'
+        Filter   = '*.agent.md'
+        LocalDir = '.github/agents'
+    }
 )
 
 if (-not $GlobalBase) {

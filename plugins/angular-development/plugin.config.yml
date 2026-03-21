@@ -1,0 +1,42 @@
+name: angular-development
+description: >-
+  Angular 21 full-stack development plugin.
+  Covers standalone components, NgRx Signal Store, Angular libraries,
+  PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.
+version: "1.0.0"
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - angular
+  - ngrx
+  - signals
+  - primeng
+  - sakai-ui
+  - typescript
+
+# Agents copied as-is from templates/agents/
+agents:
+  - source: angular-expert
+  - source: angular-library-architect
+  - source: sakai-ui-expert
+
+# Skills generated from prompt templates
+skills:
+  # Code quality & tooling
+  - name: setup-prettier-eslint-husky
+
+  # Component scaffolding
+  - name: angular-component
+  - name: sakai-ui-component
+
+  # State management
+  - name: angular-signal-store
+
+  # Library setup
+  - name: angular-library-create
+
+instructions:
+  - source: angular
+  - source: ngrx-signals
+  - source: sakai-ui
