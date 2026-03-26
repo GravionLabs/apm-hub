@@ -6,12 +6,38 @@ This page lists all available Copilot CLI plugins in this repository. This file 
 
 ## Overview
 
-| Plugin                                    | Description                                                                                                                                                                                                                                                                                                                                                                           | Skills | Agents | Instructions |
-| :---------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----: | :----: | :----------: |
-| [copilot-workspace](#copilot-workspace)   | Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. The standalone copilot-sync.ps1 script is included for manual or scheduled runs without the AI prompt. |   2    |   0    |      0       |
-| [csharp-development](#csharp-development) | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.                                                                                                                   |   13   |   9    |      3       |
-| [devops](#devops)                         | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.                                                                                                                                 |   8    |   3    |      4       |
-| [security](#security)                     | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                                                                                                                                      |   0    |   2    |      1       |
+| Plugin                                      | Description                                                                                                                                                                                                                                                                                                                                                                           | Skills | Agents | Instructions |
+| :------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----: | :----: | :----------: |
+| [angular-development](#angular-development) | Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.                                                                                                                                                                                          |   5    |   3    |      3       |
+| [copilot-workspace](#copilot-workspace)     | Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. The standalone copilot-sync.ps1 script is included for manual or scheduled runs without the AI prompt. |   2    |   0    |      0       |
+| [csharp-development](#csharp-development)   | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.                                                                                                                   |   13   |   9    |      3       |
+| [devops](#devops)                           | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.                                                                                                                                 |   8    |   3    |      4       |
+| [security](#security)                       | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                                                                                                                                      |   0    |   2    |      1       |
+
+## angular-development
+
+📁 [`plugins/angular-development`](../plugins/angular-development)
+
+Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.
+
+**Keywords:** `angular`, `ngrx`, `signals`, `primeng`, `sakai-ui`, `typescript`
+
+**Skills (5):**
+- [`setup-prettier-eslint-husky`](../plugins/angular-development/skills/setup-prettier-eslint-husky)
+- [`angular-component`](../plugins/angular-development/skills/angular-component)
+- [`sakai-ui-component`](../plugins/angular-development/skills/sakai-ui-component)
+- [`angular-signal-store`](../plugins/angular-development/skills/angular-signal-store)
+- [`angular-library-create`](../plugins/angular-development/skills/angular-library-create)
+
+**Agents (3):**
+- [`angular-expert.agent.md`](../plugins/angular-development/agents/angular-expert.agent.md)
+- [`angular-library-architect.agent.md`](../plugins/angular-development/agents/angular-library-architect.agent.md)
+- [`sakai-ui-expert.agent.md`](../plugins/angular-development/agents/sakai-ui-expert.agent.md)
+
+**Instructions (3):**
+- [`angular.instructions.md`](../plugins/angular-development/instructions/angular.instructions.md)
+- [`ngrx-signals.instructions.md`](../plugins/angular-development/instructions/ngrx-signals.instructions.md)
+- [`sakai-ui.instructions.md`](../plugins/angular-development/instructions/sakai-ui.instructions.md)
 
 ## copilot-workspace
 

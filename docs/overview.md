@@ -47,6 +47,7 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 - [Prompts](concepts/prompts.md): What prompts are and when to use them
 - [Instructions](concepts/instructions.md): What instructions are and how scoping works
 - [Agents](concepts/agents.md): What agents are and how they differ from prompts
+- [Skills](concepts/skills.md): Named prompts bundled in plugins, available as slash commands
 - [Plugins](concepts/plugins.md): Installable bundles of agents, skills, and instructions
 - [How all concepts work together](concepts/mental-model.md)
 - [copilot-workspace: Setup & Sync](sync/copilot-workspace.md)
@@ -124,18 +125,19 @@ This section is especially useful for **onboarding**, **training**, and **docume
 
 ## Core Concepts at a Glance
 
-| Concept      | Purpose                         | Applied When   |
-| :----------- | :------------------------------ | :------------- |
-| Instructions | Persistent project rules        | Automatically  |
-| Prompts      | Task‑specific workflows         | Manually (`/`) |
-| Agents       | Specialized roles & permissions | Manually (`@`) |
-| Plugins      | Installable bundles (CLI)       | On install     |
+| Concept      | Purpose                                 | Applied When   |
+| :----------- | :-------------------------------------- | :------------- |
+| Instructions | Persistent project rules                | Automatically  |
+| Prompts      | Task‑specific workflows                 | Manually (`/`) |
+| Agents       | Specialized roles & permissions         | Manually (`@`) |
+| Skills       | Named prompts distributed via plugins   | Manually (`/`) |
+| Plugins      | Installable bundles (agents, skills, …) | On install     |
 
 **Mental model**
 
 Instructions → Define the rules
 Agent → Define the role
-Prompt → Define the task
+Prompt / Skill → Define the task
 
 ## Who Is This Repository For?
 
@@ -194,6 +196,7 @@ GitHub Copilot is a **developer assistant**, not a decision maker.
 
 - Start with `docs/concepts/prompts.md`, `instructions.md`, and `agents.md`
 - **[Browse All Templates](template-list.md)**
+- **[Browse All Skills](skill-list.md)** — cross-plugin skill index
 - **[Browse All Plugins](plugin-list.md)** — or install via `gh copilot plugin marketplace add GravionLabs/copilot-hub`
 - Review the templates in `templates/`
 - Explore the review checklists in `docs/checklists/`

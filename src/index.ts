@@ -6,6 +6,7 @@ import { generatePluginList } from './generators/plugin-list-generator';
 import { updateReadme } from './generators/readme-generator';
 import { formatAllDocs } from './generators/format-docs-generator';
 import { generateMarketplace } from './generators/marketplace-generator';
+import { generateSkillList } from './generators/skill-list-generator';
 
 function main() {
   const args = process.argv.slice(2);
@@ -33,6 +34,9 @@ function main() {
 
     // 3. Regenerate plugin list
     generatePluginList();
+
+    // 3.5 Regenerate skill list
+    generateSkillList();
 
     // 4. Update README.md auto-generated sections
     updateReadme();

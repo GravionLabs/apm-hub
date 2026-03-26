@@ -49,11 +49,11 @@ Bootstraps a repository's GitHub Copilot configuration from scratch. The wizard:
 
 #### Flags
 
-| Flag | Description |
-|------|-------------|
-| *(none)* | Interactive mode — confirms each step before proceeding |
-| `--autopilot` | Skip all confirmations, accept all suggestions, proceed non-interactively |
-| `--autopilot --with-instructions` | Autopilot mode and also generate `copilot-instructions.md` automatically |
+| Flag                              | Description                                                               |
+| :-------------------------------- | :------------------------------------------------------------------------ |
+| *(none)*                          | Interactive mode — confirms each step before proceeding                   |
+| `--autopilot`                     | Skip all confirmations, accept all suggestions, proceed non-interactively |
+| `--autopilot --with-instructions` | Autopilot mode and also generate `copilot-instructions.md` automatically  |
 
 #### Usage examples
 
@@ -70,16 +70,16 @@ Bootstraps a repository's GitHub Copilot configuration from scratch. The wizard:
 
 #### Stack-based suggestions
 
-| Stack | Suggested templates |
-|-------|-------------------|
-| Always | `instructions/security.instructions.md` |
-| C# / .NET | `csharp.instructions.md`, `dotnet-architecture-good-practices.instructions.md`, prompts: `csharp-code-review`, `dotnet-best-practices`, agents: `csharp-expert` |
-| + NUnit | `csharp-nunit.instructions.md` |
-| + ASP.NET | `aspnet-rest-apis.instructions.md` |
-| Python | `python.instructions.md`, prompts: `python-code-review`, `pytest-coverage` |
-| TypeScript / JS | `typescript-mcp-server.instructions.md` (if MCP), prompts: `code-review`, `write-tests` |
-| Terraform | `terraform.instructions.md` |
-| Generic | `code-review.prompt.md`, `explain-code.prompt.md`, agents: `security-reviewer` |
+| Stack           | Suggested templates                                                                                                                                             |
+| :-------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Always          | `instructions/security.instructions.md`                                                                                                                         |
+| C# / .NET       | `csharp.instructions.md`, `dotnet-architecture-good-practices.instructions.md`, prompts: `csharp-code-review`, `dotnet-best-practices`, agents: `csharp-expert` |
+| + NUnit         | `csharp-nunit.instructions.md`                                                                                                                                  |
+| + ASP.NET       | `aspnet-rest-apis.instructions.md`                                                                                                                              |
+| Python          | `python.instructions.md`, prompts: `python-code-review`, `pytest-coverage`                                                                                      |
+| TypeScript / JS | `typescript-mcp-server.instructions.md` (if MCP), prompts: `code-review`, `write-tests`                                                                         |
+| Terraform       | `terraform.instructions.md`                                                                                                                                     |
+| Generic         | `code-review.prompt.md`, `explain-code.prompt.md`, agents: `security-reviewer`                                                                                  |
 
 ---
 
@@ -97,15 +97,15 @@ sync logic is always current even if the plugin itself hasn't been updated.
 
 #### Flags
 
-| Flag | Description |
-|------|-------------|
-| *(none)* | Interactive mode — shows diff summary, asks before applying updates |
-| `--autopilot` | Skip all confirmations, apply all updates immediately |
-| `--force` | Overwrite all files unconditionally, even if unchanged |
-| `--dry-run` | Show what would change without writing any files |
-| `--global-base <path>` | Override the global base directory (default: `~/.github`) |
-| `--skip-new` | Skip the check for newly available templates in copilot-hub |
-| `--install-new` | Automatically install all newly discovered templates |
+| Flag                   | Description                                                         |
+| :--------------------- | :------------------------------------------------------------------ |
+| *(none)*               | Interactive mode — shows diff summary, asks before applying updates |
+| `--autopilot`          | Skip all confirmations, apply all updates immediately               |
+| `--force`              | Overwrite all files unconditionally, even if unchanged              |
+| `--dry-run`            | Show what would change without writing any files                    |
+| `--global-base <path>` | Override the global base directory (default: `~/.github`)           |
+| `--skip-new`           | Skip the check for newly available templates in copilot-hub         |
+| `--install-new`        | Automatically install all newly discovered templates                |
 
 #### Usage examples
 
@@ -143,14 +143,14 @@ pwsh .github/scripts/copilot-sync.ps1
 
 ### Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `-Autopilot` | switch | Skip all confirmation prompts, apply updates immediately |
-| `-Force` | switch | Overwrite all files unconditionally, even if unchanged |
-| `-DryRun` | switch | Show what would change without writing any files |
+| Parameter            | Type   | Description                                                                                 |
+| :------------------- | :----- | :------------------------------------------------------------------------------------------ |
+| `-Autopilot`         | switch | Skip all confirmation prompts, apply updates immediately                                    |
+| `-Force`             | switch | Overwrite all files unconditionally, even if unchanged                                      |
+| `-DryRun`            | switch | Show what would change without writing any files                                            |
 | `-GlobalBase <path>` | string | Override the global base directory (default: `$HOME/.github` or `$env:COPILOT_GLOBAL_BASE`) |
-| `-SkipNew` | switch | Skip the check for new templates not yet installed |
-| `-InstallNew` | switch | Automatically install all newly discovered templates |
+| `-SkipNew`           | switch | Skip the check for new templates not yet installed                                          |
+| `-InstallNew`        | switch | Automatically install all newly discovered templates                                        |
 
 ### What the script does
 
@@ -231,11 +231,11 @@ jobs:
 
 ## When to Use What
 
-| Scenario | Recommended approach |
-|----------|---------------------|
-| First-time setup of a new repository | `/gh-copilot-setup` |
-| Manually updating templates in an existing repo | `/gh-copilot-sync` |
-| Previewing what would change | `/gh-copilot-sync --dry-run` |
-| Keeping a repository updated on a schedule | `copilot-sync.ps1` via CI |
-| Running without an AI session | `pwsh .github/scripts/copilot-sync.ps1` directly |
-| Non-interactive scripting / pipelines | `copilot-sync.ps1 -Autopilot` |
+| Scenario                                        | Recommended approach                             |
+| :---------------------------------------------- | :----------------------------------------------- |
+| First-time setup of a new repository            | `/gh-copilot-setup`                              |
+| Manually updating templates in an existing repo | `/gh-copilot-sync`                               |
+| Previewing what would change                    | `/gh-copilot-sync --dry-run`                     |
+| Keeping a repository updated on a schedule      | `copilot-sync.ps1` via CI                        |
+| Running without an AI session                   | `pwsh .github/scripts/copilot-sync.ps1` directly |
+| Non-interactive scripting / pipelines           | `copilot-sync.ps1 -Autopilot`                    |
