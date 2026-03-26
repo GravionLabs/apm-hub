@@ -3,8 +3,10 @@ description: >-
   Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub.
   Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with
   instructions, prompts, and agents tailored to your stack, plus a sync prompt
-  (gh-copilot-sync) to keep them up to date. The standalone copilot-sync.ps1
-  script is included for manual or scheduled runs without the AI prompt.
+  (gh-copilot-sync) to keep them up to date. Includes create-agents-md to
+  scaffold an AGENTS.md repository context file. The standalone scripts
+  (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled
+  runs without the AI prompt.
 version: "1.0.0"
 author:
   name: Gravion
@@ -16,15 +18,22 @@ keywords:
   - sync
   - workspace
   - configuration
+  - agents-md
 
 skills:
   # Interactive wizard: analyze stack, select and install instructions/prompts/agents
   - name: gh-copilot-setup
   # Download and run copilot-sync.ps1 to update installed templates from copilot-hub
   - name: gh-copilot-sync
+  # Analyze the repository and generate a tailored AGENTS.md context file
+  - name: create-agents-md
 
 files:
   # Standalone PowerShell Core sync script — can be run directly without the AI prompt:
   #   pwsh .github/scripts/copilot-sync.ps1 [-Autopilot] [-Force] [-DryRun] [-InstallNew]
   - source: scripts/copilot-sync.ps1
     destination: .github/scripts/copilot-sync.ps1
+  # Scaffold an AGENTS.md from a project-type template:
+  #   pwsh .github/scripts/New-AgentsMd.ps1 [-Type dotnet|node|python|github-actions|generic]
+  - source: scripts/New-AgentsMd.ps1
+    destination: .github/scripts/New-AgentsMd.ps1
