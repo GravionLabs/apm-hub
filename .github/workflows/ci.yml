@@ -6,12 +6,17 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   ci:
     name: CI
     uses: GravionLabs/ci/.github/workflows/node-ci.yml@main
     with:
-      node-version: '24'
+      node-version: '22'
 
   release:
     name: Release
