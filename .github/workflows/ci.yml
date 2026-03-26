@@ -10,8 +10,11 @@ jobs:
   ci:
     name: CI
     uses: GravionLabs/ci/.github/workflows/node-ci.yml@main
+    permissions:
+      checks: write
+      pull-requests: write
     with:
-      node-version: '24'
+      node-version: '22'
 
   release:
     name: Release
