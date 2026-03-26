@@ -11,6 +11,7 @@ jobs:
     name: CI
     uses: GravionLabs/ci/.github/workflows/node-ci.yml@main
     permissions:
+      contents: read
       checks: write
       pull-requests: write
     with:
