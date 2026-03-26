@@ -47,6 +47,7 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 - [Prompts](concepts/prompts.md): What prompts are and when to use them
 - [Instructions](concepts/instructions.md): What instructions are and how scoping works
 - [Agents](concepts/agents.md): What agents are and how they differ from prompts
+- [AGENTS.md](concepts/agents-md.md): Repository context files for AI coding assistants
 - [Skills](concepts/skills.md): Named prompts bundled in plugins, available as slash commands
 - [Plugins](concepts/plugins.md): Installable bundles of agents, skills, and instructions
 - [How all concepts work together](concepts/mental-model.md)
@@ -132,6 +133,7 @@ This section is especially useful for **onboarding**, **training**, and **docume
 | Agents       | Specialized roles & permissions         | Manually (`@`) |
 | Skills       | Named prompts distributed via plugins   | Manually (`/`) |
 | Plugins      | Installable bundles (agents, skills, …) | On install     |
+| AGENTS.md    | Repository context for AI tools         | Automatically  |
 
 **Mental model**
 

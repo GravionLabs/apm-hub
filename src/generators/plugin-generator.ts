@@ -286,27 +286,6 @@ export function generatePlugin(configPath: string, templatesDir: string): void {
     }
   }
 
-  // Copy scripts
-  if (config.scripts && config.scripts.length > 0) {
-    const scriptsDir = path.join(pluginDir, 'scripts');
-    fs.mkdirSync(scriptsDir, { recursive: true });
-    const repoRoot = path.dirname(templatesDir);
-
-    for (const scriptName of config.scripts) {
-      const scriptFile = scriptName.includes('.') ? scriptName : `${scriptName}.ps1`;
-      const sourcePath = path.join(repoRoot, 'scripts', scriptFile);
-
-      if (!fs.existsSync(sourcePath)) {
-        console.warn(`  ⚠ Script source not found, skipping: ${sourcePath}`);
-        continue;
-      }
-
-      const destPath = path.join(scriptsDir, scriptFile);
-      fs.copyFileSync(sourcePath, destPath);
-      console.log(`  ✓ Script: scripts/${scriptFile}`);
-    }
-  }
-
   // Generate plugin.json in .github/plugin/
   const pluginManifestDir = path.join(pluginDir, '.github', 'plugin');
   fs.mkdirSync(pluginManifestDir, { recursive: true });
