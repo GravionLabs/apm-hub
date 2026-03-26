@@ -10,6 +10,7 @@
     "generate-template-list": "node dist/index.js --template-list",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "vitest run",
+    "test:ci": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
