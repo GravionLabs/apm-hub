@@ -20,6 +20,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Comprehensive docs/ update
 - Replace old sync mechanism with copilot-workspace docs
 - Add Skills concept documentation and auto-generated skill list
+- Update CHANGELOG.md for v1.0.0 [skip ci]
 
 
 ### Features
