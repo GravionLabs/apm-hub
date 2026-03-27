@@ -7,7 +7,7 @@ description: >-
   scaffold an AGENTS.md repository context file. The standalone scripts
   (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled
   runs without the AI prompt.
-version: "1.0.0"
+version: "1.0.1"
 author:
   name: Gravion
 license: MIT
