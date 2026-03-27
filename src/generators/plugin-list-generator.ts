@@ -28,6 +28,7 @@ interface PluginMetadata {
 export interface ParsedPlugin {
   dirName: string;
   name: string;
+  version: string;
   description: string;
   skillCount: number;
   agentCount: number;
@@ -56,6 +57,7 @@ export function parsePluginConfig(configPath: string): ParsedPlugin {
   return {
     dirName,
     name: config.name ?? dirName,
+    version: config.version ?? '1.0.0',
     description: config.description ?? '',
     skillCount: skills.length,
     agentCount: agents.length,
@@ -95,13 +97,13 @@ export function generatePluginList(pluginsBaseDir = 'plugins', outputFile = 'doc
   output += `> Each plugin can be installed by pointing the Copilot CLI at its \`.github/plugin/plugin.json\` manifest.\n\n`;
 
   output += `## Overview\n\n`;
-  output += `| Plugin | Description | Skills | Agents | Instructions |\n`;
-  output += `| :--- | :--- | :---: | :---: | :---: |\n`;
+  output += `| Plugin | Version | Description | Skills | Agents | Instructions |\n`;
+  output += `| :--- | :---: | :--- | :---: | :---: | :---: |\n`;
 
   for (const p of plugins) {
     const link = `[${p.name}](#${p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')})`;
     const desc = p.description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-    output += `| ${link} | ${desc} | ${p.skillCount} | ${p.agentCount} | ${p.instructionCount} |\n`;
+    output += `| ${link} | \`${p.version}\` | ${desc} | ${p.skillCount} | ${p.agentCount} | ${p.instructionCount} |\n`;
   }
   output += `\n`;
 
@@ -110,7 +112,7 @@ export function generatePluginList(pluginsBaseDir = 'plugins', outputFile = 'doc
     output += `## ${p.name}\n\n`;
 
     const relDir = `../plugins/${p.dirName}`;
-    output += `📁 [\`plugins/${p.dirName}\`](${relDir})\n\n`;
+    output += `📁 [\`plugins/${p.dirName}\`](${relDir}) · **v${p.version}**\n\n`;
 
     if (p.description) {
       const desc = p.description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();

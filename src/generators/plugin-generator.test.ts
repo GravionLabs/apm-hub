@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as path from 'path';
-import { generatePlugin, resolveSkillSource, resolveTemplatePath } from './plugin-generator';
+import { generatePlugin, updatePluginConfigVersion, resolveSkillSource, resolveTemplatePath } from './plugin-generator';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -449,5 +449,63 @@ describe('plugin-generator', () => {
     expect(() => generatePlugin('/does/not/exist/plugin.config.yml', TEMPLATES_DIR)).toThrow(
       'Plugin config not found',
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// updatePluginConfigVersion
+// ---------------------------------------------------------------------------
+
+describe('updatePluginConfigVersion', () => {
+  beforeEach(() => {
+    writtenFiles.clear();
+    existingFiles.clear();
+  });
+
+  it('updates the version field in plugin.config.yml', () => {
+    const content = 'name: my-plugin\nversion: "1.0.0"\ndescription: Test\n';
+    existingFiles.set(CONFIG_PATH, content);
+
+    updatePluginConfigVersion(CONFIG_PATH, '2.3.4');
+
+    expect(writtenFiles.get(CONFIG_PATH)).toBe('name: my-plugin\nversion: "2.3.4"\ndescription: Test\n');
+  });
+
+  it('does not write the file when version is unchanged', () => {
+    const content = 'name: my-plugin\nversion: "1.0.0"\ndescription: Test\n';
+    existingFiles.set(CONFIG_PATH, content);
+
+    updatePluginConfigVersion(CONFIG_PATH, '1.0.0');
+
+    expect(writtenFiles.has(CONFIG_PATH)).toBe(false);
+  });
+
+  it('preserves comments and surrounding content', () => {
+    const content = '# Plugin config\nname: my-plugin\n# The version\nversion: "0.9.1"\nauthor:\n  name: Test\n';
+    existingFiles.set(CONFIG_PATH, content);
+
+    updatePluginConfigVersion(CONFIG_PATH, '1.5.0');
+
+    expect(writtenFiles.get(CONFIG_PATH)).toBe(
+      '# Plugin config\nname: my-plugin\n# The version\nversion: "1.5.0"\nauthor:\n  name: Test\n',
+    );
+  });
+
+  it('generatePlugin updates plugin.config.yml when version is provided', () => {
+    const configContent = makeConfig({ version: '1.0.0' });
+    existingFiles.set(CONFIG_PATH, configContent);
+
+    generatePlugin(CONFIG_PATH, TEMPLATES_DIR, '3.1.4');
+
+    expect(writtenFiles.get(CONFIG_PATH)).toContain('version: "3.1.4"');
+  });
+
+  it('generatePlugin does not modify plugin.config.yml when no version is provided', () => {
+    const configContent = makeConfig({ version: '1.0.0' });
+    existingFiles.set(CONFIG_PATH, configContent);
+
+    generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+    expect(writtenFiles.has(CONFIG_PATH)).toBe(false);
   });
 });

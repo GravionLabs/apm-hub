@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { injectBlock, buildTemplateStatsBlock, buildPluginTableBlock, updateReadme } from './readme-generator';
+import { injectBlock, buildTemplateStatsBlock, buildPluginTableBlock, updateReadme, updateFileBlock } from './readme-generator';
 
 vi.mock('fs');
 vi.mock('yaml');
@@ -195,6 +195,56 @@ describe('updateReadme', () => {
     mockFs.writeFileSync = vi.fn();
     const changed = updateReadme('README.md', 'templates', 'plugins');
     expect(changed).toBe(false);
+    expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+  });
+});
+
+describe('updateFileBlock', () => {
+  const FILE_PATH = 'docs/overview.md';
+  const fileWithMarkers = '# Overview\n\n<!-- AUTO:start version -->\nWelcome to **copilot-hub** v1.0.0 👋\n<!-- AUTO:end version -->\n\nSome content.\n';
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFs.writeFileSync = vi.fn();
+  });
+
+  it('updates the block content and returns true when changed', () => {
+    mockFs.existsSync = vi.fn().mockReturnValue(true);
+    mockFs.readFileSync = vi.fn().mockReturnValue(fileWithMarkers);
+
+    const result = updateFileBlock(FILE_PATH, 'version', 'Welcome to **copilot-hub** v2.0.0 👋');
+
+    expect(result).toBe(true);
+    const written = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
+    expect(written).toContain('v2.0.0');
+  });
+
+  it('returns false and does not write when content is unchanged', () => {
+    mockFs.existsSync = vi.fn().mockReturnValue(true);
+    mockFs.readFileSync = vi.fn().mockReturnValue(fileWithMarkers);
+
+    const result = updateFileBlock(FILE_PATH, 'version', 'Welcome to **copilot-hub** v1.0.0 👋');
+
+    expect(result).toBe(false);
+    expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+  });
+
+  it('returns false and warns when file does not exist', () => {
+    mockFs.existsSync = vi.fn().mockReturnValue(false);
+
+    const result = updateFileBlock(FILE_PATH, 'version', 'Welcome to **copilot-hub** v2.0.0 👋');
+
+    expect(result).toBe(false);
+    expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+  });
+
+  it('returns false and warns when AUTO markers are missing', () => {
+    mockFs.existsSync = vi.fn().mockReturnValue(true);
+    mockFs.readFileSync = vi.fn().mockReturnValue('# Overview\n\nNo markers here.\n');
+
+    const result = updateFileBlock(FILE_PATH, 'version', 'Welcome to **copilot-hub** v2.0.0 👋');
+
+    expect(result).toBe(false);
     expect(mockFs.writeFileSync).not.toHaveBeenCalled();
   });
 });
