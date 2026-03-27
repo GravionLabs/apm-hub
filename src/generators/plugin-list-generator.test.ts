@@ -23,6 +23,7 @@ describe('parsePluginConfig', () => {
     mockParse.mockReturnValue({
       name: 'my-plugin',
       description: 'My plugin description',
+      version: '2.1.0',
       skills: [{ name: 'skill-a' }, { name: 'skill-b' }],
       agents: [{ source: 'agent-x' }],
       instructions: [{ source: 'instr-y' }],
@@ -33,6 +34,7 @@ describe('parsePluginConfig', () => {
 
     expect(result.dirName).toBe('my-plugin');
     expect(result.name).toBe('my-plugin');
+    expect(result.version).toBe('2.1.0');
     expect(result.description).toBe('My plugin description');
     expect(result.skillCount).toBe(2);
     expect(result.agentCount).toBe(1);
@@ -70,6 +72,7 @@ describe('parsePluginConfig', () => {
     expect(result.agents).toEqual([]);
     expect(result.instructions).toEqual([]);
     expect(result.keywords).toEqual([]);
+    expect(result.version).toBe('1.0.0');
   });
 
   it('should fall back to dirName when config has no name', () => {
@@ -98,6 +101,7 @@ describe('generatePluginList', () => {
     mockParse.mockReturnValue({
       name: 'my-plugin',
       description: 'A cool plugin',
+      version: '1.2.3',
       skills: [{ name: 'skill-a' }, { name: 'skill-b' }],
       agents: [{ source: 'agent-x' }],
       instructions: [{ source: 'instr-y' }],
@@ -112,12 +116,14 @@ describe('generatePluginList', () => {
 
     expect(content).toContain('# Plugin List');
     expect(content).toContain('automatically generated');
-    // Overview table
-    expect(content).toContain('| Plugin | Description | Skills | Agents | Instructions |');
+    // Overview table includes Version column
+    expect(content).toContain('| Plugin | Version | Description | Skills | Agents | Instructions |');
+    expect(content).toContain('`1.2.3`');
     expect(content).toContain('my-plugin');
     expect(content).toContain('A cool plugin');
-    // Per-plugin section
+    // Per-plugin section shows version
     expect(content).toContain('## my-plugin');
+    expect(content).toContain('**v1.2.3**');
     expect(content).toContain('plugins/my-plugin');
     expect(content).toContain('skill-a');
     expect(content).toContain('agent-x.agent.md');
@@ -132,15 +138,14 @@ describe('generatePluginList', () => {
 
     const content = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
     expect(content).toContain('# Plugin List');
-    expect(content).toContain('| Plugin | Description | Skills | Agents | Instructions |');
+    expect(content).toContain('| Plugin | Version | Description | Skills | Agents | Instructions |');
     // No plugin rows
     expect(content).not.toContain('\n## my-plugin');
   });
 
   it('should skip directories without plugin.config.yml', () => {
     mockFs.existsSync = vi.fn((p: fs.PathLike | string) => {
-      if (typeof p === 'string' && p.endsWith('plugin.config.yml')) return false;
-      return true;
+      return !(typeof p === 'string' && p.endsWith('plugin.config.yml'));
     });
     mockFs.readdirSync = vi.fn().mockReturnValue([
       { name: 'orphan', isDirectory: () => true },

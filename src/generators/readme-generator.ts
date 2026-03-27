@@ -22,7 +22,7 @@ export function injectBlock(content: string, id: string, generated: string): str
   const endIdx = content.indexOf(end);
 
   if (startIdx === -1 || endIdx === -1) {
-    throw new Error(`AUTO markers for '${id}' not found in README.md`);
+    throw new Error(`AUTO markers for '${id}' not found`);
   }
 
   const before = content.slice(0, startIdx + start.length);
@@ -88,6 +88,36 @@ export function buildPluginTableBlock(pluginsDir: string): string {
   }
 
   return rows.join('\n');
+}
+
+/**
+ * Update an AUTO-marked block in any markdown file with new content.
+ * Returns true if the file was changed.
+ */
+export function updateFileBlock(filePath: string, blockId: string, content: string): boolean {
+  if (!fs.existsSync(filePath)) {
+    console.warn(`File not found at ${filePath}, skipping.`);
+    return false;
+  }
+
+  const original = fs.readFileSync(filePath, 'utf8');
+  let updated: string;
+
+  try {
+    updated = injectBlock(original, blockId, content);
+  } catch {
+    console.warn(`AUTO markers for '${blockId}' not found in ${filePath}, skipping.`);
+    return false;
+  }
+
+  if (updated === original) {
+    console.log(`${filePath} is already up to date.`);
+    return false;
+  }
+
+  fs.writeFileSync(filePath, updated, 'utf8');
+  console.log(`Successfully updated ${filePath}`);
+  return true;
 }
 
 /**

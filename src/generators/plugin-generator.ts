@@ -172,13 +172,31 @@ function generatePluginJson(config: PluginConfig, skillNames: string[], instruct
 }
 
 /**
+ * Updates the `version` field in a plugin.config.yml file in-place.
+ * Preserves all comments and formatting.
+ */
+export function updatePluginConfigVersion(configPath: string, version: string): void {
+  const content = fs.readFileSync(configPath, 'utf8');
+  const updated = content.replace(/^version:\s*"[^"]*"/m, `version: "${version}"`);
+  if (updated !== content) {
+    fs.writeFileSync(configPath, updated, 'utf8');
+    console.log(`  ✓ Version updated to "${version}" in ${path.basename(configPath)}`);
+  }
+}
+
+/**
  * Generates a Copilot CLI plugin from a plugin.config.yml definition.
  * @param configPath - Path to the plugin.config.yml file
  * @param templatesDir - Path to the templates/ directory
+ * @param version - Optional version to write into plugin.config.yml before generating
  */
-export function generatePlugin(configPath: string, templatesDir: string): void {
+export function generatePlugin(configPath: string, templatesDir: string, version?: string): void {
   if (!fs.existsSync(configPath)) {
     throw new Error(`Plugin config not found: ${configPath}`);
+  }
+
+  if (version) {
+    updatePluginConfigVersion(configPath, version);
   }
 
   const configContent = fs.readFileSync(configPath, 'utf8');
