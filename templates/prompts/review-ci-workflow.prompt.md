@@ -1,5 +1,5 @@
 ---
-description: Review .github/workflows/ci.yml against Horae project CI standards
+description: 'Review a GitHub Actions CI workflow file for correctness, security, job dependencies, permissions, and best practices'
 ---
 
 Review `.github/workflows/ci.yml` for the Horae project against the GravionLabs/ci best practices and Horae-specific requirements.

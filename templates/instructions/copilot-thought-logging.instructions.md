@@ -1,6 +1,6 @@
 ---
 applyTo: '**'
-description: 'See process Copilot is following where you can edit this to reshape the interaction or save when follow up may be needed'
+description: 'Instructs Copilot to log its reasoning steps inline, making the thought process visible and editable during complex interactions'
 ---
 
 # Copilot Process tracking Instructions

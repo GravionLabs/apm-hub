@@ -1,6 +1,6 @@
 ---
-description: 'Playwright test generation instructions'
-applyTo: '**'
+description: 'Playwright TypeScript test generation: locators, page objects, fixtures, async/await patterns, and browser automation'
+applyTo: '**/*.spec.ts, **/*.test.ts, **/tests/**/*.ts, **/e2e/**/*.ts'
 ---
 
 ## Test Writing Guidelines

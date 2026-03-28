@@ -1,5 +1,6 @@
 ﻿---
 applyTo: "**/*"
+description: 'Security best practices: input validation, secrets handling, OWASP Top 10, dependency scanning, and secure coding for any language'
 ---
 # Security guidelines
 - Sanitize/validate inputs

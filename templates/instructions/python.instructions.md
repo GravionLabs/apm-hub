@@ -1,5 +1,5 @@
 ---
-description: 'Python coding conventions and guidelines'
+description: 'Python coding standards: naming conventions, type hints, error handling, imports, and project structure for modern Python applications'
 applyTo: '**/*.py'
 ---
 

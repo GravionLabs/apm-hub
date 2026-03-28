@@ -10,7 +10,7 @@ All `source` and `extend` fields in skills, agents, and instructions are resolve
 another GitHub repository or marketplace.
 
 The solution is to extend the **generator** (`src/generators/plugin-generator.ts`) so that
-it recognises a `github://` prefix and fetches the file from GitHub's raw content API at
+it recognizes a `github://` prefix and fetches the file from GitHub's raw content API at
 generation time (`npm run generate`). The generated plugin remains fully self-contained — all
 content is embedded locally, no network access is needed at install or runtime.
 

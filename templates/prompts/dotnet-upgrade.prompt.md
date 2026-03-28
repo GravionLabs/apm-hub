@@ -1,6 +1,6 @@
 ---
 name: ".NET Upgrade Analysis Prompts"
-description: "Ready-to-use prompts for comprehensive .NET framework upgrade analysis and execution"
+description: "Comprehensive .NET framework upgrade: analysis, migration steps, breaking change handling, and execution"
 ---
   # Project Discovery & Assessment
   - name: "Project Classification Analysis"
