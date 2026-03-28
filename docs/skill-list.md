@@ -37,6 +37,9 @@ This page lists all available skills across all Copilot CLI plugins in this repo
 | [create-node-workflow](../plugins/devops/skills/create-node-workflow)                             | [devops](../plugins/devops)                           | Create a GitHub Actions Node.js CI workflow using GravionLabs/ci reusable workflows                                                                                                                                                            |
 | [add-gitversion](../plugins/devops/skills/add-gitversion)                                         | [devops](../plugins/devops)                           | Add GitVersion to a repository for automatic semantic versioning from git history                                                                                                                                                              |
 | [create-wiki-workflow](../plugins/devops/skills/create-wiki-workflow)                             | [devops](../plugins/devops)                           | Create a GitHub Actions workflow that syncs docs to the GitHub Wiki using GravionLabs/ci reusable workflows                                                                                                                                    |
+| [helm-chart-create](../plugins/helm-development/skills/helm-chart-create)                         | [helm-development](../plugins/helm-development)       | Scaffold a new Helm chart with Chart.yaml, values.yaml, named templates, standard Kubernetes resources, and security context defaults                                                                                                          |
+| [helm-values-review](../plugins/helm-development/skills/helm-values-review)                       | [helm-development](../plugins/helm-development)       | Review a Helm values.yaml for completeness, security, naming conventions, and documentation quality                                                                                                                                            |
+| [helm-chart-upgrade](../plugins/helm-development/skills/helm-chart-upgrade)                       | [helm-development](../plugins/helm-development)       | Upgrade a Helm chart to a newer chart API version, update deprecated Kubernetes APIs, and migrate values.yaml breaking changes                                                                                                                 |
 | [create-python-workflow](../plugins/python-development/skills/create-python-workflow)             | [python-development](../plugins/python-development)   | Create a GitHub Actions Python Package CI/CD workflow using GravionLabs/ci reusable workflows                                                                                                                                                  |
 | [python-code-review](../plugins/python-development/skills/python-code-review)                     | [python-development](../plugins/python-development)   | Perform a structured code review for Python and pytest codebases                                                                                                                                                                               |
 | [pytest-coverage](../plugins/python-development/skills/pytest-coverage)                           | [python-development](../plugins/python-development)   | Run pytest tests with coverage, discover lines missing coverage, and increase coverage to 100%.                                                                                                                                                |
@@ -107,6 +110,18 @@ Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or A
 | [`create-node-workflow`](../plugins/devops/skills/create-node-workflow)     | Create a GitHub Actions Node.js CI workflow using GravionLabs/ci reusable workflows                         |
 | [`add-gitversion`](../plugins/devops/skills/add-gitversion)                 | Add GitVersion to a repository for automatic semantic versioning from git history                           |
 | [`create-wiki-workflow`](../plugins/devops/skills/create-wiki-workflow)     | Create a GitHub Actions workflow that syncs docs to the GitHub Wiki using GravionLabs/ci reusable workflows |
+
+## helm-development
+
+📁 [`plugins/helm-development`](../plugins/helm-development)
+
+Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.
+
+| Skill                                                                         | Description                                                                                                                           |
+| :---------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| [`helm-chart-create`](../plugins/helm-development/skills/helm-chart-create)   | Scaffold a new Helm chart with Chart.yaml, values.yaml, named templates, standard Kubernetes resources, and security context defaults |
+| [`helm-values-review`](../plugins/helm-development/skills/helm-values-review) | Review a Helm values.yaml for completeness, security, naming conventions, and documentation quality                                   |
+| [`helm-chart-upgrade`](../plugins/helm-development/skills/helm-chart-upgrade) | Upgrade a Helm chart to a newer chart API version, update deprecated Kubernetes APIs, and migrate values.yaml breaking changes        |
 
 ## python-development
 

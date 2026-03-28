@@ -1,0 +1,28 @@
+{
+  "name": "helm-development",
+  "description": "Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Gravion"
+  },
+  "license": "MIT",
+  "keywords": [
+    "helm",
+    "kubernetes",
+    "k8s",
+    "helmfile",
+    "oci"
+  ],
+  "agents": [
+    "./agents"
+  ],
+  "skills": [
+    "./skills/helm-chart-create",
+    "./skills/helm-values-review",
+    "./skills/helm-chart-upgrade"
+  ],
+  "instructions": [
+    "./instructions/helm.instructions.md",
+    "./instructions/docker.instructions.md"
+  ]
+}
