@@ -18,7 +18,7 @@ This page lists all available Copilot CLI plugins in this repository. This file 
 
 ## angular-development
 
-📁 [`plugins/angular-development`](../plugins/angular-development) · **v1.0.3**
+📁 [`plugins/angular-development`](../plugins/angular-development) · **v1.0.5**
 
 Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.
 
@@ -43,7 +43,7 @@ Angular 21 full-stack development plugin. Covers standalone components, NgRx Sig
 
 ## copilot-workspace
 
-📁 [`plugins/copilot-workspace`](../plugins/copilot-workspace) · **v1.0.3**
+📁 [`plugins/copilot-workspace`](../plugins/copilot-workspace) · **v1.0.5**
 
 Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes create-agents-md to scaffold an AGENTS.md repository context file. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt.
 
@@ -56,7 +56,7 @@ Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provid
 
 ## csharp-development
 
-📁 [`plugins/csharp-development`](../plugins/csharp-development) · **v1.0.3**
+📁 [`plugins/csharp-development`](../plugins/csharp-development) · **v1.0.5**
 
 C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.
 
@@ -95,7 +95,7 @@ C#/.NET full-stack development plugin. Covers project setup, NUnit testing, asyn
 
 ## devops
 
-📁 [`plugins/devops`](../plugins/devops) · **v1.0.3**
+📁 [`plugins/devops`](../plugins/devops) · **v1.0.5**
 
 Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.
 
@@ -122,9 +122,53 @@ Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or A
 - [`docker.instructions.md`](../plugins/devops/instructions/docker.instructions.md)
 - [`terraform.instructions.md`](../plugins/devops/instructions/terraform.instructions.md)
 
+## go-development
+
+📁 [`plugins/go-development`](../plugins/go-development) · **v1.0.5**
+
+Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.
+
+**Keywords:** `go`, `golang`, `modules`, `concurrency`, `testing`
+
+**Skills (4):**
+- [`go-code-review`](../plugins/go-development/skills/go-code-review)
+- [`go-test-generate`](../plugins/go-development/skills/go-test-generate)
+- [`multi-stage-dockerfile`](../plugins/go-development/skills/multi-stage-dockerfile)
+- [`write-tests`](../plugins/go-development/skills/write-tests)
+
+**Agents (3):**
+- [`go-expert.agent.md`](../plugins/go-development/agents/go-expert.agent.md)
+- [`documentation-writer.agent.md`](../plugins/go-development/agents/documentation-writer.agent.md)
+- [`security-reviewer.agent.md`](../plugins/go-development/agents/security-reviewer.agent.md)
+
+**Instructions (2):**
+- [`go.instructions.md`](../plugins/go-development/instructions/go.instructions.md)
+- [`docker.instructions.md`](../plugins/go-development/instructions/docker.instructions.md)
+
+## helm-development
+
+📁 [`plugins/helm-development`](../plugins/helm-development) · **v1.0.5**
+
+Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.
+
+**Keywords:** `helm`, `kubernetes`, `k8s`, `helmfile`, `oci`
+
+**Skills (3):**
+- [`helm-chart-create`](../plugins/helm-development/skills/helm-chart-create)
+- [`helm-values-review`](../plugins/helm-development/skills/helm-values-review)
+- [`helm-chart-upgrade`](../plugins/helm-development/skills/helm-chart-upgrade)
+
+**Agents (2):**
+- [`helm-expert.agent.md`](../plugins/helm-development/agents/helm-expert.agent.md)
+- [`security-reviewer.agent.md`](../plugins/helm-development/agents/security-reviewer.agent.md)
+
+**Instructions (2):**
+- [`helm.instructions.md`](../plugins/helm-development/instructions/helm.instructions.md)
+- [`docker.instructions.md`](../plugins/helm-development/instructions/docker.instructions.md)
+
 ## python-development
 
-📁 [`plugins/python-development`](../plugins/python-development) · **v1.0.3**
+📁 [`plugins/python-development`](../plugins/python-development) · **v1.0.5**
 
 Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.
 
@@ -149,7 +193,7 @@ Python development plugin. Covers project setup with uv, pytest testing with fix
 
 ## security
 
-📁 [`plugins/security`](../plugins/security) · **v1.0.3**
+📁 [`plugins/security`](../plugins/security) · **v1.0.5**
 
 Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.
 

@@ -1,0 +1,36 @@
+name: go-development
+description: >-
+  Go development plugin for idiomatic Go applications.
+  Covers module structure, error handling, interface design, concurrency patterns,
+  table-driven testing, code review, and containerization.
+version: "1.0.5"
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - go
+  - golang
+  - modules
+  - concurrency
+  - testing
+
+# Agents copied as-is from templates/agents/
+agents:
+  - source: go-expert
+  - source: documentation-writer
+  - source: security-reviewer
+
+# Skills generated from prompt templates
+skills:
+  # Go code review (error handling, interfaces, concurrency, security)
+  - name: go-code-review
+  # Generate table-driven Go tests with subtests and mocks
+  - name: go-test-generate
+  # Optimized multi-stage Dockerfile for Go applications (scratch/distroless final stage)
+  - name: multi-stage-dockerfile
+  # Generate focused unit tests for existing code
+  - name: write-tests
+
+instructions:
+  - source: go
+  - source: docker

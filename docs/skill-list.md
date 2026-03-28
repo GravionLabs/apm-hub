@@ -111,6 +111,31 @@ Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or A
 | [`add-gitversion`](../plugins/devops/skills/add-gitversion)                 | Add GitVersion to a repository for automatic semantic versioning from git history                           |
 | [`create-wiki-workflow`](../plugins/devops/skills/create-wiki-workflow)     | Create a GitHub Actions workflow that syncs docs to the GitHub Wiki using GravionLabs/ci reusable workflows |
 
+## go-development
+
+📁 [`plugins/go-development`](../plugins/go-development)
+
+Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.
+
+| Skill                                                                               | Description                                                                                                            |
+| :---------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------- |
+| [`go-code-review`](../plugins/go-development/skills/go-code-review)                 | Review Go code for idiomatic patterns, error handling, interface design, concurrency safety, and Go module conventions |
+| [`go-test-generate`](../plugins/go-development/skills/go-test-generate)             | Generate table-driven Go tests with subtests, error cases, mocks, and race detector compatibility                      |
+| [`multi-stage-dockerfile`](../plugins/go-development/skills/multi-stage-dockerfile) | Create optimized multi-stage Dockerfiles for any language or framework                                                 |
+| [`write-tests`](../plugins/go-development/skills/write-tests)                       | write-tests                                                                                                            |
+
+## helm-development
+
+📁 [`plugins/helm-development`](../plugins/helm-development)
+
+Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.
+
+| Skill                                                                         | Description                                                                                                                           |
+| :---------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| [`helm-chart-create`](../plugins/helm-development/skills/helm-chart-create)   | Scaffold a new Helm chart with Chart.yaml, values.yaml, named templates, standard Kubernetes resources, and security context defaults |
+| [`helm-values-review`](../plugins/helm-development/skills/helm-values-review) | Review a Helm values.yaml for completeness, security, naming conventions, and documentation quality                                   |
+| [`helm-chart-upgrade`](../plugins/helm-development/skills/helm-chart-upgrade) | Upgrade a Helm chart to a newer chart API version, update deprecated Kubernetes APIs, and migrate values.yaml breaking changes        |
+
 ## python-development
 
 📁 [`plugins/python-development`](../plugins/python-development)
