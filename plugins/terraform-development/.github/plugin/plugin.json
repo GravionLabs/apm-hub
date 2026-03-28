@@ -1,0 +1,29 @@
+{
+  "name": "terraform-development",
+  "description": "Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Gravion"
+  },
+  "license": "MIT",
+  "keywords": [
+    "terraform",
+    "iac",
+    "infrastructure",
+    "aws",
+    "azure",
+    "gcp"
+  ],
+  "agents": [
+    "./agents"
+  ],
+  "skills": [
+    "./skills/terraform-code-review",
+    "./skills/terraform-module-create",
+    "./skills/multi-stage-dockerfile"
+  ],
+  "instructions": [
+    "./instructions/terraform.instructions.md",
+    "./instructions/docker.instructions.md"
+  ]
+}

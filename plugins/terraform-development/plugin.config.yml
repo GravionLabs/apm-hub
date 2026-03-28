@@ -1,0 +1,34 @@
+name: terraform-development
+description: >-
+  Terraform infrastructure-as-code development plugin.
+  Covers module design, naming conventions, state management, security best
+  practices, code review, and multi-cloud provider configurations.
+version: "1.0.0"
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - terraform
+  - iac
+  - infrastructure
+  - aws
+  - azure
+  - gcp
+
+# Agents copied as-is from templates/agents/
+agents:
+  - source: terraform-expert
+  - source: security-reviewer
+
+# Skills generated from prompt templates
+skills:
+  # Terraform configuration review (security, naming, modules, state)
+  - name: terraform-code-review
+  # Scaffold a reusable Terraform module with examples and README
+  - name: terraform-module-create
+  # Optimized multi-stage Dockerfile for Terraform runners
+  - name: multi-stage-dockerfile
+
+instructions:
+  - source: terraform
+  - source: docker
