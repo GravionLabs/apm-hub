@@ -7,7 +7,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [1.0.4] — 2026-03-28
 
+### Documentation
+- Update CHANGELOG.md for v1.0.4 [skip ci]
+
+
 ### Features
+- Add helm-development plugin (#10)
 - Add go-development plugin (#11)
 
 
