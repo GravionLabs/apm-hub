@@ -1,0 +1,39 @@
+name: python-development
+description: >-
+  Python development plugin.
+  Covers project setup with uv, pytest testing with fixtures and markers,
+  type hints, code review, Playwright Python testing, and containerization.
+version: "1.0.0"
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - python
+  - pytest
+  - uv
+  - playwright
+  - typing
+
+# Agents copied as-is from templates/agents/
+agents:
+  - source: python-expert
+  - source: pytest-engineer
+  - source: documentation-writer
+
+# Skills generated from prompt templates
+skills:
+  # GitHub Actions CI/CD workflow for Python packages
+  - name: create-python-workflow
+  # Structured Python code review (correctness, types, security, pytest)
+  - name: python-code-review
+  # pytest coverage reporting and configuration
+  - name: pytest-coverage
+  # Generate focused unit tests for existing code
+  - name: write-tests
+  # Optimized multi-stage Dockerfile for Python applications
+  - name: multi-stage-dockerfile
+
+instructions:
+  - source: python
+  - source: python-pytest
+  - source: playwright-python
