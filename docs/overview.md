@@ -2,7 +2,7 @@
 
 
 <!-- AUTO:start version -->
-Welcome to **copilot-hub** v1.0.1 👋
+Welcome to **copilot-hub** v1.0.2 👋
 <!-- AUTO:end version -->
 
 This repository is a **shared reference, documentation hub, and template library** for using **GitHub Copilot** effectively and responsibly across teams and projects.
@@ -128,14 +128,14 @@ This section is especially useful for **onboarding**, **training**, and **docume
 
 ## Core Concepts at a Glance
 
-| Concept      | Purpose                                 | Applied When   | GitHub Docs |
-| :----------- | :-------------------------------------- | :------------- | :---------- |
-| Instructions | Persistent project rules                | Automatically  | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization) |
-| Prompts      | Task‑specific workflows                 | Manually (`/`) | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization) |
+| Concept      | Purpose                                 | Applied When   | GitHub Docs                                                                              |
+| :----------- | :-------------------------------------- | :------------- | :--------------------------------------------------------------------------------------- |
+| Instructions | Persistent project rules                | Automatically  | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
+| Prompts      | Task‑specific workflows                 | Manually (`/`) | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
 | Agents       | Specialized roles & permissions         | Manually (`@`) | [↗](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents) |
-| Skills       | Named prompts distributed via plugins   | Manually (`/`) | [↗](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) |
-| Plugins      | Installable bundles (agents, skills, …) | On install     | |
-| AGENTS.md    | Repository context for AI tools         | Automatically  | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization) |
+| Skills       | Named prompts distributed via plugins   | Manually (`/`) | [↗](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)               |
+| Plugins      | Installable bundles (agents, skills, …) | On install     |                                                                                          |
+| AGENTS.md    | Repository context for AI tools         | Automatically  | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
 
 **Mental model**
 
