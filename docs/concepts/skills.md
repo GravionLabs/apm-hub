@@ -201,3 +201,9 @@ Each skill is part of a plugin. See **[`docs/plugin-list.md`](../plugin-list.md)
 - [Plugins](plugins.md) — the distribution unit that bundles skills
 - [Plugin List](../plugin-list.md) — all plugins with their skills listed
 - [Skill List](../skill-list.md) — all skills across all plugins
+
+---
+
+## Further Reading
+
+- [About agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) — GitHub Docs: what skills are, how they work, and how Copilot loads them
