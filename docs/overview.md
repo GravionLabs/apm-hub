@@ -2,7 +2,7 @@
 
 
 <!-- AUTO:start version -->
-Welcome to **copilot-hub** v1.0.1 👋
+Welcome to **copilot-hub** v1.0.2 👋
 <!-- AUTO:end version -->
 
 This repository is a **shared reference, documentation hub, and template library** for using **GitHub Copilot** effectively and responsibly across teams and projects.

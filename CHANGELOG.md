@@ -5,6 +5,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.2] — 2026-03-28
+
+### Documentation
+- Add “Further Reading” sections with external GitHub Docs links
+
+
+### Features
+- Update agent, instruction and prompt files
+
+
+## [1.0.1] — 2026-03-27
+
+### Documentation
+- Update CHANGELOG.md for v1.0.1 [skip ci]
+
+
 ## [1.0.0] — 2026-03-26
 
 ### Bug Fixes
