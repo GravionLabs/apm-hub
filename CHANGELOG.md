@@ -9,10 +9,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - Add “Further Reading” sections with external GitHub Docs links
+- Update CHANGELOG.md for v1.0.2 [skip ci]
 
 
 ### Features
 - Update agent, instruction and prompt files
+- Add python-development plugin (#7)
 
 
 ## [1.0.1] — 2026-03-27
