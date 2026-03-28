@@ -120,6 +120,31 @@ Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or A
 - [`docker.instructions.md`](../plugins/devops/instructions/docker.instructions.md)
 - [`terraform.instructions.md`](../plugins/devops/instructions/terraform.instructions.md)
 
+## python-development
+
+📁 [`plugins/python-development`](../plugins/python-development) · **v1.0.0**
+
+Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.
+
+**Keywords:** `python`, `pytest`, `uv`, `playwright`, `typing`
+
+**Skills (5):**
+- [`create-python-workflow`](../plugins/python-development/skills/create-python-workflow)
+- [`python-code-review`](../plugins/python-development/skills/python-code-review)
+- [`pytest-coverage`](../plugins/python-development/skills/pytest-coverage)
+- [`write-tests`](../plugins/python-development/skills/write-tests)
+- [`multi-stage-dockerfile`](../plugins/python-development/skills/multi-stage-dockerfile)
+
+**Agents (3):**
+- [`python-expert.agent.md`](../plugins/python-development/agents/python-expert.agent.md)
+- [`pytest-engineer.agent.md`](../plugins/python-development/agents/pytest-engineer.agent.md)
+- [`documentation-writer.agent.md`](../plugins/python-development/agents/documentation-writer.agent.md)
+
+**Instructions (3):**
+- [`python.instructions.md`](../plugins/python-development/instructions/python.instructions.md)
+- [`python-pytest.instructions.md`](../plugins/python-development/instructions/python-pytest.instructions.md)
+- [`playwright-python.instructions.md`](../plugins/python-development/instructions/playwright-python.instructions.md)
+
 ## security
 
 📁 [`plugins/security`](../plugins/security) · **v1.0.2**

@@ -37,6 +37,11 @@ This page lists all available skills across all Copilot CLI plugins in this repo
 | [create-node-workflow](../plugins/devops/skills/create-node-workflow)                             | [devops](../plugins/devops)                           | Create a GitHub Actions Node.js CI workflow using GravionLabs/ci reusable workflows                                                                                                                                                            |
 | [add-gitversion](../plugins/devops/skills/add-gitversion)                                         | [devops](../plugins/devops)                           | Add GitVersion to a repository for automatic semantic versioning from git history                                                                                                                                                              |
 | [create-wiki-workflow](../plugins/devops/skills/create-wiki-workflow)                             | [devops](../plugins/devops)                           | Create a GitHub Actions workflow that syncs docs to the GitHub Wiki using GravionLabs/ci reusable workflows                                                                                                                                    |
+| [create-python-workflow](../plugins/python-development/skills/create-python-workflow)             | [python-development](../plugins/python-development)   | Create a GitHub Actions Python Package CI/CD workflow using GravionLabs/ci reusable workflows                                                                                                                                                  |
+| [python-code-review](../plugins/python-development/skills/python-code-review)                     | [python-development](../plugins/python-development)   | Perform a structured code review for Python and pytest codebases                                                                                                                                                                               |
+| [pytest-coverage](../plugins/python-development/skills/pytest-coverage)                           | [python-development](../plugins/python-development)   | Run pytest tests with coverage, discover lines missing coverage, and increase coverage to 100%.                                                                                                                                                |
+| [write-tests](../plugins/python-development/skills/write-tests)                                   | [python-development](../plugins/python-development)   | write-tests                                                                                                                                                                                                                                    |
+| [multi-stage-dockerfile](../plugins/python-development/skills/multi-stage-dockerfile)             | [python-development](../plugins/python-development)   | Create optimized multi-stage Dockerfiles for any language or framework                                                                                                                                                                         |
 
 ## angular-development
 
@@ -102,4 +107,18 @@ Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or A
 | [`create-node-workflow`](../plugins/devops/skills/create-node-workflow)     | Create a GitHub Actions Node.js CI workflow using GravionLabs/ci reusable workflows                         |
 | [`add-gitversion`](../plugins/devops/skills/add-gitversion)                 | Add GitVersion to a repository for automatic semantic versioning from git history                           |
 | [`create-wiki-workflow`](../plugins/devops/skills/create-wiki-workflow)     | Create a GitHub Actions workflow that syncs docs to the GitHub Wiki using GravionLabs/ci reusable workflows |
+
+## python-development
+
+📁 [`plugins/python-development`](../plugins/python-development)
+
+Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.
+
+| Skill                                                                                   | Description                                                                                     |
+| :-------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| [`create-python-workflow`](../plugins/python-development/skills/create-python-workflow) | Create a GitHub Actions Python Package CI/CD workflow using GravionLabs/ci reusable workflows   |
+| [`python-code-review`](../plugins/python-development/skills/python-code-review)         | Perform a structured code review for Python and pytest codebases                                |
+| [`pytest-coverage`](../plugins/python-development/skills/pytest-coverage)               | Run pytest tests with coverage, discover lines missing coverage, and increase coverage to 100%. |
+| [`write-tests`](../plugins/python-development/skills/write-tests)                       | write-tests                                                                                     |
+| [`multi-stage-dockerfile`](../plugins/python-development/skills/multi-stage-dockerfile) | Create optimized multi-stage Dockerfiles for any language or framework                          |
 

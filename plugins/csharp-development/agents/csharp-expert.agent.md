@@ -1,6 +1,6 @@
 ---
 name: "C# Expert"
-description: An agent designed to assist with software development tasks for .NET projects.
+description: 'C# .NET expert for implementation, refactoring, and code quality — general-purpose development assistant for .NET projects'
 # version: 2026-01-20a
 ---
 
@@ -170,7 +170,7 @@ When invoked:
 - **Use the framework already in the solution** if existing.
 - **Prefer NUnit, NSubstitute, and Shouldly** for new tests or if no framework is established.
 
-### NUnit (Preferred)
+### NUnit
 
 - Packages: `Microsoft.NET.Test.Sdk`, `NUnit`, `NUnit3TestAdapter`, `NSubstitute`, `Shouldly` (versions managed centrally via `Directory.Packages.props`)
 - Class `[TestFixture]`, test `[Test]`
@@ -185,24 +185,6 @@ When invoked:
 - **No AAA comments:** Do not use "Arrange", "Act", or "Assert" comments.
 - **US English** in test names, comments, and helper symbols (e.g., `Deserialize` not `Deserialise`).
 - **No decorative divider comments** such as `// ---`, `// ===`, or `// ──`; separate test groups with whitespace only.
-
-### xUnit
-
-- Packages: `Microsoft.NET.Test.Sdk`, `xunit`, `xunit.runner.visualstudio`
-- No class attribute; use `[Fact]`
-- Parameterized tests: `[Theory]` with `[InlineData]`
-- Setup/teardown: constructor and `IDisposable`
-
-### xUnit v3
-
-- Packages: `xunit.v3`, `xunit.runner.visualstudio` 3.x, `Microsoft.NET.Test.Sdk`
-- `ITestOutputHelper` and `[Theory]` are in `Xunit`
-
-### MSTest
-
-- Class `[TestClass]`, test `[TestMethod]`
-- Setup/teardown: `[TestInitialize]`, `[TestCleanup]`
-- Parameterized tests: **use `[TestMethod]` + `[DataRow]`**
 
 ### Assertions
 

@@ -10,7 +10,7 @@
       "name": "angular-development",
       "source": "plugins/angular-development",
       "description": "Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "angular",
         "ngrx",
@@ -24,7 +24,7 @@
       "name": "copilot-workspace",
       "source": "plugins/copilot-workspace",
       "description": "Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes create-agents-md to scaffold an AGENTS.md repository context file. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "copilot",
         "github-copilot",
@@ -39,7 +39,7 @@
       "name": "csharp-development",
       "source": "plugins/csharp-development",
       "description": "C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "csharp",
         "dotnet",
@@ -52,7 +52,7 @@
       "name": "devops",
       "source": "plugins/devops",
       "description": "Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "devops",
         "azure-devops",
@@ -63,10 +63,23 @@
       ]
     },
     {
+      "name": "python-development",
+      "source": "plugins/python-development",
+      "description": "Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.",
+      "version": "1.0.0",
+      "keywords": [
+        "python",
+        "pytest",
+        "uv",
+        "playwright",
+        "typing"
+      ]
+    },
+    {
       "name": "security",
       "source": "plugins/security",
       "description": "Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "security",
         "threat-model",

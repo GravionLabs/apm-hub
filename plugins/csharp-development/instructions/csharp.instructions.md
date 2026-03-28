@@ -1,5 +1,5 @@
 ---
-description: 'Guidelines for building C# applications'
+description: 'C# coding standards for .NET projects: naming conventions, structure, async/await, LINQ, error handling, and SOLID principles'
 applyTo: '**/*.cs'
 ---
 
