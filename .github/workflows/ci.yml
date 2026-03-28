@@ -12,6 +12,45 @@ permissions:
   contents: read
 
 jobs:
+  lint-no-generated-files:
+    name: No Generated Files in PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for auto-generated aggregate files
+        run: |
+          GENERATED_FILES=(
+            ".github/plugin/marketplace.json"
+            "docs/plugin-list.md"
+            "docs/skill-list.md"
+            "docs/template-list.md"
+          )
+
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          VIOLATIONS=""
+
+          for file in "${GENERATED_FILES[@]}"; do
+            if echo "$CHANGED" | grep -qF "$file"; then
+              VIOLATIONS="$VIOLATIONS\n  - $file"
+            fi
+          done
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "❌ This PR modifies auto-generated files that must not be committed in feature branches:"
+            printf "$VIOLATIONS\n"
+            echo ""
+            echo "These files are regenerated automatically by CI after merging to main."
+            echo "Please remove them from your commits. See CONTRIBUTING.md for details."
+            exit 1
+          fi
+
+          echo "✅ No auto-generated aggregate files found in PR."
+
   build-test:
     name: Build & Test
     runs-on: ubuntu-latest
