@@ -1,79 +1,79 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="89" failures="0" errors="0" time="0.159108998">
-    <testsuite name="src/generators/marketplace-generator.test.ts" timestamp="2026-03-28T06:56:17.446Z" hostname="ubuntu" tests="6" failures="0" errors="0" skipped="0" time="0.035309605">
-        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; generates marketplace.json with all plugins sorted by directory" time="0.024586433">
+<testsuites name="vitest tests" tests="89" failures="0" errors="0" time="0.133177167">
+    <testsuite name="src/generators/marketplace-generator.test.ts" timestamp="2026-03-28T08:31:33.100Z" hostname="ubuntu" tests="6" failures="0" errors="0" skipped="0" time="0.026318101">
+        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; generates marketplace.json with all plugins sorted by directory" time="0.016706625">
             <system-out>
 Successfully generated marketplace.json (2 plugins)
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; collapses multiline description to single line" time="0.002763503">
+        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; collapses multiline description to single line" time="0.002311202">
             <system-out>
 Successfully generated marketplace.json (1 plugins)
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; sets correct source for each plugin" time="0.001988188">
+        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; sets correct source for each plugin" time="0.001641839">
             <system-out>
 Successfully generated marketplace.json (1 plugins)
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; skips directories without plugin.config.yml" time="0.001560197">
+        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; skips directories without plugin.config.yml" time="0.001424631">
             <system-out>
 Successfully generated marketplace.json (1 plugins)
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; does not write if content is unchanged" time="0.001738294">
+        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; does not write if content is unchanged" time="0.001573743">
             <system-out>
   marketplace.json is already up to date.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; warns and returns if plugins dir does not exist" time="0.001089882">
+        <testcase classname="src/generators/marketplace-generator.test.ts" name="generateMarketplace &gt; warns and returns if plugins dir does not exist" time="0.000828183">
             <system-err>
   marketplace-generator: plugins dir not found: plugins
 
             </system-err>
         </testcase>
     </testsuite>
-    <testsuite name="src/generators/plugin-generator.test.ts" timestamp="2026-03-28T06:56:17.448Z" hostname="ubuntu" tests="43" failures="0" errors="0" skipped="0" time="0.058939833">
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; agents/ without extension → appends .agent.md" time="0.001691151">
+    <testsuite name="src/generators/plugin-generator.test.ts" timestamp="2026-03-28T08:31:33.103Z" hostname="ubuntu" tests="43" failures="0" errors="0" skipped="0" time="0.051345876">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; agents/ without extension → appends .agent.md" time="0.001852691">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; agents/ with extension → unchanged" time="0.000186059">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; agents/ with extension → unchanged" time="0.000222515">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; prompts/ without extension → appends .prompt.md" time="0.000127182">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; prompts/ without extension → appends .prompt.md" time="0.000147436">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; prompts/ with extension → unchanged" time="0.000121036">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; prompts/ with extension → unchanged" time="0.000128998">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; instructions/ without extension → appends .instructions.md" time="0.000112515">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; instructions/ without extension → appends .instructions.md" time="0.000138146">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; instructions/ with extension → unchanged" time="0.000099036">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; instructions/ with extension → unchanged" time="0.000117823">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; bare name → prompts/&lt;name&gt;.prompt.md" time="0.000097639">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; bare name → prompts/&lt;name&gt;.prompt.md" time="0.000117404">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; bare name with extension → prompts/&lt;name&gt;" time="0.000093448">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; bare name with extension → prompts/&lt;name&gt;" time="0.00013263">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; unknown directory without extension → appends .prompt.md as fallback" time="0.00016797">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveTemplatePath &gt; unknown directory without extension → appends .prompt.md as fallback" time="0.000138636">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; no source → prompts/&lt;name&gt;.prompt.md" time="0.000152116">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; no source → prompts/&lt;name&gt;.prompt.md" time="0.000164826">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; bare name as source → prompts/&lt;source&gt;.prompt.md" time="0.000102039">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; bare name as source → prompts/&lt;source&gt;.prompt.md" time="0.000126135">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; name with .prompt.md suffix → prompts/&lt;source&gt;" time="0.000094985">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; name with .prompt.md suffix → prompts/&lt;source&gt;" time="0.00011468">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; full path with .prompt.md → unchanged" time="0.000090585">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; full path with .prompt.md → unchanged" time="0.000123341">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; agent path with extension → unchanged" time="0.000086465">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; agent path with extension → unchanged" time="0.00010574">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; agent path without extension → appends .agent.md" time="0.000123271">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; agent path without extension → appends .agent.md" time="0.000108534">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; path without extension → appends .prompt.md" time="0.000132979">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; path without extension → appends .prompt.md" time="0.000105461">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; bare name without source equals bare name as source" time="0.000136192">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="resolveSkillSource &gt; bare name without source equals bare name as source" time="0.000106369">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; resolves skill without source from name (prompts/&lt;name&gt;.prompt.md)" time="0.019077167">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; resolves skill without source from name (prompts/&lt;name&gt;.prompt.md)" time="0.011269309">
             <system-out>
 Generating plugin: my-plugin
   ✓ Skill: skills/csharp-nunit/SKILL.md
@@ -82,7 +82,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; resolves skill with bare source name (prompts/&lt;source&gt;.prompt.md)" time="0.001494895">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; resolves skill with bare source name (prompts/&lt;source&gt;.prompt.md)" time="0.001368339">
             <system-out>
 Generating plugin: my-plugin
   ✓ Skill: skills/my-nunit-skill/SKILL.md
@@ -91,7 +91,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; resolves skill with source name including .prompt.md suffix" time="0.001580522">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; resolves skill with source name including .prompt.md suffix" time="0.001158954">
             <system-out>
 Generating plugin: my-plugin
   ✓ Skill: skills/my-skill/SKILL.md
@@ -100,7 +100,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; still resolves explicit agent path unchanged" time="0.001145197">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; still resolves explicit agent path unchanged" time="0.000995384">
             <system-out>
 Generating plugin: my-plugin
   ✓ Skill: skills/gfog-helm/SKILL.md
@@ -109,7 +109,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; resolves agents/ source without extension" time="0.001162378">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; resolves agents/ source without extension" time="0.001437622">
             <system-out>
 Generating plugin: my-plugin
   ✓ Skill: skills/gfog-helm/SKILL.md
@@ -118,7 +118,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; resolves extend entry without extension" time="0.001517874">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; skill source resolution in generatePlugin &gt; resolves extend entry without extension" time="0.001373507">
             <system-out>
 Generating plugin: my-plugin
   ✓ Skill: skills/csharp-code-review/SKILL.md
@@ -127,7 +127,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin without instructions &gt; plugin.json omits instructions field when no instructions configured" time="0.001860098">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin without instructions &gt; plugin.json omits instructions field when no instructions configured" time="0.001536867">
             <system-out>
 Generating plugin: my-plugin
   ✓ Manifest: .github/plugin/plugin.json
@@ -135,7 +135,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin without instructions &gt; plugin.json omits instructions field when instructions array is empty" time="0.000946706">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin without instructions &gt; plugin.json omits instructions field when instructions array is empty" time="0.001232916">
             <system-out>
 Generating plugin: my-plugin
   ✓ Manifest: .github/plugin/plugin.json
@@ -143,16 +143,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with instructions &gt; creates the instructions/ directory" time="0.001153368">
-            <system-out>
-Generating plugin: my-plugin
-  ✓ Instruction: instructions/csharp.instructions.md
-  ✓ Manifest: .github/plugin/plugin.json
-Plugin &apos;my-plugin&apos; generated successfully.
-
-            </system-out>
-        </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with instructions &gt; copies the instruction file to instructions/&lt;source&gt;.instructions.md" time="0.001008237">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with instructions &gt; creates the instructions/ directory" time="0.001492168">
             <system-out>
 Generating plugin: my-plugin
   ✓ Instruction: instructions/csharp.instructions.md
@@ -161,7 +152,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with instructions &gt; supports source with full .instructions.md extension" time="0.000869322">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with instructions &gt; copies the instruction file to instructions/&lt;source&gt;.instructions.md" time="0.001285437">
             <system-out>
 Generating plugin: my-plugin
   ✓ Instruction: instructions/csharp.instructions.md
@@ -170,7 +161,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with instructions &gt; plugin.json includes instructions array with relative paths" time="0.001477365">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with instructions &gt; supports source with full .instructions.md extension" time="0.001277824">
             <system-out>
 Generating plugin: my-plugin
   ✓ Instruction: instructions/csharp.instructions.md
@@ -179,7 +170,16 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with instructions &gt; plugin.json includes multiple instruction paths" time="0.001508794">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with instructions &gt; plugin.json includes instructions array with relative paths" time="0.002229417">
+            <system-out>
+Generating plugin: my-plugin
+  ✓ Instruction: instructions/csharp.instructions.md
+  ✓ Manifest: .github/plugin/plugin.json
+Plugin &apos;my-plugin&apos; generated successfully.
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with instructions &gt; plugin.json includes multiple instruction paths" time="0.001145544">
             <system-out>
 Generating plugin: my-plugin
   ✓ Instruction: instructions/csharp.instructions.md
@@ -189,7 +189,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; missing instruction source file &gt; logs a warning but does not throw" time="0.006237997">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; missing instruction source file &gt; logs a warning but does not throw" time="0.005101867">
             <system-out>
 Generating plugin: my-plugin
   ✓ Manifest: .github/plugin/plugin.json
@@ -197,7 +197,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; missing instruction source file &gt; omits the missing file from plugin.json instructions array" time="0.001861146">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; missing instruction source file &gt; omits the missing file from plugin.json instructions array" time="0.001531419">
             <system-out>
 Generating plugin: my-plugin
   ✓ Manifest: .github/plugin/plugin.json
@@ -205,7 +205,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; missing instruction source file &gt; continues generating remaining instructions after a missing file" time="0.001384336">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; missing instruction source file &gt; continues generating remaining instructions after a missing file" time="0.001343196">
             <system-out>
 Generating plugin: my-plugin
   ✓ Instruction: instructions/csharp.instructions.md
@@ -214,7 +214,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with files &gt; copies a file to the plugin directory using destination" time="0.001324551">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with files &gt; copies a file to the plugin directory using destination" time="0.001292072">
             <system-out>
 Generating plugin: my-plugin
   ✓ File: .editorconfig
@@ -223,7 +223,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with files &gt; uses basename of source when no destination is specified" time="0.001326576">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with files &gt; uses basename of source when no destination is specified" time="0.001448447">
             <system-out>
 Generating plugin: my-plugin
   ✓ File: .editorconfig-csharp
@@ -232,7 +232,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with files &gt; warns and skips when source file does not exist" time="0.00158555">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with files &gt; warns and skips when source file does not exist" time="0.001741363">
             <system-out>
 Generating plugin: my-plugin
   ✓ Manifest: .github/plugin/plugin.json
@@ -240,7 +240,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with files &gt; plugin.json does not include files field" time="0.00095844">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; plugin with files &gt; plugin.json does not include files field" time="0.001400955">
             <system-out>
 Generating plugin: my-plugin
   ✓ File: .editorconfig
@@ -249,23 +249,23 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; throws when config file does not exist" time="0.000484143">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="plugin-generator &gt; throws when config file does not exist" time="0.000470733">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="updatePluginConfigVersion &gt; updates the version field in plugin.config.yml" time="0.000429946">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="updatePluginConfigVersion &gt; updates the version field in plugin.config.yml" time="0.000441958">
             <system-out>
   ✓ Version updated to &quot;2.3.4&quot; in plugin.config.yml
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="updatePluginConfigVersion &gt; does not write the file when version is unchanged" time="0.000193253">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="updatePluginConfigVersion &gt; does not write the file when version is unchanged" time="0.000233272">
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="updatePluginConfigVersion &gt; preserves comments and surrounding content" time="0.000249126">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="updatePluginConfigVersion &gt; preserves comments and surrounding content" time="0.000272872">
             <system-out>
   ✓ Version updated to &quot;1.5.0&quot; in plugin.config.yml
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="updatePluginConfigVersion &gt; generatePlugin updates plugin.config.yml when version is provided" time="0.000781321">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="updatePluginConfigVersion &gt; generatePlugin updates plugin.config.yml when version is provided" time="0.000751148">
             <system-out>
   ✓ Version updated to &quot;3.1.4&quot; in plugin.config.yml
 Generating plugin: my-plugin
@@ -274,7 +274,7 @@ Plugin &apos;my-plugin&apos; generated successfully.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-generator.test.ts" name="updatePluginConfigVersion &gt; generatePlugin does not modify plugin.config.yml when no version is provided" time="0.000754572">
+        <testcase classname="src/generators/plugin-generator.test.ts" name="updatePluginConfigVersion &gt; generatePlugin does not modify plugin.config.yml when no version is provided" time="0.000658398">
             <system-out>
 Generating plugin: my-plugin
   ✓ Manifest: .github/plugin/plugin.json
@@ -283,136 +283,136 @@ Plugin &apos;my-plugin&apos; generated successfully.
             </system-out>
         </testcase>
     </testsuite>
-    <testsuite name="src/generators/plugin-list-generator.test.ts" timestamp="2026-03-28T06:56:17.457Z" hostname="ubuntu" tests="8" failures="0" errors="0" skipped="0" time="0.023519808">
-        <testcase classname="src/generators/plugin-list-generator.test.ts" name="parsePluginConfig &gt; should parse a full plugin config" time="0.005358617">
+    <testsuite name="src/generators/plugin-list-generator.test.ts" timestamp="2026-03-28T08:31:33.112Z" hostname="ubuntu" tests="8" failures="0" errors="0" skipped="0" time="0.018126996">
+        <testcase classname="src/generators/plugin-list-generator.test.ts" name="parsePluginConfig &gt; should parse a full plugin config" time="0.00448265">
         </testcase>
-        <testcase classname="src/generators/plugin-list-generator.test.ts" name="parsePluginConfig &gt; should handle string-form skills and agents" time="0.001055031">
+        <testcase classname="src/generators/plugin-list-generator.test.ts" name="parsePluginConfig &gt; should handle string-form skills and agents" time="0.001137652">
         </testcase>
-        <testcase classname="src/generators/plugin-list-generator.test.ts" name="parsePluginConfig &gt; should default empty arrays when keys are missing" time="0.001031215">
+        <testcase classname="src/generators/plugin-list-generator.test.ts" name="parsePluginConfig &gt; should default empty arrays when keys are missing" time="0.001238503">
         </testcase>
-        <testcase classname="src/generators/plugin-list-generator.test.ts" name="parsePluginConfig &gt; should fall back to dirName when config has no name" time="0.000778178">
+        <testcase classname="src/generators/plugin-list-generator.test.ts" name="parsePluginConfig &gt; should fall back to dirName when config has no name" time="0.000916393">
         </testcase>
-        <testcase classname="src/generators/plugin-list-generator.test.ts" name="generatePluginList &gt; should generate plugin-list.md with overview table and per-plugin sections" time="0.003106986">
+        <testcase classname="src/generators/plugin-list-generator.test.ts" name="generatePluginList &gt; should generate plugin-list.md with overview table and per-plugin sections" time="0.003013181">
             <system-out>
 Successfully generated docs/plugin-list.md
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-list-generator.test.ts" name="generatePluginList &gt; should write an empty overview when no plugins exist" time="0.001195204">
+        <testcase classname="src/generators/plugin-list-generator.test.ts" name="generatePluginList &gt; should write an empty overview when no plugins exist" time="0.002071365">
             <system-out>
 Successfully generated docs/plugin-list.md
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-list-generator.test.ts" name="generatePluginList &gt; should skip directories without plugin.config.yml" time="0.001437345">
+        <testcase classname="src/generators/plugin-list-generator.test.ts" name="generatePluginList &gt; should skip directories without plugin.config.yml" time="0.001059359">
             <system-out>
 Successfully generated docs/plugin-list.md
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/plugin-list-generator.test.ts" name="generatePluginList &gt; should create output directory if missing" time="0.002625076">
+        <testcase classname="src/generators/plugin-list-generator.test.ts" name="generatePluginList &gt; should create output directory if missing" time="0.002531901">
             <system-out>
 Successfully generated docs/plugin-list.md
 
             </system-out>
         </testcase>
     </testsuite>
-    <testsuite name="src/generators/readme-generator.test.ts" timestamp="2026-03-28T06:56:17.458Z" hostname="ubuntu" tests="17" failures="0" errors="0" skipped="0" time="0.026780376">
-        <testcase classname="src/generators/readme-generator.test.ts" name="injectBlock &gt; replaces the content between markers" time="0.002555095">
+    <testsuite name="src/generators/readme-generator.test.ts" timestamp="2026-03-28T08:31:33.114Z" hostname="ubuntu" tests="17" failures="0" errors="0" skipped="0" time="0.022319872">
+        <testcase classname="src/generators/readme-generator.test.ts" name="injectBlock &gt; replaces the content between markers" time="0.002152871">
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="injectBlock &gt; works when block was previously empty" time="0.000401242">
+        <testcase classname="src/generators/readme-generator.test.ts" name="injectBlock &gt; works when block was previously empty" time="0.000284326">
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="injectBlock &gt; throws when start marker is missing" time="0.001375676">
+        <testcase classname="src/generators/readme-generator.test.ts" name="injectBlock &gt; throws when start marker is missing" time="0.000914786">
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="injectBlock &gt; throws when end marker is missing" time="0.000293894">
+        <testcase classname="src/generators/readme-generator.test.ts" name="injectBlock &gt; throws when end marker is missing" time="0.000218116">
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="buildTemplateStatsBlock &gt; counts .md files in each subdirectory" time="0.001805203">
+        <testcase classname="src/generators/readme-generator.test.ts" name="buildTemplateStatsBlock &gt; counts .md files in each subdirectory" time="0.001553001">
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="buildTemplateStatsBlock &gt; counts 0 when directory does not exist" time="0.000943913">
+        <testcase classname="src/generators/readme-generator.test.ts" name="buildTemplateStatsBlock &gt; counts 0 when directory does not exist" time="0.000738366">
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="buildTemplateStatsBlock &gt; ignores non-.md files" time="0.000778247">
+        <testcase classname="src/generators/readme-generator.test.ts" name="buildTemplateStatsBlock &gt; ignores non-.md files" time="0.000790189">
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="buildPluginTableBlock &gt; builds a table row per plugin" time="0.001295707">
+        <testcase classname="src/generators/readme-generator.test.ts" name="buildPluginTableBlock &gt; builds a table row per plugin" time="0.000872392">
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="buildPluginTableBlock &gt; returns header-only table when plugins dir missing" time="0.000948174">
+        <testcase classname="src/generators/readme-generator.test.ts" name="buildPluginTableBlock &gt; returns header-only table when plugins dir missing" time="0.000690385">
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="buildPluginTableBlock &gt; collapses multi-line descriptions" time="0.001578496">
+        <testcase classname="src/generators/readme-generator.test.ts" name="buildPluginTableBlock &gt; collapses multi-line descriptions" time="0.000757363">
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="updateReadme &gt; updates both blocks and writes the file" time="0.005186317">
+        <testcase classname="src/generators/readme-generator.test.ts" name="updateReadme &gt; updates both blocks and writes the file" time="0.004585597">
             <system-out>
 Successfully updated README.md
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="updateReadme &gt; returns false and does not write if no changes" time="0.001583455">
+        <testcase classname="src/generators/readme-generator.test.ts" name="updateReadme &gt; returns false and does not write if no changes" time="0.001644353">
             <system-out>
 README.md is already up to date.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="updateReadme &gt; returns false and warns when README.md does not exist" time="0.001216715">
+        <testcase classname="src/generators/readme-generator.test.ts" name="updateReadme &gt; returns false and warns when README.md does not exist" time="0.000974292">
             <system-err>
 README.md not found at README.md, skipping.
 
             </system-err>
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="updateFileBlock &gt; updates the block content and returns true when changed" time="0.001134022">
+        <testcase classname="src/generators/readme-generator.test.ts" name="updateFileBlock &gt; updates the block content and returns true when changed" time="0.000999784">
             <system-out>
 Successfully updated docs/overview.md
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="updateFileBlock &gt; returns false and does not write when content is unchanged" time="0.001119426">
+        <testcase classname="src/generators/readme-generator.test.ts" name="updateFileBlock &gt; returns false and does not write when content is unchanged" time="0.001039315">
             <system-out>
 docs/overview.md is already up to date.
 
             </system-out>
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="updateFileBlock &gt; returns false and warns when file does not exist" time="0.000865411">
+        <testcase classname="src/generators/readme-generator.test.ts" name="updateFileBlock &gt; returns false and warns when file does not exist" time="0.000992101">
             <system-err>
 File not found at docs/overview.md, skipping.
 
             </system-err>
         </testcase>
-        <testcase classname="src/generators/readme-generator.test.ts" name="updateFileBlock &gt; returns false and warns when AUTO markers are missing" time="0.001016129">
+        <testcase classname="src/generators/readme-generator.test.ts" name="updateFileBlock &gt; returns false and warns when AUTO markers are missing" time="0.000995384">
             <system-err>
 AUTO markers for &apos;version&apos; not found in docs/overview.md, skipping.
 
             </system-err>
         </testcase>
     </testsuite>
-    <testsuite name="src/generators/template-list-generator.test.ts" timestamp="2026-03-28T06:56:17.461Z" hostname="ubuntu" tests="7" failures="0" errors="0" skipped="0" time="0.007344082">
-        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; parseFrontmatter &gt; should parse simple frontmatter" time="0.00331253">
+    <testsuite name="src/generators/template-list-generator.test.ts" timestamp="2026-03-28T08:31:33.117Z" hostname="ubuntu" tests="7" failures="0" errors="0" skipped="0" time="0.006410979">
+        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; parseFrontmatter &gt; should parse simple frontmatter" time="0.003006337">
         </testcase>
-        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; parseFrontmatter &gt; should handle quoted values" time="0.000404105">
+        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; parseFrontmatter &gt; should handle quoted values" time="0.000300668">
         </testcase>
-        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; parseFrontmatter &gt; should return empty object if no frontmatter" time="0.000273012">
+        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; parseFrontmatter &gt; should return empty object if no frontmatter" time="0.000157214">
         </testcase>
-        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; parseFrontmatter &gt; should handle colon in values" time="0.000263164">
+        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; parseFrontmatter &gt; should handle colon in values" time="0.000138286">
         </testcase>
-        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; getTitle &gt; should extract title from H1" time="0.000500836">
+        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; getTitle &gt; should extract title from H1" time="0.000342713">
         </testcase>
-        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; getTitle &gt; should return filename if no H1 found" time="0.000254993">
+        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; getTitle &gt; should return filename if no H1 found" time="0.000143944">
         </testcase>
-        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; getTitle &gt; should find H1 even if not on first line" time="0.000167481">
+        <testcase classname="src/generators/template-list-generator.test.ts" name="template-list-generator helpers &gt; getTitle &gt; should find H1 even if not on first line" time="0.000112515">
         </testcase>
     </testsuite>
-    <testsuite name="src/utils/markdown-table.test.ts" timestamp="2026-03-28T06:56:17.462Z" hostname="ubuntu" tests="8" failures="0" errors="0" skipped="0" time="0.007215294">
-        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; aligns columns to the widest cell in each column" time="0.003217824">
+    <testsuite name="src/utils/markdown-table.test.ts" timestamp="2026-03-28T08:31:33.118Z" hostname="ubuntu" tests="8" failures="0" errors="0" skipped="0" time="0.008655343">
+        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; aligns columns to the widest cell in each column" time="0.003276204">
         </testcase>
-        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; handles center-aligned columns" time="0.000630253">
+        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; handles center-aligned columns" time="0.000739694">
         </testcase>
-        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; leaves non-table content untouched" time="0.000175862">
+        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; leaves non-table content untouched" time="0.000198141">
         </testcase>
-        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; handles mixed content with a table in the middle" time="0.000227265">
+        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; handles mixed content with a table in the middle" time="0.000346484">
         </testcase>
-        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; is idempotent — formatting already-formatted tables produces the same output" time="0.000169506">
+        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; is idempotent — formatting already-formatted tables produces the same output" time="0.000253805">
         </testcase>
-        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; handles multiple tables in one document" time="0.000226218">
+        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; handles multiple tables in one document" time="0.001404238">
         </testcase>
-        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; handles a table with no data rows (header + separator only)" time="0.00014988">
+        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; handles a table with no data rows (header + separator only)" time="0.000207779">
         </testcase>
-        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; right-aligns cells correctly" time="0.000206034">
+        <testcase classname="src/utils/markdown-table.test.ts" name="formatTablesInMarkdown &gt; right-aligns cells correctly" time="0.000227126">
         </testcase>
     </testsuite>
 </testsuites>
