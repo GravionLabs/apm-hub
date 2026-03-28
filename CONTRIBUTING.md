@@ -103,6 +103,53 @@ Examples:
 - test-engineer.agent.md
 - documentation-writer.agent.md
 
+## 6. Auto-Generated Files — Do Not Commit in Feature Branches
+
+The plugin generator produces several **aggregate files** that summarise all plugins in one place.
+These files are regenerated automatically by CI after every merge to `main` and must **not** be included in feature branch commits.
+
+### Files that must not be committed in PRs
+
+| File | Description |
+|------|-------------|
+| `.github/plugin/marketplace.json` | Combined marketplace manifest (all plugins) |
+| `docs/plugin-list.md` | Generated plugin overview table |
+| `docs/skill-list.md` | Generated skill overview table |
+| `docs/template-list.md` | Generated template overview table |
+
+### What to commit instead
+
+A PR that adds a new plugin should only contain:
+
+```
+templates/agents/<name>.agent.md          ← new agent template
+templates/instructions/<name>.instructions.md  ← new instruction template
+templates/prompts/<name>.prompt.md        ← new prompt template
+plugins/<plugin-name>/plugin.config.yml   ← plugin configuration
+plugins/<plugin-name>/skills/*/SKILL.md   ← generated per-plugin files (ok)
+plugins/<plugin-name>/agents/*.agent.md   ← generated per-plugin files (ok)
+plugins/<plugin-name>/instructions/*.md   ← generated per-plugin files (ok)
+plugins/<plugin-name>/.github/plugin/plugin.json  ← generated per-plugin manifest (ok)
+```
+
+> **Note:** Per-plugin files under `plugins/<plugin-name>/` are fine to commit — they only affect one plugin's directory and will never conflict across branches. The prohibited files are the ones that **aggregate all plugins into a single file**.
+
+### Why?
+
+When two feature branches both run the generator and commit `.github/plugin/marketplace.json`, git cannot automatically resolve the conflict because both branches modified the same sorted list.
+By keeping aggregate files out of PRs, merges are always clean — CI regenerates everything on `main` in a single `[skip ci]` commit after each merge.
+
+### CI Enforcement
+
+A CI check (`No Generated Files in PR`) will fail if your PR contains any of the files listed above.
+To fix it, remove them from your commits:
+
+```bash
+git restore --staged .github/plugin/marketplace.json docs/plugin-list.md docs/skill-list.md docs/template-list.md
+git commit --amend --no-edit
+```
+
+
 ## 5. Writing Guidelines
 
 ### Writing Prompts
