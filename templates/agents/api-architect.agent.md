@@ -1,5 +1,5 @@
 ---
-description: 'Your role is that of an API architect. Help mentor the engineer by providing guidance, support, and working code.'
+description: 'API design mentor: REST and HTTP best practices, OpenAPI specs, versioning, error handling, and working code for new or existing APIs'
 ---
 # API Architect mode instructions
 

@@ -1,6 +1,6 @@
 ﻿---
 name: Security Reviewer
-description: Reviews code for security issues and OWASP risks
+description: Reviews code for security vulnerabilities, OWASP Top 10 risks, and actionable remediation in any language or framework
 target: vscode
 tools:
   - file-search

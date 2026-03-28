@@ -6,7 +6,9 @@ A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI 
 
 ## What is copilot-hub?
 
-**copilot-hub** is a shared library of reusable GitHub Copilot templates — instructions, agents, and prompts — designed to be adopted across projects and teams. Templates can be copied individually or installed as **plugins** (bundled, curated sets). The hub also hosts **Copilot CLI plugins**, making it a self-service marketplace for Copilot capabilities your team can plug into any repository.
+**copilot-hub** is a shared library of reusable GitHub Copilot templates — instructions, agents, and prompts — designed to be adopted across projects and teams. 
+Templates can be copied individually or installed as **plugins** (bundled, curated sets). 
+The hub also hosts **Copilot CLI plugins**, making it a self-service marketplace for Copilot capabilities your team can plug into any repository.
 
 ---
 

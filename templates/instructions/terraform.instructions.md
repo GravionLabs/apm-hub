@@ -1,5 +1,5 @@
 ---
-description: 'Terraform Conventions and Guidelines'
+description: 'Terraform IaC standards: module structure, naming conventions, variable and output usage, state management, and security best practices'
 applyTo: '**/*.tf'
 ---
 

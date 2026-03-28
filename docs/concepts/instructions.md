@@ -105,3 +105,11 @@ This repository contains:
 - **Global instructions** in `templates/copilot-instructions.md`
 - **Scoped instruction templates** under `templates/instructions/`
 - **Review guidelines** in [instruction-review-checklist](../checklists/instructions-review-checklist.md)
+
+---
+
+## Further Reading
+
+- [About customizing GitHub Copilot responses](https://docs.github.com/en/copilot/concepts/prompting/response-customization) — GitHub Docs: custom instructions concepts, scoping, and types
+- [Add repository custom instructions](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions) — GitHub Docs: how to create and configure instruction files
+- [Support for different types of custom instructions](https://docs.github.com/en/copilot/reference/custom-instructions-support) — GitHub Docs: which environments support which instruction types

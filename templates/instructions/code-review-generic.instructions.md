@@ -1,5 +1,5 @@
 ---
-description: 'Generic code review instructions that can be customized for any project using GitHub Copilot'
+description: 'Code review guidelines for any language or framework: readability, naming, complexity, error handling, security, and test coverage'
 applyTo: '**'
 excludeAgent: ["coding-agent"]
 ---

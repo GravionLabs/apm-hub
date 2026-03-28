@@ -5,7 +5,8 @@ applyTo: '**/.github/skills/**/SKILL.md, **/.claude/skills/**/SKILL.md'
 
 # Agent Skills File Guidelines
 
-Instructions for creating effective and portable Agent Skills that enhance GitHub Copilot with specialized capabilities, workflows, and bundled resources.
+Instructions for creating effective and portable Agent Skills that enhance GitHub Copilot with specialized capabilities, 
+workflows, and bundled resources.
 
 ## What Are Agent Skills?
 
@@ -50,7 +51,9 @@ license: Complete terms in LICENSE.txt
 
 ### Description Best Practices
 
-**CRITICAL**: The `description` field is the PRIMARY mechanism for automatic skill discovery. Copilot reads ONLY the `name` and `description` to decide whether to load a skill. If your description is vague, the skill will never be activated.
+**CRITICAL**: The `description` field is the PRIMARY mechanism for automatic skill discovery. 
+Copilot reads ONLY the `name` and `description` to decide whether to load a skill. 
+If your description is vague, the skill will never be activated.
 
 **What to include in description:**
 1. **WHAT** the skill does (capabilities)

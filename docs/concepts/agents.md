@@ -156,3 +156,11 @@ This repository contains:
 - **Best practices** in [designing-agents](../best-practices/designing-agents.md)
 
 All agents are designed to provide specialized expertise while adhering to the repository's core principles of safety and clarity.
+
+---
+
+## Further Reading
+
+- [About custom agents](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents) — GitHub Docs: what custom agents are and how they work
+- [Custom agents configuration reference](https://docs.github.com/en/copilot/reference/custom-agents-configuration) — GitHub Docs: full YAML frontmatter reference, tools, MCP servers
+- [Copilot customization cheat sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet) — GitHub Docs: comparison of agents vs. other customization options

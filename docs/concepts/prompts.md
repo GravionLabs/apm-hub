@@ -228,3 +228,10 @@ All prompts are intended to be:
 - Reusable
 - Safe by default
 - Independent of specific projects
+
+---
+
+## Further Reading
+
+- [About customizing GitHub Copilot responses](https://docs.github.com/en/copilot/concepts/prompting/response-customization) — GitHub Docs: prompt files, custom instructions, and response customization
+- [Copilot customization cheat sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet) — GitHub Docs: comparison of all customization options

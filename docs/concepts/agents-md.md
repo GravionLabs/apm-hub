@@ -154,3 +154,10 @@ pwsh scripts/New-AgentsMd.ps1 -Type node -OutputPath ./my-project/AGENTS.md
 - [Agents (`.agent.md`)](agents.md) — Copilot Chat personas
 - [Plugins](plugins.md) — how to install the `copilot-workspace` plugin
 - [copilot-workspace Setup](../sync/copilot-workspace.md)
+
+---
+
+## Further Reading
+
+- [About customizing GitHub Copilot responses](https://docs.github.com/en/copilot/concepts/prompting/response-customization) — GitHub Docs: AGENTS.md listed as "agent instructions" type under repository custom instructions
+- [Add repository custom instructions](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions) — GitHub Docs: how-to for creating AGENTS.md and other instruction files

@@ -1,6 +1,6 @@
 ---
-description: 'Playwright .NET test generation instructions'
-applyTo: '**'
+description: 'Playwright .NET C# test generation: page objects, locators, assertions, and test structure for C# test projects'
+applyTo: '**/*.cs, **/Tests/**/*.cs, **/E2E/**/*.cs'
 ---
 
 # Playwright .NET Test Generation Instructions

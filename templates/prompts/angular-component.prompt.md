@@ -61,8 +61,8 @@ If the component needs to be used somewhere, show the user:
 
 ## Naming Rules
 
-| Input | Filename | Class | Selector |
-|-------|----------|-------|----------|
+| Input          | Filename          | Class         | Selector           |
+|----------------|-------------------|---------------|--------------------|
 | `user-profile` | `user-profile.ts` | `UserProfile` | `app-user-profile` |
 | `product-card` | `product-card.ts` | `ProductCard` | `app-product-card` |
 

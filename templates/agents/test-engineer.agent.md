@@ -1,6 +1,6 @@
 ﻿---
 name: Test Engineer
-description: Designs and implements tests with clear structure and coverage
+description: Designs and implements unit, integration, and end-to-end tests with clear structure, descriptive names, and high coverage
 target: vscode
 tools:
   - file-search

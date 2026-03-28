@@ -1,6 +1,6 @@
 ---
-description: 'Playwright Python AI test generation instructions based on official documentation.'
-applyTo: '**'
+description: 'Playwright Python test generation using pytest-playwright: page objects, browser fixtures, locators, and async test patterns'
+applyTo: '**/*.py, **/tests/**/*.py, **/e2e/**/*.py'
 ---
 
 # Playwright Python Test Generation Instructions

@@ -28,117 +28,30 @@ Create `GitVersion.yml` in the repository root with configuration matching the c
 
 ```yaml
 # GitVersion.yml
-# Configured for GitHub Flow: main + feature branches
-assembly-versioning-scheme: MajorMinorPatch
-mode: ContinuousDelivery
-tag-prefix: 'v'
-
-branches:
-  main:
-    regex: ^main$
-    label: ''
-    increment: Patch
-    prevent-increment-of-merged-branch-version: true
-    track-merge-target: false
-    tracks-release-branch: false
-    is-release-branch: true
-    is-mainline: true
-    pre-release-weight: 55000
-
-  feature:
-    regex: ^features?[/-]
-    label: alpha
-    increment: Inherit
-    source-branches: [main]
-    pre-release-weight: 30000
-
-  pull-request:
-    regex: ^(pull|pull\-requests|pr)[/-]
-    label: PR{BranchPrNumber}
-    increment: Inherit
-    source-branches: [main, feature]
-    pre-release-weight: 30000
+# Minimal config for GitHub Flow
+workflow: GitHubFlow/v1
 ```
 
 ### GitFlow:
 
 ```yaml
 # GitVersion.yml
-# Configured for GitFlow: main, develop, release/*, hotfix/*
-assembly-versioning-scheme: MajorMinorPatch
-mode: ContinuousDelivery
-tag-prefix: 'v'
-
-branches:
-  main:
-    regex: ^main$
-    label: ''
-    increment: Patch
-    is-mainline: true
-    is-release-branch: true
-    pre-release-weight: 55000
-
-  develop:
-    regex: ^dev(elop)?(ment)?$
-    label: alpha
-    increment: Minor
-    source-branches: [main]
-    pre-release-weight: 30000
-
-  release:
-    regex: ^releases?[/-]
-    label: beta
-    increment: None
-    source-branches: [develop]
-    is-release-branch: true
-    pre-release-weight: 40000
-
-  feature:
-    regex: ^features?[/-]
-    label: alpha
-    increment: Inherit
-    source-branches: [develop]
-    pre-release-weight: 20000
-
-  hotfix:
-    regex: ^hotfix(es)?[/-]
-    label: hotfix
-    increment: Patch
-    source-branches: [main]
-    pre-release-weight: 50000
-
-  pull-request:
-    regex: ^(pull|pull\-requests|pr)[/-]
-    label: PR{BranchPrNumber}
-    increment: Inherit
-    source-branches: [main, develop, release, hotfix, feature]
-    pre-release-weight: 30000
+# Minimal config for GitFlow
+workflow: GitFlow/v1
 ```
 
 ### Trunk-based:
 
 ```yaml
 # GitVersion.yml
-# Configured for trunk-based development (all commits to main)
-assembly-versioning-scheme: MajorMinorPatch
-mode: ContinuousDeployment
+# Minimal config for trunk-based development
+workflow: TrunkBased/preview1
+```
+
+If the user explicitly wants a custom tag prefix, add only this override:
+
+```yaml
 tag-prefix: 'v'
-
-branches:
-  main:
-    regex: ^main$
-    label: ''
-    increment: Patch
-    is-mainline: true
-    is-release-branch: true
-    pre-release-weight: 55000
-
-  feature:
-    regex: ^features?[/-]
-    label: alpha
-    increment: Inherit
-    source-branches: [main]
-    pre-release-weight: 30000
 ```
 
 ## Step 3 — Version bump via commit messages

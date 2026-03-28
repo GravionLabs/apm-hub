@@ -1,5 +1,5 @@
 ---
-description: "Work with PostgreSQL databases using the PostgreSQL extension."
+description: "PostgreSQL database expert for schema design, query optimization, indexing, Row Level Security, JSONB, and database administration tasks"
 name: "PostgreSQL Database Administrator"
 tools: ["codebase", "edit/editFiles", "githubRepo", "extensions", "runCommands", "database", "pgsql_bulkLoadCsv", "pgsql_connect", "pgsql_describeCsv", "pgsql_disconnect", "pgsql_listDatabases", "pgsql_listServers", "pgsql_modifyDatabase", "pgsql_open_script", "pgsql_query", "pgsql_visualizeSchema"]
 ---
