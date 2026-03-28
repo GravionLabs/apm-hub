@@ -63,16 +63,16 @@
       ]
     },
     {
-      "name": "go-development",
-      "source": "plugins/go-development",
-      "description": "Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.",
+      "name": "helm-development",
+      "source": "plugins/helm-development",
+      "description": "Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.",
       "version": "1.0.0",
       "keywords": [
-        "go",
-        "golang",
-        "modules",
-        "concurrency",
-        "testing"
+        "helm",
+        "kubernetes",
+        "k8s",
+        "helmfile",
+        "oci"
       ]
     },
     {
