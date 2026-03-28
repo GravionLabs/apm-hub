@@ -3,7 +3,7 @@ description: >-
   Python development plugin.
   Covers project setup with uv, pytest testing with fixtures and markers,
   type hints, code review, Playwright Python testing, and containerization.
-version: "1.0.0"
+version: "1.0.3"
 author:
   name: Gravion
 license: MIT
