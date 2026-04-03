@@ -3,7 +3,7 @@ description: >-
   Angular 21 full-stack development plugin.
   Covers standalone components, NgRx Signal Store, Angular libraries,
   PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.
-version: "1.0.5"
+version: "1.0.6"
 author:
   name: Gravion
 license: MIT

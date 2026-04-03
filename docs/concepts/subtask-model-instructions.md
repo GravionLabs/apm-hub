@@ -37,22 +37,22 @@ Perform the following steps:
 
 ## How It Works
 
-| Layer              | Description                                                   |
-| :----------------- | :------------------------------------------------------------ |
-| Skill / Agent (.md) | Describes *what* the AI should do — as a prompt              |
-| AI (Copilot CLI)   | Interprets the prompt and calls the `task` tool               |
-| `task` tool        | Launches a subagent with the given `agent_type` + `model`     |
+| Layer               | Description                                               |
+| :------------------ | :-------------------------------------------------------- |
+| Skill / Agent (.md) | Describes *what* the AI should do — as a prompt           |
+| AI (Copilot CLI)    | Interprets the prompt and calls the `task` tool           |
+| `task` tool         | Launches a subagent with the given `agent_type` + `model` |
 
 ---
 
 ## Available `agent_type` Values
 
-| Value | Purpose | Default Model |
-| :---- | :------ | :------------ |
-| `explore` | Explore the codebase | Haiku (fast / cheap) |
-| `task` | Run commands | Haiku |
-| `general-purpose` | Complex multi-step tasks | Sonnet |
-| `code-review` | Analyse code changes | Sonnet |
+| Value             | Purpose                  | Default Model        |
+| :---------------- | :----------------------- | :------------------- |
+| `explore`         | Explore the codebase     | Haiku (fast / cheap) |
+| `task`            | Run commands             | Haiku                |
+| `general-purpose` | Complex multi-step tasks | Sonnet               |
+| `code-review`     | Analyse code changes     | Sonnet               |
 
 **Custom agents** (example — `csharp-development` plugin):
 
@@ -65,14 +65,14 @@ Perform the following steps:
 
 ## Model Override (`model` parameter)
 
-| Model ID | Type | Recommended for |
-| :------- | :--- | :-------------- |
-| `claude-sonnet-4.6` | Standard | General tasks |
-| `claude-haiku-4.5` | Fast / Cheap | Simple explore tasks |
-| `claude-opus-4.6` | Premium | Very complex analysis |
-| `gpt-5.4` | Standard | Code review (high quality) |
-| `gpt-5.4-mini` | Fast / Cheap | Creating PRs, simple tasks |
-| `gpt-5.2-codex` | Standard | Code-specific tasks |
+| Model ID            | Type         | Recommended for            |
+| :------------------ | :----------- | :------------------------- |
+| `claude-sonnet-4.6` | Standard     | General tasks              |
+| `claude-haiku-4.5`  | Fast / Cheap | Simple explore tasks       |
+| `claude-opus-4.6`   | Premium      | Very complex analysis      |
+| `gpt-5.4`           | Standard     | Code review (high quality) |
+| `gpt-5.4-mini`      | Fast / Cheap | Creating PRs, simple tasks |
+| `gpt-5.2-codex`     | Standard     | Code-specific tasks        |
 
 ---
 
