@@ -19,6 +19,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Update overview.md with version notice, official docs reference, and updated concepts table
 - Add Mermaid diagrams to mental-model and overview
 - Translate subtask-model-instructions.md from German to English
+- Update CHANGELOG.md for v1.0.6 [skip ci]
 
 
 ### Features
