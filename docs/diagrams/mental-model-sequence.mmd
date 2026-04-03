@@ -1,0 +1,17 @@
+%%{init: {"theme": "neutral"}}%%
+sequenceDiagram
+    actor User
+    participant H  as 🔗 Hooks
+    participant I  as 🛡️ Instructions
+    participant A  as 🎭 Agent (@security-auditor)
+    participant S  as 📚 Skill (OWASP)
+    participant SA as 🤖 Subagent
+
+    User->>A: /review (code changes)
+    H-->>A: preToolUse — block destructive commands
+    I-->>A: Apply coding standards (always active)
+    A->>S: Auto-load OWASP skill (context match)
+    A->>SA: Spawn → analyse dependency tree
+    SA-->>A: Findings (isolated context)
+    A-->>User: Security review + compliant fix suggestions
+    H-->>H: sessionEnd — cleanup

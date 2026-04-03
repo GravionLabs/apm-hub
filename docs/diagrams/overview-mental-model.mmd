@@ -1,0 +1,11 @@
+%%{init: {"theme": "neutral"}}%%
+flowchart LR
+    I["🛡️ Instructions\nRules"]
+    A["🎭 Agent\nRole"]
+    S["📚 Skills\nKnow-how\n(auto)"]
+    P["💬 Prompt\nTask"]
+    SA["🤖 Subagent\nDelegate"]
+    H["🔗 Hooks\nLifecycle"]
+
+    I --> A --> S --> P --> SA
+    H -. "wraps all" .- I

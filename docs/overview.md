@@ -171,6 +171,11 @@ This section is especially useful for **onboarding**, **training**, and **docume
 
 **Mental model**
 
+<img src="diagrams/overview-mental-model.svg" alt="Mental model: Instructions → Agent → Skills → Prompt → Subagent, wrapped by Hooks" />
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart LR
     I["🛡️ Instructions\nRules"]
@@ -182,14 +187,9 @@ flowchart LR
 
     I --> A --> S --> P --> SA
     H -. "wraps all" .- I
-
-    style I  fill:#1f3d6e,stroke:#58a6ff,color:#cae8ff
-    style A  fill:#1f3d6e,stroke:#58a6ff,color:#cae8ff
-    style S  fill:#2d2153,stroke:#c084fc,color:#e9d5ff
-    style P  fill:#0f4c35,stroke:#3fb950,color:#aff5b4
-    style SA fill:#3d2400,stroke:#d29922,color:#ffd27f
-    style H  fill:#3d0c0c,stroke:#f85149,color:#ffb3b0
 ```
+
+</details>
 
 ## Who Is This Repository For?
 

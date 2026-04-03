@@ -1,0 +1,13 @@
+%%{init: {"theme": "neutral"}}%%
+flowchart TD
+    subgraph hooks ["🔗 Hooks — lifecycle enforcement (always wraps the session)"]
+        subgraph instr ["🛡️ Instructions — persistent rules (always active)"]
+            subgraph agent ["🎭 Agent — role & tools (session-scoped)"]
+                subgraph skills ["📚 Skills — auto-loaded know-how (on demand)"]
+                    P["💬 Prompt\nSpecific task"]
+                    SA["🤖 Subagent\nDelegated subtask\n(isolated context)"]
+                    P -- "may spawn" --> SA
+                end
+            end
+        end
+    end
