@@ -1,7 +1,7 @@
 {
   "name": "helm-development",
   "description": "Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "author": {
     "name": "Gravion"
   },
