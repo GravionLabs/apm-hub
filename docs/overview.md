@@ -171,12 +171,25 @@ This section is especially useful for **onboarding**, **training**, and **docume
 
 **Mental model**
 
-Instructions → Define the **rules**
-Agent → Define the **role**
-Skill → Load **specialized know-how** (automatic)
-Prompt / explicit skill → Define the **task**
-Subagent → Handle a **delegated subtask** (isolated)
-Hook → Enforce **lifecycle actions** (deterministic)
+```mermaid
+flowchart LR
+    I["🛡️ Instructions\nRules"]
+    A["🎭 Agent\nRole"]
+    S["📚 Skills\nKnow-how\n(auto)"]
+    P["💬 Prompt\nTask"]
+    SA["🤖 Subagent\nDelegate"]
+    H["🔗 Hooks\nLifecycle"]
+
+    I --> A --> S --> P --> SA
+    H -. "wraps all" .- I
+
+    style I  fill:#1f3d6e,stroke:#58a6ff,color:#cae8ff
+    style A  fill:#1f3d6e,stroke:#58a6ff,color:#cae8ff
+    style S  fill:#2d2153,stroke:#c084fc,color:#e9d5ff
+    style P  fill:#0f4c35,stroke:#3fb950,color:#aff5b4
+    style SA fill:#3d2400,stroke:#d29922,color:#ffd27f
+    style H  fill:#3d0c0c,stroke:#f85149,color:#ffb3b0
+```
 
 ## Who Is This Repository For?
 

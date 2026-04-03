@@ -19,6 +19,28 @@ We use a simple mental model to distinguish between **Instructions**, **Agents**
 - **Subagent** → Handles a **Delegated Subtask** (Isolated context)
 - **Hook** → Enforces **Lifecycle Actions** (Deterministic, event-driven)
 
+```mermaid
+flowchart TD
+    subgraph hooks ["🔗 Hooks — lifecycle enforcement (always wraps the session)"]
+        subgraph instr ["🛡️ Instructions — persistent rules (always active)"]
+            subgraph agent ["🎭 Agent — role & tools (session-scoped)"]
+                subgraph skills ["📚 Skills — auto-loaded know-how (on demand)"]
+                    P["💬 Prompt\nSpecific task"]
+                    SA["🤖 Subagent\nDelegated subtask\n(isolated context)"]
+                    P -- "may spawn" --> SA
+                end
+            end
+        end
+    end
+
+    style hooks fill:#0d1117,stroke:#30363d,color:#8b949e
+    style instr fill:#161b22,stroke:#1f6feb,color:#58a6ff
+    style agent fill:#1c2128,stroke:#388bfd,color:#79c0ff
+    style skills fill:#21262d,stroke:#8b5cf6,color:#c084fc
+    style P fill:#0f4c35,stroke:#3fb950,color:#56d364
+    style SA fill:#3d1f00,stroke:#d29922,color:#e3b341
+```
+
 ---
 
 ### 1. Instructions: The Guardrails (The "How")
@@ -87,6 +109,25 @@ When you interact with Copilot, all layers can influence the result:
 > - **A Skill** for OWASP scanning is automatically loaded because the context matches.
 > - **A Subagent** is spawned to analyze a large dependency tree without cluttering the main session.
 > - **A Hook (`preToolUse`)** prevents the agent from running destructive shell commands during the review.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant H  as 🔗 Hooks
+    participant I  as 🛡️ Instructions
+    participant A  as 🎭 Agent (@security-auditor)
+    participant S  as 📚 Skill (OWASP)
+    participant SA as 🤖 Subagent
+
+    User->>A: /review (code changes)
+    H-->>A: preToolUse — block destructive commands
+    I-->>A: Apply coding standards (always active)
+    A->>S: Auto-load OWASP skill (context match)
+    A->>SA: Spawn → analyse dependency tree
+    SA-->>A: Findings (isolated context)
+    A-->>User: Security review + compliant fix suggestions
+    H-->>H: sessionEnd — cleanup
+```
 
 ---
 
