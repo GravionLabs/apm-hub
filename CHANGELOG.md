@@ -5,7 +5,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.10] — 2026-04-03
+
+### Bug Fixes
+- Standardize frontmatter in all prompt templates
+
+
+### Documentation
+- Add Phase 10 prompt template quality to ROADMAP.md
+
+
 ## [1.0.9] — 2026-04-03
+
+### Documentation
+- Update CHANGELOG.md for v1.0.9 [skip ci]
+
 
 ### Features
 - Add issue workflow skills and fix generator allowed-tools mapping
