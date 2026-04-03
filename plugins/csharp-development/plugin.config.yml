@@ -4,7 +4,7 @@ description: >-
   Covers project setup, NUnit testing, async/await, code review, XML documentation,
   design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades,
   modernization, Playwright .NET testing, and containerization.
-version: "1.0.6"
+version: "1.0.7"
 author:
   name: Gravion
 license: MIT

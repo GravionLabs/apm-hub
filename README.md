@@ -94,7 +94,7 @@ This repository contains a wide range of production-ready templates:
 | :--------------- | :---: | :------------------------ | :--------------------------------------- |
 | **Agents**       |  34   | `templates/agents/`       | Specialized expert roles (@-mentions)    |
 | **Prompts**      |  52   | `templates/prompts/`      | Task-specific workflows (slash commands) |
-| **Instructions** |  26   | `templates/instructions/` | Persistent project rules and standards   |
+| **Instructions** |  27   | `templates/instructions/` | Persistent project rules and standards   |
 <!-- AUTO:end template-stats -->
 
 📄 **[Browse All Templates](docs/template-list.md)**

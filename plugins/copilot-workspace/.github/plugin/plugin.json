@@ -1,7 +1,7 @@
 {
   "name": "copilot-workspace",
   "description": "Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes create-agents-md to scaffold an AGENTS.md repository context file. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt.",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "author": {
     "name": "Gravion"
   },
