@@ -1,24 +1,48 @@
 ﻿# Skills
 
-This document explains what **Skills** are in the context of **GitHub Copilot CLI plugins**, how they are created from prompt templates, and how they differ from plain prompt files.
+This document explains what **Skills** are in the context of **GitHub Copilot**, how they are created from prompt templates, and how they differ from plain prompt files.
 
 ---
 
 ## What Is a Skill?
 
-A **Skill** is a named, reusable prompt that is bundled inside a Copilot CLI plugin and distributed as part of it.
+An **Agent Skill** is a folder of instructions, scripts, and resources that Copilot can load to improve its performance in specialized tasks. Skills are part of the open [Agent Skills specification](https://github.com/agentskills/agentskills) and work across different AI systems.
 
 Skills answer the question:
 
-> **"What reusable task can this plugin perform on demand?"**
+> **"How should Copilot perform this specialized task?"**
 
-When a plugin is installed, each of its skills becomes available as a **slash command** in supported IDEs and in the Copilot CLI:
+### How Copilot Selects Skills
+
+> **Important:** Skills are **automatically selected by Copilot** based on your prompt and the skill's `description` field. You do not need to invoke them manually.
+
+When you ask Copilot something and a skill's description matches your intent, Copilot automatically loads the `SKILL.md` file into its context.
+
+You can also **explicitly reference** a skill in your prompt:
 
 ```text
-/csharp-async
-/create-dotnet-solution
-/ef-core
+Use the /csharp-async skill to improve this code.
 ```
+
+### Skill Locations
+
+Skills can be stored in two scopes:
+
+| Scope        | Paths                                                                                                    |
+| :----------- | :------------------------------------------------------------------------------------------------------- |
+| **Project**  | `.github/skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`    |
+| **Personal** | `~/.copilot/skills/<name>/SKILL.md`, `~/.claude/skills/<name>/SKILL.md`, `~/.agents/skills/<name>/SKILL.md` |
+
+### Plugin Skills vs. Native Agent Skills
+
+This repository uses a **plugin-based distribution** for skills. Plugin skills follow the same `SKILL.md` format but are bundled and installed via the copilot-hub plugin system:
+
+| Aspect              | Native Agent Skill                 | Plugin Skill (copilot-hub)                |
+| :------------------ | :--------------------------------- | :---------------------------------------- |
+| **Location**        | `.github/skills/` or `~/.copilot/skills/` | `plugins/<plugin>/skills/<name>/SKILL.md` |
+| **Distribution**    | Manual copy or sync                | `gh copilot plugin install`               |
+| **Trigger**         | Automatic (context-based) + explicit `/skill-name` | Automatic (context-based) + explicit `/skill-name` |
+| **Versioning**      | Repository-level                   | Plugin version                            |
 
 Skills are the plugin-scoped equivalent of `.prompt.md` files. Where a prompt file lives in `.github/prompts/` of a single repository, a skill lives inside a plugin and travels with it.
 
@@ -26,14 +50,14 @@ Skills are the plugin-scoped equivalent of `.prompt.md` files. Where a prompt fi
 
 ## Skills vs. Prompts
 
-| Aspect              | Prompt (`.prompt.md`)          | Skill (`SKILL.md`)                        |
-| :------------------ | :----------------------------- | :---------------------------------------- |
-| **Location**        | `.github/prompts/` (per repo)  | `plugins/<plugin>/skills/<name>/SKILL.md` |
-| **Scope**           | Single repository              | Any repository with the plugin installed  |
-| **Distribution**    | Manual copy or sync script     | `gh copilot plugin install`               |
-| **Source of truth** | Template file in `templates/`  | `plugin.config.yml` → generator           |
-| **Trigger**         | `/prompt-name` (slash command) | `/skill-name` (slash command)             |
-| **Versioning**      | Repository-level               | Plugin version                            |
+| Aspect              | Prompt (`.prompt.md`)          | Skill (`SKILL.md`)                                   |
+| :------------------ | :----------------------------- | :--------------------------------------------------- |
+| **Location**        | `.github/prompts/` (per repo)  | `.github/skills/`, `~/.copilot/skills/`, or plugin   |
+| **Scope**           | Single repository              | Project, personal, or any repo with plugin installed |
+| **Distribution**    | Manual copy or sync script     | `gh copilot plugin install` (plugin) or manual       |
+| **Source of truth** | Template file in `templates/`  | `plugin.config.yml` → generator (plugin)             |
+| **Trigger**         | `/prompt-name` (slash command) | Automatic (context-based) or explicit `/skill-name`  |
+| **Versioning**      | Repository-level               | Plugin version (plugin) or repository-level          |
 
 **Key insight:** Every skill is backed by a prompt template. The plugin generator reads the template, optionally extends it with additional agent content, and writes the result as a `SKILL.md` file.
 
@@ -144,16 +168,36 @@ The generator appends the body of each listed file to the skill content (separat
 
 ## How to Use Skills
 
-Skills become available as slash commands immediately after installing the plugin:
+### In Copilot CLI
+
+Skills become available immediately after installing the plugin or placing a `SKILL.md` in a supported location. Copilot selects them automatically based on context.
+
+**Manage skills in the CLI:**
+
+```bash
+/skills list      # list all available skills
+/skills           # toggle skills on/off interactively
+/skills info      # show details including skill location and source plugin
+/skills add       # add an alternative skills location
+/skills reload    # reload skills added during the current session
+/skills remove SKILL-DIR  # remove a directly-added skill (not plugin skills)
+```
+
+**Explicitly reference a skill in a prompt:**
+
+```text
+Use the /csharp-async skill to improve the async code in this file.
+```
+
+**After installing a plugin, use its skills:**
 
 ```bash
 # Install the plugin (once per machine)
 gh copilot plugin install csharp-development@copilot-hub
 
-# Use a skill in Copilot Chat
-/csharp-async
-/create-dotnet-solution
-/ef-core
+# Skills are now available — Copilot selects them automatically,
+# or you can reference them explicitly:
+Use the /create-dotnet-solution skill to scaffold the project.
 ```
 
 In supported IDEs (VS Code, JetBrains), skills appear in the slash-command autocomplete list alongside regular prompts.
@@ -199,6 +243,7 @@ Each skill is part of a plugin. See **[`docs/plugin-list.md`](../plugin-list.md)
 
 - [Prompts](prompts.md) — the source templates skills are generated from
 - [Plugins](plugins.md) — the distribution unit that bundles skills
+- [Subagents](subagents.md) — how skills can be used by delegated sub-agents
 - [Plugin List](../plugin-list.md) — all plugins with their skills listed
 - [Skill List](../skill-list.md) — all skills across all plugins
 
@@ -207,3 +252,5 @@ Each skill is part of a plugin. See **[`docs/plugin-list.md`](../plugin-list.md)
 ## Further Reading
 
 - [About agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) — GitHub Docs: what skills are, how they work, and how Copilot loads them
+- [Creating agent skills for GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/create-skills) — GitHub Docs: step-by-step guide for creating skills
+- [Copilot customization cheat sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet) — GitHub Docs: comparison of skills vs. other customization options
