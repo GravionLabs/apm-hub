@@ -173,6 +173,22 @@ Improve documentation quality, cross-tool clarity, and developer workflow conven
 
 ---
 
+## 📋 Phase 10 – Prompt Template Quality
+
+Audit and standardize all 56 `templates/prompts/` frontmatter fields for correctness and completeness.
+
+### Frontmatter standardization
+
+- [x] Add missing frontmatter to `create-agents-md.prompt.md`
+- [x] Fix structural issues: `dotnet-upgrade`, `editorconfig`, `review-ci-workflow`
+- [x] Migrate `agent: 'agent'` → `mode: agent` across all templates (VS Code standard)
+- [x] Add `tools:` field to 25 templates missing tool declarations
+- [x] Migrate 22 templates from deprecated tool name format (`search/codebase` → `codebase`, etc.)
+- [x] Fix deprecated `runInTerminal` → `runCommands`
+- [x] Remove non-standard `tested_with:` field from 3 templates
+
+---
+
 ## Architecture
 
 ```
