@@ -144,6 +144,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
 
       - name: Create GitHub Release
         uses: GravionLabs/ci/versioning/gh-release@main
@@ -152,3 +153,4 @@ jobs:
           changelog-file: CHANGELOG.md
           cliff-config: cliff.toml
           update-changelog: 'true'
+          token: ${{ secrets.GH_PAT }}
