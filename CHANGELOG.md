@@ -5,6 +5,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.9] — 2026-04-03
+
+### Features
+- Add issue workflow skills and fix generator allowed-tools mapping
+
+
+## [1.0.8] — 2026-04-03
+
+### Documentation
+- Update CHANGELOG.md for v1.0.8 [skip ci]
+
+
 ## [1.0.7] — 2026-04-03
 
 ### Documentation
