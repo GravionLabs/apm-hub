@@ -5,6 +5,16 @@
 Welcome to **copilot-hub** v1.0.5 👋
 <!-- AUTO:end version -->
 
+> **📌 Scope & Version Notice**
+>
+> This documentation summarizes and complements the official **GitHub Copilot** docs.
+> It is **not a replacement** for the official documentation.
+>
+> **Copilot CLI version referenced:** `1.0.17`
+> **Last reviewed against:** [GitHub Copilot Customization Cheat Sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet)
+>
+> Always consult the [official GitHub Copilot documentation](https://docs.github.com/en/copilot) for the authoritative and most current information.
+
 This repository is a **shared reference, documentation hub, and template library** for using **GitHub Copilot** effectively and responsibly across teams and projects.
 
 It is designed to help developers, teams, and organizations:
@@ -13,6 +23,24 @@ It is designed to help developers, teams, and organizations:
 - Learn the key concepts (Prompts, Instructions, Agents)
 - Reuse proven templates instead of starting from scratch
 - Establish consistent, high‑quality AI‑assisted workflows
+
+---
+
+## 📖 Official GitHub Docs Reference
+
+This repository summarizes the following official resources. When in doubt, these are the authoritative sources:
+
+| Topic | Official GitHub Docs |
+| :---- | :------------------- |
+| **Customization overview** | [Copilot customization cheat sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet) |
+| **Custom instructions** | [About customizing responses](https://docs.github.com/en/copilot/concepts/prompting/response-customization) |
+| **Prompt files** | [About prompt files](https://docs.github.com/en/copilot/concepts/prompting/response-customization#about-prompt-files) |
+| **Custom agents** | [About custom agents](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents) |
+| **Agent skills** | [About agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) |
+| **Subagents** | [Using subagents](https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide#using-subagents) |
+| **Hooks** | [About hooks](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-hooks) |
+| **Copilot CLI** | [About GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli) |
+| **MCP servers** | [About MCP](https://docs.github.com/en/copilot/concepts/context/mcp) |
 
 ---
 
@@ -50,7 +78,9 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 - [Instructions](concepts/instructions.md): What instructions are and how scoping works · [↗ GitHub Docs](https://docs.github.com/en/copilot/concepts/prompting/response-customization)
 - [Agents](concepts/agents.md): What agents are and how they differ from prompts · [↗ GitHub Docs](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents)
 - [AGENTS.md](concepts/agents-md.md): Repository context files for AI coding assistants · [↗ GitHub Docs](https://docs.github.com/en/copilot/concepts/prompting/response-customization)
-- [Skills](concepts/skills.md): Named prompts bundled in plugins, available as slash commands · [↗ GitHub Docs](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)
+- [Skills](concepts/skills.md): Specialized instructions Copilot loads automatically when relevant · [↗ GitHub Docs](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)
+- [Subagents](concepts/subagents.md): Isolated agents for delegated subtasks · [↗ GitHub Docs](https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide#using-subagents)
+- [Hooks](concepts/hooks.md): Shell commands at agent lifecycle events · [↗ GitHub Docs](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-hooks)
 - [Plugins](concepts/plugins.md): Installable bundles of agents, skills, and instructions
 - [How all concepts work together](concepts/mental-model.md)
 - [copilot-workspace: Setup & Sync](sync/copilot-workspace.md)
@@ -128,20 +158,25 @@ This section is especially useful for **onboarding**, **training**, and **docume
 
 ## Core Concepts at a Glance
 
-| Concept      | Purpose                                 | Applied When   | GitHub Docs                                                                              |
-| :----------- | :-------------------------------------- | :------------- | :--------------------------------------------------------------------------------------- |
-| Instructions | Persistent project rules                | Automatically  | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
-| Prompts      | Task‑specific workflows                 | Manually (`/`) | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
-| Agents       | Specialized roles & permissions         | Manually (`@`) | [↗](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents) |
-| Skills       | Named prompts distributed via plugins   | Manually (`/`) | [↗](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)               |
-| Plugins      | Installable bundles (agents, skills, …) | On install     |                                                                                          |
-| AGENTS.md    | Repository context for AI tools         | Automatically  | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
+| Concept      | Purpose                                    | Applied When               | GitHub Docs                                                                              |
+| :----------- | :----------------------------------------- | :------------------------- | :--------------------------------------------------------------------------------------- |
+| Instructions | Persistent project rules                   | Automatically              | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
+| Prompts      | Task‑specific workflows                    | Manually (`/`)             | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
+| Agents       | Specialized roles & permissions            | Manually (`@`)             | [↗](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents) |
+| Skills       | Specialized know-how loaded when relevant  | Auto (context) or explicit | [↗](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)               |
+| Subagents    | Delegated subtasks in isolated context     | Auto (agent) or explicit   | [↗](https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide#using-subagents) |
+| Hooks        | Shell commands at lifecycle events         | Automatically (events)     | [↗](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-hooks)         |
+| Plugins      | Installable bundles (agents, skills, …)    | On install                 |                                                                                          |
+| AGENTS.md    | Repository context for AI tools            | Automatically              | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
 
 **Mental model**
 
-Instructions → Define the rules
-Agent → Define the role
-Prompt / Skill → Define the task
+Instructions → Define the **rules**
+Agent → Define the **role**
+Skill → Load **specialized know-how** (automatic)
+Prompt / explicit skill → Define the **task**
+Subagent → Handle a **delegated subtask** (isolated)
+Hook → Enforce **lifecycle actions** (deterministic)
 
 ## Who Is This Repository For?
 
@@ -213,9 +248,11 @@ GitHub Copilot is a **developer assistant**, not a decision maker.
 
 This repository:
 
-- Does **not** replace official GitHub documentation
+- **Summarizes** the official GitHub Copilot documentation — it is **not a replacement**
+- Is maintained against **GitHub Copilot CLI 1.0.17** (see version notice at the top)
 - Does **not** enforce rules automatically
 - Provides **guidance and templates**, not guarantees
+- May lag behind official docs — always verify against [docs.github.com/en/copilot](https://docs.github.com/en/copilot)
 
 Always review Copilot output and apply professional judgment.
 
