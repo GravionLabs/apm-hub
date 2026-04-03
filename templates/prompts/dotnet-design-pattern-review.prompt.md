@@ -1,6 +1,7 @@
 ---
-agent: 'agent'
+mode: agent
 description: 'Review the C#/.NET code for design pattern implementation and suggest improvements.'
+tools: ['changes', 'codebase', 'problems', 'editFiles']
 ---
 # .NET/C# Design Pattern Review
 

@@ -1,9 +1,8 @@
 ---
-agent: agent
-tools: ['runInTerminal', 'editFiles', 'search/codebase']
+mode: agent
+tools: ['runCommands', 'editFiles', 'codebase']
 description: 'Scaffold a new .NET solution with src/test layout, Central Package Management, and .editorconfig'
 ---
-
 # Create .NET Solution
 
 Scaffold a new .NET solution following the standard project structure with `src/` and `test/` directories, Central Package Management, and shared build configuration.

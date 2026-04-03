@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: 'Review Go code for idiomatic patterns, error handling, interface design, concurrency safety, and Go module conventions'
+tools: ['changes', 'codebase', 'problems', 'editFiles']
 ---
-
 # Go Code Review
 
 Review the provided Go code for correctness, idiomatic style, error handling, security, and maintainability.

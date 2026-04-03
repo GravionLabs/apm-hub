@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: 'Generate table-driven Go tests with subtests, error cases, mocks, and race detector compatibility'
+tools: ['editFiles', 'codebase', 'runTests', 'runCommands']
 ---
-
 # Generate Go Tests
 
 Generate comprehensive, idiomatic Go tests for the provided code using table-driven tests and the standard `testing` package.

@@ -1,9 +1,8 @@
 ---
-agent: 'agent'
-tools: ['changes', 'search/codebase', 'edit/editFiles', 'problems']
+mode: agent
+tools: ['changes', 'codebase', 'editFiles', 'problems']
 description: 'Get best practices for C# async programming'
 ---
-
 # C# Async Programming Best Practices
 
 Your goal is to help me follow best practices for asynchronous programming in C#.

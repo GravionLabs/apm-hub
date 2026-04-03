@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: 'Review a Helm values.yaml for completeness, security, naming conventions, and documentation quality'
+tools: ['changes', 'codebase', 'problems', 'editFiles']
 ---
-
 # Review Helm values.yaml
 
 Review the provided `values.yaml` (and optionally the chart templates) for completeness, security, maintainability, and usability.

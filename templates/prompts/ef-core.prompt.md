@@ -1,9 +1,8 @@
 ---
-agent: 'agent'
-tools: ['changes', 'search/codebase', 'edit/editFiles', 'problems', 'runCommands']
+mode: agent
+tools: ['changes', 'codebase', 'editFiles', 'problems', 'runCommands']
 description: 'Get best practices for Entity Framework Core'
 ---
-
 # Entity Framework Core Best Practices
 
 Your goal is to help me follow best practices when working with Entity Framework Core.

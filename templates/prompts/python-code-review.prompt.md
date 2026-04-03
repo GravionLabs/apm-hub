@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: Perform a structured code review for Python and pytest codebases
+tools: ['changes', 'codebase', 'problems', 'editFiles']
 ---
-
 # Python Code Review
 
 Review the provided Python code for correctness, readability, maintainability, and security. Follow the project's specific guidelines for Python development and pytest testing.

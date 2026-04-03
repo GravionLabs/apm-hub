@@ -1,8 +1,9 @@
 ---
+mode: agent
 name: angular-component
 description: 'Scaffold an Angular 21 standalone component with 3-file structure (ts/html/scss)'
+tools: ['editFiles', 'codebase', 'runCommands']
 ---
-
 # Create Angular 21 Component
 
 Scaffold a new Angular 21 standalone component following the 3-file structure convention.

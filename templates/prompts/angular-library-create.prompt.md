@@ -1,8 +1,9 @@
 ---
+mode: agent
 name: angular-library-create
 description: 'Scaffold an Angular library with ng-packagr, public-api.ts, 3-file component structure, and injection tokens'
+tools: ['editFiles', 'codebase', 'runCommands']
 ---
-
 # Create Angular Library
 
 Scaffold a new Angular library inside an existing Angular workspace using `ng-packagr`.

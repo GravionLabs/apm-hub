@@ -1,8 +1,9 @@
 ---
+mode: agent
 name: angular-signal-store
 description: 'Create an NgRx Signal Store with state, computed signals, methods, and hooks'
+tools: ['editFiles', 'codebase', 'runCommands']
 ---
-
 # Create NgRx Signal Store
 
 Scaffold a new NgRx Signal Store (`@ngrx/signals`) for managing shared state in an Angular application.

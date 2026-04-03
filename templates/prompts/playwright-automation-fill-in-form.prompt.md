@@ -1,10 +1,9 @@
 ---
 description: 'Automate filling in a form using Playwright MCP'
-agent: agent
+mode: agent
 tools: ['playwright']
 model: 'Claude Sonnet 4'
 ---
-
 # Automating Filling in a Form with Playwright MCP
 
 Your goal is to automate the process of filling in a form using Playwright MCP.

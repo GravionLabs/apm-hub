@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: 'Scaffold a new Helm chart with Chart.yaml, values.yaml, named templates, standard Kubernetes resources, and security context defaults'
+tools: ['editFiles', 'codebase', 'runCommands']
 ---
-
 # Create Helm Chart
 
 Scaffold a complete, production-ready Helm 3 chart following Helm best practices.

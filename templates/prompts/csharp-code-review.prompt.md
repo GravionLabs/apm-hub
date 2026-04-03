@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: Perform a structured code review for C# and NUnit codebases
+tools: ['changes', 'codebase', 'problems', 'editFiles']
 ---
-
 # C# Code Review
 
 Review the provided C# code for correctness, readability, maintainability, and security. Follow the project's specific guidelines for C# development and NUnit testing.

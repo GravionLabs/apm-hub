@@ -1,9 +1,8 @@
 ---
-agent: agent
-tools: ['editFiles', 'search/codebase']
+mode: agent
+tools: ['editFiles', 'codebase']
 description: 'Create a GitHub Actions NuGet Package CI/CD workflow using GravionLabs/ci reusable workflows'
 ---
-
 # Create NuGet Package CI/CD Workflow
 
 Create a `.github/workflows/` file that calls the `GravionLabs/ci` reusable NuGet Package workflow.

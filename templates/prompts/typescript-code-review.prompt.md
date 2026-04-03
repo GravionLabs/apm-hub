@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: 'Review TypeScript code for type safety, strict mode compliance, idiomatic patterns, and Node.js best practices'
+tools: ['changes', 'codebase', 'problems', 'editFiles']
 ---
-
 # TypeScript Code Review
 
 Review the provided TypeScript code for correctness, type safety, maintainability, and security. Follow the project's TypeScript and Node.js conventions.

@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: 'Upgrade a Helm chart to a newer chart API version, update deprecated Kubernetes APIs, and migrate values.yaml breaking changes'
+tools: ['editFiles', 'codebase', 'changes', 'runCommands']
 ---
-
 # Upgrade Helm Chart
 
 Analyze the provided Helm chart and produce an upgrade plan with all required changes.

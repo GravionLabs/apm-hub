@@ -1,9 +1,8 @@
 ---
-agent: 'agent'
-tools: ['search/codebase', 'edit/editFiles', 'search']
+mode: agent
+tools: ['codebase', 'editFiles', 'search']
 description: 'Guide users through creating high-quality GitHub Copilot prompts with proper structure, tools, and best practices.'
 ---
-
 # Professional Prompt Builder
 
 You are an expert prompt engineer specializing in GitHub Copilot prompt development with deep knowledge of:

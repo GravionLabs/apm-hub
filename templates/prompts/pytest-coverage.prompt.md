@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: 'Run pytest tests with coverage, discover lines missing coverage, and increase coverage to 100%.'
+tools: ['runCommands', 'runTests', 'editFiles', 'codebase', 'problems']
 ---
-
 The goal is for the tests to cover all lines of code.
 
 Generate a coverage report with:

@@ -1,8 +1,8 @@
 ---
-agent: 'agent'
+mode: agent
 description: 'Generate a complete MCP server project in TypeScript with tools, resources, and proper configuration'
+tools: ['editFiles', 'codebase', 'runCommands']
 ---
-
 # Generate TypeScript MCP Server
 
 Create a complete Model Context Protocol (MCP) server in TypeScript with the following specifications:

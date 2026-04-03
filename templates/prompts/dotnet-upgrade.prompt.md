@@ -1,6 +1,7 @@
 ---
-name: ".NET Upgrade Analysis Prompts"
-description: "Comprehensive .NET framework upgrade: analysis, migration steps, breaking change handling, and execution"
+mode: agent
+description: 'Comprehensive .NET framework upgrade: analysis, migration steps, breaking change handling, and execution'
+tools: ['changes', 'codebase', 'editFiles', 'runCommands', 'problems', 'fetch']
 ---
   # Project Discovery & Assessment
   - name: "Project Classification Analysis"

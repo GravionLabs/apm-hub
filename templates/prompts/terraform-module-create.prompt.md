@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: 'Scaffold a reusable Terraform module with variables, outputs, examples, and terraform-docs README'
+tools: ['editFiles', 'codebase', 'runCommands']
 ---
-
 # Create Terraform Module
 
 Scaffold a complete, reusable Terraform module following HashiCorp module development best practices.

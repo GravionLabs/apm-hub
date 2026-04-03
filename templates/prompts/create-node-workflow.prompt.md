@@ -1,9 +1,8 @@
 ---
-agent: agent
-tools: ['editFiles', 'search/codebase']
+mode: agent
+tools: ['editFiles', 'codebase']
 description: 'Create a GitHub Actions Node.js CI workflow using GravionLabs/ci reusable workflows'
 ---
-
 # Create Node.js CI Workflow
 
 Create a `.github/workflows/` file that calls the `GravionLabs/ci` reusable Node.js CI workflow.

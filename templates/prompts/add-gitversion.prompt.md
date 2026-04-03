@@ -1,9 +1,8 @@
 ---
-agent: agent
-tools: ['editFiles', 'search/codebase']
+mode: agent
+tools: ['editFiles', 'codebase']
 description: 'Add GitVersion to a repository for automatic semantic versioning from git history'
 ---
-
 # Add GitVersion Configuration
 
 Set up [GitVersion](https://gitversion.net/) for automatic semantic versioning based on the git history.

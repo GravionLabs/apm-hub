@@ -1,9 +1,8 @@
 ---
-agent: agent
-tools: ['editFiles', 'search/codebase']
+mode: agent
+tools: ['editFiles', 'codebase']
 description: 'Create a GitHub Actions Python Package CI/CD workflow using GravionLabs/ci reusable workflows'
 ---
-
 # Create Python Package CI/CD Workflow
 
 Create a `.github/workflows/` file that calls the `GravionLabs/ci` reusable Python Package workflow.

@@ -1,8 +1,9 @@
 ---
+mode: agent
 name: sakai-ui-component
 description: 'Scaffold a new @gravion/sakai-ui library component with gv- prefix, 3-file structure, and public-api.ts export'
+tools: ['editFiles', 'codebase', 'runCommands']
 ---
-
 # Create sakai-ui Library Component
 
 Scaffold a new component for the `@gravion/sakai-ui` Angular library following all library conventions.

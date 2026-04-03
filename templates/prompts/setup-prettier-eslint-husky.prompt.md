@@ -1,8 +1,9 @@
 ---
+mode: agent
 name: setup-prettier-eslint-husky
 description: 'Set up ESLint, Prettier with import organizer, Husky pre-commit hooks, and auto-format on save for VSCode and WebStorm'
+tools: ['editFiles', 'codebase', 'runCommands']
 ---
-
 # Set Up Prettier, ESLint, and Husky
 
 Set up a complete code quality pipeline for an Angular project:

@@ -1,7 +1,8 @@
 ---
+mode: agent
 description: 'Review a GitHub Actions CI workflow file for correctness, security, job dependencies, permissions, and best practices'
+tools: ['changes', 'codebase', 'problems']
 ---
-
 Review `.github/workflows/ci.yml` for the Horae project against the GravionLabs/ci best practices and Horae-specific requirements.
 
 ## Checklist

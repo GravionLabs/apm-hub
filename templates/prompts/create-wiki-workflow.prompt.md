@@ -1,9 +1,8 @@
 ---
-agent: agent
+mode: agent
 tools: ['editFiles']
 description: 'Create a GitHub Actions workflow that syncs docs to the GitHub Wiki using GravionLabs/ci reusable workflows'
 ---
-
 # Create Wiki Sync Workflow
 
 Create a `.github/workflows/sync-wiki.yml` file that calls the `GravionLabs/ci` reusable Wiki Sync workflow.

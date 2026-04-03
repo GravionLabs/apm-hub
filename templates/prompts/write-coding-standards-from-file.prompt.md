@@ -1,9 +1,8 @@
 ---
-agent: "agent"
+mode: agent
 description: "Write a coding standards document for a project using the coding styles from the file(s) and/or folder(s) passed as arguments in the prompt."
 tools: ['createFile', 'editFiles', 'web/fetch', 'githubRepo', 'search', 'testFailure']
 ---
-
 # Write Coding Standards From File
 
 Use the existing syntax of the file(s) to establish the standards and style guides for the project. If more than one file or a folder is passed, loop through each file or files in the folder, appending the file's data to temporary memory or a file, then when complete use temporary data as a single instance; as if it were the file name to base the standards and style guideline on.

@@ -1,9 +1,8 @@
 ---
-agent: 'agent'
-tools: ['changes', 'search/codebase', 'edit/editFiles', 'problems']
+mode: agent
+tools: ['changes', 'codebase', 'editFiles', 'problems']
 description: 'Create ASP.NET Minimal API endpoints using Carter with proper OpenAPI documentation'
 ---
-
 # ASP.NET Minimal API with OpenAPI and Carter
 
 Your goal is to help me create well-structured ASP.NET Minimal API endpoints using Carter with correct types and comprehensive OpenAPI/Swagger documentation.

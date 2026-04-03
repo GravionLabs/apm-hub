@@ -1,8 +1,8 @@
 ---
-agent: agent
+mode: agent
 description: 'Review a Terraform configuration for security, naming conventions, module design, state management, and IaC best practices'
+tools: ['changes', 'codebase', 'problems', 'editFiles']
 ---
-
 # Terraform Code Review
 
 Review the provided Terraform configuration for correctness, security, maintainability, and adherence to HashiCorp best practices.

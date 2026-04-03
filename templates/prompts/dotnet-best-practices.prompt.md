@@ -1,6 +1,7 @@
 ---
-agent: 'agent'
+mode: agent
 description: 'Ensure .NET/C# code meets best practices for the solution/project.'
+tools: ['changes', 'codebase', 'problems', 'editFiles']
 ---
 # .NET/C# Best Practices
 
