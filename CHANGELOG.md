@@ -5,6 +5,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.11] — 2026-04-03
+
+### Documentation
+- Add global sharing guide and update concept docs with global paths
+- Fix tool support matrix column header inconsistency
+
+
 ## [1.0.10] — 2026-04-03
 
 ### Bug Fixes
@@ -13,6 +20,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - Add Phase 10 prompt template quality to ROADMAP.md
+- Update CHANGELOG.md for v1.0.10 [skip ci]
 
 
 ## [1.0.9] — 2026-04-03
