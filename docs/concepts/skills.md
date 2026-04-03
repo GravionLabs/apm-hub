@@ -28,10 +28,27 @@ Use the /csharp-async skill to improve this code.
 
 Skills can be stored in two scopes:
 
-| Scope        | Paths                                                                                                       |
-| :----------- | :---------------------------------------------------------------------------------------------------------- |
-| **Project**  | `.github/skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`        |
-| **Personal** | `~/.copilot/skills/<name>/SKILL.md`, `~/.claude/skills/<name>/SKILL.md`, `~/.agents/skills/<name>/SKILL.md` |
+| Scope | Paths | Availability |
+| :--- | :--- | :--- |
+| **Project** | `.github/skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md` | Current repository only |
+| **Personal** | `~/.copilot/skills/<name>/SKILL.md`, `~/.claude/skills/<name>/SKILL.md`, `~/.agents/skills/<name>/SKILL.md` | All repositories on this machine |
+
+> ⚠️ **Skills do NOT use `~/.github/skills/`**
+>
+> Unlike agents and prompts (which use `~/.github/`), skills follow the [agentskills.io open standard](https://agentskills.io/specification) and use `~/.copilot/skills/` as their personal path. This makes skills portable across GitHub Copilot, Claude, and other compatible AI systems.
+>
+> `~/.github/skills/` is **not loaded** by any tool — files placed there will be silently ignored.
+
+### Skills vs. Agents & Prompts: Path Comparison
+
+| Type | Project path | Personal/global path | Standard |
+| :--- | :--- | :--- | :--- |
+| **Agents** | `.github/agents/` | `~/.github/agents/` | GitHub Copilot |
+| **Prompts** | `.github/prompts/` | `~/.github/prompts/` | GitHub Copilot |
+| **Instructions** | `.github/instructions/` | `~/.github/instructions/` | GitHub Copilot |
+| **Skills** | `.github/skills/<name>/` | `~/.copilot/skills/<name>/` | agentskills.io |
+
+> See [global-sharing.md](../sync/global-sharing.md) for the full tool-support matrix and cross-machine sync setup.
 
 ### Plugin Skills vs. Native Agent Skills
 
@@ -251,6 +268,7 @@ Each skill is part of a plugin. See **[`docs/plugin-list.md`](../plugin-list.md)
 
 ## Further Reading
 
+- [global-sharing.md](../sync/global-sharing.md) — Full path comparison, tool-support matrix, and cross-machine sync setup
 - [About agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) — GitHub Docs: what skills are, how they work, and how Copilot loads them
 - [Creating agent skills for GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/create-skills) — GitHub Docs: step-by-step guide for creating skills
 - [Copilot customization cheat sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet) — GitHub Docs: comparison of skills vs. other customization options

@@ -55,11 +55,12 @@ They can be selected in the chat UI and combined with prompts to perform a wide 
 
 ## 3) Where agents live
 
-**Location in your repository:**
+Agents can be stored at **project** or **global** scope:
 
-```text
-.github/agents/*.agent.md
-```
+| Scope | Path | Availability |
+| :--- | :--- | :--- |
+| **Project** | `.github/agents/*.agent.md` | Current repository only |
+| **Global** | `~/.github/agents/*.agent.md` | All repositories on this machine |
 
 **Reusable templates in this repository:**
 
@@ -72,6 +73,16 @@ templates/agents/*.agent.md
 ```text
 security-reviewer.agent.md
 ```
+
+### Global path tool support
+
+| Tool | Global agents path | Notes |
+| :--- | :---: | :--- |
+| VS Code (Copilot Chat) | ✅ | Loaded automatically |
+| CLI (`gh copilot`) | ✅ | Available as `@agent-name` |
+| JetBrains | ⬜ | Not supported |
+
+> For instructions on setting up global sharing and cross-machine sync, see [global-sharing.md](../sync/global-sharing.md).
 
 ---
 
@@ -161,6 +172,7 @@ All agents are designed to provide specialized expertise while adhering to the r
 
 ## Further Reading
 
+- [global-sharing.md](../sync/global-sharing.md) — How to share agents globally across all repositories
 - [About custom agents](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents) — GitHub Docs: what custom agents are and how they work
 - [Custom agents configuration reference](https://docs.github.com/en/copilot/reference/custom-agents-configuration) — GitHub Docs: full YAML frontmatter reference, tools, MCP servers
 - [Copilot customization cheat sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet) — GitHub Docs: comparison of agents vs. other customization options
