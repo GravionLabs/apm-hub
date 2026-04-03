@@ -3,9 +3,9 @@ description: >-
   Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub.
   Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with
   instructions, prompts, and agents tailored to your stack, plus a sync prompt
-  (gh-copilot-sync) to keep them up to date. Includes create-agents-md to
+  (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to
   scaffold an AGENTS.md repository context file. Issue workflow skills
-  (start-work-on-issue, implement-issue, finish-work-on-issue, work-on-issue)
+  (gh-issue-implement, gh-issue-finish, gh-issue-work)
   automate the full branch → implement → review → PR lifecycle. The standalone
   scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or
   scheduled runs without the AI prompt.
@@ -29,15 +29,13 @@ skills:
   # Download and run copilot-sync.ps1 to update installed templates from copilot-hub
   - name: gh-copilot-sync
   # Analyze the repository and generate a tailored AGENTS.md context file
-  - name: create-agents-md
-  # Prepare branch and implementation plan for a GitHub issue
-  - name: start-work-on-issue
-  # Implement a GitHub issue: code, tests, docs, atomic commits
-  - name: implement-issue
+  - name: gh-agents-md
+  # Read issue, determine branch type, create branch, implement code, tests, docs, push
+  - name: gh-issue-implement
   # Review changes and create a pull request for a GitHub issue
-  - name: finish-work-on-issue
+  - name: gh-issue-finish
   # Full end-to-end workflow: branch → implement → review → PR
-  - name: work-on-issue
+  - name: gh-issue-work
 
 files:
   # Standalone PowerShell Core sync script — can be run directly without the AI prompt:

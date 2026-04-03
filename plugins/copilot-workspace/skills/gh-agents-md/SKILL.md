@@ -1,6 +1,6 @@
 ---
-name: create-agents-md
-description: 'create-agents-md'
+name: gh-agents-md
+description: 'Analyze the repository and generate a complete AGENTS.md file tailored to the project type (dotnet, node, python, github-actions, or generic).'
 ---
 
 Analyze the current repository and generate a complete, filled-in `AGENTS.md` file.

@@ -1,8 +1,6 @@
 ---
+name: gh-issue-work
 description: 'Full end-to-end workflow for working on a GitHub issue: create branch, implement code with tests and docs, review, and create a pull request. Use this for simple issues that can be completed in one pass.'
-mode: agent
-tools: ['githubRepo', 'get_issue', 'search_issues', 'editFiles', 'runCommands', 'runTests', 'codebase', 'problems', 'changes']
-argument-hint: '<issue-number>'
 ---
 
 # Work on Issue (Full Workflow)
@@ -10,9 +8,8 @@ argument-hint: '<issue-number>'
 Complete end-to-end workflow for a GitHub issue: prepare, implement, and create a PR.
 
 > **Tip:** For complex issues, use the individual skills instead:
-> 1. `/start-work-on-issue {number}` — prepare branch and plan
-> 2. `/implement-issue {number}` — write code, tests, docs
-> 3. `/finish-work-on-issue {number}` — review and create PR
+> 1. `/gh-issue-implement {number}` — prepare branch, plan, and implement
+> 2. `/gh-issue-finish {number}` — review and create PR
 
 ## Prerequisites
 
@@ -21,7 +18,7 @@ Complete end-to-end workflow for a GitHub issue: prepare, implement, and create 
 
 ## Phase 1 — Prepare
 
-Follow all steps from `/start-work-on-issue`:
+Follow all steps from `/gh-issue-implement` Phase 1:
 1. Read the issue (`gh issue view {issue-number} --json title,body,labels`)
 2. Determine branch type from labels
 3. Create and check out the branch (`feature/{number}-{title}`)
@@ -29,7 +26,7 @@ Follow all steps from `/start-work-on-issue`:
 
 ## Phase 2 — Implement
 
-Follow all steps from `/implement-issue`:
+Follow all steps from `/gh-issue-implement` Phase 2:
 1. Analyze the codebase for relevant files and patterns
 2. Implement all required changes
 3. Write tests for every changed behavior
@@ -39,7 +36,7 @@ Follow all steps from `/implement-issue`:
 
 ## Phase 3 — Review and PR
 
-Follow all steps from `/finish-work-on-issue`:
+Follow all steps from `/gh-issue-finish`:
 1. Run build and tests — fix any failures
 2. Review all changes (diff, correctness, edge cases, security)
 3. Create the pull request with `Closes #{number}` in the body

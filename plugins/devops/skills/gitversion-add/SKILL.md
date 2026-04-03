@@ -1,5 +1,5 @@
 ---
-name: add-gitversion
+name: gitversion-add
 description: 'Add GitVersion to a repository for automatic semantic versioning from git history'
 ---
 
