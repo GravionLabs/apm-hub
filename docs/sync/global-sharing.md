@@ -106,10 +106,18 @@ To keep your global files in sync across machines, store them in a **dotfiles re
 
 ### Symlink setup (recommended)
 
+If `~/.github` or `~/.copilot` already exist as normal directories, move or remove them first.
+The example below backs them up before creating the symlinks:
+
 ```bash
-# Create symlinks
-ln -s ~/dotfiles/github ~/.github
-ln -s ~/dotfiles/copilot ~/.copilot
+# Back up existing directories if they are not already symlinks
+mkdir -p ~/dotfiles-backup
+[ -d ~/.github ] && [ ! -L ~/.github ] && mv ~/.github ~/dotfiles-backup/github
+[ -d ~/.copilot ] && [ ! -L ~/.copilot ] && mv ~/.copilot ~/dotfiles-backup/copilot
+
+# Create or replace the symlinks
+ln -sfn ~/dotfiles/github ~/.github
+ln -sfn ~/dotfiles/copilot ~/.copilot
 ```
 
 ### Or use GNU stow
