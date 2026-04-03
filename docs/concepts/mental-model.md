@@ -140,11 +140,11 @@ sequenceDiagram
 
 ## Summary Table
 
-| Layer            | Focus                    | Persistence   | Trigger                      |
-| :--------------- | :----------------------- | :------------ | :--------------------------- |
-| **Instructions** | Rules                    | Persistent    | Automatic                    |
-| **Agents**       | Roles                    | Session       | Manual (`@`)                 |
-| **Prompts**      | Tasks                    | Single Action | Manual (`/`)                 |
-| **Skills**       | Specialized Know-how     | On Demand     | Auto (context) or explicit   |
-| **Subagents**    | Delegated Subtasks       | Task Duration | Auto (agent) or explicit     |
-| **Hooks**        | Lifecycle Enforcement    | Always        | Automatic (lifecycle events) |
+| Layer            | Focus                 | Persistence   | Trigger                      |
+| :--------------- | :-------------------- | :------------ | :--------------------------- |
+| **Instructions** | Rules                 | Persistent    | Automatic                    |
+| **Agents**       | Roles                 | Session       | Manual (`@`)                 |
+| **Prompts**      | Tasks                 | Single Action | Manual (`/`)                 |
+| **Skills**       | Specialized Know-how  | On Demand     | Auto (context) or explicit   |
+| **Subagents**    | Delegated Subtasks    | Task Duration | Auto (agent) or explicit     |
+| **Hooks**        | Lifecycle Enforcement | Always        | Automatic (lifecycle events) |

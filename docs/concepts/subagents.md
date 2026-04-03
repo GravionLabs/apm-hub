@@ -39,14 +39,14 @@ Subagents are best suited when:
 
 ## Subagents vs. Custom Agents
 
-| Aspect          | Subagent                            | Custom Agent (`.agent.md`)           |
-| :-------------- | :---------------------------------- | :----------------------------------- |
-| **Configuration** | None — runtime process            | `.github/agents/AGENT-NAME.md` file  |
-| **Trigger**     | Automatic or explicit in prompt     | Manual via `@agent-name`             |
-| **Context**     | Isolated context window             | Shares session context               |
-| **Persistence** | Ends when task is done              | Active for the session duration      |
-| **Nesting**     | Cannot create subagents             | Can instruct subagents               |
-| **Model**       | Same as main session (default)      | Inherits session model               |
+| Aspect            | Subagent                        | Custom Agent (`.agent.md`)          |
+| :---------------- | :------------------------------ | :---------------------------------- |
+| **Configuration** | None — runtime process          | `.github/agents/AGENT-NAME.md` file |
+| **Trigger**       | Automatic or explicit in prompt | Manual via `@agent-name`            |
+| **Context**       | Isolated context window         | Shares session context              |
+| **Persistence**   | Ends when task is done          | Active for the session duration     |
+| **Nesting**       | Cannot create subagents         | Can instruct subagents              |
+| **Model**         | Same as main session (default)  | Inherits session model              |
 
 ---
 
@@ -110,18 +110,18 @@ Use the task tool with:
 - prompt: "Review all changed files in the current branch..."
 ```
 
-See [Sub-Tasks with Custom Models](../../subtask-model-anweisungen.txt) for a detailed reference.
+See [Sub-Tasks with Custom Models](subtask-model-instructions.md) for a detailed reference.
 
 ---
 
 ## IDE and Surface Support
 
-| Surface          | Subagents Supported |
-| :--------------- | :------------------ |
-| VS Code          | ✓                   |
-| JetBrains IDEs   | Preview             |
-| Copilot CLI      | ✓                   |
-| GitHub.com       | ✗                   |
+| Surface        | Subagents Supported |
+| :------------- | :------------------ |
+| VS Code        | ✓                   |
+| JetBrains IDEs | Preview             |
+| Copilot CLI    | ✓                   |
+| GitHub.com     | ✗                   |
 
 ---
 

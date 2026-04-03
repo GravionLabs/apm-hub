@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/github-copilot-templates.iml" filepath="$PROJECT_DIR$/.idea/github-copilot-templates.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/copilot-hub.iml" filepath="$PROJECT_DIR$/.idea/copilot-hub.iml" />
     </modules>
   </component>
 </project>

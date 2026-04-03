@@ -117,7 +117,11 @@ export function resolveSkillSource(name: string, source?: string): string {
  * Transforms front-matter to the SKILL format (name + description only).
  * Optionally appends bodies from additional source files (extend list).
  */
-function generateSkillContent(skillName: string, sourceContent: string, extendContents: string[] = []): string {
+function generateSkillContent(
+  skillName: string,
+  sourceContent: string,
+  extendContents: string[] = []
+): string {
   const fm = parseFrontmatter(sourceContent);
   const description = fm.description || fm.name || skillName;
   let body = extractBody(sourceContent);
@@ -136,7 +140,11 @@ function generateSkillContent(skillName: string, sourceContent: string, extendCo
 /**
  * Generates the plugin.json manifest content.
  */
-function generatePluginJson(config: PluginConfig, skillNames: string[], instructionPaths: string[]): string {
+function generatePluginJson(
+  config: PluginConfig,
+  skillNames: string[],
+  instructionPaths: string[]
+): string {
   const manifest: Record<string, unknown> = {
     name: config.name,
     description: config.description,
@@ -308,7 +316,11 @@ export function generatePlugin(configPath: string, templatesDir: string, version
   const pluginManifestDir = path.join(pluginDir, '.github', 'plugin');
   fs.mkdirSync(pluginManifestDir, { recursive: true });
   const pluginJsonPath = path.join(pluginManifestDir, 'plugin.json');
-  const pluginJsonContent = generatePluginJson(config, generatedSkillNames, generatedInstructionPaths);
+  const pluginJsonContent = generatePluginJson(
+    config,
+    generatedSkillNames,
+    generatedInstructionPaths
+  );
   fs.writeFileSync(pluginJsonPath, pluginJsonContent, 'utf8');
   console.log(`  ✓ Manifest: .github/plugin/plugin.json`);
 

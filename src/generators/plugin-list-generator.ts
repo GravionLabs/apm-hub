@@ -44,14 +44,10 @@ export function parsePluginConfig(configPath: string): ParsedPlugin {
   const raw = fs.readFileSync(configPath, 'utf8');
   const config = parse(raw) as PluginMetadata;
 
-  const skills = (config.skills ?? []).map((s) =>
-    typeof s === 'string' ? s : s.name,
-  );
-  const agents = (config.agents ?? []).map((a) =>
-    typeof a === 'string' ? a : a.source,
-  );
+  const skills = (config.skills ?? []).map((s) => (typeof s === 'string' ? s : s.name));
+  const agents = (config.agents ?? []).map((a) => (typeof a === 'string' ? a : a.source));
   const instructions = (config.instructions ?? []).map((i) =>
-    typeof i === 'string' ? i : i.source,
+    typeof i === 'string' ? i : i.source
   );
 
   return {

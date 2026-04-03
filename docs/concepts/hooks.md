@@ -51,14 +51,14 @@ Hooks are defined in JSON files in your repository:
 
 ### Property Reference
 
-| Property      | Required                | Description                                                        |
-| :------------ | :---------------------- | :----------------------------------------------------------------- |
-| `type`        | ✅                       | Must be `"command"`                                                |
-| `bash`        | ✅ (Unix systems)        | Bash command or path to script                                     |
-| `powershell`  | ✅ (Windows)             | PowerShell command or path to script                               |
-| `cwd`         | —                       | Working directory relative to repository root                      |
-| `env`         | —                       | Additional environment variables merged with the existing env      |
-| `timeoutSec`  | —                       | Maximum execution time in seconds (default: 30)                    |
+| Property     | Required         | Description                                                   |
+| :----------- | :--------------- | :------------------------------------------------------------ |
+| `type`       | ✅                | Must be `"command"`                                           |
+| `bash`       | ✅ (Unix systems) | Bash command or path to script                                |
+| `powershell` | ✅ (Windows)      | PowerShell command or path to script                          |
+| `cwd`        | —                | Working directory relative to repository root                 |
+| `env`        | —                | Additional environment variables merged with the existing env |
+| `timeoutSec` | —                | Maximum execution time in seconds (default: 30)               |
 
 ---
 
@@ -184,12 +184,12 @@ Hooks run **synchronously** and block agent execution. Keep these guidelines in 
 
 ## IDE and Surface Support
 
-| Surface          | Hooks Supported |
-| :--------------- | :-------------- |
-| VS Code          | Preview         |
-| JetBrains IDEs   | ✗               |
-| Copilot CLI      | ✓               |
-| GitHub.com       | ✓               |
+| Surface        | Hooks Supported |
+| :------------- | :-------------- |
+| VS Code        | Preview         |
+| JetBrains IDEs | ✗               |
+| Copilot CLI    | ✓               |
+| GitHub.com     | ✓               |
 
 ---
 

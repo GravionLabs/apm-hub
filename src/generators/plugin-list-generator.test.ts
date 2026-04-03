@@ -94,9 +94,9 @@ describe('generatePluginList', () => {
 
   it('should generate plugin-list.md with overview table and per-plugin sections', () => {
     mockFs.existsSync = vi.fn().mockReturnValue(true);
-    mockFs.readdirSync = vi.fn().mockReturnValue([
-      { name: 'my-plugin', isDirectory: () => true },
-    ] as unknown as fs.Dirent[]);
+    mockFs.readdirSync = vi
+      .fn()
+      .mockReturnValue([{ name: 'my-plugin', isDirectory: () => true }] as unknown as fs.Dirent[]);
     mockFs.readFileSync = vi.fn().mockReturnValue('yaml content');
     mockParse.mockReturnValue({
       name: 'my-plugin',
@@ -117,7 +117,9 @@ describe('generatePluginList', () => {
     expect(content).toContain('# Plugin List');
     expect(content).toContain('automatically generated');
     // Overview table includes Version column
-    expect(content).toContain('| Plugin | Version | Description | Skills | Agents | Instructions |');
+    expect(content).toContain(
+      '| Plugin | Version | Description | Skills | Agents | Instructions |'
+    );
     expect(content).toContain('`1.2.3`');
     expect(content).toContain('my-plugin');
     expect(content).toContain('A cool plugin');
@@ -138,7 +140,9 @@ describe('generatePluginList', () => {
 
     const content = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
     expect(content).toContain('# Plugin List');
-    expect(content).toContain('| Plugin | Version | Description | Skills | Agents | Instructions |');
+    expect(content).toContain(
+      '| Plugin | Version | Description | Skills | Agents | Instructions |'
+    );
     // No plugin rows
     expect(content).not.toContain('\n## my-plugin');
   });
@@ -147,9 +151,9 @@ describe('generatePluginList', () => {
     mockFs.existsSync = vi.fn((p: fs.PathLike | string) => {
       return !(typeof p === 'string' && p.endsWith('plugin.config.yml'));
     });
-    mockFs.readdirSync = vi.fn().mockReturnValue([
-      { name: 'orphan', isDirectory: () => true },
-    ] as unknown as fs.Dirent[]);
+    mockFs.readdirSync = vi
+      .fn()
+      .mockReturnValue([{ name: 'orphan', isDirectory: () => true }] as unknown as fs.Dirent[]);
 
     generatePluginList('plugins', 'docs/plugin-list.md');
 

@@ -30,17 +30,17 @@ It is designed to help developers, teams, and organizations:
 
 This repository summarizes the following official resources. When in doubt, these are the authoritative sources:
 
-| Topic | Official GitHub Docs |
-| :---- | :------------------- |
-| **Customization overview** | [Copilot customization cheat sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet) |
-| **Custom instructions** | [About customizing responses](https://docs.github.com/en/copilot/concepts/prompting/response-customization) |
-| **Prompt files** | [About prompt files](https://docs.github.com/en/copilot/concepts/prompting/response-customization#about-prompt-files) |
-| **Custom agents** | [About custom agents](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents) |
-| **Agent skills** | [About agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) |
-| **Subagents** | [Using subagents](https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide#using-subagents) |
-| **Hooks** | [About hooks](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-hooks) |
-| **Copilot CLI** | [About GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli) |
-| **MCP servers** | [About MCP](https://docs.github.com/en/copilot/concepts/context/mcp) |
+| Topic                      | Official GitHub Docs                                                                                                  |
+| :------------------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| **Customization overview** | [Copilot customization cheat sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet)           |
+| **Custom instructions**    | [About customizing responses](https://docs.github.com/en/copilot/concepts/prompting/response-customization)           |
+| **Prompt files**           | [About prompt files](https://docs.github.com/en/copilot/concepts/prompting/response-customization#about-prompt-files) |
+| **Custom agents**          | [About custom agents](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents)            |
+| **Agent skills**           | [About agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)                           |
+| **Subagents**              | [Using subagents](https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide#using-subagents)           |
+| **Hooks**                  | [About hooks](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-hooks)                            |
+| **Copilot CLI**            | [About GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli)                      |
+| **MCP servers**            | [About MCP](https://docs.github.com/en/copilot/concepts/context/mcp)                                                  |
 
 ---
 
@@ -158,16 +158,16 @@ This section is especially useful for **onboarding**, **training**, and **docume
 
 ## Core Concepts at a Glance
 
-| Concept      | Purpose                                    | Applied When               | GitHub Docs                                                                              |
-| :----------- | :----------------------------------------- | :------------------------- | :--------------------------------------------------------------------------------------- |
-| Instructions | Persistent project rules                   | Automatically              | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
-| Prompts      | Task‑specific workflows                    | Manually (`/`)             | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
-| Agents       | Specialized roles & permissions            | Manually (`@`)             | [↗](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents) |
-| Skills       | Specialized know-how loaded when relevant  | Auto (context) or explicit | [↗](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)               |
-| Subagents    | Delegated subtasks in isolated context     | Auto (agent) or explicit   | [↗](https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide#using-subagents) |
-| Hooks        | Shell commands at lifecycle events         | Automatically (events)     | [↗](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-hooks)         |
-| Plugins      | Installable bundles (agents, skills, …)    | On install                 |                                                                                          |
-| AGENTS.md    | Repository context for AI tools            | Automatically              | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)        |
+| Concept      | Purpose                                   | Applied When               | GitHub Docs                                                                                   |
+| :----------- | :---------------------------------------- | :------------------------- | :-------------------------------------------------------------------------------------------- |
+| Instructions | Persistent project rules                  | Automatically              | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)             |
+| Prompts      | Task‑specific workflows                   | Manually (`/`)             | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)             |
+| Agents       | Specialized roles & permissions           | Manually (`@`)             | [↗](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents)      |
+| Skills       | Specialized know-how loaded when relevant | Auto (context) or explicit | [↗](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)                    |
+| Subagents    | Delegated subtasks in isolated context    | Auto (agent) or explicit   | [↗](https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide#using-subagents) |
+| Hooks        | Shell commands at lifecycle events        | Automatically (events)     | [↗](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-hooks)              |
+| Plugins      | Installable bundles (agents, skills, …)   | On install                 |                                                                                               |
+| AGENTS.md    | Repository context for AI tools           | Automatically              | [↗](https://docs.github.com/en/copilot/concepts/prompting/response-customization)             |
 
 **Mental model**
 

@@ -3,7 +3,11 @@ import * as path from 'path';
 import { parsePluginConfig } from './plugin-list-generator';
 import { parseFrontmatter } from './template-list-generator';
 
-function readSkillDescription(pluginsBaseDir: string, pluginDirName: string, skillName: string): string {
+function readSkillDescription(
+  pluginsBaseDir: string,
+  pluginDirName: string,
+  skillName: string
+): string {
   const skillFile = path.join(pluginsBaseDir, pluginDirName, 'skills', skillName, 'SKILL.md');
   if (!fs.existsSync(skillFile)) return '-';
   const content = fs.readFileSync(skillFile, 'utf8');

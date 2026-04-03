@@ -28,21 +28,21 @@ Use the /csharp-async skill to improve this code.
 
 Skills can be stored in two scopes:
 
-| Scope        | Paths                                                                                                    |
-| :----------- | :------------------------------------------------------------------------------------------------------- |
-| **Project**  | `.github/skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`    |
+| Scope        | Paths                                                                                                       |
+| :----------- | :---------------------------------------------------------------------------------------------------------- |
+| **Project**  | `.github/skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`        |
 | **Personal** | `~/.copilot/skills/<name>/SKILL.md`, `~/.claude/skills/<name>/SKILL.md`, `~/.agents/skills/<name>/SKILL.md` |
 
 ### Plugin Skills vs. Native Agent Skills
 
 This repository uses a **plugin-based distribution** for skills. Plugin skills follow the same `SKILL.md` format but are bundled and installed via the copilot-hub plugin system:
 
-| Aspect              | Native Agent Skill                 | Plugin Skill (copilot-hub)                |
-| :------------------ | :--------------------------------- | :---------------------------------------- |
-| **Location**        | `.github/skills/` or `~/.copilot/skills/` | `plugins/<plugin>/skills/<name>/SKILL.md` |
-| **Distribution**    | Manual copy or sync                | `gh copilot plugin install`               |
-| **Trigger**         | Automatic (context-based) + explicit `/skill-name` | Automatic (context-based) + explicit `/skill-name` |
-| **Versioning**      | Repository-level                   | Plugin version                            |
+| Aspect           | Native Agent Skill                                 | Plugin Skill (copilot-hub)                         |
+| :--------------- | :------------------------------------------------- | :------------------------------------------------- |
+| **Location**     | `.github/skills/` or `~/.copilot/skills/`          | `plugins/<plugin>/skills/<name>/SKILL.md`          |
+| **Distribution** | Manual copy or sync                                | `gh copilot plugin install`                        |
+| **Trigger**      | Automatic (context-based) + explicit `/skill-name` | Automatic (context-based) + explicit `/skill-name` |
+| **Versioning**   | Repository-level                                   | Plugin version                                     |
 
 Skills are the plugin-scoped equivalent of `.prompt.md` files. Where a prompt file lives in `.github/prompts/` of a single repository, a skill lives inside a plugin and travels with it.
 

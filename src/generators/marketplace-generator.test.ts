@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fs from 'fs';
-import * as path from 'path';
 import { generateMarketplace } from './marketplace-generator';
 
 vi.mock('fs');
@@ -44,9 +43,11 @@ describe('generateMarketplace', () => {
     });
 
     let written = '';
-    (fs.writeFileSync as ReturnType<typeof vi.fn>).mockImplementation((_p: unknown, data: unknown) => {
-      written = data as string;
-    });
+    (fs.writeFileSync as ReturnType<typeof vi.fn>).mockImplementation(
+      (_p: unknown, data: unknown) => {
+        written = data as string;
+      }
+    );
 
     generateMarketplace('plugins', 'marketplace.json');
 
@@ -72,9 +73,11 @@ describe('generateMarketplace', () => {
     (fs.readFileSync as ReturnType<typeof vi.fn>).mockReturnValue(mockPluginB);
 
     let written = '';
-    (fs.writeFileSync as ReturnType<typeof vi.fn>).mockImplementation((_p: unknown, data: unknown) => {
-      written = data as string;
-    });
+    (fs.writeFileSync as ReturnType<typeof vi.fn>).mockImplementation(
+      (_p: unknown, data: unknown) => {
+        written = data as string;
+      }
+    );
 
     generateMarketplace('plugins', 'marketplace.json');
 
@@ -117,9 +120,11 @@ describe('generateMarketplace', () => {
     (fs.readFileSync as ReturnType<typeof vi.fn>).mockReturnValue(mockPluginA);
 
     let written = '';
-    (fs.writeFileSync as ReturnType<typeof vi.fn>).mockImplementation((_p: unknown, data: unknown) => {
-      written = data as string;
-    });
+    (fs.writeFileSync as ReturnType<typeof vi.fn>).mockImplementation(
+      (_p: unknown, data: unknown) => {
+        written = data as string;
+      }
+    );
 
     generateMarketplace('plugins', 'marketplace.json');
 
@@ -138,25 +143,26 @@ describe('generateMarketplace', () => {
     ]);
 
     // Return same content that would be generated
-    const expected = JSON.stringify(
-      {
-        name: 'copilot-hub',
-        owner: { login: 'GravionLabs', name: 'Gravion' },
-        description:
-          "A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team's Copilot marketplace.",
-        plugins: [
-          {
-            name: 'alpha-plugin',
-            source: 'plugins/alpha-plugin',
-            description: 'Alpha plugin description',
-            version: '1.2.0',
-            keywords: ['alpha', 'test'],
-          },
-        ],
-      },
-      null,
-      2
-    ) + '\n';
+    const expected =
+      JSON.stringify(
+        {
+          name: 'copilot-hub',
+          owner: { login: 'GravionLabs', name: 'Gravion' },
+          description:
+            "A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team's Copilot marketplace.",
+          plugins: [
+            {
+              name: 'alpha-plugin',
+              source: 'plugins/alpha-plugin',
+              description: 'Alpha plugin description',
+              version: '1.2.0',
+              keywords: ['alpha', 'test'],
+            },
+          ],
+        },
+        null,
+        2
+      ) + '\n';
 
     (fs.readFileSync as ReturnType<typeof vi.fn>).mockImplementation((p: unknown) => {
       if (String(p) === 'marketplace.json') return expected;

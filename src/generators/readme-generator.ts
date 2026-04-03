@@ -57,10 +57,7 @@ export function buildTemplateStatsBlock(templatesDir: string): string {
  * Build the plugin-table from plugins/<name>/plugin.config.yml files.
  */
 export function buildPluginTableBlock(pluginsDir: string): string {
-  const rows: string[] = [
-    '| Plugin | Description |',
-    '| :--- | :--- |',
-  ];
+  const rows: string[] = ['| Plugin | Description |', '| :--- | :--- |'];
 
   if (!fs.existsSync(pluginsDir)) {
     return rows.join('\n');
@@ -79,10 +76,7 @@ export function buildPluginTableBlock(pluginsDir: string): string {
     const raw = fs.readFileSync(configPath, 'utf8');
     const config = parse(raw) as PluginMeta;
     const name = config.name ?? dirName;
-    const desc = (config.description ?? '')
-      .replace(/\n/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const desc = (config.description ?? '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
     rows.push(`| [\`${name}\`](plugins/${dirName}) | ${desc} |`);
   }
@@ -127,7 +121,7 @@ export function updateFileBlock(filePath: string, blockId: string, content: stri
 export function updateReadme(
   readmePath = 'README.md',
   templatesDir = 'templates',
-  pluginsDir = 'plugins',
+  pluginsDir = 'plugins'
 ): boolean {
   if (!fs.existsSync(readmePath)) {
     console.warn(`README.md not found at ${readmePath}, skipping.`);

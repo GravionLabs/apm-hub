@@ -24,7 +24,10 @@ interface RawPluginConfig {
   keywords?: string[];
 }
 
-export function generateMarketplace(pluginsDir = 'plugins', outputPath = '.github/plugin/marketplace.json'): void {
+export function generateMarketplace(
+  pluginsDir = 'plugins',
+  outputPath = '.github/plugin/marketplace.json'
+): void {
   if (!fs.existsSync(pluginsDir)) {
     console.warn(`  marketplace-generator: plugins dir not found: ${pluginsDir}`);
     return;
@@ -56,7 +59,7 @@ export function generateMarketplace(pluginsDir = 'plugins', outputPath = '.githu
     name: 'copilot-hub',
     owner: { login: 'GravionLabs', name: 'Gravion' },
     description:
-      'A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team\'s Copilot marketplace.',
+      "A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team's Copilot marketplace.",
     plugins: entries,
   };
 

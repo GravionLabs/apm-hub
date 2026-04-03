@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { injectBlock, buildTemplateStatsBlock, buildPluginTableBlock, updateReadme, updateFileBlock } from './readme-generator';
+import {
+  injectBlock,
+  buildTemplateStatsBlock,
+  buildPluginTableBlock,
+  updateReadme,
+  updateFileBlock,
+} from './readme-generator';
 
 vi.mock('fs');
 vi.mock('yaml');
@@ -21,7 +27,9 @@ describe('injectBlock', () => {
     ].join('\n');
 
     const result = injectBlock(content, 'my-block', 'new content');
-    expect(result).toContain('<!-- AUTO:start my-block -->\nnew content\n<!-- AUTO:end my-block -->');
+    expect(result).toContain(
+      '<!-- AUTO:start my-block -->\nnew content\n<!-- AUTO:end my-block -->'
+    );
     expect(result).not.toContain('old content');
     expect(result).toContain('after');
   });
@@ -34,12 +42,16 @@ describe('injectBlock', () => {
 
   it('throws when start marker is missing', () => {
     const content = '<!-- AUTO:end my-block -->';
-    expect(() => injectBlock(content, 'my-block', 'x')).toThrow("AUTO markers for 'my-block' not found");
+    expect(() => injectBlock(content, 'my-block', 'x')).toThrow(
+      "AUTO markers for 'my-block' not found"
+    );
   });
 
   it('throws when end marker is missing', () => {
     const content = '<!-- AUTO:start my-block -->';
-    expect(() => injectBlock(content, 'my-block', 'x')).toThrow("AUTO markers for 'my-block' not found");
+    expect(() => injectBlock(content, 'my-block', 'x')).toThrow(
+      "AUTO markers for 'my-block' not found"
+    );
   });
 });
 
@@ -53,7 +65,12 @@ describe('buildTemplateStatsBlock', () => {
       const d = dir as string;
       if (d.endsWith('agents')) return ['a.agent.md', 'b.agent.md'] as unknown as fs.Dirent[];
       if (d.endsWith('prompts')) return ['p.prompt.md'] as unknown as fs.Dirent[];
-      if (d.endsWith('instructions')) return ['i.instructions.md', 'j.instructions.md', 'k.instructions.md'] as unknown as fs.Dirent[];
+      if (d.endsWith('instructions'))
+        return [
+          'i.instructions.md',
+          'j.instructions.md',
+          'k.instructions.md',
+        ] as unknown as fs.Dirent[];
       return [] as unknown as fs.Dirent[];
     }) as any;
 
@@ -74,7 +91,9 @@ describe('buildTemplateStatsBlock', () => {
   it('ignores non-.md files', () => {
     mockFs.existsSync = vi.fn().mockReturnValue(true);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockFs.readdirSync = vi.fn(() => ['file.md', 'file.yml', 'file.txt'] as unknown as fs.Dirent[]) as any;
+    mockFs.readdirSync = vi.fn(
+      () => ['file.md', 'file.yml', 'file.txt'] as unknown as fs.Dirent[]
+    ) as any;
     const result = buildTemplateStatsBlock('templates');
     expect(result).toContain('| **Agents** | 1 |');
   });
@@ -85,9 +104,9 @@ describe('buildPluginTableBlock', () => {
 
   it('builds a table row per plugin', () => {
     mockFs.existsSync = vi.fn().mockReturnValue(true);
-    mockFs.readdirSync = vi.fn().mockReturnValue([
-      { name: 'my-plugin', isDirectory: () => true },
-    ] as unknown as fs.Dirent[]);
+    mockFs.readdirSync = vi
+      .fn()
+      .mockReturnValue([{ name: 'my-plugin', isDirectory: () => true }] as unknown as fs.Dirent[]);
     mockFs.readFileSync = vi.fn().mockReturnValue('yaml');
     mockParse.mockReturnValue({ name: 'my-plugin', description: 'A cool plugin' });
 
@@ -106,9 +125,9 @@ describe('buildPluginTableBlock', () => {
 
   it('collapses multi-line descriptions', () => {
     mockFs.existsSync = vi.fn().mockReturnValue(true);
-    mockFs.readdirSync = vi.fn().mockReturnValue([
-      { name: 'p', isDirectory: () => true },
-    ] as unknown as fs.Dirent[]);
+    mockFs.readdirSync = vi
+      .fn()
+      .mockReturnValue([{ name: 'p', isDirectory: () => true }] as unknown as fs.Dirent[]);
     mockFs.readFileSync = vi.fn().mockReturnValue('yaml');
     mockParse.mockReturnValue({ name: 'p', description: 'Line one\nLine two\n  extra spaces' });
 
@@ -124,17 +143,18 @@ describe('buildPluginTableBlock', () => {
 describe('updateReadme', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  const makeReadme = () => [
-    '# copilot-hub',
-    '',
-    '<!-- AUTO:start template-stats -->',
-    'old stats',
-    '<!-- AUTO:end template-stats -->',
-    '',
-    '<!-- AUTO:start plugin-table -->',
-    'old table',
-    '<!-- AUTO:end plugin-table -->',
-  ].join('\n');
+  const makeReadme = () =>
+    [
+      '# copilot-hub',
+      '',
+      '<!-- AUTO:start template-stats -->',
+      'old stats',
+      '<!-- AUTO:end template-stats -->',
+      '',
+      '<!-- AUTO:start plugin-table -->',
+      'old table',
+      '<!-- AUTO:end plugin-table -->',
+    ].join('\n');
 
   it('updates both blocks and writes the file', () => {
     mockFs.existsSync = vi.fn().mockReturnValue(true);
@@ -201,7 +221,8 @@ describe('updateReadme', () => {
 
 describe('updateFileBlock', () => {
   const FILE_PATH = 'docs/overview.md';
-  const fileWithMarkers = '# Overview\n\n<!-- AUTO:start version -->\nWelcome to **copilot-hub** v1.0.0 👋\n<!-- AUTO:end version -->\n\nSome content.\n';
+  const fileWithMarkers =
+    '# Overview\n\n<!-- AUTO:start version -->\nWelcome to **copilot-hub** v1.0.0 👋\n<!-- AUTO:end version -->\n\nSome content.\n';
 
   beforeEach(() => {
     vi.clearAllMocks();

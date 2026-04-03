@@ -16,11 +16,16 @@ function parseAlignment(cell: string): Alignment {
 
 /** Build a separator cell of the given width with the correct alignment markers */
 function buildSeparator(width: number, alignment: Alignment): string {
-  const dashes = '-'.repeat(Math.max(width - (alignment === 'center' ? 2 : alignment === 'right' ? 1 : 1), 1));
+  const dashes = '-'.repeat(
+    Math.max(width - (alignment === 'center' ? 2 : alignment === 'right' ? 1 : 1), 1)
+  );
   switch (alignment) {
-    case 'center': return `:${dashes}:`;
-    case 'right':  return `${dashes}:`;
-    default:       return `:${dashes}`;
+    case 'center':
+      return `:${dashes}:`;
+    case 'right':
+      return `${dashes}:`;
+    default:
+      return `:${dashes}`;
   }
 }
 
@@ -29,13 +34,15 @@ function padCell(value: string, width: number, alignment: Alignment): string {
   const padding = width - value.length;
   if (padding <= 0) return value;
   switch (alignment) {
-    case 'right':  return ' '.repeat(padding) + value;
+    case 'right':
+      return ' '.repeat(padding) + value;
     case 'center': {
       const left = Math.floor(padding / 2);
       const right = padding - left;
       return ' '.repeat(left) + value + ' '.repeat(right);
     }
-    default:       return value + ' '.repeat(padding);
+    default:
+      return value + ' '.repeat(padding);
   }
 }
 
@@ -104,8 +111,8 @@ function formatTableBlock(block: string[]): string[] {
   for (let col = 0; col < colCount; col++) {
     // Minimum width for separator (e.g. ":---" = 4)
     const align = alignments[col] ?? 'left';
-    const sepMin = align === 'center' ? 3 : 2; // "::" is 2, ":--:" is 4, ":-" is 2
-    widths[col] = sepMin;
+     // "::" is 2, ":--:" is 4, ":-" is 2
+    widths[col] = align === 'center' ? 3 : 2;
   }
   for (let row = 0; row < parsedRows.length; row++) {
     if (row === sepIdx) continue;

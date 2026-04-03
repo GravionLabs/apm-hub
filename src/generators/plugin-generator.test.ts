@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as path from 'path';
-import { generatePlugin, updatePluginConfigVersion, resolveSkillSource, resolveTemplatePath } from './plugin-generator';
+import {
+  generatePlugin,
+  updatePluginConfigVersion,
+  resolveSkillSource,
+  resolveTemplatePath,
+} from './plugin-generator';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -23,10 +28,17 @@ function makeConfig(overrides: Record<string, unknown> = {}): string {
   const lines = Object.entries(base).map(([k, v]) => {
     if (Array.isArray(v)) {
       if (v.length === 0) return `${k}: []`;
-      return `${k}:\n` + (v as Record<string, unknown>[]).map((item) => {
-        const entries = Object.entries(item).map(([ik, iv]) => `    ${ik}: ${iv}`).join('\n');
-        return `  -\n${entries}`;
-      }).join('\n');
+      return (
+        `${k}:\n` +
+        (v as Record<string, unknown>[])
+          .map((item) => {
+            const entries = Object.entries(item)
+              .map(([ik, iv]) => `    ${ik}: ${iv}`)
+              .join('\n');
+            return `  -\n${entries}`;
+          })
+          .join('\n')
+      );
     }
     return `${k}: ${JSON.stringify(v)}`;
   });
@@ -50,8 +62,12 @@ vi.mock('fs', async () => {
       if (existingFiles.has(p)) return existingFiles.get(p)!;
       throw new Error(`ENOENT: no such file: ${p}`);
     },
-    mkdirSync: (p: string, _opts?: unknown) => { createdDirs.add(p); },
-    writeFileSync: (p: string, content: string, _enc: string) => { writtenFiles.set(p, content); },
+    mkdirSync: (p: string, _opts?: unknown) => {
+      createdDirs.add(p);
+    },
+    writeFileSync: (p: string, content: string, _enc: string) => {
+      writtenFiles.set(p, content);
+    },
     copyFileSync: (src: string, dest: string) => {
       if (!existingFiles.has(src)) throw new Error(`ENOENT: no such file: ${src}`);
       writtenFiles.set(dest, existingFiles.get(src)!);
@@ -77,7 +93,9 @@ describe('resolveTemplatePath', () => {
   });
 
   it('prompts/ with extension → unchanged', () => {
-    expect(resolveTemplatePath('prompts/csharp-nunit.prompt.md')).toBe('prompts/csharp-nunit.prompt.md');
+    expect(resolveTemplatePath('prompts/csharp-nunit.prompt.md')).toBe(
+      'prompts/csharp-nunit.prompt.md'
+    );
   });
 
   it('instructions/ without extension → appends .instructions.md', () => {
@@ -85,7 +103,9 @@ describe('resolveTemplatePath', () => {
   });
 
   it('instructions/ with extension → unchanged', () => {
-    expect(resolveTemplatePath('instructions/csharp.instructions.md')).toBe('instructions/csharp.instructions.md');
+    expect(resolveTemplatePath('instructions/csharp.instructions.md')).toBe(
+      'instructions/csharp.instructions.md'
+    );
   });
 
   it('bare name → prompts/<name>.prompt.md', () => {
@@ -111,15 +131,21 @@ describe('resolveSkillSource', () => {
   });
 
   it('name with .prompt.md suffix → prompts/<source>', () => {
-    expect(resolveSkillSource('my-skill', 'csharp-nunit.prompt.md')).toBe('prompts/csharp-nunit.prompt.md');
+    expect(resolveSkillSource('my-skill', 'csharp-nunit.prompt.md')).toBe(
+      'prompts/csharp-nunit.prompt.md'
+    );
   });
 
   it('full path with .prompt.md → unchanged', () => {
-    expect(resolveSkillSource('my-skill', 'prompts/csharp-nunit.prompt.md')).toBe('prompts/csharp-nunit.prompt.md');
+    expect(resolveSkillSource('my-skill', 'prompts/csharp-nunit.prompt.md')).toBe(
+      'prompts/csharp-nunit.prompt.md'
+    );
   });
 
   it('agent path with extension → unchanged', () => {
-    expect(resolveSkillSource('gfog-helm', 'agents/gfog-helm.agent.md')).toBe('agents/gfog-helm.agent.md');
+    expect(resolveSkillSource('gfog-helm', 'agents/gfog-helm.agent.md')).toBe(
+      'agents/gfog-helm.agent.md'
+    );
   });
 
   it('agent path without extension → appends .agent.md', () => {
@@ -132,7 +158,7 @@ describe('resolveSkillSource', () => {
 
   it('bare name without source equals bare name as source', () => {
     expect(resolveSkillSource('dotnet-best-practices')).toBe(
-      resolveSkillSource('dotnet-best-practices', 'dotnet-best-practices'),
+      resolveSkillSource('dotnet-best-practices', 'dotnet-best-practices')
     );
   });
 });
@@ -155,9 +181,12 @@ describe('plugin-generator', () => {
   describe('skill source resolution in generatePlugin', () => {
     it('resolves skill without source from name (prompts/<name>.prompt.md)', () => {
       const promptPath = path.join(TEMPLATES_DIR, 'prompts', 'csharp-nunit.prompt.md');
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        skills: [{ name: 'csharp-nunit' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          skills: [{ name: 'csharp-nunit' }],
+        })
+      );
       existingFiles.set(promptPath, '---\ndescription: NUnit\n---\n\nContent.\n');
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -168,9 +197,12 @@ describe('plugin-generator', () => {
 
     it('resolves skill with bare source name (prompts/<source>.prompt.md)', () => {
       const promptPath = path.join(TEMPLATES_DIR, 'prompts', 'csharp-nunit.prompt.md');
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        skills: [{ name: 'my-nunit-skill', source: 'csharp-nunit' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          skills: [{ name: 'my-nunit-skill', source: 'csharp-nunit' }],
+        })
+      );
       existingFiles.set(promptPath, '---\ndescription: NUnit\n---\n\nContent.\n');
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -181,9 +213,12 @@ describe('plugin-generator', () => {
 
     it('resolves skill with source name including .prompt.md suffix', () => {
       const promptPath = path.join(TEMPLATES_DIR, 'prompts', 'csharp-nunit.prompt.md');
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        skills: [{ name: 'my-skill', source: 'csharp-nunit.prompt.md' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          skills: [{ name: 'my-skill', source: 'csharp-nunit.prompt.md' }],
+        })
+      );
       existingFiles.set(promptPath, '---\ndescription: NUnit\n---\n\nContent.\n');
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -194,9 +229,12 @@ describe('plugin-generator', () => {
 
     it('still resolves explicit agent path unchanged', () => {
       const agentPath = path.join(TEMPLATES_DIR, 'agents', 'gfog-helm.agent.md');
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        skills: [{ name: 'gfog-helm', source: 'agents/gfog-helm.agent.md' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          skills: [{ name: 'gfog-helm', source: 'agents/gfog-helm.agent.md' }],
+        })
+      );
       existingFiles.set(agentPath, '---\ndescription: Helm\n---\n\nContent.\n');
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -207,9 +245,12 @@ describe('plugin-generator', () => {
 
     it('resolves agents/ source without extension', () => {
       const agentPath = path.join(TEMPLATES_DIR, 'agents', 'gfog-helm.agent.md');
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        skills: [{ name: 'gfog-helm', source: 'agents/gfog-helm' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          skills: [{ name: 'gfog-helm', source: 'agents/gfog-helm' }],
+        })
+      );
       existingFiles.set(agentPath, '---\ndescription: Helm\n---\n\nContent.\n');
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -221,9 +262,10 @@ describe('plugin-generator', () => {
     it('resolves extend entry without extension', () => {
       const promptPath = path.join(TEMPLATES_DIR, 'prompts', 'csharp-code-review.prompt.md');
       const agentPath = path.join(TEMPLATES_DIR, 'agents', 'code-review-cli.agent.md');
-      existingFiles.set(CONFIG_PATH,
+      existingFiles.set(
+        CONFIG_PATH,
         'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
-        '  - name: csharp-code-review\n    extend:\n      - agents/code-review-cli\n',
+          '  - name: csharp-code-review\n    extend:\n      - agents/code-review-cli\n'
       );
       existingFiles.set(promptPath, '---\ndescription: Review\n---\n\nReview content.\n');
       existingFiles.set(agentPath, '---\ndescription: CLI\n---\n\nCLI content.\n');
@@ -266,13 +308,21 @@ describe('plugin-generator', () => {
   // -------------------------------------------------------------------------
 
   describe('plugin with instructions', () => {
-    const instructionSourcePath = path.join(TEMPLATES_DIR, 'instructions', 'csharp.instructions.md');
-    const instructionContent = '---\ndescription: C# rules\napplyTo: "**/*.cs"\n---\n\nUse C# best practices.\n';
+    const instructionSourcePath = path.join(
+      TEMPLATES_DIR,
+      'instructions',
+      'csharp.instructions.md'
+    );
+    const instructionContent =
+      '---\ndescription: C# rules\napplyTo: "**/*.cs"\n---\n\nUse C# best practices.\n';
 
     it('creates the instructions/ directory', () => {
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        instructions: [{ source: 'csharp' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          instructions: [{ source: 'csharp' }],
+        })
+      );
       existingFiles.set(instructionSourcePath, instructionContent);
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -282,9 +332,12 @@ describe('plugin-generator', () => {
     });
 
     it('copies the instruction file to instructions/<source>.instructions.md', () => {
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        instructions: [{ source: 'csharp' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          instructions: [{ source: 'csharp' }],
+        })
+      );
       existingFiles.set(instructionSourcePath, instructionContent);
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -295,9 +348,12 @@ describe('plugin-generator', () => {
     });
 
     it('supports source with full .instructions.md extension', () => {
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        instructions: [{ source: 'csharp.instructions.md' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          instructions: [{ source: 'csharp.instructions.md' }],
+        })
+      );
       existingFiles.set(instructionSourcePath, instructionContent);
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -307,9 +363,12 @@ describe('plugin-generator', () => {
     });
 
     it('plugin.json includes instructions array with relative paths', () => {
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        instructions: [{ source: 'csharp' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          instructions: [{ source: 'csharp' }],
+        })
+      );
       existingFiles.set(instructionSourcePath, instructionContent);
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -321,9 +380,12 @@ describe('plugin-generator', () => {
 
     it('plugin.json includes multiple instruction paths', () => {
       const nunitPath = path.join(TEMPLATES_DIR, 'instructions', 'csharp-nunit.instructions.md');
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        instructions: [{ source: 'csharp' }, { source: 'csharp-nunit' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          instructions: [{ source: 'csharp' }, { source: 'csharp-nunit' }],
+        })
+      );
       existingFiles.set(instructionSourcePath, instructionContent);
       existingFiles.set(nunitPath, '---\ndescription: NUnit rules\n---\n\nUse NUnit.\n');
 
@@ -345,9 +407,12 @@ describe('plugin-generator', () => {
   describe('missing instruction source file', () => {
     it('logs a warning but does not throw', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        instructions: [{ source: 'nonexistent' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          instructions: [{ source: 'nonexistent' }],
+        })
+      );
       // source file is NOT in existingFiles
 
       expect(() => generatePlugin(CONFIG_PATH, TEMPLATES_DIR)).not.toThrow();
@@ -356,9 +421,12 @@ describe('plugin-generator', () => {
 
     it('omits the missing file from plugin.json instructions array', () => {
       vi.spyOn(console, 'warn').mockImplementation(() => {});
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        instructions: [{ source: 'nonexistent' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          instructions: [{ source: 'nonexistent' }],
+        })
+      );
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
 
@@ -370,9 +438,12 @@ describe('plugin-generator', () => {
     it('continues generating remaining instructions after a missing file', () => {
       vi.spyOn(console, 'warn').mockImplementation(() => {});
       const csharpPath = path.join(TEMPLATES_DIR, 'instructions', 'csharp.instructions.md');
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        instructions: [{ source: 'nonexistent' }, { source: 'csharp' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          instructions: [{ source: 'nonexistent' }, { source: 'csharp' }],
+        })
+      );
       existingFiles.set(csharpPath, '---\ndescription: C#\n---\n\nContent.\n');
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -393,9 +464,12 @@ describe('plugin-generator', () => {
     const editorConfigContent = '# editorconfig\nroot = true\n';
 
     it('copies a file to the plugin directory using destination', () => {
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        files: [{ source: 'editor-configs/.editorconfig-csharp', destination: '.editorconfig' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          files: [{ source: 'editor-configs/.editorconfig-csharp', destination: '.editorconfig' }],
+        })
+      );
       existingFiles.set(editorConfigSource, editorConfigContent);
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -406,9 +480,12 @@ describe('plugin-generator', () => {
     });
 
     it('uses basename of source when no destination is specified', () => {
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        files: [{ source: 'editor-configs/.editorconfig-csharp' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          files: [{ source: 'editor-configs/.editorconfig-csharp' }],
+        })
+      );
       existingFiles.set(editorConfigSource, editorConfigContent);
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -419,18 +496,26 @@ describe('plugin-generator', () => {
 
     it('warns and skips when source file does not exist', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        files: [{ source: 'editor-configs/nonexistent.editorconfig', destination: '.editorconfig' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          files: [
+            { source: 'editor-configs/nonexistent.editorconfig', destination: '.editorconfig' },
+          ],
+        })
+      );
 
       expect(() => generatePlugin(CONFIG_PATH, TEMPLATES_DIR)).not.toThrow();
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('nonexistent'));
     });
 
     it('plugin.json does not include files field', () => {
-      existingFiles.set(CONFIG_PATH, makeConfig({
-        files: [{ source: 'editor-configs/.editorconfig-csharp', destination: '.editorconfig' }],
-      }));
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          files: [{ source: 'editor-configs/.editorconfig-csharp', destination: '.editorconfig' }],
+        })
+      );
       existingFiles.set(editorConfigSource, editorConfigContent);
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
@@ -447,7 +532,7 @@ describe('plugin-generator', () => {
 
   it('throws when config file does not exist', () => {
     expect(() => generatePlugin('/does/not/exist/plugin.config.yml', TEMPLATES_DIR)).toThrow(
-      'Plugin config not found',
+      'Plugin config not found'
     );
   });
 });
@@ -468,7 +553,9 @@ describe('updatePluginConfigVersion', () => {
 
     updatePluginConfigVersion(CONFIG_PATH, '2.3.4');
 
-    expect(writtenFiles.get(CONFIG_PATH)).toBe('name: my-plugin\nversion: "2.3.4"\ndescription: Test\n');
+    expect(writtenFiles.get(CONFIG_PATH)).toBe(
+      'name: my-plugin\nversion: "2.3.4"\ndescription: Test\n'
+    );
   });
 
   it('does not write the file when version is unchanged', () => {
@@ -481,13 +568,14 @@ describe('updatePluginConfigVersion', () => {
   });
 
   it('preserves comments and surrounding content', () => {
-    const content = '# Plugin config\nname: my-plugin\n# The version\nversion: "0.9.1"\nauthor:\n  name: Test\n';
+    const content =
+      '# Plugin config\nname: my-plugin\n# The version\nversion: "0.9.1"\nauthor:\n  name: Test\n';
     existingFiles.set(CONFIG_PATH, content);
 
     updatePluginConfigVersion(CONFIG_PATH, '1.5.0');
 
     expect(writtenFiles.get(CONFIG_PATH)).toBe(
-      '# Plugin config\nname: my-plugin\n# The version\nversion: "1.5.0"\nauthor:\n  name: Test\n',
+      '# Plugin config\nname: my-plugin\n# The version\nversion: "1.5.0"\nauthor:\n  name: Test\n'
     );
   });
 
