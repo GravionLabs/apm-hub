@@ -41,13 +41,13 @@ By default, all Copilot customizations live in `.github/` of a specific reposito
 
 Which tool loads global files from which path:
 
-| File type | `~/.github/` | VS Code | CLI (`gh copilot`) | JetBrains |
+| File type | Global path | VS Code | CLI (`gh copilot`) | JetBrains |
 | :--- | :--- | :---: | :---: | :---: |
-| `.agent.md` | `agents/` | ✅ | ✅ | ⬜ |
-| `.prompt.md` | `prompts/` | ✅ | ✅ | ✅ |
-| `.instructions.md` | `instructions/` | ✅ | ✅ | ⬜ |
-| `copilot-instructions.md` | root | ✅ | ✅ | ✅ |
-| `AGENTS.md` | root | ✅ | ✅ | ⬜ |
+| `.agent.md` | `~/.github/agents/` | ✅ | ✅ | ⬜ |
+| `.prompt.md` | `~/.github/prompts/` | ✅ | ✅ | ✅ |
+| `.instructions.md` | `~/.github/instructions/` | ✅ | ✅ | ⬜ |
+| `copilot-instructions.md` | `~/.github/` root | ✅ | ✅ | ✅ |
+| `AGENTS.md` | `~/.github/` root | ✅ | ✅ | ⬜ |
 | `SKILL.md` | `~/.copilot/skills/<name>/` | ✅ | ✅ | ✅ |
 
 > ✅ Supported · ⬜ Not supported / not documented
