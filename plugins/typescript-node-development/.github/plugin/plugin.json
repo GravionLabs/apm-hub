@@ -1,0 +1,31 @@
+{
+  "name": "typescript-node-development",
+  "description": "TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, Playwright TypeScript testing, and containerization.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Gravion"
+  },
+  "license": "MIT",
+  "keywords": [
+    "typescript",
+    "nodejs",
+    "playwright",
+    "vitest",
+    "eslint"
+  ],
+  "agents": [
+    "./agents"
+  ],
+  "skills": [
+    "./skills/create-node-workflow",
+    "./skills/typescript-code-review",
+    "./skills/setup-prettier-eslint-husky",
+    "./skills/write-tests",
+    "./skills/multi-stage-dockerfile"
+  ],
+  "instructions": [
+    "./instructions/typescript.instructions.md",
+    "./instructions/nodejs.instructions.md",
+    "./instructions/playwright-typescript.instructions.md"
+  ]
+}
