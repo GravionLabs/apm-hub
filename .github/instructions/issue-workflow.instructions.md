@@ -12,15 +12,20 @@ When working on a GitHub issue, always follow these conventions.
 Create a branch with the following format:
 
 ```
-feat/issue-{number}-{short-kebab-title}
+feature/{number}-{short-kebab-title}
+bugfix/{number}-{short-kebab-title}
+hotfix/{number}-{short-kebab-title}
 ```
 
-Examples:
-- `feat/issue-18-global-sharing-docs`
-- `feat/issue-42-add-python-plugin`
-- `fix/issue-7-ci-push-failure`
+Where `{number}` is the GitHub issue number.
 
-Use `fix/` prefix for bug fixes, `feat/` for new features or documentation additions, `chore/` for maintenance tasks.
+Examples:
+- `feature/18-global-sharing-docs`
+- `feature/42-add-python-plugin`
+- `bugfix/7-ci-push-failure`
+- `hotfix/99-security-patch`
+
+Use `feature/` for new features or documentation additions, `bugfix/` for bug fixes, `hotfix/` for critical production fixes.
 
 ### Commit Messages
 
@@ -41,7 +46,7 @@ For multi-commit work, include the issue reference in the final commit or the PR
 
 - **Title**: Match the final commit message subject (without the `closes #N` part)
 - **Body**: Always include `Closes #<number>` to auto-close the issue on merge
-- **Branch**: Must come from the `feat/issue-{number}-*` branch (never commit directly to `main`)
+- **Branch**: Must come from a `feature/`, `bugfix/`, or `hotfix/` branch (never commit directly to `main`)
 
 PR body template:
 
@@ -61,7 +66,7 @@ Closes #<issue-number>
 ### Checklist
 
 Before opening a PR:
-- [ ] Branch name follows `feat/issue-{number}-{title}` convention
+- [ ] Branch name follows `feature/{number}-{title}` convention
 - [ ] At least one commit references the issue number
 - [ ] PR body contains `Closes #<number>`
 - [ ] Generated files are up to date (`npm run generate:all` if applicable)
