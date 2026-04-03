@@ -22,14 +22,14 @@ By default, all Copilot customizations live in `.github/` of a specific reposito
 
 ⚠️ **Important:** Agents, prompts, and instructions use **a different root** than skills:
 
-| Type | Global path | Standard |
-| :--- | :--- | :--- |
-| Agents (`.agent.md`) | `~/.github/agents/` | GitHub Copilot |
-| Prompts (`.prompt.md`) | `~/.github/prompts/` | GitHub Copilot |
-| Instructions (`.instructions.md`) | `~/.github/instructions/` | GitHub Copilot |
-| `copilot-instructions.md` | `~/.github/copilot-instructions.md` | GitHub Copilot |
-| `AGENTS.md` | `~/.github/AGENTS.md` | OpenAI Codex / Claude |
-| Skills (`SKILL.md`) | `~/.copilot/skills/<name>/SKILL.md` | agentskills.io open standard |
+| Type                              | Global path                         | Standard                     |
+| :-------------------------------- | :---------------------------------- | :--------------------------- |
+| Agents (`.agent.md`)              | `~/.github/agents/`                 | GitHub Copilot               |
+| Prompts (`.prompt.md`)            | `~/.github/prompts/`                | GitHub Copilot               |
+| Instructions (`.instructions.md`) | `~/.github/instructions/`           | GitHub Copilot               |
+| `copilot-instructions.md`         | `~/.github/copilot-instructions.md` | GitHub Copilot               |
+| `AGENTS.md`                       | `~/.github/AGENTS.md`               | OpenAI Codex / Claude        |
+| Skills (`SKILL.md`)               | `~/.copilot/skills/<name>/SKILL.md` | agentskills.io open standard |
 
 > **Skills deliberately use `~/.copilot/`, not `~/.github/`.**  
 > The [agentskills.io specification](https://agentskills.io/specification) defines a tool-agnostic path (`~/.copilot/`, `~/.claude/`, `~/.agents/`) so skills work across different AI systems, not just GitHub Copilot.  
@@ -41,14 +41,14 @@ By default, all Copilot customizations live in `.github/` of a specific reposito
 
 Which tool loads global files from which path:
 
-| File type | Global path | VS Code | CLI (`gh copilot`) | JetBrains |
-| :--- | :--- | :---: | :---: | :---: |
-| `.agent.md` | `~/.github/agents/` | ✅ | ✅ | ⬜ |
-| `.prompt.md` | `~/.github/prompts/` | ✅ | ✅ | ✅ |
-| `.instructions.md` | `~/.github/instructions/` | ✅ | ✅ | ⬜ |
-| `copilot-instructions.md` | `~/.github/` root | ✅ | ✅ | ✅ |
-| `AGENTS.md` | `~/.github/` root | ✅ | ✅ | ⬜ |
-| `SKILL.md` | `~/.copilot/skills/<name>/` | ✅ | ✅ | ✅ |
+| File type                 | Global path                 | VS Code | CLI (`gh copilot`) | JetBrains |
+| :------------------------ | :-------------------------- | :-----: | :----------------: | :-------: |
+| `.agent.md`               | `~/.github/agents/`         |    ✅    |         ✅          |     ⬜     |
+| `.prompt.md`              | `~/.github/prompts/`        |    ✅    |         ✅          |     ✅     |
+| `.instructions.md`        | `~/.github/instructions/`   |    ✅    |         ✅          |     ⬜     |
+| `copilot-instructions.md` | `~/.github/` root           |    ✅    |         ✅          |     ✅     |
+| `AGENTS.md`               | `~/.github/` root           |    ✅    |         ✅          |     ⬜     |
+| `SKILL.md`                | `~/.copilot/skills/<name>/` |    ✅    |         ✅          |     ✅     |
 
 > ✅ Supported · ⬜ Not supported / not documented
 
@@ -56,13 +56,13 @@ Which tool loads global files from which path:
 
 ## Plugin vs. File-Based Approach
 
-| Aspect | File-based (manual) | Plugin (copilot-hub) |
-| :--- | :--- | :--- |
-| **Setup** | Copy files to `~/.github/` or `~/.copilot/` | `gh copilot plugin install <url>` |
-| **Updates** | Manual or via `gh-copilot-sync` | `gh copilot plugin update` |
-| **Customization** | Full control over each file | Controlled by plugin author |
-| **Portability** | Manual sync across machines | Plugin installed per machine |
-| **Best for** | Personal workflows, team conventions | Curated skill sets, shareable toolkits |
+| Aspect            | File-based (manual)                         | Plugin (copilot-hub)                   |
+| :---------------- | :------------------------------------------ | :------------------------------------- |
+| **Setup**         | Copy files to `~/.github/` or `~/.copilot/` | `gh copilot plugin install <url>`      |
+| **Updates**       | Manual or via `gh-copilot-sync`             | `gh copilot plugin update`             |
+| **Customization** | Full control over each file                 | Controlled by plugin author            |
+| **Portability**   | Manual sync across machines                 | Plugin installed per machine           |
+| **Best for**      | Personal workflows, team conventions        | Curated skill sets, shareable toolkits |
 
 **When to use which:**
 - Use **file-based** for personal conventions and custom prompts you maintain yourself.

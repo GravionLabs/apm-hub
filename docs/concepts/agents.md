@@ -57,10 +57,10 @@ They can be selected in the chat UI and combined with prompts to perform a wide 
 
 Agents can be stored at **project** or **global** scope:
 
-| Scope | Path | Availability |
-| :--- | :--- | :--- |
-| **Project** | `.github/agents/*.agent.md` | Current repository only |
-| **Global** | `~/.github/agents/*.agent.md` | All repositories on this machine |
+| Scope       | Path                          | Availability                     |
+| :---------- | :---------------------------- | :------------------------------- |
+| **Project** | `.github/agents/*.agent.md`   | Current repository only          |
+| **Global**  | `~/.github/agents/*.agent.md` | All repositories on this machine |
 
 **Reusable templates in this repository:**
 
@@ -76,11 +76,11 @@ security-reviewer.agent.md
 
 ### Global path tool support
 
-| Tool | Global agents path | Notes |
-| :--- | :---: | :--- |
-| VS Code (Copilot Chat) | ✅ | Loaded automatically |
-| CLI (`gh copilot`) | ✅ | Available as `@agent-name` |
-| JetBrains | ⬜ | Not supported |
+| Tool                   | Global agents path | Notes                      |
+| :--------------------- | :----------------: | :------------------------- |
+| VS Code (Copilot Chat) |         ✅          | Loaded automatically       |
+| CLI (`gh copilot`)     |         ✅          | Available as `@agent-name` |
+| JetBrains              |         ⬜          | Not supported              |
 
 > For instructions on setting up global sharing and cross-machine sync, see [global-sharing.md](../sync/global-sharing.md).
 

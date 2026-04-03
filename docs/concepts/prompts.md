@@ -38,10 +38,10 @@ GitHub Copilot supports **reusable prompt files** stored in a repository.
 
 Prompts can be stored at **project** or **global** scope:
 
-| Scope | Path | Availability |
-| :--- | :--- | :--- |
-| **Project** | `.github/prompts/*.prompt.md` | Current repository only |
-| **Global** | `~/.github/prompts/*.prompt.md` | All repositories on this machine |
+| Scope       | Path                            | Availability                     |
+| :---------- | :------------------------------ | :------------------------------- |
+| **Project** | `.github/prompts/*.prompt.md`   | Current repository only          |
+| **Global**  | `~/.github/prompts/*.prompt.md` | All repositories on this machine |
 
 **Reusable templates in this repository:**
 
@@ -63,11 +63,11 @@ When a prompt file is available, it can be invoked like this in Copilot Chat:
 
 ### Global path tool support
 
-| Tool | Global prompts path | Notes |
-| :--- | :---: | :--- |
-| VS Code (Copilot Chat) | ✅ | Available as `/prompt-name` |
-| CLI (`gh copilot`) | ✅ | Available as `/prompt-name` |
-| JetBrains | ✅ | Available as `/prompt-name` |
+| Tool                   | Global prompts path | Notes                       |
+| :--------------------- | :-----------------: | :-------------------------- |
+| VS Code (Copilot Chat) |          ✅          | Available as `/prompt-name` |
+| CLI (`gh copilot`)     |          ✅          | Available as `/prompt-name` |
+| JetBrains              |          ✅          | Available as `/prompt-name` |
 
 > For instructions on setting up global sharing and cross-machine sync, see [global-sharing.md](../sync/global-sharing.md).
 

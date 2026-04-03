@@ -28,9 +28,9 @@ Use the /csharp-async skill to improve this code.
 
 Skills can be stored in two scopes:
 
-| Scope | Paths | Availability |
-| :--- | :--- | :--- |
-| **Project** | `.github/skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md` | Current repository only |
+| Scope        | Paths                                                                                                       | Availability                     |
+| :----------- | :---------------------------------------------------------------------------------------------------------- | :------------------------------- |
+| **Project**  | `.github/skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`, `.agents/skills/<name>/SKILL.md`        | Current repository only          |
 | **Personal** | `~/.copilot/skills/<name>/SKILL.md`, `~/.claude/skills/<name>/SKILL.md`, `~/.agents/skills/<name>/SKILL.md` | All repositories on this machine |
 
 > ⚠️ **Skills do NOT use `~/.github/skills/`**
@@ -41,12 +41,12 @@ Skills can be stored in two scopes:
 
 ### Skills vs. Agents & Prompts: Path Comparison
 
-| Type | Project path | Personal/global path | Standard |
-| :--- | :--- | :--- | :--- |
-| **Agents** | `.github/agents/` | `~/.github/agents/` | GitHub Copilot |
-| **Prompts** | `.github/prompts/` | `~/.github/prompts/` | GitHub Copilot |
-| **Instructions** | `.github/instructions/` | `~/.github/instructions/` | GitHub Copilot |
-| **Skills** | `.github/skills/<name>/` | `~/.copilot/skills/<name>/` | agentskills.io |
+| Type             | Project path             | Personal/global path        | Standard       |
+| :--------------- | :----------------------- | :-------------------------- | :------------- |
+| **Agents**       | `.github/agents/`        | `~/.github/agents/`         | GitHub Copilot |
+| **Prompts**      | `.github/prompts/`       | `~/.github/prompts/`        | GitHub Copilot |
+| **Instructions** | `.github/instructions/`  | `~/.github/instructions/`   | GitHub Copilot |
+| **Skills**       | `.github/skills/<name>/` | `~/.copilot/skills/<name>/` | agentskills.io |
 
 > See [global-sharing.md](../sync/global-sharing.md) for the full tool-support matrix and cross-machine sync setup.
 
