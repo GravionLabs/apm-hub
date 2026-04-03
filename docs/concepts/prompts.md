@@ -36,11 +36,12 @@ GitHub Copilot supports **reusable prompt files** stored in a repository.
 - Shared across a team
 - Exposed as **slash commands** in supported IDEs
 
-**Location in your repository:**
+Prompts can be stored at **project** or **global** scope:
 
-```text
-.github/prompts/*.prompt.md
-```
+| Scope | Path | Availability |
+| :--- | :--- | :--- |
+| **Project** | `.github/prompts/*.prompt.md` | Current repository only |
+| **Global** | `~/.github/prompts/*.prompt.md` | All repositories on this machine |
 
 **Reusable templates in this repository:**
 
@@ -59,6 +60,16 @@ When a prompt file is available, it can be invoked like this in Copilot Chat:
 ```text
 /explain-code
 ```
+
+### Global path tool support
+
+| Tool | Global prompts path | Notes |
+| :--- | :---: | :--- |
+| VS Code (Copilot Chat) | ✅ | Available as `/prompt-name` |
+| CLI (`gh copilot`) | ✅ | Available as `/prompt-name` |
+| JetBrains | ✅ | Available as `/prompt-name` |
+
+> For instructions on setting up global sharing and cross-machine sync, see [global-sharing.md](../sync/global-sharing.md).
 
 ## When Should You Use a Prompt?
 
@@ -233,5 +244,6 @@ All prompts are intended to be:
 
 ## Further Reading
 
+- [global-sharing.md](../sync/global-sharing.md) — How to share prompts globally across all repositories
 - [About customizing GitHub Copilot responses](https://docs.github.com/en/copilot/concepts/prompting/response-customization) — GitHub Docs: prompt files, custom instructions, and response customization
 - [Copilot customization cheat sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet) — GitHub Docs: comparison of all customization options
