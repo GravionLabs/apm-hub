@@ -143,6 +143,27 @@ See [`plans/extend-generator.md`](plans/extend-generator.md) for full spec.
 
 ---
 
+## 📋 Phase 9 – Documentation & Developer Experience
+
+Improve documentation quality, cross-tool clarity, and developer workflow conventions.
+
+### New docs
+
+- [ ] `docs/sync/global-sharing.md` – Guide: when to use `~/.github/` vs `~/.copilot/`, collision rules, Dotfiles-approach, automation via `gh-copilot-setup` and `gh-copilot-sync`
+
+### Concept doc updates
+
+- [ ] `docs/concepts/agents.md` – Add global path `~/.github/agents/` with tool-support matrix
+- [ ] `docs/concepts/prompts.md` – Add global path `~/.github/prompts/` with tool-support matrix
+- [ ] `docs/concepts/skills.md` – Clarify that skills use `~/.copilot/skills/` (NOT `~/.github/skills/`)
+- [ ] `docs/overview.md` – Add cross-reference to `global-sharing.md`
+
+### Templates
+
+- [ ] `templates/instructions/issue-workflow.instructions.md` – Instruction for branch + PR conventions when working on GitHub issues
+
+---
+
 ## Architecture
 
 ```
