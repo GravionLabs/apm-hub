@@ -5,6 +5,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.6] — 2026-04-03
+
+### Bug Fixes
+- Restore generate script and normalize generate:* naming
+- Replace direct push with auto-PR in update-docs job
+- Use GH_PAT for update-docs push to bypass branch protection
+- Pass GH_PAT to gh-release action and release job checkout
+
+
+### Documentation
+- Add subagents and hooks concepts, update skills and mental model
+- Update overview.md with version notice, official docs reference, and updated concepts table
+- Add Mermaid diagrams to mental-model and overview
+- Translate subtask-model-instructions.md from German to English
+
+
+### Features
+- Add typescript-node-development plugin (#8)
+- Add cross-platform Mermaid diagram support (GitHub + Azure DevOps)
+- Update plugin versions, add new plugins and improve formatting
+
+
+## [1.0.5] — 2026-03-28
+
+### Documentation
+- Update CHANGELOG.md for v1.0.5 [skip ci]
+
+
 ## [1.0.4] — 2026-03-28
 
 ### Documentation
@@ -12,6 +40,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 
 ### Features
+- Add terraform-development plugin (#9)
 - Add helm-development plugin (#10)
 - Add go-development plugin (#11)
 
