@@ -160,7 +160,16 @@ Improve documentation quality, cross-tool clarity, and developer workflow conven
 
 ### Templates
 
-- [ ] `templates/instructions/issue-workflow.instructions.md` – Instruction for branch + PR conventions when working on GitHub issues
+- [x] `templates/instructions/issue-workflow.instructions.md` – Instruction for branch + PR conventions
+- [ ] `templates/prompts/start-work-on-issue.prompt.md` – Prepare branch and implementation plan
+- [ ] `templates/prompts/implement-issue.prompt.md` – Implement code, tests, docs with atomic commits
+- [ ] `templates/prompts/finish-work-on-issue.prompt.md` – Review changes and create pull request
+- [ ] `templates/prompts/work-on-issue.prompt.md` – Full end-to-end issue workflow
+
+### Generator improvements
+
+- [x] `src/generators/plugin-generator.ts` – Map `tools:` → `allowed-tools:` in SKILL.md (agentskills.io spec)
+- [x] Pass through `argument-hint`, `user-invocable`, `disable-model-invocation`, `compatibility` from source to SKILL.md
 
 ---
 

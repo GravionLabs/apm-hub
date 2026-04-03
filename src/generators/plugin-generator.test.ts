@@ -276,6 +276,59 @@ describe('plugin-generator', () => {
       expect(writtenFiles.has(skillPath)).toBe(true);
       expect(writtenFiles.get(skillPath)).toContain('CLI content.');
     });
+
+    it('maps tools: array to allowed-tools in SKILL.md', () => {
+      const promptPath = path.join(TEMPLATES_DIR, 'prompts', 'my-tool-skill.prompt.md');
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({ skills: [{ name: 'my-tool-skill' }] })
+      );
+      existingFiles.set(
+        promptPath,
+        "---\ndescription: Skill with tools\ntools: ['codebase', 'runCommands', 'editFiles']\n---\n\nContent.\n"
+      );
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const skillPath = path.join(PLUGIN_DIR, 'skills', 'my-tool-skill', 'SKILL.md');
+      expect(writtenFiles.has(skillPath)).toBe(true);
+      const content = writtenFiles.get(skillPath)!;
+      expect(content).toContain('allowed-tools: codebase runCommands editFiles');
+      expect(content).not.toContain("tools: ['codebase'");
+    });
+
+    it('passes through argument-hint to SKILL.md', () => {
+      const promptPath = path.join(TEMPLATES_DIR, 'prompts', 'my-arg-skill.prompt.md');
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({ skills: [{ name: 'my-arg-skill' }] })
+      );
+      existingFiles.set(
+        promptPath,
+        "---\ndescription: Skill with arg-hint\nargument-hint: '<issue-number>'\n---\n\nContent.\n"
+      );
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const skillPath = path.join(PLUGIN_DIR, 'skills', 'my-arg-skill', 'SKILL.md');
+      const content = writtenFiles.get(skillPath)!;
+      expect(content).toContain('argument-hint:');
+    });
+
+    it('omits allowed-tools when tools field is absent', () => {
+      const promptPath = path.join(TEMPLATES_DIR, 'prompts', 'no-tools-skill.prompt.md');
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({ skills: [{ name: 'no-tools-skill' }] })
+      );
+      existingFiles.set(promptPath, '---\ndescription: Simple skill\n---\n\nContent.\n');
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const skillPath = path.join(PLUGIN_DIR, 'skills', 'no-tools-skill', 'SKILL.md');
+      const content = writtenFiles.get(skillPath)!;
+      expect(content).not.toContain('allowed-tools');
+    });
   });
 
   describe('plugin without instructions', () => {

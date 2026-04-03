@@ -113,8 +113,25 @@ export function resolveSkillSource(name: string, source?: string): string {
 }
 
 /**
+ * Parses a YAML array-style tools string (e.g. "['codebase', 'runCommands']")
+ * into a space-delimited allowed-tools string (e.g. "codebase runCommands").
+ */
+function parseToolsToAllowedTools(toolsValue: string): string {
+  // Remove surrounding brackets if present, then split by comma
+  const cleaned = toolsValue.replace(/^\s*\[|\]\s*$/g, '');
+  return cleaned
+    .split(',')
+    .map((t) => t.trim().replace(/^['"]|['"]$/g, ''))
+    .filter(Boolean)
+    .join(' ');
+}
+
+/**
  * Generates a SKILL.md from a source template file (prompt or agent).
- * Transforms front-matter to the SKILL format (name + description only).
+ * Transforms front-matter to the SKILL format:
+ *   - name, description (required)
+ *   - tools → allowed-tools (space-delimited, experimental per agentskills.io spec)
+ *   - argument-hint, user-invocable, disable-model-invocation, compatibility (pass-through)
  * Optionally appends bodies from additional source files (extend list).
  */
 function generateSkillContent(
@@ -133,7 +150,25 @@ function generateSkillContent(
     }
   }
 
-  const frontmatter = `---\nname: ${skillName}\ndescription: '${description}'\n---\n\n`;
+  let frontmatter = `---\nname: ${skillName}\ndescription: '${description}'`;
+
+  // Map tools: [...] → allowed-tools: space-delimited (agentskills.io spec, experimental)
+  if (fm['tools']) {
+    const allowedTools = parseToolsToAllowedTools(fm['tools']);
+    if (allowedTools) {
+      frontmatter += `\nallowed-tools: ${allowedTools}`;
+    }
+  }
+
+  // Pass through SKILL.md-specific optional fields
+  const passThroughFields = ['argument-hint', 'user-invocable', 'disable-model-invocation', 'compatibility'];
+  for (const field of passThroughFields) {
+    if (fm[field] !== undefined) {
+      frontmatter += `\n${field}: ${fm[field]}`;
+    }
+  }
+
+  frontmatter += `\n---\n\n`;
   return frontmatter + body;
 }
 

@@ -4,9 +4,11 @@ description: >-
   Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with
   instructions, prompts, and agents tailored to your stack, plus a sync prompt
   (gh-copilot-sync) to keep them up to date. Includes create-agents-md to
-  scaffold an AGENTS.md repository context file. The standalone scripts
-  (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled
-  runs without the AI prompt.
+  scaffold an AGENTS.md repository context file. Issue workflow skills
+  (start-work-on-issue, implement-issue, finish-work-on-issue, work-on-issue)
+  automate the full branch → implement → review → PR lifecycle. The standalone
+  scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or
+  scheduled runs without the AI prompt.
 version: "1.0.8"
 author:
   name: Gravion
@@ -19,6 +21,7 @@ keywords:
   - workspace
   - configuration
   - agents-md
+  - issue-workflow
 
 skills:
   # Interactive wizard: analyze stack, select and install instructions/prompts/agents
@@ -27,6 +30,14 @@ skills:
   - name: gh-copilot-sync
   # Analyze the repository and generate a tailored AGENTS.md context file
   - name: create-agents-md
+  # Prepare branch and implementation plan for a GitHub issue
+  - name: start-work-on-issue
+  # Implement a GitHub issue: code, tests, docs, atomic commits
+  - name: implement-issue
+  # Review changes and create a pull request for a GitHub issue
+  - name: finish-work-on-issue
+  # Full end-to-end workflow: branch → implement → review → PR
+  - name: work-on-issue
 
 files:
   # Standalone PowerShell Core sync script — can be run directly without the AI prompt:
