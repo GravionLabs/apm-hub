@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.17] — 2026-04-04
+
+### Features
+- Restructure templates into domain-based directories (issue #36)
+
+
 ## [1.0.16] — 2026-04-04
+
+### Documentation
+- Update CHANGELOG.md for v1.0.16 [skip ci]
+
 
 ### Refactoring
 - Treat plugin agents, instructions, skills as generated artifacts
