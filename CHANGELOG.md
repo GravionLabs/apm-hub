@@ -5,10 +5,20 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.19] — 2026-04-04
+
+### Documentation
+- Fix outdated references after domain template restructuring (#39)
+
+
 ## [1.0.18] — 2026-04-04
 
 ### Bug Fixes
 - Remove generated aggregate docs from branch, extend CI check
+
+
+### Documentation
+- Update CHANGELOG.md for v1.0.18 [skip ci]
 
 
 ## [1.0.17] — 2026-04-04
