@@ -195,3 +195,4 @@ TypeScript and Node.js development plugin. Covers strict typing, ESM modules, as
 | [`setup-prettier-eslint-husky`](../plugins/typescript-node-development/skills/setup-prettier-eslint-husky) | Set up ESLint, Prettier with import organizer, Husky pre-commit hooks, and auto-format on save for VSCode and WebStorm |
 | [`write-tests`](../plugins/typescript-node-development/skills/write-tests)                                 | Generate focused, maintainable unit tests with clear structure, descriptive names, and appropriate mocking             |
 | [`multi-stage-dockerfile`](../plugins/typescript-node-development/skills/multi-stage-dockerfile)           | Create optimized multi-stage Dockerfiles for any language or framework                                                 |
+

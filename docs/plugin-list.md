@@ -258,3 +258,4 @@ TypeScript and Node.js development plugin. Covers strict typing, ESM modules, as
 - [`typescript.instructions.md`](../plugins/typescript-node-development/instructions/typescript.instructions.md)
 - [`nodejs.instructions.md`](../plugins/typescript-node-development/instructions/nodejs.instructions.md)
 - [`playwright-typescript.instructions.md`](../plugins/typescript-node-development/instructions/playwright-typescript.instructions.md)
+
