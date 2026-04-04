@@ -29,6 +29,8 @@ jobs:
             "docs/plugin-list.md"
             "docs/skill-list.md"
             "docs/template-list.md"
+            "docs/agent-list.md"
+            "docs/instruction-list.md"
           )
 
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
@@ -160,6 +162,9 @@ jobs:
           # Force-add gitignored plugin artifacts (agents, instructions, skills are in .gitignore
           # but must be committed so plugins work when installed from this repo)
           git add -f plugins/*/agents/ plugins/*/instructions/ plugins/*/skills/
+          # Force-add gitignored aggregate docs (agent-list.md, instruction-list.md are in .gitignore
+          # but must be committed so the docs are available in the repo)
+          git add -f docs/agent-list.md docs/instruction-list.md
           if git diff --staged --quiet; then
             echo "No generated changes to commit"
             exit 0
