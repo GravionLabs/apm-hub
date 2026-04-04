@@ -83,7 +83,7 @@ This repository uses a **generator** (`npm run generate`) that creates `SKILL.md
 
 ### Planned Migration
 
-The long-term plan is to maintain **dedicated, concise `SKILL.md` files** for CLI use, separate from the verbose `.prompt.md` templates. See the [architecture discussion issue](https://github.com/GravionLabs/copilot-hub/issues) for details.
+The long-term plan is to maintain **dedicated, concise `SKILL.md` files** for CLI use, separate from the verbose `.prompt.md` templates. See the [architecture discussion issue #30](https://github.com/GravionLabs/copilot-hub/issues/30) for details.
 
 ---
 
