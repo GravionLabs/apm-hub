@@ -1,17 +1,15 @@
 ---
-description: 'Finish working on a GitHub issue: run build and tests, perform a code review of all changes, then create a pull request. Use this after implement-issue when the implementation is complete.'
-mode: agent
-tools: ['changes', 'runCommands', 'runTests', 'editFiles', 'codebase', 'problems']
-argument-hint: '<issue-number>'
+name: gh-issue-finish
+description: 'Finish working on a GitHub issue: run build and tests, perform a code review of all changes, then create a pull request. Use this after gh-issue-implement when the implementation is complete.'
 ---
 
-# Finish Work on Issue
+# Finish Issue
 
 Review the implementation and create a pull request for a GitHub issue.
 
 ## Prerequisites
 
-- Issue is implemented (run `/implement-issue {issue-number}` first)
+- Issue is implemented (run `/gh-issue-implement {issue-number}` first)
 - Branch is pushed to origin
 - Current directory is the repository root
 

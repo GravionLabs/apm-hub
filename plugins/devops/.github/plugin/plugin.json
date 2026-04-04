@@ -21,7 +21,7 @@
     "./skills/create-nuget-workflow",
     "./skills/create-python-workflow",
     "./skills/create-node-workflow",
-    "./skills/add-gitversion",
+    "./skills/gitversion-add",
     "./skills/create-wiki-workflow"
   ],
   "instructions": [
