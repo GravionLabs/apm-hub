@@ -99,7 +99,7 @@ Use a prompt when:
 > **Important:** The Copilot CLI plugin format (`plugin.json`) does **not** have a `prompts` field.
 > CLI plugins can only distribute: `agents`, `skills`, `commands`, `hooks`, `mcpServers`, `lspServers`.
 
-Prompt files (`.prompt.md`) are a **VS Code Copilot Chat feature**. They are:
+Prompt files (`.prompt.md`) are a **GitHub Copilot prompt files feature** supported by VS Code, JetBrains, and the Copilot CLI. They are:
 - Available in VS Code, JetBrains, and the Copilot CLI (as slash commands)
 - **Not distributable via plugins** using the native `plugin.json` format
 
