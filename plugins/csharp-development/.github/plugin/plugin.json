@@ -17,7 +17,18 @@
     "./agents"
   ],
   "skills": [
-    "./skills/csharp-code-review"
+    "./skills/aspnet-minimal-api-openapi",
+    "./skills/create-dotnet-solution",
+    "./skills/csharp-async",
+    "./skills/csharp-docs",
+    "./skills/csharp-mcp-server-generator",
+    "./skills/csharp-nunit",
+    "./skills/write-tests",
+    "./skills/csharp-code-review",
+    "./skills/dotnet-best-practices",
+    "./skills/dotnet-design-pattern-review",
+    "./skills/dotnet-upgrade",
+    "./skills/ef-core"
   ],
   "instructions": [
     "./instructions/csharp.instructions.md",

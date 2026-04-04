@@ -16,6 +16,12 @@
   "agents": [
     "./agents"
   ],
+  "skills": [
+    "./skills/create-node-workflow",
+    "./skills/typescript-code-review",
+    "./skills/setup-prettier-eslint-husky",
+    "./skills/write-tests"
+  ],
   "instructions": [
     "./instructions/typescript.instructions.md",
     "./instructions/nodejs.instructions.md",

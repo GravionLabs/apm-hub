@@ -116,8 +116,46 @@ describe('resolveTemplatePath', () => {
     expect(resolveTemplatePath('csharp-nunit.prompt.md')).toBe('prompts/csharp-nunit.prompt.md');
   });
 
-  it('unknown directory without extension → appends .prompt.md as fallback', () => {
-    expect(resolveTemplatePath('custom/my-template')).toBe('custom/my-template.prompt.md');
+  it('domain path without templatesDir → appends .skill.md as fallback', () => {
+    expect(resolveTemplatePath('custom/my-template')).toBe('custom/my-template.skill.md');
+  });
+
+  it('skills/ without extension → appends .skill.md', () => {
+    expect(resolveTemplatePath('skills/write-tests')).toBe('skills/write-tests.skill.md');
+  });
+
+  it('skills/ with extension → unchanged', () => {
+    expect(resolveTemplatePath('skills/write-tests.skill.md')).toBe('skills/write-tests.skill.md');
+  });
+
+  it('domain path with templatesDir → discovers .skill.md extension', () => {
+    existingFiles.set('/fake/templates/shared/write-tests.skill.md', 'content');
+    expect(resolveTemplatePath('shared/write-tests', '/fake/templates')).toBe(
+      'shared/write-tests.skill.md'
+    );
+    existingFiles.clear();
+  });
+
+  it('domain path with templatesDir → discovers .agent.md extension', () => {
+    existingFiles.set('/fake/templates/devops/create-pr.agent.md', 'content');
+    expect(resolveTemplatePath('devops/create-pr', '/fake/templates')).toBe(
+      'devops/create-pr.agent.md'
+    );
+    existingFiles.clear();
+  });
+
+  it('domain path with templatesDir → discovers .instructions.md extension', () => {
+    existingFiles.set('/fake/templates/csharp/csharp.instructions.md', 'content');
+    expect(resolveTemplatePath('csharp/csharp', '/fake/templates')).toBe(
+      'csharp/csharp.instructions.md'
+    );
+    existingFiles.clear();
+  });
+
+  it('domain path with templatesDir → fallback to .skill.md when no file found', () => {
+    expect(resolveTemplatePath('unknown/no-match', '/fake/templates')).toBe(
+      'unknown/no-match.skill.md'
+    );
   });
 });
 
@@ -150,6 +188,18 @@ describe('resolveSkillSource', () => {
 
   it('agent path without extension → appends .agent.md', () => {
     expect(resolveSkillSource('gfog-helm', 'agents/gfog-helm')).toBe('agents/gfog-helm.agent.md');
+  });
+
+  it('skills/ path without extension → appends .skill.md', () => {
+    expect(resolveSkillSource('write-tests', 'skills/write-tests')).toBe(
+      'skills/write-tests.skill.md'
+    );
+  });
+
+  it('skills/ path with extension → unchanged', () => {
+    expect(resolveSkillSource('write-tests', 'skills/write-tests.skill.md')).toBe(
+      'skills/write-tests.skill.md'
+    );
   });
 
   it('path without extension → appends .prompt.md', () => {
@@ -277,6 +327,24 @@ describe('plugin-generator', () => {
       expect(writtenFiles.get(skillPath)).toContain('CLI content.');
     });
 
+    it('resolves domain skill source to .skill.md when file exists (e.g. csharp/csharp-code-review)', () => {
+      const skillTemplatePath = path.join(TEMPLATES_DIR, 'csharp', 'csharp-code-review.skill.md');
+      const SKILL_CONTENT =
+        "---\nname: csharp-code-review\ndescription: 'C# code review'\nallowed-tools: codebase editFiles\n---\n\nReview C# code.\n";
+      existingFiles.set(
+        CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
+          '  - name: csharp-code-review\n    source: csharp/csharp-code-review\n'
+      );
+      existingFiles.set(skillTemplatePath, SKILL_CONTENT);
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const skillPath = path.join(PLUGIN_DIR, 'skills', 'csharp-code-review', 'SKILL.md');
+      expect(writtenFiles.has(skillPath)).toBe(true);
+      expect(writtenFiles.get(skillPath)).toBe(SKILL_CONTENT);
+    });
+
     it('maps tools: array to allowed-tools in SKILL.md', () => {
       const promptPath = path.join(TEMPLATES_DIR, 'prompts', 'my-tool-skill.prompt.md');
       existingFiles.set(
@@ -331,6 +399,78 @@ describe('plugin-generator', () => {
     });
   });
 
+  describe('.skill.md passthrough (domain source)', () => {
+    const SKILL_CONTENT =
+      "---\nname: write-tests\ndescription: 'Write unit tests'\nallowed-tools: codebase editFiles\n---\n\nWrite tests.\n";
+
+    it('copies .skill.md content as-is when source is domain/<name>', () => {
+      const skillTemplatePath = path.join(TEMPLATES_DIR, 'shared', 'write-tests.skill.md');
+      existingFiles.set(
+        CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
+          '  - name: write-tests\n    source: shared/write-tests\n'
+      );
+      existingFiles.set(skillTemplatePath, SKILL_CONTENT);
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const skillPath = path.join(PLUGIN_DIR, 'skills', 'write-tests', 'SKILL.md');
+      expect(writtenFiles.has(skillPath)).toBe(true);
+      expect(writtenFiles.get(skillPath)).toBe(SKILL_CONTENT);
+    });
+
+    it('does NOT apply prompt→skill transform for .skill.md source (preserves original frontmatter)', () => {
+      const skillTemplatePath = path.join(TEMPLATES_DIR, 'shared', 'write-tests.skill.md');
+      existingFiles.set(
+        CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
+          '  - name: write-tests\n    source: shared/write-tests\n'
+      );
+      existingFiles.set(skillTemplatePath, SKILL_CONTENT);
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const skillPath = path.join(PLUGIN_DIR, 'skills', 'write-tests', 'SKILL.md');
+      const content = writtenFiles.get(skillPath)!;
+      // Frontmatter must be exactly as in the template — no re-generation
+      expect(content).toContain("allowed-tools: codebase editFiles");
+      // Should NOT have been re-wrapped with a new frontmatter block (2 --- markers = original open+close)
+      expect(content.match(/^---/gm)?.length).toBe(2);
+    });
+
+    it('copies .skill.md with explicit .skill.md extension in domain source', () => {
+      const skillTemplatePath = path.join(TEMPLATES_DIR, 'shared', 'write-tests.skill.md');
+      existingFiles.set(
+        CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
+          '  - name: write-tests\n    source: shared/write-tests.skill.md\n'
+      );
+      existingFiles.set(skillTemplatePath, SKILL_CONTENT);
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const skillPath = path.join(PLUGIN_DIR, 'skills', 'write-tests', 'SKILL.md');
+      expect(writtenFiles.get(skillPath)).toBe(SKILL_CONTENT);
+    });
+
+    it('discovers .agent.md extension for domain skill source (e.g. devops/create-pr)', () => {
+      const agentTemplatePath = path.join(TEMPLATES_DIR, 'devops', 'create-pr.agent.md');
+      existingFiles.set(
+        CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
+          '  - name: create-pr\n    source: devops/create-pr\n'
+      );
+      existingFiles.set(agentTemplatePath, '---\ndescription: Create PR\n---\n\nCreate a PR.\n');
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const skillPath = path.join(PLUGIN_DIR, 'skills', 'create-pr', 'SKILL.md');
+      expect(writtenFiles.has(skillPath)).toBe(true);
+    });
+  });
+
+
+
   describe('plugin without instructions', () => {
     it('plugin.json omits instructions field when no instructions configured', () => {
       const yaml = makeConfig({ agents: [], skills: [] });
@@ -363,7 +503,7 @@ describe('plugin-generator', () => {
   describe('plugin with instructions', () => {
     const instructionSourcePath = path.join(
       TEMPLATES_DIR,
-      'instructions',
+      'csharp',
       'csharp.instructions.md'
     );
     const instructionContent =
@@ -373,7 +513,7 @@ describe('plugin-generator', () => {
       existingFiles.set(
         CONFIG_PATH,
         makeConfig({
-          instructions: [{ source: 'csharp' }],
+          instructions: [{ source: 'csharp/csharp' }],
         })
       );
       existingFiles.set(instructionSourcePath, instructionContent);
@@ -384,11 +524,11 @@ describe('plugin-generator', () => {
       expect(createdDirs.has(expectedDir)).toBe(true);
     });
 
-    it('copies the instruction file to instructions/<source>.instructions.md', () => {
+    it('copies the instruction file to instructions/<name>.instructions.md', () => {
       existingFiles.set(
         CONFIG_PATH,
         makeConfig({
-          instructions: [{ source: 'csharp' }],
+          instructions: [{ source: 'csharp/csharp' }],
         })
       );
       existingFiles.set(instructionSourcePath, instructionContent);
@@ -404,7 +544,7 @@ describe('plugin-generator', () => {
       existingFiles.set(
         CONFIG_PATH,
         makeConfig({
-          instructions: [{ source: 'csharp.instructions.md' }],
+          instructions: [{ source: 'csharp/csharp.instructions.md' }],
         })
       );
       existingFiles.set(instructionSourcePath, instructionContent);
@@ -419,7 +559,7 @@ describe('plugin-generator', () => {
       existingFiles.set(
         CONFIG_PATH,
         makeConfig({
-          instructions: [{ source: 'csharp' }],
+          instructions: [{ source: 'csharp/csharp' }],
         })
       );
       existingFiles.set(instructionSourcePath, instructionContent);
@@ -432,11 +572,11 @@ describe('plugin-generator', () => {
     });
 
     it('plugin.json includes multiple instruction paths', () => {
-      const nunitPath = path.join(TEMPLATES_DIR, 'instructions', 'csharp-nunit.instructions.md');
+      const nunitPath = path.join(TEMPLATES_DIR, 'csharp', 'csharp-nunit.instructions.md');
       existingFiles.set(
         CONFIG_PATH,
         makeConfig({
-          instructions: [{ source: 'csharp' }, { source: 'csharp-nunit' }],
+          instructions: [{ source: 'csharp/csharp' }, { source: 'csharp/csharp-nunit' }],
         })
       );
       existingFiles.set(instructionSourcePath, instructionContent);
@@ -490,11 +630,11 @@ describe('plugin-generator', () => {
 
     it('continues generating remaining instructions after a missing file', () => {
       vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const csharpPath = path.join(TEMPLATES_DIR, 'instructions', 'csharp.instructions.md');
+      const csharpPath = path.join(TEMPLATES_DIR, 'csharp', 'csharp.instructions.md');
       existingFiles.set(
         CONFIG_PATH,
         makeConfig({
-          instructions: [{ source: 'nonexistent' }, { source: 'csharp' }],
+          instructions: [{ source: 'nonexistent' }, { source: 'csharp/csharp' }],
         })
       );
       existingFiles.set(csharpPath, '---\ndescription: C#\n---\n\nContent.\n');

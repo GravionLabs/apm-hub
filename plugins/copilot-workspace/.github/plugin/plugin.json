@@ -15,5 +15,13 @@
     "configuration",
     "agents-md",
     "issue-workflow"
+  ],
+  "skills": [
+    "./skills/gh-copilot-setup",
+    "./skills/gh-copilot-sync",
+    "./skills/gh-agents-md",
+    "./skills/gh-issue-implement",
+    "./skills/gh-issue-finish",
+    "./skills/gh-issue-work"
   ]
 }

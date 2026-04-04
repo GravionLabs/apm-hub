@@ -18,39 +18,38 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: code-review-publisher
-  - source: az-devops-setup
-  - source: create-pr
+  - source: devops/code-review-publisher
+  - source: devops/az-devops-setup
+  - source: devops/create-pr
 
 # Skills generated from agent templates (no dedicated prompts exist)
 skills:
   # Publishes code review results as PR comments on GitHub or Azure DevOps
   - name: code-review-publisher
-    source: agents/code-review-publisher
+    source: devops/code-review-publisher
   # Interactive setup guide for az devops CLI and authentication
   - name: az-devops-setup
-    source: agents/az-devops-setup
+    source: devops/az-devops-setup
   # Analyzes git history and diff, generates structured PR description, creates PR
   - name: create-pr
-    source: agents/create-pr
+    source: devops/create-pr
   # Create a GitHub Actions workflow calling GravionLabs/ci NuGet Package CI/CD
   - name: create-nuget-workflow
-    source: skills/create-nuget-workflow
+    source: devops/create-nuget-workflow
   # Create a GitHub Actions workflow calling GravionLabs/ci Python Package CI/CD
   - name: create-python-workflow
-    source: skills/create-python-workflow
+    source: devops/create-python-workflow
   # Create a GitHub Actions workflow calling GravionLabs/ci Node.js CI
   - name: create-node-workflow
-    source: skills/create-node-workflow
+    source: devops/create-node-workflow
   # Add GitVersion.yml configuration for automatic semantic versioning
   - name: gitversion-add
-    source: skills/gitversion-add
+    source: devops/gitversion-add
   # Create a GitHub Actions workflow that syncs docs/**/*.md and README.md to the GitHub Wiki
   - name: create-wiki-workflow
-    source: skills/create-wiki-workflow
+    source: devops/create-wiki-workflow
 
 instructions:
-  - source: shell
-  - source: powershell
-  - source: docker
-  - source: terraform
+  - source: devops/shell
+  - source: devops/powershell
+  - source: terraform/terraform

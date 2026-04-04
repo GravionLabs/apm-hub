@@ -1,0 +1,20 @@
+name: docker
+description: >-
+  Docker containerization plugin.
+  Optimized multi-stage Dockerfiles for any language or framework.
+version: "1.0.14"
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - docker
+  - containers
+  - dockerfile
+  - multi-stage
+
+skills:
+  - name: multi-stage-dockerfile
+    source: docker/multi-stage-dockerfile
+
+instructions:
+  - source: docker/docker

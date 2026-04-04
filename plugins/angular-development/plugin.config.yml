@@ -17,31 +17,31 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: angular-expert
-  - source: angular-library-architect
-  - source: sakai-ui-expert
+  - source: angular/angular-expert
+  - source: angular/angular-library-architect
+  - source: angular/sakai-ui-expert
 
 # Skills generated from prompt templates
 skills:
   # Code quality & tooling
   - name: setup-prettier-eslint-husky
-    source: skills/setup-prettier-eslint-husky
+    source: typescript/setup-prettier-eslint-husky
 
   # Component scaffolding
   - name: angular-component
-    source: skills/angular-component
+    source: angular/angular-component
   - name: sakai-ui-component
-    source: skills/sakai-ui-component
+    source: angular/sakai-ui-component
 
   # State management
   - name: angular-signal-store
-    source: skills/angular-signal-store
+    source: angular/angular-signal-store
 
   # Library setup
   - name: angular-library-create
-    source: skills/angular-library-create
+    source: angular/angular-library-create
 
 instructions:
-  - source: angular
-  - source: ngrx-signals
-  - source: sakai-ui
+  - source: angular/angular
+  - source: angular/ngrx-signals
+  - source: angular/sakai-ui
