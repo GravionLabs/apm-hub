@@ -9,11 +9,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - Clarify Skills vs Prompts — plugin support, allowed-tools semantics, generator limitations
+- Update CHANGELOG.md for v1.0.13 [skip ci]
 
 
 ## [1.0.12] — 2026-04-04
 
 ### Bug Fixes
+- Standardize placeholder to {issue-number} in gh-issue-work SKILL.md
+- Update plugin versions to 1.0.5 and standardize skill names
 - Remove marketplace.json from feature branch
 
 
@@ -22,6 +25,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 
 ### Features
+- Rename prompts/skills to domain-first naming convention
 - Split generate into safe local vs CI-only aggregate
 - Update plugin versions to 1.0.11 and enhance skill descriptions
 - Add skills for issue workflow management
