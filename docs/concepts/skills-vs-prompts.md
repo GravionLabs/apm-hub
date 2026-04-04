@@ -62,9 +62,10 @@ This document compares **Agent Skills** (`SKILL.md`) and **Prompt Files** (`.pro
 
 > ⚠️ **`allowed-tools` ≠ `tools:`** — The `allowed-tools` field pre-approves tool use without asking the user. This is a convenience/security setting, not a restriction. Tools not listed are still available — Copilot will just ask for confirmation first.
 
-**Project path:** `.github/skills/name/SKILL.md`  
-**Global path:** `~/.copilot/skills/name/SKILL.md`
+**Copilot project path:** `.github/skills/name/SKILL.md`  
+**Copilot global path:** `~/.copilot/skills/name/SKILL.md`
 
+Other tools may use additional supported skill locations, such as `.claude/skills/name/SKILL.md`, `.agents/skills/name/SKILL.md`, `~/.claude/skills/name/SKILL.md`, and `~/.agents/skills/name/SKILL.md`.
 ---
 
 ## The Generator in This Repository
