@@ -1,6 +1,7 @@
 ---
 name: helm-values-review
 description: 'Review a Helm values.yaml for completeness, security, naming conventions, and documentation quality'
+allowed-tools: changes codebase problems editFiles
 ---
 
 # Review Helm values.yaml

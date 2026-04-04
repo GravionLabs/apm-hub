@@ -1,6 +1,7 @@
 ---
 name: create-python-workflow
 description: 'Create a GitHub Actions Python Package CI/CD workflow using GravionLabs/ci reusable workflows'
+allowed-tools: editFiles codebase
 ---
 
 # Create Python Package CI/CD Workflow

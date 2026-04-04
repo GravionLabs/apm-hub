@@ -1,6 +1,7 @@
 ---
 name: go-code-review
 description: 'Review Go code for idiomatic patterns, error handling, interface design, concurrency safety, and Go module conventions'
+allowed-tools: changes codebase problems editFiles
 ---
 
 # Go Code Review

@@ -1,6 +1,7 @@
 ---
 name: helm-chart-upgrade
 description: 'Upgrade a Helm chart to a newer chart API version, update deprecated Kubernetes APIs, and migrate values.yaml breaking changes'
+allowed-tools: editFiles codebase changes runCommands
 ---
 
 # Upgrade Helm Chart

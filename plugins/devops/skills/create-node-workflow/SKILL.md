@@ -1,6 +1,7 @@
 ---
 name: create-node-workflow
 description: 'Create a GitHub Actions Node.js CI workflow using GravionLabs/ci reusable workflows'
+allowed-tools: editFiles codebase
 ---
 
 # Create Node.js CI Workflow

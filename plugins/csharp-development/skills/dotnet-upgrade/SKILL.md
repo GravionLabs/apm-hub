@@ -1,6 +1,7 @@
 ---
 name: dotnet-upgrade
 description: 'Comprehensive .NET framework upgrade: analysis, migration steps, breaking change handling, and execution'
+allowed-tools: changes codebase editFiles runCommands problems fetch
 ---
 
 # Project Discovery & Assessment

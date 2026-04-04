@@ -1,6 +1,7 @@
 ---
 name: terraform-code-review
 description: 'Review a Terraform configuration for security, naming conventions, module design, state management, and IaC best practices'
+allowed-tools: changes codebase problems editFiles
 ---
 
 # Terraform Code Review

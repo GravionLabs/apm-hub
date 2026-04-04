@@ -1,6 +1,7 @@
 ---
 name: create-nuget-workflow
 description: 'Create a GitHub Actions NuGet Package CI/CD workflow using GravionLabs/ci reusable workflows'
+allowed-tools: editFiles codebase
 ---
 
 # Create NuGet Package CI/CD Workflow

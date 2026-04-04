@@ -1,6 +1,7 @@
 ---
 name: go-test-generate
 description: 'Generate table-driven Go tests with subtests, error cases, mocks, and race detector compatibility'
+allowed-tools: editFiles codebase runTests runCommands
 ---
 
 # Generate Go Tests

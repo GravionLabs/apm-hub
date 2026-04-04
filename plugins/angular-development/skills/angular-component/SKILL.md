@@ -1,6 +1,7 @@
 ---
 name: angular-component
 description: 'Scaffold an Angular 21 standalone component with 3-file structure (ts/html/scss)'
+allowed-tools: editFiles codebase runCommands
 ---
 
 # Create Angular 21 Component
