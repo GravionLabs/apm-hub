@@ -5,10 +5,20 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.13] — 2026-04-04
+
+### Documentation
+- Clarify Skills vs Prompts — plugin support, allowed-tools semantics, generator limitations
+
+
 ## [1.0.12] — 2026-04-04
 
 ### Bug Fixes
 - Remove marketplace.json from feature branch
+
+
+### Documentation
+- Update CHANGELOG.md for v1.0.12 [skip ci]
 
 
 ### Features
