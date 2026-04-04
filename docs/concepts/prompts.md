@@ -119,13 +119,13 @@ This copies the file into the user's project when the plugin is installed. Users
 
 For CLI use, consider whether a **skill** is more appropriate than a prompt:
 
-| | Prompt (`.prompt.md`) | Skill (`SKILL.md`) |
-|---|---|---|
-| **Primary surface** | VS Code Copilot Chat | Copilot CLI (+ Claude, other AI tools) |
-| **Invocation** | Explicit `/name` | Auto-selected by Copilot, or explicit `/name` |
-| **Ideal length** | Can be long | Should be **concise** (injected into context) |
-| **Distribution** | `files:` in plugin | `skills:` in plugin (native) |
-| **Standard** | GitHub Copilot | [agentskills.io](https://agentskills.io) (open standard) |
+|                     | Prompt (`.prompt.md`) | Skill (`SKILL.md`)                                       |
+| :------------------ | :-------------------- | :------------------------------------------------------- |
+| **Primary surface** | VS Code Copilot Chat  | Copilot CLI (+ Claude, other AI tools)                   |
+| **Invocation**      | Explicit `/name`      | Auto-selected by Copilot, or explicit `/name`            |
+| **Ideal length**    | Can be long           | Should be **concise** (injected into context)            |
+| **Distribution**    | `files:` in plugin    | `skills:` in plugin (native)                             |
+| **Standard**        | GitHub Copilot        | [agentskills.io](https://agentskills.io) (open standard) |
 
 See [skills-vs-prompts.md](skills-vs-prompts.md) for a full comparison.
 

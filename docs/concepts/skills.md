@@ -147,10 +147,10 @@ Tools NOT listed in `allowed-tools` can still be used by Copilot — the user wi
 
 **Difference from prompt `tools:` field:**
 
-| Field | Location | Semantics |
-|---|---|---|
-| `tools: [...]` | `.prompt.md` frontmatter | **Restricts** which tools are available in VS Code |
-| `allowed-tools: ...` | `SKILL.md` frontmatter | **Pre-approves** tools without confirmation prompt |
+| Field                | Location                 | Semantics                                          |
+| :------------------- | :----------------------- | :------------------------------------------------- |
+| `tools: [...]`       | `.prompt.md` frontmatter | **Restricts** which tools are available in VS Code |
+| `allowed-tools: ...` | `SKILL.md` frontmatter   | **Pre-approves** tools without confirmation prompt |
 
 These are semantically opposite: `tools:` limits availability; `allowed-tools:` grants silent permission.
 

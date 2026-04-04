@@ -6,14 +6,14 @@ This document compares **Agent Skills** (`SKILL.md`) and **Prompt Files** (`.pro
 
 ## Overview
 
-| | Prompt (`.prompt.md`) | Skill (`SKILL.md`) |
-|---|---|---|
-| **Surface** | VS Code Copilot Chat | Copilot CLI (+ Claude, other AI tools) |
-| **Standard** | GitHub Copilot VS Code extension | [agentskills.io](https://agentskills.io) open standard |
-| **Invocation** | Explicit: user types `/name` | Auto-selected by Copilot, or explicit `/name` |
-| **Ideal length** | Can be long and verbose | **Concise** — injected into context on every match |
-| **Distribution** | Manual copy or `files:` in plugin | Native `skills:` field in `plugin.json` |
-| **Plugin support** | ❌ Not a native `plugin.json` field | ✅ First-class `plugin.json` field |
+|                    | Prompt (`.prompt.md`)              | Skill (`SKILL.md`)                                     |
+| :----------------- | :--------------------------------- | :----------------------------------------------------- |
+| **Surface**        | VS Code Copilot Chat               | Copilot CLI (+ Claude, other AI tools)                 |
+| **Standard**       | GitHub Copilot VS Code extension   | [agentskills.io](https://agentskills.io) open standard |
+| **Invocation**     | Explicit: user types `/name`       | Auto-selected by Copilot, or explicit `/name`          |
+| **Ideal length**   | Can be long and verbose            | **Concise** — injected into context on every match     |
+| **Distribution**   | Manual copy or `files:` in plugin  | Native `skills:` field in `plugin.json`                |
+| **Plugin support** | ❌ Not a native `plugin.json` field | ✅ First-class `plugin.json` field                      |
 
 ---
 
@@ -28,13 +28,13 @@ This document compares **Agent Skills** (`SKILL.md`) and **Prompt Files** (`.pro
 
 **Frontmatter fields:**
 
-| Field | Description |
-|---|---|
-| `mode` | `agent`, `edit`, or `ask` |
-| `description` | Shown in IDE |
-| `tools` | **Restricts** available tools in VS Code |
-| `model` | Override the active model |
-| `argument-hint` | Hint shown when user invokes the prompt |
+| Field           | Description                              |
+| :-------------- | :--------------------------------------- |
+| `mode`          | `agent`, `edit`, or `ask`                |
+| `description`   | Shown in IDE                             |
+| `tools`         | **Restricts** available tools in VS Code |
+| `model`         | Override the active model                |
+| `argument-hint` | Hint shown when user invokes the prompt  |
 
 **Project path:** `.github/prompts/name.prompt.md`  
 **Global path:** `~/.github/prompts/name.prompt.md`
@@ -53,12 +53,12 @@ This document compares **Agent Skills** (`SKILL.md`) and **Prompt Files** (`.pro
 
 **Frontmatter fields:**
 
-| Field | Required | Description |
-|---|---|---|
-| `name` | ✅ | Unique identifier (kebab-case) |
-| `description` | ✅ | When Copilot should use this skill (drives auto-selection) |
-| `allowed-tools` | — | Pre-approved tools (no confirmation dialog) |
-| `license` | — | License identifier |
+| Field           | Required | Description                                                |
+| :-------------- | :------- | :--------------------------------------------------------- |
+| `name`          | ✅        | Unique identifier (kebab-case)                             |
+| `description`   | ✅        | When Copilot should use this skill (drives auto-selection) |
+| `allowed-tools` | —        | Pre-approved tools (no confirmation dialog)                |
+| `license`       | —        | License identifier                                         |
 
 > ⚠️ **`allowed-tools` ≠ `tools:`** — The `allowed-tools` field pre-approves tool use without asking the user. This is a convenience/security setting, not a restriction. Tools not listed are still available — Copilot will just ask for confirmation first.
 
@@ -74,12 +74,12 @@ This repository uses a **generator** (`npm run generate`) that creates `SKILL.md
 
 ### Known Limitations
 
-| Limitation | Impact |
-|---|---|
-| Long prompts become long skills | Token cost; auto-selection injects 300+ lines into context |
+| Limitation                                                | Impact                                                                 |
+| :-------------------------------------------------------- | :--------------------------------------------------------------------- |
+| Long prompts become long skills                           | Token cost; auto-selection injects 300+ lines into context             |
 | `tools:` → `allowed-tools:` mapping is semantically wrong | `tools:` restricts; `allowed-tools:` pre-approves — opposite semantics |
-| Not all prompts should be skills | Wizard workflows (`gh-copilot-setup`) get auto-selected too broadly |
-| Skills can't include scripts | Generator only outputs the body, can't add companion scripts |
+| Not all prompts should be skills                          | Wizard workflows (`gh-copilot-setup`) get auto-selected too broadly    |
+| Skills can't include scripts                              | Generator only outputs the body, can't add companion scripts           |
 
 ### Planned Migration
 
