@@ -1,6 +1,7 @@
 ---
 name: angular-signal-store
 description: 'Create an NgRx Signal Store with state, computed signals, methods, and hooks'
+allowed-tools: editFiles codebase runCommands
 ---
 
 # Create NgRx Signal Store

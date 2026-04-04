@@ -1,6 +1,7 @@
 ---
 name: csharp-code-review
 description: 'Perform a structured code review for C# and NUnit codebases'
+allowed-tools: changes codebase problems editFiles
 ---
 
 # C# Code Review

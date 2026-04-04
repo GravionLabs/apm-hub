@@ -1,6 +1,7 @@
 ---
 name: dotnet-best-practices
 description: 'Ensure .NET/C# code meets best practices for the solution/project.'
+allowed-tools: changes codebase problems editFiles
 ---
 
 # .NET/C# Best Practices

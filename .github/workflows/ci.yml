@@ -46,10 +46,44 @@ jobs:
             echo ""
             echo "These files are regenerated automatically by CI after merging to main."
             echo "Please remove them from your commits. See CONTRIBUTING.md for details."
+
+            {
+              echo "## ❌ Auto-generated files found in PR"
+              echo ""
+              echo "This PR modifies files that are **only allowed to change via CI after merging to \`main\`**."
+              echo "Please remove these files from your commits."
+              echo ""
+              echo "### Violations"
+              echo ""
+              printf "$VIOLATIONS\n" | sed 's/^[[:space:]]*//' | while IFS= read -r line; do
+                echo "- \`$line\`"
+              done
+              echo ""
+              echo "### How to fix"
+              echo ""
+              echo '```bash'
+              printf "$VIOLATIONS\n" | sed 's/^[[:space:]]*//' | while IFS= read -r line; do
+                echo "git checkout origin/${{ github.base_ref }} -- $line"
+              done
+              echo '```'
+              echo ""
+              echo "> **Tip:** Use \`npm run generate\` (not \`generate:ci\`) locally — it only generates plugin-specific files and never touches aggregate docs."
+            } >> "$GITHUB_STEP_SUMMARY"
+
             exit 1
           fi
 
           echo "✅ No auto-generated aggregate files found in PR."
+
+          {
+            echo "## ✅ No auto-generated aggregate files in PR"
+            echo ""
+            echo "The following files were checked and are **not modified** in this PR:"
+            echo ""
+            for file in "${GENERATED_FILES[@]}"; do
+              echo "- \`$file\`"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
   build-test:
     name: Build & Test
@@ -116,7 +150,7 @@ jobs:
         run: npm run generate:diagrams
 
       - name: Regenerate plugins & documentation
-        run: npm run generate -- --version ${{ needs.determine-version.outputs.semver }}
+        run: npm run generate:ci -- --version ${{ needs.determine-version.outputs.semver }}
 
       - name: Commit generated files
         run: |

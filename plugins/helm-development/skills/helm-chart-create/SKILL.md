@@ -1,6 +1,7 @@
 ---
 name: helm-chart-create
 description: 'Scaffold a new Helm chart with Chart.yaml, values.yaml, named templates, standard Kubernetes resources, and security context defaults'
+allowed-tools: editFiles codebase runCommands
 ---
 
 # Create Helm Chart

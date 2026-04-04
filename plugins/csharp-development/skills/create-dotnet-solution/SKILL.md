@@ -1,6 +1,7 @@
 ---
 name: create-dotnet-solution
 description: 'Scaffold a new .NET solution with src/test layout, Central Package Management, and .editorconfig'
+allowed-tools: runCommands editFiles codebase
 ---
 
 # Create .NET Solution

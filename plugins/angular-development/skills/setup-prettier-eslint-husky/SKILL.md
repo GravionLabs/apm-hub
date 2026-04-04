@@ -1,6 +1,7 @@
 ---
 name: setup-prettier-eslint-husky
 description: 'Set up ESLint, Prettier with import organizer, Husky pre-commit hooks, and auto-format on save for VSCode and WebStorm'
+allowed-tools: editFiles codebase runCommands
 ---
 
 # Set Up Prettier, ESLint, and Husky
