@@ -1,7 +1,7 @@
 {
   "name": "csharp-development",
   "description": "C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "author": {
     "name": "Gravion"
   },
