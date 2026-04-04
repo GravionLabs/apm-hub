@@ -70,20 +70,21 @@ Other tools may use additional supported skill locations, such as `.claude/skill
 
 ## The Generator in This Repository
 
-This repository uses a **generator** (`npm run generate`) that creates `SKILL.md` files from `.prompt.md` templates. This provides a pragmatic bridge: one source file serves both VS Code users (as prompts) and CLI users (as skills).
+This repository uses a **generator** (`npm run generate`) that copies `.skill.md` templates directly as `SKILL.md` files, or converts `.prompt.md` templates for legacy sources. This provides a pragmatic bridge: one source file serves both VS Code users (as prompts) and CLI users (as skills).
 
 ### Known Limitations
 
-| Limitation                                                | Impact                                                                 |
-| :-------------------------------------------------------- | :--------------------------------------------------------------------- |
-| Long prompts become long skills                           | Token cost; auto-selection injects 300+ lines into context             |
-| `tools:` → `allowed-tools:` mapping is semantically wrong | `tools:` restricts; `allowed-tools:` pre-approves — opposite semantics |
-| Not all prompts should be skills                          | Wizard workflows (`gh-copilot-setup`) get auto-selected too broadly    |
-| Skills can't include scripts                              | Generator only outputs the body, can't add companion scripts           |
+| Limitation                                                | Impact                                                              |
+| :-------------------------------------------------------- | :------------------------------------------------------------------ |
+| Long prompts become long skills                           | Token cost; auto-selection injects 300+ lines into context          |
+| Not all prompts should be skills                          | Wizard workflows (`gh-copilot-setup`) get auto-selected too broadly |
+| Skills can't include scripts                              | Generator only outputs the body, can't add companion scripts        |
 
-### Planned Migration
+> **Note:** The `tools: → allowed-tools:` mapping limitation only applies to **legacy `.prompt.md`-based skills**. Modern `.skill.md` templates set `allowed-tools` directly and are copied without transformation.
 
-The long-term plan is to maintain **dedicated, concise `SKILL.md` files** for CLI use, separate from the verbose `.prompt.md` templates. See the [architecture discussion issue #30](https://github.com/GravionLabs/copilot-hub/issues/30) for details.
+### Migration Status
+
+The migration to dedicated `.skill.md` files is **complete** (as of [Issue #30](https://github.com/GravionLabs/copilot-hub/issues/30)). All skills in this repository are now sourced from `templates/<domain>/*.skill.md` files. Legacy `.prompt.md`-based skills remain supported as a fallback but are no longer the primary source.
 
 ---
 
