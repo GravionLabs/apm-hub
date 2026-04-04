@@ -25,16 +25,21 @@ agents:
 skills:
   # Code quality & tooling
   - name: setup-prettier-eslint-husky
+    source: skills/setup-prettier-eslint-husky
 
   # Component scaffolding
   - name: angular-component
+    source: skills/angular-component
   - name: sakai-ui-component
+    source: skills/sakai-ui-component
 
   # State management
   - name: angular-signal-store
+    source: skills/angular-signal-store
 
   # Library setup
   - name: angular-library-create
+    source: skills/angular-library-create
 
 instructions:
   - source: angular

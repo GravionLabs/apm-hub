@@ -35,14 +35,19 @@ skills:
     source: agents/create-pr
   # Create a GitHub Actions workflow calling GravionLabs/ci NuGet Package CI/CD
   - name: create-nuget-workflow
+    source: skills/create-nuget-workflow
   # Create a GitHub Actions workflow calling GravionLabs/ci Python Package CI/CD
   - name: create-python-workflow
+    source: skills/create-python-workflow
   # Create a GitHub Actions workflow calling GravionLabs/ci Node.js CI
   - name: create-node-workflow
+    source: skills/create-node-workflow
   # Add GitVersion.yml configuration for automatic semantic versioning
   - name: gitversion-add
+    source: skills/gitversion-add
   # Create a GitHub Actions workflow that syncs docs/**/*.md and README.md to the GitHub Wiki
   - name: create-wiki-workflow
+    source: skills/create-wiki-workflow
 
 instructions:
   - source: shell

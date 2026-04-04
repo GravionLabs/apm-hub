@@ -1,73 +1,36 @@
 ---
 name: create-node-workflow
-description: 'Create a GitHub Actions Node.js CI workflow using GravionLabs/ci reusable workflows'
+description: 'Create a GitHub Actions CI workflow for a Node.js project using GravionLabs/ci reusable workflows (install, lint, test, build).'
 allowed-tools: editFiles codebase
 ---
 
-# Create Node.js CI Workflow
+Create a `.github/workflows/` file for Node.js CI using `GravionLabs/ci`.
 
-Create a `.github/workflows/` file that calls the `GravionLabs/ci` reusable Node.js CI workflow.
+## What this skill does
+Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable Node.js CI workflow to install dependencies, lint, test, and build the project.
 
-## Step 1 — Gather information
+## Steps
+1. Ask if not provided: Node.js version, package manager (npm / pnpm / yarn), whether to publish (npm registry / GitHub Packages / none)
+2. Create `.github/workflows/ci.yml`:
+   ```yaml
+   name: CI
 
-Ask the user for the following. Do not assume defaults without asking.
+   on:
+     push:
+       branches: [main]
+     pull_request:
 
-- **Workflow file name** (e.g. `node-ci.yml`). Default: `node-ci.yml`.
-- **Trigger branches**: Which branches should trigger CI? Default: `[main]`.
-- **Node.js version**: Which Node.js version to use. Default: `20`. Common choices: `18`, `20`, `22`.
-- **Working directory**: Path to the Node.js project root. Default: `.` (repository root).
-- **Run tests?** (yes/no): Whether to run `npm test`. Default: yes.
+   jobs:
+     build:
+       uses: GravionLabs/ci/.github/workflows/node.yml@main
+       with:
+         node-version: '22'
+       secrets: inherit
+   ```
+3. Confirm `package.json` has `test`, `build`, and `lint` scripts
+4. If publishing: confirm `NPM_TOKEN` secret is configured
 
-## Step 2 — Generate the workflow file
-
-Create `.github/workflows/<workflow-file-name>`. Replace all `<placeholders>`.
-
-### Minimal workflow (root directory, tests enabled):
-
-```yaml
-name: Node.js CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  ci:
-    uses: GravionLabs/ci/.github/workflows/node-ci.yml@main
-```
-
-### With custom Node version, working directory, and no tests:
-
-```yaml
-name: Node.js CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  ci:
-    uses: GravionLabs/ci/.github/workflows/node-ci.yml@main
-    with:
-      node-version: '22'
-      working-directory: 'packages/my-app'
-      run-tests: false
-```
-
-## Step 3 — Available optional inputs
-
-After creating the file, inform the user of all available inputs:
-
-| Input | Default | Description |
-|-------|---------|-------------|
-| `node-version` | `20` | Node.js version (e.g. `18`, `20`, `22`) |
-| `working-directory` | `.` | Directory containing `package.json` |
-| `run-tests` | `true` | Whether to run `npm test` |
-
-## Step 4 — Prerequisites
-
-Remind the user that the workflow runs `npm ci`, `npm run build --if-present`, and optionally `npm test --if-present`. The `package.json` should have the appropriate `build` and `test` scripts defined.
+## Constraints
+- Use `secrets: inherit` to pass secrets to the reusable workflow
+- `package.json` must define `test` and `build` scripts — the reusable workflow calls them
+- Do not hardcode Node.js version if the project uses `.nvmrc` — check if the reusable workflow reads it automatically

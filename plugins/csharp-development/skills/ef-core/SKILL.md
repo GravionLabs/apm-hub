@@ -1,76 +1,41 @@
 ---
 name: ef-core
-description: 'Get best practices for Entity Framework Core'
-allowed-tools: changes codebase editFiles problems runCommands
+description: 'Apply Entity Framework Core best practices: DbContext design, migrations, query optimization, owned entities, and avoiding N+1 problems.'
+allowed-tools: codebase editFiles runCommands
 ---
 
-# Entity Framework Core Best Practices
+Apply Entity Framework Core best practices to the specified code.
 
-Your goal is to help me follow best practices when working with Entity Framework Core.
+## What this skill does
+Reviews and improves EF Core usage: DbContext configuration, entity design, migrations, query patterns, and performance.
 
-## Data Context Design
+## Key rules
 
-- Keep DbContext classes focused and cohesive
-- Use constructor injection for configuration options
-- Override OnModelCreating for fluent API configuration
-- Separate entity configurations using IEntityTypeConfiguration
-- Consider using DbContextFactory pattern for console apps or tests
+### DbContext
+- Register with `AddDbContext<T>` using Scoped lifetime (default)
+- Use `IDbContextFactory<T>` for background services or parallel queries
+- Never inject `DbContext` as Singleton
 
-## Entity Design
+### Entity configuration
+- Use Fluent API in `IEntityTypeConfiguration<T>` classes — not data annotations
+- Configure owned entities with `OwnsOne` / `OwnsMany`
+- Always configure string lengths to avoid `nvarchar(max)`
 
-- Use meaningful primary keys (consider natural vs surrogate keys)
-- Implement proper relationships (one-to-one, one-to-many, many-to-many)
-- Use data annotations or fluent API for constraints and validations
-- Implement appropriate navigational properties
-- Consider using owned entity types for value objects
+### Queries
+- Use `AsNoTracking()` for read-only queries
+- Avoid N+1: use `Include` / `ThenInclude` or split queries
+- Use `Select` projections — do not load full entities when only a few properties are needed
+- Use `AsSplitQuery()` for complex includes with collections
 
-## Performance
+### Migrations
+- Name migrations descriptively: `AddUserEmailIndex`, not `Migration1`
+- Never edit generated migration files — add a new migration instead
+- Run `dotnet ef migrations add <Name>` and review before applying
 
-- Use AsNoTracking() for read-only queries
-- Implement pagination for large result sets with Skip() and Take()
-- Use Include() to eager load related entities when needed
-- Consider projection (Select) to retrieve only required fields
-- Use compiled queries for frequently executed queries
-- Avoid N+1 query problems by properly including related data
+### Transactions
+- Use `IDbContextTransaction` for multi-step operations requiring atomicity
 
-## Migrations
-
-- Create small, focused migrations
-- Name migrations descriptively
-- Verify migration SQL scripts before applying to production
-- Consider using migration bundles for deployment
-- Add data seeding through migrations when appropriate
-
-## Querying
-
-- Use IQueryable judiciously and understand when queries execute
-- Prefer strongly-typed LINQ queries over raw SQL
-- Use appropriate query operators (Where, OrderBy, GroupBy)
-- Consider database functions for complex operations
-- Implement specifications pattern for reusable queries
-
-## Change Tracking & Saving
-
-- Use appropriate change tracking strategies
-- Batch your SaveChanges() calls
-- Implement concurrency control for multi-user scenarios
-- Consider using transactions for multiple operations
-- Use appropriate DbContext lifetimes (scoped for web apps)
-
-## Security
-
-- Avoid SQL injection by using parameterized queries
-- Implement appropriate data access permissions
-- Be careful with raw SQL queries
-- Consider data encryption for sensitive information
-- Use migrations to manage database user permissions
-
-## Testing
-
-- Use in-memory database provider for unit tests
-- Create separate testing contexts with SQLite for integration tests
-- Mock DbContext and DbSet for pure unit tests
-- Test migrations in isolated environments
-- Consider snapshot testing for model changes
-
-When reviewing my EF Core code, identify issues and suggest improvements that follow these best practices.
+## Steps
+1. Read target code and identify EF Core violations
+2. Apply fixes — query optimizations first, then design improvements
+3. Run `dotnet build` to confirm no compilation errors

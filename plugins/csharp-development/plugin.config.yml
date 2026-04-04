@@ -30,27 +30,39 @@ agents:
 # Skills generated from local prompt/agent templates (local rules take priority over awesome-copilot)
 skills:
   - name: aspnet-minimal-api-openapi
+    source: skills/aspnet-minimal-api-openapi
   # Scaffold a new .NET solution with src/test layout and all build config files
   - name: create-dotnet-solution
+    source: skills/create-dotnet-solution
   - name: csharp-async
+    source: skills/csharp-async
   # Ensure C# types are documented with XML comments
   - name: csharp-docs
+    source: skills/csharp-docs
   - name: csharp-mcp-server-generator
+    source: skills/csharp-mcp-server-generator
   - name: csharp-nunit
+    source: skills/csharp-nunit
   - name: write-tests
+    source: skills/write-tests
   # C# code review extended with the generic priority system (🔴/🟡/🟢) from code-review-cli
   - name: csharp-code-review
     extend:
       - agents/code-review-cli.agent.md
   - name: dotnet-best-practices
+    source: skills/dotnet-best-practices
   # Review C#/.NET code for design pattern implementation
   - name: dotnet-design-pattern-review
+    source: skills/dotnet-design-pattern-review
   # .NET framework upgrade analysis and execution
   - name: dotnet-upgrade
+    source: skills/dotnet-upgrade
   # Entity Framework Core best practices
   - name: ef-core
+    source: skills/ef-core
   # Optimized multi-stage Dockerfiles for .NET containers
   - name: multi-stage-dockerfile
+    source: skills/multi-stage-dockerfile
 
 instructions:
   - source: csharp

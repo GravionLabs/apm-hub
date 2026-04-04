@@ -1,68 +1,37 @@
 ---
 name: create-wiki-workflow
-description: 'Create a GitHub Actions workflow that syncs docs to the GitHub Wiki using GravionLabs/ci reusable workflows'
+description: 'Create a GitHub Actions workflow that syncs a docs/ directory to the GitHub Wiki using GravionLabs/ci reusable workflows.'
 allowed-tools: editFiles
 ---
 
-# Create Wiki Sync Workflow
+Create a `.github/workflows/sync-wiki.yml` file that syncs documentation to the GitHub Wiki.
 
-Create a `.github/workflows/sync-wiki.yml` file that calls the `GravionLabs/ci` reusable Wiki Sync workflow.
+## What this skill does
+Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable Wiki Sync workflow to publish Markdown files from a `docs/` directory to the repository's GitHub Wiki.
 
-## Step 1 — Gather information
+## Steps
+1. Create `.github/workflows/sync-wiki.yml`:
+   ```yaml
+   name: Sync Wiki
 
-Ask the user for the following. Use the defaults shown if the user confirms or skips.
+   on:
+     push:
+       branches: [main]
+       paths:
+         - 'docs/**'
 
-- **Docs path**: Path to the docs directory to sync. Default: `docs`.
-- **README path**: Path to the README file that maps to the wiki Home page. Default: `README.md`.
-- **Trigger branches**: Which branches should trigger the sync? Default: `[main]`.
-- **Path filters**: Should the workflow only trigger when docs or README change? Default: yes (paths: `README.md`, `docs/**/*.md`).
+   jobs:
+     sync-wiki:
+       uses: GravionLabs/ci/.github/workflows/sync-wiki.yml@main
+       with:
+         docs-path: docs
+       secrets: inherit
+   ```
+2. Confirm the repository has the Wiki enabled (Settings → Features → Wikis)
+3. Note: the `GITHUB_TOKEN` must have write permissions to the wiki — `secrets: inherit` passes it automatically
 
-## Step 2 — Prerequisites
-
-Remind the user of the following before generating the file:
-
-> ⚠️ **Wiki must be enabled** in the repository settings before this workflow can run.
-> Go to **Settings → General → Features** and enable **Wikis**.
-> The workflow will automatically initialize the wiki on first run if no pages exist yet.
-
-## Step 3 — Generate the workflow file
-
-Create `.github/workflows/sync-wiki.yml` with the following structure:
-
-```yaml
-name: Sync Wiki
-
-on:
-  push:
-    branches: [<trigger-branches>]
-    paths:
-      - '<readme-path>'
-      - '<docs-path>/**/*.md'
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  sync-wiki:
-    uses: GravionLabs/ci/.github/workflows/sync-wiki.yml@main
-    secrets: inherit
-```
-
-If the user provided non-default `docs-path` or `readme-path`, add a `with:` block to the job:
-
-```yaml
-    with:
-      docs-path: '<docs-path>'
-      readme-path: '<readme-path>'
-```
-
-If the user does **not** want path filters, omit the `paths:` block from the trigger.
-
-## Step 4 — Confirm
-
-After creating the file, remind the user to:
-
-1. Enable Wikis in repository settings if not already done.
-2. Commit and push to trigger the workflow, or run it manually via `workflow_dispatch`.
-3. The wiki will be auto-initialized on first run if it has never been used.
+## Constraints
+- Trigger only on changes to docs files to avoid unnecessary runs
+- The `docs/` directory should contain Markdown files following the GitHub Wiki format
+- The home page should be `docs/Home.md`
+- Do not add redundant build steps — wiki sync only needs to copy files

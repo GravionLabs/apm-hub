@@ -1,87 +1,40 @@
 ---
 name: dotnet-best-practices
-description: 'Ensure .NET/C# code meets best practices for the solution/project.'
-allowed-tools: changes codebase problems editFiles
+description: 'Review and improve .NET/C# code to meet project-specific best practices: nullability, async patterns, DI, logging, and modern C# idioms.'
+allowed-tools: codebase editFiles
 ---
 
-# .NET/C# Best Practices
+Ensure .NET/C# code meets best practices for the solution.
 
-Your task is to ensure .NET/C# code in ${selection} meets the best practices specific to this solution/project. This includes:
+## What this skill does
+Reviews the specified code against project-specific and general .NET best practices, then applies improvements. Reads existing code patterns to stay consistent with the project.
 
-## Documentation & Structure
+## Key areas
 
-- Create comprehensive XML documentation comments for all public classes, interfaces, methods, and properties
-- Include parameter descriptions and return value descriptions in XML comments
-- Follow the established namespace structure: {Core|Console|App|Service}.{Feature}
+### Modern C# idioms
+- Enable `<Nullable>enable</Nullable>` and resolve all warnings
+- Use `record` types for immutable data transfer objects
+- Use primary constructors, collection expressions, and pattern matching where they improve clarity
+- Prefer `is null` / `is not null` over `== null`
 
-## Design Patterns & Architecture
+### Async
+- `Async` suffix on all async methods
+- Pass `CancellationToken` through I/O chains
+- No `.Result`/`.Wait()` — use `await` throughout
 
-- Use primary constructor syntax for dependency injection (e.g., `public class MyClass(IDependency dependency)`)
-- Implement the Command Handler pattern with generic base classes (e.g., `CommandHandler<TOptions>`)
-- Use interface segregation with clear naming conventions (prefix interfaces with 'I')
-- Follow the Factory pattern for complex object creation.
+### Dependency injection
+- Register services with appropriate lifetimes (Singleton / Scoped / Transient)
+- Inject via constructor — no service locator pattern
 
-## Dependency Injection & Services
+### Logging
+- Use `ILogger<T>` — not `Console.WriteLine`
+- Use structured logging with named parameters: `_logger.LogInformation("User {UserId} created", id)`
 
-- Use constructor dependency injection with null checks via ArgumentNullException
-- Register services with appropriate lifetimes (Singleton, Scoped, Transient)
-- Use Microsoft.Extensions.DependencyInjection patterns
-- Implement service interfaces for testability
+### Error handling
+- Use specific exception types
+- Do not swallow exceptions with empty `catch` blocks
 
-## Resource Management & Localization
-
-- Use ResourceManager for localized messages and error strings
-- Separate LogMessages and ErrorMessages resource files
-- Access resources via `_resourceManager.GetString("MessageKey")`
-
-## Async/Await Patterns
-
-- Use async/await for all I/O operations and long-running tasks
-- Return Task or Task<T> from async methods
-- Use ConfigureAwait(false) where appropriate
-- Handle async exceptions properly
-
-## Testing Standards
-
-- Use NUnit framework with FluentAssertions or Shouldly for assertions
-- Follow AAA pattern (Arrange, Act, Assert) but do not include comments for them
-- Use NSubstitute for mocking dependencies
-- Test both success and failure scenarios
-- Include null parameter validation tests
-- Follow the naming convention `[MethodName]_Should[ExpectedResult]`
-
-## Configuration & Settings
-
-- Use strongly-typed configuration classes with data annotations
-- Implement validation attributes (Required, NotEmptyOrWhitespace)
-- Use IConfiguration binding for settings
-- Support appsettings.json configuration files
-
-## Semantic Kernel & AI Integration
-
-- Use Microsoft.SemanticKernel for AI operations
-- Implement proper kernel configuration and service registration
-- Handle AI model settings (ChatCompletion, Embedding, etc.)
-- Use structured output patterns for reliable AI responses
-
-## Error Handling & Logging
-
-- Use structured logging with Microsoft.Extensions.Logging
-- Include scoped logging with meaningful context
-- Throw specific exceptions with descriptive messages
-- Use try-catch blocks for expected failure scenarios
-
-## Performance & Security
-
-- Use C# 12+ features and .NET 8 optimizations where applicable
-- Implement proper input validation and sanitization
-- Use parameterized queries for database operations
-- Follow secure coding practices for AI/ML operations
-
-## Code Quality
-
-- Ensure SOLID principles compliance
-- Avoid code duplication through base classes and utilities
-- Use meaningful names that reflect domain concepts
-- Keep methods focused and cohesive
-- Implement proper disposal patterns for resources
+## Steps
+1. Read the target file(s) and project conventions
+2. List all violations found
+3. Apply fixes, staying consistent with existing style

@@ -1,50 +1,40 @@
 ---
 name: csharp-async
-description: 'Get best practices for C# async programming'
-allowed-tools: changes codebase editFiles problems
+description: 'Apply C# async/await best practices to existing code: fix deadlocks, ConfigureAwait usage, async void, cancellation token propagation, and naming conventions.'
+allowed-tools: codebase editFiles
 ---
 
-# C# Async Programming Best Practices
+Apply C# async/await best practices to the specified code.
 
-Your goal is to help me follow best practices for asynchronous programming in C#.
+## What this skill does
+Reviews and refactors async code to eliminate common pitfalls: deadlocks, missing `CancellationToken` propagation, `async void`, improper `Result`/`Wait()` usage, and incorrect `ConfigureAwait`.
 
-## Naming Conventions
+## Key rules
 
-- Use the 'Async' suffix for all async methods
-- Match method names with their synchronous counterparts when applicable (e.g., `GetDataAsync()` for `GetData()`)
+### Naming
+- Suffix all async methods with `Async` (e.g., `GetDataAsync()`)
 
-## Return Types
+### Avoid sync-over-async
+- Never call `.Result`, `.Wait()`, or `.GetAwaiter().GetResult()` on tasks — causes deadlocks
+- Never use `Task.Run` to wrap inherently async operations
 
-- Return `Task<T>` when the method returns a value
-- Return `Task` when the method doesn't return a value
-- Consider `ValueTask<T>` for high-performance scenarios to reduce allocations
-- Avoid returning `void` for async methods except for event handlers
+### ConfigureAwait
+- In library code: use `ConfigureAwait(false)` on every `await`
+- In application code (ASP.NET Core, etc.): `ConfigureAwait(false)` is optional but consistent
 
-## Exception Handling
+### CancellationToken
+- Accept `CancellationToken cancellationToken = default` in all async methods that do I/O
+- Pass the token through to every `await`-ed call
 
-- Use try/catch blocks around await expressions
-- Avoid swallowing exceptions in async methods
-- Use `ConfigureAwait(false)` when appropriate to prevent deadlocks in library code
-- Propagate exceptions with `Task.FromException()` instead of throwing in async Task returning methods
+### async void
+- Never use `async void` except for event handlers
+- Return `Task` or `Task<T>` instead
 
-## Performance
+### Parallelism
+- Use `Task.WhenAll` for concurrent independent operations
+- Use `IAsyncEnumerable<T>` for async streams
 
-- Use `Task.WhenAll()` for parallel execution of multiple tasks
-- Use `Task.WhenAny()` for implementing timeouts or taking the first completed task
-- Avoid unnecessary async/await when simply passing through task results
-- Consider cancellation tokens for long-running operations
-
-## Common Pitfalls
-
-- Never use `.Wait()`, `.Result`, or `.GetAwaiter().GetResult()` in async code
-- Avoid mixing blocking and async code
-- Don't create async void methods (except for event handlers)
-- Always await Task-returning methods
-
-## Implementation Patterns
-
-- Implement the async command pattern for long-running operations
-- Use async streams (IAsyncEnumerable<T>) for processing sequences asynchronously
-- Consider the task-based asynchronous pattern (TAP) for public APIs
-
-When reviewing my C# code, identify these issues and suggest improvements that follow these best practices.
+## Steps
+1. Identify all async violations in the target code
+2. Apply fixes in priority order: deadlocks first, then missing cancellation, then naming
+3. Verify no compilation errors after changes

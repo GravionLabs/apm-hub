@@ -1,57 +1,46 @@
 ---
 name: python-code-review
-description: 'Perform a structured code review for Python and pytest codebases'
-allowed-tools: changes codebase problems editFiles
+description: 'Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions.'
+allowed-tools: codebase
 ---
 
-# Python Code Review
+Review Python code for correctness, readability, maintainability, and security.
 
-Review the provided Python code for correctness, readability, maintainability, and security. Follow the project's specific guidelines for Python development and pytest testing.
+## What this skill does
+Provides a structured, prioritized code review. Does not modify code — outputs findings only.
 
-## Review Focus
+## Priority ratings
+- 🔴 **Critical** — bugs, security vulnerabilities, data corruption risk, broken tests
+- 🟡 **Important** — performance issues, missing error handling, type annotation gaps
+- 🟢 **Suggestion** — style, naming, minor refactors
 
-### 1. General Python Guidelines
-- **Tooling:** Ensure **uv** is used for package management and **src layout** is followed (code in `src/`, tests in `tests/`, notebooks in `notebooks/`).
-- **Naming & Types:**
-  - Descriptive names for functions and variables.
-  - **Type Hints:** Mandatory for function parameters and return types (using `typing` module where necessary).
-- **Documentation:**
-  - Clear and concise comments for each function explaining the **why**.
-  - Docstrings following **PEP 257** for all classes and functions.
-- **Code Style:**
-  - Adherence to **PEP 8**.
-  - 4 spaces for indentation.
-  - Max line length of 79 characters.
-- **Idiomatic Python:** Use modern Python features and avoid complex functions by breaking them down.
-- **Notebooks:**
-  - All Jupyter notebooks (`.ipynb` files) must reside in the `notebooks/` directory.
-  - Use descriptive names (e.g., `01_data_exploration.ipynb`).
-  - Include a `README.md` in `notebooks/` describing each notebook's purpose.
+## Review checklist
 
-### 2. Testing Guidelines (pytest)
-- **Stack:** Verify usage of **pytest**, **unittest.mock** (or `pytest-mock`), and **pytest-asyncio** for async tests.
-- **Structure:**
-  - Test files: `test_*.py`.
-  - Test functions: `test_*()`.
-  - No "Arrange", "Act", or "Assert" comments.
-- **Markers & Organization:**
-  - Unit tests in `tests/unit/` and marked with `@pytest.mark.unit`.
-  - Integration tests in `tests/integration/` and marked with `@pytest.mark.integration`.
-  - Manual tests in `tests/manual/` **must** be marked with `@pytest.mark.manual` and skipped by default.
-- **Fixtures:** Prefer pytest fixtures over `setup`/`teardown` methods.
-- **Async Tests:** Check for proper `asyncio_mode = auto` usage or `@pytest.mark.asyncio` markers.
+### Correctness
+- No mutable default arguments: `def f(x=[])` → use `None` and initialize inside
+- Context managers for resources: files, connections, locks (`with` statement)
+- Exception handling: not bare `except:`, no silenced exceptions
 
-### 3. Logic and Security
-- **Security:** No secrets in code, validate all external inputs.
-- **Error Handling:** Clear exception handling, specific exception types, and handling of edge cases (empty inputs, invalid types).
-- **Maintainability:** Ensure code is clear, concise, and well-documented.
+### Type safety
+- Functions should have type annotations on parameters and return values
+- Use `Optional[T]` or `T | None` for nullable values
+- Use `TypeVar` and generics appropriately
 
-## Response Format
-Return a prioritized, actionable checklist. For each issue found:
-1. **Description:** What is the issue?
-2. **Guideline:** Which rule is violated?
-3. **Recommendation:** How to fix it (with code examples).
-4. **Severity:** High/Medium/Low.
+### Security
+- No `eval()` or `exec()` on untrusted input
+- No SQL string formatting — use parameterized queries
+- No hardcoded secrets; use environment variables or secret managers
 
-Code to review:
-${input:code:Paste the Python code or diff to review}
+### Python idioms
+- Use list/dict/set comprehensions over `for` + `.append()`
+- Use `enumerate()` instead of manual index counters
+- Use `dataclass` or `NamedTuple` for structured data
+- `pathlib.Path` over `os.path` string manipulation
+
+### pytest conventions
+- Test functions: `test_<function>_<scenario>`
+- Use `pytest.raises` for exception assertions
+- Use `@pytest.mark.parametrize` for data-driven tests
+
+## Output format
+Group by file. Priority emoji, location, explanation, suggested fix.

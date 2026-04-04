@@ -1,52 +1,40 @@
 ---
 name: gh-issue-work
-description: 'Full end-to-end workflow for working on a GitHub issue: create branch, implement code with tests and docs, review, and create a pull request. Use this for simple issues that can be completed in one pass.'
+description: 'End-to-end workflow for a GitHub issue: read issue, create branch, implement with tests and docs, review, and open a pull request.'
+allowed-tools: codebase editFiles runCommands
 ---
 
-# Work on Issue (Full Workflow)
+Complete end-to-end workflow for a GitHub issue — from branch creation to pull request.
 
-Complete end-to-end workflow for a GitHub issue: prepare, implement, and create a PR.
+## What this skill does
+Combines `gh-issue-implement` and `gh-issue-finish` into a single workflow for straightforward issues.
 
-> **Tip:** For complex issues, use the individual skills instead:
-> 1. `/gh-issue-implement {issue-number}` — prepare branch, plan, and implement
-> 2. `/gh-issue-finish {issue-number}` — review and create PR
+> **Tip:** For complex issues, use the individual skills:
+> 1. `gh-issue-implement {issue-number}` — branch + implementation
+> 2. `gh-issue-finish {issue-number}` — review + PR
 
 ## Prerequisites
-
 - `gh` CLI installed and authenticated (`gh auth status`)
-- Current directory is the repository root
+- Run from the repository root
 
-## Phase 1 — Prepare
+## Steps
 
-Follow all steps from `/gh-issue-implement` Phase 1:
-1. Read the issue (`gh issue view {issue-number} --json title,body,labels`)
-2. Determine branch type from labels
-3. Create and check out the branch (`feature/{issue-number}-{title}`)
-4. Output an implementation plan
+### Phase 1 — Prepare
+1. `gh issue view {issue-number} --json title,body,labels,assignees`
+2. Determine branch prefix from labels (`feature/`, `fix/`, `chore/`, `docs/`)
+3. `git checkout -b <prefix>/<issue-number>-<slug>`
 
-## Phase 2 — Implement
+### Phase 2 — Implement
+4. Explore affected areas of the codebase
+5. Write code, tests, and update docs as needed
+6. Atomic commits: `git commit -m "<type>: <description> (#<issue-number>)"`
 
-Follow all steps from `/gh-issue-implement` Phase 2:
-1. Analyze the codebase for relevant files and patterns
-2. Implement all required changes
-3. Write tests for every changed behavior
-4. Update documentation if needed
-5. Create atomic commits (`feat: ... (refs #{issue-number})`)
-6. Push the branch
+### Phase 3 — Finish
+7. Run build and tests — fix any failures
+8. Self-review: `git diff main...HEAD`
+9. Push and open PR: `git push -u origin HEAD && gh pr create ...`
+10. Verify CI: `gh pr checks`
 
-## Phase 3 — Review and PR
-
-Follow all steps from `/gh-issue-finish`:
-1. Run build and tests — fix any failures
-2. Review all changes (diff, correctness, edge cases, security)
-3. Create the pull request with `Closes #{issue-number}` in the body
-
-## Output
-
-End with:
-```
-✅ Pull request created: <PR URL>
-
-Branch: {branch-name}
-Closes: #{issue-number}
-```
+## Constraints
+- Tests must pass before the PR is opened
+- PR body must include `Closes #<issue-number>`

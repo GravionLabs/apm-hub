@@ -1,53 +1,31 @@
 ---
-name: create-agents-md
+name: gh-agents-md
 description: 'Analyze the repository and generate a complete AGENTS.md file tailored to the project type (dotnet, node, python, github-actions, or generic).'
-allowed-tools: codebase editFiles runCommands search
+allowed-tools: codebase editFiles runCommands
 ---
 
-Analyze the current repository and generate a complete, filled-in `AGENTS.md` file.
+Generate a complete `AGENTS.md` file for the repository.
 
-## Step 1 — Detect project type
+## What this skill does
+Detects the project type from indicator files, then creates a tailored `AGENTS.md` with build commands, test commands, code style guidance, and PR conventions.
 
-Look for these indicator files to determine the project type:
+## Steps
+1. Detect project type from indicator files:
+   | Indicator | Type |
+   | `*.csproj`, `*.sln`, `Directory.Packages.props` | `dotnet` |
+   | `package.json`, `tsconfig.json` | `node` |
+   | `pyproject.toml`, `setup.py`, `requirements.txt` | `python` |
+   | `.github/workflows/` with nested `action.yml` | `github-actions` |
+   If multiple indicators match, pick the dominant one.
+2. Read `README.md`, `CONTRIBUTING.md`, and CI workflow files for context
+3. Generate `AGENTS.md` with these sections:
+   - **Build** — commands to build the project
+   - **Test** — commands to run tests (with single-test example)
+   - **Lint** — commands to check code style
+   - **Code style** — key conventions (naming, formatting, file structure)
+   - **PR conventions** — branch naming, commit message format, PR checklist
+4. Write the file to the repository root as `AGENTS.md`
 
-| Indicator | Type |
-| :--- | :--- |
-| `*.csproj`, `*.sln`, `*.slnx`, `global.json`, `Directory.Packages.props` | `dotnet` |
-| `package.json`, `tsconfig.json`, `.nvmrc` | `node` |
-| `pyproject.toml`, `setup.py`, `requirements.txt`, `uv.lock` | `python` |
-| `.github/workflows/` with `action.yml` files in subdirectories | `github-actions` |
-
-If multiple indicators are present, pick the dominant one.
-If no indicator is found, use `generic`.
-
-## Step 2 — Gather information
-
-Collect the following from the repository:
-
-- **Directory structure** (top 2 levels)
-- **Project name and description** (from `README.md`, `package.json`, `pyproject.toml`, or `*.csproj`)
-- **Technology versions** (runtime, language, SDK, package manager)
-- **Test framework and conventions** (look for test directories, config files, existing test files)
-- **Build and test commands** (from `package.json` scripts, `Makefile`, `README.md`, CI workflow files)
-- **Key conventions** (naming patterns, architectural decisions visible in existing code)
-- **Auto-generated files or directories** that must not be edited manually
-
-## Step 3 — Generate AGENTS.md
-
-Use the detected type to select the appropriate template structure:
-
-- `dotnet` → use `templates/agents-md/dotnet.md` as structure
-- `node` → use `templates/agents-md/node.md` as structure
-- `python` → use `templates/agents-md/python.md` as structure
-- `github-actions` → use `templates/agents-md/github-actions.md` as structure
-- `generic` → use `templates/agents-md/generic.md` as structure
-
-Fill in **all placeholder comments** with concrete values from the repository.
-Remove any sections that are not applicable.
-Add additional sections if important conventions are found that don't fit the template.
-
-## Step 4 — Write the file
-
-Write the generated content to `AGENTS.md` in the **repository root**.
-
-If an `AGENTS.md` already exists, show a diff and ask for confirmation before overwriting.
+## Constraints
+- Tailor commands to the actual project — do not use generic placeholders
+- If build/test commands are ambiguous, read `package.json` scripts or `.github/workflows/` to infer them
