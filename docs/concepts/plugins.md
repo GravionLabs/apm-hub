@@ -71,25 +71,25 @@ files:
 
 ### Field Reference
 
-| Field                   | Type                      | Required | Description                                                                                                                      |
-| :---------------------- | :------------------------ | :------: | :------------------------------------------------------------------------------------------------------------------------------- |
-| `name`                  | string                    |    ✅     | Unique plugin identifier (kebab-case)                                                                                            |
-| `description`           | string                    |    ✅     | One-sentence description of what the plugin provides                                                                             |
-| `version`               | string                    |    ✅     | Semantic version (e.g. `"1.0.0"`)                                                                                                |
-| `author`                | string or object          |    —     | Author name or `{ name, email }` object                                                                                          |
-| `license`               | string                    |    —     | SPDX license identifier (e.g. `MIT`)                                                                                             |
-| `keywords`              | string[]                  |    —     | Searchable tags                                                                                                                  |
-| `agents`                | PluginAgentConfig[]       |    —     | List of agents to include                                                                                                        |
-| `agents[].source`       | string                    |    ✅     | Agent domain path — resolves to `templates/<domain>/<name>.agent.md`. Use format `<domain>/<name>` (e.g., `csharp/api-architect`). |
-| `skills`                | PluginSkillConfig[]       |    —     | List of skills to generate                                                                                                       |
-| `skills[].name`         | string                    |    ✅     | Skill name (used as the directory name under `skills/`)                                                                          |
-| `skills[].source`       | string                    |    ✅     | Source template path — use format `<domain>/<name>` (e.g., `csharp/csharp-async`)                                               |
-| `skills[].extend`       | string[]                  |    —     | Additional source paths whose bodies are appended to the skill                                                                   |
-| `instructions`          | PluginInstructionConfig[] |    —     | List of instruction files to bundle                                                                                              |
+| Field                   | Type                      | Required | Description                                                                                                                              |
+| :---------------------- | :------------------------ | :------: | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                  | string                    |    ✅     | Unique plugin identifier (kebab-case)                                                                                                    |
+| `description`           | string                    |    ✅     | One-sentence description of what the plugin provides                                                                                     |
+| `version`               | string                    |    ✅     | Semantic version (e.g. `"1.0.0"`)                                                                                                        |
+| `author`                | string or object          |    —     | Author name or `{ name, email }` object                                                                                                  |
+| `license`               | string                    |    —     | SPDX license identifier (e.g. `MIT`)                                                                                                     |
+| `keywords`              | string[]                  |    —     | Searchable tags                                                                                                                          |
+| `agents`                | PluginAgentConfig[]       |    —     | List of agents to include                                                                                                                |
+| `agents[].source`       | string                    |    ✅     | Agent domain path — resolves to `templates/<domain>/<name>.agent.md`. Use format `<domain>/<name>` (e.g., `csharp/api-architect`).       |
+| `skills`                | PluginSkillConfig[]       |    —     | List of skills to generate                                                                                                               |
+| `skills[].name`         | string                    |    ✅     | Skill name (used as the directory name under `skills/`)                                                                                  |
+| `skills[].source`       | string                    |    ✅     | Source template path — use format `<domain>/<name>` (e.g., `csharp/csharp-async`)                                                        |
+| `skills[].extend`       | string[]                  |    —     | Additional source paths whose bodies are appended to the skill                                                                           |
+| `instructions`          | PluginInstructionConfig[] |    —     | List of instruction files to bundle                                                                                                      |
 | `instructions[].source` | string                    |    ✅     | Instruction domain path — resolves to `templates/<domain>/<name>.instructions.md`. Use format `<domain>/<name>` (e.g., `csharp/csharp`). |
-| `files`                 | PluginFileConfig[]        |    —     | List of arbitrary files to copy into the plugin                                                                                  |
-| `files[].source`        | string                    |    ✅     | Source file path relative to `templates/` (or repo root)                                                                         |
-| `files[].destination`   | string                    |    —     | Destination path relative to the plugin directory. Defaults to the basename of source.                                           |
+| `files`                 | PluginFileConfig[]        |    —     | List of arbitrary files to copy into the plugin                                                                                          |
+| `files[].source`        | string                    |    ✅     | Source file path relative to `templates/` (or repo root)                                                                                 |
+| `files[].destination`   | string                    |    —     | Destination path relative to the plugin directory. Defaults to the basename of source.                                                   |
 
 ### Resolving `source` paths
 

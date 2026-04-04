@@ -74,11 +74,11 @@ This repository uses a **generator** (`npm run generate`) that copies `.skill.md
 
 ### Known Limitations
 
-| Limitation                                                | Impact                                                              |
-| :-------------------------------------------------------- | :------------------------------------------------------------------ |
-| Long prompts become long skills                           | Token cost; auto-selection injects 300+ lines into context          |
-| Not all prompts should be skills                          | Wizard workflows (`gh-copilot-setup`) get auto-selected too broadly |
-| Skills can't include scripts                              | Generator only outputs the body, can't add companion scripts        |
+| Limitation                       | Impact                                                              |
+| :------------------------------- | :------------------------------------------------------------------ |
+| Long prompts become long skills  | Token cost; auto-selection injects 300+ lines into context          |
+| Not all prompts should be skills | Wizard workflows (`gh-copilot-setup`) get auto-selected too broadly |
+| Skills can't include scripts     | Generator only outputs the body, can't add companion scripts        |
 
 > **Note:** The `tools: → allowed-tools:` mapping limitation only applies to **legacy `.prompt.md`-based skills**. Modern `.skill.md` templates set `allowed-tools` directly and are copied without transformation.
 

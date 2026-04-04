@@ -209,11 +209,11 @@ The generator appends the body of each listed file to the skill content (separat
 
 ### Source Resolution
 
-| Config entry                              | Resolved template path                                              |
-| :---------------------------------------- | :------------------------------------------------------------------ |
-| `source: csharp/csharp-async`             | `templates/csharp/csharp-async.skill.md` (preferred)               |
-| `source: devops/code-review-publisher`    | `templates/devops/code-review-publisher.agent.md` (auto-discovered) |
-| `name: my-skill` (no source, legacy)      | `templates/prompts/my-skill.prompt.md` (legacy fallback)            |
+| Config entry                           | Resolved template path                                              |
+| :------------------------------------- | :------------------------------------------------------------------ |
+| `source: csharp/csharp-async`          | `templates/csharp/csharp-async.skill.md` (preferred)                |
+| `source: devops/code-review-publisher` | `templates/devops/code-review-publisher.agent.md` (auto-discovered) |
+| `name: my-skill` (no source, legacy)   | `templates/prompts/my-skill.prompt.md` (legacy fallback)            |
 
 ---
 
