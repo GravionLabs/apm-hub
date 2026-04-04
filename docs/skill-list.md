@@ -6,60 +6,60 @@ This page lists all available skills across all Copilot CLI plugins in this repo
 
 ## Overview
 
-| Skill                                                                                                    | Plugin                                                                | Description                                                                                                                                                                  |
-| :------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [setup-prettier-eslint-husky](../plugins/angular-development/skills/setup-prettier-eslint-husky)         | [angular-development](../plugins/angular-development)                 | Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm.          |
-| [angular-component](../plugins/angular-development/skills/angular-component)                             | [angular-development](../plugins/angular-development)                 | Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.              |
-| [sakai-ui-component](../plugins/angular-development/skills/sakai-ui-component)                           | [angular-development](../plugins/angular-development)                 | Scaffold a new @gravion/sakai-ui Angular library component with gv- prefix, 3-file structure, PrimeNG dependencies, and public-api.ts export.                                |
-| [angular-signal-store](../plugins/angular-development/skills/angular-signal-store)                       | [angular-development](../plugins/angular-development)                 | Create an NgRx Signal Store for Angular state management with state, computed signals, updaters, and effects. Follows @ngrx/signals patterns.                                |
-| [angular-library-create](../plugins/angular-development/skills/angular-library-create)                   | [angular-development](../plugins/angular-development)                 | Scaffold a new Angular library inside an existing workspace using ng-packagr, with public-api.ts, 3-file component structure, and injection tokens.                          |
-| [gh-copilot-setup](../plugins/copilot-workspace/skills/gh-copilot-setup)                                 | [copilot-workspace](../plugins/copilot-workspace)                     | Interactive wizard to install GitHub Copilot configuration (instructions, prompts, agents) from GravionLabs/copilot-hub into .github/. Requires pwsh and gh CLI.             |
-| [gh-copilot-sync](../plugins/copilot-workspace/skills/gh-copilot-sync)                                   | [copilot-workspace](../plugins/copilot-workspace)                     | Sync installed GitHub Copilot configuration files (.github/instructions, prompts, agents) with the latest versions from GravionLabs/copilot-hub.                             |
-| [gh-agents-md](../plugins/copilot-workspace/skills/gh-agents-md)                                         | [copilot-workspace](../plugins/copilot-workspace)                     | Analyze the repository and generate a complete AGENTS.md file tailored to the project type (dotnet, node, python, github-actions, or generic).                               |
-| [gh-issue-implement](../plugins/copilot-workspace/skills/gh-issue-implement)                             | [copilot-workspace](../plugins/copilot-workspace)                     | Read a GitHub issue, create the appropriate branch, and implement it with code, tests, and docs. Use this to start work on a new issue.                                      |
-| [gh-issue-finish](../plugins/copilot-workspace/skills/gh-issue-finish)                                   | [copilot-workspace](../plugins/copilot-workspace)                     | Review implemented changes and create a pull request for a GitHub issue. Run this after gh-issue-implement when the implementation is complete.                              |
-| [gh-issue-work](../plugins/copilot-workspace/skills/gh-issue-work)                                       | [copilot-workspace](../plugins/copilot-workspace)                     | End-to-end workflow for a GitHub issue: read issue, create branch, implement with tests and docs, review, and open a pull request.                                           |
-| [aspnet-minimal-api-openapi](../plugins/csharp-development/skills/aspnet-minimal-api-openapi)            | [csharp-development](../plugins/csharp-development)                   | Create an ASP.NET Core Minimal API endpoint module using Carter with full OpenAPI documentation, typed request/response models, and proper error responses.                  |
-| [create-dotnet-solution](../plugins/csharp-development/skills/create-dotnet-solution)                    | [csharp-development](../plugins/csharp-development)                   | Scaffold a new .NET solution with src/test layout, Central Package Management (Directory.Packages.props), Directory.Build.props, and .editorconfig.                          |
-| [csharp-async](../plugins/csharp-development/skills/csharp-async)                                        | [csharp-development](../plugins/csharp-development)                   | Apply C# async/await best practices to existing code: fix deadlocks, ConfigureAwait usage, async void, cancellation token propagation, and naming conventions.               |
-| [csharp-docs](../plugins/csharp-development/skills/csharp-docs)                                          | [csharp-development](../plugins/csharp-development)                   | Add XML documentation comments to C# public and internal types and members following summary/param/returns/remarks conventions.                                              |
-| [csharp-mcp-server-generator](../plugins/csharp-development/skills/csharp-mcp-server-generator)          | [csharp-development](../plugins/csharp-development)                   | Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.                                              |
-| [csharp-nunit](../plugins/csharp-development/skills/csharp-nunit)                                        | [csharp-development](../plugins/csharp-development)                   | Write NUnit tests using NSubstitute for mocking and Shouldly for assertions, following project naming and category conventions.                                              |
-| [write-tests](../plugins/csharp-development/skills/write-tests)                                          | [csharp-development](../plugins/csharp-development)                   | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                             |
-| [csharp-code-review](../plugins/csharp-development/skills/csharp-code-review)                            | [csharp-development](../plugins/csharp-development)                   | Perform a structured code review for C# and NUnit codebases                                                                                                                  |
-| [dotnet-best-practices](../plugins/csharp-development/skills/dotnet-best-practices)                      | [csharp-development](../plugins/csharp-development)                   | Review and improve .NET/C# code to meet project-specific best practices: nullability, async patterns, DI, logging, and modern C# idioms.                                     |
-| [dotnet-design-pattern-review](../plugins/csharp-development/skills/dotnet-design-pattern-review)        | [csharp-development](../plugins/csharp-development)                   | Review C#/.NET code for design pattern implementation quality and suggest improvements. Read-only — outputs findings, does not modify code.                                  |
-| [dotnet-upgrade](../plugins/csharp-development/skills/dotnet-upgrade)                                    | [csharp-development](../plugins/csharp-development)                   | Analyze and execute a .NET framework or package upgrade: assess current state, identify breaking changes, update target frameworks and NuGet packages, and verify the build. |
-| [ef-core](../plugins/csharp-development/skills/ef-core)                                                  | [csharp-development](../plugins/csharp-development)                   | Apply Entity Framework Core best practices: DbContext design, migrations, query optimization, owned entities, and avoiding N+1 problems.                                     |
-| [multi-stage-dockerfile](../plugins/csharp-development/skills/multi-stage-dockerfile)                    | [csharp-development](../plugins/csharp-development)                   | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.                                 |
-| [code-review-publisher](../plugins/devops/skills/code-review-publisher)                                  | [devops](../plugins/devops)                                           | -                                                                                                                                                                            |
-| [az-devops-setup](../plugins/devops/skills/az-devops-setup)                                              | [devops](../plugins/devops)                                           | -                                                                                                                                                                            |
-| [create-pr](../plugins/devops/skills/create-pr)                                                          | [devops](../plugins/devops)                                           | -                                                                                                                                                                            |
-| [create-nuget-workflow](../plugins/devops/skills/create-nuget-workflow)                                  | [devops](../plugins/devops)                                           | Create a GitHub Actions CI/CD workflow for building and publishing a NuGet package using GravionLabs/ci reusable workflows.                                                  |
-| [create-python-workflow](../plugins/devops/skills/create-python-workflow)                                | [devops](../plugins/devops)                                           | Create a GitHub Actions CI/CD workflow for a Python package using GravionLabs/ci reusable workflows (lint, test, build, publish).                                            |
-| [create-node-workflow](../plugins/devops/skills/create-node-workflow)                                    | [devops](../plugins/devops)                                           | Create a GitHub Actions CI workflow for a Node.js project using GravionLabs/ci reusable workflows (install, lint, test, build).                                              |
-| [gitversion-add](../plugins/devops/skills/gitversion-add)                                                | [devops](../plugins/devops)                                           | Add GitVersion to a repository for automatic semantic versioning from git history, configured for use with GravionLabs/ci reusable workflows.                                |
-| [create-wiki-workflow](../plugins/devops/skills/create-wiki-workflow)                                    | [devops](../plugins/devops)                                           | Create a GitHub Actions workflow that syncs a docs/ directory to the GitHub Wiki using GravionLabs/ci reusable workflows.                                                    |
-| [go-code-review](../plugins/go-development/skills/go-code-review)                                        | [go-development](../plugins/go-development)                           | Perform a structured Go code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions for idiomatic style.                         |
-| [go-test-generate](../plugins/go-development/skills/go-test-generate)                                    | [go-development](../plugins/go-development)                           | Generate idiomatic Go tests using table-driven subtests, covering happy path, error cases, and edge cases. Compatible with the race detector.                                |
-| [multi-stage-dockerfile](../plugins/go-development/skills/multi-stage-dockerfile)                        | [go-development](../plugins/go-development)                           | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.                                 |
-| [write-tests](../plugins/go-development/skills/write-tests)                                              | [go-development](../plugins/go-development)                           | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                             |
-| [helm-chart-create](../plugins/helm-development/skills/helm-chart-create)                                | [helm-development](../plugins/helm-development)                       | Scaffold a new Helm 3 chart with Chart.yaml, values.yaml, named templates, standard Kubernetes resources, and security context defaults.                                     |
-| [helm-values-review](../plugins/helm-development/skills/helm-values-review)                              | [helm-development](../plugins/helm-development)                       | Review a Helm values.yaml for completeness, security defaults, naming conventions, and documentation quality. Read-only — outputs findings only.                             |
-| [helm-chart-upgrade](../plugins/helm-development/skills/helm-chart-upgrade)                              | [helm-development](../plugins/helm-development)                       | Upgrade a Helm chart to a newer chart or app version: update Chart.yaml, migrate deprecated Kubernetes APIs, and handle values.yaml breaking changes.                        |
-| [create-python-workflow](../plugins/python-development/skills/create-python-workflow)                    | [python-development](../plugins/python-development)                   | Create a GitHub Actions CI/CD workflow for a Python package using GravionLabs/ci reusable workflows (lint, test, build, publish).                                            |
-| [python-code-review](../plugins/python-development/skills/python-code-review)                            | [python-development](../plugins/python-development)                   | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions.                                   |
-| [pytest-coverage](../plugins/python-development/skills/pytest-coverage)                                  | [python-development](../plugins/python-development)                   | Run pytest with coverage, identify uncovered lines, and write additional tests to achieve full (or target) coverage.                                                         |
-| [write-tests](../plugins/python-development/skills/write-tests)                                          | [python-development](../plugins/python-development)                   | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                             |
-| [multi-stage-dockerfile](../plugins/python-development/skills/multi-stage-dockerfile)                    | [python-development](../plugins/python-development)                   | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.                                 |
-| [terraform-code-review](../plugins/terraform-development/skills/terraform-code-review)                   | [terraform-development](../plugins/terraform-development)             | Perform a structured Terraform code review with priority ratings: 🔴 critical security/state risks, 🟡 important improvements, 🟢 best practice suggestions.                 |
-| [terraform-module-create](../plugins/terraform-development/skills/terraform-module-create)               | [terraform-development](../plugins/terraform-development)             | Scaffold a reusable Terraform module with variables.tf, outputs.tf, main.tf, examples/, and a terraform-docs README.                                                         |
-| [multi-stage-dockerfile](../plugins/terraform-development/skills/multi-stage-dockerfile)                 | [terraform-development](../plugins/terraform-development)             | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.                                 |
-| [create-node-workflow](../plugins/typescript-node-development/skills/create-node-workflow)               | [typescript-node-development](../plugins/typescript-node-development) | Create a GitHub Actions CI workflow for a Node.js project using GravionLabs/ci reusable workflows (install, lint, test, build).                                              |
-| [typescript-code-review](../plugins/typescript-node-development/skills/typescript-code-review)           | [typescript-node-development](../plugins/typescript-node-development) | Perform a structured TypeScript/JavaScript code review with priority ratings: 🔴 critical bugs/security, 🟡 important type/async issues, 🟢 style suggestions.               |
-| [setup-prettier-eslint-husky](../plugins/typescript-node-development/skills/setup-prettier-eslint-husky) | [typescript-node-development](../plugins/typescript-node-development) | Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm.          |
-| [write-tests](../plugins/typescript-node-development/skills/write-tests)                                 | [typescript-node-development](../plugins/typescript-node-development) | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                             |
-| [multi-stage-dockerfile](../plugins/typescript-node-development/skills/multi-stage-dockerfile)           | [typescript-node-development](../plugins/typescript-node-development) | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.                                 |
+| Skill                                                                                                    | Plugin                                                                | Description                                                 |
+| :------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- | :---------------------------------------------------------- |
+| [setup-prettier-eslint-husky](../plugins/angular-development/skills/setup-prettier-eslint-husky)         | [angular-development](../plugins/angular-development)                 | -                                                           |
+| [angular-component](../plugins/angular-development/skills/angular-component)                             | [angular-development](../plugins/angular-development)                 | -                                                           |
+| [sakai-ui-component](../plugins/angular-development/skills/sakai-ui-component)                           | [angular-development](../plugins/angular-development)                 | -                                                           |
+| [angular-signal-store](../plugins/angular-development/skills/angular-signal-store)                       | [angular-development](../plugins/angular-development)                 | -                                                           |
+| [angular-library-create](../plugins/angular-development/skills/angular-library-create)                   | [angular-development](../plugins/angular-development)                 | -                                                           |
+| [gh-copilot-setup](../plugins/copilot-workspace/skills/gh-copilot-setup)                                 | [copilot-workspace](../plugins/copilot-workspace)                     | -                                                           |
+| [gh-copilot-sync](../plugins/copilot-workspace/skills/gh-copilot-sync)                                   | [copilot-workspace](../plugins/copilot-workspace)                     | -                                                           |
+| [gh-agents-md](../plugins/copilot-workspace/skills/gh-agents-md)                                         | [copilot-workspace](../plugins/copilot-workspace)                     | -                                                           |
+| [gh-issue-implement](../plugins/copilot-workspace/skills/gh-issue-implement)                             | [copilot-workspace](../plugins/copilot-workspace)                     | -                                                           |
+| [gh-issue-finish](../plugins/copilot-workspace/skills/gh-issue-finish)                                   | [copilot-workspace](../plugins/copilot-workspace)                     | -                                                           |
+| [gh-issue-work](../plugins/copilot-workspace/skills/gh-issue-work)                                       | [copilot-workspace](../plugins/copilot-workspace)                     | -                                                           |
+| [aspnet-minimal-api-openapi](../plugins/csharp-development/skills/aspnet-minimal-api-openapi)            | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [create-dotnet-solution](../plugins/csharp-development/skills/create-dotnet-solution)                    | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [csharp-async](../plugins/csharp-development/skills/csharp-async)                                        | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [csharp-docs](../plugins/csharp-development/skills/csharp-docs)                                          | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [csharp-mcp-server-generator](../plugins/csharp-development/skills/csharp-mcp-server-generator)          | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [csharp-nunit](../plugins/csharp-development/skills/csharp-nunit)                                        | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [write-tests](../plugins/csharp-development/skills/write-tests)                                          | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [csharp-code-review](../plugins/csharp-development/skills/csharp-code-review)                            | [csharp-development](../plugins/csharp-development)                   | Perform a structured code review for C# and NUnit codebases |
+| [dotnet-best-practices](../plugins/csharp-development/skills/dotnet-best-practices)                      | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [dotnet-design-pattern-review](../plugins/csharp-development/skills/dotnet-design-pattern-review)        | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [dotnet-upgrade](../plugins/csharp-development/skills/dotnet-upgrade)                                    | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [ef-core](../plugins/csharp-development/skills/ef-core)                                                  | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [multi-stage-dockerfile](../plugins/csharp-development/skills/multi-stage-dockerfile)                    | [csharp-development](../plugins/csharp-development)                   | -                                                           |
+| [code-review-publisher](../plugins/devops/skills/code-review-publisher)                                  | [devops](../plugins/devops)                                           | -                                                           |
+| [az-devops-setup](../plugins/devops/skills/az-devops-setup)                                              | [devops](../plugins/devops)                                           | -                                                           |
+| [create-pr](../plugins/devops/skills/create-pr)                                                          | [devops](../plugins/devops)                                           | -                                                           |
+| [create-nuget-workflow](../plugins/devops/skills/create-nuget-workflow)                                  | [devops](../plugins/devops)                                           | -                                                           |
+| [create-python-workflow](../plugins/devops/skills/create-python-workflow)                                | [devops](../plugins/devops)                                           | -                                                           |
+| [create-node-workflow](../plugins/devops/skills/create-node-workflow)                                    | [devops](../plugins/devops)                                           | -                                                           |
+| [gitversion-add](../plugins/devops/skills/gitversion-add)                                                | [devops](../plugins/devops)                                           | -                                                           |
+| [create-wiki-workflow](../plugins/devops/skills/create-wiki-workflow)                                    | [devops](../plugins/devops)                                           | -                                                           |
+| [go-code-review](../plugins/go-development/skills/go-code-review)                                        | [go-development](../plugins/go-development)                           | -                                                           |
+| [go-test-generate](../plugins/go-development/skills/go-test-generate)                                    | [go-development](../plugins/go-development)                           | -                                                           |
+| [multi-stage-dockerfile](../plugins/go-development/skills/multi-stage-dockerfile)                        | [go-development](../plugins/go-development)                           | -                                                           |
+| [write-tests](../plugins/go-development/skills/write-tests)                                              | [go-development](../plugins/go-development)                           | -                                                           |
+| [helm-chart-create](../plugins/helm-development/skills/helm-chart-create)                                | [helm-development](../plugins/helm-development)                       | -                                                           |
+| [helm-values-review](../plugins/helm-development/skills/helm-values-review)                              | [helm-development](../plugins/helm-development)                       | -                                                           |
+| [helm-chart-upgrade](../plugins/helm-development/skills/helm-chart-upgrade)                              | [helm-development](../plugins/helm-development)                       | -                                                           |
+| [create-python-workflow](../plugins/python-development/skills/create-python-workflow)                    | [python-development](../plugins/python-development)                   | -                                                           |
+| [python-code-review](../plugins/python-development/skills/python-code-review)                            | [python-development](../plugins/python-development)                   | -                                                           |
+| [pytest-coverage](../plugins/python-development/skills/pytest-coverage)                                  | [python-development](../plugins/python-development)                   | -                                                           |
+| [write-tests](../plugins/python-development/skills/write-tests)                                          | [python-development](../plugins/python-development)                   | -                                                           |
+| [multi-stage-dockerfile](../plugins/python-development/skills/multi-stage-dockerfile)                    | [python-development](../plugins/python-development)                   | -                                                           |
+| [terraform-code-review](../plugins/terraform-development/skills/terraform-code-review)                   | [terraform-development](../plugins/terraform-development)             | -                                                           |
+| [terraform-module-create](../plugins/terraform-development/skills/terraform-module-create)               | [terraform-development](../plugins/terraform-development)             | -                                                           |
+| [multi-stage-dockerfile](../plugins/terraform-development/skills/multi-stage-dockerfile)                 | [terraform-development](../plugins/terraform-development)             | -                                                           |
+| [create-node-workflow](../plugins/typescript-node-development/skills/create-node-workflow)               | [typescript-node-development](../plugins/typescript-node-development) | -                                                           |
+| [typescript-code-review](../plugins/typescript-node-development/skills/typescript-code-review)           | [typescript-node-development](../plugins/typescript-node-development) | -                                                           |
+| [setup-prettier-eslint-husky](../plugins/typescript-node-development/skills/setup-prettier-eslint-husky) | [typescript-node-development](../plugins/typescript-node-development) | -                                                           |
+| [write-tests](../plugins/typescript-node-development/skills/write-tests)                                 | [typescript-node-development](../plugins/typescript-node-development) | -                                                           |
+| [multi-stage-dockerfile](../plugins/typescript-node-development/skills/multi-stage-dockerfile)           | [typescript-node-development](../plugins/typescript-node-development) | -                                                           |
 
 ## angular-development
 
@@ -67,13 +67,13 @@ This page lists all available skills across all Copilot CLI plugins in this repo
 
 Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.
 
-| Skill                                                                                              | Description                                                                                                                                                         |
-| :------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`setup-prettier-eslint-husky`](../plugins/angular-development/skills/setup-prettier-eslint-husky) | Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm. |
-| [`angular-component`](../plugins/angular-development/skills/angular-component)                     | Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.     |
-| [`sakai-ui-component`](../plugins/angular-development/skills/sakai-ui-component)                   | Scaffold a new @gravion/sakai-ui Angular library component with gv- prefix, 3-file structure, PrimeNG dependencies, and public-api.ts export.                       |
-| [`angular-signal-store`](../plugins/angular-development/skills/angular-signal-store)               | Create an NgRx Signal Store for Angular state management with state, computed signals, updaters, and effects. Follows @ngrx/signals patterns.                       |
-| [`angular-library-create`](../plugins/angular-development/skills/angular-library-create)           | Scaffold a new Angular library inside an existing workspace using ng-packagr, with public-api.ts, 3-file component structure, and injection tokens.                 |
+| Skill                                                                                              | Description |
+| :------------------------------------------------------------------------------------------------- | :---------- |
+| [`setup-prettier-eslint-husky`](../plugins/angular-development/skills/setup-prettier-eslint-husky) | -           |
+| [`angular-component`](../plugins/angular-development/skills/angular-component)                     | -           |
+| [`sakai-ui-component`](../plugins/angular-development/skills/sakai-ui-component)                   | -           |
+| [`angular-signal-store`](../plugins/angular-development/skills/angular-signal-store)               | -           |
+| [`angular-library-create`](../plugins/angular-development/skills/angular-library-create)           | -           |
 
 ## copilot-workspace
 
@@ -81,14 +81,14 @@ Angular 21 full-stack development plugin. Covers standalone components, NgRx Sig
 
 Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt.
 
-| Skill                                                                          | Description                                                                                                                                                      |
-| :----------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`gh-copilot-setup`](../plugins/copilot-workspace/skills/gh-copilot-setup)     | Interactive wizard to install GitHub Copilot configuration (instructions, prompts, agents) from GravionLabs/copilot-hub into .github/. Requires pwsh and gh CLI. |
-| [`gh-copilot-sync`](../plugins/copilot-workspace/skills/gh-copilot-sync)       | Sync installed GitHub Copilot configuration files (.github/instructions, prompts, agents) with the latest versions from GravionLabs/copilot-hub.                 |
-| [`gh-agents-md`](../plugins/copilot-workspace/skills/gh-agents-md)             | Analyze the repository and generate a complete AGENTS.md file tailored to the project type (dotnet, node, python, github-actions, or generic).                   |
-| [`gh-issue-implement`](../plugins/copilot-workspace/skills/gh-issue-implement) | Read a GitHub issue, create the appropriate branch, and implement it with code, tests, and docs. Use this to start work on a new issue.                          |
-| [`gh-issue-finish`](../plugins/copilot-workspace/skills/gh-issue-finish)       | Review implemented changes and create a pull request for a GitHub issue. Run this after gh-issue-implement when the implementation is complete.                  |
-| [`gh-issue-work`](../plugins/copilot-workspace/skills/gh-issue-work)           | End-to-end workflow for a GitHub issue: read issue, create branch, implement with tests and docs, review, and open a pull request.                               |
+| Skill                                                                          | Description |
+| :----------------------------------------------------------------------------- | :---------- |
+| [`gh-copilot-setup`](../plugins/copilot-workspace/skills/gh-copilot-setup)     | -           |
+| [`gh-copilot-sync`](../plugins/copilot-workspace/skills/gh-copilot-sync)       | -           |
+| [`gh-agents-md`](../plugins/copilot-workspace/skills/gh-agents-md)             | -           |
+| [`gh-issue-implement`](../plugins/copilot-workspace/skills/gh-issue-implement) | -           |
+| [`gh-issue-finish`](../plugins/copilot-workspace/skills/gh-issue-finish)       | -           |
+| [`gh-issue-work`](../plugins/copilot-workspace/skills/gh-issue-work)           | -           |
 
 ## csharp-development
 
@@ -96,21 +96,21 @@ Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provid
 
 C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.
 
-| Skill                                                                                               | Description                                                                                                                                                                  |
-| :-------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`aspnet-minimal-api-openapi`](../plugins/csharp-development/skills/aspnet-minimal-api-openapi)     | Create an ASP.NET Core Minimal API endpoint module using Carter with full OpenAPI documentation, typed request/response models, and proper error responses.                  |
-| [`create-dotnet-solution`](../plugins/csharp-development/skills/create-dotnet-solution)             | Scaffold a new .NET solution with src/test layout, Central Package Management (Directory.Packages.props), Directory.Build.props, and .editorconfig.                          |
-| [`csharp-async`](../plugins/csharp-development/skills/csharp-async)                                 | Apply C# async/await best practices to existing code: fix deadlocks, ConfigureAwait usage, async void, cancellation token propagation, and naming conventions.               |
-| [`csharp-docs`](../plugins/csharp-development/skills/csharp-docs)                                   | Add XML documentation comments to C# public and internal types and members following summary/param/returns/remarks conventions.                                              |
-| [`csharp-mcp-server-generator`](../plugins/csharp-development/skills/csharp-mcp-server-generator)   | Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.                                              |
-| [`csharp-nunit`](../plugins/csharp-development/skills/csharp-nunit)                                 | Write NUnit tests using NSubstitute for mocking and Shouldly for assertions, following project naming and category conventions.                                              |
-| [`write-tests`](../plugins/csharp-development/skills/write-tests)                                   | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                             |
-| [`csharp-code-review`](../plugins/csharp-development/skills/csharp-code-review)                     | Perform a structured code review for C# and NUnit codebases                                                                                                                  |
-| [`dotnet-best-practices`](../plugins/csharp-development/skills/dotnet-best-practices)               | Review and improve .NET/C# code to meet project-specific best practices: nullability, async patterns, DI, logging, and modern C# idioms.                                     |
-| [`dotnet-design-pattern-review`](../plugins/csharp-development/skills/dotnet-design-pattern-review) | Review C#/.NET code for design pattern implementation quality and suggest improvements. Read-only — outputs findings, does not modify code.                                  |
-| [`dotnet-upgrade`](../plugins/csharp-development/skills/dotnet-upgrade)                             | Analyze and execute a .NET framework or package upgrade: assess current state, identify breaking changes, update target frameworks and NuGet packages, and verify the build. |
-| [`ef-core`](../plugins/csharp-development/skills/ef-core)                                           | Apply Entity Framework Core best practices: DbContext design, migrations, query optimization, owned entities, and avoiding N+1 problems.                                     |
-| [`multi-stage-dockerfile`](../plugins/csharp-development/skills/multi-stage-dockerfile)             | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.                                 |
+| Skill                                                                                               | Description                                                 |
+| :-------------------------------------------------------------------------------------------------- | :---------------------------------------------------------- |
+| [`aspnet-minimal-api-openapi`](../plugins/csharp-development/skills/aspnet-minimal-api-openapi)     | -                                                           |
+| [`create-dotnet-solution`](../plugins/csharp-development/skills/create-dotnet-solution)             | -                                                           |
+| [`csharp-async`](../plugins/csharp-development/skills/csharp-async)                                 | -                                                           |
+| [`csharp-docs`](../plugins/csharp-development/skills/csharp-docs)                                   | -                                                           |
+| [`csharp-mcp-server-generator`](../plugins/csharp-development/skills/csharp-mcp-server-generator)   | -                                                           |
+| [`csharp-nunit`](../plugins/csharp-development/skills/csharp-nunit)                                 | -                                                           |
+| [`write-tests`](../plugins/csharp-development/skills/write-tests)                                   | -                                                           |
+| [`csharp-code-review`](../plugins/csharp-development/skills/csharp-code-review)                     | Perform a structured code review for C# and NUnit codebases |
+| [`dotnet-best-practices`](../plugins/csharp-development/skills/dotnet-best-practices)               | -                                                           |
+| [`dotnet-design-pattern-review`](../plugins/csharp-development/skills/dotnet-design-pattern-review) | -                                                           |
+| [`dotnet-upgrade`](../plugins/csharp-development/skills/dotnet-upgrade)                             | -                                                           |
+| [`ef-core`](../plugins/csharp-development/skills/ef-core)                                           | -                                                           |
+| [`multi-stage-dockerfile`](../plugins/csharp-development/skills/multi-stage-dockerfile)             | -                                                           |
 
 ## devops
 
@@ -118,16 +118,16 @@ C#/.NET full-stack development plugin. Covers project setup, NUnit testing, asyn
 
 Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.
 
-| Skill                                                                       | Description                                                                                                                                   |
-| :-------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`code-review-publisher`](../plugins/devops/skills/code-review-publisher)   | -                                                                                                                                             |
-| [`az-devops-setup`](../plugins/devops/skills/az-devops-setup)               | -                                                                                                                                             |
-| [`create-pr`](../plugins/devops/skills/create-pr)                           | -                                                                                                                                             |
-| [`create-nuget-workflow`](../plugins/devops/skills/create-nuget-workflow)   | Create a GitHub Actions CI/CD workflow for building and publishing a NuGet package using GravionLabs/ci reusable workflows.                   |
-| [`create-python-workflow`](../plugins/devops/skills/create-python-workflow) | Create a GitHub Actions CI/CD workflow for a Python package using GravionLabs/ci reusable workflows (lint, test, build, publish).             |
-| [`create-node-workflow`](../plugins/devops/skills/create-node-workflow)     | Create a GitHub Actions CI workflow for a Node.js project using GravionLabs/ci reusable workflows (install, lint, test, build).               |
-| [`gitversion-add`](../plugins/devops/skills/gitversion-add)                 | Add GitVersion to a repository for automatic semantic versioning from git history, configured for use with GravionLabs/ci reusable workflows. |
-| [`create-wiki-workflow`](../plugins/devops/skills/create-wiki-workflow)     | Create a GitHub Actions workflow that syncs a docs/ directory to the GitHub Wiki using GravionLabs/ci reusable workflows.                     |
+| Skill                                                                       | Description |
+| :-------------------------------------------------------------------------- | :---------- |
+| [`code-review-publisher`](../plugins/devops/skills/code-review-publisher)   | -           |
+| [`az-devops-setup`](../plugins/devops/skills/az-devops-setup)               | -           |
+| [`create-pr`](../plugins/devops/skills/create-pr)                           | -           |
+| [`create-nuget-workflow`](../plugins/devops/skills/create-nuget-workflow)   | -           |
+| [`create-python-workflow`](../plugins/devops/skills/create-python-workflow) | -           |
+| [`create-node-workflow`](../plugins/devops/skills/create-node-workflow)     | -           |
+| [`gitversion-add`](../plugins/devops/skills/gitversion-add)                 | -           |
+| [`create-wiki-workflow`](../plugins/devops/skills/create-wiki-workflow)     | -           |
 
 ## go-development
 
@@ -135,12 +135,12 @@ Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or A
 
 Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.
 
-| Skill                                                                               | Description                                                                                                                                          |
-| :---------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`go-code-review`](../plugins/go-development/skills/go-code-review)                 | Perform a structured Go code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions for idiomatic style. |
-| [`go-test-generate`](../plugins/go-development/skills/go-test-generate)             | Generate idiomatic Go tests using table-driven subtests, covering happy path, error cases, and edge cases. Compatible with the race detector.        |
-| [`multi-stage-dockerfile`](../plugins/go-development/skills/multi-stage-dockerfile) | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.         |
-| [`write-tests`](../plugins/go-development/skills/write-tests)                       | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.     |
+| Skill                                                                               | Description |
+| :---------------------------------------------------------------------------------- | :---------- |
+| [`go-code-review`](../plugins/go-development/skills/go-code-review)                 | -           |
+| [`go-test-generate`](../plugins/go-development/skills/go-test-generate)             | -           |
+| [`multi-stage-dockerfile`](../plugins/go-development/skills/multi-stage-dockerfile) | -           |
+| [`write-tests`](../plugins/go-development/skills/write-tests)                       | -           |
 
 ## helm-development
 
@@ -148,11 +148,11 @@ Go development plugin for idiomatic Go applications. Covers module structure, er
 
 Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.
 
-| Skill                                                                         | Description                                                                                                                                           |
-| :---------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`helm-chart-create`](../plugins/helm-development/skills/helm-chart-create)   | Scaffold a new Helm 3 chart with Chart.yaml, values.yaml, named templates, standard Kubernetes resources, and security context defaults.              |
-| [`helm-values-review`](../plugins/helm-development/skills/helm-values-review) | Review a Helm values.yaml for completeness, security defaults, naming conventions, and documentation quality. Read-only — outputs findings only.      |
-| [`helm-chart-upgrade`](../plugins/helm-development/skills/helm-chart-upgrade) | Upgrade a Helm chart to a newer chart or app version: update Chart.yaml, migrate deprecated Kubernetes APIs, and handle values.yaml breaking changes. |
+| Skill                                                                         | Description |
+| :---------------------------------------------------------------------------- | :---------- |
+| [`helm-chart-create`](../plugins/helm-development/skills/helm-chart-create)   | -           |
+| [`helm-values-review`](../plugins/helm-development/skills/helm-values-review) | -           |
+| [`helm-chart-upgrade`](../plugins/helm-development/skills/helm-chart-upgrade) | -           |
 
 ## python-development
 
@@ -160,13 +160,13 @@ Helm chart development plugin for Kubernetes packaging. Covers chart structure, 
 
 Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.
 
-| Skill                                                                                   | Description                                                                                                                                      |
-| :-------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`create-python-workflow`](../plugins/python-development/skills/create-python-workflow) | Create a GitHub Actions CI/CD workflow for a Python package using GravionLabs/ci reusable workflows (lint, test, build, publish).                |
-| [`python-code-review`](../plugins/python-development/skills/python-code-review)         | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions.       |
-| [`pytest-coverage`](../plugins/python-development/skills/pytest-coverage)               | Run pytest with coverage, identify uncovered lines, and write additional tests to achieve full (or target) coverage.                             |
-| [`write-tests`](../plugins/python-development/skills/write-tests)                       | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios. |
-| [`multi-stage-dockerfile`](../plugins/python-development/skills/multi-stage-dockerfile) | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.     |
+| Skill                                                                                   | Description |
+| :-------------------------------------------------------------------------------------- | :---------- |
+| [`create-python-workflow`](../plugins/python-development/skills/create-python-workflow) | -           |
+| [`python-code-review`](../plugins/python-development/skills/python-code-review)         | -           |
+| [`pytest-coverage`](../plugins/python-development/skills/pytest-coverage)               | -           |
+| [`write-tests`](../plugins/python-development/skills/write-tests)                       | -           |
+| [`multi-stage-dockerfile`](../plugins/python-development/skills/multi-stage-dockerfile) | -           |
 
 ## terraform-development
 
@@ -174,11 +174,11 @@ Python development plugin. Covers project setup with uv, pytest testing with fix
 
 Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.
 
-| Skill                                                                                        | Description                                                                                                                                                  |
-| :------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`terraform-code-review`](../plugins/terraform-development/skills/terraform-code-review)     | Perform a structured Terraform code review with priority ratings: 🔴 critical security/state risks, 🟡 important improvements, 🟢 best practice suggestions. |
-| [`terraform-module-create`](../plugins/terraform-development/skills/terraform-module-create) | Scaffold a reusable Terraform module with variables.tf, outputs.tf, main.tf, examples/, and a terraform-docs README.                                         |
-| [`multi-stage-dockerfile`](../plugins/terraform-development/skills/multi-stage-dockerfile)   | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.                 |
+| Skill                                                                                        | Description |
+| :------------------------------------------------------------------------------------------- | :---------- |
+| [`terraform-code-review`](../plugins/terraform-development/skills/terraform-code-review)     | -           |
+| [`terraform-module-create`](../plugins/terraform-development/skills/terraform-module-create) | -           |
+| [`multi-stage-dockerfile`](../plugins/terraform-development/skills/multi-stage-dockerfile)   | -           |
 
 ## typescript-node-development
 
@@ -186,11 +186,11 @@ Terraform infrastructure-as-code development plugin. Covers module design, namin
 
 TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, Playwright TypeScript testing, and containerization.
 
-| Skill                                                                                                      | Description                                                                                                                                                         |
-| :--------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`create-node-workflow`](../plugins/typescript-node-development/skills/create-node-workflow)               | Create a GitHub Actions CI workflow for a Node.js project using GravionLabs/ci reusable workflows (install, lint, test, build).                                     |
-| [`typescript-code-review`](../plugins/typescript-node-development/skills/typescript-code-review)           | Perform a structured TypeScript/JavaScript code review with priority ratings: 🔴 critical bugs/security, 🟡 important type/async issues, 🟢 style suggestions.      |
-| [`setup-prettier-eslint-husky`](../plugins/typescript-node-development/skills/setup-prettier-eslint-husky) | Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm. |
-| [`write-tests`](../plugins/typescript-node-development/skills/write-tests)                                 | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                    |
-| [`multi-stage-dockerfile`](../plugins/typescript-node-development/skills/multi-stage-dockerfile)           | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.                        |
+| Skill                                                                                                      | Description |
+| :--------------------------------------------------------------------------------------------------------- | :---------- |
+| [`create-node-workflow`](../plugins/typescript-node-development/skills/create-node-workflow)               | -           |
+| [`typescript-code-review`](../plugins/typescript-node-development/skills/typescript-code-review)           | -           |
+| [`setup-prettier-eslint-husky`](../plugins/typescript-node-development/skills/setup-prettier-eslint-husky) | -           |
+| [`write-tests`](../plugins/typescript-node-development/skills/write-tests)                                 | -           |
+| [`multi-stage-dockerfile`](../plugins/typescript-node-development/skills/multi-stage-dockerfile)           | -           |
 
