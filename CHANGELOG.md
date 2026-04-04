@@ -5,6 +5,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.15] — 2026-04-04
+
+### Features
+- Templates/skills/ as single source of truth for plugin skills
+
+
+## [1.0.14] — 2026-04-04
+
+### Documentation
+- Update CHANGELOG.md for v1.0.14 [skip ci]
+
+
 ## [1.0.13] — 2026-04-04
 
 ### Documentation
