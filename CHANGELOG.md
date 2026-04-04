@@ -5,11 +5,24 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.12] — 2026-04-04
+
+### Bug Fixes
+- Remove marketplace.json from feature branch
+
+
+### Features
+- Split generate into safe local vs CI-only aggregate
+- Update plugin versions to 1.0.11 and enhance skill descriptions
+- Add skills for issue workflow management
+
+
 ## [1.0.11] — 2026-04-03
 
 ### Documentation
 - Add global sharing guide and update concept docs with global paths
 - Fix tool support matrix column header inconsistency
+- Update CHANGELOG.md for v1.0.11 [skip ci]
 
 
 ## [1.0.10] — 2026-04-03
