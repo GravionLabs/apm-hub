@@ -32,3 +32,10 @@ Thumbs.db
 
 # Test results
 test-results/
+
+# Generated plugin artifacts — managed by CI (regenerate-and-commit job)
+# Source of truth: templates/agents/, templates/instructions/, templates/skills/
+# Edit templates, not these copies. CI regenerates them after merge to main.
+plugins/*/agents/
+plugins/*/instructions/
+plugins/*/skills/
