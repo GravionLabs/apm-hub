@@ -195,15 +195,18 @@ copilot-hub ships a `marketplace.json` file in the repository root. This file ma
 
 ## Generator Pipeline
 
-Running `npm run generate` (or committing to `main`) triggers a 6-step pipeline in `src/index.ts`:
+Running `npm run generate` (or committing to `main`) triggers a pipeline in `src/index.ts`:
 
-| Step | Generator                    | Output                                                      |
-| :--- | :--------------------------- | :---------------------------------------------------------- |
-| 1    | `plugin-generator.ts`        | Agents, skills, instructions, `plugin.json` for each plugin |
-| 2    | `template-list-generator.ts` | `docs/template-list.md`                                     |
-| 3    | `plugin-list-generator.ts`   | `docs/plugin-list.md`                                       |
-| 4    | `readme-generator.ts`        | Patches `<!-- AUTO:... -->` blocks in `README.md`           |
-| 5    | `format-docs-generator.ts`   | Formats all Markdown tables in `docs/` and `README.md`      |
-| 6    | `marketplace-generator.ts`   | `marketplace.json`                                          |
+| Step | Generator                       | Output                                                      |
+| :--- | :------------------------------ | :---------------------------------------------------------- |
+| 1    | `plugin-generator.ts`           | Agents, skills, instructions, `plugin.json` for each plugin |
+| 2    | `template-list-generator.ts`    | `docs/template-list.md` (all types, by domain)              |
+| 3    | `skill-list-generator.ts`       | `docs/skill-list.md` (skills by domain)                     |
+| 4    | `agent-list-generator.ts`       | `docs/agent-list.md` (agents by domain)                     |
+| 5    | `instruction-list-generator.ts` | `docs/instruction-list.md` (instructions by domain)         |
+| 6    | `plugin-list-generator.ts`      | `docs/plugin-list.md`                                       |
+| 7    | `readme-generator.ts`           | Patches `<!-- AUTO:... -->` blocks in `README.md`           |
+| 8    | `format-docs-generator.ts`      | Formats all Markdown tables in `docs/` and `README.md`      |
+| 9    | `marketplace-generator.ts`      | `marketplace.json`                                          |
 
 The pipeline is also run automatically via [`.github/workflows/generate-docs.yml`](../../.github/workflows/generate-docs.yml) on every push to `main`.

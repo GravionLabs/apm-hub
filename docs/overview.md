@@ -247,8 +247,10 @@ GitHub Copilot is a **developer assistant**, not a decision maker.
 ## Where to Go Next
 
 - Start with `docs/concepts/prompts.md`, `instructions.md`, and `agents.md`
-- **[Browse All Templates](template-list.md)**
-- **[Browse All Skills](skill-list.md)** — cross-plugin skill index
+- **[Browse All Templates](template-list.md)** — all agents, skills, prompts, instructions by domain
+- **[Browse All Skills](skill-list.md)** — skills by domain
+- **[Browse All Agents](agent-list.md)** — agents by domain
+- **[Browse All Instructions](instruction-list.md)** — instructions by domain
 - **[Browse All Plugins](plugin-list.md)** — or install via `gh copilot plugin marketplace add GravionLabs/copilot-hub`
 - Review the templates in `templates/`
 - Explore the review checklists in `docs/checklists/`

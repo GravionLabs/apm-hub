@@ -39,3 +39,9 @@ test-results/
 plugins/*/agents/
 plugins/*/instructions/
 plugins/*/skills/
+
+# Generated aggregate docs — managed by CI (regenerate-and-commit job)
+# These are auto-generated from templates/ after merge to main.
+# Edit generators in src/generators/, not these files.
+docs/agent-list.md
+docs/instruction-list.md
