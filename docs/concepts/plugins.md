@@ -49,48 +49,59 @@ license: MIT
 keywords: [csharp, dotnet]
 
 agents:
-  - source: my-agent  # resolves to templates/agents/my-agent.agent.md
+  - source: csharp/api-architect    # resolves to templates/csharp/api-architect.agent.md
+  - source: shared/documentation-writer
 
 skills:
-  - name: my-skill
-    source: prompts/my-skill.prompt.md
-  - name: extended-skill
-    source: prompts/base.prompt.md
+  - name: csharp-async
+    source: csharp/csharp-async     # resolves to templates/csharp/csharp-async.skill.md
+  - name: csharp-code-review
+    source: csharp/csharp-code-review
     extend:
-      - agents/extra.agent.md  # body appended after a --- separator
+      - csharp/csharp-expert        # body appended after a --- separator
 
 instructions:
-  - source: csharp        # resolves to templates/instructions/csharp.instructions.md
-  - source: csharp-nunit  # resolves to templates/instructions/csharp-nunit.instructions.md
+  - source: csharp/csharp           # resolves to templates/csharp/csharp.instructions.md
+  - source: csharp/csharp-nunit.instructions.md
+
+files:
+  - source: editor-configs/.editorconfig-csharp
+    destination: .editorconfig
 ```
 
 ### Field Reference
 
-| Field                   | Type                      | Required | Description                                                                         |
-| :---------------------- | :------------------------ | :------: | :---------------------------------------------------------------------------------- |
-| `name`                  | string                    |    ✅     | Unique plugin identifier (kebab-case)                                               |
-| `description`           | string                    |    ✅     | One-sentence description of what the plugin provides                                |
-| `version`               | string                    |    ✅     | Semantic version (e.g. `"1.0.0"`)                                                   |
-| `author`                | string or object          |    —     | Author name or `{ name, email }` object                                             |
-| `license`               | string                    |    —     | SPDX license identifier (e.g. `MIT`)                                                |
-| `keywords`              | string[]                  |    —     | Searchable tags                                                                     |
-| `agents`                | PluginAgentConfig[]       |    —     | List of agents to include                                                           |
-| `agents[].source`       | string                    |    ✅     | Agent filename without extension — resolves to `templates/agents/<source>.agent.md` |
-| `skills`                | PluginSkillConfig[]       |    —     | List of skills to generate                                                          |
-| `skills[].name`         | string                    |    ✅     | Skill name (used as the directory name under `skills/`)                             |
-| `skills[].source`       | string                    |    ✅     | Source template path relative to `templates/`                                       |
-| `skills[].extend`       | string[]                  |    —     | Additional source paths whose bodies are appended to the skill                      |
-| `instructions`          | PluginInstructionConfig[] |    —     | List of instruction files to bundle                                                 |
-| `instructions[].source` | string                    |    ✅     | Instruction name — resolves to `templates/instructions/<source>.instructions.md`    |
+| Field                   | Type                      | Required | Description                                                                                                                      |
+| :---------------------- | :------------------------ | :------: | :------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                  | string                    |    ✅     | Unique plugin identifier (kebab-case)                                                                                            |
+| `description`           | string                    |    ✅     | One-sentence description of what the plugin provides                                                                             |
+| `version`               | string                    |    ✅     | Semantic version (e.g. `"1.0.0"`)                                                                                                |
+| `author`                | string or object          |    —     | Author name or `{ name, email }` object                                                                                          |
+| `license`               | string                    |    —     | SPDX license identifier (e.g. `MIT`)                                                                                             |
+| `keywords`              | string[]                  |    —     | Searchable tags                                                                                                                  |
+| `agents`                | PluginAgentConfig[]       |    —     | List of agents to include                                                                                                        |
+| `agents[].source`       | string                    |    ✅     | Agent domain path — resolves to `templates/<domain>/<name>.agent.md`. Use format `<domain>/<name>` (e.g., `csharp/api-architect`). |
+| `skills`                | PluginSkillConfig[]       |    —     | List of skills to generate                                                                                                       |
+| `skills[].name`         | string                    |    ✅     | Skill name (used as the directory name under `skills/`)                                                                          |
+| `skills[].source`       | string                    |    ✅     | Source template path — use format `<domain>/<name>` (e.g., `csharp/csharp-async`)                                               |
+| `skills[].extend`       | string[]                  |    —     | Additional source paths whose bodies are appended to the skill                                                                   |
+| `instructions`          | PluginInstructionConfig[] |    —     | List of instruction files to bundle                                                                                              |
+| `instructions[].source` | string                    |    ✅     | Instruction domain path — resolves to `templates/<domain>/<name>.instructions.md`. Use format `<domain>/<name>` (e.g., `csharp/csharp`). |
+| `files`                 | PluginFileConfig[]        |    —     | List of arbitrary files to copy into the plugin                                                                                  |
+| `files[].source`        | string                    |    ✅     | Source file path relative to `templates/` (or repo root)                                                                         |
+| `files[].destination`   | string                    |    —     | Destination path relative to the plugin directory. Defaults to the basename of source.                                           |
 
 ### Resolving `source` paths
 
-**Agents** — `source: "my-agent"` → `templates/agents/my-agent.agent.md`
+**Agents** — `source: "csharp/api-architect"` → `templates/csharp/api-architect.agent.md`
 
-**Skills** — `source: "prompts/my-skill.prompt.md"` → `templates/prompts/my-skill.prompt.md`
+**Skills** — `source: "csharp/csharp-async"` → `templates/csharp/csharp-async.skill.md` (or `.prompt.md` if no `.skill.md` exists)
 
-**Instructions** — `source: "csharp"` → `templates/instructions/csharp.instructions.md`  
-The generator automatically appends `.instructions.md` if the source does not already end with it.
+The generator auto-discovers extensions in order: `.skill.md`, `.agent.md`, `.instructions.md`, `.prompt.md`.
+
+**Instructions** — `source: "csharp/csharp"` → `templates/csharp/csharp.instructions.md`
+
+All sources use the format `<domain>/<name>`. When the path contains `/`, the generator searches in `templates/<domain>/` with auto-extension discovery.
 
 ---
 
@@ -149,7 +160,7 @@ gh copilot plugin uninstall csharp-development  # remove
    ```
    This produces `agents/`, `skills/`, `instructions/`, and `.github/plugin/plugin.json`.
 
-5. Commit both `plugin.config.yml` and all generated files.
+5. Commit `plugin.config.yml` — generated files (`agents/`, `skills/`, `instructions/`, `plugin.json`) are gitignored and regenerated automatically by CI after merging to `main`.
 
 ---
 
@@ -209,4 +220,6 @@ Running `npm run generate` (or committing to `main`) triggers a pipeline in `src
 | 8    | `format-docs-generator.ts`      | Formats all Markdown tables in `docs/` and `README.md`      |
 | 9    | `marketplace-generator.ts`      | `marketplace.json`                                          |
 
-The pipeline is also run automatically via [`.github/workflows/generate-docs.yml`](../../.github/workflows/generate-docs.yml) on every push to `main`.
+> **`npm run generate`** (no args) runs only **step 1** (plugin artifacts: `agents/`, `skills/`, `instructions/`, `plugin.json`). This is safe to run locally in feature branches.
+>
+> **Steps 2–9** require **`npm run generate:ci`** and must only run via CI, not locally in feature branches. Running `generate:ci` locally will produce aggregate docs (`marketplace.json`, `skill-list.md`, etc.) that must not be committed to feature branch PRs.

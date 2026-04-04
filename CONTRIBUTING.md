@@ -103,6 +103,18 @@ Examples:
 - test-engineer.agent.md
 - documentation-writer.agent.md
 
+### Skills
+
+```text
+<task-name>.skill.md
+```
+
+Examples:
+
+- csharp-async.skill.md
+- create-dotnet-solution.skill.md
+- code-review.skill.md
+
 ## 6. Auto-Generated Files — Do Not Commit in Feature Branches
 
 The plugin generator produces several **aggregate files** that summarise all plugins in one place.
@@ -116,20 +128,23 @@ These files are regenerated automatically by CI after every merge to `main` and 
 | `docs/plugin-list.md` | Generated plugin overview table |
 | `docs/skill-list.md` | Generated skill overview table |
 | `docs/template-list.md` | Generated template overview table |
+| `docs/agent-list.md` | Generated agent overview table |
+| `docs/instruction-list.md` | Generated instruction overview table |
 
 ### What to commit instead
 
 A PR that adds a new plugin should only contain:
 
 ```
-templates/agents/<name>.agent.md          ← new agent template
-templates/instructions/<name>.instructions.md  ← new instruction template
-templates/prompts/<name>.prompt.md        ← new prompt template
-plugins/<plugin-name>/plugin.config.yml   ← plugin configuration
-plugins/<plugin-name>/skills/*/SKILL.md   ← generated per-plugin files (ok)
-plugins/<plugin-name>/agents/*.agent.md   ← generated per-plugin files (ok)
-plugins/<plugin-name>/instructions/*.md   ← generated per-plugin files (ok)
-plugins/<plugin-name>/.github/plugin/plugin.json  ← generated per-plugin manifest (ok)
+templates/<domain>/<name>.agent.md          ← new agent template
+templates/<domain>/<name>.skill.md          ← new skill template (preferred)
+templates/<domain>/<name>.instructions.md   ← new instruction template
+templates/<domain>/<name>.prompt.md         ← new prompt template (VS Code)
+
+plugins/<plugin-name>/skills/*/SKILL.md     ← generated (gitignored)
+plugins/<plugin-name>/agents/*.agent.md     ← generated (gitignored)
+plugins/<plugin-name>/instructions/*.md     ← generated (gitignored)
+plugins/<plugin-name>/.github/plugin/plugin.json  ← generated (gitignored)
 ```
 
 > **Note:** Per-plugin files under `plugins/<plugin-name>/` are fine to commit — they only affect one plugin's directory and will never conflict across branches. The prohibited files are the ones that **aggregate all plugins into a single file**.

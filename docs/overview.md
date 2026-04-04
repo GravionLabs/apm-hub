@@ -114,7 +114,7 @@ The `docs/` folder explains **how and why** to use GitHub Copilot features.
 
 The `plugins/` directory contains **installable plugin bundles** — curated sets of agents, skills, and instructions for a specific domain. Plugins are consumed directly by the Copilot CLI.
 
-Available plugins: [`csharp-development`](../plugins/csharp-development/plugin.config.yml), [`devops`](../plugins/devops/plugin.config.yml), [`security`](../plugins/security/plugin.config.yml)
+Available plugins: [`angular-development`](../plugins/angular-development/plugin.config.yml), [`copilot-workspace`](../plugins/copilot-workspace/plugin.config.yml), [`csharp-development`](../plugins/csharp-development/plugin.config.yml), [`devops`](../plugins/devops/plugin.config.yml), [`docker`](../plugins/docker/plugin.config.yml), [`go-development`](../plugins/go-development/plugin.config.yml), [`helm-development`](../plugins/helm-development/plugin.config.yml), [`playwright`](../plugins/playwright/plugin.config.yml), [`python-development`](../plugins/python-development/plugin.config.yml), [`security`](../plugins/security/plugin.config.yml), [`terraform-development`](../plugins/terraform-development/plugin.config.yml), [`typescript-node-development`](../plugins/typescript-node-development/plugin.config.yml)
 
 See the [Plugin Marketplace](../README.md#-plugin-marketplace) and the [Plugin Concepts doc](concepts/plugins.md) for installation and creation details.
 
@@ -124,14 +124,14 @@ See the [Plugin Marketplace](../README.md#-plugin-marketplace) and the [Plugin C
 
 The `templates/` directory contains **working, reusable configuration files** that GitHub Copilot can consume directly (or serve as examples).
 
-- `instructions/*.instructions.md`
-  Scoped instructions (frontend, backend, security, etc.)
+Templates are organized by **domain** (e.g., `csharp/`, `python/`, `devops/`, etc.) and use compound extensions:
 
-- `prompts/*.prompt.md`
-  Reusable prompts exposed as slash commands
+- `<domain>/*.instructions.md` — scoped coding standards (e.g., `csharp/csharp.instructions.md`)
+- `<domain>/*.skill.md` — task-specific skills for the Copilot CLI
+- `<domain>/*.prompt.md` — reusable prompts exposed as VS Code slash commands
+- `<domain>/*.agent.md` — custom agents defining specialized roles
 
-- `agents/*.agent.md`
-  Custom agents defining specialized roles
+Available domains: `angular`, `csharp`, `copilot`, `devops`, `docker`, `go`, `helm`, `playwright`, `postgresql`, `python`, `security`, `shared`, `terraform`, `typescript`
 
 These files are intended to be:
 
