@@ -1,6 +1,7 @@
 ---
 name: sakai-ui-component
 description: 'Scaffold a new @gravion/sakai-ui library component with gv- prefix, 3-file structure, and public-api.ts export'
+allowed-tools: editFiles codebase runCommands
 ---
 
 # Create sakai-ui Library Component

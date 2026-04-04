@@ -1,6 +1,7 @@
 ---
 name: terraform-module-create
 description: 'Scaffold a reusable Terraform module with variables, outputs, examples, and terraform-docs README'
+allowed-tools: editFiles codebase runCommands
 ---
 
 # Create Terraform Module

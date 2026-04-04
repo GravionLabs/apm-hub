@@ -1,6 +1,7 @@
 ---
 name: aspnet-minimal-api-openapi
 description: 'Create ASP.NET Minimal API endpoints using Carter with proper OpenAPI documentation'
+allowed-tools: changes codebase editFiles problems
 ---
 
 # ASP.NET Minimal API with OpenAPI and Carter

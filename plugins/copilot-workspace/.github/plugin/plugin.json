@@ -1,7 +1,7 @@
 {
   "name": "copilot-workspace",
-  "description": "Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt.",
-  "version": "1.0.11",
+  "description": "Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes create-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (start-work-on-issue, implement-issue, finish-work-on-issue, work-on-issue) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt.",
+  "version": "1.0.13",
   "author": {
     "name": "Gravion"
   },
@@ -19,9 +19,10 @@
   "skills": [
     "./skills/gh-copilot-setup",
     "./skills/gh-copilot-sync",
-    "./skills/gh-agents-md",
-    "./skills/gh-issue-implement",
-    "./skills/gh-issue-finish",
-    "./skills/gh-issue-work"
+    "./skills/create-agents-md",
+    "./skills/start-work-on-issue",
+    "./skills/implement-issue",
+    "./skills/finish-work-on-issue",
+    "./skills/work-on-issue"
   ]
 }

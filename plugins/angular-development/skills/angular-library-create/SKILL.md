@@ -1,6 +1,7 @@
 ---
 name: angular-library-create
 description: 'Scaffold an Angular library with ng-packagr, public-api.ts, 3-file component structure, and injection tokens'
+allowed-tools: editFiles codebase runCommands
 ---
 
 # Create Angular Library

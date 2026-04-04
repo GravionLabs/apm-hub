@@ -1,6 +1,7 @@
 ---
 name: csharp-mcp-server-generator
 description: 'Generate a complete MCP server project in C# with tools, prompts, and proper configuration'
+allowed-tools: editFiles codebase runCommands
 ---
 
 # Generate C# MCP Server

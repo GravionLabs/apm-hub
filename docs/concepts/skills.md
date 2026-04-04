@@ -18,6 +18,15 @@ Skills answer the question:
 
 When you ask Copilot something and a skill's description matches your intent, Copilot automatically loads the `SKILL.md` file into its context.
 
+### Keep Skills Concise
+
+Skills are **injected into the agent's context** when selected. This means:
+- Long skills increase token usage and cost for every matching request
+- Verbose instructions dilute the model's focus
+- Skills should describe **what** and **when**, not exhaustive step-by-step procedures
+
+**Recommended:** Keep `SKILL.md` files under 100 lines. For complex workflows, reference external scripts or files in the skill directory rather than inlining all instructions.
+
 You can also **explicitly reference** a skill in your prompt:
 
 ```text
@@ -62,6 +71,14 @@ This repository uses a **plugin-based distribution** for skills. Plugin skills f
 | **Versioning**   | Repository-level                                   | Plugin version                                     |
 
 Skills are the plugin-scoped equivalent of `.prompt.md` files. Where a prompt file lives in `.github/prompts/` of a single repository, a skill lives inside a plugin and travels with it.
+
+### Skills and Prompts in This Repository
+
+> **Note:** This repository currently generates `SKILL.md` files from `.prompt.md` templates using the plugin generator (`npm run generate`).
+>
+> This approach has known limitations — see [skills-vs-prompts.md](skills-vs-prompts.md) for the full analysis and the planned migration to dedicated skill files.
+>
+> The generator maps prompt `tools: [...]` → skill `allowed-tools:`. Be aware that this mapping is semantically incorrect: the `tools` field in a prompt *restricts* available tools, while `allowed-tools` in a skill *pre-approves* tool use without confirmation.
 
 ---
 
@@ -119,6 +136,23 @@ Your goal is to help me follow best practices for asynchronous programming in C#
 ```
 
 > **Note:** `SKILL.md` files are **auto-generated**. Do not edit them manually — always edit the source template in `templates/prompts/` and re-run the generator.
+
+### `allowed-tools` — Security Consideration
+
+The `allowed-tools` field pre-approves tools for use **without prompting the user for confirmation**. This is a convenience feature, not a tool restriction.
+
+> ⚠️ **Security warning:** Only include `shell` or `bash` in `allowed-tools` if you fully trust the skill's source. Pre-approving these tools allows arbitrary commands to run without confirmation, which can be exploited by prompt injection attacks.
+
+Tools NOT listed in `allowed-tools` can still be used by Copilot — the user will simply be asked for confirmation before each use.
+
+**Difference from prompt `tools:` field:**
+
+| Field                | Location                 | Semantics                                          |
+| :------------------- | :----------------------- | :------------------------------------------------- |
+| `tools: [...]`       | `.prompt.md` frontmatter | **Restricts** which tools are available in VS Code |
+| `allowed-tools: ...` | `SKILL.md` frontmatter   | **Pre-approves** tools without confirmation prompt |
+
+These are semantically opposite: `tools:` limits availability; `allowed-tools:` grants silent permission.
 
 ---
 
@@ -268,6 +302,7 @@ Each skill is part of a plugin. See **[`docs/plugin-list.md`](../plugin-list.md)
 
 ## Further Reading
 
+- [skills-vs-prompts.md](skills-vs-prompts.md) — Skills vs. Prompts full comparison
 - [global-sharing.md](../sync/global-sharing.md) — Full path comparison, tool-support matrix, and cross-machine sync setup
 - [About agent skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) — GitHub Docs: what skills are, how they work, and how Copilot loads them
 - [Creating agent skills for GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/create-skills) — GitHub Docs: step-by-step guide for creating skills

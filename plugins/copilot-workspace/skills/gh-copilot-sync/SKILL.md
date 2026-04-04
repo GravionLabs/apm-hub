@@ -1,6 +1,7 @@
 ---
 name: gh-copilot-sync
 description: 'Sync all existing .github/instructions, .github/prompts, and .github/agents files with the latest versions from GravionLabs/copilot-hub. Also syncs the global base directory (~/.github) if configured. Checks for newly available templates.'
+allowed-tools: codebase runCommands editFiles
 ---
 
 > **IDE Compatibility:** ✅ Works in VS Code, JetBrains Copilot, and Copilot CLI.

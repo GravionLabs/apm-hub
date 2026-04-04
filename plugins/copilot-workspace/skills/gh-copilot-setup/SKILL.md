@@ -1,6 +1,7 @@
 ---
 name: gh-copilot-setup
 description: 'Interactive setup wizard: browse GravionLabs/copilot-hub, select relevant Instructions/Prompts/Agents, install them to .github/ and optionally to a global instructions directory, and generate a copilot-instructions.md'
+allowed-tools: codebase runCommands editFiles
 ---
 
 > **IDE Compatibility:** ✅ Works in VS Code, JetBrains Copilot, and Copilot CLI.

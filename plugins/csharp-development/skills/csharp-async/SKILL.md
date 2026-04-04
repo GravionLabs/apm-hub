@@ -1,6 +1,7 @@
 ---
 name: csharp-async
 description: 'Get best practices for C# async programming'
+allowed-tools: changes codebase editFiles problems
 ---
 
 # C# Async Programming Best Practices

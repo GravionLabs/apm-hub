@@ -1,6 +1,7 @@
 ---
 name: ef-core
 description: 'Get best practices for Entity Framework Core'
+allowed-tools: changes codebase editFiles problems runCommands
 ---
 
 # Entity Framework Core Best Practices

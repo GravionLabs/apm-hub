@@ -1,6 +1,7 @@
 ---
 name: csharp-nunit
 description: 'Get best practices for NUnit unit testing, including data-driven tests'
+allowed-tools: changes codebase editFiles problems search
 ---
 
 # NUnit Best Practices

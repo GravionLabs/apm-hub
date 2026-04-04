@@ -1,6 +1,7 @@
 ---
 name: gitversion-add
 description: 'Add GitVersion to a repository for automatic semantic versioning from git history'
+allowed-tools: editFiles codebase
 ---
 
 # Add GitVersion Configuration

@@ -1,6 +1,7 @@
 ---
 name: python-code-review
 description: 'Perform a structured code review for Python and pytest codebases'
+allowed-tools: changes codebase problems editFiles
 ---
 
 # Python Code Review

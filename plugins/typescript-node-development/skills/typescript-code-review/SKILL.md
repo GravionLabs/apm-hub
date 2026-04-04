@@ -1,6 +1,7 @@
 ---
 name: typescript-code-review
 description: 'Review TypeScript code for type safety, strict mode compliance, idiomatic patterns, and Node.js best practices'
+allowed-tools: changes codebase problems editFiles
 ---
 
 # TypeScript Code Review
