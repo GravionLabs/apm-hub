@@ -1,7 +1,7 @@
 {
   "name": "python-development",
   "description": "Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "author": {
     "name": "Gravion"
   },
@@ -15,13 +15,6 @@
   ],
   "agents": [
     "./agents"
-  ],
-  "skills": [
-    "./skills/create-python-workflow",
-    "./skills/python-code-review",
-    "./skills/pytest-coverage",
-    "./skills/write-tests",
-    "./skills/multi-stage-dockerfile"
   ],
   "instructions": [
     "./instructions/python.instructions.md",
