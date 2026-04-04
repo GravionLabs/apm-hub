@@ -8,20 +8,22 @@ This page lists all available Copilot CLI plugins in this repository. This file 
 
 | Plugin                                                      | Version  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Skills | Agents | Instructions |
 | :---------------------------------------------------------- | :------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----: | :----: | :----------: |
-| [angular-development](#angular-development)                 | `1.0.16` | Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.                                                                                                                                                                                                                                                                                                                                                                                                                                 |   5    |   3    |      3       |
-| [copilot-workspace](#copilot-workspace)                     | `1.0.16` | Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt. |   6    |   0    |      0       |
-| [csharp-development](#csharp-development)                   | `1.0.16` | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.                                                                                                                                                                                                                                                                                                                                                          |   13   |   9    |      3       |
-| [devops](#devops)                                           | `1.0.16` | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.                                                                                                                                                                                                                                                                                                                                                                        |   8    |   3    |      4       |
-| [go-development](#go-development)                           | `1.0.16` | Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                               |   4    |   3    |      2       |
-| [helm-development](#helm-development)                       | `1.0.16` | Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.                                                                                                                                                                                                                                                                                                                                                                                                                                      |   3    |   2    |      2       |
-| [python-development](#python-development)                   | `1.0.16` | Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |   5    |   3    |      3       |
-| [security](#security)                                       | `1.0.16` | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |   0    |   2    |      1       |
-| [terraform-development](#terraform-development)             | `1.0.16` | Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.                                                                                                                                                                                                                                                                                                                                                                                                                              |   3    |   2    |      2       |
-| [typescript-node-development](#typescript-node-development) | `1.0.16` | TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, Playwright TypeScript testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                                        |   5    |   3    |      3       |
+| [angular-development](#angular-development)                 | `1.0.17` | Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.                                                                                                                                                                                                                                                                                                                                                                                                                                 |   5    |   3    |      3       |
+| [copilot-workspace](#copilot-workspace)                     | `1.0.17` | Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt. |   6    |   0    |      0       |
+| [csharp-development](#csharp-development)                   | `1.0.17` | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.                                                                                                                                                                                                                                                                                                                                                          |   12   |   9    |      3       |
+| [devops](#devops)                                           | `1.0.17` | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.                                                                                                                                                                                                                                                                                                                                                                        |   8    |   3    |      3       |
+| [docker](#docker)                                           | `1.0.17` | Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |   1    |   0    |      1       |
+| [go-development](#go-development)                           | `1.0.17` | Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                               |   3    |   2    |      1       |
+| [helm-development](#helm-development)                       | `1.0.17` | Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.                                                                                                                                                                                                                                                                                                                                                                                                                                      |   3    |   1    |      1       |
+| [playwright](#playwright)                                   | `1.0.17` | Cross-language Playwright testing plugin. Browser automation, form filling, test generation, and website exploration. Language-specific instructions (playwright-dotnet, playwright-python, playwright-typescript) are bundled with the respective language plugins (csharp-development, python-development, typescript-node-development).                                                                                                                                                                                                                                                                                   |   3    |   1    |      0       |
+| [python-development](#python-development)                   | `1.0.17` | Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |   4    |   3    |      3       |
+| [security](#security)                                       | `1.0.17` | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |   0    |   2    |      1       |
+| [terraform-development](#terraform-development)             | `1.0.17` | Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.                                                                                                                                                                                                                                                                                                                                                                                                                              |   2    |   1    |      1       |
+| [typescript-node-development](#typescript-node-development) | `1.0.17` | TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, Playwright TypeScript testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                                        |   4    |   3    |      3       |
 
 ## angular-development
 
-📁 [`plugins/angular-development`](../plugins/angular-development) · **v1.0.16**
+📁 [`plugins/angular-development`](../plugins/angular-development) · **v1.0.17**
 
 Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.
 
@@ -35,18 +37,18 @@ Angular 21 full-stack development plugin. Covers standalone components, NgRx Sig
 - [`angular-library-create`](../plugins/angular-development/skills/angular-library-create)
 
 **Agents (3):**
-- [`angular-expert.agent.md`](../plugins/angular-development/agents/angular-expert.agent.md)
-- [`angular-library-architect.agent.md`](../plugins/angular-development/agents/angular-library-architect.agent.md)
-- [`sakai-ui-expert.agent.md`](../plugins/angular-development/agents/sakai-ui-expert.agent.md)
+- [`angular/angular-expert.agent.md`](../plugins/angular-development/agents/angular/angular-expert.agent.md)
+- [`angular/angular-library-architect.agent.md`](../plugins/angular-development/agents/angular/angular-library-architect.agent.md)
+- [`angular/sakai-ui-expert.agent.md`](../plugins/angular-development/agents/angular/sakai-ui-expert.agent.md)
 
 **Instructions (3):**
-- [`angular.instructions.md`](../plugins/angular-development/instructions/angular.instructions.md)
-- [`ngrx-signals.instructions.md`](../plugins/angular-development/instructions/ngrx-signals.instructions.md)
-- [`sakai-ui.instructions.md`](../plugins/angular-development/instructions/sakai-ui.instructions.md)
+- [`angular/angular.instructions.md`](../plugins/angular-development/instructions/angular/angular.instructions.md)
+- [`angular/ngrx-signals.instructions.md`](../plugins/angular-development/instructions/angular/ngrx-signals.instructions.md)
+- [`angular/sakai-ui.instructions.md`](../plugins/angular-development/instructions/angular/sakai-ui.instructions.md)
 
 ## copilot-workspace
 
-📁 [`plugins/copilot-workspace`](../plugins/copilot-workspace) · **v1.0.16**
+📁 [`plugins/copilot-workspace`](../plugins/copilot-workspace) · **v1.0.17**
 
 Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt.
 
@@ -62,13 +64,13 @@ Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provid
 
 ## csharp-development
 
-📁 [`plugins/csharp-development`](../plugins/csharp-development) · **v1.0.16**
+📁 [`plugins/csharp-development`](../plugins/csharp-development) · **v1.0.17**
 
 C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.
 
 **Keywords:** `csharp`, `dotnet`, `nunit`, `aspnet`, `efcore`
 
-**Skills (13):**
+**Skills (12):**
 - [`aspnet-minimal-api-openapi`](../plugins/csharp-development/skills/aspnet-minimal-api-openapi)
 - [`create-dotnet-solution`](../plugins/csharp-development/skills/create-dotnet-solution)
 - [`csharp-async`](../plugins/csharp-development/skills/csharp-async)
@@ -81,27 +83,26 @@ C#/.NET full-stack development plugin. Covers project setup, NUnit testing, asyn
 - [`dotnet-design-pattern-review`](../plugins/csharp-development/skills/dotnet-design-pattern-review)
 - [`dotnet-upgrade`](../plugins/csharp-development/skills/dotnet-upgrade)
 - [`ef-core`](../plugins/csharp-development/skills/ef-core)
-- [`multi-stage-dockerfile`](../plugins/csharp-development/skills/multi-stage-dockerfile)
 
 **Agents (9):**
-- [`api-architect.agent.md`](../plugins/csharp-development/agents/api-architect.agent.md)
-- [`csharp-expert.agent.md`](../plugins/csharp-development/agents/csharp-expert.agent.md)
-- [`documentation-writer.agent.md`](../plugins/csharp-development/agents/documentation-writer.agent.md)
-- [`dotnet-upgrade.agent.md`](../plugins/csharp-development/agents/dotnet-upgrade.agent.md)
-- [`expert-dotnet-software-engineer.agent.md`](../plugins/csharp-development/agents/expert-dotnet-software-engineer.agent.md)
-- [`migration-agent.agent.md`](../plugins/csharp-development/agents/migration-agent.agent.md)
-- [`modernization.agent.md`](../plugins/csharp-development/agents/modernization.agent.md)
-- [`nunit-engineer.agent.md`](../plugins/csharp-development/agents/nunit-engineer.agent.md)
-- [`openapi-to-application.agent.md`](../plugins/csharp-development/agents/openapi-to-application.agent.md)
+- [`csharp/api-architect.agent.md`](../plugins/csharp-development/agents/csharp/api-architect.agent.md)
+- [`csharp/csharp-expert.agent.md`](../plugins/csharp-development/agents/csharp/csharp-expert.agent.md)
+- [`shared/documentation-writer.agent.md`](../plugins/csharp-development/agents/shared/documentation-writer.agent.md)
+- [`csharp/dotnet-upgrade.agent.md.agent.md`](../plugins/csharp-development/agents/csharp/dotnet-upgrade.agent.md.agent.md)
+- [`csharp/expert-dotnet-software-engineer.agent.md`](../plugins/csharp-development/agents/csharp/expert-dotnet-software-engineer.agent.md)
+- [`csharp/migration-agent.agent.md`](../plugins/csharp-development/agents/csharp/migration-agent.agent.md)
+- [`csharp/modernization.agent.md`](../plugins/csharp-development/agents/csharp/modernization.agent.md)
+- [`csharp/nunit-engineer.agent.md`](../plugins/csharp-development/agents/csharp/nunit-engineer.agent.md)
+- [`csharp/openapi-to-application.agent.md`](../plugins/csharp-development/agents/csharp/openapi-to-application.agent.md)
 
 **Instructions (3):**
-- [`csharp.instructions.md`](../plugins/csharp-development/instructions/csharp.instructions.md)
-- [`csharp-nunit.instructions.md`](../plugins/csharp-development/instructions/csharp-nunit.instructions.md)
-- [`playwright-dotnet.instructions.md`](../plugins/csharp-development/instructions/playwright-dotnet.instructions.md)
+- [`csharp/csharp.instructions.md`](../plugins/csharp-development/instructions/csharp/csharp.instructions.md)
+- [`csharp/csharp-nunit.instructions.md.instructions.md`](../plugins/csharp-development/instructions/csharp/csharp-nunit.instructions.md.instructions.md)
+- [`csharp/playwright-dotnet.instructions.md`](../plugins/csharp-development/instructions/csharp/playwright-dotnet.instructions.md)
 
 ## devops
 
-📁 [`plugins/devops`](../plugins/devops) · **v1.0.16**
+📁 [`plugins/devops`](../plugins/devops) · **v1.0.17**
 
 Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.
 
@@ -118,42 +119,52 @@ Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or A
 - [`create-wiki-workflow`](../plugins/devops/skills/create-wiki-workflow)
 
 **Agents (3):**
-- [`code-review-publisher.agent.md`](../plugins/devops/agents/code-review-publisher.agent.md)
-- [`az-devops-setup.agent.md`](../plugins/devops/agents/az-devops-setup.agent.md)
-- [`create-pr.agent.md`](../plugins/devops/agents/create-pr.agent.md)
+- [`devops/code-review-publisher.agent.md`](../plugins/devops/agents/devops/code-review-publisher.agent.md)
+- [`devops/az-devops-setup.agent.md`](../plugins/devops/agents/devops/az-devops-setup.agent.md)
+- [`devops/create-pr.agent.md`](../plugins/devops/agents/devops/create-pr.agent.md)
 
-**Instructions (4):**
-- [`shell.instructions.md`](../plugins/devops/instructions/shell.instructions.md)
-- [`powershell.instructions.md`](../plugins/devops/instructions/powershell.instructions.md)
-- [`docker.instructions.md`](../plugins/devops/instructions/docker.instructions.md)
-- [`terraform.instructions.md`](../plugins/devops/instructions/terraform.instructions.md)
+**Instructions (3):**
+- [`devops/shell.instructions.md`](../plugins/devops/instructions/devops/shell.instructions.md)
+- [`devops/powershell.instructions.md`](../plugins/devops/instructions/devops/powershell.instructions.md)
+- [`terraform/terraform.instructions.md`](../plugins/devops/instructions/terraform/terraform.instructions.md)
+
+## docker
+
+📁 [`plugins/docker`](../plugins/docker) · **v1.0.17**
+
+Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.
+
+**Keywords:** `docker`, `containers`, `dockerfile`, `multi-stage`
+
+**Skills (1):**
+- [`multi-stage-dockerfile`](../plugins/docker/skills/multi-stage-dockerfile)
+
+**Instructions (1):**
+- [`docker/docker.instructions.md`](../plugins/docker/instructions/docker/docker.instructions.md)
 
 ## go-development
 
-📁 [`plugins/go-development`](../plugins/go-development) · **v1.0.16**
+📁 [`plugins/go-development`](../plugins/go-development) · **v1.0.17**
 
 Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.
 
 **Keywords:** `go`, `golang`, `modules`, `concurrency`, `testing`
 
-**Skills (4):**
+**Skills (3):**
 - [`go-code-review`](../plugins/go-development/skills/go-code-review)
 - [`go-test-generate`](../plugins/go-development/skills/go-test-generate)
-- [`multi-stage-dockerfile`](../plugins/go-development/skills/multi-stage-dockerfile)
 - [`write-tests`](../plugins/go-development/skills/write-tests)
 
-**Agents (3):**
-- [`go-expert.agent.md`](../plugins/go-development/agents/go-expert.agent.md)
-- [`documentation-writer.agent.md`](../plugins/go-development/agents/documentation-writer.agent.md)
-- [`security-reviewer.agent.md`](../plugins/go-development/agents/security-reviewer.agent.md)
+**Agents (2):**
+- [`go/go-expert.agent.md`](../plugins/go-development/agents/go/go-expert.agent.md)
+- [`shared/documentation-writer.agent.md`](../plugins/go-development/agents/shared/documentation-writer.agent.md)
 
-**Instructions (2):**
-- [`go.instructions.md`](../plugins/go-development/instructions/go.instructions.md)
-- [`docker.instructions.md`](../plugins/go-development/instructions/docker.instructions.md)
+**Instructions (1):**
+- [`go/go.instructions.md`](../plugins/go-development/instructions/go/go.instructions.md)
 
 ## helm-development
 
-📁 [`plugins/helm-development`](../plugins/helm-development) · **v1.0.16**
+📁 [`plugins/helm-development`](../plugins/helm-development) · **v1.0.17**
 
 Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.
 
@@ -164,97 +175,106 @@ Helm chart development plugin for Kubernetes packaging. Covers chart structure, 
 - [`helm-values-review`](../plugins/helm-development/skills/helm-values-review)
 - [`helm-chart-upgrade`](../plugins/helm-development/skills/helm-chart-upgrade)
 
-**Agents (2):**
-- [`helm-expert.agent.md`](../plugins/helm-development/agents/helm-expert.agent.md)
-- [`security-reviewer.agent.md`](../plugins/helm-development/agents/security-reviewer.agent.md)
+**Agents (1):**
+- [`helm/helm-expert.agent.md`](../plugins/helm-development/agents/helm/helm-expert.agent.md)
 
-**Instructions (2):**
-- [`helm.instructions.md`](../plugins/helm-development/instructions/helm.instructions.md)
-- [`docker.instructions.md`](../plugins/helm-development/instructions/docker.instructions.md)
+**Instructions (1):**
+- [`helm/helm.instructions.md`](../plugins/helm-development/instructions/helm/helm.instructions.md)
+
+## playwright
+
+📁 [`plugins/playwright`](../plugins/playwright) · **v1.0.17**
+
+Cross-language Playwright testing plugin. Browser automation, form filling, test generation, and website exploration. Language-specific instructions (playwright-dotnet, playwright-python, playwright-typescript) are bundled with the respective language plugins (csharp-development, python-development, typescript-node-development).
+
+**Keywords:** `playwright`, `testing`, `browser-automation`, `e2e`
+
+**Skills (3):**
+- [`playwright-generate-test`](../plugins/playwright/skills/playwright-generate-test)
+- [`playwright-explore-website`](../plugins/playwright/skills/playwright-explore-website)
+- [`playwright-automation-fill-in-form`](../plugins/playwright/skills/playwright-automation-fill-in-form)
+
+**Agents (1):**
+- [`playwright/playwright-tester.agent.md`](../plugins/playwright/agents/playwright/playwright-tester.agent.md)
 
 ## python-development
 
-📁 [`plugins/python-development`](../plugins/python-development) · **v1.0.16**
+📁 [`plugins/python-development`](../plugins/python-development) · **v1.0.17**
 
 Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.
 
 **Keywords:** `python`, `pytest`, `uv`, `playwright`, `typing`
 
-**Skills (5):**
+**Skills (4):**
 - [`create-python-workflow`](../plugins/python-development/skills/create-python-workflow)
 - [`python-code-review`](../plugins/python-development/skills/python-code-review)
 - [`pytest-coverage`](../plugins/python-development/skills/pytest-coverage)
 - [`write-tests`](../plugins/python-development/skills/write-tests)
-- [`multi-stage-dockerfile`](../plugins/python-development/skills/multi-stage-dockerfile)
 
 **Agents (3):**
-- [`python-expert.agent.md`](../plugins/python-development/agents/python-expert.agent.md)
-- [`pytest-engineer.agent.md`](../plugins/python-development/agents/pytest-engineer.agent.md)
-- [`documentation-writer.agent.md`](../plugins/python-development/agents/documentation-writer.agent.md)
+- [`python/python-expert.agent.md`](../plugins/python-development/agents/python/python-expert.agent.md)
+- [`python/pytest-engineer.agent.md`](../plugins/python-development/agents/python/pytest-engineer.agent.md)
+- [`shared/documentation-writer.agent.md`](../plugins/python-development/agents/shared/documentation-writer.agent.md)
 
 **Instructions (3):**
-- [`python.instructions.md`](../plugins/python-development/instructions/python.instructions.md)
-- [`python-pytest.instructions.md`](../plugins/python-development/instructions/python-pytest.instructions.md)
-- [`playwright-python.instructions.md`](../plugins/python-development/instructions/playwright-python.instructions.md)
+- [`python/python.instructions.md`](../plugins/python-development/instructions/python/python.instructions.md)
+- [`python/python-pytest.instructions.md`](../plugins/python-development/instructions/python/python-pytest.instructions.md)
+- [`python/playwright-python.instructions.md`](../plugins/python-development/instructions/python/playwright-python.instructions.md)
 
 ## security
 
-📁 [`plugins/security`](../plugins/security) · **v1.0.16**
+📁 [`plugins/security`](../plugins/security) · **v1.0.17**
 
 Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.
 
 **Keywords:** `security`, `threat-model`, `stride`, `disaster-recovery`, `resilience`
 
 **Agents (2):**
-- [`security-reviewer.agent.md`](../plugins/security/agents/security-reviewer.agent.md)
-- [`se-security-reviewer.agent.md`](../plugins/security/agents/se-security-reviewer.agent.md)
+- [`security/security-reviewer.agent.md`](../plugins/security/agents/security/security-reviewer.agent.md)
+- [`security/se-security-reviewer.agent.md`](../plugins/security/agents/security/se-security-reviewer.agent.md)
 
 **Instructions (1):**
-- [`security.instructions.md`](../plugins/security/instructions/security.instructions.md)
+- [`security/security.instructions.md`](../plugins/security/instructions/security/security.instructions.md)
 
 ## terraform-development
 
-📁 [`plugins/terraform-development`](../plugins/terraform-development) · **v1.0.16**
+📁 [`plugins/terraform-development`](../plugins/terraform-development) · **v1.0.17**
 
 Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.
 
 **Keywords:** `terraform`, `iac`, `infrastructure`, `aws`, `azure`, `gcp`
 
-**Skills (3):**
+**Skills (2):**
 - [`terraform-code-review`](../plugins/terraform-development/skills/terraform-code-review)
 - [`terraform-module-create`](../plugins/terraform-development/skills/terraform-module-create)
-- [`multi-stage-dockerfile`](../plugins/terraform-development/skills/multi-stage-dockerfile)
 
-**Agents (2):**
-- [`terraform-expert.agent.md`](../plugins/terraform-development/agents/terraform-expert.agent.md)
-- [`security-reviewer.agent.md`](../plugins/terraform-development/agents/security-reviewer.agent.md)
+**Agents (1):**
+- [`terraform/terraform-expert.agent.md`](../plugins/terraform-development/agents/terraform/terraform-expert.agent.md)
 
-**Instructions (2):**
-- [`terraform.instructions.md`](../plugins/terraform-development/instructions/terraform.instructions.md)
-- [`docker.instructions.md`](../plugins/terraform-development/instructions/docker.instructions.md)
+**Instructions (1):**
+- [`terraform/terraform.instructions.md`](../plugins/terraform-development/instructions/terraform/terraform.instructions.md)
 
 ## typescript-node-development
 
-📁 [`plugins/typescript-node-development`](../plugins/typescript-node-development) · **v1.0.16**
+📁 [`plugins/typescript-node-development`](../plugins/typescript-node-development) · **v1.0.17**
 
 TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, Playwright TypeScript testing, and containerization.
 
 **Keywords:** `typescript`, `nodejs`, `playwright`, `vitest`, `eslint`
 
-**Skills (5):**
+**Skills (4):**
 - [`create-node-workflow`](../plugins/typescript-node-development/skills/create-node-workflow)
 - [`typescript-code-review`](../plugins/typescript-node-development/skills/typescript-code-review)
 - [`setup-prettier-eslint-husky`](../plugins/typescript-node-development/skills/setup-prettier-eslint-husky)
 - [`write-tests`](../plugins/typescript-node-development/skills/write-tests)
-- [`multi-stage-dockerfile`](../plugins/typescript-node-development/skills/multi-stage-dockerfile)
 
 **Agents (3):**
-- [`typescript-expert.agent.md`](../plugins/typescript-node-development/agents/typescript-expert.agent.md)
-- [`documentation-writer.agent.md`](../plugins/typescript-node-development/agents/documentation-writer.agent.md)
-- [`test-engineer.agent.md`](../plugins/typescript-node-development/agents/test-engineer.agent.md)
+- [`typescript/typescript-expert.agent.md`](../plugins/typescript-node-development/agents/typescript/typescript-expert.agent.md)
+- [`shared/documentation-writer.agent.md`](../plugins/typescript-node-development/agents/shared/documentation-writer.agent.md)
+- [`shared/test-engineer.agent.md`](../plugins/typescript-node-development/agents/shared/test-engineer.agent.md)
 
 **Instructions (3):**
-- [`typescript.instructions.md`](../plugins/typescript-node-development/instructions/typescript.instructions.md)
-- [`nodejs.instructions.md`](../plugins/typescript-node-development/instructions/nodejs.instructions.md)
-- [`playwright-typescript.instructions.md`](../plugins/typescript-node-development/instructions/playwright-typescript.instructions.md)
+- [`typescript/typescript.instructions.md`](../plugins/typescript-node-development/instructions/typescript/typescript.instructions.md)
+- [`typescript/nodejs.instructions.md`](../plugins/typescript-node-development/instructions/typescript/nodejs.instructions.md)
+- [`typescript/playwright-typescript.instructions.md`](../plugins/typescript-node-development/instructions/typescript/playwright-typescript.instructions.md)
 

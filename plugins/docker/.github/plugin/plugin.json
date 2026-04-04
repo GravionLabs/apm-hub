@@ -1,7 +1,7 @@
 {
   "name": "docker",
   "description": "Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.",
-  "version": "1.0.14",
+  "version": "1.0.17",
   "author": {
     "name": "Gravion"
   },
