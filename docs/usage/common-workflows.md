@@ -139,23 +139,28 @@ two files.
 ### Step 1 — Browse the template list
 
 Open [`docs/template-list.md`](../template-list.md) to find the template you need. Templates are
-organised by category (instructions, agents, prompts).
+organised by domain (angular, csharp, devops, …) and include agents, skills, prompts, and instructions.
+
+For type-specific views, use:
+- [`docs/agent-list.md`](../agent-list.md) — all agents by domain
+- [`docs/skill-list.md`](../skill-list.md) — all skills by domain
+- [`docs/instruction-list.md`](../instruction-list.md) — all instructions by domain
 
 ### Step 2 — Copy the file
 
 Copy the desired file from `templates/` to the correct location in your repository:
 
-| Template type | Source path                                          | Destination                                        |
-| :------------ | :--------------------------------------------------- | :------------------------------------------------- |
-| Instruction   | `templates/instructions/csharp.instructions.md`      | `.github/instructions/csharp.instructions.md`      |
-| Prompt        | `templates/prompts/create-dotnet-solution.prompt.md` | `.github/prompts/create-dotnet-solution.prompt.md` |
-| Agent         | `templates/agents/security-reviewer.agent.md`        | `.github/agents/security-reviewer.agent.md`        |
+| Template type | Source path                                         | Destination                                        |
+| :------------ | :-------------------------------------------------- | :------------------------------------------------- |
+| Instruction   | `templates/csharp/csharp.instructions.md`           | `.github/instructions/csharp.instructions.md`      |
+| Prompt        | `templates/csharp/create-dotnet-solution.prompt.md` | `.github/prompts/create-dotnet-solution.prompt.md` |
+| Agent         | `templates/security/security-reviewer.agent.md`     | `.github/agents/security-reviewer.agent.md`        |
 
 You can also use `curl` or copy-paste directly from GitHub:
 
 ```bash
 # Example: copy the C# instructions template
-curl -o .github/instructions/csharp.instructions.md   https://raw.githubusercontent.com/GravionLabs/copilot-hub/main/templates/instructions/csharp.instructions.md
+curl -o .github/instructions/csharp.instructions.md   https://raw.githubusercontent.com/GravionLabs/copilot-hub/main/templates/csharp/csharp.instructions.md
 ```
 
 ### Step 3 — Customise
@@ -171,3 +176,6 @@ general — localise them to your tech stack and team preferences.
 - [What are Plugins?](../concepts/plugins.md)
 - [Plugin List](../plugin-list.md)
 - [Template List](../template-list.md)
+- [Agent List](../agent-list.md)
+- [Skill List](../skill-list.md)
+- [Instruction List](../instruction-list.md)

@@ -7,6 +7,8 @@ import { updateReadme, updateFileBlock } from './generators/readme-generator';
 import { formatAllDocs } from './generators/format-docs-generator';
 import { generateMarketplace } from './generators/marketplace-generator';
 import { generateSkillList } from './generators/skill-list-generator';
+import { generateAgentList } from './generators/agent-list-generator';
+import { generateInstructionList } from './generators/instruction-list-generator';
 
 function generateAllPlugins(version?: string) {
   const pluginsDir = 'plugins';
@@ -26,8 +28,10 @@ function generateAllPlugins(version?: string) {
 
 function generateAggregateDocs(version?: string) {
   generateTemplateList();
-  generatePluginList();
   generateSkillList();
+  generateAgentList();
+  generateInstructionList();
+  generatePluginList();
   updateReadme();
   if (version) {
     updateFileBlock('docs/overview.md', 'version', `Welcome to **copilot-hub** v${version} 👋`);
@@ -68,6 +72,21 @@ function main() {
 
   if (inputPath === '--template-list') {
     generateTemplateList();
+    return;
+  }
+
+  if (inputPath === '--skill-list') {
+    generateSkillList();
+    return;
+  }
+
+  if (inputPath === '--agent-list') {
+    generateAgentList();
+    return;
+  }
+
+  if (inputPath === '--instruction-list') {
+    generateInstructionList();
     return;
   }
 
