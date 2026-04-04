@@ -23,10 +23,13 @@ agents:
 skills:
   # Scaffold a new Helm chart with standard resources and security defaults
   - name: helm-chart-create
+    source: skills/helm-chart-create
   # Review values.yaml for completeness, security, and documentation
   - name: helm-values-review
+    source: skills/helm-values-review
   # Upgrade a Helm chart to newer API versions or Kubernetes API versions
   - name: helm-chart-upgrade
+    source: skills/helm-chart-upgrade
 
 instructions:
   - source: helm

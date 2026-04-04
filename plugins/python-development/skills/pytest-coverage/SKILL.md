@@ -1,29 +1,44 @@
 ---
 name: pytest-coverage
-description: 'Run pytest tests with coverage, discover lines missing coverage, and increase coverage to 100%.'
-allowed-tools: runCommands runTests editFiles codebase problems
+description: 'Run pytest with coverage, identify uncovered lines, and write additional tests to achieve full (or target) coverage.'
+allowed-tools: codebase editFiles runCommands
 ---
 
-The goal is for the tests to cover all lines of code.
+Improve pytest test coverage for Python code.
 
-Generate a coverage report with:
+## What this skill does
+Runs the test suite with coverage, identifies uncovered lines, and writes focused tests to close coverage gaps.
 
-pytest --cov --cov-report=annotate:cov_annotate
+## Steps
 
-If you are checking for coverage of a specific module, you can specify it like this:
+### 1. Generate coverage report
+```bash
+pytest --cov=<source-dir> --cov-report=term-missing --cov-report=html
+```
 
-pytest --cov=your_module_name --cov-report=annotate:cov_annotate
+### 2. Analyze gaps
+- Review the `term-missing` output for files and line numbers not covered
+- Prioritize: uncovered branches > uncovered error handlers > uncovered happy paths
 
-You can also specify specific tests to run, for example:
+### 3. Write missing tests
+For each uncovered line/branch:
+- Identify what condition or code path is not exercised
+- Write a focused pytest test that exercises exactly that path
+- Use `pytest.raises` for exception paths
+- Use `@pytest.mark.parametrize` for multiple inputs
 
-pytest tests/test_your_module.py --cov=your_module_name --cov-report=annotate:cov_annotate
+### 4. Verify
+```bash
+pytest --cov=<source-dir> --cov-report=term-missing --cov-fail-under=<target>
+```
 
-Open the cov_annotate directory to view the annotated source code.
-There will be one file per source file. If a file has 100% source coverage, it means all lines are covered by tests, so you do not need to open the file.
+## Conventions
+- Test file: `test_<module>.py` mirroring the source structure
+- Test function: `test_<function>_<scenario>`
+- Use fixtures for shared setup — avoid copy-paste between tests
+- Keep each test focused on one scenario
 
-For each file that has less than 100% test coverage, find the matching file in cov_annotate and review the file.
-
-If a line starts with a ! (exclamation mark), it means that the line is not covered by tests.
-Add tests to cover the missing lines.
-
-Keep running the tests and improving coverage until all lines are covered.
+## Constraints
+- Do not mock internal implementation details — test the public interface
+- Do not write tests that trivially pass without actually exercising the logic
+- If coverage cannot reach 100% due to platform-specific code, use `# pragma: no cover` with a comment

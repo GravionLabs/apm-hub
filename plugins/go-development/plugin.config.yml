@@ -24,12 +24,16 @@ agents:
 skills:
   # Go code review (error handling, interfaces, concurrency, security)
   - name: go-code-review
+    source: skills/go-code-review
   # Generate table-driven Go tests with subtests and mocks
   - name: go-test-generate
+    source: skills/go-test-generate
   # Optimized multi-stage Dockerfile for Go applications (scratch/distroless final stage)
   - name: multi-stage-dockerfile
+    source: skills/multi-stage-dockerfile
   # Generate focused unit tests for existing code
   - name: write-tests
+    source: skills/write-tests
 
 instructions:
   - source: go

@@ -1,80 +1,51 @@
 ---
 name: csharp-nunit
-description: 'Get best practices for NUnit unit testing, including data-driven tests'
-allowed-tools: changes codebase editFiles problems search
+description: 'Write NUnit tests using NSubstitute for mocking and Shouldly for assertions, following project naming and category conventions.'
+allowed-tools: codebase editFiles
 ---
 
-# NUnit Best Practices
+Write NUnit tests for C# code using NSubstitute and Shouldly.
 
-Your goal is to help me write effective unit tests with NUnit, covering both standard and data-driven testing approaches.
+## What this skill does
+Creates focused, maintainable NUnit tests covering happy path, edge cases, and error scenarios. Follows project naming conventions and uses NSubstitute for mocking and Shouldly for fluent assertions.
 
-## Project Setup
+## Conventions
 
-- Use a separate test project with naming convention `[ProjectName].Test`
-- Projects should be located under the `test/` directory
-- Reference Microsoft.NET.Test.Sdk, NUnit, NSubstitute, FluentAssertions or Shouldly, and NUnit3TestAdapter packages
-- Create test classes that match the classes being tested (e.g., `CalculatorTests` for `Calculator`)
-- Use .NET SDK test commands: `dotnet test` for running tests
+### Project structure
+- Test project: `<ProjectName>.Tests` in `test/` directory
+- Mirrors source file structure: `src/MyApp/Services/UserService.cs` → `test/MyApp.Tests/Services/UserServiceTests.cs`
 
-## Test Structure
+### Test naming
+```
+MethodName_Scenario_ExpectedResult
+// e.g.: GetUser_WithValidId_ReturnsUser
+//       GetUser_WithNullId_ThrowsArgumentNullException
+```
 
-- Apply `[TestFixture]` attribute to test classes
-- Use `[Test]` attribute for test methods
-- Follow the Arrange-Act-Assert (AAA) pattern but **do not** include "Arrange", "Act", or "Assert" comments
-- Name tests using the pattern `[MethodName]_Should[ExpectedResult]` (e.g., `ToDateOnly_ShouldReturnCorrectDate`)
-- Use `[SetUp]` and `[TearDown]` for per-test setup and teardown
-- Use `[OneTimeSetUp]` and `[OneTimeTearDown]` for per-class setup and teardown
-- Use `[SetUpFixture]` for assembly-level setup and teardown
+### Test structure (AAA)
+```csharp
+[Test]
+public async Task GetUser_WithValidId_ReturnsUser()
+{
+    // Arrange
+    var repo = Substitute.For<IUserRepository>();
+    repo.GetByIdAsync("123", Arg.Any<CancellationToken>()).Returns(new User { Id = "123" });
+    var sut = new UserService(repo);
 
-## Test Categories and Organization
+    // Act
+    var result = await sut.GetUserAsync("123");
 
-- Every `[TestFixture]` or test class **must** define a category using the `[Category]` attribute
-- Available categories:
-  - `"UnitTest"` (Default): For isolated logic tests
-  - `"IntegrationTest"`: For tests involving external dependencies (DB, API, etc.)
-  - `"ManualTest"`: For tests that require manual setup or intervention
-- **Manual Tests:** Any test or fixture marked with `[Category("ManualTest")]` **must** also be marked with the `[Explicit]` attribute
+    // Assert
+    result.ShouldNotBeNull();
+    result.Id.ShouldBe("123");
+}
+```
 
-## Standard Tests
+### Categories
+- Use `[Category("Unit")]` for unit tests, `[Category("Integration")]` for integration tests
 
-- Keep tests focused on a single behavior
-- Avoid testing multiple behaviors in one test method
-- Use clear assertions that express intent
-- Include only the assertions needed to verify the test case
-- Make tests independent and idempotent (can run in any order)
-- Avoid test interdependencies
-
-## Data-Driven Tests
-
-- Use `[TestCase]` for inline test data
-- Use `[TestCaseSource]` for programmatically generated test data
-- Use `[Values]` for simple parameter combinations
-- Use `[ValueSource]` for property or method-based data sources
-- Use `[Random]` for random numeric test values
-- Use `[Range]` for sequential numeric test values
-- Use `[Combinatorial]` or `[Pairwise]` for combining multiple parameters
-
-## Assertions
-
-- Use **FluentAssertions** or **Shouldly** for all assertions (preferred):
-  - **FluentAssertions:** `result.Should().Be(expected)`
-  - **Shouldly:** `result.ShouldBe(expected)`
-- Use `Assert.That` with constraint model (NUnit style) only if FluentAssertions or Shouldly is not available
-- Use constraints like `Is.EqualTo`, `Is.SameAs`, `Contains.Item`
-- Use `Assert.Throws<T>` or `Assert.ThrowsAsync<T>` to test exceptions (or `action.Should().Throw<T>()` for FluentAssertions, `Should.Throw<T>(action)` for Shouldly)
-- Use descriptive messages in assertions for clarity on failure
-
-## Mocking and Isolation
-
-- Use **NSubstitute** for creating mocks: `Substitute.For<IMyService>()`
-- Mock dependencies to isolate units under test
-- Use interfaces to facilitate mocking
-- Consider using a DI container for complex test setups
-
-## Test Organization
-
-- Group tests by feature or component
-- Use `[Order]` to control test execution order when necessary
-- Use `[Author("DeveloperName")]` to indicate ownership
-- Use `[Description]` to provide additional test information
-- Use `[Ignore("Reason")]` to temporarily skip tests
+## Steps
+1. Read the target code to understand dependencies and behaviour
+2. Identify test cases: happy path, boundary values, null inputs, error paths
+3. Create one test class per source class; one test method per scenario
+4. Keep tests independent and deterministic — no shared mutable state

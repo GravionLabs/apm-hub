@@ -1,73 +1,38 @@
 ---
 name: helm-chart-upgrade
-description: 'Upgrade a Helm chart to a newer chart API version, update deprecated Kubernetes APIs, and migrate values.yaml breaking changes'
-allowed-tools: editFiles codebase changes runCommands
+description: 'Upgrade a Helm chart to a newer chart or app version: update Chart.yaml, migrate deprecated Kubernetes APIs, and handle values.yaml breaking changes.'
+allowed-tools: editFiles codebase runCommands
 ---
 
-# Upgrade Helm Chart
+Upgrade a Helm chart to a newer version.
 
-Analyze the provided Helm chart and produce an upgrade plan with all required changes.
+## What this skill does
+Analyzes the current chart version, identifies required changes (Kubernetes API deprecations, values schema changes), applies updates, and verifies the chart lints cleanly.
 
-## Chart to Upgrade
+## Steps
 
-Current chart version: ${input:current_version:Enter the current chart version (e.g., 1.x)}
-Target chart version or Helm API version: ${input:target_version:Enter the target version or describe the upgrade goal}
+### Phase 1 — Assess
+1. Read `Chart.yaml` for current `apiVersion`, `version`, and `appVersion`
+2. Read `values.yaml` and all templates to understand current structure
+3. Identify the target version (ask if not specified — chart version, app version, or Kubernetes API version)
 
-Paste the chart contents below or describe what needs upgrading:
-${input:chart_content:Paste Chart.yaml, values.yaml, or specific templates to review}
+### Phase 2 — Identify changes
+4. Check for deprecated Kubernetes API versions in templates:
+   - `extensions/v1beta1` → `apps/v1` (Deployment, DaemonSet, ReplicaSet)
+   - `networking.k8s.io/v1beta1` → `networking.k8s.io/v1` (Ingress)
+   - `policy/v1beta1` → `policy/v1` (PodDisruptionBudget)
+5. Check for breaking changes in upstream Helm chart if this is a dependency
 
-## Upgrade Analysis
+### Phase 3 — Apply changes
+6. Update `Chart.yaml`: bump `version` (SemVer), update `appVersion`
+7. Replace deprecated API versions in templates
+8. Update `values.yaml` for any breaking value renames or restructuring
+9. Update `Chart.lock` if dependencies changed: `helm dependency update`
 
-Analyze the chart for:
+### Phase 4 — Verify
+10. `helm lint <chart-dir>/`
+11. `helm template <chart-dir>/` to validate rendering
 
-### 1. Chart API Version (`apiVersion`)
-- If `apiVersion: v1` → upgrade to `apiVersion: v2` (Helm 3 only).
-- Helm 2 charts (`v1`) do not support `type`, `dependencies` in `Chart.yaml`, or library charts.
-- Migration: update `Chart.yaml`, move any `requirements.yaml` dependencies into `Chart.yaml`.
-
-### 2. Deprecated Kubernetes API Versions
-Check for deprecated or removed APIs based on the target Kubernetes version:
-
-| Deprecated API | Replacement | Removed in |
-|:---------------|:------------|:-----------|
-| `extensions/v1beta1 Ingress` | `networking.k8s.io/v1 Ingress` | K8s 1.22 |
-| `extensions/v1beta1 Deployment` | `apps/v1 Deployment` | K8s 1.16 |
-| `policy/v1beta1 PodDisruptionBudget` | `policy/v1 PodDisruptionBudget` | K8s 1.25 |
-| `policy/v1beta1 PodSecurityPolicy` | Removed — use OPA/Kyverno | K8s 1.25 |
-| `networking.k8s.io/v1beta1 IngressClass` | `networking.k8s.io/v1 IngressClass` | K8s 1.22 |
-| `autoscaling/v2beta2 HPA` | `autoscaling/v2 HPA` | K8s 1.26 |
-| `batch/v1beta1 CronJob` | `batch/v1 CronJob` | K8s 1.25 |
-
-### 3. Breaking values.yaml Changes
-- Identify any value renames or restructures between chart versions.
-- List old key → new key migrations.
-- Flag deprecated values that will be removed.
-- Provide a migration guide for consumers of the chart.
-
-### 4. Named Template Renames
-- List any `_helpers.tpl` template renames that would break overrides.
-- Check for `define` blocks that users may be overriding.
-
-### 5. Security Context Upgrades
-- If `PodSecurityPolicy` was used → migrate to `securityContext` + admission controller (OPA/Kyverno/PSA).
-- Add `seccompProfile: RuntimeDefault` if missing (recommended K8s 1.19+).
-- Add `capabilities.drop: [ALL]` if missing.
-
-## Output Format
-
-1. **Breaking changes summary** — what must be updated before upgrading.
-2. **values.yaml migration guide** — old → new key table with examples.
-3. **Template changes** — specific file/line changes needed.
-4. **Kubernetes API updates** — replace deprecated `apiVersion` strings.
-5. **Upgrade commands:**
-```bash
-# Update chart dependencies
-helm dependency update ./<chart>
-
-# Validate after changes
-helm lint ./<chart>
-helm template test-release ./<chart> -f values-upgraded.yaml
-
-# Install or upgrade
-helm upgrade my-release ./<chart> -f values-upgraded.yaml
-```
+## Constraints
+- Never downgrade `apiVersion` — always upgrade to supported versions
+- Document breaking value changes in `NOTES.txt` or chart README

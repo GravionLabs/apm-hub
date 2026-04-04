@@ -24,10 +24,13 @@ agents:
 skills:
   # Terraform configuration review (security, naming, modules, state)
   - name: terraform-code-review
+    source: skills/terraform-code-review
   # Scaffold a reusable Terraform module with examples and README
   - name: terraform-module-create
+    source: skills/terraform-module-create
   # Optimized multi-stage Dockerfile for Terraform runners
   - name: multi-stage-dockerfile
+    source: skills/multi-stage-dockerfile
 
 instructions:
   - source: terraform

@@ -24,14 +24,19 @@ agents:
 skills:
   # GitHub Actions CI/CD workflow for Python packages
   - name: create-python-workflow
+    source: skills/create-python-workflow
   # Structured Python code review (correctness, types, security, pytest)
   - name: python-code-review
+    source: skills/python-code-review
   # pytest coverage reporting and configuration
   - name: pytest-coverage
+    source: skills/pytest-coverage
   # Generate focused unit tests for existing code
   - name: write-tests
+    source: skills/write-tests
   # Optimized multi-stage Dockerfile for Python applications
   - name: multi-stage-dockerfile
+    source: skills/multi-stage-dockerfile
 
 instructions:
   - source: python

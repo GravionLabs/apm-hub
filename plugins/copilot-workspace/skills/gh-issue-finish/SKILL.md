@@ -1,78 +1,49 @@
 ---
 name: gh-issue-finish
-description: 'Finish working on a GitHub issue: run build and tests, perform a code review of all changes, then create a pull request. Use this after gh-issue-implement when the implementation is complete.'
+description: 'Review implemented changes and create a pull request for a GitHub issue. Run this after gh-issue-implement when the implementation is complete.'
+allowed-tools: codebase editFiles runCommands
 ---
 
-# Finish Issue
-
-Review the implementation and create a pull request for a GitHub issue.
+Review the implementation and open a pull request for a GitHub issue.
 
 ## Prerequisites
-
-- Issue is implemented (run `/gh-issue-implement {issue-number}` first)
+- Issue is implemented (`gh-issue-implement` completed)
 - Branch is pushed to origin
-- Current directory is the repository root
+- Run from the repository root
 
 ## Steps
 
-### 1. Verify build and tests pass
+### 1. Verify build and tests
+Run the full build and test suite for the project. Fix any failures before continuing.
 
-Run the full build and test suite for the project:
-- **Node.js**: `npm run build && npm test`
-- **.NET**: `dotnet build && dotnet test`
-- **Python**: `pytest`
-- **Other**: use the project's documented build/test command
-
-Fix any failures before continuing.
-
-### 2. Code review
-
-Analyze all changes compared to the base branch:
-
-```bash
-git diff origin/main...HEAD
-```
-
-Review for:
-- **Correctness**: does the implementation match the issue requirements?
-- **Edge cases**: are error conditions handled?
-- **Code quality**: naming, readability, consistency with codebase
-- **Test coverage**: are the important paths tested?
-- **Security**: no secrets, no unsafe operations
-- **Performance**: no obvious inefficiencies
-
-Create a final fix commit if issues are found:
-```bash
-git commit -m "fix: address review findings (refs #{issue-number})"
-git push
-```
+### 2. Self-review changes
+- `git diff main...HEAD` — review all changes
+- Check for: leftover debug code, missing error handling, incomplete TODOs, missing tests
 
 ### 3. Create the pull request
-
 ```bash
 gh pr create \
-  --title "<description>" \
-  --body "## Summary
-
-<Short description of what this PR does>
+  --title "<type>: <description> (#<issue-number>)" \
+  --body "$(cat <<'EOF'
+## Summary
+<what changed and why>
 
 ## Changes
+- <bullet list of changes>
 
-- <change 1>
-- <change 2>
+## Testing
+- <how it was tested>
 
-Closes #{issue-number}" \
-  --base main
+Closes #<issue-number>
+EOF
+)"
 ```
 
-PR title should match the final commit subject (without the issue reference).
+### 4. Confirm
+- Verify the PR link is accessible
+- Check CI status: `gh pr checks`
 
-### 4. Summary
-
-Output the PR URL and a brief status:
-```
-✅ Pull request created: <PR URL>
-
-Branch: {branch-name}
-Closes: #{issue-number}
-```
+## Constraints
+- PR title must reference the issue number
+- All CI checks should be green before requesting review
+- Link the issue with `Closes #<issue-number>` in the PR body
