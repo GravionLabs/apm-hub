@@ -116,7 +116,7 @@ jobs:
         run: npm run generate:diagrams
 
       - name: Regenerate plugins & documentation
-        run: npm run generate -- --version ${{ needs.determine-version.outputs.semver }}
+        run: npm run generate:ci -- --version ${{ needs.determine-version.outputs.semver }}
 
       - name: Commit generated files
         run: |

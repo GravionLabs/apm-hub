@@ -8,6 +8,34 @@ import { formatAllDocs } from './generators/format-docs-generator';
 import { generateMarketplace } from './generators/marketplace-generator';
 import { generateSkillList } from './generators/skill-list-generator';
 
+function generateAllPlugins(version?: string) {
+  const pluginsDir = 'plugins';
+  if (fs.existsSync(pluginsDir)) {
+    const pluginDirs = fs
+      .readdirSync(pluginsDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
+    for (const pluginDirName of pluginDirs) {
+      const configPath = path.join(pluginsDir, pluginDirName, 'plugin.config.yml');
+      if (fs.existsSync(configPath)) {
+        processPluginConfig(configPath, version);
+      }
+    }
+  }
+}
+
+function generateAggregateDocs(version?: string) {
+  generateTemplateList();
+  generatePluginList();
+  generateSkillList();
+  updateReadme();
+  if (version) {
+    updateFileBlock('docs/overview.md', 'version', `Welcome to **copilot-hub** v${version} 👋`);
+  }
+  formatAllDocs();
+  generateMarketplace();
+}
+
 function main() {
   const args = process.argv.slice(2);
 
@@ -19,50 +47,24 @@ function main() {
     args.splice(versionFlagIndex, 2);
   }
 
+  // Default (no args): only regenerate plugin-specific files (SKILL.md, plugin.json).
+  // Safe to run locally or in feature branches — does NOT touch aggregate docs.
   if (args.length === 0) {
-    console.log('No parameters provided. Regenerating everything...');
-
-    // 1. Regenerate all plugins
-    const pluginsDir = 'plugins';
-    if (fs.existsSync(pluginsDir)) {
-      const pluginDirs = fs
-        .readdirSync(pluginsDir, { withFileTypes: true })
-        .filter((d) => d.isDirectory())
-        .map((d) => d.name);
-      for (const pluginDirName of pluginDirs) {
-        const configPath = path.join(pluginsDir, pluginDirName, 'plugin.config.yml');
-        if (fs.existsSync(configPath)) {
-          processPluginConfig(configPath, version);
-        }
-      }
-    }
-
-    // 2. Regenerate template list
-    generateTemplateList();
-
-    // 3. Regenerate plugin list
-    generatePluginList();
-
-    // 3.5 Regenerate skill list
-    generateSkillList();
-
-    // 4. Update README.md auto-generated sections
-    updateReadme();
-
-    // 4.5 Update version in docs/overview.md
-    if (version) {
-      updateFileBlock('docs/overview.md', 'version', `Welcome to **copilot-hub** v${version} 👋`);
-    }
-
-    // 5. Format all markdown tables
-    formatAllDocs();
-
-    // 6. Generate marketplace.json
-    generateMarketplace();
+    console.log('Regenerating plugin files (SKILL.md, plugin.json)...');
+    console.log('Tip: use --aggregate to also regenerate docs/plugin-list.md, skill-list.md, marketplace.json, etc.');
+    generateAllPlugins(version);
     return;
   }
 
   const inputPath = args[0];
+
+  // --aggregate: regenerate all aggregate docs (CI-only, not for feature branches)
+  if (inputPath === '--aggregate') {
+    console.log('Regenerating plugins + all aggregate docs...');
+    generateAllPlugins(version);
+    generateAggregateDocs(version);
+    return;
+  }
 
   if (inputPath === '--template-list') {
     generateTemplateList();
@@ -70,19 +72,7 @@ function main() {
   }
 
   if (inputPath === '--plugins') {
-    const pluginsDir = 'plugins';
-    if (fs.existsSync(pluginsDir)) {
-      const pluginDirs = fs
-        .readdirSync(pluginsDir, { withFileTypes: true })
-        .filter((d) => d.isDirectory())
-        .map((d) => d.name);
-      for (const pluginDirName of pluginDirs) {
-        const configPath = path.join(pluginsDir, pluginDirName, 'plugin.config.yml');
-        if (fs.existsSync(configPath)) {
-          processPluginConfig(configPath, version);
-        }
-      }
-    }
+    generateAllPlugins(version);
     return;
   }
 
