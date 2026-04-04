@@ -94,6 +94,41 @@ Use a prompt when:
 - Defining long‑term project rules
 - Describing agent personas (use agents)
 
+## Prompts and CLI Plugins
+
+> **Important:** The Copilot CLI plugin format (`plugin.json`) does **not** have a `prompts` field.
+> CLI plugins can only distribute: `agents`, `skills`, `commands`, `hooks`, `mcpServers`, `lspServers`.
+
+Prompt files (`.prompt.md`) are a **GitHub Copilot prompt files feature** supported by VS Code, JetBrains, and the Copilot CLI. They are:
+- Available in VS Code, JetBrains, and the Copilot CLI (as slash commands)
+- **Not distributable via plugins** using the native `plugin.json` format
+
+### Distributing Prompts via Plugins
+
+To include prompts in a plugin, use the `files:` mechanism in `plugin.config.yml`:
+
+```yaml
+files:
+  - source: templates/prompts/my-prompt.prompt.md
+    destination: .github/prompts/my-prompt.prompt.md
+```
+
+This copies the file into the user's project when the plugin is installed. Users can also install prompts globally into `~/.github/prompts/` using the `gh-copilot-setup` skill.
+
+### Prompts vs. Skills
+
+For CLI use, consider whether a **skill** is more appropriate than a prompt:
+
+| | Prompt (`.prompt.md`) | Skill (`SKILL.md`) |
+|---|---|---|
+| **Primary surface** | VS Code Copilot Chat | Copilot CLI (+ Claude, other AI tools) |
+| **Invocation** | Explicit `/name` | Auto-selected by Copilot, or explicit `/name` |
+| **Ideal length** | Can be long | Should be **concise** (injected into context) |
+| **Distribution** | `files:` in plugin | `skills:` in plugin (native) |
+| **Standard** | GitHub Copilot | [agentskills.io](https://agentskills.io) (open standard) |
+
+See [skills-vs-prompts.md](skills-vs-prompts.md) for a full comparison.
+
 ## Prompt vs. Instructions vs. Agents
 
 | Concept          | Purpose                     | Scope         | Trigger      | Persistence |
@@ -244,6 +279,7 @@ All prompts are intended to be:
 
 ## Further Reading
 
+- [skills-vs-prompts.md](skills-vs-prompts.md) — Skills vs. Prompts full comparison
 - [global-sharing.md](../sync/global-sharing.md) — How to share prompts globally across all repositories
 - [About customizing GitHub Copilot responses](https://docs.github.com/en/copilot/concepts/prompting/response-customization) — GitHub Docs: prompt files, custom instructions, and response customization
 - [Copilot customization cheat sheet](https://docs.github.com/en/copilot/reference/customization-cheat-sheet) — GitHub Docs: comparison of all customization options
