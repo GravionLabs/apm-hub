@@ -16,8 +16,12 @@
   "agents": [
     "./agents"
   ],
+  "skills": [
+    "./skills/helm-chart-create",
+    "./skills/helm-values-review",
+    "./skills/helm-chart-upgrade"
+  ],
   "instructions": [
-    "./instructions/helm.instructions.md",
-    "./instructions/docker.instructions.md"
+    "./instructions/helm.instructions.md"
   ]
 }

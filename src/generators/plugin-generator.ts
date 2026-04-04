@@ -15,20 +15,22 @@ export interface PluginSkillConfig {
    * Source path relative to templates/ directory. Optional — defaults to `prompts/<name>.prompt.md`.
    *
    * Resolution rules (applied in order):
-   * 1. No source → `prompts/<name>.prompt.md`
-   * 2. Contains `/` → used as-is; `.prompt.md` is appended when no file extension is present
-   * 3. No `/` → `prompts/<source>`; `.prompt.md` is appended when no file extension is present
+   * 1. No source → `prompts/<name>.prompt.md` (legacy: generate skill from prompt)
+   * 2. `<domain>/<name>` → auto-discover extension by scanning filesystem
+   *      (tries .skill.md, .agent.md, .instructions.md, .prompt.md)
+   * 3. `skills/<name>` → `skills/<name>.skill.md` (legacy: dedicated skill template)
+   * 4. Contains `/` and `.` → used as-is (explicit path)
+   * 5. No `/` → `prompts/<source>.prompt.md`
    *
    * Examples:
-   *   name: csharp-nunit              → prompts/csharp-nunit.prompt.md
-   *   name: my-skill, source: csharp-nunit          → prompts/csharp-nunit.prompt.md
-   *   name: my-skill, source: csharp-nunit.prompt.md → prompts/csharp-nunit.prompt.md
-   *   name: my-skill, source: agents/gfog-helm.agent.md → agents/gfog-helm.agent.md (unchanged)
+   *   name: csharp-nunit                                 → prompts/csharp-nunit.prompt.md (legacy)
+   *   name: csharp-nunit, source: csharp/csharp-nunit    → csharp/csharp-nunit.skill.md (preferred)
+   *   name: code-review-publisher, source: devops/code-review-publisher → devops/code-review-publisher.agent.md
    */
   source?: string;
   /**
    * Optional additional source paths whose bodies are appended to the primary source body.
-   * Useful for combining C#-specific prompt content with a generic review framework.
+   * Only applies when using legacy prompt/agent sources (not .skill.md templates).
    */
   extend?: string[];
 }
@@ -77,26 +79,35 @@ function extractBody(content: string): string {
 /**
  * Resolves a template path relative to the templates/ directory.
  * Infers the file extension from the directory prefix when the path has no extension.
- *
+/**
  * Resolution rules:
  * - Has `/` and has `.` → used as-is (explicit path)
- * - Has `/` and no `.` → extension inferred from directory prefix:
- *     agents/       → .agent.md
- *     prompts/      → .prompt.md
- *     instructions/ → .instructions.md
- *     other         → .prompt.md (fallback)
+ * - Has `/` and no `.` → extension inferred:
+ *     Legacy prefixes: agents/ → .agent.md, instructions/ → .instructions.md,
+ *                      skills/ → .skill.md, prompts/ → .prompt.md
+ *     Domain-based path (e.g. csharp/csharp-expert) → auto-discovers extension
+ *       by checking the filesystem (tries .skill.md, .agent.md, .instructions.md, .prompt.md)
  * - No `/` → resolved under prompts/ with .prompt.md
  *     bare name → prompts/<name>.prompt.md
  *     name with extension → prompts/<name>
  */
-export function resolveTemplatePath(raw: string): string {
+export function resolveTemplatePath(raw: string, templatesDir?: string): string {
   if (raw.includes('/')) {
     if (raw.includes('.')) return raw;
 
     if (raw.startsWith('agents/')) return `${raw}.agent.md`;
     if (raw.startsWith('instructions/')) return `${raw}.instructions.md`;
-    // prompts/ or any other directory — default to .prompt.md
-    return `${raw}.prompt.md`;
+    if (raw.startsWith('skills/')) return `${raw}.skill.md`;
+    if (raw.startsWith('prompts/')) return `${raw}.prompt.md`;
+
+    // Domain-based path (e.g. csharp/csharp-expert) — auto-discover extension
+    if (templatesDir) {
+      for (const ext of ['.skill.md', '.agent.md', '.instructions.md', '.prompt.md']) {
+        const candidate = `${raw}${ext}`;
+        if (fs.existsSync(path.join(templatesDir, candidate))) return candidate;
+      }
+    }
+    return `${raw}.skill.md`;
   }
 
   // Bare name (no directory) → default to prompts/
@@ -108,8 +119,8 @@ export function resolveTemplatePath(raw: string): string {
  * Resolves the source path of a skill relative to the templates/ directory.
  * See PluginSkillConfig.source for full resolution rules.
  */
-export function resolveSkillSource(name: string, source?: string): string {
-  return resolveTemplatePath(source ?? name);
+export function resolveSkillSource(name: string, source?: string, templatesDir?: string): string {
+  return resolveTemplatePath(source ?? name, templatesDir);
 }
 
 /**
@@ -252,7 +263,7 @@ export function generatePlugin(configPath: string, templatesDir: string, version
 
   // Generate skills
   for (const skill of config.skills || []) {
-    const resolvedSource = resolveSkillSource(skill.name, skill.source);
+    const resolvedSource = resolveSkillSource(skill.name, skill.source, templatesDir);
     const sourcePath = path.join(templatesDir, resolvedSource);
 
     if (!fs.existsSync(sourcePath)) {
@@ -262,19 +273,26 @@ export function generatePlugin(configPath: string, templatesDir: string, version
 
     const sourceContent = fs.readFileSync(sourcePath, 'utf8');
 
-    // Load any extended source bodies
-    const extendContents: string[] = [];
-    for (const extSource of skill.extend || []) {
-      const resolvedExt = resolveTemplatePath(extSource);
-      const extPath = path.join(templatesDir, resolvedExt);
-      if (fs.existsSync(extPath)) {
-        extendContents.push(fs.readFileSync(extPath, 'utf8'));
-      } else {
-        console.warn(`  ⚠ Extend source not found, skipping: ${extPath}`);
+    let skillContent: string;
+    if (resolvedSource.endsWith('.skill.md')) {
+      // Dedicated skill template (.skill.md) — copy directly, no transform needed.
+      // The file is already in the agentskills.io SKILL.md format.
+      skillContent = sourceContent;
+    } else {
+      // Legacy: generate skill from prompt/agent template via frontmatter transform.
+      // Load any extended source bodies
+      const extendContents: string[] = [];
+      for (const extSource of skill.extend || []) {
+        const resolvedExt = resolveTemplatePath(extSource, templatesDir);
+        const extPath = path.join(templatesDir, resolvedExt);
+        if (fs.existsSync(extPath)) {
+          extendContents.push(fs.readFileSync(extPath, 'utf8'));
+        } else {
+          console.warn(`  ⚠ Extend source not found, skipping: ${extPath}`);
+        }
       }
+      skillContent = generateSkillContent(skill.name, sourceContent, extendContents);
     }
-
-    const skillContent = generateSkillContent(skill.name, sourceContent, extendContents);
     const skillDir = path.join(pluginDir, 'skills', skill.name);
 
     fs.mkdirSync(skillDir, { recursive: true });
@@ -289,7 +307,9 @@ export function generatePlugin(configPath: string, templatesDir: string, version
   fs.mkdirSync(agentsDir, { recursive: true });
 
   for (const agent of config.agents || []) {
-    const resolvedAgent = resolveTemplatePath(`agents/${agent.source}`);
+    const resolvedAgent = agent.source.includes('/')
+      ? resolveTemplatePath(agent.source, templatesDir)
+      : resolveTemplatePath(`agents/${agent.source}`);
     const sourcePath = path.join(templatesDir, resolvedAgent);
 
     if (!fs.existsSync(sourcePath)) {
@@ -298,7 +318,10 @@ export function generatePlugin(configPath: string, templatesDir: string, version
     }
 
     const agentContent = fs.readFileSync(sourcePath, 'utf8');
-    const agentFile = path.basename(resolvedAgent);
+    const rawBaseName = path.basename(resolvedAgent);
+    // Strip compound extension (e.g. .agent.md, .skill.md) to get bare name
+    const baseName = rawBaseName.replace(/\.(agent|skill|prompt|instructions)\.md$/, '');
+    const agentFile = `${baseName}.agent.md`;
     const destPath = path.join(agentsDir, agentFile);
     fs.writeFileSync(destPath, agentContent, 'utf8');
     console.log(`  ✓ Agent: agents/${agentFile}`);
@@ -311,7 +334,9 @@ export function generatePlugin(configPath: string, templatesDir: string, version
     fs.mkdirSync(instructionsDir, { recursive: true });
 
     for (const instruction of config.instructions) {
-      const resolvedInstruction = resolveTemplatePath(`instructions/${instruction.source}`);
+      const resolvedInstruction = instruction.source.includes('/')
+        ? resolveTemplatePath(instruction.source, templatesDir)
+        : resolveTemplatePath(`instructions/${instruction.source}`);
       const instructionFile = path.basename(resolvedInstruction);
       const sourcePath = path.join(templatesDir, resolvedInstruction);
 

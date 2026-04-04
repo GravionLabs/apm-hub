@@ -16,29 +16,26 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: python-expert
-  - source: pytest-engineer
-  - source: documentation-writer
+  - source: python/python-expert
+  - source: python/pytest-engineer
+  - source: shared/documentation-writer
 
 # Skills generated from prompt templates
 skills:
   # GitHub Actions CI/CD workflow for Python packages
   - name: create-python-workflow
-    source: skills/create-python-workflow
+    source: devops/create-python-workflow
   # Structured Python code review (correctness, types, security, pytest)
   - name: python-code-review
-    source: skills/python-code-review
+    source: python/python-code-review
   # pytest coverage reporting and configuration
   - name: pytest-coverage
-    source: skills/pytest-coverage
+    source: python/pytest-coverage
   # Generate focused unit tests for existing code
   - name: write-tests
-    source: skills/write-tests
-  # Optimized multi-stage Dockerfile for Python applications
-  - name: multi-stage-dockerfile
-    source: skills/multi-stage-dockerfile
+    source: shared/write-tests
 
 instructions:
-  - source: python
-  - source: python-pytest
-  - source: playwright-python
+  - source: python/python
+  - source: python/python-pytest
+  - source: python/playwright-python

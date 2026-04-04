@@ -16,29 +16,26 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: typescript-expert
-  - source: documentation-writer
-  - source: test-engineer
+  - source: typescript/typescript-expert
+  - source: shared/documentation-writer
+  - source: shared/test-engineer
 
 # Skills generated from prompt templates
 skills:
   # GitHub Actions CI/CD workflow for Node.js packages
   - name: create-node-workflow
-    source: skills/create-node-workflow
+    source: devops/create-node-workflow
   # TypeScript code review (type safety, strict mode, Node.js conventions)
   - name: typescript-code-review
-    source: skills/typescript-code-review
+    source: typescript/typescript-code-review
   # ESLint + Prettier + Husky setup for TypeScript projects
   - name: setup-prettier-eslint-husky
-    source: skills/setup-prettier-eslint-husky
+    source: typescript/setup-prettier-eslint-husky
   # Generate focused unit tests for existing code
   - name: write-tests
-    source: skills/write-tests
-  # Optimized multi-stage Dockerfile for Node.js applications
-  - name: multi-stage-dockerfile
-    source: skills/multi-stage-dockerfile
+    source: shared/write-tests
 
 instructions:
-  - source: typescript
-  - source: nodejs
-  - source: playwright-typescript
+  - source: typescript/typescript
+  - source: typescript/nodejs
+  - source: typescript/playwright-typescript

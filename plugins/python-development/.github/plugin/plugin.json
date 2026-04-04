@@ -16,6 +16,12 @@
   "agents": [
     "./agents"
   ],
+  "skills": [
+    "./skills/create-python-workflow",
+    "./skills/python-code-review",
+    "./skills/pytest-coverage",
+    "./skills/write-tests"
+  ],
   "instructions": [
     "./instructions/python.instructions.md",
     "./instructions/python-pytest.instructions.md",

@@ -16,8 +16,12 @@
   "agents": [
     "./agents"
   ],
+  "skills": [
+    "./skills/go-code-review",
+    "./skills/go-test-generate",
+    "./skills/write-tests"
+  ],
   "instructions": [
-    "./instructions/go.instructions.md",
-    "./instructions/docker.instructions.md"
+    "./instructions/go.instructions.md"
   ]
 }

@@ -17,10 +17,19 @@
   "agents": [
     "./agents"
   ],
+  "skills": [
+    "./skills/code-review-publisher",
+    "./skills/az-devops-setup",
+    "./skills/create-pr",
+    "./skills/create-nuget-workflow",
+    "./skills/create-python-workflow",
+    "./skills/create-node-workflow",
+    "./skills/gitversion-add",
+    "./skills/create-wiki-workflow"
+  ],
   "instructions": [
     "./instructions/shell.instructions.md",
     "./instructions/powershell.instructions.md",
-    "./instructions/docker.instructions.md",
     "./instructions/terraform.instructions.md"
   ]
 }

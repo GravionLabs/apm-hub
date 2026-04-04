@@ -17,8 +17,11 @@
   "agents": [
     "./agents"
   ],
+  "skills": [
+    "./skills/terraform-code-review",
+    "./skills/terraform-module-create"
+  ],
   "instructions": [
-    "./instructions/terraform.instructions.md",
-    "./instructions/docker.instructions.md"
+    "./instructions/terraform.instructions.md"
   ]
 }

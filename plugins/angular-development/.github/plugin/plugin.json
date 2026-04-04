@@ -17,6 +17,13 @@
   "agents": [
     "./agents"
   ],
+  "skills": [
+    "./skills/setup-prettier-eslint-husky",
+    "./skills/angular-component",
+    "./skills/sakai-ui-component",
+    "./skills/angular-signal-store",
+    "./skills/angular-library-create"
+  ],
   "instructions": [
     "./instructions/angular.instructions.md",
     "./instructions/ngrx-signals.instructions.md",
