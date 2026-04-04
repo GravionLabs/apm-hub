@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.16] — 2026-04-04
+
+### Refactoring
+- Treat plugin agents, instructions, skills as generated artifacts
+
+
 ## [1.0.15] — 2026-04-04
+
+### Documentation
+- Update CHANGELOG.md for v1.0.15 [skip ci]
+
 
 ### Features
 - Templates/skills/ as single source of truth for plugin skills
