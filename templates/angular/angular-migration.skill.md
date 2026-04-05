@@ -6,6 +6,11 @@ allowed-tools: codebase editFiles runCommands
 
 Migrate an Angular application to a newer version.
 
+## Stack
+- **CLI:** Angular CLI (`ng update`, `ng generate @angular/core:migrate-*`)
+- **Package manager:** `npm` or `pnpm`
+- **Schematics:** `@angular/core:standalone`, `@angular/core:control-flow`, `@ngrx/signals`
+
 ## Step 1 — Check current version
 
 ```bash
