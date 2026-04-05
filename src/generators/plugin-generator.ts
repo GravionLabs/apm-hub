@@ -16,21 +16,21 @@ export interface PluginSkillConfig {
    *
    * Resolution rules (applied in order):
    * 1. No source → `prompts/<name>.prompt.md` (legacy: generate skill from prompt)
-   * 2. `<domain>/<name>` → auto-discover extension by scanning filesystem
-   *      (tries .skill.md, .agent.md, .instructions.md, .prompt.md)
-   * 3. `skills/<name>` → `skills/<name>.skill.md` (legacy: dedicated skill template)
+   * 2. `<domain>/skills/<name>` → `<domain>/skills/<name>/SKILL.md` (agentskills.io directory layout)
+   * 3. `<domain>/<name>` → auto-discover extension by scanning filesystem
+   *      (tries /SKILL.md, .agent.md, .instructions.md, .prompt.md)
    * 4. Contains `/` and `.` → used as-is (explicit path)
    * 5. No `/` → `prompts/<source>.prompt.md`
    *
    * Examples:
-   *   name: csharp-nunit                                 → prompts/csharp-nunit.prompt.md (legacy)
-   *   name: csharp-nunit, source: csharp/csharp-nunit    → csharp/csharp-nunit.skill.md (preferred)
+   *   name: csharp-nunit                                         → prompts/csharp-nunit.prompt.md (legacy)
+   *   name: csharp-nunit, source: csharp/skills/csharp-nunit    → csharp/skills/csharp-nunit/SKILL.md
    *   name: code-review-publisher, source: devops/code-review-publisher → devops/code-review-publisher.agent.md
    */
   source?: string;
   /**
    * Optional additional source paths whose bodies are appended to the primary source body.
-   * Only applies when using legacy prompt/agent sources (not .skill.md templates).
+   * Only applies when using legacy prompt/agent sources (not SKILL.md templates).
    */
   extend?: string[];
 }
@@ -86,14 +86,17 @@ function extractBody(content: string): string {
 /**
  * Resolves a template path relative to the templates/ directory.
  * Infers the file extension from the directory prefix when the path has no extension.
-/**
+ *
  * Resolution rules:
  * - Has `/` and has `.` → used as-is (explicit path)
  * - Has `/` and no `.` → extension inferred:
- *     Legacy prefixes: agents/ → .agent.md, instructions/ → .instructions.md,
- *                      skills/ → .skill.md, prompts/ → .prompt.md
+ *     Type-first prefixes: agents/ → .agent.md, instructions/ → .instructions.md,
+ *                          prompts/ → .prompt.md
+ *     Domain/type/name (e.g. csharp/agents/name, csharp/skills/name):
+ *       - skills → <raw>/SKILL.md  (agentskills.io directory layout)
+ *       - others → <raw>.<ext>
  *     Domain-based path (e.g. csharp/csharp-expert) → auto-discovers extension
- *       by checking the filesystem (tries .skill.md, .agent.md, .instructions.md, .prompt.md)
+ *       by checking the filesystem (tries /SKILL.md, .agent.md, .instructions.md, .prompt.md)
  * - No `/` → resolved under prompts/ with .prompt.md
  *     bare name → prompts/<name>.prompt.md
  *     name with extension → prompts/<name>
@@ -102,49 +105,38 @@ export function resolveTemplatePath(raw: string, templatesDir?: string): string 
   if (raw.includes('/')) {
     if (raw.includes('.')) return raw;
 
-    // Legacy type-first paths: agents/name, skills/name, etc.
+    // Type-first paths: agents/name, instructions/name, prompts/name
     if (raw.startsWith('agents/')) return `${raw}.agent.md`;
     if (raw.startsWith('instructions/')) return `${raw}.instructions.md`;
-    if (raw.startsWith('skills/')) return `${raw}.skill.md`;
     if (raw.startsWith('prompts/')) return `${raw}.prompt.md`;
 
-    // New domain/type/name paths: csharp/agents/name, csharp/skills/name, etc.
+    // Domain/type/name paths: csharp/agents/name, csharp/skills/name, etc.
     const parts = raw.split('/');
     if (parts.length === 3) {
       const typeExtMap: Record<string, string> = {
         agents: '.agent.md',
-        skills: '.skill.md',
         prompts: '.prompt.md',
         instructions: '.instructions.md',
       };
-      const ext = typeExtMap[parts[1]];
-      if (ext) {
-        // Skills use the agentskills.io directory layout: prefer <name>/SKILL.md over <name>.skill.md
-        if (parts[1] === 'skills') {
-          if (templatesDir) {
-            const dirLayout = path.join(templatesDir, raw, 'SKILL.md');
-            const flatLayout = path.join(templatesDir, `${raw}${ext}`);
-            if (fs.existsSync(dirLayout)) return `${raw}/SKILL.md`;
-            if (fs.existsSync(flatLayout)) return `${raw}${ext}`;
-          }
-          return `${raw}/SKILL.md`; // default to new directory layout
-        }
-        return `${raw}${ext}`;
+      if (parts[1] === 'skills') {
+        // Skills use the agentskills.io directory layout: <name>/SKILL.md
+        return `${raw}/SKILL.md`;
       }
+      const ext = typeExtMap[parts[1]];
+      if (ext) return `${raw}${ext}`;
     }
 
     // Domain-based path (e.g. csharp/csharp-expert) — auto-discover extension
     if (templatesDir) {
-      // Check new directory layout first (agentskills.io: <name>/SKILL.md)
+      // Check directory layout first (agentskills.io: <name>/SKILL.md)
       const dirSkillMd = path.join(templatesDir, raw, 'SKILL.md');
       if (fs.existsSync(dirSkillMd)) return `${raw}/SKILL.md`;
-      // Then check flat layout extensions
-      for (const ext of ['.skill.md', '.agent.md', '.instructions.md', '.prompt.md']) {
+      for (const ext of ['.agent.md', '.instructions.md', '.prompt.md']) {
         const candidate = `${raw}${ext}`;
         if (fs.existsSync(path.join(templatesDir, candidate))) return candidate;
       }
     }
-    return `${raw}.skill.md`;
+    throw new Error(`Cannot resolve template path: '${raw}'. Use domain/skills/<name>, domain/agents/<name>, etc.`);
   }
 
   // Bare name (no directory) → default to prompts/
@@ -367,13 +359,11 @@ export function generatePlugin(configPath: string, templatesDir: string, version
 
     const sourceContent = fs.readFileSync(sourcePath, 'utf8');
 
-    // Determine the source layout: flat <name>.skill.md or directory <name>/SKILL.md
-    const isSkillMd = resolvedSource.endsWith('.skill.md');
     const isSkillDir = resolvedSource.endsWith('/SKILL.md');
 
     let skillContent: string;
-    if (isSkillMd || isSkillDir) {
-      // Dedicated skill template already in agentskills.io SKILL.md format — copy directly.
+    if (isSkillDir) {
+      // Dedicated skill template in agentskills.io SKILL.md format — copy directly.
       skillContent = sourceContent;
     } else {
       // Legacy: generate skill from prompt/agent template via frontmatter transform.
@@ -397,15 +387,8 @@ export function generatePlugin(configPath: string, templatesDir: string, version
     fs.writeFileSync(skillPath, skillContent, 'utf8');
     console.log(`  ✓ Skill: skills/${skill.name}/SKILL.md`);
 
-    // Copy companion assets based on layout
-    if (isSkillMd) {
-      // Flat layout: companion dir lives alongside the .skill.md file with the same base name
-      const companionDir = sourcePath.replace(/\.skill\.md$/, '');
-      const assetFiles = copySkillAssets(companionDir, skillDir);
-      for (const rel of assetFiles) {
-        console.log(`  ✓ Skill asset: skills/${skill.name}/${rel}`);
-      }
-    } else if (isSkillDir) {
+    // Copy companion assets: content alongside SKILL.md inside the skill directory
+    if (isSkillDir) {
       // Directory layout: companion content lives alongside SKILL.md inside the skill directory
       const skillSourceDir = path.dirname(sourcePath);
       const entries = fs.readdirSync(skillSourceDir, { withFileTypes: true });

@@ -154,18 +154,4 @@ describe('generateTemplateList', () => {
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).not.toContain('setup.ps1');
   });
-
-  it('should also handle legacy flat .skill.md files inside skills/ dir', () => {
-    const csSkillsDir = path.join(templatesDir, 'csharp', 'skills');
-    fs.writeFileSync(
-      path.join(csSkillsDir, 'legacy-skill.skill.md'),
-      '---\nname: legacy-skill\ndescription: A legacy flat skill.\n---\nContent'
-    );
-
-    generateTemplateList(templatesDir, outputFile);
-    const content = fs.readFileSync(outputFile, 'utf8');
-    expect(content).toContain('legacy-skill');
-    expect(content).toContain('csharp/skills/legacy-skill.skill.md');
-  });
 });
-

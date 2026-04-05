@@ -33,20 +33,28 @@ export function generateSkillList(
 
   for (const domain of domains) {
     const domainDir = path.join(templatesBaseDir, domain);
-    const files = fs
-      .readdirSync(domainDir, { withFileTypes: true })
-      .filter((f) => f.isFile() && f.name.endsWith('.skill.md'))
-      .map((f) => f.name)
+    const skillsSubdir = path.join(domainDir, 'skills');
+    if (!fs.existsSync(skillsSubdir)) continue;
+
+    const skillDirs = fs
+      .readdirSync(skillsSubdir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
       .sort();
 
-    if (files.length === 0) continue;
+    const validSkillDirs = skillDirs.filter((name) =>
+      fs.existsSync(path.join(skillsSubdir, name, 'SKILL.md'))
+    );
+    if (validSkillDirs.length === 0) continue;
 
     byDomain[domain] = [];
-    for (const filename of files) {
-      const content = fs.readFileSync(path.join(domainDir, filename), 'utf8');
+    for (const skillName of validSkillDirs) {
+      const skillMdPath = path.join(skillsSubdir, skillName, 'SKILL.md');
+      const content = fs.readFileSync(skillMdPath, 'utf8');
       const fm = parseFrontmatter(content);
-      const name = fm.name || filename.replace('.skill.md', '');
+      const name = fm.name || skillName;
       const description = fm.description || '-';
+      const filename = `skills/${skillName}/SKILL.md`;
       const entry: SkillEntry = { domain, name, description, filename };
       allSkills.push(entry);
       byDomain[domain].push(entry);

@@ -12,10 +12,9 @@ const SUBDIR_TYPE_LABELS: Record<string, string> = {
   instructions: 'Instructions',
 };
 
-/** Flat file extension → display type label (legacy / cross-domain flat files) */
+/** Flat file extension → display type label (for agents, prompts, instructions subdirs) */
 const EXT_TYPE_LABELS: Record<string, string> = {
   '.agent.md': 'Agent',
-  '.skill.md': 'Skill',
   '.prompt.md': 'Prompt',
   '.instructions.md': 'Instructions',
 };
@@ -63,43 +62,14 @@ function collectDomainEntries(domainDir: string, domain: string): TemplateEntry[
 
       for (const skillDir of skillDirs) {
         const skillMdPath = path.join(subdirPath, skillDir.name, 'SKILL.md');
-        // Also support legacy flat .skill.md files in the skills/ dir
-        const legacyPath = path.join(subdirPath, `${skillDir.name}.skill.md`);
+        if (!fs.existsSync(skillMdPath)) continue;
 
-        let filePath: string | null = null;
-        let relPath: string | null = null;
-
-        if (fs.existsSync(skillMdPath)) {
-          filePath = skillMdPath;
-          relPath = `${domain}/skills/${skillDir.name}/SKILL.md`;
-        } else if (fs.existsSync(legacyPath)) {
-          filePath = legacyPath;
-          relPath = `${domain}/skills/${skillDir.name}.skill.md`;
-        }
-
-        if (!filePath || !relPath) continue;
-
-        const content = fs.readFileSync(filePath, 'utf8');
+        const relPath = `${domain}/skills/${skillDir.name}/SKILL.md`;
+        const content = fs.readFileSync(skillMdPath, 'utf8');
         const fm = parseFrontmatter(content);
         const name = fm.name || skillDir.name;
         const description = fm.description || '-';
         entries.push({ relPath, linkText: name, type: typeLabel, name, description });
-      }
-
-      // Also handle any flat .skill.md files directly in skills/ (not inside a subdir)
-      const flatFiles = fs
-        .readdirSync(subdirPath, { withFileTypes: true })
-        .filter((f) => f.isFile() && f.name.endsWith('.skill.md'))
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      for (const file of flatFiles) {
-        const filePath = path.join(subdirPath, file.name);
-        const content = fs.readFileSync(filePath, 'utf8');
-        const fm = parseFrontmatter(content);
-        const name = fm.name || getTitle(content, file.name);
-        const description = fm.description || '-';
-        const relPath = `${domain}/skills/${file.name}`;
-        entries.push({ relPath, linkText: file.name, type: typeLabel, name, description });
       }
     } else {
       // agents/, prompts/, instructions/ — flat files with extension-based type

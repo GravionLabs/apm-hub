@@ -13,27 +13,31 @@ describe('generateSkillList', () => {
     templatesDir = path.join(tmpDir, 'templates');
     outputFile = path.join(tmpDir, 'docs', 'skill-list.md');
 
-    const csDir = path.join(templatesDir, 'csharp');
-    fs.mkdirSync(csDir, { recursive: true });
+    // csharp/skills/<name>/SKILL.md — agentskills.io directory layout
+    const csSkillsDir = path.join(templatesDir, 'csharp', 'skills');
+    fs.mkdirSync(path.join(csSkillsDir, 'csharp-async'), { recursive: true });
     fs.writeFileSync(
-      path.join(csDir, 'csharp-async.skill.md'),
+      path.join(csSkillsDir, 'csharp-async', 'SKILL.md'),
       '---\nname: csharp-async\ndescription: Best practices for async/await in C#.\n---\nContent'
     );
+    fs.mkdirSync(path.join(csSkillsDir, 'csharp-docs'), { recursive: true });
     fs.writeFileSync(
-      path.join(csDir, 'csharp-docs.skill.md'),
+      path.join(csSkillsDir, 'csharp-docs', 'SKILL.md'),
       '---\nname: csharp-docs\ndescription: Document C# types with XML comments.\n---\nContent'
     );
-    // Non-skill files should be ignored
-    fs.writeFileSync(path.join(csDir, 'csharp-expert.agent.md'), '---\nname: C# Expert\n---\n');
-    fs.writeFileSync(
-      path.join(csDir, 'csharp.instructions.md'),
-      '---\ndescription: C# standards.\n---\n'
-    );
+    // Agents/instructions in csharp domain should be ignored by skill-list
+    const csAgentsDir = path.join(templatesDir, 'csharp', 'agents');
+    fs.mkdirSync(csAgentsDir, { recursive: true });
+    fs.writeFileSync(path.join(csAgentsDir, 'csharp-expert.agent.md'), '---\nname: C# Expert\n---\n');
+    const csInstrDir = path.join(templatesDir, 'csharp', 'instructions');
+    fs.mkdirSync(csInstrDir, { recursive: true });
+    fs.writeFileSync(path.join(csInstrDir, 'csharp.instructions.md'), '---\ndescription: C# standards.\n---\n');
 
-    const sharedDir = path.join(templatesDir, 'shared');
-    fs.mkdirSync(sharedDir, { recursive: true });
+    // shared/skills/write-tests/SKILL.md
+    const sharedSkillsDir = path.join(templatesDir, 'shared', 'skills');
+    fs.mkdirSync(path.join(sharedSkillsDir, 'write-tests'), { recursive: true });
     fs.writeFileSync(
-      path.join(sharedDir, 'write-tests.skill.md'),
+      path.join(sharedSkillsDir, 'write-tests', 'SKILL.md'),
       '---\nname: write-tests\ndescription: Write unit tests.\n---\nContent'
     );
   });
@@ -68,10 +72,10 @@ describe('generateSkillList', () => {
     expect(content).toContain('[Shared](#shared)');
   });
 
-  it('should link to template files', () => {
+  it('should link to skill directory layout template files', () => {
     generateSkillList(templatesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
-    expect(content).toContain('csharp-async.skill.md');
-    expect(content).toContain('write-tests.skill.md');
+    expect(content).toContain('skills/csharp-async/SKILL.md');
+    expect(content).toContain('skills/write-tests/SKILL.md');
   });
 });

@@ -129,24 +129,14 @@ describe('resolveTemplatePath', () => {
     expect(resolveTemplatePath('csharp-nunit.prompt.md')).toBe('prompts/csharp-nunit.prompt.md');
   });
 
-  it('domain path without templatesDir → appends .skill.md as fallback', () => {
-    expect(resolveTemplatePath('custom/my-template')).toBe('custom/my-template.skill.md');
-  });
-
-  it('skills/ without extension → appends .skill.md', () => {
-    expect(resolveTemplatePath('skills/write-tests')).toBe('skills/write-tests.skill.md');
-  });
-
-  it('skills/ with extension → unchanged', () => {
-    expect(resolveTemplatePath('skills/write-tests.skill.md')).toBe('skills/write-tests.skill.md');
-  });
-
-  it('domain path with templatesDir → discovers .skill.md extension', () => {
-    existingFiles.set('/fake/templates/shared/write-tests.skill.md', 'content');
-    expect(resolveTemplatePath('shared/write-tests', '/fake/templates')).toBe(
-      'shared/write-tests.skill.md'
+  it('domain path without templatesDir → throws error', () => {
+    expect(() => resolveTemplatePath('custom/my-template')).toThrow(
+      "Cannot resolve template path: 'custom/my-template'"
     );
-    existingFiles.clear();
+  });
+
+  it('skills/ prefix path → throws (no longer supported, use domain/skills/name)', () => {
+    expect(() => resolveTemplatePath('skills/write-tests')).toThrow();
   });
 
   it('domain path with templatesDir → discovers .agent.md extension', () => {
@@ -165,9 +155,9 @@ describe('resolveTemplatePath', () => {
     existingFiles.clear();
   });
 
-  it('domain path with templatesDir → fallback to .skill.md when no file found', () => {
-    expect(resolveTemplatePath('unknown/no-match', '/fake/templates')).toBe(
-      'unknown/no-match.skill.md'
+  it('domain path with templatesDir → fallback throws when no file found', () => {
+    expect(() => resolveTemplatePath('unknown/no-match', '/fake/templates')).toThrow(
+      "Cannot resolve template path: 'unknown/no-match'"
     );
   });
 
@@ -177,13 +167,13 @@ describe('resolveTemplatePath', () => {
     );
   });
 
-  it('domain/skills/name → returns directory layout SKILL.md (no templatesDir)', () => {
+  it('domain/skills/name → always returns directory layout SKILL.md', () => {
     expect(resolveTemplatePath('csharp/skills/create-dotnet-solution')).toBe(
       'csharp/skills/create-dotnet-solution/SKILL.md'
     );
   });
 
-  it('domain/skills/name with dir layout → prefers directory layout', () => {
+  it('domain/skills/name with templatesDir → still returns directory layout SKILL.md', () => {
     existingDirs.add('/fake/templates/csharp/skills/create-dotnet-solution');
     existingFiles.set('/fake/templates/csharp/skills/create-dotnet-solution/SKILL.md', 'content');
     expect(resolveTemplatePath('csharp/skills/create-dotnet-solution', '/fake/templates')).toBe(
@@ -191,14 +181,6 @@ describe('resolveTemplatePath', () => {
     );
     existingFiles.clear();
     existingDirs.clear();
-  });
-
-  it('domain/skills/name with flat layout → uses flat .skill.md (backward compat)', () => {
-    existingFiles.set('/fake/templates/csharp/skills/old-skill.skill.md', 'content');
-    expect(resolveTemplatePath('csharp/skills/old-skill', '/fake/templates')).toBe(
-      'csharp/skills/old-skill.skill.md'
-    );
-    existingFiles.clear();
   });
 
   it('domain/prompts/name → appends .prompt.md', () => {
@@ -213,12 +195,8 @@ describe('resolveTemplatePath', () => {
     );
   });
 
-  it('domain/unknowntype/name → falls through to domain-based auto-discover', () => {
-    existingFiles.set('/fake/templates/csharp/other/my-skill.skill.md', 'x');
-    expect(resolveTemplatePath('csharp/other/my-skill', '/fake/templates')).toBe(
-      'csharp/other/my-skill.skill.md'
-    );
-    existingFiles.clear();
+  it('domain/unknowntype/name → falls through to domain-based auto-discover → throws when no file', () => {
+    expect(() => resolveTemplatePath('csharp/other/my-skill', '/fake/templates')).toThrow();
   });
 });
 
@@ -253,13 +231,12 @@ describe('resolveSkillSource', () => {
     expect(resolveSkillSource('gfog-helm', 'agents/gfog-helm')).toBe('agents/gfog-helm.agent.md');
   });
 
-  it('skills/ path without extension → appends .skill.md', () => {
-    expect(resolveSkillSource('write-tests', 'skills/write-tests')).toBe(
-      'skills/write-tests.skill.md'
-    );
+  it('skills/ path → throws (no longer supported, use domain/skills/name)', () => {
+    expect(() => resolveSkillSource('write-tests', 'skills/write-tests')).toThrow();
   });
 
-  it('skills/ path with extension → unchanged', () => {
+  it('skills/ path with extension → unchanged (explicit path)', () => {
+    // Explicit paths with a dot are passed through as-is
     expect(resolveSkillSource('write-tests', 'skills/write-tests.skill.md')).toBe(
       'skills/write-tests.skill.md'
     );
@@ -391,16 +368,18 @@ describe('plugin-generator', () => {
       expect(writtenFiles.get(skillPath)).toContain('CLI content.');
     });
 
-    it('resolves domain skill source to .skill.md when file exists (e.g. csharp/csharp-code-review)', () => {
-      const skillTemplatePath = path.join(TEMPLATES_DIR, 'csharp', 'csharp-code-review.skill.md');
+    it('resolves domain/skills/name source to SKILL.md directory layout (e.g. csharp/skills/csharp-code-review)', () => {
+      const skillSourceDir = path.join(TEMPLATES_DIR, 'csharp', 'skills', 'csharp-code-review');
+      const skillTemplatePath = path.join(skillSourceDir, 'SKILL.md');
       const SKILL_CONTENT =
         "---\nname: csharp-code-review\ndescription: 'C# code review'\nallowed-tools: codebase editFiles\n---\n\nReview C# code.\n";
       existingFiles.set(
         CONFIG_PATH,
         'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
-          '  - name: csharp-code-review\n    source: csharp/csharp-code-review\n'
+          '  - name: csharp-code-review\n    source: csharp/skills/csharp-code-review\n'
       );
       existingFiles.set(skillTemplatePath, SKILL_CONTENT);
+      existingDirs.add(skillSourceDir);
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
 
@@ -463,16 +442,16 @@ describe('plugin-generator', () => {
     });
   });
 
-  describe('.skill.md passthrough (domain source)', () => {
+  describe('SKILL.md directory layout passthrough (domain source)', () => {
     const SKILL_CONTENT =
       "---\nname: write-tests\ndescription: 'Write unit tests'\nallowed-tools: codebase editFiles\n---\n\nWrite tests.\n";
 
-    it('copies .skill.md content as-is when source is domain/<name>', () => {
-      const skillTemplatePath = path.join(TEMPLATES_DIR, 'shared', 'write-tests.skill.md');
+    it('copies SKILL.md content as-is when source is domain/skills/<name>', () => {
+      const skillTemplatePath = path.join(TEMPLATES_DIR, 'shared', 'skills', 'write-tests', 'SKILL.md');
       existingFiles.set(
         CONFIG_PATH,
         'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
-          '  - name: write-tests\n    source: shared/write-tests\n'
+          '  - name: write-tests\n    source: shared/skills/write-tests\n'
       );
       existingFiles.set(skillTemplatePath, SKILL_CONTENT);
 
@@ -483,12 +462,12 @@ describe('plugin-generator', () => {
       expect(writtenFiles.get(skillPath)).toBe(SKILL_CONTENT);
     });
 
-    it('does NOT apply prompt→skill transform for .skill.md source (preserves original frontmatter)', () => {
-      const skillTemplatePath = path.join(TEMPLATES_DIR, 'shared', 'write-tests.skill.md');
+    it('does NOT apply prompt→skill transform for SKILL.md source (preserves original frontmatter)', () => {
+      const skillTemplatePath = path.join(TEMPLATES_DIR, 'shared', 'skills', 'write-tests', 'SKILL.md');
       existingFiles.set(
         CONFIG_PATH,
         'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
-          '  - name: write-tests\n    source: shared/write-tests\n'
+          '  - name: write-tests\n    source: shared/skills/write-tests\n'
       );
       existingFiles.set(skillTemplatePath, SKILL_CONTENT);
 
@@ -496,25 +475,8 @@ describe('plugin-generator', () => {
 
       const skillPath = path.join(PLUGIN_DIR, 'skills', 'write-tests', 'SKILL.md');
       const content = writtenFiles.get(skillPath)!;
-      // Frontmatter must be exactly as in the template — no re-generation
-      expect(content).toContain("allowed-tools: codebase editFiles");
-      // Should NOT have been re-wrapped with a new frontmatter block (2 --- markers = original open+close)
+      expect(content).toContain('allowed-tools: codebase editFiles');
       expect(content.match(/^---/gm)?.length).toBe(2);
-    });
-
-    it('copies .skill.md with explicit .skill.md extension in domain source', () => {
-      const skillTemplatePath = path.join(TEMPLATES_DIR, 'shared', 'write-tests.skill.md');
-      existingFiles.set(
-        CONFIG_PATH,
-        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
-          '  - name: write-tests\n    source: shared/write-tests.skill.md\n'
-      );
-      existingFiles.set(skillTemplatePath, SKILL_CONTENT);
-
-      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
-
-      const skillPath = path.join(PLUGIN_DIR, 'skills', 'write-tests', 'SKILL.md');
-      expect(writtenFiles.get(skillPath)).toBe(SKILL_CONTENT);
     });
 
     it('discovers .agent.md extension for domain skill source (e.g. devops/create-pr)', () => {
@@ -532,8 +494,6 @@ describe('plugin-generator', () => {
       expect(writtenFiles.has(skillPath)).toBe(true);
     });
   });
-
-
 
   describe('plugin without instructions', () => {
     it('plugin.json omits instructions field when no instructions configured', () => {
@@ -790,19 +750,19 @@ describe('plugin-generator', () => {
   // -------------------------------------------------------------------------
 
   describe('skill companion directories', () => {
-    it('copies companion directory files alongside SKILL.md', () => {
-      const skillTemplatePath = path.join(TEMPLATES_DIR, 'csharp', 'create-dotnet-solution.skill.md');
-      const companionDir = path.join(TEMPLATES_DIR, 'csharp', 'create-dotnet-solution');
-      const editorConfigPath = path.join(companionDir, 'templates', '.editorconfig');
+    it('copies companion directory files alongside SKILL.md (directory layout)', () => {
+      const skillSourceDir = path.join(TEMPLATES_DIR, 'csharp', 'skills', 'create-dotnet-solution');
+      const skillTemplatePath = path.join(skillSourceDir, 'SKILL.md');
+      const editorConfigPath = path.join(skillSourceDir, 'templates', '.editorconfig');
 
       existingFiles.set(CONFIG_PATH,
         'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
-        '  - name: create-dotnet-solution\n    source: csharp/create-dotnet-solution\n'
+        '  - name: create-dotnet-solution\n    source: csharp/skills/create-dotnet-solution\n'
       );
       existingFiles.set(skillTemplatePath, "---\nname: create-dotnet-solution\ndescription: 'Scaffold solution'\nallowed-tools: editFiles\n---\n\nContent.\n");
       existingFiles.set(editorConfigPath, '# editorconfig content');
-      existingDirs.add(companionDir);
-      existingDirs.add(path.join(companionDir, 'templates'));
+      existingDirs.add(skillSourceDir);
+      existingDirs.add(path.join(skillSourceDir, 'templates'));
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
 
@@ -811,19 +771,20 @@ describe('plugin-generator', () => {
       expect(writtenFiles.get(destEditorConfig)).toBe('# editorconfig content');
     });
 
-    it('does not fail when no companion directory exists', () => {
-      const skillTemplatePath = path.join(TEMPLATES_DIR, 'shared', 'write-tests.skill.md');
+    it('does not fail when skill directory has no companion assets (only SKILL.md)', () => {
+      const skillSourceDir = path.join(TEMPLATES_DIR, 'shared', 'skills', 'write-tests');
+      const skillTemplatePath = path.join(skillSourceDir, 'SKILL.md');
       existingFiles.set(CONFIG_PATH,
         'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
-        '  - name: write-tests\n    source: shared/write-tests\n'
+        '  - name: write-tests\n    source: shared/skills/write-tests\n'
       );
       existingFiles.set(skillTemplatePath, "---\nname: write-tests\ndescription: 'Write tests'\nallowed-tools: codebase\n---\n\nContent.\n");
-      // No companion dir added to existingDirs
+      existingDirs.add(skillSourceDir);
 
       expect(() => generatePlugin(CONFIG_PATH, TEMPLATES_DIR)).not.toThrow();
     });
 
-    it('does not copy companion directory for non-.skill.md sources', () => {
+    it('does not copy companion assets when source is a prompt (not SKILL.md)', () => {
       const promptPath = path.join(TEMPLATES_DIR, 'prompts', 'csharp-nunit.prompt.md');
       const companionDir = path.join(TEMPLATES_DIR, 'prompts', 'csharp-nunit');
 
@@ -839,6 +800,7 @@ describe('plugin-generator', () => {
       );
       expect(anyCompanionFile).toBeUndefined();
     });
+
 
     it('generates skill from directory layout SKILL.md', () => {
       const skillSourceDir = path.join(TEMPLATES_DIR, 'csharp/skills/my-skill');
