@@ -158,13 +158,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/ plugins/**/.github/plugin/plugin.json plugins/*/plugin.config.yml README.md
+          git add plugins/**/.github/plugin/plugin.json plugins/*/plugin.config.yml README.md
           # Force-add gitignored plugin artifacts (agents, instructions, skills are in .gitignore
           # but must be committed so plugins work when installed from this repo)
           git add -f plugins/*/agents/ plugins/*/instructions/ plugins/*/skills/
-          # Force-add gitignored aggregate docs (agent-list.md, instruction-list.md are in .gitignore
-          # but must be committed so the docs are available in the repo)
-          git add -f docs/agent-list.md docs/instruction-list.md
+          # Force-add gitignored aggregate docs and marketplace manifest
+          git add -f docs/agent-list.md docs/instruction-list.md docs/skill-list.md docs/template-list.md docs/plugin-list.md
+          git add -f .github/plugin/marketplace.json
           if git diff --staged --quiet; then
             echo "No generated changes to commit"
             exit 0
