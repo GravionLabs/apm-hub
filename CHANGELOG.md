@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.30] — 2026-04-05
+
+### Features
+- **csharp**: Companion templates for csharp-mcp-server-generator skill (#67)
+
+
 ## [1.0.29] — 2026-04-05
+
+### Documentation
+- Update CHANGELOG.md for v1.0.29 [skip ci]
+
 
 ### Features
 - **generator**: Spec compliance, companion dirs, new plugin.json fields
