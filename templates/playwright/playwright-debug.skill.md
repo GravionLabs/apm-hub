@@ -63,4 +63,4 @@ npx playwright test --project=webkit
 - [ ] Replace fragile CSS/XPath selectors with `getByRole` / `getByTestId`
 - [ ] Add explicit `expect` waits before interaction
 - [ ] Check `page.waitForLoadState` after navigation
-- [ ] Test all configured browsers (`--project=all`)
+- [ ] Test all configured browsers (`npx playwright test` without `--project`)
