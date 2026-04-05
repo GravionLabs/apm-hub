@@ -2,6 +2,7 @@
 name: sakai-ui-component
 description: 'Scaffold a new @gravion/sakai-ui Angular library component with gv- prefix, 3-file structure, PrimeNG dependencies, and public-api.ts export.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Scaffold a new component for the `@gravion/sakai-ui` Angular library.

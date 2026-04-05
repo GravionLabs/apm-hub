@@ -2,6 +2,7 @@
 name: postgresql-debug
 description: 'Diagnose PostgreSQL performance issues: slow queries, lock contention, connection exhaustion, bloated tables, and autovacuum problems using pg_stat_activity, pg_locks, and EXPLAIN ANALYZE.'
 allowed-tools: codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Diagnose PostgreSQL performance and operational issues.

@@ -2,6 +2,7 @@
 name: create-pr
 description: 'Analyze git history and diff, generate a structured PR description, and create a pull request.'
 allowed-tools: runCommands codebase
+model: gpt-4.1
 ---
 
 Create a well-structured pull request by analyzing the current branch's commits and diff.

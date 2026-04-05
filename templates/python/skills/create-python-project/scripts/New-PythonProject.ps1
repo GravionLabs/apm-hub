@@ -15,7 +15,8 @@
 param(
   [Parameter(Mandatory)][string]$ProjectName,
   [ValidateSet('library', 'app', 'workspace')][string]$ProjectType = 'app',
-  [string]$OutputDirectory = '.'
+  [string]$OutputDirectory = '.',
+  [switch]$Upgrade
 )
 
 $ErrorActionPreference = 'Stop'
@@ -90,7 +91,9 @@ members = ["libs/*", "apps/*"]
   # Install dev dependencies
   Write-Host "Installing dev dependencies..." -ForegroundColor Cyan
   Push-Location $TargetDir
-  try { uv sync } finally { Pop-Location }
+  try {
+    if ($Upgrade) { uv sync --upgrade } else { uv sync }
+  } finally { Pop-Location }
 }
 
 Write-Host "Done!" -ForegroundColor Green

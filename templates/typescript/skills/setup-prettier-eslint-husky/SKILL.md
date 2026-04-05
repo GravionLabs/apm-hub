@@ -2,6 +2,7 @@
 name: setup-prettier-eslint-husky
 description: 'Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm.'
 allowed-tools: editFiles codebase runCommands
+model: gpt-4.1
 ---
 
 Set up a complete code quality pipeline for a JS/TS or Angular project.

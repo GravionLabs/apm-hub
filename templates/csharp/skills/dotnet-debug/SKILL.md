@@ -2,6 +2,7 @@
 name: "dotnet-debug"
 description: "Diagnose .NET runtime issues: slow performance, memory leaks, high CPU, crashes, and deadlocks using diagnostic tools"
 allowed-tools: ["codebase", "runCommands", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # .NET Debug

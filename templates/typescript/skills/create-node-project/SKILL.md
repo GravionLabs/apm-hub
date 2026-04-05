@@ -2,6 +2,7 @@
 name: create-node-project
 description: 'Scaffold a new TypeScript/Node.js project (library, CLI, or application) with strict tsconfig, Vitest, and ESM support.'
 allowed-tools: editFiles codebase runCommands
+model: gpt-4.1
 ---
 
 Scaffold a new TypeScript/Node.js project with a production-ready baseline.

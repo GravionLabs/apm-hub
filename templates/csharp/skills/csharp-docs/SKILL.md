@@ -2,6 +2,7 @@
 name: csharp-docs
 description: 'Add XML documentation comments to C# public and internal types and members following summary/param/returns/remarks conventions.'
 allowed-tools: codebase editFiles
+model: claude-sonnet-4.6
 ---
 
 Add XML documentation comments to C# types and members.

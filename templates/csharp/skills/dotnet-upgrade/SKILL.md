@@ -2,6 +2,7 @@
 name: dotnet-upgrade
 description: 'Analyze and execute a .NET framework or package upgrade: assess current state, identify breaking changes, update target frameworks and NuGet packages, and verify the build.'
 allowed-tools: codebase editFiles runCommands
+model: claude-sonnet-4.6
 ---
 
 Analyze and execute a .NET upgrade for the solution.

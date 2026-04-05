@@ -2,6 +2,7 @@
 name: dotnet-best-practices
 description: 'Review and improve .NET/C# code to meet project-specific best practices: nullability, async patterns, DI, logging, and modern C# idioms.'
 allowed-tools: codebase editFiles
+model: claude-sonnet-4.6
 ---
 
 Ensure .NET/C# code meets best practices for the solution.

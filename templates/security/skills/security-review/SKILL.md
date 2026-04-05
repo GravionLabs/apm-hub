@@ -2,6 +2,7 @@
 name: "Security Review"
 description: "Structured security review against OWASP Top 10 — any language or framework"
 allowed-tools: ["codebase", "changes", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # Security Review

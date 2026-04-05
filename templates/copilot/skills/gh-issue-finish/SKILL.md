@@ -2,6 +2,7 @@
 name: gh-issue-finish
 description: 'Review implemented changes and create a pull request for a GitHub issue. Run this after gh-issue-implement when the implementation is complete.'
 allowed-tools: codebase editFiles runCommands
+model: gpt-4.1
 ---
 
 Review the implementation and open a pull request for a GitHub issue.

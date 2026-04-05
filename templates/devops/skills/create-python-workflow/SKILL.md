@@ -2,6 +2,7 @@
 name: create-python-workflow
 description: 'Create a GitHub Actions CI/CD workflow for a Python package using GravionLabs/ci reusable workflows (lint, test, build, publish).'
 allowed-tools: editFiles codebase
+model: gpt-4.1
 ---
 
 Create a `.github/workflows/` file for Python package CI/CD using `GravionLabs/ci`.

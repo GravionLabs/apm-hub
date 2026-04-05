@@ -2,6 +2,7 @@
 name: gh-issue-work
 description: 'End-to-end workflow for a GitHub issue: read issue, create branch, implement with tests and docs, review, and open a pull request.'
 allowed-tools: codebase editFiles runCommands
+model: claude-sonnet-4.6
 ---
 
 Complete end-to-end workflow for a GitHub issue — from branch creation to pull request.

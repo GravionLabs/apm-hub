@@ -2,6 +2,7 @@
 name: create-angular-project
 description: 'Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier.'
 allowed-tools: editFiles codebase runCommands
+model: gpt-4.1
 ---
 
 Scaffold a new Angular 21+ project with a production-ready baseline.

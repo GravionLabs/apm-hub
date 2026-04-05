@@ -2,6 +2,7 @@
 name: csharp-async
 description: 'Apply C# async/await best practices to existing code: fix deadlocks, ConfigureAwait usage, async void, cancellation token propagation, and naming conventions.'
 allowed-tools: codebase editFiles
+model: claude-sonnet-4.6
 ---
 
 Apply C# async/await best practices to the specified code.

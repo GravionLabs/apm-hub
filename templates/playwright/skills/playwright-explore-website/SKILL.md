@@ -2,6 +2,7 @@
 name: playwright-explore-website
 description: 'Explore a website with Playwright MCP to identify key user flows, UI elements, and locators for testing. Returns a structured exploration report with proposed test cases.'
 allowed-tools: fetch runCommands playwright
+model: claude-sonnet-4.6
 ---
 
 Explore a website to discover testable flows and identify correct locators.

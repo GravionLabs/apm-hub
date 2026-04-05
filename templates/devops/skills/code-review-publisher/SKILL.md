@@ -2,6 +2,7 @@
 name: code-review-publisher
 description: 'Publish code review results as PR comments on GitHub or Azure DevOps.'
 allowed-tools: runCommands codebase
+model: claude-sonnet-4.6
 ---
 
 Publish structured code review feedback as pull request comments.

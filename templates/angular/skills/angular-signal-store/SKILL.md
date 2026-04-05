@@ -2,6 +2,7 @@
 name: angular-signal-store
 description: 'Create an NgRx Signal Store for Angular state management with state, computed signals, updaters, and effects. Follows @ngrx/signals patterns.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Scaffold an NgRx Signal Store for Angular feature state management.

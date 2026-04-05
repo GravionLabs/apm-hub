@@ -2,6 +2,7 @@
 name: terraform-drift-detection
 description: 'Detect and remediate infrastructure drift: resources modified outside Terraform that are no longer consistent with state or configuration.'
 allowed-tools: codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Detect and remediate Terraform drift — resources that changed outside Terraform.

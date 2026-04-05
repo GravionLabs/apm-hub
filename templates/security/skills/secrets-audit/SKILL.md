@@ -2,6 +2,7 @@
 name: "Secrets Audit"
 description: "Scan for hardcoded secrets, credentials, and insecure secret storage patterns"
 allowed-tools: ["codebase", "changes", "runCommands", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # Secrets Audit

@@ -2,6 +2,7 @@
 name: create-dotnet-solution
 description: 'Scaffold a new .NET solution with src/test layout, Central Package Management (Directory.Packages.props), Directory.Build.props, and .editorconfig. Supports both NuGet libraries (multi-target) and applications (webapi/worker/console).'
 allowed-tools: runCommands editFiles codebase
+model: gpt-4.1
 ---
 
 Scaffold a new .NET solution following the standard project structure.

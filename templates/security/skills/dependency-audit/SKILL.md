@@ -2,6 +2,7 @@
 name: "Dependency Audit"
 description: "Audit dependencies for known vulnerabilities and outdated packages across ecosystems"
 allowed-tools: ["codebase", "runCommands", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # Dependency Audit

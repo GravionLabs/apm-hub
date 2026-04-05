@@ -2,6 +2,7 @@
 name: python-packaging
 description: 'Set up or modernize Python project packaging using pyproject.toml, uv, and hatch — covers dependencies, build backends, and publishing.'
 allowed-tools: codebase editFiles runCommands
+model: gpt-4.1
 ---
 
 Set up or modernize a Python project's packaging configuration using `pyproject.toml` and modern tooling.

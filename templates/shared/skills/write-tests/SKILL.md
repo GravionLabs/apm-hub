@@ -2,6 +2,7 @@
 name: write-tests
 description: 'Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.'
 allowed-tools: codebase editFiles
+model: claude-sonnet-4.6
 ---
 
 Write unit tests for the specified code.

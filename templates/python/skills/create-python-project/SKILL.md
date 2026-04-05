@@ -2,6 +2,7 @@
 name: create-python-project
 description: 'Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, and asyncio support.'
 allowed-tools: editFiles codebase runCommands
+model: gpt-4.1
 ---
 
 Scaffold a new Python project with a production-ready baseline using `uv`.
@@ -56,7 +57,7 @@ Scaffold a new Python project with a production-ready baseline using `uv`.
   pwsh scripts/New-PythonProject.ps1 -ProjectName "my-lib" -ProjectType library
   pwsh scripts/New-PythonProject.ps1 -ProjectName "my-engine" -ProjectType workspace
   ```
-  Parameters: `-ProjectName` (required), `-ProjectType` (library/app/workspace), `-OutputDirectory`
+  Parameters: `-ProjectName` (required), `-ProjectType` (library/app/workspace), `-OutputDirectory`, `-Upgrade` (resolve latest compatible versions)
 
 ## Constraints
 - Always use `src/` layout — prevents accidental imports from repo root

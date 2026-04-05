@@ -2,6 +2,7 @@
 name: terraform-code-review
 description: 'Perform a structured Terraform code review with priority ratings: 🔴 critical security/state risks, 🟡 important improvements, 🟢 best practice suggestions.'
 allowed-tools: codebase
+model: claude-sonnet-4.6
 ---
 
 Review Terraform configuration for security, correctness, and best practices.

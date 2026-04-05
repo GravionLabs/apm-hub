@@ -2,6 +2,7 @@
 name: typescript-mcp-server-generator
 description: 'Generate a complete MCP server in TypeScript with tools, resources, and prompts using @modelcontextprotocol/sdk and zod validation.'
 allowed-tools: codebase editFiles runCommands
+model: claude-sonnet-4.6
 ---
 
 Generate a complete, production-ready Model Context Protocol (MCP) server in TypeScript.

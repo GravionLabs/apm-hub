@@ -2,6 +2,7 @@
 name: az-devops-setup
 description: 'Interactive setup guide for the az CLI azure-devops extension and authentication.'
 allowed-tools: runCommands codebase
+model: gpt-4.1
 ---
 
 Set up the Azure DevOps CLI extension with authentication and default configuration.

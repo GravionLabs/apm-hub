@@ -2,6 +2,7 @@
 name: angular-library-create
 description: 'Scaffold a new Angular library inside an existing workspace using ng-packagr, with public-api.ts, 3-file component structure, and injection tokens.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Scaffold a new Angular library inside an existing Angular workspace.

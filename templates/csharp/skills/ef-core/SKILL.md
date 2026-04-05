@@ -2,6 +2,7 @@
 name: ef-core
 description: 'Apply Entity Framework Core best practices: DbContext design, migrations, query optimization, owned entities, and avoiding N+1 problems.'
 allowed-tools: codebase editFiles runCommands
+model: claude-sonnet-4.6
 ---
 
 Apply Entity Framework Core best practices to the specified code.

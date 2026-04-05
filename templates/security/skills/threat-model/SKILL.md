@@ -2,6 +2,7 @@
 name: "Threat Model"
 description: "STRIDE threat modelling — identify threats, affected components, and mitigations"
 allowed-tools: ["codebase", "changes", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # Threat Model (STRIDE)

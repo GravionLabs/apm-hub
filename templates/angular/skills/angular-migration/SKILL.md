@@ -2,6 +2,7 @@
 name: angular-migration
 description: 'Migrate an Angular application to a newer version. Covers ng update, standalone component migration, new @if/@for/@switch control flow syntax, and signals-first patterns.'
 allowed-tools: codebase editFiles runCommands
+model: claude-sonnet-4.6
 ---
 
 Migrate an Angular application to a newer version.

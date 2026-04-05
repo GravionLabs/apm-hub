@@ -2,6 +2,7 @@
 name: terraform-module-create
 description: 'Scaffold a reusable Terraform module with variables.tf, outputs.tf, main.tf, examples/, and a terraform-docs README.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Scaffold a complete, reusable Terraform module.

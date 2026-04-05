@@ -2,6 +2,7 @@
 name: create-wiki-workflow
 description: 'Create a GitHub Actions workflow that syncs a docs/ directory to the GitHub Wiki using GravionLabs/ci reusable workflows.'
 allowed-tools: editFiles
+model: gpt-4.1
 ---
 
 Create a `.github/workflows/sync-wiki.yml` file that syncs documentation to the GitHub Wiki.

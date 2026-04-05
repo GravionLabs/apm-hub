@@ -2,6 +2,7 @@
 name: "ci-debug"
 description: "Diagnose failing GitHub Actions CI runs — parse logs, identify root causes, and suggest fixes"
 allowed-tools: ["codebase", "runCommands", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # CI Debug

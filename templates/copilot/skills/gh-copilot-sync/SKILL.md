@@ -2,6 +2,7 @@
 name: gh-copilot-sync
 description: 'Sync installed GitHub Copilot configuration files (.github/instructions, prompts, agents) with the latest versions from GravionLabs/copilot-hub.'
 allowed-tools: codebase runCommands editFiles
+model: gpt-4.1
 ---
 
 Sync existing `.github/` Copilot configuration files to their latest versions from GravionLabs/copilot-hub.

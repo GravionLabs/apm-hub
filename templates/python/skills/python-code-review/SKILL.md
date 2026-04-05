@@ -2,6 +2,7 @@
 name: python-code-review
 description: 'Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions.'
 allowed-tools: codebase
+model: claude-sonnet-4.6
 ---
 
 Review Python code for correctness, readability, maintainability, and security.

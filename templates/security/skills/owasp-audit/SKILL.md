@@ -2,6 +2,7 @@
 name: "OWASP Audit"
 description: "Focused OWASP Top 10 2021 audit — analyze one or more categories in depth"
 allowed-tools: ["codebase", "changes", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # OWASP Top 10 Audit

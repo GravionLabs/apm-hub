@@ -2,6 +2,7 @@
 name: playwright-generate-test
 description: 'Generate a Playwright TypeScript test for a given scenario using the Playwright MCP. Explores the page live, identifies locators, writes and runs the test until it passes.'
 allowed-tools: editFiles runCommands playwright
+model: claude-sonnet-4.6
 ---
 
 Generate a passing Playwright TypeScript test for a user scenario.

@@ -2,6 +2,7 @@
 name: angular-component
 description: 'Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Generate an Angular standalone component following project conventions.

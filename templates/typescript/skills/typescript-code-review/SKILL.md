@@ -2,6 +2,7 @@
 name: typescript-code-review
 description: 'Perform a structured TypeScript/JavaScript code review with priority ratings: 🔴 critical bugs/security, 🟡 important type/async issues, 🟢 style suggestions.'
 allowed-tools: codebase
+model: claude-sonnet-4.6
 ---
 
 Review TypeScript (or JavaScript) code for correctness, type safety, and maintainability.

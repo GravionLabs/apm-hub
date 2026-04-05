@@ -2,6 +2,7 @@
 name: typescript-debug
 description: 'Diagnose and fix TypeScript type errors, module resolution issues, build failures, and runtime errors using tsc, Node.js debugger, and source maps.'
 allowed-tools: codebase problems runCommands editFiles
+model: claude-sonnet-4.6
 ---
 
 Diagnose and resolve TypeScript and Node.js issues including type errors, module resolution failures, build errors, and runtime crashes.

@@ -2,6 +2,7 @@
 name: playwright-automation-fill-in-form
 description: 'Automate filling in a web form using Playwright MCP: navigate to the form, fill fields with provided data, validate before submitting.'
 allowed-tools: editFiles runCommands playwright
+model: claude-sonnet-4.6
 ---
 
 Automate filling in a web form using Playwright MCP.
