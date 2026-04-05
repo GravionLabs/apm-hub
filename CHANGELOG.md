@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.29] — 2026-04-05
+
+### Features
+- **generator**: Spec compliance, companion dirs, new plugin.json fields
+
+
 ## [1.0.28] — 2026-04-05
+
+### Documentation
+- Update CHANGELOG.md for v1.0.28 [skip ci]
+
 
 ### Features
 - **python**: Add plugin, fix agents, new skills, update instructions
