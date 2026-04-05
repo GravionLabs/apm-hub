@@ -50,7 +50,9 @@ This page lists all available skills organized by domain. This file is automatic
 | [python-code-review](../templates/python/python-code-review.skill.md)                       | [Python](#python)         | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions.                                      |
 | [write-tests](../templates/shared/write-tests.skill.md)                                     | [Shared](#shared)         | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                                |
 | [terraform-code-review](../templates/terraform/terraform-code-review.skill.md)              | [Terraform](#terraform)   | Perform a structured Terraform code review with priority ratings: 🔴 critical security/state risks, 🟡 important improvements, 🟢 best practice suggestions.                    |
+| [terraform-drift-detection](../templates/terraform/terraform-drift-detection.skill.md)      | [Terraform](#terraform)   | Detect and remediate infrastructure drift: resources modified outside Terraform that are no longer consistent with state or configuration.                                      |
 | [terraform-module-create](../templates/terraform/terraform-module-create.skill.md)          | [Terraform](#terraform)   | Scaffold a reusable Terraform module with variables.tf, outputs.tf, main.tf, examples/, and a terraform-docs README.                                                            |
+| [terraform-plan-debugger](../templates/terraform/terraform-plan-debugger.skill.md)          | [Terraform](#terraform)   | Diagnose unexpected Terraform plan changes: drift, missing lifecycle blocks, provider mismatches, state inconsistencies, incorrect variable values, and missing moved{} blocks. |
 | [setup-prettier-eslint-husky](../templates/typescript/setup-prettier-eslint-husky.skill.md) | [Typescript](#typescript) | Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm.             |
 | [typescript-code-review](../templates/typescript/typescript-code-review.skill.md)           | [Typescript](#typescript) | Perform a structured TypeScript/JavaScript code review with priority ratings: 🔴 critical bugs/security, 🟡 important type/async issues, 🟢 style suggestions.                  |
 
@@ -142,10 +144,12 @@ This page lists all available skills organized by domain. This file is automatic
 
 ## Terraform
 
-| Skill                                                                                | Description                                                                                                                                                  |
-| :----------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`terraform-code-review`](../templates/terraform/terraform-code-review.skill.md)     | Perform a structured Terraform code review with priority ratings: 🔴 critical security/state risks, 🟡 important improvements, 🟢 best practice suggestions. |
-| [`terraform-module-create`](../templates/terraform/terraform-module-create.skill.md) | Scaffold a reusable Terraform module with variables.tf, outputs.tf, main.tf, examples/, and a terraform-docs README.                                         |
+| Skill                                                                                    | Description                                                                                                                                                                     |
+| :--------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`terraform-code-review`](../templates/terraform/terraform-code-review.skill.md)         | Perform a structured Terraform code review with priority ratings: 🔴 critical security/state risks, 🟡 important improvements, 🟢 best practice suggestions.                    |
+| [`terraform-drift-detection`](../templates/terraform/terraform-drift-detection.skill.md) | Detect and remediate infrastructure drift: resources modified outside Terraform that are no longer consistent with state or configuration.                                      |
+| [`terraform-module-create`](../templates/terraform/terraform-module-create.skill.md)     | Scaffold a reusable Terraform module with variables.tf, outputs.tf, main.tf, examples/, and a terraform-docs README.                                                            |
+| [`terraform-plan-debugger`](../templates/terraform/terraform-plan-debugger.skill.md)     | Diagnose unexpected Terraform plan changes: drift, missing lifecycle blocks, provider mismatches, state inconsistencies, incorrect variable values, and missing moved{} blocks. |
 
 ## Typescript
 

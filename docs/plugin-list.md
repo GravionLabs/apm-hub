@@ -8,22 +8,22 @@ This page lists all available Copilot CLI plugins in this repository. This file 
 
 | Plugin                                                      | Version  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Skills | Agents | Instructions |
 | :---------------------------------------------------------- | :------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----: | :----: | :----------: |
-| [angular-development](#angular-development)                 | `1.0.20` | Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.                                                                                                                                                                                                                                                                                                                                                                                                                                 |   8    |   3    |      3       |
-| [copilot-workspace](#copilot-workspace)                     | `1.0.20` | Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt. |   6    |   0    |      0       |
-| [csharp-development](#csharp-development)                   | `1.0.20` | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.                                                                                                                                                                                                                                                                                                                                                          |   12   |   9    |      3       |
-| [devops](#devops)                                           | `1.0.20` | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.                                                                                                                                                                                                                                                                                                                                                                        |   8    |   3    |      3       |
-| [docker](#docker)                                           | `1.0.20` | Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |   1    |   0    |      1       |
-| [go-development](#go-development)                           | `1.0.20` | Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                               |   3    |   2    |      1       |
-| [helm-development](#helm-development)                       | `1.0.20` | Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.                                                                                                                                                                                                                                                                                                                                                                                                                                      |   3    |   1    |      1       |
-| [playwright](#playwright)                                   | `1.0.20` | Cross-language Playwright testing plugin. Browser automation, form filling, test generation, and website exploration. Language-specific instructions (playwright-dotnet, playwright-python, playwright-typescript) are bundled with the respective language plugins (csharp-development, python-development, typescript-node-development).                                                                                                                                                                                                                                                                                   |   3    |   1    |      0       |
-| [python-development](#python-development)                   | `1.0.20` | Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |   4    |   3    |      3       |
-| [security](#security)                                       | `1.0.20` | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |   0    |   2    |      1       |
-| [terraform-development](#terraform-development)             | `1.0.20` | Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.                                                                                                                                                                                                                                                                                                                                                                                                                              |   2    |   1    |      1       |
-| [typescript-node-development](#typescript-node-development) | `1.0.20` | TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, Playwright TypeScript testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                                        |   4    |   3    |      3       |
+| [angular-development](#angular-development)                 | `1.0.21` | Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.                                                                                                                                                                                                                                                                                                                                                                                                                                 |   8    |   3    |      3       |
+| [copilot-workspace](#copilot-workspace)                     | `1.0.21` | Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt. |   6    |   0    |      0       |
+| [csharp-development](#csharp-development)                   | `1.0.21` | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.                                                                                                                                                                                                                                                                                                                                                          |   12   |   9    |      3       |
+| [devops](#devops)                                           | `1.0.21` | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.                                                                                                                                                                                                                                                                                                                                                                        |   8    |   3    |      3       |
+| [docker](#docker)                                           | `1.0.21` | Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |   1    |   0    |      1       |
+| [go-development](#go-development)                           | `1.0.21` | Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                               |   3    |   2    |      1       |
+| [helm-development](#helm-development)                       | `1.0.21` | Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.                                                                                                                                                                                                                                                                                                                                                                                                                                      |   3    |   1    |      1       |
+| [playwright](#playwright)                                   | `1.0.21` | Cross-language Playwright testing plugin. Browser automation, form filling, test generation, and website exploration. Language-specific instructions (playwright-dotnet, playwright-python, playwright-typescript) are bundled with the respective language plugins (csharp-development, python-development, typescript-node-development).                                                                                                                                                                                                                                                                                   |   3    |   1    |      0       |
+| [python-development](#python-development)                   | `1.0.21` | Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |   4    |   3    |      3       |
+| [security](#security)                                       | `1.0.21` | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |   0    |   2    |      1       |
+| [terraform-development](#terraform-development)             | `1.0.21` | Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.                                                                                                                                                                                                                                                                                                                                                                                                                              |   4    |   2    |      1       |
+| [typescript-node-development](#typescript-node-development) | `1.0.21` | TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, Playwright TypeScript testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                                        |   4    |   3    |      3       |
 
 ## angular-development
 
-📁 [`plugins/angular-development`](../plugins/angular-development) · **v1.0.20**
+📁 [`plugins/angular-development`](../plugins/angular-development) · **v1.0.21**
 
 Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.
 
@@ -51,7 +51,7 @@ Angular 21 full-stack development plugin. Covers standalone components, NgRx Sig
 
 ## copilot-workspace
 
-📁 [`plugins/copilot-workspace`](../plugins/copilot-workspace) · **v1.0.20**
+📁 [`plugins/copilot-workspace`](../plugins/copilot-workspace) · **v1.0.21**
 
 Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt.
 
@@ -67,7 +67,7 @@ Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provid
 
 ## csharp-development
 
-📁 [`plugins/csharp-development`](../plugins/csharp-development) · **v1.0.20**
+📁 [`plugins/csharp-development`](../plugins/csharp-development) · **v1.0.21**
 
 C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.
 
@@ -105,7 +105,7 @@ C#/.NET full-stack development plugin. Covers project setup, NUnit testing, asyn
 
 ## devops
 
-📁 [`plugins/devops`](../plugins/devops) · **v1.0.20**
+📁 [`plugins/devops`](../plugins/devops) · **v1.0.21**
 
 Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.
 
@@ -133,7 +133,7 @@ Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or A
 
 ## docker
 
-📁 [`plugins/docker`](../plugins/docker) · **v1.0.20**
+📁 [`plugins/docker`](../plugins/docker) · **v1.0.21**
 
 Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.
 
@@ -147,7 +147,7 @@ Docker containerization plugin. Optimized multi-stage Dockerfiles for any langua
 
 ## go-development
 
-📁 [`plugins/go-development`](../plugins/go-development) · **v1.0.20**
+📁 [`plugins/go-development`](../plugins/go-development) · **v1.0.21**
 
 Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.
 
@@ -167,7 +167,7 @@ Go development plugin for idiomatic Go applications. Covers module structure, er
 
 ## helm-development
 
-📁 [`plugins/helm-development`](../plugins/helm-development) · **v1.0.20**
+📁 [`plugins/helm-development`](../plugins/helm-development) · **v1.0.21**
 
 Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.
 
@@ -186,7 +186,7 @@ Helm chart development plugin for Kubernetes packaging. Covers chart structure, 
 
 ## playwright
 
-📁 [`plugins/playwright`](../plugins/playwright) · **v1.0.20**
+📁 [`plugins/playwright`](../plugins/playwright) · **v1.0.21**
 
 Cross-language Playwright testing plugin. Browser automation, form filling, test generation, and website exploration. Language-specific instructions (playwright-dotnet, playwright-python, playwright-typescript) are bundled with the respective language plugins (csharp-development, python-development, typescript-node-development).
 
@@ -202,7 +202,7 @@ Cross-language Playwright testing plugin. Browser automation, form filling, test
 
 ## python-development
 
-📁 [`plugins/python-development`](../plugins/python-development) · **v1.0.20**
+📁 [`plugins/python-development`](../plugins/python-development) · **v1.0.21**
 
 Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.
 
@@ -226,7 +226,7 @@ Python development plugin. Covers project setup with uv, pytest testing with fix
 
 ## security
 
-📁 [`plugins/security`](../plugins/security) · **v1.0.20**
+📁 [`plugins/security`](../plugins/security) · **v1.0.21**
 
 Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.
 
@@ -241,25 +241,28 @@ Security and resilience tooling. STRIDE threat modeling, security compliance rev
 
 ## terraform-development
 
-📁 [`plugins/terraform-development`](../plugins/terraform-development) · **v1.0.20**
+📁 [`plugins/terraform-development`](../plugins/terraform-development) · **v1.0.21**
 
 Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.
 
 **Keywords:** `terraform`, `iac`, `infrastructure`, `aws`, `azure`, `gcp`
 
-**Skills (2):**
+**Skills (4):**
 - [`terraform-code-review`](../plugins/terraform-development/skills/terraform-code-review)
 - [`terraform-module-create`](../plugins/terraform-development/skills/terraform-module-create)
+- [`terraform-plan-debugger`](../plugins/terraform-development/skills/terraform-plan-debugger)
+- [`terraform-drift-detection`](../plugins/terraform-development/skills/terraform-drift-detection)
 
-**Agents (1):**
+**Agents (2):**
 - [`terraform/terraform-expert.agent.md`](../plugins/terraform-development/agents/terraform/terraform-expert.agent.md)
+- [`terraform/terraform-reviewer.agent.md`](../plugins/terraform-development/agents/terraform/terraform-reviewer.agent.md)
 
 **Instructions (1):**
 - [`terraform/terraform.instructions.md`](../plugins/terraform-development/instructions/terraform/terraform.instructions.md)
 
 ## typescript-node-development
 
-📁 [`plugins/typescript-node-development`](../plugins/typescript-node-development) · **v1.0.20**
+📁 [`plugins/typescript-node-development`](../plugins/typescript-node-development) · **v1.0.21**
 
 TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, Playwright TypeScript testing, and containerization.
 

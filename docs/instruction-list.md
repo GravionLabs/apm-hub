@@ -31,7 +31,7 @@ This page lists all available instructions organized by domain. This file is aut
 | [code-review-generic](../templates/shared/code-review-generic.instructions.md)               | [Shared](#shared)         | Code review guidelines for any language or framework: readability, naming, complexity, error handling, security, and test coverage                                                                                    |
 | [html-css-style-color-guide](../templates/shared/html-css-style-color-guide.instructions.md) | [Shared](#shared)         | Color usage guidelines and styling rules for HTML elements to ensure accessible, professional designs.                                                                                                                |
 | [markdown](../templates/shared/markdown.instructions.md)                                     | [Shared](#shared)         | Markdown documentation standards: structure, formatting, headings, lists, code blocks, and writing style for technical docs                                                                                           |
-| [terraform](../templates/terraform/terraform.instructions.md)                                | [Terraform](#terraform)   | Terraform IaC standards: module structure, naming conventions, variable and output usage, state management, and security best practices                                                                               |
+| [terraform](../templates/terraform/terraform.instructions.md)                                | [Terraform](#terraform)   | Terraform IaC standards: module structure, naming conventions, variable and output usage, state management, security best practices, and modern Terraform 1.9+ syntax                                                 |
 | [nodejs](../templates/typescript/nodejs.instructions.md)                                     | [Typescript](#typescript) | Node.js conventions: module system, error handling, async patterns, environment config, logging, and project structure for server-side TypeScript/JavaScript                                                          |
 | [playwright-typescript](../templates/typescript/playwright-typescript.instructions.md)       | [Typescript](#typescript) | Playwright TypeScript test generation: locators, page objects, fixtures, async/await patterns, and browser automation                                                                                                 |
 | [typescript](../templates/typescript/typescript.instructions.md)                             | [Typescript](#typescript) | TypeScript coding standards: strict types, ESM modules, naming conventions, async/await patterns, and modern TypeScript features                                                                                      |
@@ -111,9 +111,9 @@ This page lists all available instructions organized by domain. This file is aut
 
 ## Terraform
 
-| Instruction                                                     | Description                                                                                                                             |
-| :-------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| [`terraform`](../templates/terraform/terraform.instructions.md) | Terraform IaC standards: module structure, naming conventions, variable and output usage, state management, and security best practices |
+| Instruction                                                     | Description                                                                                                                                                           |
+| :-------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`terraform`](../templates/terraform/terraform.instructions.md) | Terraform IaC standards: module structure, naming conventions, variable and output usage, state management, security best practices, and modern Terraform 1.9+ syntax |
 
 ## Typescript
 
