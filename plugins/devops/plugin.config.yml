@@ -16,12 +16,6 @@ keywords:
   - github-actions
   - ci-cd
 
-# Agents copied as-is from templates/agents/
-agents:
-  - source: devops/skills/code-review-publisher
-  - source: devops/skills/az-devops-setup
-  - source: devops/skills/create-pr
-
 # Skills generated from agent templates (no dedicated prompts exist)
 skills:
   # Publishes code review results as PR comments on GitHub or Azure DevOps

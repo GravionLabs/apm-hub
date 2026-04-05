@@ -445,7 +445,10 @@ export function generatePlugin(configPath: string, templatesDir: string, version
     }
 
     const agentContent = fs.readFileSync(sourcePath, 'utf8');
-    const rawBaseName = path.basename(resolvedAgent);
+    // When source resolves to a directory-layout SKILL.md, use the parent dir name
+    const rawBaseName = resolvedAgent.endsWith('/SKILL.md')
+      ? path.basename(path.dirname(resolvedAgent))
+      : path.basename(resolvedAgent);
     // Strip compound extension (e.g. .agent.md, .skill.md) to get bare name
     const baseName = rawBaseName.replace(/\.(agent|skill|prompt|instructions)\.md$/, '');
     const agentFile = `${baseName}.agent.md`;
