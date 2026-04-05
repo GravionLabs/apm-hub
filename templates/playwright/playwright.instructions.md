@@ -27,7 +27,7 @@ Use resilient locators in this priority order:
 Encapsulate page interactions in classes — keep test logic out of locators:
 
 ```typescript
-// pages/login.page.ts
+// tests/pages/login.page.ts
 export class LoginPage {
   constructor(private page: Page) {}
 
