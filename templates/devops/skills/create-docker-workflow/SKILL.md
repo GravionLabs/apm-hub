@@ -88,3 +88,5 @@ jobs:
 - All action versions pinned to full commit SHA — never floating tags
 - OIDC for cloud registry auth — never store registry credentials as secrets
 - Builds run on PRs (push: false) for validation; push only on main/tags
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

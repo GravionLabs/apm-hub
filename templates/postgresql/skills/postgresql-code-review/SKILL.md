@@ -43,3 +43,5 @@ Review PostgreSQL code for correctness, security, and PG-specific best practices
 
 ## Output format
 Group by file/table. Priority emoji, location, issue, suggested fix.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

@@ -45,3 +45,5 @@ Starter files are available in `templates/` alongside this skill:
 ## Constraints
 - All logs must go to stderr — never stdout (stdio transport uses stdout for MCP protocol)
 - Tool methods should be `async Task<string>` or `async Task<CallToolResponse>`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

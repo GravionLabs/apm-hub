@@ -42,3 +42,5 @@ test('scenario description', async ({ page }) => {
 - One scenario per test — keep tests independent and isolated
 - Use `expect` assertions — never silent clicks with no verification
 - Await all Playwright actions — never `.then()` chains
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

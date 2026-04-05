@@ -57,3 +57,5 @@ TestBed.configureTestingModule({
 - Use `fixture.debugElement.query(By.css(...))` for DOM queries
 - Always call `fixture.detectChanges()` after state changes
 - Use `fakeAsync` + `tick()` for Observable/timer-based async
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

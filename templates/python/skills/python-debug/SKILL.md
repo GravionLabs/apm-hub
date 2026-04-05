@@ -76,3 +76,5 @@ python -m cProfile -s cumulative <script>.py | head -20
 ## Tips
 > **Use the `task` tool** for diagnostic commands — they are mechanical inspection steps.
 > Example: `#task uv run mypy src/ --strict && uv run pytest --tb=short -x`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

@@ -38,3 +38,5 @@ Explore a website to discover testable flows and identify correct locators.
 1. <test description>
 2. <test description>
 ```
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

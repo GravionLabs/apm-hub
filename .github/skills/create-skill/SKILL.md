@@ -2,6 +2,7 @@
 name: create-skill
 description: 'Create a new skill in copilot-hub following the agentskills.io directory layout and copilot-hub conventions.'
 allowed-tools: editFiles codebase runCommands
+model: gpt-4.1
 ---
 
 Create a new skill in the `GravionLabs/copilot-hub` repository.
@@ -22,6 +23,7 @@ Skills live in `templates/<domain>/skills/<name>/SKILL.md`. Use the `shared` dom
 name: <name>           # must match directory name exactly
 description: '...'     # one sentence; used for auto-selection
 allowed-tools: ...     # space-separated: editFiles codebase runCommands problems
+model: gpt-4.1
 ---
 ```
 
@@ -65,3 +67,5 @@ See `references/` for detailed specs:
 - `agentskills-spec.md` — agentskills.io directory layout spec (all 4 subdirs)
 - `copilot-plugin-spec.md` — GitHub Copilot CLI plugin.json spec
 - `skill-conventions.md` — copilot-hub internal conventions and design decisions
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

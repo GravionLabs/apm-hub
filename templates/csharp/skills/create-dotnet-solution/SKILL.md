@@ -103,3 +103,5 @@ Starter files are available in `templates/` alongside this skill and get copied 
 ## Tips
 > **Use the `task` tool** for the scaffolding steps — they are mechanical and don't require reasoning. Example: `#task pwsh scripts/New-Solution.ps1 -SolutionName "Acme.Core" -OutputType library -UpdatePackages`
 > This allows routing scaffold work to a cheaper, faster model.
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

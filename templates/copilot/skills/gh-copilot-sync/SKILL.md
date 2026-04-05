@@ -31,3 +31,5 @@ Compares currently installed instructions, prompts, and agents against the lates
 - Only updates files that are already installed — does not install new categories
 - Preserves local customizations by showing diffs before overwriting
 - For first-time setup, use `gh-copilot-setup` instead
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

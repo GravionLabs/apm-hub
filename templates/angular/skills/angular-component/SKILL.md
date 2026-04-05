@@ -32,3 +32,5 @@ Creates three files (`<name>.ts`, `<name>.html`, `<name>.scss`) for a standalone
 - Use `styleUrl` (singular, Angular 17+), not `styleUrls`
 - Class name: PascalCase + `Component` suffix
 - Follow project's import ordering (Angular core → Angular common → PrimeNG → local)
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

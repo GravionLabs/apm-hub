@@ -84,3 +84,5 @@ docker compose exec app sh        # open shell in running service
 docker compose build --no-cache   # force rebuild
 docker compose ps                 # show running services
 ```
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

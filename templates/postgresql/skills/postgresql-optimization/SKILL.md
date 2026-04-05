@@ -70,3 +70,5 @@ FROM pg_stat_user_tables ORDER BY n_dead_tup DESC LIMIT 20;
 -- Manual vacuum if autovacuum is behind
 VACUUM ANALYZE <table>;
 ```
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

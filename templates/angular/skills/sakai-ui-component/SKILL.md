@@ -33,3 +33,5 @@ Creates a PrimeNG-based Angular standalone component in the `sakai-ui` library, 
 - All exports via `public-api.ts` — no internal deep imports from consumers
 - PrimeNG components must be imported in the component's `imports` array
 - Do not modify existing components unless fixing an export
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

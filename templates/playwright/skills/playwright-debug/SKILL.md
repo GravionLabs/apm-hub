@@ -65,3 +65,5 @@ npx playwright test --project=webkit
 - [ ] Add explicit `expect` waits before interaction
 - [ ] Check `page.waitForLoadState` after navigation
 - [ ] Test all configured browsers (`npx playwright test` without `--project`)
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

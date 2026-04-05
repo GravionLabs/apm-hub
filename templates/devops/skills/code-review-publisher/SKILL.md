@@ -22,3 +22,5 @@ Reads code review results and posts them as PR comments using `gh` (GitHub) or `
    - GitHub: `gh pr comment <number> --body "..."`
    - Azure DevOps: REST API via `az devops invoke`
 5. Confirm each posted comment with PR number and platform
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

@@ -27,3 +27,5 @@ Creates a library project using `ng generate library`, configures `ng-packagr`, 
 - All exports go through `public-api.ts` — no deep imports
 - Use standalone components — no NgModules
 - Library must compile with `ng build` before task is complete
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

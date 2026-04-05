@@ -39,3 +39,5 @@ Reviews the specified code against project-specific and general .NET best practi
 1. Read the target file(s) and project conventions
 2. List all violations found
 3. Apply fixes, staying consistent with existing style
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

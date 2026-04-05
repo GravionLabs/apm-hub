@@ -2,6 +2,7 @@
 name: go-test-generate
 description: 'Generate idiomatic Go tests using table-driven subtests, covering happy path, error cases, and edge cases. Compatible with the race detector.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Generate comprehensive, idiomatic Go tests for the specified code.
@@ -48,3 +49,5 @@ func TestFunctionName(t *testing.T) {
 ## Constraints
 - Use standard `testing` package — introduce testify only if already in the project
 - Avoid global state in tests; each subtest must be independent
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

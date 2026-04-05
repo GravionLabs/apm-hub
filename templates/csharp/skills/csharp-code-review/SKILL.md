@@ -37,3 +37,5 @@ Provides a structured code review with prioritized findings. Does not modify cod
 
 ## Output format
 Group findings by file. For each finding: priority emoji, location, explanation, suggested fix.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

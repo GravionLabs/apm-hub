@@ -95,3 +95,5 @@ jobs:
 - Use OIDC — no `KUBECONFIG` base64 stored in secrets
 - Always wait for rollout completion (`kubectl rollout status` or `helm --wait`)
 - Pin all action SHAs
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

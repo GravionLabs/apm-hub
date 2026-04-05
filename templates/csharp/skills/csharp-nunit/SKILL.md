@@ -50,3 +50,5 @@ public async Task GetUser_WithValidId_ReturnsUser()
 2. Identify test cases: happy path, boundary values, null inputs, error paths
 3. Create one test class per source class; one test method per scenario
 4. Keep tests independent and deterministic — no shared mutable state
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

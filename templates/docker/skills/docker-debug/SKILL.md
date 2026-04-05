@@ -92,3 +92,5 @@ docker run -it --entrypoint bash <image>
 - [ ] Volume mounts verified (paths exist, permissions correct)
 - [ ] Network connectivity tested between services
 - [ ] Resource limits checked — not hitting memory cap
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

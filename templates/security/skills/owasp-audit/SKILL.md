@@ -40,3 +40,5 @@ Check CI/CD pipelines for untrusted inputs in `run:` steps. Verify dependency pi
 
 ### A10 — SSRF
 Any URL or hostname supplied by users? Validate against an explicit allowlist. Block access to `169.254.0.0/16` (cloud metadata) and internal subnets.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

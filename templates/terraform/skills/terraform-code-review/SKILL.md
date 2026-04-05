@@ -44,3 +44,5 @@ Provides a structured, prioritized review of Terraform code. Does not modify fil
 
 ## Output format
 Group by file. Priority emoji, location, explanation, suggested fix.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

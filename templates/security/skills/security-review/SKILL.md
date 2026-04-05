@@ -66,3 +66,5 @@ Perform a structured code security review when asked to check for vulnerabilitie
 ### Recommendations
 - ...
 ```
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

@@ -2,6 +2,7 @@
 name: docker-security-review
 description: 'Review a Dockerfile or docker-compose configuration for security issues: base image hygiene, running as root, exposed secrets, ADD vs COPY, .dockerignore, and image pinning.'
 allowed-tools: codebase
+model: claude-sonnet-4.6
 ---
 
 Review Docker configuration for security vulnerabilities and best practice violations.
@@ -45,3 +46,5 @@ Review Docker configuration for security vulnerabilities and best practice viola
 
 ## Output format
 Group by file. Priority emoji, line reference, issue, and suggested fix.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

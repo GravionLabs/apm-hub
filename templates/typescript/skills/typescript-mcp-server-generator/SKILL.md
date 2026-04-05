@@ -93,3 +93,5 @@ npx @modelcontextprotocol/inspector node dist/index.js
 > **Use the `task` tool** for scaffolding — it's mechanical. Example:
 > `#task pwsh scripts/New-McpServer.ps1 -ServerName "my-tool-server"`
 
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

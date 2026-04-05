@@ -48,3 +48,5 @@ EOF
 - PR title must reference the issue number
 - All CI checks should be green before requesting review
 - Link the issue with `Closes #<issue-number>` in the PR body
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

@@ -41,3 +41,5 @@ Adds or improves `<summary>`, `<param>`, `<returns>`, `<exception>`, and `<remar
 2. Add XML comments — prioritize public surface area first
 3. Ensure every `<param>` and `<exception>` tag matches the actual signature
 4. Do not remove existing comments unless they are incorrect
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

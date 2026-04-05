@@ -54,3 +54,5 @@ Use this skill when asked to perform threat modelling, security design review, o
 - **Info Disclosure** → Least privilege, encryption, generic errors
 - **DoS** → Rate limiting, timeouts, circuit breakers
 - **Elevation** → RBAC, authorization on every operation
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

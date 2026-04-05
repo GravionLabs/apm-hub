@@ -68,3 +68,5 @@ Scaffold a new Python project with a production-ready baseline using `uv`.
 ## Tips
 > **Use the `task` tool** for scaffolding — it's mechanical.
 > Example: `#task pwsh scripts/New-PythonProject.ps1 -ProjectName "my-lib" -ProjectType library`
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

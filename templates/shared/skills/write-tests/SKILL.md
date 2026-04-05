@@ -28,3 +28,5 @@ Analyzes existing code and generates comprehensive unit tests covering happy pat
 - Do not introduce new test frameworks or libraries not already in the project
 - Cover at minimum: happy path, one error path, and one boundary/edge case per method
 - Tests must compile and pass against the existing code
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

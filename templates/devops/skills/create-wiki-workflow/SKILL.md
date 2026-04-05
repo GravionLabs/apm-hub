@@ -36,3 +36,5 @@ Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable Wik
 - The `docs/` directory should contain Markdown files following the GitHub Wiki format
 - The home page should be `docs/Home.md`
 - Do not add redundant build steps — wiki sync only needs to copy files
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

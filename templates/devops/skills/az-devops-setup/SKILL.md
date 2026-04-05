@@ -23,3 +23,5 @@ Installs the `azure-devops` CLI extension, authenticates, and configures the def
    az devops configure --defaults organization=https://dev.azure.com/<org> project=<project>
    ```
 5. Verify: `az devops project show`
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

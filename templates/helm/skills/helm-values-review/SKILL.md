@@ -41,3 +41,5 @@ Evaluates a `values.yaml` (and optionally chart templates) for completeness, sec
 
 ## Output format
 Group findings by section. Priority emoji, location, explanation, suggestion.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

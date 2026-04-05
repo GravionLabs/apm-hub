@@ -80,3 +80,5 @@ addopts = "--strict-markers"
 ## Tips
 > **Use the `task` tool** for setup commands — they are mechanical.
 > Example: `#task uv init my-package && cd my-package && uv add --dev pytest ruff`
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

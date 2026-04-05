@@ -35,3 +35,5 @@ Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable Pyt
 - Use `secrets: inherit` to pass secrets to the reusable workflow
 - Matrix testing across multiple Python versions: pass `python-version` as a JSON array if supported by the reusable workflow
 - Do not duplicate lint/test steps already handled by the reusable workflow
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

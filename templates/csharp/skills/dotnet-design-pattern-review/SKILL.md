@@ -35,3 +35,5 @@ For each finding:
 - **Recommendation**: specific, actionable improvement with a code sketch if helpful
 
 Do not recommend patterns where they add unnecessary complexity.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

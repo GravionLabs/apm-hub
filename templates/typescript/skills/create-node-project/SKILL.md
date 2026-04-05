@@ -68,3 +68,5 @@ Scaffold a new TypeScript/Node.js project with a production-ready baseline.
 ## Tips
 > **Use the `task` tool** for scaffolding — it's mechanical.
 > Example: `#task pwsh scripts/New-NodeProject.ps1 -ProjectName "my-cli" -ProjectType cli`
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

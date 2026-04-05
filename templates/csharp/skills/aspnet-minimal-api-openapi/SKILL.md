@@ -32,3 +32,5 @@ Scaffolds a Carter `ICarterModule` with route handlers, typed request/response m
 - Use Carter for organization — not `app.MapGet` scattered in `Program.cs`
 - All endpoints must have OpenAPI metadata and typed response types
 - Use `TypedResults` (not `Results.Ok(...)`) for compile-time safety
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

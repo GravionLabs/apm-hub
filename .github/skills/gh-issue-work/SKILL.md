@@ -39,3 +39,5 @@ Combines `gh-issue-implement` and `gh-issue-finish` into a single workflow for s
 ## Constraints
 - Tests must pass before the PR is opened
 - PR body must include `Closes #<issue-number>`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

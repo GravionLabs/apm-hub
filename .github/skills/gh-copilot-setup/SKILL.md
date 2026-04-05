@@ -31,3 +31,5 @@ Interactively browses the copilot-hub repository, lets the user select relevant 
 ## Constraints
 - For ongoing sync of already-installed files, use `gh-copilot-sync` instead
 - Never overwrite customized files without user confirmation (unless `--autopilot`)
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

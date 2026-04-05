@@ -67,3 +67,5 @@ See `references/` for detailed specs:
 - `agentskills-spec.md` — agentskills.io directory layout spec (all 4 subdirs)
 - `copilot-plugin-spec.md` — GitHub Copilot CLI plugin.json spec
 - `skill-conventions.md` — copilot-hub internal conventions and design decisions
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

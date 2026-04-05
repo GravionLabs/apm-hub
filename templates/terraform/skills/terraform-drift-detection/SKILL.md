@@ -64,3 +64,5 @@ import {
 - Use `lifecycle { ignore_changes = [...] }` for auto-managed attributes (e.g., ASG `desired_capacity`)
 - Run `terraform plan -refresh-only` in CI on a schedule to detect drift early
 - Use Terraform Cloud / Atlantis drift detection features
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

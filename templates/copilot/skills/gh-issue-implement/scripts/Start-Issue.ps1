@@ -47,7 +47,7 @@ elseif ($labels -contains 'documentation' -or $labels -contains 'docs') { $prefi
 $slug = $title.ToLower() -replace '[^a-z0-9]+', '-' -replace '^-|-$', ''
 if ($slug.Length -gt 50) { $slug = $slug.Substring(0, 50).TrimEnd('-') }
 
-$branch = "$prefix/issue-$IssueNumber-$slug"
+$branch = "$prefix/$IssueNumber-$slug"
 
 Write-Host "Issue: [$($issue.number)] $title" -ForegroundColor White
 Write-Host "Branch: $branch" -ForegroundColor Yellow

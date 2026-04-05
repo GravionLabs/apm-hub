@@ -30,3 +30,5 @@ Detects the project type from indicator files, then creates a tailored `AGENTS.m
 ## Constraints
 - Tailor commands to the actual project — do not use generic placeholders
 - If build/test commands are ambiguous, read `package.json` scripts or `.github/workflows/` to infer them
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

@@ -70,3 +70,5 @@ INSERT INTO events (type, payload) VALUES
 - Index all FK columns and WHERE/JOIN predicates
 - Composite index column order: equality predicates first, then range
 - `(status, created_at)` for `WHERE status = 'open' ORDER BY created_at`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

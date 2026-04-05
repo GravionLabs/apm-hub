@@ -80,3 +80,5 @@ npx tsc --showConfig
 
 ## Tips
 > **Use the `task` tool** for diagnostic commands (`tsc --noEmit`, `--traceResolution`, `npx tsc --showConfig`) — they are mechanical inspection steps that don't require reasoning.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

@@ -71,3 +71,5 @@ terraform workspace show             # confirm active workspace
 
 ## Output format
 Report the most likely cause first, with the exact command or config change to resolve it.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

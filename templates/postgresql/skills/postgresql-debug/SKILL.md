@@ -106,3 +106,5 @@ LIMIT 20;
 - [ ] Tables with high `n_dead_tup` vacuumed
 - [ ] Unused indexes identified
 - [ ] `EXPLAIN (ANALYZE, BUFFERS)` run on slow queries
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

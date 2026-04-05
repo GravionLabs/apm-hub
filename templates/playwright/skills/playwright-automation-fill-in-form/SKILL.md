@@ -42,3 +42,5 @@ await page.getByLabel('Date').fill('2025-07-15');
 - Always verify the filled state before submitting
 - Pause for review if any field fails to fill
 - Generate a reusable test script if the automation will be repeated
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

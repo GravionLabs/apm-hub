@@ -54,3 +54,5 @@ The script fetches the issue, derives the branch name from labels, creates and c
 
 ## Templates
 - **`templates/pr-body.md`** — PR body template used by `gh-issue-finish`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

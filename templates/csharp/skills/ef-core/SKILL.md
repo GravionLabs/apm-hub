@@ -42,3 +42,5 @@ Reviews and improves EF Core usage: DbContext configuration, entity design, migr
 1. Read target code and identify EF Core violations
 2. Apply fixes — query optimizations first, then design improvements
 3. Run `dotnet build` to confirm no compilation errors
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

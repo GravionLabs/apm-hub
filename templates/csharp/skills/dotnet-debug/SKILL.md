@@ -89,3 +89,5 @@ dotnet-dump analyze <dump-file>
 - [ ] Identify process PID with `dotnet-counters ps`
 - [ ] Capture appropriate artifact (trace for CPU, gcdump for memory, dump for crashes)
 - [ ] Look for: excessive GC (high `gen-0/1/2-gc-count`), thread pool starvation (`threadpool-queue-length > 0`), large object heap fragmentation, `async void` patterns, `Result`/`.Wait()` deadlocks
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

@@ -35,3 +35,5 @@ Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable NuG
 - Use `secrets: inherit` to pass repository secrets to the reusable workflow
 - The reusable workflow handles versioning via GitVersion — do not manually set package versions
 - Do not duplicate build/test logic already in the reusable workflow
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

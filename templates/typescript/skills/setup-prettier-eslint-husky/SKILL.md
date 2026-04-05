@@ -58,3 +58,5 @@ Set up a complete code quality pipeline for a JS/TS or Angular project.
 ## Tips
 > **Use the `task` tool** for the setup script — it's mechanical. Example:
 > `#task pwsh scripts/Setup-CodeQuality.ps1 -ProjectType angular -SelectorPrefix app`
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.
