@@ -18,9 +18,9 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: devops/skills/code-review-publisher
-  - source: devops/skills/az-devops-setup
-  - source: devops/skills/create-pr
+  - source: devops/agents/code-review-publisher
+  - source: devops/agents/az-devops-setup
+  - source: devops/agents/create-pr
 
 # Skills generated from agent templates (no dedicated prompts exist)
 skills:
