@@ -13,26 +13,32 @@ describe('generateAgentList', () => {
     templatesDir = path.join(tmpDir, 'templates');
     outputFile = path.join(tmpDir, 'docs', 'agent-list.md');
 
-    const csDir = path.join(templatesDir, 'csharp');
-    fs.mkdirSync(csDir, { recursive: true });
+    // Agents are in templates/<domain>/agents/*.agent.md
+    const csAgentsDir = path.join(templatesDir, 'csharp', 'agents');
+    fs.mkdirSync(csAgentsDir, { recursive: true });
     fs.writeFileSync(
-      path.join(csDir, 'csharp-expert.agent.md'),
+      path.join(csAgentsDir, 'csharp-expert.agent.md'),
       '---\nname: C# Expert\ndescription: Expert C# developer agent.\n---\nContent'
     );
     fs.writeFileSync(
-      path.join(csDir, 'dotnet-upgrade.agent.md'),
+      path.join(csAgentsDir, 'dotnet-upgrade.agent.md'),
       '---\nname: .NET Upgrade\ndescription: Modernize and upgrade .NET projects.\n---\nContent'
     );
-    // Non-agent files should be ignored
+    // Non-agent files in agents/ should be ignored
+    fs.writeFileSync(path.join(csAgentsDir, 'README.md'), '# readme');
+
+    // Skills should not appear in agent list
+    const csSkillsDir = path.join(templatesDir, 'csharp', 'skills', 'csharp-async');
+    fs.mkdirSync(csSkillsDir, { recursive: true });
     fs.writeFileSync(
-      path.join(csDir, 'csharp-async.skill.md'),
+      path.join(csSkillsDir, 'SKILL.md'),
       '---\nname: csharp-async\n---\nContent'
     );
 
-    const sharedDir = path.join(templatesDir, 'shared');
-    fs.mkdirSync(sharedDir, { recursive: true });
+    const sharedAgentsDir = path.join(templatesDir, 'shared', 'agents');
+    fs.mkdirSync(sharedAgentsDir, { recursive: true });
     fs.writeFileSync(
-      path.join(sharedDir, 'documentation-writer.agent.md'),
+      path.join(sharedAgentsDir, 'documentation-writer.agent.md'),
       '---\nname: Documentation Writer\ndescription: Write and update technical documentation.\n---\nContent'
     );
   });
@@ -52,7 +58,7 @@ describe('generateAgentList', () => {
     expect(content).toContain('Documentation Writer');
   });
 
-  it('should not include skills or instructions in agent list', () => {
+  it('should not include skills in agent list', () => {
     generateAgentList(templatesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).not.toContain('csharp-async');
@@ -66,10 +72,10 @@ describe('generateAgentList', () => {
     expect(content).toContain('[Shared](#shared)');
   });
 
-  it('should link to template files', () => {
+  it('should link to template files using agents/ subdir path', () => {
     generateAgentList(templatesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
-    expect(content).toContain('csharp-expert.agent.md');
-    expect(content).toContain('documentation-writer.agent.md');
+    expect(content).toContain('csharp/agents/csharp-expert.agent.md');
+    expect(content).toContain('shared/agents/documentation-writer.agent.md');
   });
 });
