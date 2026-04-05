@@ -2,7 +2,7 @@
 
 
 <!-- AUTO:start version -->
-Welcome to **copilot-hub** v1.0.29 👋
+Welcome to **copilot-hub** v1.0.30 👋
 <!-- AUTO:end version -->
 
 > **📌 Scope & Version Notice**
