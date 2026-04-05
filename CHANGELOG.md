@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.24] — 2026-04-05
+
+### Features
+- **postgresql**: Create plugin; add agents, skills, instructions (#45)
+
+
 ## [1.0.23] — 2026-04-05
+
+### Documentation
+- Update CHANGELOG.md for v1.0.23 [skip ci]
+
 
 ### Features
 - **playwright**: Add skills, instructions, debug skill; fix agent frontmatter (#44)
