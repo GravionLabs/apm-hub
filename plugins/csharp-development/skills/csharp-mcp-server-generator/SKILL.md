@@ -6,7 +6,9 @@ allowed-tools: editFiles codebase runCommands
 
 Generate a complete Model Context Protocol (MCP) server in C#.
 
-## What this skill does
+## Stack
+- **CLI:** `dotnet` SDK (key commands: `dotnet new console`, `dotnet add package`, `dotnet build`, `dotnet run`)
+- **Package manager:** NuGet — `ModelContextProtocol` (prerelease), `Microsoft.Extensions.Hosting`
 Creates a C# console application that implements an MCP server using `ModelContextProtocol` (prerelease) with `Microsoft.Extensions.Hosting`, exposes tools and prompts, and uses stdio transport.
 
 ## Steps

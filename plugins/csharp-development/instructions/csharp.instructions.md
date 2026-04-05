@@ -9,6 +9,40 @@ applyTo: '**/*.cs'
 - Always use the latest version C#, currently C# 14 features.
 - Write clear and concise comments for each function.
 
+## C# 13 / .NET 9 Features (prefer these)
+
+- **`params` collections** — use `params ReadOnlySpan<T>` instead of `params T[]` for better performance; also works with `IEnumerable<T>`, `List<T>`
+  ```csharp
+  static void Log(params ReadOnlySpan<string> messages) { ... }
+  ```
+- **`System.Threading.Lock`** — use `Lock` type instead of `lock(object)` for improved performance and diagnostics
+  ```csharp
+  private readonly Lock _lock = new();
+  using (_lock.EnterScope()) { ... }
+  ```
+- **LINQ additions** — prefer `CountBy`, `AggregateBy`, and `Index` over manual loops
+  ```csharp
+  var counts = items.CountBy(x => x.Category);
+  var indexed = items.Index(); // (int Index, T Item) tuples
+  ```
+- **`\e` escape sequence** — use `\e` instead of `\x1b` or `\u001b` for ANSI escape codes
+
+## C# 14 / .NET 10 Features (prefer these)
+
+- **`field` keyword in auto-properties** — access the compiler-generated backing field directly:
+  ```csharp
+  public string Name
+  {
+      get;
+      set => field = value?.Trim() ?? throw new ArgumentNullException(nameof(value));
+  }
+  ```
+- **Implicit span conversions** — `string[]` and `T[]` convert implicitly to `ReadOnlySpan<T>` in method calls
+- **`allows ref struct`** — use in generic constraints when accepting `ref struct` types like `Span<T>`:
+  ```csharp
+  static T Process<T>(T value) where T : allows ref struct { ... }
+  ```
+
 ## General Instructions
 - Make only high confidence suggestions when reviewing code changes.
 - Write code with good maintainability practices, including comments on why certain design decisions were made.

@@ -1,5 +1,8 @@
 ---
+name: "API Architect"
 description: 'API design mentor: REST and HTTP best practices, OpenAPI specs, versioning, error handling, and working code for new or existing APIs'
+mode: agent
+tools: ["codebase", "editFiles", "search", "problems", "changes"]
 ---
 # API Architect mode instructions
 
