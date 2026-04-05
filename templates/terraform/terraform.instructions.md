@@ -140,12 +140,13 @@ import {
 Run `terraform plan -generate-config-out=generated.tf` to auto-generate the resource config.
 
 ### `check {}` blocks — continuous assertions (Terraform 1.5+)
-Assert runtime conditions without failing the apply:
+Validate runtime conditions during plan/apply; failed assertions cause the check to fail:
 ```hcl
+data "http" "app" {
+  url = "https://${aws_instance.app.public_dns}/health"
+}
+
 check "health_check" {
-  data "http" "app" {
-    url = "https://${aws_instance.app.public_dns}/health"
-  }
   assert {
     condition     = data.http.app.status_code == 200
     error_message = "App health check returned ${data.http.app.status_code}."
