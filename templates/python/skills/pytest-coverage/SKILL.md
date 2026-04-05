@@ -47,3 +47,7 @@ pytest --cov=<source-dir> --cov-report=term-missing --cov-fail-under=<target>
 - Do not mock internal implementation details — test the public interface
 - Do not write tests that trivially pass without actually exercising the logic
 - If coverage cannot reach 100% due to platform-specific code, use `# pragma: no cover` with a comment
+
+## Tips
+> **Use the `task` tool** for coverage runs — they are mechanical.
+> Example: `#task uv run pytest --cov=src --cov-report=term-missing --cov-fail-under=80`

@@ -71,3 +71,7 @@ python -m cProfile -s cumulative <script>.py | head -20
 | Memory growing | tracemalloc | Find objects not being GC'd; check circular refs |
 | Type mismatch at runtime | mypy | Run `mypy --strict`; add type annotations |
 | `RuntimeError: coroutine never awaited` | asyncio | Add `await`; check event loop setup |
+
+## Tips
+> **Use the `task` tool** for diagnostic commands — they are mechanical inspection steps.
+> Example: `#task uv run mypy src/ --strict && uv run pytest --tb=short -x`
