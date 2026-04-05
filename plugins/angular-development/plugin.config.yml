@@ -41,6 +41,18 @@ skills:
   - name: angular-library-create
     source: angular/angular-library-create
 
+  # Code quality & review
+  - name: angular-code-review
+    source: angular/angular-code-review
+
+  # Testing
+  - name: angular-testing
+    source: angular/angular-testing
+
+  # Migration
+  - name: angular-migration
+    source: angular/angular-migration
+
 instructions:
   - source: angular/angular
   - source: angular/ngrx-signals
