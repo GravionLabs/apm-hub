@@ -22,12 +22,12 @@ Only create subdirs that are actually needed. An empty `assets/` directory adds 
 
 ## Subdir Semantics
 
-| Subdir | Content | Examples |
-|---|---|---|
-| `templates/` | Files to copy/adapt into user projects | `.editorconfig`, `pyproject.toml`, `Program.cs`, CI YAML |
-| `scripts/` | Executable utility scripts | `setup.sh`, `run-migrations.ps1` |
-| `references/` | Reference docs for the agent to read | `common-errors.md`, `cheatsheet.md` |
-| `assets/` | Images, diagrams, binary files | `architecture.svg`, `logo.png` |
+| Subdir        | Content                                | Examples                                                 |
+| :------------ | :------------------------------------- | :------------------------------------------------------- |
+| `templates/`  | Files to copy/adapt into user projects | `.editorconfig`, `pyproject.toml`, `Program.cs`, CI YAML |
+| `scripts/`    | Executable utility scripts             | `setup.sh`, `run-migrations.ps1`                         |
+| `references/` | Reference docs for the agent to read   | `common-errors.md`, `cheatsheet.md`                      |
+| `assets/`     | Images, diagrams, binary files         | `architecture.svg`, `logo.png`                           |
 
 ## How the Generator Processes Them
 
