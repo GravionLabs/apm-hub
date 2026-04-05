@@ -2,6 +2,7 @@
 name: gh-issue-work
 description: 'End-to-end workflow for a GitHub issue: read issue, create branch, implement with tests and docs, review, and open a pull request.'
 allowed-tools: codebase editFiles runCommands
+model: claude-sonnet-4.6
 ---
 
 Complete end-to-end workflow for a GitHub issue — from branch creation to pull request.
@@ -38,3 +39,5 @@ Combines `gh-issue-implement` and `gh-issue-finish` into a single workflow for s
 ## Constraints
 - Tests must pass before the PR is opened
 - PR body must include `Closes #<issue-number>`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

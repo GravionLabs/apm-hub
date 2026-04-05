@@ -2,6 +2,7 @@
 name: "Secrets Audit"
 description: "Scan for hardcoded secrets, credentials, and insecure secret storage patterns"
 allowed-tools: ["codebase", "changes", "runCommands", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # Secrets Audit
@@ -69,3 +70,5 @@ connectionString = "Server=...;Password=..."
 - [ ] `.secrets.baseline` maintained if using detect-secrets
 - [ ] Pre-commit hook (`gitleaks protect --staged`) configured
 - [ ] Secret rotation policy documented
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

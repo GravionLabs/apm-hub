@@ -2,6 +2,7 @@
 name: "review-ci-workflow"
 description: "Review a GitHub Actions CI/CD workflow file for correctness, security, and best practices"
 allowed-tools: ["codebase", "changes", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # CI Workflow Review
@@ -55,3 +56,5 @@ Use this skill when asked to review a GitHub Actions workflow for correctness, s
 |---|---|---|---|
 | 🔴 | job: deploy, step: auth | Hardcoded AWS key | Use OIDC with id-token: write |
 ```
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

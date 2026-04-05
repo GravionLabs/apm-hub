@@ -2,6 +2,7 @@
 name: "ci-debug"
 description: "Diagnose failing GitHub Actions CI runs — parse logs, identify root causes, and suggest fixes"
 allowed-tools: ["codebase", "runCommands", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # CI Debug
@@ -73,3 +74,5 @@ gh run watch <RUN_ID>
 - [ ] Verify secrets/variables set in correct scope (repo vs environment)
 - [ ] Re-run with debug logging: `ACTIONS_STEP_DEBUG: true` in repo vars
 - [ ] Check if failure is on `main` too (regression) or only on PR
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

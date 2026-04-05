@@ -2,6 +2,7 @@
 name: dotnet-design-pattern-review
 description: 'Review C#/.NET code for design pattern implementation quality and suggest improvements. Read-only — outputs findings, does not modify code.'
 allowed-tools: codebase
+model: claude-sonnet-4.6
 ---
 
 Review C#/.NET code for design pattern implementation and suggest improvements.
@@ -34,3 +35,5 @@ For each finding:
 - **Recommendation**: specific, actionable improvement with a code sketch if helpful
 
 Do not recommend patterns where they add unnecessary complexity.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

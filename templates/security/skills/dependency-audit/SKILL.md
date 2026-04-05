@@ -2,6 +2,7 @@
 name: "Dependency Audit"
 description: "Audit dependencies for known vulnerabilities and outdated packages across ecosystems"
 allowed-tools: ["codebase", "runCommands", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # Dependency Audit
@@ -68,3 +69,5 @@ snyk test
 | Dependency with no fix | Replace with maintained alternative |
 | Unpinned `*` version | Lock to specific version in manifest |
 | No lockfile | Run `npm install` / `pip freeze > requirements.txt` |
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

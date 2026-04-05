@@ -2,6 +2,7 @@
 name: terraform-module-create
 description: 'Scaffold a reusable Terraform module with variables.tf, outputs.tf, main.tf, examples/, and a terraform-docs README.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Scaffold a complete, reusable Terraform module.
@@ -38,3 +39,5 @@ Creates a well-structured Terraform module following HashiCorp module developmen
 ## Constraints
 - Pin provider versions in `versions.tf` — never use `>= x` without an upper bound for patch releases
 - No secrets in examples — use `var.` references
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

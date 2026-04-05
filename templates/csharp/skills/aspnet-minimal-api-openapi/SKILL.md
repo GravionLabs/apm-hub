@@ -2,6 +2,7 @@
 name: aspnet-minimal-api-openapi
 description: 'Create an ASP.NET Core Minimal API endpoint module using Carter with full OpenAPI documentation, typed request/response models, and proper error responses.'
 allowed-tools: codebase editFiles
+model: claude-sonnet-4.6
 ---
 
 Create a well-structured ASP.NET Core Minimal API endpoint using Carter with OpenAPI documentation.
@@ -31,3 +32,5 @@ Scaffolds a Carter `ICarterModule` with route handlers, typed request/response m
 - Use Carter for organization — not `app.MapGet` scattered in `Program.cs`
 - All endpoints must have OpenAPI metadata and typed response types
 - Use `TypedResults` (not `Results.Ok(...)`) for compile-time safety
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

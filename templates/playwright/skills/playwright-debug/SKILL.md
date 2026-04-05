@@ -2,6 +2,7 @@
 name: playwright-debug
 description: 'Debug flaky Playwright tests: diagnose timeout errors, selector failures, race conditions, and browser-specific issues using --debug, --trace, and Playwright Inspector.'
 allowed-tools: codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Diagnose and fix failing or flaky Playwright tests.
@@ -64,3 +65,5 @@ npx playwright test --project=webkit
 - [ ] Add explicit `expect` waits before interaction
 - [ ] Check `page.waitForLoadState` after navigation
 - [ ] Test all configured browsers (`npx playwright test` without `--project`)
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

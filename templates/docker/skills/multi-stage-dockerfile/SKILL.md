@@ -2,6 +2,7 @@
 name: multi-stage-dockerfile
 description: 'Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.'
 allowed-tools: codebase editFiles
+model: claude-sonnet-4.6
 ---
 
 Create an optimized multi-stage Dockerfile for the project.
@@ -48,3 +49,5 @@ ENTRYPOINT [...]
 1. Detect language and framework from project files
 2. Write the Dockerfile with appropriate stages
 3. Create or update `.dockerignore`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

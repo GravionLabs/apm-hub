@@ -2,6 +2,7 @@
 name: typescript-mcp-server-generator
 description: 'Generate a complete MCP server in TypeScript with tools, resources, and prompts using @modelcontextprotocol/sdk and zod validation.'
 allowed-tools: codebase editFiles runCommands
+model: claude-sonnet-4.6
 ---
 
 Generate a complete, production-ready Model Context Protocol (MCP) server in TypeScript.
@@ -92,3 +93,5 @@ npx @modelcontextprotocol/inspector node dist/index.js
 > **Use the `task` tool** for scaffolding — it's mechanical. Example:
 > `#task pwsh scripts/New-McpServer.ps1 -ServerName "my-tool-server"`
 
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

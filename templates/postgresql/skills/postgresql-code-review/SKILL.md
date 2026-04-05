@@ -2,6 +2,7 @@
 name: postgresql-code-review
 description: 'Review PostgreSQL schema and query code for correctness, security, and PG-specific best practices: JSONB usage, RLS, index strategy, naming conventions, and anti-patterns.'
 allowed-tools: codebase
+model: claude-sonnet-4.6
 ---
 
 Review PostgreSQL code for correctness, security, and PG-specific best practices.
@@ -42,3 +43,5 @@ Review PostgreSQL code for correctness, security, and PG-specific best practices
 
 ## Output format
 Group by file/table. Priority emoji, location, issue, suggested fix.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

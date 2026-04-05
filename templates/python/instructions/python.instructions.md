@@ -8,6 +8,8 @@ applyTo: '**/*.py'
 ## Project Structure and Tooling
 
 - Use **uv** as the default package manager and for environment management.
+- Use **ruff** as the default linter and formatter (replaces flake8/black/isort): `uv run ruff check .` / `uv run ruff format .`
+- Target **Python 3.14+** for new projects (`requires-python = ">=3.14"` in `pyproject.toml`).
 - Follow the **src layout**:
   - Application code resides in the `src/` directory.
   - Tests reside in the `tests/` directory.
@@ -99,13 +101,17 @@ class MyList(list[int]):
 - `copy.copy()` / `copy.deepcopy()` are faster for built-in types
 - Use `PythonFinalizationError` for code running during interpreter shutdown
 
+### Python 3.14 — Current Target
+- Free-threaded mode (`--disable-gil`) is available as an opt-in experimental feature
+- Improved `locals()` semantics are finalized
+- `pyproject.toml` default: `requires-python = ">=3.14"`
+
 ## Additional Python Conventions
 
-- Follow the **PEP 8** style guide for Python.
-- Maintain proper indentation (use 4 spaces for each level of indentation).
-- Ensure lines do not exceed 79 characters.
-- Place function and class docstrings immediately after the `def` or `class` keyword.
-- Use blank lines to separate functions, classes, and code blocks where appropriate.
+- Follow **ruff** defaults for style (line-length 120, auto-fixes enabled)
+- Maintain proper indentation (4 spaces per level)
+- Place function and class docstrings immediately after the `def` or `class` keyword
+- Use blank lines to separate functions, classes, and code blocks where appropriate
 
 ## Edge Cases and Testing
 

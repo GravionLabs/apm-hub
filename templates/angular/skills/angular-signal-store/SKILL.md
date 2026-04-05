@@ -2,6 +2,7 @@
 name: angular-signal-store
 description: 'Create an NgRx Signal Store for Angular state management with state, computed signals, updaters, and effects. Follows @ngrx/signals patterns.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Scaffold an NgRx Signal Store for Angular feature state management.
@@ -30,3 +31,5 @@ Creates a `<feature>.store.ts` (and optionally `<feature>.models.ts`) using `@ng
 - Keep store files focused on a single feature slice
 - Prefer `withComputed` for derived values over manual subscriptions
 - Export the store type: `type <Feature>Store = InstanceType<typeof <Feature>Store>`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

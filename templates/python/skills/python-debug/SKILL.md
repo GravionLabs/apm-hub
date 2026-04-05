@@ -2,6 +2,7 @@
 name: python-debug
 description: 'Diagnose and fix Python runtime errors, memory leaks, and performance issues using pdb, mypy, and profiling tools.'
 allowed-tools: codebase problems runCommands editFiles
+model: claude-sonnet-4.6
 ---
 
 Diagnose and resolve Python runtime issues including crashes, unexpected behavior, memory leaks, and slow performance.
@@ -71,3 +72,9 @@ python -m cProfile -s cumulative <script>.py | head -20
 | Memory growing | tracemalloc | Find objects not being GC'd; check circular refs |
 | Type mismatch at runtime | mypy | Run `mypy --strict`; add type annotations |
 | `RuntimeError: coroutine never awaited` | asyncio | Add `await`; check event loop setup |
+
+## Tips
+> **Use the `task` tool** for diagnostic commands — they are mechanical inspection steps.
+> Example: `#task uv run mypy src/ --strict && uv run pytest --tb=short -x`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

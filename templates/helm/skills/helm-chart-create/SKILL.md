@@ -2,6 +2,7 @@
 name: helm-chart-create
 description: 'Scaffold a new Helm 3 chart with Chart.yaml, values.yaml, named templates, standard Kubernetes resources, and security context defaults.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Scaffold a complete, production-ready Helm 3 chart.
@@ -36,3 +37,5 @@ Creates a Helm chart with all required files, helper templates, and security-con
 - Use `helm.sh/chart` label with chart name+version
 - All image tags must be configurable via values — no hardcoded tags in templates
 - Resources limits/requests must be configurable and have sensible defaults
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

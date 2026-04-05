@@ -2,6 +2,7 @@
 name: csharp-mcp-server-generator
 description: 'Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Generate a complete Model Context Protocol (MCP) server in C#.
@@ -44,3 +45,5 @@ Starter files are available in `templates/` alongside this skill:
 ## Constraints
 - All logs must go to stderr — never stdout (stdio transport uses stdout for MCP protocol)
 - Tool methods should be `async Task<string>` or `async Task<CallToolResponse>`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

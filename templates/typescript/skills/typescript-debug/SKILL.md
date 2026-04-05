@@ -2,6 +2,7 @@
 name: typescript-debug
 description: 'Diagnose and fix TypeScript type errors, module resolution issues, build failures, and runtime errors using tsc, Node.js debugger, and source maps.'
 allowed-tools: codebase problems runCommands editFiles
+model: claude-sonnet-4.6
 ---
 
 Diagnose and resolve TypeScript and Node.js issues including type errors, module resolution failures, build errors, and runtime crashes.
@@ -79,3 +80,5 @@ npx tsc --showConfig
 
 ## Tips
 > **Use the `task` tool** for diagnostic commands (`tsc --noEmit`, `--traceResolution`, `npx tsc --showConfig`) — they are mechanical inspection steps that don't require reasoning.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

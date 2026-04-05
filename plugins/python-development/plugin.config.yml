@@ -44,6 +44,9 @@ skills:
   # Set up or modernize Python packaging with pyproject.toml and uv
   - name: python-packaging
     source: python/skills/python-packaging
+  # Scaffold a new Python 3.14 project with uv, ruff, and pytest
+  - name: create-python-project
+    source: python/skills/create-python-project
 
 instructions:
   - source: python/instructions/python

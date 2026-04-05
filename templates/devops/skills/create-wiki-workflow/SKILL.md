@@ -2,6 +2,7 @@
 name: create-wiki-workflow
 description: 'Create a GitHub Actions workflow that syncs a docs/ directory to the GitHub Wiki using GravionLabs/ci reusable workflows.'
 allowed-tools: editFiles
+model: gpt-4.1
 ---
 
 Create a `.github/workflows/sync-wiki.yml` file that syncs documentation to the GitHub Wiki.
@@ -35,3 +36,5 @@ Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable Wik
 - The `docs/` directory should contain Markdown files following the GitHub Wiki format
 - The home page should be `docs/Home.md`
 - Do not add redundant build steps — wiki sync only needs to copy files
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

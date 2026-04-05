@@ -2,6 +2,7 @@
 name: create-angular-project
 description: 'Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier.'
 allowed-tools: editFiles codebase runCommands
+model: gpt-4.1
 ---
 
 Scaffold a new Angular 21+ project with a production-ready baseline.
@@ -66,3 +67,5 @@ Scaffold a new Angular 21+ project with a production-ready baseline.
 ## Tips
 > **Use the `task` tool** for scaffolding — it's mechanical.
 > Example: `#task pwsh scripts/New-AngularProject.ps1 -ProjectName "my-app" -UseVitest -UseEslint`
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

@@ -2,6 +2,7 @@
 name: "Security Review"
 description: "Structured security review against OWASP Top 10 — any language or framework"
 allowed-tools: ["codebase", "changes", "problems"]
+model: claude-sonnet-4.6
 ---
 
 # Security Review
@@ -65,3 +66,5 @@ Perform a structured code security review when asked to check for vulnerabilitie
 ### Recommendations
 - ...
 ```
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

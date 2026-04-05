@@ -2,6 +2,7 @@
 name: setup-prettier-eslint-husky
 description: 'Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm.'
 allowed-tools: editFiles codebase runCommands
+model: gpt-4.1
 ---
 
 Set up a complete code quality pipeline for a JS/TS or Angular project.
@@ -57,3 +58,5 @@ Set up a complete code quality pipeline for a JS/TS or Angular project.
 ## Tips
 > **Use the `task` tool** for the setup script — it's mechanical. Example:
 > `#task pwsh scripts/Setup-CodeQuality.ps1 -ProjectType angular -SelectorPrefix app`
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

@@ -2,6 +2,7 @@
 name: csharp-code-review
 description: 'Perform a structured C# and NUnit code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions.'
 allowed-tools: codebase
+model: claude-sonnet-4.6
 ---
 
 Review C# code for correctness, readability, maintainability, and security.
@@ -36,3 +37,5 @@ Provides a structured code review with prioritized findings. Does not modify cod
 
 ## Output format
 Group findings by file. For each finding: priority emoji, location, explanation, suggested fix.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
