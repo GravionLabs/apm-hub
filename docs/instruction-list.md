@@ -19,6 +19,7 @@ This page lists all available instructions organized by domain. This file is aut
 | [csharp-nunit](../templates/csharp/csharp-nunit.instructions.md)                             | [Csharp](#csharp)         | Guidelines for C# testing with NUnit, NSubstitute and Shouldly                                                                                                                                                        |
 | [csharp](../templates/csharp/csharp.instructions.md)                                         | [Csharp](#csharp)         | C# coding standards for .NET projects: naming conventions, structure, async/await, LINQ, error handling, and SOLID principles                                                                                         |
 | [playwright-dotnet](../templates/csharp/playwright-dotnet.instructions.md)                   | [Csharp](#csharp)         | Playwright .NET C# test generation: page objects, locators, assertions, and test structure for C# test projects                                                                                                       |
+| [github-actions](../templates/devops/github-actions.instructions.md)                         | [Devops](#devops)         | GitHub Actions best practices: permissions, OIDC, secrets, caching, action pinning, and workflow structure                                                                                                            |
 | [powershell](../templates/devops/powershell.instructions.md)                                 | [Devops](#devops)         | PowerShell cmdlet and scripting best practices based on Microsoft guidelines                                                                                                                                          |
 | [shell](../templates/devops/shell.instructions.md)                                           | [Devops](#devops)         | Shell scripting best practices and conventions for bash, sh, zsh, and other shells                                                                                                                                    |
 | [docker](../templates/docker/docker.instructions.md)                                         | [Docker](#docker)         | Comprehensive best practices for creating optimized, secure, and efficient Docker images and managing containers. Covers multi-stage builds, image layer optimization, security scanning, and runtime best practices. |
@@ -66,10 +67,11 @@ This page lists all available instructions organized by domain. This file is aut
 
 ## Devops
 
-| Instruction                                                    | Description                                                                        |
-| :------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
-| [`powershell`](../templates/devops/powershell.instructions.md) | PowerShell cmdlet and scripting best practices based on Microsoft guidelines       |
-| [`shell`](../templates/devops/shell.instructions.md)           | Shell scripting best practices and conventions for bash, sh, zsh, and other shells |
+| Instruction                                                            | Description                                                                                                |
+| :--------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| [`github-actions`](../templates/devops/github-actions.instructions.md) | GitHub Actions best practices: permissions, OIDC, secrets, caching, action pinning, and workflow structure |
+| [`powershell`](../templates/devops/powershell.instructions.md)         | PowerShell cmdlet and scripting best practices based on Microsoft guidelines                               |
+| [`shell`](../templates/devops/shell.instructions.md)                   | Shell scripting best practices and conventions for bash, sh, zsh, and other shells                         |
 
 ## Docker
 

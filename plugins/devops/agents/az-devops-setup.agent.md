@@ -6,6 +6,10 @@ allowed-tools: runCommands codebase
 
 Set up the Azure DevOps CLI extension with authentication and default configuration.
 
+## Stack
+- **CLI:** `az` — Azure CLI (key commands: `az extension add`, `az devops configure`, `az devops login`)
+- **Extension:** `azure-devops` — `az extension add --name azure-devops`
+
 ## What this skill does
 Installs the `azure-devops` CLI extension, authenticates, and configures the default organization and project.
 

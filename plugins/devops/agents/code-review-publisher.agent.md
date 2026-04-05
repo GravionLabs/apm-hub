@@ -6,6 +6,10 @@ allowed-tools: runCommands codebase
 
 Publish structured code review feedback as pull request comments.
 
+## Stack
+- **CLI:** `gh` — GitHub CLI (key commands: `gh pr comment`, `gh pr review`)
+- **CLI:** `az devops` — Azure DevOps CLI (key commands: `az repos pr create`, `az devops invoke`)
+
 ## What this skill does
 Reads code review results and posts them as PR comments using `gh` (GitHub) or `az devops` (Azure DevOps).
 

@@ -6,6 +6,9 @@ allowed-tools: runCommands codebase
 
 Create a well-structured pull request by analyzing the current branch's commits and diff.
 
+## Stack
+- **CLI:** `gh` — GitHub CLI (key commands: `gh pr create`, `gh pr view`, `git log`, `git diff`)
+
 ## What this skill does
 Analyzes git history and file changes, generates a structured PR title and description, and creates the PR on GitHub or Azure DevOps.
 

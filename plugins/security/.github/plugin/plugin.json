@@ -1,7 +1,7 @@
 {
   "name": "security",
   "description": "Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "author": {
     "name": "Gravion"
   },
