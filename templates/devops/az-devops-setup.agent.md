@@ -1,8 +1,8 @@
 ---
 name: az-devops-setup
 description: 'Interactive setup guide for the az CLI azure-devops extension and authentication.'
-allowed-tools: runCommands codebase
-tools: runCommands codebase
+mode: agent
+tools: ["runCommands", "codebase"]
 ---
 
 You are a DevOps agent that guides users through installing and authenticating the Azure DevOps CLI extension.
