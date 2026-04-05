@@ -18,34 +18,34 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: python/python-expert
-  - source: python/pytest-engineer
-  - source: python/python-mcp-expert
-  - source: python/python-reviewer
-  - source: shared/documentation-writer
+  - source: python/agents/python-expert
+  - source: python/agents/pytest-engineer
+  - source: python/agents/python-mcp-expert
+  - source: python/agents/python-reviewer
+  - source: shared/agents/documentation-writer
 
 # Skills generated from prompt templates
 skills:
   # GitHub Actions CI/CD workflow for Python packages
   - name: create-python-workflow
-    source: devops/create-python-workflow
+    source: devops/skills/create-python-workflow
   # Structured Python code review (correctness, types, security, pytest)
   - name: python-code-review
-    source: python/python-code-review
+    source: python/skills/python-code-review
   # pytest coverage reporting and configuration
   - name: pytest-coverage
-    source: python/pytest-coverage
+    source: python/skills/pytest-coverage
   # Generate focused unit tests for existing code
   - name: write-tests
-    source: shared/write-tests
+    source: shared/skills/write-tests
   # Diagnose and fix Python runtime errors, memory leaks, and performance issues
   - name: python-debug
-    source: python/python-debug
+    source: python/skills/python-debug
   # Set up or modernize Python packaging with pyproject.toml and uv
   - name: python-packaging
-    source: python/python-packaging
+    source: python/skills/python-packaging
 
 instructions:
-  - source: python/python
-  - source: python/python-pytest
-  - source: python/playwright-python
+  - source: python/instructions/python
+  - source: python/instructions/python-pytest
+  - source: python/instructions/playwright-python

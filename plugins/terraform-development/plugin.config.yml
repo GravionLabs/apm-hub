@@ -17,23 +17,23 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: terraform/terraform-expert
-  - source: terraform/terraform-reviewer
+  - source: terraform/agents/terraform-expert
+  - source: terraform/agents/terraform-reviewer
 
 # Skills generated from prompt templates
 skills:
   # Terraform configuration review (security, naming, modules, state)
   - name: terraform-code-review
-    source: terraform/terraform-code-review
+    source: terraform/skills/terraform-code-review
   # Scaffold a reusable Terraform module with examples and README
   - name: terraform-module-create
-    source: terraform/terraform-module-create
+    source: terraform/skills/terraform-module-create
   # Diagnose unexpected plan changes (drift, lifecycle, provider mismatches)
   - name: terraform-plan-debugger
-    source: terraform/terraform-plan-debugger
+    source: terraform/skills/terraform-plan-debugger
   # Detect and remediate infrastructure drift
   - name: terraform-drift-detection
-    source: terraform/terraform-drift-detection
+    source: terraform/skills/terraform-drift-detection
 
 instructions:
-  - source: terraform/terraform
+  - source: terraform/instructions/terraform

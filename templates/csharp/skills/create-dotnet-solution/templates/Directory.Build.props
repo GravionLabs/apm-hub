@@ -1,0 +1,23 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Target framework — change to match your project requirements -->
+    <TargetFramework>net9.0</TargetFramework>
+
+    <!-- Enforce nullable reference types across all projects -->
+    <Nullable>enable</Nullable>
+
+    <!-- Enable C# global usings (System, System.Linq, etc.) -->
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Treat all compiler warnings as errors for a clean build -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- Deterministic builds for reproducibility -->
+    <Deterministic>true</Deterministic>
+
+    <!-- Suppress NuGet restore audit noise (adjust as needed) -->
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+
+</Project>

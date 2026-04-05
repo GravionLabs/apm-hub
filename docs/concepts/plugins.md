@@ -54,15 +54,15 @@ agents:
 
 skills:
   - name: csharp-async
-    source: csharp/csharp-async     # resolves to templates/csharp/csharp-async.skill.md
+    source: csharp/skills/csharp-async     # resolves to templates/csharp/skills/csharp-async.skill.md
   - name: csharp-code-review
-    source: csharp/csharp-code-review
+    source: csharp/skills/csharp-code-review
     extend:
-      - csharp/csharp-expert        # body appended after a --- separator
+      - csharp/agents/csharp-expert        # body appended after a --- separator
 
 instructions:
-  - source: csharp/csharp           # resolves to templates/csharp/csharp.instructions.md
-  - source: csharp/csharp-nunit.instructions.md
+  - source: csharp/instructions/csharp          # resolves to templates/csharp/instructions/csharp.instructions.md
+  - source: csharp/instructions/csharp-nunit
 
 files:
   - source: editor-configs/.editorconfig-csharp
@@ -80,28 +80,26 @@ files:
 | `license`               | string                    |    —     | SPDX license identifier (e.g. `MIT`)                                                                                                     |
 | `keywords`              | string[]                  |    —     | Searchable tags                                                                                                                          |
 | `agents`                | PluginAgentConfig[]       |    —     | List of agents to include                                                                                                                |
-| `agents[].source`       | string                    |    ✅     | Agent domain path — resolves to `templates/<domain>/<name>.agent.md`. Use format `<domain>/<name>` (e.g., `csharp/api-architect`).       |
+| `agents[].source`       | string                    |    ✅     | Agent path — use `<domain>/agents/<name>` (e.g., `csharp/agents/api-architect`).       |
 | `skills`                | PluginSkillConfig[]       |    —     | List of skills to generate                                                                                                               |
 | `skills[].name`         | string                    |    ✅     | Skill name (used as the directory name under `skills/`)                                                                                  |
-| `skills[].source`       | string                    |    ✅     | Source template path — use format `<domain>/<name>` (e.g., `csharp/csharp-async`)                                                        |
+| `skills[].source`       | string                    |    ✅     | Source template path — use `<domain>/skills/<name>` (e.g., `csharp/skills/csharp-async`)                                                        |
 | `skills[].extend`       | string[]                  |    —     | Additional source paths whose bodies are appended to the skill                                                                           |
 | `instructions`          | PluginInstructionConfig[] |    —     | List of instruction files to bundle                                                                                                      |
-| `instructions[].source` | string                    |    ✅     | Instruction domain path — resolves to `templates/<domain>/<name>.instructions.md`. Use format `<domain>/<name>` (e.g., `csharp/csharp`). |
+| `instructions[].source` | string                    |    ✅     | Instruction path — use `<domain>/instructions/<name>` (e.g., `csharp/instructions/csharp`). |
 | `files`                 | PluginFileConfig[]        |    —     | List of arbitrary files to copy into the plugin                                                                                          |
 | `files[].source`        | string                    |    ✅     | Source file path relative to `templates/` (or repo root)                                                                                 |
 | `files[].destination`   | string                    |    —     | Destination path relative to the plugin directory. Defaults to the basename of source.                                                   |
 
 ### Resolving `source` paths
 
-**Agents** — `source: "csharp/api-architect"` → `templates/csharp/api-architect.agent.md`
+**Agents** — `source: "csharp/agents/api-architect"` → `templates/csharp/agents/api-architect.agent.md`
 
-**Skills** — `source: "csharp/csharp-async"` → `templates/csharp/csharp-async.skill.md` (or `.prompt.md` if no `.skill.md` exists)
+**Skills** — `source: "csharp/skills/csharp-async"` → `templates/csharp/skills/csharp-async.skill.md` (or `.prompt.md` if no `.skill.md` exists)
 
-The generator auto-discovers extensions in order: `.skill.md`, `.agent.md`, `.instructions.md`, `.prompt.md`.
+**Instructions** — `source: "csharp/instructions/csharp"` → `templates/csharp/instructions/csharp.instructions.md`
 
-**Instructions** — `source: "csharp/csharp"` → `templates/csharp/csharp.instructions.md`
-
-All sources use the format `<domain>/<name>`. When the path contains `/`, the generator searches in `templates/<domain>/` with auto-extension discovery.
+All sources use the format `<domain>/<type>/<name>`. The `<type>` segment (`skills`, `agents`, `prompts`, `instructions`) determines the file extension automatically. See [Skill Companion Directories](../usage/skill-companion-dirs.md) for bundling templates, scripts, and references alongside a skill.
 
 ---
 

@@ -170,6 +170,38 @@ describe('resolveTemplatePath', () => {
       'unknown/no-match.skill.md'
     );
   });
+
+  it('domain/agents/name → appends .agent.md', () => {
+    expect(resolveTemplatePath('csharp/agents/csharp-expert')).toBe(
+      'csharp/agents/csharp-expert.agent.md'
+    );
+  });
+
+  it('domain/skills/name → appends .skill.md', () => {
+    expect(resolveTemplatePath('csharp/skills/create-dotnet-solution')).toBe(
+      'csharp/skills/create-dotnet-solution.skill.md'
+    );
+  });
+
+  it('domain/prompts/name → appends .prompt.md', () => {
+    expect(resolveTemplatePath('csharp/prompts/csharp-nunit')).toBe(
+      'csharp/prompts/csharp-nunit.prompt.md'
+    );
+  });
+
+  it('domain/instructions/name → appends .instructions.md', () => {
+    expect(resolveTemplatePath('csharp/instructions/csharp')).toBe(
+      'csharp/instructions/csharp.instructions.md'
+    );
+  });
+
+  it('domain/unknowntype/name → falls through to domain-based auto-discover', () => {
+    existingFiles.set('/fake/templates/csharp/other/my-skill.skill.md', 'x');
+    expect(resolveTemplatePath('csharp/other/my-skill', '/fake/templates')).toBe(
+      'csharp/other/my-skill.skill.md'
+    );
+    existingFiles.clear();
+  });
 });
 
 describe('resolveSkillSource', () => {

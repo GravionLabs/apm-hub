@@ -18,38 +18,38 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: devops/code-review-publisher
-  - source: devops/az-devops-setup
-  - source: devops/create-pr
+  - source: devops/skills/code-review-publisher
+  - source: devops/skills/az-devops-setup
+  - source: devops/skills/create-pr
 
 # Skills generated from agent templates (no dedicated prompts exist)
 skills:
   # Publishes code review results as PR comments on GitHub or Azure DevOps
   - name: code-review-publisher
-    source: devops/code-review-publisher
+    source: devops/skills/code-review-publisher
   # Interactive setup guide for az devops CLI and authentication
   - name: az-devops-setup
-    source: devops/az-devops-setup
+    source: devops/skills/az-devops-setup
   # Analyzes git history and diff, generates structured PR description, creates PR
   - name: create-pr
-    source: devops/create-pr
+    source: devops/skills/create-pr
   # Create a GitHub Actions workflow calling GravionLabs/ci NuGet Package CI/CD
   - name: create-nuget-workflow
-    source: devops/create-nuget-workflow
+    source: devops/skills/create-nuget-workflow
   # Create a GitHub Actions workflow calling GravionLabs/ci Python Package CI/CD
   - name: create-python-workflow
-    source: devops/create-python-workflow
+    source: devops/skills/create-python-workflow
   # Create a GitHub Actions workflow calling GravionLabs/ci Node.js CI
   - name: create-node-workflow
-    source: devops/create-node-workflow
+    source: devops/skills/create-node-workflow
   # Add GitVersion.yml configuration for automatic semantic versioning
   - name: gitversion-add
-    source: devops/gitversion-add
+    source: devops/skills/gitversion-add
   # Create a GitHub Actions workflow that syncs docs/**/*.md and README.md to the GitHub Wiki
   - name: create-wiki-workflow
-    source: devops/create-wiki-workflow
+    source: devops/skills/create-wiki-workflow
 
 instructions:
-  - source: devops/shell
-  - source: devops/powershell
-  - source: terraform/terraform
+  - source: devops/instructions/shell
+  - source: devops/instructions/powershell
+  - source: terraform/instructions/terraform

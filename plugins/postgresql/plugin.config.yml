@@ -15,22 +15,22 @@ keywords:
   - performance
 
 agents:
-  - source: postgresql/postgresql-dba
-  - source: postgresql/postgresql-developer
+  - source: postgresql/agents/postgresql-dba
+  - source: postgresql/agents/postgresql-developer
 
 skills:
   # Code quality review
   - name: postgresql-code-review
-    source: postgresql/postgresql-code-review
+    source: postgresql/skills/postgresql-code-review
   # Query and index optimization
   - name: postgresql-optimization
-    source: postgresql/postgresql-optimization
+    source: postgresql/skills/postgresql-optimization
   # Cross-DB SQL optimization
   - name: sql-optimization
-    source: postgresql/sql-optimization
+    source: postgresql/skills/sql-optimization
   # Performance diagnostics
   - name: postgresql-debug
-    source: postgresql/postgresql-debug
+    source: postgresql/skills/postgresql-debug
 
 instructions:
-  - source: postgresql/postgresql
+  - source: postgresql/instructions/postgresql

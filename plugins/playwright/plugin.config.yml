@@ -15,17 +15,17 @@ keywords:
   - e2e
 
 agents:
-  - source: playwright/playwright-tester
+  - source: playwright/agents/playwright-tester
 
 skills:
   - name: playwright-generate-test
-    source: playwright/playwright-generate-test
+    source: playwright/skills/playwright-generate-test
   - name: playwright-explore-website
-    source: playwright/playwright-explore-website
+    source: playwright/skills/playwright-explore-website
   - name: playwright-automation-fill-in-form
-    source: playwright/playwright-automation-fill-in-form
+    source: playwright/skills/playwright-automation-fill-in-form
   - name: playwright-debug
-    source: playwright/playwright-debug
+    source: playwright/skills/playwright-debug
 
 instructions:
-  - source: playwright/playwright
+  - source: playwright/instructions/playwright

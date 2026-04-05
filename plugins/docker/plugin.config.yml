@@ -13,18 +13,18 @@ keywords:
   - multi-stage
 
 agents:
-  - source: docker/docker-expert
-  - source: docker/docker-security-reviewer
+  - source: docker/agents/docker-expert
+  - source: docker/agents/docker-security-reviewer
 
 skills:
   - name: multi-stage-dockerfile
-    source: docker/multi-stage-dockerfile
+    source: docker/skills/multi-stage-dockerfile
   - name: docker-debug
-    source: docker/docker-debug
+    source: docker/skills/docker-debug
   - name: docker-security-review
-    source: docker/docker-security-review
+    source: docker/skills/docker-security-review
   - name: docker-compose-setup
-    source: docker/docker-compose-setup
+    source: docker/skills/docker-compose-setup
 
 instructions:
-  - source: docker/docker
+  - source: docker/instructions/docker

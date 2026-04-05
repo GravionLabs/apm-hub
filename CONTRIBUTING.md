@@ -136,16 +136,19 @@ These files are regenerated automatically by CI after every merge to `main` and 
 A PR that adds a new plugin should only contain:
 
 ```
-templates/<domain>/<name>.agent.md          ← new agent template
-templates/<domain>/<name>.skill.md          ← new skill template (preferred)
-templates/<domain>/<name>.instructions.md   ← new instruction template
-templates/<domain>/<name>.prompt.md         ← new prompt template (VS Code)
+templates/<domain>/agents/<name>.agent.md         ← new agent template
+templates/<domain>/skills/<name>.skill.md         ← new skill template (preferred)
+templates/<domain>/skills/<name>/                 ← companion directory (optional)
+templates/<domain>/instructions/<name>.instructions.md  ← new instruction template
+templates/<domain>/prompts/<name>.prompt.md       ← new prompt template (VS Code)
 
 plugins/<plugin-name>/skills/*/SKILL.md     ← generated (gitignored)
 plugins/<plugin-name>/agents/*.agent.md     ← generated (gitignored)
 plugins/<plugin-name>/instructions/*.md     ← generated (gitignored)
 plugins/<plugin-name>/.github/plugin/plugin.json  ← generated (gitignored)
 ```
+
+> See [Skill Companion Directories](docs/usage/skill-companion-dirs.md) for how to add templates, scripts, references, and assets alongside a skill.
 
 > **Note:** Per-plugin files under `plugins/<plugin-name>/` are fine to commit — they only affect one plugin's directory and will never conflict across branches. The prohibited files are the ones that **aggregate all plugins into a single file**.
 

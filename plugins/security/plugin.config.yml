@@ -16,8 +16,8 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: security/security-reviewer
-  - source: security/se-security-reviewer
+  - source: security/agents/security-reviewer
+  - source: security/agents/se-security-reviewer
 
 instructions:
-  - source: security/security
+  - source: security/instructions/security

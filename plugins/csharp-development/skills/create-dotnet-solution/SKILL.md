@@ -28,6 +28,14 @@ Creates a solution with `src/` and `test/` directories, Central Package Manageme
 6. Update `.csproj` files to use `<PackageReference>` without `Version` attributes
 7. Run `dotnet build` to verify
 
+## Templates
+Starter files are available in `templates/` alongside this skill:
+- **`Directory.Build.props`** — shared MSBuild properties: `net9.0`, `Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`, `Deterministic`
+- **`Directory.Packages.props`** — Central Package Management stub with pinned NUnit 4 / NSubstitute / Shouldly test packages
+- **`.editorconfig`** — opinionated C# style rules: space indentation, `_camelCase` private fields, `IPascalCase` interfaces, var preferences, pattern matching, brace style
+
+Copy these files to the solution root and adjust versions or properties as needed.
+
 ## Constraints
 - All package versions in `Directory.Packages.props` — never in individual `.csproj` files
 - Solution must build cleanly before task is complete

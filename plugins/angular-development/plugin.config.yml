@@ -17,43 +17,43 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: angular/angular-expert
-  - source: angular/angular-library-architect
-  - source: angular/sakai-ui-expert
+  - source: angular/agents/angular-expert
+  - source: angular/agents/angular-library-architect
+  - source: angular/agents/sakai-ui-expert
 
 # Skills generated from prompt templates
 skills:
   # Code quality & tooling
   - name: setup-prettier-eslint-husky
-    source: typescript/setup-prettier-eslint-husky
+    source: typescript/skills/setup-prettier-eslint-husky
 
   # Component scaffolding
   - name: angular-component
-    source: angular/angular-component
+    source: angular/skills/angular-component
   - name: sakai-ui-component
-    source: angular/sakai-ui-component
+    source: angular/skills/sakai-ui-component
 
   # State management
   - name: angular-signal-store
-    source: angular/angular-signal-store
+    source: angular/skills/angular-signal-store
 
   # Library setup
   - name: angular-library-create
-    source: angular/angular-library-create
+    source: angular/skills/angular-library-create
 
   # Code quality & review
   - name: angular-code-review
-    source: angular/angular-code-review
+    source: angular/skills/angular-code-review
 
   # Testing
   - name: angular-testing
-    source: angular/angular-testing
+    source: angular/skills/angular-testing
 
   # Migration
   - name: angular-migration
-    source: angular/angular-migration
+    source: angular/skills/angular-migration
 
 instructions:
-  - source: angular/angular
-  - source: angular/ngrx-signals
-  - source: angular/sakai-ui
+  - source: angular/instructions/angular
+  - source: angular/instructions/ngrx-signals
+  - source: angular/instructions/sakai-ui
