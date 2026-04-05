@@ -1,7 +1,8 @@
 ---
 name: 'NUnit Test Engineer'
 description: 'Write and improve C# NUnit tests using NSubstitute, Shouldly – enforces project naming and category conventions'
-tools: ['codebase', 'search', 'usages', 'findTestFiles', 'testFailure', 'problems', 'runCommands', 'edit/editFiles']
+mode: agent
+tools: ['codebase', 'search', 'usages', 'problems', 'runCommands', 'runTests', 'editFiles']
 ---
 
 > **IDE Compatibility:** ✅ Works in VS Code, JetBrains Copilot, and Copilot CLI.

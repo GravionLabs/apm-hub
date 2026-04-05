@@ -6,7 +6,9 @@ allowed-tools: runCommands editFiles codebase
 
 Scaffold a new .NET solution following the standard project structure.
 
-## What this skill does
+## Stack
+- **CLI:** `dotnet` SDK (key commands: `dotnet new`, `dotnet sln add`, `dotnet build`)
+- **Package manager:** NuGet (via `Directory.Packages.props` — Central Package Management)
 Creates a solution with `src/` and `test/` directories, Central Package Management, shared build configuration, and an `.editorconfig` — ready for development.
 
 ## Steps
