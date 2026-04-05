@@ -23,7 +23,14 @@ tests/
 
 - Use **`src/`** for all source files; compiled output goes to `dist/`.
 - Use `"type": "module"` in `package.json` for ESM; use `.mts`/`.mjs` extensions when mixing module types.
-- Declare Node.js version in `package.json` `engines` field and `.nvmrc`.
+- Declare Node.js version in `package.json` `engines` field and `.nvmrc`. Target **Node.js 22 LTS** or **23** for new projects.
+- Use the **`--watch`** flag (Node.js 18+) for zero-dependency file watching in development: `node --watch dist/index.js`.
+- Use the **native `fetch`** API (Node.js 18+) instead of `node-fetch` for new projects.
+- Use the **native test runner** (`node:test`) for lightweight testing without a framework dependency:
+  ```typescript
+  import { test, describe } from 'node:test';
+  import assert from 'node:assert/strict';
+  ```
 
 ## Environment & Configuration
 
