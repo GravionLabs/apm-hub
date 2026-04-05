@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.26] — 2026-04-05
+
+### Features
+- **csharp**: Fix 9 agents, add debug skill, Stack blocks, C#13/14 instructions
+
+
 ## [1.0.25] — 2026-04-05
+
+### Documentation
+- Update CHANGELOG.md for v1.0.25 [skip ci]
+
 
 ### Features
 - **security**: Add 5 skills, fix agents, expand instructions
