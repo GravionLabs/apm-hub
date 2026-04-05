@@ -25,6 +25,7 @@ This page lists all available instructions organized by domain. This file is aut
 | [go](../templates/go/go.instructions.md)                                                     | [Go](#go)                 | Go coding standards: idiomatic Go, error handling, package design, interfaces, concurrency patterns, and module conventions                                                                                           |
 | [helm](../templates/helm/helm.instructions.md)                                               | [Helm](#helm)             | Helm chart conventions: chart structure, values.yaml design, named templates, helpers, versioning, and Kubernetes packaging best practices                                                                            |
 | [playwright](../templates/playwright/playwright.instructions.md)                             | [Playwright](#playwright) | Playwright E2E testing conventions: Page Object Model, locator best practices, data-testid, test isolation, async/await patterns, and CI configuration                                                                |
+| [postgresql](../templates/postgresql/postgresql.instructions.md)                             | [Postgresql](#postgresql) | PostgreSQL 16/17 development conventions: naming, data types, indexing strategy, migrations, connection pooling, Row Level Security, and query best practices                                                         |
 | [playwright-python](../templates/python/playwright-python.instructions.md)                   | [Python](#python)         | Playwright Python test generation using pytest-playwright: page objects, browser fixtures, locators, and async test patterns                                                                                          |
 | [python-pytest](../templates/python/python-pytest.instructions.md)                           | [Python](#python)         | Guidelines for Python testing with pytest                                                                                                                                                                             |
 | [python](../templates/python/python.instructions.md)                                         | [Python](#python)         | Python coding standards: naming conventions, type hints, error handling, imports, and project structure for modern Python applications                                                                                |
@@ -93,6 +94,12 @@ This page lists all available instructions organized by domain. This file is aut
 | Instruction                                                        | Description                                                                                                                                            |
 | :----------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`playwright`](../templates/playwright/playwright.instructions.md) | Playwright E2E testing conventions: Page Object Model, locator best practices, data-testid, test isolation, async/await patterns, and CI configuration |
+
+## Postgresql
+
+| Instruction                                                        | Description                                                                                                                                                   |
+| :----------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`postgresql`](../templates/postgresql/postgresql.instructions.md) | PostgreSQL 16/17 development conventions: naming, data types, indexing strategy, migrations, connection pooling, Row Level Security, and query best practices |
 
 ## Python
 
