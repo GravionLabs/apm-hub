@@ -54,7 +54,7 @@ agents:
 
 skills:
   - name: csharp-async
-    source: csharp/skills/csharp-async     # resolves to templates/csharp/skills/csharp-async.skill.md
+    source: csharp/skills/csharp-async     # resolves to templates/csharp/skills/csharp-async/SKILL.md
   - name: csharp-code-review
     source: csharp/skills/csharp-code-review
     extend:
@@ -95,7 +95,7 @@ files:
 
 **Agents** — `source: "csharp/agents/api-architect"` → `templates/csharp/agents/api-architect.agent.md`
 
-**Skills** — `source: "csharp/skills/csharp-async"` → `templates/csharp/skills/csharp-async.skill.md` (or `.prompt.md` if no `.skill.md` exists)
+**Skills** — `source: "csharp/skills/csharp-async"` → `templates/csharp/skills/csharp-async/SKILL.md` (directory layout; flat `csharp-async.skill.md` is legacy backward-compat)
 
 **Instructions** — `source: "csharp/instructions/csharp"` → `templates/csharp/instructions/csharp.instructions.md`
 
