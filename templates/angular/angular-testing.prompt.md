@@ -56,6 +56,9 @@ describe('MyComponent', () => {
 For each injected service, create a typed mock:
 
 ```typescript
+import { vi } from 'vitest';
+import { signal } from '@angular/core';
+
 const mockUserService = {
   getUser: vi.fn().mockResolvedValue({ id: 1, name: 'Test' }),
   currentUser: signal(null),
@@ -92,6 +95,8 @@ it('displays the title', () => {
 
 ### Observable / async (with fakeAsync)
 ```typescript
+import { fakeAsync, tick } from '@angular/core/testing';
+
 it('loads data on init', fakeAsync(() => {
   const fixture = TestBed.createComponent(DataComponent);
   fixture.detectChanges();
