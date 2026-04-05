@@ -63,8 +63,8 @@ import {
 ```
 
 ```bash
-terraform plan     # generates resource config from the imported resource
-terraform apply    # import and add to state
+terraform plan -generate-config-out=generated-resources.tf   # writes generated resource config for review
+terraform apply                                              # import and add to state
 ```
 
 ## Step 5 — Prevent future drift
