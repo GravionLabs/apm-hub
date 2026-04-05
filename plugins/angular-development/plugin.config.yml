@@ -23,6 +23,10 @@ agents:
 
 # Skills generated from prompt templates
 skills:
+  # Project scaffolding
+  - name: create-angular-project
+    source: angular/skills/create-angular-project
+
   # Code quality & tooling
   - name: setup-prettier-eslint-husky
     source: typescript/skills/setup-prettier-eslint-husky
