@@ -177,10 +177,28 @@ describe('resolveTemplatePath', () => {
     );
   });
 
-  it('domain/skills/name → appends .skill.md', () => {
+  it('domain/skills/name → returns directory layout SKILL.md (no templatesDir)', () => {
     expect(resolveTemplatePath('csharp/skills/create-dotnet-solution')).toBe(
-      'csharp/skills/create-dotnet-solution.skill.md'
+      'csharp/skills/create-dotnet-solution/SKILL.md'
     );
+  });
+
+  it('domain/skills/name with dir layout → prefers directory layout', () => {
+    existingDirs.add('/fake/templates/csharp/skills/create-dotnet-solution');
+    existingFiles.set('/fake/templates/csharp/skills/create-dotnet-solution/SKILL.md', 'content');
+    expect(resolveTemplatePath('csharp/skills/create-dotnet-solution', '/fake/templates')).toBe(
+      'csharp/skills/create-dotnet-solution/SKILL.md'
+    );
+    existingFiles.clear();
+    existingDirs.clear();
+  });
+
+  it('domain/skills/name with flat layout → uses flat .skill.md (backward compat)', () => {
+    existingFiles.set('/fake/templates/csharp/skills/old-skill.skill.md', 'content');
+    expect(resolveTemplatePath('csharp/skills/old-skill', '/fake/templates')).toBe(
+      'csharp/skills/old-skill.skill.md'
+    );
+    existingFiles.clear();
   });
 
   it('domain/prompts/name → appends .prompt.md', () => {
@@ -820,6 +838,61 @@ describe('plugin-generator', () => {
         k.includes('skills/csharp-nunit') && !k.endsWith('SKILL.md')
       );
       expect(anyCompanionFile).toBeUndefined();
+    });
+
+    it('generates skill from directory layout SKILL.md', () => {
+      const skillSourceDir = path.join(TEMPLATES_DIR, 'csharp/skills/my-skill');
+      const skillMdPath = path.join(skillSourceDir, 'SKILL.md');
+      existingDirs.add(skillSourceDir);
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          skills: [{ name: 'my-skill', source: 'csharp/skills/my-skill' }],
+        })
+      );
+      existingFiles.set(
+        skillMdPath,
+        "---\nname: my-skill\ndescription: 'A skill'\nallowed-tools: editFiles\n---\n\nInstructions here.\n"
+      );
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const outPath = path.join(PLUGIN_DIR, 'skills', 'my-skill', 'SKILL.md');
+      expect(writtenFiles.has(outPath)).toBe(true);
+      expect(writtenFiles.get(outPath)).toContain('name: my-skill');
+    });
+
+    it('copies companion assets from directory layout skill dir (alongside SKILL.md)', () => {
+      const skillSourceDir = path.join(TEMPLATES_DIR, 'csharp/skills/my-skill-with-assets');
+      const skillMdPath = path.join(skillSourceDir, 'SKILL.md');
+      const templatesSubDir = path.join(skillSourceDir, 'templates');
+      const assetFilePath = path.join(templatesSubDir, 'template.txt');
+
+      existingDirs.add(skillSourceDir);
+      existingDirs.add(templatesSubDir);
+      existingFiles.set(
+        CONFIG_PATH,
+        makeConfig({
+          skills: [{ name: 'my-skill-with-assets', source: 'csharp/skills/my-skill-with-assets' }],
+        })
+      );
+      existingFiles.set(
+        skillMdPath,
+        "---\nname: my-skill-with-assets\ndescription: 'A skill'\nallowed-tools: editFiles\n---\n\nInstructions.\n"
+      );
+      existingFiles.set(assetFilePath, '# template content');
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const destAsset = path.join(
+        PLUGIN_DIR,
+        'skills',
+        'my-skill-with-assets',
+        'templates',
+        'template.txt'
+      );
+      expect(writtenFiles.has(destAsset)).toBe(true);
+      expect(writtenFiles.get(destAsset)).toBe('# template content');
     });
   });
 

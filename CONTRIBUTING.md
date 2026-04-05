@@ -105,15 +105,20 @@ Examples:
 
 ### Skills
 
+Skills use the [agentskills.io](https://agentskills.io) directory layout — each skill lives in its own directory:
+
 ```text
-<task-name>.skill.md
+templates/<domain>/skills/<task-name>/
+  SKILL.md
 ```
 
 Examples:
 
-- csharp-async.skill.md
-- create-dotnet-solution.skill.md
-- code-review.skill.md
+- `csharp/skills/csharp-async/SKILL.md`
+- `csharp/skills/create-dotnet-solution/SKILL.md`
+- `devops/skills/code-review/SKILL.md`
+
+> **Legacy:** flat `<task-name>.skill.md` files are still supported for backward compatibility but the directory layout is the default for all new and migrated skills.
 
 ## 6. Auto-Generated Files — Do Not Commit in Feature Branches
 
@@ -137,8 +142,8 @@ A PR that adds a new plugin should only contain:
 
 ```
 templates/<domain>/agents/<name>.agent.md         ← new agent template
-templates/<domain>/skills/<name>.skill.md         ← new skill template (preferred)
-templates/<domain>/skills/<name>/                 ← companion directory (optional)
+templates/<domain>/skills/<name>/SKILL.md         ← new skill (preferred directory layout)
+templates/<domain>/skills/<name>/                 ← companion content lives here too
 templates/<domain>/instructions/<name>.instructions.md  ← new instruction template
 templates/<domain>/prompts/<name>.prompt.md       ← new prompt template (VS Code)
 
