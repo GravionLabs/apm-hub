@@ -35,6 +35,12 @@ Creates a C# console application that implements an MCP server using `ModelConte
 6. Add `appsettings.json` with `Logging` config routing all logs to stderr
 7. Build and verify: `dotnet build`
 
+## Templates
+Starter files are available in `templates/` alongside this skill:
+- **`Program.cs`** — host setup with `AddMcpServer()`, stdio transport, tool and prompt registration
+- **`Tools.cs`** — `[McpServerToolType]` class with two example tools (sync + async with `CancellationToken`)
+- **`Prompts.cs`** — `[McpServerPromptType]` class with an example `PromptMessage` return
+
 ## Constraints
 - All logs must go to stderr — never stdout (stdio transport uses stdout for MCP protocol)
 - Tool methods should be `async Task<string>` or `async Task<CallToolResponse>`
