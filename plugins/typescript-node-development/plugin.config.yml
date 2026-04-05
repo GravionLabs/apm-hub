@@ -33,6 +33,9 @@ skills:
   # ESLint + Prettier + Husky setup for TypeScript projects
   - name: setup-prettier-eslint-husky
     source: typescript/skills/setup-prettier-eslint-husky
+  # Generate a TypeScript MCP server with tools, resources, and prompts
+  - name: typescript-mcp-server-generator
+    source: typescript/skills/typescript-mcp-server-generator
   # Generate focused unit tests for existing code
   - name: write-tests
     source: shared/skills/write-tests

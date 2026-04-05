@@ -76,3 +76,6 @@ npx tsc --showConfig
 - Use `--inspect-brk` to pause on the first line and step through async startup code
 - For long chains, `await Promise.all([...])` errors show the first rejection — use `Promise.allSettled` to see all
 - Check for missing `await` with `@typescript-eslint/no-floating-promises` lint rule
+
+## Tips
+> **Use the `task` tool** for diagnostic commands (`tsc --noEmit`, `--traceResolution`, `npx tsc --showConfig`) — they are mechanical inspection steps that don't require reasoning.

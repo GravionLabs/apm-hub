@@ -9,29 +9,26 @@ Generate a complete, production-ready Model Context Protocol (MCP) server in Typ
 ## Stack
 - **`@modelcontextprotocol/sdk`** — official MCP SDK (`McpServer`, transports)
 - **`zod`** — schema validation and type inference for tool inputs/outputs
-- **`node`** — Node.js 22+ LTS runtime; `tsx` or `ts-node` for development
+- **`node`** — Node.js 22+ LTS runtime; `tsx` for development
 
 ## Steps
 
 ### 1. Scaffold the project
+**Run the scaffold script** (recommended):
+```powershell
+pwsh scripts/New-McpServer.ps1 -ServerName my-mcp-server
+```
+The script creates the project directory, copies starter templates, and runs `npm install`.
+
+**Alternatively — manual:**
 ```bash
 mkdir my-mcp-server && cd my-mcp-server
-npm init -y
-npm install @modelcontextprotocol/sdk zod
-npm install --save-dev typescript tsx @types/node
-npx tsc --init --module nodenext --target es2022 --outdir dist --rootdir src --strict true
+# Copy templates/package.json, templates/tsconfig.json, templates/src/index.ts
+npm install
 ```
-Set `"type": "module"` in `package.json`; add `build`, `dev` (tsx watch), and `start` scripts.
 
-### 2. Create McpServer and register tools
+### 2. Register tools
 ```typescript
-// src/index.ts
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { z } from 'zod';
-
-const server = new McpServer({ name: 'my-mcp-server', version: '1.0.0' });
-
 server.registerTool(
   'tool-name',
   {
@@ -71,14 +68,27 @@ server.registerPrompt('prompt-name',
 ```bash
 # Validate env vars with zod at startup
 const env = z.object({ API_KEY: z.string() }).parse(process.env);
-
 # Test with MCP Inspector
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
 
+## Template Files
+| File | Purpose |
+|---|---|
+| `templates/package.json` | Starter: `@modelcontextprotocol/sdk`, `zod`, `tsx`; ESM `"type": "module"` |
+| `templates/tsconfig.json` | NodeNext module resolution, strict mode, sourceMap |
+| `templates/src/index.ts` | Minimal `McpServer` + `StdioServerTransport` skeleton with example tool |
+
+## Scripts
+- **`scripts/New-McpServer.ps1`** — Scaffold automation. Params: `-ServerName` (required), `-OutputDirectory`
+
 ## Key Conventions
-- Always provide `title` for tools, resources, and prompts (not just `name`)
+- Always provide `title` for tools, resources, and prompts
 - Return `isError: true` for failures — do not throw from tool handlers
 - Import from specific SDK paths (e.g., `@modelcontextprotocol/sdk/server/mcp.js`)
 - Use ES module imports only (`"type": "module"` in package.json)
+
+## Tips
+> **Use the `task` tool** for scaffolding — it's mechanical. Example:
+> `#task pwsh scripts/New-McpServer.ps1 -ServerName "my-tool-server"`
 
