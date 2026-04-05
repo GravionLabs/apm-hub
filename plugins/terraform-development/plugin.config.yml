@@ -18,6 +18,7 @@ keywords:
 # Agents copied as-is from templates/agents/
 agents:
   - source: terraform/terraform-expert
+  - source: terraform/terraform-reviewer
 
 # Skills generated from prompt templates
 skills:
@@ -27,6 +28,12 @@ skills:
   # Scaffold a reusable Terraform module with examples and README
   - name: terraform-module-create
     source: terraform/terraform-module-create
+  # Diagnose unexpected plan changes (drift, lifecycle, provider mismatches)
+  - name: terraform-plan-debugger
+    source: terraform/terraform-plan-debugger
+  # Detect and remediate infrastructure drift
+  - name: terraform-drift-detection
+    source: terraform/terraform-drift-detection
 
 instructions:
   - source: terraform/terraform
