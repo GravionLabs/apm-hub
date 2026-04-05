@@ -21,6 +21,8 @@ A skill is a **directory** named after the skill, containing a required `SKILL.m
 | `description` | One-sentence description shown to users and used for auto-selection |
 | `allowed-tools` | Space-separated list of tools the agent may use |
 
+> **Note:** The official GitHub Copilot CLI currently only recognises `name`, `description`, `license`, and `allowed-tools`. Unknown fields are silently ignored.
+
 ### SKILL.md Frontmatter Format
 ```yaml
 ---
@@ -31,10 +33,10 @@ allowed-tools: editFiles codebase runCommands
 ```
 
 ### Optional Frontmatter Fields
-| Field | Description |
-|---|---|
-| `model` | Preferred model (e.g., `gpt-4.1`) — omit to use session default |
-| `version` | Skill version string |
+| Field | Description | Support |
+|---|---|---|
+| `model` | Preferred model (e.g., `gpt-4.1`) — omit to use session default | ⚠️ aspirational — not yet implemented in official Copilot CLI (ignored) |
+| `version` | Skill version string | ⚠️ aspirational — not yet implemented in official Copilot CLI (ignored) |
 
 ## Standard Subdirectory Purposes
 
