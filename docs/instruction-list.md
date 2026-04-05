@@ -29,7 +29,7 @@ This page lists all available instructions organized by domain. This file is aut
 | [playwright-python](../templates/python/playwright-python.instructions.md)                   | [Python](#python)         | Playwright Python test generation using pytest-playwright: page objects, browser fixtures, locators, and async test patterns                                                                                          |
 | [python-pytest](../templates/python/python-pytest.instructions.md)                           | [Python](#python)         | Guidelines for Python testing with pytest                                                                                                                                                                             |
 | [python](../templates/python/python.instructions.md)                                         | [Python](#python)         | Python coding standards: naming conventions, type hints, error handling, imports, and project structure for modern Python applications                                                                                |
-| [security](../templates/security/security.instructions.md)                                   | [Security](#security)     | -                                                                                                                                                                                                                     |
+| [security](../templates/security/security.instructions.md)                                   | [Security](#security)     | Security best practices: OWASP Top 10 2021, supply chain security, AI/LLM risks, secrets management, Zero Trust, and secure coding for any language                                                                   |
 | [code-review-generic](../templates/shared/code-review-generic.instructions.md)               | [Shared](#shared)         | Code review guidelines for any language or framework: readability, naming, complexity, error handling, security, and test coverage                                                                                    |
 | [html-css-style-color-guide](../templates/shared/html-css-style-color-guide.instructions.md) | [Shared](#shared)         | Color usage guidelines and styling rules for HTML elements to ensure accessible, professional designs.                                                                                                                |
 | [markdown](../templates/shared/markdown.instructions.md)                                     | [Shared](#shared)         | Markdown documentation standards: structure, formatting, headings, lists, code blocks, and writing style for technical docs                                                                                           |
@@ -111,9 +111,9 @@ This page lists all available instructions organized by domain. This file is aut
 
 ## Security
 
-| Instruction                                                  | Description |
-| :----------------------------------------------------------- | :---------- |
-| [`security`](../templates/security/security.instructions.md) | -           |
+| Instruction                                                  | Description                                                                                                                                         |
+| :----------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`security`](../templates/security/security.instructions.md) | Security best practices: OWASP Top 10 2021, supply chain security, AI/LLM risks, secrets management, Zero Trust, and secure coding for any language |
 
 ## Shared
 

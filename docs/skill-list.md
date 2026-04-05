@@ -59,6 +59,11 @@ This page lists all available skills organized by domain. This file is automatic
 | [sql-optimization](../templates/postgresql/sql-optimization.skill.md)                                     | [Postgresql](#postgresql) | Optimize SQL queries across any SQL database (PostgreSQL, MySQL, SQL Server, SQLite): execution plan analysis, index strategy, query rewrites, pagination, and batch operations.             |
 | [pytest-coverage](../templates/python/pytest-coverage.skill.md)                                           | [Python](#python)         | Run pytest with coverage, identify uncovered lines, and write additional tests to achieve full (or target) coverage.                                                                         |
 | [python-code-review](../templates/python/python-code-review.skill.md)                                     | [Python](#python)         | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions.                                                   |
+| [Dependency Audit](../templates/security/dependency-audit.skill.md)                                       | [Security](#security)     | Audit dependencies for known vulnerabilities and outdated packages across ecosystems                                                                                                         |
+| [OWASP Audit](../templates/security/owasp-audit.skill.md)                                                 | [Security](#security)     | Focused OWASP Top 10 2021 audit — analyze one or more categories in depth                                                                                                                    |
+| [Secrets Audit](../templates/security/secrets-audit.skill.md)                                             | [Security](#security)     | Scan for hardcoded secrets, credentials, and insecure secret storage patterns                                                                                                                |
+| [Security Review](../templates/security/security-review.skill.md)                                         | [Security](#security)     | Structured security review against OWASP Top 10 — any language or framework                                                                                                                  |
+| [Threat Model](../templates/security/threat-model.skill.md)                                               | [Security](#security)     | STRIDE threat modelling — identify threats, affected components, and mitigations                                                                                                             |
 | [write-tests](../templates/shared/write-tests.skill.md)                                                   | [Shared](#shared)         | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                                             |
 | [terraform-code-review](../templates/terraform/terraform-code-review.skill.md)                            | [Terraform](#terraform)   | Perform a structured Terraform code review with priority ratings: 🔴 critical security/state risks, 🟡 important improvements, 🟢 best practice suggestions.                                 |
 | [terraform-drift-detection](../templates/terraform/terraform-drift-detection.skill.md)                    | [Terraform](#terraform)   | Detect and remediate infrastructure drift: resources modified outside Terraform that are no longer consistent with state or configuration.                                                   |
@@ -167,6 +172,16 @@ This page lists all available skills organized by domain. This file is automatic
 | :---------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
 | [`pytest-coverage`](../templates/python/pytest-coverage.skill.md)       | Run pytest with coverage, identify uncovered lines, and write additional tests to achieve full (or target) coverage.                       |
 | [`python-code-review`](../templates/python/python-code-review.skill.md) | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions. |
+
+## Security
+
+| Skill                                                                 | Description                                                                          |
+| :-------------------------------------------------------------------- | :----------------------------------------------------------------------------------- |
+| [`Dependency Audit`](../templates/security/dependency-audit.skill.md) | Audit dependencies for known vulnerabilities and outdated packages across ecosystems |
+| [`OWASP Audit`](../templates/security/owasp-audit.skill.md)           | Focused OWASP Top 10 2021 audit — analyze one or more categories in depth            |
+| [`Secrets Audit`](../templates/security/secrets-audit.skill.md)       | Scan for hardcoded secrets, credentials, and insecure secret storage patterns        |
+| [`Security Review`](../templates/security/security-review.skill.md)   | Structured security review against OWASP Top 10 — any language or framework          |
+| [`Threat Model`](../templates/security/threat-model.skill.md)         | STRIDE threat modelling — identify threats, affected components, and mitigations     |
 
 ## Shared
 
