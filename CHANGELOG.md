@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.28] — 2026-04-05
+
+### Features
+- **python**: Add plugin, fix agents, new skills, update instructions
+
+
 ## [1.0.27] — 2026-04-05
+
+### Documentation
+- Update CHANGELOG.md for v1.0.27 [skip ci]
+
 
 ### Features
 - **devops**: Fix agents, add 4 skills, github-actions instructions
