@@ -1,5 +1,5 @@
 ---
-description: 'Terraform IaC standards: module structure, naming conventions, variable and output usage, state management, and security best practices'
+description: 'Terraform IaC standards: module structure, naming conventions, variable and output usage, state management, security best practices, and modern Terraform 1.9+ syntax'
 applyTo: '**/*.tf'
 ---
 
@@ -7,8 +7,14 @@ applyTo: '**/*.tf'
 
 ## General Instructions
 
-- Use Terraform to provision and manage infrastructure.
-- Use version control for your Terraform configurations.
+- Use Terraform **1.9+** (current stable). OpenTofu is a fully open-source compatible alternative — use it when HashiCorp BSL licensing is a concern.
+- Use version control for all Terraform configurations.
+- Pin `required_version` in every `versions.tf`:
+  ```hcl
+  terraform {
+    required_version = ">= 1.9, < 2.0"
+  }
+  ```
 
 ## Security
 
@@ -111,3 +117,51 @@ applyTo: '**/*.tf'
   - Use the `.tftest.hcl` extension for test files.
   - Write tests to cover both positive and negative scenarios.
   - Ensure tests are idempotent and can be run multiple times without side effects.
+
+## Modern Terraform Syntax (1.5+)
+
+### `moved {}` blocks — safe resource renaming
+Use when refactoring resource addresses to avoid destroy + recreate:
+```hcl
+moved {
+  from = aws_instance.web
+  to   = aws_instance.app_server
+}
+```
+
+### `import {}` blocks — declarative import (Terraform 1.5+)
+Bring existing infrastructure under Terraform management without CLI commands:
+```hcl
+import {
+  to = aws_s3_bucket.logs
+  id = "my-logs-bucket-prod"
+}
+```
+Run `terraform plan -generate-config-out=generated.tf` to auto-generate the resource config.
+
+### `check {}` blocks — continuous assertions (Terraform 1.5+)
+Assert runtime conditions without failing the apply:
+```hcl
+check "health_check" {
+  data "http" "app" {
+    url = "https://${aws_instance.app.public_dns}/health"
+  }
+  assert {
+    condition     = data.http.app.status_code == 200
+    error_message = "App health check returned ${data.http.app.status_code}."
+  }
+}
+```
+
+### Variable validation with `check` (Terraform 1.9+)
+Input variable validation using `condition` and custom error messages:
+```hcl
+variable "instance_type" {
+  type        = string
+  description = "EC2 instance type"
+  validation {
+    condition     = can(regex("^(t3|m5|c5)\\.", var.instance_type))
+    error_message = "Instance type must be t3, m5, or c5 family."
+  }
+}
+```
