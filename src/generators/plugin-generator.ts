@@ -51,14 +51,21 @@ export interface PluginConfig {
   name: string;
   description: string;
   version: string;
-  author?: { name: string; email?: string };
+  author?: { name: string; email?: string; url?: string };
+  homepage?: string;
   repository?: string;
   license?: string;
   keywords?: string[];
+  category?: string;
+  tags?: string[];
   agents: PluginAgentConfig[];
   skills: PluginSkillConfig[];
   instructions?: PluginInstructionConfig[];
   files?: PluginFileConfig[];
+  hooks?: string | Record<string, unknown>;
+  mcpServers?: string | Record<string, unknown>;
+  lspServers?: string | Record<string, unknown>;
+  commands?: string | string[];
 }
 
 /**
@@ -184,13 +191,27 @@ function generateSkillContent(
 }
 
 /**
- * Generates the plugin.json manifest content.
+ * Prefixes string paths with `./` if not already present.
+ * Arrays of strings are mapped individually; objects are returned as-is.
  */
-function generatePluginJson(
-  config: PluginConfig,
-  skillNames: string[],
-  instructionPaths: string[]
-): string {
+function prefixPaths(
+  value: string | string[] | Record<string, unknown>
+): string | string[] | Record<string, unknown> {
+  if (typeof value === 'string') {
+    return value.startsWith('./') ? value : `./${value}`;
+  }
+  if (Array.isArray(value)) {
+    return value.map((v) => (v.startsWith('./') ? v : `./${v}`));
+  }
+  return value;
+}
+
+/**
+ * Generates the plugin.json manifest content.
+ * Note: `instructions` is intentionally excluded — it is not part of the
+ * official Copilot CLI plugin.json spec.
+ */
+function generatePluginJson(config: PluginConfig, skillNames: string[]): string {
   const manifest: Record<string, unknown> = {
     name: config.name,
     description: config.description,
@@ -199,6 +220,9 @@ function generatePluginJson(
 
   if (config.author) {
     manifest.author = config.author;
+  }
+  if (config.homepage) {
+    manifest.homepage = config.homepage;
   }
   if (config.repository) {
     manifest.repository = config.repository;
@@ -209,6 +233,12 @@ function generatePluginJson(
   if (config.keywords && config.keywords.length > 0) {
     manifest.keywords = config.keywords;
   }
+  if (config.category) {
+    manifest.category = config.category;
+  }
+  if (config.tags && config.tags.length > 0) {
+    manifest.tags = config.tags;
+  }
 
   if (config.agents && config.agents.length > 0) {
     manifest.agents = ['./agents'];
@@ -218,8 +248,17 @@ function generatePluginJson(
     manifest.skills = skillNames.map((name) => `./skills/${name}`);
   }
 
-  if (instructionPaths.length > 0) {
-    manifest.instructions = instructionPaths;
+  if (config.commands !== undefined) {
+    manifest.commands = prefixPaths(config.commands);
+  }
+  if (config.hooks !== undefined) {
+    manifest.hooks = prefixPaths(config.hooks);
+  }
+  if (config.mcpServers !== undefined) {
+    manifest.mcpServers = prefixPaths(config.mcpServers);
+  }
+  if (config.lspServers !== undefined) {
+    manifest.lspServers = prefixPaths(config.lspServers);
   }
 
   return JSON.stringify(manifest, null, 2) + '\n';
@@ -236,6 +275,31 @@ export function updatePluginConfigVersion(configPath: string, version: string): 
     fs.writeFileSync(configPath, updated, 'utf8');
     console.log(`  ✓ Version updated to "${version}" in ${path.basename(configPath)}`);
   }
+}
+
+/**
+ * Recursively copies all files from srcDir into destDir.
+ * Creates destination subdirectories as needed.
+ * Returns relative paths (from destDir) of all copied files.
+ */
+function copySkillAssets(srcDir: string, destDir: string): string[] {
+  const copied: string[] = [];
+  if (!fs.existsSync(srcDir) || !fs.statSync(srcDir).isDirectory()) {
+    return copied;
+  }
+  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+    if (entry.isDirectory()) {
+      fs.mkdirSync(destPath, { recursive: true });
+      copied.push(...copySkillAssets(srcPath, destPath).map((r) => path.join(entry.name, r)));
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+      copied.push(entry.name);
+    }
+  }
+  return copied;
 }
 
 /**
@@ -299,6 +363,16 @@ export function generatePlugin(configPath: string, templatesDir: string, version
     const skillPath = path.join(skillDir, 'SKILL.md');
     fs.writeFileSync(skillPath, skillContent, 'utf8');
     console.log(`  ✓ Skill: skills/${skill.name}/SKILL.md`);
+
+    // Check for companion directory alongside the .skill.md file
+    if (resolvedSource.endsWith('.skill.md')) {
+      const companionDir = sourcePath.replace(/\.skill\.md$/, '');
+      const assetFiles = copySkillAssets(companionDir, skillDir);
+      for (const rel of assetFiles) {
+        console.log(`  ✓ Skill asset: skills/${skill.name}/${rel}`);
+      }
+    }
+
     generatedSkillNames.push(skill.name);
   }
 
@@ -376,11 +450,7 @@ export function generatePlugin(configPath: string, templatesDir: string, version
   const pluginManifestDir = path.join(pluginDir, '.github', 'plugin');
   fs.mkdirSync(pluginManifestDir, { recursive: true });
   const pluginJsonPath = path.join(pluginManifestDir, 'plugin.json');
-  const pluginJsonContent = generatePluginJson(
-    config,
-    generatedSkillNames,
-    generatedInstructionPaths
-  );
+  const pluginJsonContent = generatePluginJson(config, generatedSkillNames);
   fs.writeFileSync(pluginJsonPath, pluginJsonContent, 'utf8');
   console.log(`  ✓ Manifest: .github/plugin/plugin.json`);
 

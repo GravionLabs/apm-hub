@@ -52,12 +52,13 @@ function makeConfig(overrides: Record<string, unknown> = {}): string {
 const writtenFiles = new Map<string, string>();
 const createdDirs = new Set<string>();
 const existingFiles = new Map<string, string>();
+const existingDirs = new Set<string>();
 
 vi.mock('fs', async () => {
   const actual = await vi.importActual<typeof import('fs')>('fs');
   return {
     ...actual,
-    existsSync: (p: string) => existingFiles.has(p),
+    existsSync: (p: string) => existingFiles.has(p) || existingDirs.has(p),
     readFileSync: (p: string, _enc: string) => {
       if (existingFiles.has(p)) return existingFiles.get(p)!;
       throw new Error(`ENOENT: no such file: ${p}`);
@@ -71,6 +72,18 @@ vi.mock('fs', async () => {
     copyFileSync: (src: string, dest: string) => {
       if (!existingFiles.has(src)) throw new Error(`ENOENT: no such file: ${src}`);
       writtenFiles.set(dest, existingFiles.get(src)!);
+    },
+    statSync: (p: string) => ({
+      isDirectory: () => existingDirs.has(p),
+    }),
+    readdirSync: (p: string, _opts?: unknown) => {
+      const fileEntries = [...existingFiles.keys()]
+        .filter((k) => path.dirname(k) === p)
+        .map((k) => ({ name: path.basename(k), isDirectory: () => false }));
+      const dirEntries = [...existingDirs]
+        .filter((d) => path.dirname(d) === p)
+        .map((d) => ({ name: path.basename(d), isDirectory: () => true }));
+      return [...fileEntries, ...dirEntries];
     },
   };
 });
@@ -218,6 +231,7 @@ describe('plugin-generator', () => {
     writtenFiles.clear();
     createdDirs.clear();
     existingFiles.clear();
+    existingDirs.clear();
   });
 
   afterEach(() => {
@@ -555,7 +569,7 @@ describe('plugin-generator', () => {
       expect(writtenFiles.has(destPath)).toBe(true);
     });
 
-    it('plugin.json includes instructions array with relative paths', () => {
+    it('plugin.json does NOT include instructions array', () => {
       existingFiles.set(
         CONFIG_PATH,
         makeConfig({
@@ -568,10 +582,10 @@ describe('plugin-generator', () => {
 
       const pluginJsonPath = path.join(PLUGIN_DIR, '.github', 'plugin', 'plugin.json');
       const manifest = JSON.parse(writtenFiles.get(pluginJsonPath)!);
-      expect(manifest.instructions).toEqual(['./instructions/csharp.instructions.md']);
+      expect(manifest).not.toHaveProperty('instructions');
     });
 
-    it('plugin.json includes multiple instruction paths', () => {
+    it('plugin.json does NOT include multiple instruction paths', () => {
       const nunitPath = path.join(TEMPLATES_DIR, 'csharp', 'csharp-nunit.instructions.md');
       existingFiles.set(
         CONFIG_PATH,
@@ -586,10 +600,7 @@ describe('plugin-generator', () => {
 
       const pluginJsonPath = path.join(PLUGIN_DIR, '.github', 'plugin', 'plugin.json');
       const manifest = JSON.parse(writtenFiles.get(pluginJsonPath)!);
-      expect(manifest.instructions).toEqual([
-        './instructions/csharp.instructions.md',
-        './instructions/csharp-nunit.instructions.md',
-      ]);
+      expect(manifest).not.toHaveProperty('instructions');
     });
   });
 
@@ -628,7 +639,7 @@ describe('plugin-generator', () => {
       expect(manifest).not.toHaveProperty('instructions');
     });
 
-    it('continues generating remaining instructions after a missing file', () => {
+    it('continues generating remaining instruction files after a missing file', () => {
       vi.spyOn(console, 'warn').mockImplementation(() => {});
       const csharpPath = path.join(TEMPLATES_DIR, 'csharp', 'csharp.instructions.md');
       existingFiles.set(
@@ -641,9 +652,14 @@ describe('plugin-generator', () => {
 
       generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
 
+      // Instruction file is still copied to disk
+      const destPath = path.join(PLUGIN_DIR, 'instructions', 'csharp.instructions.md');
+      expect(writtenFiles.has(destPath)).toBe(true);
+
+      // But plugin.json must NOT have an instructions field
       const pluginJsonPath = path.join(PLUGIN_DIR, '.github', 'plugin', 'plugin.json');
       const manifest = JSON.parse(writtenFiles.get(pluginJsonPath)!);
-      expect(manifest.instructions).toEqual(['./instructions/csharp.instructions.md']);
+      expect(manifest).not.toHaveProperty('instructions');
     });
   });
 
@@ -716,6 +732,115 @@ describe('plugin-generator', () => {
       const pluginJsonPath = path.join(PLUGIN_DIR, '.github', 'plugin', 'plugin.json');
       const manifest = JSON.parse(writtenFiles.get(pluginJsonPath)!);
       expect(manifest).not.toHaveProperty('files');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Skill companion directories
+  // -------------------------------------------------------------------------
+
+  describe('skill companion directories', () => {
+    it('copies companion directory files alongside SKILL.md', () => {
+      const skillTemplatePath = path.join(TEMPLATES_DIR, 'csharp', 'create-dotnet-solution.skill.md');
+      const companionDir = path.join(TEMPLATES_DIR, 'csharp', 'create-dotnet-solution');
+      const editorConfigPath = path.join(companionDir, 'templates', '.editorconfig');
+
+      existingFiles.set(CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
+        '  - name: create-dotnet-solution\n    source: csharp/create-dotnet-solution\n'
+      );
+      existingFiles.set(skillTemplatePath, "---\nname: create-dotnet-solution\ndescription: 'Scaffold solution'\nallowed-tools: editFiles\n---\n\nContent.\n");
+      existingFiles.set(editorConfigPath, '# editorconfig content');
+      existingDirs.add(companionDir);
+      existingDirs.add(path.join(companionDir, 'templates'));
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      const destEditorConfig = path.join(PLUGIN_DIR, 'skills', 'create-dotnet-solution', 'templates', '.editorconfig');
+      expect(writtenFiles.has(destEditorConfig)).toBe(true);
+      expect(writtenFiles.get(destEditorConfig)).toBe('# editorconfig content');
+    });
+
+    it('does not fail when no companion directory exists', () => {
+      const skillTemplatePath = path.join(TEMPLATES_DIR, 'shared', 'write-tests.skill.md');
+      existingFiles.set(CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills:\n' +
+        '  - name: write-tests\n    source: shared/write-tests\n'
+      );
+      existingFiles.set(skillTemplatePath, "---\nname: write-tests\ndescription: 'Write tests'\nallowed-tools: codebase\n---\n\nContent.\n");
+      // No companion dir added to existingDirs
+
+      expect(() => generatePlugin(CONFIG_PATH, TEMPLATES_DIR)).not.toThrow();
+    });
+
+    it('does not copy companion directory for non-.skill.md sources', () => {
+      const promptPath = path.join(TEMPLATES_DIR, 'prompts', 'csharp-nunit.prompt.md');
+      const companionDir = path.join(TEMPLATES_DIR, 'prompts', 'csharp-nunit');
+
+      existingFiles.set(CONFIG_PATH, makeConfig({ skills: [{ name: 'csharp-nunit' }] }));
+      existingFiles.set(promptPath, '---\ndescription: NUnit\n---\n\nContent.\n');
+      existingDirs.add(companionDir); // companion dir exists but should be ignored
+
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+
+      // No files from companion dir should be copied
+      const anyCompanionFile = [...writtenFiles.keys()].find((k) =>
+        k.includes('skills/csharp-nunit') && !k.endsWith('SKILL.md')
+      );
+      expect(anyCompanionFile).toBeUndefined();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // plugin.json new fields
+  // -------------------------------------------------------------------------
+
+  describe('plugin.json new fields', () => {
+    it('includes category in plugin.json', () => {
+      existingFiles.set(CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\ncategory: "development"\nagents: []\nskills: []\n'
+      );
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+      const manifest = JSON.parse(writtenFiles.get(path.join(PLUGIN_DIR, '.github', 'plugin', 'plugin.json'))!);
+      expect(manifest.category).toBe('development');
+    });
+
+    it('includes tags in plugin.json', () => {
+      existingFiles.set(CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\ntags:\n  - react\n  - frontend\nagents: []\nskills: []\n'
+      );
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+      const manifest = JSON.parse(writtenFiles.get(path.join(PLUGIN_DIR, '.github', 'plugin', 'plugin.json'))!);
+      expect(manifest.tags).toEqual(['react', 'frontend']);
+    });
+
+    it('includes hooks path with ./ prefix in plugin.json', () => {
+      existingFiles.set(CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nhooks: hooks/hooks.json\nagents: []\nskills: []\n'
+      );
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+      const manifest = JSON.parse(writtenFiles.get(path.join(PLUGIN_DIR, '.github', 'plugin', 'plugin.json'))!);
+      expect(manifest.hooks).toBe('./hooks/hooks.json');
+    });
+
+    it('includes mcpServers path in plugin.json', () => {
+      existingFiles.set(CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nmcpServers: .mcp.json\nagents: []\nskills: []\n'
+      );
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+      const manifest = JSON.parse(writtenFiles.get(path.join(PLUGIN_DIR, '.github', 'plugin', 'plugin.json'))!);
+      expect(manifest.mcpServers).toBe('./.mcp.json');
+    });
+
+    it('plugin.json does NOT include instructions', () => {
+      const instructionPath = path.join(TEMPLATES_DIR, 'csharp', 'csharp.instructions.md');
+      existingFiles.set(CONFIG_PATH,
+        'name: my-plugin\ndescription: Test\nversion: "1.0.0"\nagents: []\nskills: []\ninstructions:\n  - source: csharp/csharp\n'
+      );
+      existingFiles.set(instructionPath, '---\ndescription: C#\n---\n\nContent.\n');
+      generatePlugin(CONFIG_PATH, TEMPLATES_DIR);
+      const manifest = JSON.parse(writtenFiles.get(path.join(PLUGIN_DIR, '.github', 'plugin', 'plugin.json'))!);
+      expect(manifest).not.toHaveProperty('instructions');
     });
   });
 
