@@ -5,6 +5,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.21] — 2026-04-05
+
+### Features
+- **terraform**: Add plan-debugger, drift-detection skills; terraform-reviewer agent; modernize instructions (#42)
+
+
 ## [1.0.20] — 2026-04-05
 
 ### Bug Fixes
@@ -14,6 +20,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - **angular**: Add ## Stack section to angular-migration skill for CLI prerequisites
+- Update CHANGELOG.md for v1.0.20 [skip ci]
 
 
 ### Features
