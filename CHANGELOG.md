@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.23] — 2026-04-05
+
+### Features
+- **playwright**: Add skills, instructions, debug skill; fix agent frontmatter (#44)
+
+
 ## [1.0.22] — 2026-04-05
+
+### Documentation
+- Update CHANGELOG.md for v1.0.22 [skip ci]
+
 
 ### Features
 - **docker**: Add agents, debug/security/compose skills; modernize instructions (#43)
