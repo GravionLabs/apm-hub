@@ -1,8 +1,8 @@
 ---
 name: create-pr
 description: 'Analyze git history and diff, generate a structured PR description, and create a pull request.'
-allowed-tools: runCommands codebase
-tools: runCommands codebase
+mode: agent
+tools: ["runCommands", "codebase", "changes"]
 ---
 
 You are a DevOps agent that creates well-structured pull requests by analyzing the git history and diff.

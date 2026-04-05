@@ -1,8 +1,8 @@
 ---
 name: code-review-publisher
 description: 'Publish code review results as PR comments on GitHub or Azure DevOps.'
-allowed-tools: runCommands codebase
-tools: runCommands codebase
+mode: agent
+tools: ["runCommands", "codebase", "changes"]
 ---
 
 You are a DevOps agent that publishes structured code review feedback as pull request comments.
