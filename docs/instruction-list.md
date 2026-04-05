@@ -24,6 +24,7 @@ This page lists all available instructions organized by domain. This file is aut
 | [docker](../templates/docker/docker.instructions.md)                                         | [Docker](#docker)         | Comprehensive best practices for creating optimized, secure, and efficient Docker images and managing containers. Covers multi-stage builds, image layer optimization, security scanning, and runtime best practices. |
 | [go](../templates/go/go.instructions.md)                                                     | [Go](#go)                 | Go coding standards: idiomatic Go, error handling, package design, interfaces, concurrency patterns, and module conventions                                                                                           |
 | [helm](../templates/helm/helm.instructions.md)                                               | [Helm](#helm)             | Helm chart conventions: chart structure, values.yaml design, named templates, helpers, versioning, and Kubernetes packaging best practices                                                                            |
+| [playwright](../templates/playwright/playwright.instructions.md)                             | [Playwright](#playwright) | Playwright E2E testing conventions: Page Object Model, locator best practices, data-testid, test isolation, async/await patterns, and CI configuration                                                                |
 | [playwright-python](../templates/python/playwright-python.instructions.md)                   | [Python](#python)         | Playwright Python test generation using pytest-playwright: page objects, browser fixtures, locators, and async test patterns                                                                                          |
 | [python-pytest](../templates/python/python-pytest.instructions.md)                           | [Python](#python)         | Guidelines for Python testing with pytest                                                                                                                                                                             |
 | [python](../templates/python/python.instructions.md)                                         | [Python](#python)         | Python coding standards: naming conventions, type hints, error handling, imports, and project structure for modern Python applications                                                                                |
@@ -86,6 +87,12 @@ This page lists all available instructions organized by domain. This file is aut
 | Instruction                                      | Description                                                                                                                                |
 | :----------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
 | [`helm`](../templates/helm/helm.instructions.md) | Helm chart conventions: chart structure, values.yaml design, named templates, helpers, versioning, and Kubernetes packaging best practices |
+
+## Playwright
+
+| Instruction                                                        | Description                                                                                                                                            |
+| :----------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`playwright`](../templates/playwright/playwright.instructions.md) | Playwright E2E testing conventions: Page Object Model, locator best practices, data-testid, test isolation, async/await patterns, and CI configuration |
 
 ## Python
 

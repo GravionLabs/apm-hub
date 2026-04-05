@@ -1,18 +1,39 @@
 ---
 name: playwright-explore-website
-description: 'Website exploration for testing using Playwright MCP'
-allowed-tools: changes codebase editFiles fetch problems runCommands runTests search playwright
+description: 'Explore a website with Playwright MCP to identify key user flows, UI elements, and locators for testing. Returns a structured exploration report with proposed test cases.'
+allowed-tools: fetch runCommands playwright
 ---
 
-# Website Exploration for Testing
+Explore a website to discover testable flows and identify correct locators.
 
-Your goal is to explore the website and identify key functionalities.
+## Stack
+- **CLI:** `npx playwright test --ui`, `npx playwright codegen <url>`
+- **MCP:** Playwright MCP (live browser snapshot and navigation)
 
-## Specific Instructions
+## Steps
+1. Ask for the URL if not provided
+2. Navigate using Playwright MCP
+3. Identify and interact with 3–5 core user flows (navigation, forms, dynamic content)
+4. For each flow: record locators, expected states, and test boundaries
+5. Close browser context after exploration
+6. Output a structured report (see format below)
 
-1. Navigate to the provided URL using the Playwright MCP Server. If no URL is provided, ask the user to provide one.
-2. Identify and interact with 3-5 core features or user flows.
-3. Document the user interactions, relevant UI elements (and their locators), and the expected outcomes.
-4. Close the browser context upon completion.
-5. Provide a concise summary of your findings.
-6. Propose and generate test cases based on the exploration.
+## Locator discovery rules
+- Prefer `getByRole`, `getByTestId`, `getByLabel`, `getByText`
+- Avoid CSS selectors with dynamically generated class names
+- Note any missing `data-testid` attributes — flag them for the dev team
+
+## Exploration report format
+```
+## Explored: <URL>
+
+### Flow 1: <name>
+- Entry: <locator/action>
+- Steps: [step1, step2, ...]
+- Expected outcome: <assertion>
+- Locators found: { <element>: <locator> }
+
+### Proposed test cases
+1. <test description>
+2. <test description>
+```

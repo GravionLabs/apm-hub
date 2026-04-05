@@ -1,29 +1,43 @@
 ---
 name: playwright-automation-fill-in-form
-description: 'Automate filling in a form using Playwright MCP'
-allowed-tools: playwright
+description: 'Automate filling in a web form using Playwright MCP: navigate to the form, fill fields with provided data, validate before submitting.'
+allowed-tools: editFiles runCommands playwright
 ---
 
-# Automating Filling in a Form with Playwright MCP
+Automate filling in a web form using Playwright MCP.
 
-Your goal is to automate the process of filling in a form using Playwright MCP.
+## Stack
+- **CLI:** `npx playwright test`, `npx playwright codegen <url>`
+- **MCP:** Playwright MCP (live browser interaction)
 
-## Specific Instructions
+## Steps
+1. Ask for: target URL, field values, and whether to submit
+2. Navigate to the form URL using Playwright MCP
+3. Take a snapshot — identify all form fields and their locators
+4. Fill each field using the appropriate method:
 
-Navigate to https://forms.microsoft.com/url-of-my-form
+```typescript
+// Text inputs
+await page.getByLabel('Name').fill('John Doe');
 
-### Fill in the form with the following details:
+// Dropdowns
+await page.getByLabel('Country').selectOption('DE');
 
-1. Show: playwright live
+// Checkboxes / radio buttons
+await page.getByRole('checkbox', { name: 'Accept terms' }).check();
 
-2. Date: 15 July
+// File upload
+await page.getByLabel('Upload').setInputFiles('/path/to/file.png');
 
-3. Time: 1:00 AM
+// Date pickers (use fill or click+type)
+await page.getByLabel('Date').fill('2025-07-15');
+```
 
-4. Topic: Playwright Live - Latest updates on Playwright MCP + Live Demo
+5. Verify all fields are filled correctly before submission
+6. If submission is approved: click submit and verify success state
+7. **Never submit without explicit user confirmation**
 
-5. Upload image: /Users/myuserName/Downloads/my-image.png
-
-DO NOT SUBMIT THE FORM. 
-
-Ask for a review of the form before submitting it.
+## Rules
+- Always verify the filled state before submitting
+- Pause for review if any field fails to fill
+- Generate a reusable test script if the automation will be repeated

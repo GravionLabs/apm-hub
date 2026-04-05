@@ -1,18 +1,43 @@
 ---
 name: playwright-generate-test
-description: 'Generate a Playwright test based on a scenario using Playwright MCP'
-allowed-tools: changes codebase editFiles fetch problems runCommands runTests search playwright/*
+description: 'Generate a Playwright TypeScript test for a given scenario using the Playwright MCP. Explores the page live, identifies locators, writes and runs the test until it passes.'
+allowed-tools: editFiles runCommands playwright
 ---
 
-# Test Generation with Playwright MCP
+Generate a passing Playwright TypeScript test for a user scenario.
 
-Your goal is to generate a Playwright test based on the provided scenario after completing all prescribed steps.
+## Stack
+- **CLI:** `npx playwright test`, `npx playwright show-report`, `npx playwright codegen`
+- **Package manager:** npm / pnpm
+- **MCP:** Playwright MCP (live browser interaction)
 
-## Specific Instructions
+## Steps
+1. Ask for the scenario if not provided
+2. Navigate to the target URL using Playwright MCP
+3. Identify correct locators from live page snapshot — prefer `data-testid`, roles, accessible names
+4. Write the test using `@playwright/test` with `async/await`
+5. Save to `tests/` directory using `.spec.ts` naming
+6. Run: `npx playwright test <file> --headed` — iterate until passing
 
-- You are given a scenario, and you need to generate a playwright test for it. If the user does not provide a scenario, you will ask them to provide one.
-- DO NOT generate test code prematurely or based solely on the scenario without completing all prescribed steps.
-- DO run steps one by one using the tools provided by the Playwright MCP.
-- Only after all steps are completed, emit a Playwright TypeScript test that uses `@playwright/test` based on message history
-- Save generated test file in the tests directory
-- Execute the test file and iterate until the test passes
+## Locator priority
+1. `getByRole()` — semantic, resilient to UI changes
+2. `getByTestId()` — explicit test hooks (`data-testid`)
+3. `getByLabel()` / `getByText()` — visible content
+4. CSS/XPath — last resort only
+
+## Test structure
+```typescript
+import { test, expect } from '@playwright/test';
+
+test('scenario description', async ({ page }) => {
+  await page.goto('/path');
+  await expect(page.getByRole('heading', { name: 'Title' })).toBeVisible();
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await expect(page).toHaveURL(/success/);
+});
+```
+
+## Rules
+- One scenario per test — keep tests independent and isolated
+- Use `expect` assertions — never silent clicks with no verification
+- Await all Playwright actions — never `.then()` chains

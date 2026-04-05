@@ -3,7 +3,7 @@ description: >-
   Terraform infrastructure-as-code development plugin.
   Covers module design, naming conventions, state management, security best
   practices, code review, and multi-cloud provider configurations.
-version: "1.0.22"
+version: "1.0.23"
 author:
   name: Gravion
 license: MIT
