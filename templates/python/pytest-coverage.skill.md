@@ -6,6 +6,11 @@ allowed-tools: codebase editFiles runCommands
 
 Improve pytest test coverage for Python code.
 
+## Stack
+- **uv run pytest** — run tests inside the uv-managed environment
+- **pytest-cov** — coverage plugin (`pip install pytest-cov` or add to `dev` dependencies)
+- **coverage** — coverage reporting CLI (`coverage report`, `coverage html`)
+
 ## What this skill does
 Runs the test suite with coverage, identifies uncovered lines, and writes focused tests to close coverage gaps.
 

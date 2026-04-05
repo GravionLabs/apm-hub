@@ -1,7 +1,8 @@
 ---
 name: 'Pytest Engineer'
 description: 'Write and improve Python pytest tests using pytest fixtures, markers, and pytest-mock – enforces project structure and naming conventions'
-tools: ['codebase', 'search', 'usages', 'findTestFiles', 'testFailure', 'problems', 'runCommands', 'edit/editFiles']
+mode: agent
+tools: ['codebase', 'search', 'usages', 'problems', 'runCommands', 'editFiles']
 ---
 
 > **IDE Compatibility:** ✅ Works in VS Code, JetBrains Copilot, and Copilot CLI.

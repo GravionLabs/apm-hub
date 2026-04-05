@@ -23,7 +23,10 @@ applyTo: '**/*.py'
 - Write clear and concise comments for each function.
 - Ensure functions have descriptive names and include type hints.
 - Provide docstrings following PEP 257 conventions.
-- Use the `typing` module for type annotations (e.g., `List[str]`, `Dict[str, int]`).
+- Use the `typing` module only where necessary. Prefer **built-in generics** for Python 3.9+ projects:
+  - ✅ `list[str]`, `dict[str, int]`, `tuple[int, ...]`, `set[str]`
+  - ❌ `typing.List[str]`, `typing.Dict[str, int]` (deprecated since 3.9)
+  - Use `Optional[X]` → `X | None`, `Union[X, Y]` → `X | Y` (Python 3.10+)
 - Break down complex functions into smaller, more manageable functions.
 
 ## General Instructions
@@ -36,7 +39,67 @@ applyTo: '**/*.py'
 - Use consistent naming conventions and follow language-specific best practices.
 - Write concise, efficient, and idiomatic code that is also easily understandable.
 
-## Code Style and Formatting
+## Modern Python Features
+
+### Python 3.10 — Pattern Matching
+Use `match` statements for complex branching instead of long `if/elif` chains:
+```python
+match command:
+    case "quit":
+        quit_game()
+    case "go" if direction in valid_directions:
+        go(direction)
+    case {"action": action, "object": obj}:
+        handle_action(action, obj)
+    case _:
+        print(f"Unknown command: {command}")
+```
+
+### Python 3.11 — Exception Groups
+Use `ExceptionGroup` and `except*` for concurrent error handling:
+```python
+try:
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(task1())
+        tg.create_task(task2())
+except* ValueError as eg:
+    for exc in eg.exceptions:
+        print(f"ValueError: {exc}")
+except* TypeError as eg:
+    handle_type_errors(eg.exceptions)
+```
+
+### Python 3.12 — Type Parameter Syntax
+Use the new generic syntax instead of `TypeVar`:
+```python
+# Old (TypeVar)
+T = TypeVar("T")
+def first(items: list[T]) -> T: ...
+
+# New (Python 3.12+)
+def first[T](items: list[T]) -> T: ...
+type Vector = list[float]       # type alias
+type Matrix[T] = list[list[T]]  # generic type alias
+```
+
+Use `@override` to mark intentional method overrides:
+```python
+from typing import override
+
+class MyList(list[int]):
+    @override
+    def append(self, value: int) -> None:
+        if value < 0:
+            raise ValueError("Only non-negative values allowed")
+        super().append(value)
+```
+
+### Python 3.13 — Improved Error Messages
+- `locals()` now returns a copy (modifications no longer affect local scope)
+- `copy.copy()` / `copy.deepcopy()` are faster for built-in types
+- Use `PythonFinalizationError` for code running during interpreter shutdown
+
+## Additional Python Conventions
 
 - Follow the **PEP 8** style guide for Python.
 - Maintain proper indentation (use 4 spaces for each level of indentation).
