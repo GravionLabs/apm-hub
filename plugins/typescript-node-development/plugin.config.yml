@@ -21,6 +21,9 @@ agents:
   - source: shared/agents/test-engineer
 
 skills:
+  # Scaffold a new TypeScript/Node.js project (app, library, or CLI)
+  - name: create-node-project
+    source: typescript/skills/create-node-project
   # GitHub Actions CI/CD workflow for Node.js packages
   - name: create-node-workflow
     source: devops/skills/create-node-workflow
