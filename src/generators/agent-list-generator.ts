@@ -26,15 +26,19 @@ export function generateAgentList(
     name: string;
     description: string;
     filename: string;
+    relPath: string;
   }
 
   const allAgents: AgentEntry[] = [];
   const byDomain: Record<string, AgentEntry[]> = {};
 
   for (const domain of domains) {
-    const domainDir = path.join(templatesBaseDir, domain);
+    // Agents are in templates/<domain>/agents/*.agent.md
+    const agentsDir = path.join(templatesBaseDir, domain, 'agents');
+    if (!fs.existsSync(agentsDir)) continue;
+
     const files = fs
-      .readdirSync(domainDir, { withFileTypes: true })
+      .readdirSync(agentsDir, { withFileTypes: true })
       .filter((f) => f.isFile() && f.name.endsWith('.agent.md'))
       .map((f) => f.name)
       .sort();
@@ -43,11 +47,12 @@ export function generateAgentList(
 
     byDomain[domain] = [];
     for (const filename of files) {
-      const content = fs.readFileSync(path.join(domainDir, filename), 'utf8');
+      const content = fs.readFileSync(path.join(agentsDir, filename), 'utf8');
       const fm = parseFrontmatter(content);
       const name = fm.name || getTitle(content, filename);
       const description = fm.description || '-';
-      const entry: AgentEntry = { domain, name, description, filename };
+      const relPath = `${domain}/agents/${filename}`;
+      const entry: AgentEntry = { domain, name, description, filename, relPath };
       allAgents.push(entry);
       byDomain[domain].push(entry);
     }
@@ -63,7 +68,7 @@ export function generateAgentList(
   output += `| :---- | :----- | :---------- |\n`;
 
   for (const a of allAgents) {
-    const agentLink = `[${a.name}](../templates/${a.domain}/${a.filename})`;
+    const agentLink = `[${a.name}](../templates/${a.relPath})`;
     const domainLabel = a.domain.charAt(0).toUpperCase() + a.domain.slice(1);
     const domainLink = `[${domainLabel}](#${a.domain})`;
     output += `| ${agentLink} | ${domainLink} | ${a.description} |\n`;
@@ -77,7 +82,7 @@ export function generateAgentList(
     output += `| Agent | Description |\n`;
     output += `| :---- | :---------- |\n`;
     for (const a of agents) {
-      const agentLink = `[\`${a.name}\`](../templates/${a.domain}/${a.filename})`;
+      const agentLink = `[\`${a.name}\`](../templates/${a.relPath})`;
       output += `| ${agentLink} | ${a.description} |\n`;
     }
     output += `\n`;

@@ -118,11 +118,27 @@ export function resolveTemplatePath(raw: string, templatesDir?: string): string 
         instructions: '.instructions.md',
       };
       const ext = typeExtMap[parts[1]];
-      if (ext) return `${raw}${ext}`;
+      if (ext) {
+        // Skills use the agentskills.io directory layout: prefer <name>/SKILL.md over <name>.skill.md
+        if (parts[1] === 'skills') {
+          if (templatesDir) {
+            const dirLayout = path.join(templatesDir, raw, 'SKILL.md');
+            const flatLayout = path.join(templatesDir, `${raw}${ext}`);
+            if (fs.existsSync(dirLayout)) return `${raw}/SKILL.md`;
+            if (fs.existsSync(flatLayout)) return `${raw}${ext}`;
+          }
+          return `${raw}/SKILL.md`; // default to new directory layout
+        }
+        return `${raw}${ext}`;
+      }
     }
 
     // Domain-based path (e.g. csharp/csharp-expert) — auto-discover extension
     if (templatesDir) {
+      // Check new directory layout first (agentskills.io: <name>/SKILL.md)
+      const dirSkillMd = path.join(templatesDir, raw, 'SKILL.md');
+      if (fs.existsSync(dirSkillMd)) return `${raw}/SKILL.md`;
+      // Then check flat layout extensions
       for (const ext of ['.skill.md', '.agent.md', '.instructions.md', '.prompt.md']) {
         const candidate = `${raw}${ext}`;
         if (fs.existsSync(path.join(templatesDir, candidate))) return candidate;
@@ -351,10 +367,13 @@ export function generatePlugin(configPath: string, templatesDir: string, version
 
     const sourceContent = fs.readFileSync(sourcePath, 'utf8');
 
+    // Determine the source layout: flat <name>.skill.md or directory <name>/SKILL.md
+    const isSkillMd = resolvedSource.endsWith('.skill.md');
+    const isSkillDir = resolvedSource.endsWith('/SKILL.md');
+
     let skillContent: string;
-    if (resolvedSource.endsWith('.skill.md')) {
-      // Dedicated skill template (.skill.md) — copy directly, no transform needed.
-      // The file is already in the agentskills.io SKILL.md format.
+    if (isSkillMd || isSkillDir) {
+      // Dedicated skill template already in agentskills.io SKILL.md format — copy directly.
       skillContent = sourceContent;
     } else {
       // Legacy: generate skill from prompt/agent template via frontmatter transform.
@@ -378,12 +397,32 @@ export function generatePlugin(configPath: string, templatesDir: string, version
     fs.writeFileSync(skillPath, skillContent, 'utf8');
     console.log(`  ✓ Skill: skills/${skill.name}/SKILL.md`);
 
-    // Check for companion directory alongside the .skill.md file
-    if (resolvedSource.endsWith('.skill.md')) {
+    // Copy companion assets based on layout
+    if (isSkillMd) {
+      // Flat layout: companion dir lives alongside the .skill.md file with the same base name
       const companionDir = sourcePath.replace(/\.skill\.md$/, '');
       const assetFiles = copySkillAssets(companionDir, skillDir);
       for (const rel of assetFiles) {
         console.log(`  ✓ Skill asset: skills/${skill.name}/${rel}`);
+      }
+    } else if (isSkillDir) {
+      // Directory layout: companion content lives alongside SKILL.md inside the skill directory
+      const skillSourceDir = path.dirname(sourcePath);
+      const entries = fs.readdirSync(skillSourceDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.name === 'SKILL.md') continue;
+        const srcPath = path.join(skillSourceDir, entry.name);
+        const destPath = path.join(skillDir, entry.name);
+        if (entry.isDirectory()) {
+          fs.mkdirSync(destPath, { recursive: true });
+          const assetFiles = copySkillAssets(srcPath, destPath);
+          for (const rel of assetFiles) {
+            console.log(`  ✓ Skill asset: skills/${skill.name}/${entry.name}/${rel}`);
+          }
+        } else {
+          fs.copyFileSync(srcPath, destPath);
+          console.log(`  ✓ Skill asset: skills/${skill.name}/${entry.name}`);
+        }
       }
     }
 
@@ -406,7 +445,10 @@ export function generatePlugin(configPath: string, templatesDir: string, version
     }
 
     const agentContent = fs.readFileSync(sourcePath, 'utf8');
-    const rawBaseName = path.basename(resolvedAgent);
+    // When source resolves to a directory-layout SKILL.md, use the parent dir name
+    const rawBaseName = resolvedAgent.endsWith('/SKILL.md')
+      ? path.basename(path.dirname(resolvedAgent))
+      : path.basename(resolvedAgent);
     // Strip compound extension (e.g. .agent.md, .skill.md) to get bare name
     const baseName = rawBaseName.replace(/\.(agent|skill|prompt|instructions)\.md$/, '');
     const agentFile = `${baseName}.agent.md`;

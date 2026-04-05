@@ -6,6 +6,13 @@ allowed-tools: editFiles codebase runCommands
 
 Set up a complete code quality pipeline for a JS/TS or Angular project.
 
+## Stack
+- **ESLint** — flat config (`eslint.config.mjs`), `@typescript-eslint`, `angular-eslint` for Angular
+- **Prettier** — formatter + `prettier-plugin-organize-imports`
+- **Husky** — git hooks manager (`npx husky init`)
+- **lint-staged** — run linters on staged files only
+- **Package manager:** npm (or pnpm)
+
 ## What this skill does
 Installs and configures ESLint (flat config), Prettier with `prettier-plugin-organize-imports`, and Husky + lint-staged for pre-commit hooks. Adds IDE settings for auto-format on save.
 

@@ -14,9 +14,6 @@
     "github-actions",
     "ci-cd"
   ],
-  "agents": [
-    "./agents"
-  ],
   "skills": [
     "./skills/code-review-publisher",
     "./skills/az-devops-setup",

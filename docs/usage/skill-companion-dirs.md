@@ -4,19 +4,21 @@ Skills can ship with companion files (code templates, reference docs, scripts, a
 
 ## Directory Convention
 
-Each skill's companion directory lives next to its `.skill.md` file, under the domain's `skills/` subdirectory:
+Each skill lives in its own directory under the domain's `skills/` subdirectory, following the [agentskills.io](https://agentskills.io) directory layout:
 
 ```
 templates/<domain>/skills/
-  <skill-name>.skill.md          ← the skill itself
-  <skill-name>/                  ← companion directory (same name, no extension)
-    templates/                   ← files to copy into user projects
-    scripts/                     ← executable utility scripts
-    references/                  ← reference docs, cheat sheets, error catalogs
-    assets/                      ← images, diagrams, binary files
+  <skill-name>/
+    SKILL.md                         ← the skill itself
+    templates/                       ← files to copy into user projects
+    scripts/                         ← executable utility scripts
+    references/                      ← reference docs, cheat sheets, error catalogs
+    assets/                          ← images, diagrams, binary files
 ```
 
 Only create subdirs that are actually needed. An empty `assets/` directory adds no value.
+
+> **Legacy flat layout (backward compatible):** `<skill-name>.skill.md` alongside a `<skill-name>/` companion directory is still supported but deprecated. Prefer the directory layout for new skills.
 
 ## Subdir Semantics
 
@@ -29,22 +31,25 @@ Only create subdirs that are actually needed. An empty `assets/` directory adds 
 
 ## How the Generator Processes Them
 
-When `npm run generate` runs, after writing `SKILL.md` the generator checks for a companion directory:
+When `npm run generate` runs, after writing `SKILL.md` the generator copies companion files:
 
-1. If `templates/<domain>/skills/<skill-name>/` exists, its entire contents are copied recursively to `plugins/<plugin-name>/skills/<skill-name>/`
-2. Each copied file is logged: `✓ Skill asset: skills/<skill-name>/templates/...`
-3. The skill install process (via Copilot CLI) delivers the companion files alongside `SKILL.md` to the user's `.github/` directory
+1. Reads all entries in `templates/<domain>/skills/<skill-name>/` (excluding `SKILL.md`)
+2. Recursively copies them to `plugins/<plugin-name>/skills/<skill-name>/`
+3. Each copied file is logged: `✓ Skill asset: skills/<skill-name>/templates/...`
+4. The skill install process (via Copilot CLI) delivers the companion files alongside `SKILL.md` to the user's `.github/` directory
 
 ## Example: `create-dotnet-solution`
 
 ```
 templates/csharp/skills/
-  create-dotnet-solution.skill.md
   create-dotnet-solution/
+    SKILL.md
     templates/
       Directory.Build.props        ← shared MSBuild properties
       Directory.Packages.props     ← Central Package Management stub
       .editorconfig                ← opinionated C# style rules
+    scripts/
+      New-Solution.ps1
 ```
 
 The skill references these in its `## Templates` section so the agent knows to copy them to the solution root.
@@ -62,7 +67,6 @@ Starter files are available in `templates/` alongside this skill:
 
 ## Adding Companion Files to an Existing Skill
 
-1. Create the companion directory: `templates/<domain>/skills/<skill-name>/`
-2. Add your files in the appropriate subdir (`templates/`, `scripts/`, etc.)
-3. Add a `## Templates` / `## References` section to the skill's `.skill.md`
-4. Run `npm run generate` to verify the files are copied correctly
+1. Place files in the appropriate subdir inside the skill directory: `templates/<domain>/skills/<skill-name>/templates/`, `scripts/`, etc.
+2. Add a `## Templates` / `## References` section to the skill's `SKILL.md`
+3. Run `npm run generate` to verify the files are copied correctly

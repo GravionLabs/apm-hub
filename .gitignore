@@ -45,3 +45,9 @@ plugins/*/skills/
 # Edit generators in src/generators/, not these files.
 docs/agent-list.md
 docs/instruction-list.md
+docs/skill-list.md
+docs/template-list.md
+docs/plugin-list.md
+
+# Generated marketplace manifest — managed by CI (regenerate-and-commit job)
+.github/plugin/marketplace.json
