@@ -5,10 +5,26 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.20] — 2026-04-05
+
+### Bug Fixes
+- **angular-testing**: Add missing vi, signal, fakeAsync, tick imports to prompt examples
+- **angular-code-review**: Use space-separated allowed-tools (no commas)
+
+
+### Documentation
+- **angular**: Add ## Stack section to angular-migration skill for CLI prerequisites
+
+
+### Features
+- **angular**: Add code-review, testing, migration templates; fix agent frontmatter (#41)
+
+
 ## [1.0.19] — 2026-04-04
 
 ### Documentation
 - Fix outdated references after domain template restructuring (#39)
+- Update CHANGELOG.md for v1.0.19 [skip ci]
 
 
 ## [1.0.18] — 2026-04-04
