@@ -2,7 +2,7 @@ name: typescript-node-development
 description: >-
   TypeScript and Node.js development plugin.
   Covers strict typing, ESM modules, async/await patterns, error handling,
-  code review, Playwright TypeScript testing, and containerization.
+  code review, debugging, Playwright TypeScript testing, and containerization.
 version: "1.0.31"
 author:
   name: Gravion
@@ -14,13 +14,12 @@ keywords:
   - vitest
   - eslint
 
-# Agents copied as-is from templates/agents/
 agents:
   - source: typescript/agents/typescript-expert
+  - source: typescript/agents/typescript-reviewer
   - source: shared/agents/documentation-writer
   - source: shared/agents/test-engineer
 
-# Skills generated from prompt templates
 skills:
   # GitHub Actions CI/CD workflow for Node.js packages
   - name: create-node-workflow
@@ -28,6 +27,9 @@ skills:
   # TypeScript code review (type safety, strict mode, Node.js conventions)
   - name: typescript-code-review
     source: typescript/skills/typescript-code-review
+  # Diagnose and fix TypeScript type errors, module resolution, build failures
+  - name: typescript-debug
+    source: typescript/skills/typescript-debug
   # ESLint + Prettier + Husky setup for TypeScript projects
   - name: setup-prettier-eslint-husky
     source: typescript/skills/setup-prettier-eslint-husky
