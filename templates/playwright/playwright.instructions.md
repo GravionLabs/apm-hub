@@ -1,6 +1,6 @@
 ---
 description: 'Playwright E2E testing conventions: Page Object Model, locator best practices, data-testid, test isolation, async/await patterns, and CI configuration'
-applyTo: '**/*.spec.ts,**/*.test.ts,**/playwright.config.ts,**/tests/**/*.ts'
+applyTo: '**/*.spec.js,**/*.test.js,**/playwright.config.js,**/tests/**/*.js'
 ---
 
 # Playwright Conventions
