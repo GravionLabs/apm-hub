@@ -1,7 +1,7 @@
 ---
 name: angular-testing
 description: 'Write Angular 21 unit tests using Vitest and TestBed. Covers standalone component testing, signal testing, service mocking, and async patterns.'
-allowed-tools: editFiles codebase
+allowed-tools: editFiles codebase runCommands
 ---
 
 Write Angular 21 unit tests with Vitest and TestBed.
