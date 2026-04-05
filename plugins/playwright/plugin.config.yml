@@ -24,3 +24,8 @@ skills:
     source: playwright/playwright-explore-website
   - name: playwright-automation-fill-in-form
     source: playwright/playwright-automation-fill-in-form
+  - name: playwright-debug
+    source: playwright/playwright-debug
+
+instructions:
+  - source: playwright/playwright

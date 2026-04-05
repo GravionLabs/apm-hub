@@ -1,7 +1,8 @@
 ---
+name: "Playwright Tester"
 description: "Playwright browser automation specialist for writing, debugging, and maintaining end-to-end tests across Chrome, Firefox, and WebKit"
-name: "Playwright Tester Mode"
-tools: ["changes", "codebase", "edit/editFiles", "fetch", "findTestFiles", "problems", "runCommands", "runTasks", "runTests", "search", "searchResults", "terminalLastCommand", "terminalSelection", "testFailure", "playwright"]
+mode: agent
+tools: ["changes", "codebase", "editFiles", "fetch", "problems", "runCommands", "runTests", "playwright"]
 model: Claude Sonnet 4
 ---
 
