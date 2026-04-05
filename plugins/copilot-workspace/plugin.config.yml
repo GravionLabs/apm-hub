@@ -9,7 +9,7 @@ description: >-
   automate the full branch → implement → review → PR lifecycle. The standalone
   scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or
   scheduled runs without the AI prompt.
-version: "1.0.21"
+version: "1.0.22"
 author:
   name: Gravion
 license: MIT

@@ -1,7 +1,7 @@
 {
   "name": "docker",
   "description": "Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "author": {
     "name": "Gravion"
   },
@@ -12,8 +12,14 @@
     "dockerfile",
     "multi-stage"
   ],
+  "agents": [
+    "./agents"
+  ],
   "skills": [
-    "./skills/multi-stage-dockerfile"
+    "./skills/multi-stage-dockerfile",
+    "./skills/docker-debug",
+    "./skills/docker-security-review",
+    "./skills/docker-compose-setup"
   ],
   "instructions": [
     "./instructions/docker.instructions.md"
