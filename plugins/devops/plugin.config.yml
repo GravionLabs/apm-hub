@@ -4,7 +4,7 @@ description: >-
   Publish code reviews as PR comments to GitHub or Azure DevOps,
   configure the az CLI azure-devops extension for pipeline integration,
   and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.
-version: "1.0.30"
+version: "1.0.31"
 author:
   name: Gravion
 license: MIT
@@ -15,6 +15,12 @@ keywords:
   - pull-request
   - github-actions
   - ci-cd
+
+# Agents copied as-is from templates/agents/
+agents:
+  - source: devops/agents/code-review-publisher
+  - source: devops/agents/az-devops-setup
+  - source: devops/agents/create-pr
 
 # Skills generated from agent templates (no dedicated prompts exist)
 skills:

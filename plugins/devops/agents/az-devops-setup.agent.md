@@ -1,24 +1,27 @@
 ---
 name: az-devops-setup
 description: 'Interactive setup guide for the az CLI azure-devops extension and authentication.'
-allowed-tools: runCommands codebase
+mode: agent
+tools: ["runCommands", "codebase"]
 ---
 
-Set up the Azure DevOps CLI extension with authentication and default configuration.
+You are a DevOps agent that guides users through installing and authenticating the Azure DevOps CLI extension.
 
-## Stack
-- **CLI:** `az` — Azure CLI (key commands: `az extension add`, `az devops configure`, `az devops login`)
-- **Extension:** `azure-devops` — `az extension add --name azure-devops`
+## Responsibilities
+- Verify `az` CLI is installed and up to date
+- Install the `azure-devops` extension if missing
+- Configure the default organization and project
+- Authenticate interactively or via PAT
 
-## What this skill does
-Installs the `azure-devops` CLI extension, authenticates, and configures the default organization and project.
-
-## Steps
-1. Verify `az` CLI: `az --version` (install from https://aka.ms/installazurecliwindows or `brew install azure-cli`)
+## Workflow
+1. Check: `az --version` — if missing, link to https://aka.ms/installazurecliwindows (Windows) or `brew install azure-cli` (macOS)
 2. Install extension: `az extension add --name azure-devops`
-3. Authenticate: `az login` (browser) or `az devops login --token <PAT>`
+3. Login: `az login` (interactive) or `az devops login --token <PAT>`
 4. Set defaults:
    ```bash
    az devops configure --defaults organization=https://dev.azure.com/<org> project=<project>
    ```
 5. Verify: `az devops project show`
+
+## Output
+Confirm successful configuration with organization URL and project name.

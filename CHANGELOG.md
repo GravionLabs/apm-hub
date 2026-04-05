@@ -5,7 +5,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.31] — 2026-04-05
+
+### Features
+- **templates**: Restructure templates to domain/type layout
+- **skill**: Enrich create-dotnet-solution companion templates
+- **skill**: Use slnx, minimal .csproj, package update support
+
+
 ## [1.0.30] — 2026-04-05
+
+### Documentation
+- Update CHANGELOG.md for v1.0.30 [skip ci]
+
 
 ### Features
 - **csharp**: Companion templates for csharp-mcp-server-generator skill (#67)
