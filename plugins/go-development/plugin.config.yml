@@ -16,20 +16,20 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: go/go-expert
-  - source: shared/documentation-writer
+  - source: go/agents/go-expert
+  - source: shared/agents/documentation-writer
 
 # Skills generated from prompt templates
 skills:
   # Go code review (error handling, interfaces, concurrency, security)
   - name: go-code-review
-    source: go/go-code-review
+    source: go/skills/go-code-review
   # Generate table-driven Go tests with subtests and mocks
   - name: go-test-generate
-    source: go/go-test-generate
+    source: go/skills/go-test-generate
   # Generate focused unit tests for existing code
   - name: write-tests
-    source: shared/write-tests
+    source: shared/skills/write-tests
 
 instructions:
-  - source: go/go
+  - source: go/instructions/go

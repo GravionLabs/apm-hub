@@ -26,22 +26,22 @@ keywords:
 skills:
   # Interactive wizard: analyze stack, select and install instructions/prompts/agents
   - name: gh-copilot-setup
-    source: copilot/gh-copilot-setup
+    source: copilot/skills/gh-copilot-setup
   # Download and run copilot-sync.ps1 to update installed templates from copilot-hub
   - name: gh-copilot-sync
-    source: copilot/gh-copilot-sync
+    source: copilot/skills/gh-copilot-sync
   # Analyze the repository and generate a tailored AGENTS.md context file
   - name: gh-agents-md
-    source: copilot/gh-agents-md
+    source: copilot/skills/gh-agents-md
   # Read issue, determine branch type, create branch, implement code, tests, docs, push
   - name: gh-issue-implement
-    source: copilot/gh-issue-implement
+    source: copilot/skills/gh-issue-implement
   # Review changes and create a pull request for a GitHub issue
   - name: gh-issue-finish
-    source: copilot/gh-issue-finish
+    source: copilot/skills/gh-issue-finish
   # Full end-to-end workflow: branch → implement → review → PR
   - name: gh-issue-work
-    source: copilot/gh-issue-work
+    source: copilot/skills/gh-issue-work
 
 files:
   # Standalone PowerShell Core sync script — can be run directly without the AI prompt:

@@ -16,19 +16,19 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: helm/helm-expert
+  - source: helm/agents/helm-expert
 
 # Skills generated from prompt templates
 skills:
   # Scaffold a new Helm chart with standard resources and security defaults
   - name: helm-chart-create
-    source: helm/helm-chart-create
+    source: helm/skills/helm-chart-create
   # Review values.yaml for completeness, security, and documentation
   - name: helm-values-review
-    source: helm/helm-values-review
+    source: helm/skills/helm-values-review
   # Upgrade a Helm chart to newer API versions or Kubernetes API versions
   - name: helm-chart-upgrade
-    source: helm/helm-chart-upgrade
+    source: helm/skills/helm-chart-upgrade
 
 instructions:
-  - source: helm/helm
+  - source: helm/instructions/helm

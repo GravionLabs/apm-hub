@@ -17,53 +17,53 @@ keywords:
 
 # Agents copied as-is from templates/agents/
 agents:
-  - source: csharp/api-architect
-  - source: csharp/csharp-expert
-  - source: shared/documentation-writer
-  - source: csharp/dotnet-upgrade.agent.md
-  - source: csharp/expert-dotnet-software-engineer
-  - source: csharp/migration-agent
-  - source: csharp/modernization
-  - source: csharp/nunit-engineer
-  - source: csharp/openapi-to-application
+  - source: csharp/agents/api-architect
+  - source: csharp/agents/csharp-expert
+  - source: shared/agents/documentation-writer
+  - source: csharp/agents/dotnet-upgrade
+  - source: csharp/agents/expert-dotnet-software-engineer
+  - source: csharp/agents/migration-agent
+  - source: csharp/agents/modernization
+  - source: csharp/agents/nunit-engineer
+  - source: csharp/agents/openapi-to-application
 
 # Skills generated from local prompt/agent templates (local rules take priority over awesome-copilot)
 skills:
   - name: aspnet-minimal-api-openapi
-    source: csharp/aspnet-minimal-api-openapi
+    source: csharp/skills/aspnet-minimal-api-openapi
   # Scaffold a new .NET solution with src/test layout and all build config files
   - name: create-dotnet-solution
-    source: csharp/create-dotnet-solution
+    source: csharp/skills/create-dotnet-solution
   - name: csharp-async
-    source: csharp/csharp-async
+    source: csharp/skills/csharp-async
   # Ensure C# types are documented with XML comments
   - name: csharp-docs
-    source: csharp/csharp-docs
+    source: csharp/skills/csharp-docs
   - name: csharp-mcp-server-generator
-    source: csharp/csharp-mcp-server-generator
+    source: csharp/skills/csharp-mcp-server-generator
   - name: csharp-nunit
-    source: csharp/csharp-nunit
+    source: csharp/skills/csharp-nunit
   - name: write-tests
-    source: shared/write-tests
+    source: shared/skills/write-tests
   # C# code review skill
   - name: csharp-code-review
-    source: csharp/csharp-code-review
+    source: csharp/skills/csharp-code-review
   - name: dotnet-best-practices
-    source: csharp/dotnet-best-practices
+    source: csharp/skills/dotnet-best-practices
   # Review C#/.NET code for design pattern implementation
   - name: dotnet-design-pattern-review
-    source: csharp/dotnet-design-pattern-review
+    source: csharp/skills/dotnet-design-pattern-review
   # .NET framework upgrade analysis and execution
   - name: dotnet-upgrade
-    source: csharp/dotnet-upgrade
+    source: csharp/skills/dotnet-upgrade
   # Entity Framework Core best practices
   - name: ef-core
-    source: csharp/ef-core
+    source: csharp/skills/ef-core
 
 instructions:
-  - source: csharp/csharp
-  - source: csharp/csharp-nunit.instructions.md
-  - source: csharp/playwright-dotnet
+  - source: csharp/instructions/csharp
+  - source: csharp/instructions/csharp-nunit
+  - source: csharp/instructions/playwright-dotnet
 
 files:
   - source: editor-configs/.editorconfig-csharp

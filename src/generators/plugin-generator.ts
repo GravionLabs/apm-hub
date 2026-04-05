@@ -102,10 +102,24 @@ export function resolveTemplatePath(raw: string, templatesDir?: string): string 
   if (raw.includes('/')) {
     if (raw.includes('.')) return raw;
 
+    // Legacy type-first paths: agents/name, skills/name, etc.
     if (raw.startsWith('agents/')) return `${raw}.agent.md`;
     if (raw.startsWith('instructions/')) return `${raw}.instructions.md`;
     if (raw.startsWith('skills/')) return `${raw}.skill.md`;
     if (raw.startsWith('prompts/')) return `${raw}.prompt.md`;
+
+    // New domain/type/name paths: csharp/agents/name, csharp/skills/name, etc.
+    const parts = raw.split('/');
+    if (parts.length === 3) {
+      const typeExtMap: Record<string, string> = {
+        agents: '.agent.md',
+        skills: '.skill.md',
+        prompts: '.prompt.md',
+        instructions: '.instructions.md',
+      };
+      const ext = typeExtMap[parts[1]];
+      if (ext) return `${raw}${ext}`;
+    }
 
     // Domain-based path (e.g. csharp/csharp-expert) — auto-discover extension
     if (templatesDir) {
