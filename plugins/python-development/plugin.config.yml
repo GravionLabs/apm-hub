@@ -13,11 +13,15 @@ keywords:
   - uv
   - playwright
   - typing
+  - mcp
+  - debugging
 
 # Agents copied as-is from templates/agents/
 agents:
   - source: python/python-expert
   - source: python/pytest-engineer
+  - source: python/python-mcp-expert
+  - source: python/python-reviewer
   - source: shared/documentation-writer
 
 # Skills generated from prompt templates
@@ -34,6 +38,12 @@ skills:
   # Generate focused unit tests for existing code
   - name: write-tests
     source: shared/write-tests
+  # Diagnose and fix Python runtime errors, memory leaks, and performance issues
+  - name: python-debug
+    source: python/python-debug
+  # Set up or modernize Python packaging with pyproject.toml and uv
+  - name: python-packaging
+    source: python/python-packaging
 
 instructions:
   - source: python/python
