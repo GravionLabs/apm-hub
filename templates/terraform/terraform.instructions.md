@@ -154,8 +154,8 @@ check "health_check" {
 }
 ```
 
-### Variable validation with `check` (Terraform 1.9+)
-Input variable validation using `condition` and custom error messages:
+### Variable validation with `validation {}` blocks
+Validate input variables with `condition` and custom error messages:
 ```hcl
 variable "instance_type" {
   type        = string
