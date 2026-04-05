@@ -38,4 +38,7 @@ Creates a Helm chart with all required files, helper templates, and security-con
 - All image tags must be configurable via values — no hardcoded tags in templates
 - Resources limits/requests must be configurable and have sensible defaults
 
+## Stack
+`helm` `kubectl` `helm lint` `helm template`
+
 > 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
