@@ -1,7 +1,7 @@
 {
   "name": "docker",
   "description": "Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.",
-  "version": "1.0.28",
+  "version": "1.0.29",
   "author": {
     "name": "Gravion"
   },
@@ -20,8 +20,5 @@
     "./skills/docker-debug",
     "./skills/docker-security-review",
     "./skills/docker-compose-setup"
-  ],
-  "instructions": [
-    "./instructions/docker.instructions.md"
   ]
 }
