@@ -6,7 +6,9 @@ allowed-tools: codebase editFiles runCommands
 
 Analyze and execute a .NET upgrade for the solution.
 
-## What this skill does
+## Stack
+- **CLI:** `dotnet` SDK (key commands: `dotnet build`, `dotnet test`, `dotnet outdated`)
+- **Package manager:** NuGet (via `Directory.Packages.props` or `.csproj`)
 Assesses the current .NET version and package state, plans the upgrade path, applies changes, and verifies the solution builds and tests pass.
 
 ## Steps

@@ -6,7 +6,9 @@ allowed-tools: codebase editFiles runCommands
 
 Apply Entity Framework Core best practices to the specified code.
 
-## What this skill does
+## Stack
+- **CLI:** `dotnet` SDK + `dotnet-ef` tool (key commands: `dotnet ef migrations add`, `dotnet ef database update`, `dotnet build`)
+- **Package manager:** NuGet — `Microsoft.EntityFrameworkCore`, provider packages
 Reviews and improves EF Core usage: DbContext configuration, entity design, migrations, query patterns, and performance.
 
 ## Key rules
