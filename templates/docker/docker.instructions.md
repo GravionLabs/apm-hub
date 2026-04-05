@@ -678,4 +678,58 @@ Effective containerization with Docker is fundamental to modern DevOps. By follo
 
 ---
 
+## Modern Docker Features (Docker 23+ / BuildKit)
+
+### BuildKit (default since Docker 23)
+BuildKit is the default build backend. Key features:
+- Parallel stage execution in multi-stage builds
+- Better cache management and remote cache support
+- `--secret` flag: mount secrets without leaking into image layers
+  ```dockerfile
+  # Mount secret during build (not stored in image)
+  RUN --mount=type=secret,id=npm_token npm install
+  ```
+  ```bash
+  docker build --secret id=npm_token,src=.npmrc .
+  ```
+
+### Multi-platform builds
+```bash
+# Build for multiple architectures and push to registry
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t myregistry/myapp:latest \
+  --push .
+
+# Create and use a multi-platform builder
+docker buildx create --use --name multiarch
+```
+
+### `docker init` — official scaffolding
+```bash
+# Generates Dockerfile, .dockerignore, and docker-compose.yml for your project
+docker init
+```
+Supports: Go, Python, Node.js, Rust, ASP.NET, Java, PHP.
+
+### Docker Scout — built-in image scanning
+```bash
+docker scout cves <image>:<tag>               # list CVEs
+docker scout recommendations <image>:<tag>    # suggest better base image
+docker scout compare --to <image>:<tag> .     # compare current vs target
+```
+
+### Docker Compose v2 (Compose Specification)
+- The `version:` key is **deprecated** — omit it
+- Use `docker compose` (plugin) not `docker-compose` (standalone, deprecated)
+- Supports profiles: `docker compose --profile dev up`
+
+```yaml
+# Modern compose (no version: key)
+services:
+  app:
+    build: .
+    profiles: [dev]
+```
+
 <!-- End of Containerization & Docker Best Practices Instructions --> 

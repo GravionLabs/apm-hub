@@ -12,9 +12,19 @@ keywords:
   - dockerfile
   - multi-stage
 
+agents:
+  - source: docker/docker-expert
+  - source: docker/docker-security-reviewer
+
 skills:
   - name: multi-stage-dockerfile
     source: docker/multi-stage-dockerfile
+  - name: docker-debug
+    source: docker/docker-debug
+  - name: docker-security-review
+    source: docker/docker-security-review
+  - name: docker-compose-setup
+    source: docker/docker-compose-setup
 
 instructions:
   - source: docker/docker
