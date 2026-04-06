@@ -117,11 +117,18 @@ describe('generateTemplateList', () => {
     expect(content).toContain('## Csharp');
     expect(content).toContain('## Shared');
     expect(content).toContain('C# Expert');
-    expect(content).toContain('Agent');
+    expect(content).toContain('### Agents');
+    expect(content).toContain('### Skills');
+    expect(content).toContain('### Instructions');
+    expect(content).toContain('### Prompts');
     expect(content).toContain('csharp-async');
-    expect(content).toContain('Skill');
-    expect(content).toContain('Instructions');
-    expect(content).toContain('Prompt');
+  });
+
+  it('should not include a Type column header in tables', () => {
+    generateTemplateList(templatesDir, outputFile);
+    const content = fs.readFileSync(outputFile, 'utf8');
+    expect(content).not.toContain('| Type |');
+    expect(content).not.toContain('| :--- | :--- | :---------- |');
   });
 
   it('should include links to template files using correct paths', () => {
