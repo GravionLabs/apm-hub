@@ -15,15 +15,11 @@ Runs `helm lint`, `helm template`, and optional deep validation (kubeval schema 
 1. Ask: chart directory path, release name, values file(s) to use (optional)
 2. Lint the chart:
    ```bash
+   # Without a values file
+   helm lint <chart-dir>/
+
+   # With a values file
    helm lint <chart-dir>/ -f <values-file>
-   ```
-3. Render templates to stdout and check for YAML errors:
-   ```bash
-   helm template <release> <chart-dir>/ -f <values-file>
-   ```
-4. If `kubeval` is available, pipe rendered output for schema validation:
-   ```bash
-   helm template <release> <chart-dir>/ | kubeval --strict
    ```
 5. If `helm-unittest` plugin is installed and `tests/` directory exists:
    ```bash
