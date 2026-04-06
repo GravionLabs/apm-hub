@@ -3,7 +3,6 @@ name: gh-issue-implement
 description: 'Read a GitHub issue, create the appropriate branch, and implement it with code, tests, and docs. Use this to start work on a new issue.'
 allowed-tools: codebase editFiles runCommands
 model: claude-sonnet-4.6
-model: claude-sonnet-4.6
 ---
 
 Read a GitHub issue, create a branch, and fully implement it.
@@ -23,7 +22,7 @@ The script fetches the issue, derives the branch name from labels, creates and c
 
 **Manual alternative:**
 1. `gh issue view {issue-number} --json title,body,labels,assignees`
-2. Determine branch type from labels: `feature/`, `fix/`, `chore/`, `docs/`
+2. Determine branch type from labels: `feature/`, `bugfix/`, `hotfix/`, `chore/`, `docs/`
 3. `git checkout -b <type>/<issue-number>-<slug>`
 
 ### Phase 2 — Plan

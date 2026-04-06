@@ -39,8 +39,9 @@ $labels = $issue.labels | ForEach-Object { $_.name }
 
 # Determine branch prefix from labels
 $prefix = 'feature'
-if ($labels -contains 'bug' -or $labels -contains 'fix')           { $prefix = 'fix'   }
-elseif ($labels -contains 'chore' -or $labels -contains 'ci')      { $prefix = 'chore' }
+if ($labels -contains 'hotfix')                                    { $prefix = 'hotfix' }
+elseif ($labels -contains 'bug' -or $labels -contains 'fix')       { $prefix = 'bugfix' }
+elseif ($labels -contains 'chore' -or $labels -contains 'ci')      { $prefix = 'chore'  }
 elseif ($labels -contains 'documentation' -or $labels -contains 'docs') { $prefix = 'docs' }
 
 # Build slug from title: lowercase, alphanumeric + hyphens, max 50 chars
