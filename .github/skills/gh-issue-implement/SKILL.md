@@ -1,14 +1,14 @@
 ---
 name: gh-issue-implement
 description: 'Read a GitHub issue, create the appropriate branch, and implement it with code, tests, and docs. Use this to start work on a new issue.'
-allowed-tools: codebase editFiles runCommands
+allowed-tools: codebase editFiles runCommands mcp_github_get_issue mcp_github_create_branch mcp_github_list_branches
 model: claude-sonnet-4.6
 ---
 
 Read a GitHub issue, create a branch, and fully implement it.
 
 ## Prerequisites
-- `gh` CLI installed and authenticated (`gh auth status`)
+- `gh` CLI installed and authenticated (`gh auth status`) — used as fallback when GH MCP is unavailable
 - Run from the repository root
 
 ## Steps
@@ -20,9 +20,16 @@ pwsh scripts/Start-Issue.ps1 -IssueNumber {issue-number}
 ```
 The script fetches the issue, derives the branch name from labels, creates and checks out the branch.
 
-**Manual alternative:**
+**Manual alternative (prefer GH MCP, fall back to CLI):**
+
+*Primary — GH MCP:*
+1. Call `mcp_github_get_issue` with the issue number to read title, body, and labels
+2. Determine branch type from labels: `feature/`, `bugfix/`, `hotfix/`, `chore/`
+3. Call `mcp_github_create_branch` to create `<type>/<issue-number>-<slug>`, then `git checkout <branch>`
+
+*Fallback — GH CLI (when MCP not available):*
 1. `gh issue view {issue-number} --json title,body,labels,assignees`
-2. Determine branch type from labels: `feature/`, `bugfix/`, `hotfix/`, `chore/`, `docs/`
+2. Determine branch type from labels: `feature/`, `bugfix/`, `hotfix/`, `chore/`
 3. `git checkout -b <type>/<issue-number>-<slug>`
 
 ### Phase 2 — Plan
