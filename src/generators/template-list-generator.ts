@@ -97,6 +97,17 @@ function collectDomainEntries(domainDir: string, domain: string): TemplateEntry[
   return entries;
 }
 
+/** Fixed display order for type subsections */
+const TYPE_ORDER: string[] = ['Agent', 'Instructions', 'Prompt', 'Skill'];
+
+/** Heading labels for each type */
+const TYPE_HEADINGS: Record<string, string> = {
+  Agent: 'Agents',
+  Instructions: 'Instructions',
+  Prompt: 'Prompts',
+  Skill: 'Skills',
+};
+
 export function generateTemplateList(
   templatesBaseDir = 'templates',
   outputFile = 'docs/template-list.md'
@@ -122,19 +133,32 @@ export function generateTemplateList(
   }
   output += `\n`;
 
-  // Per-domain sections
+  // Per-domain sections, each type in its own subsection
   for (const [domain, entries] of domainEntries) {
     const label = domain.charAt(0).toUpperCase() + domain.slice(1);
-
     output += `## ${label}\n\n`;
-    output += `| Name | Type | Description | File |\n`;
-    output += `| :--- | :--- | :---------- | :--- |\n`;
 
+    // Group by type
+    const byType = new Map<string, TemplateEntry[]>();
     for (const e of entries) {
-      const fileLink = `[${e.linkText}](../templates/${e.relPath})`;
-      output += `| ${e.name} | ${e.type} | ${e.description} | ${fileLink} |\n`;
+      if (!byType.has(e.type)) byType.set(e.type, []);
+      byType.get(e.type)!.push(e);
     }
-    output += `\n`;
+
+    for (const type of TYPE_ORDER) {
+      const typeEntries = byType.get(type);
+      if (!typeEntries || typeEntries.length === 0) continue;
+
+      output += `### ${TYPE_HEADINGS[type]}\n\n`;
+      output += `| Name | Description | File |\n`;
+      output += `| :--- | :---------- | :--- |\n`;
+
+      for (const e of typeEntries) {
+        const fileLink = `[${e.linkText}](../templates/${e.relPath})`;
+        output += `| ${e.name} | ${e.description} | ${fileLink} |\n`;
+      }
+      output += `\n`;
+    }
   }
 
   writeOutputFile(outputFile, output);
