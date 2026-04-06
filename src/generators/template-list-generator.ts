@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { getTitle, parseFrontmatter } from '../utils/markdown-parser';
-import { collectDomains, writeOutputFile } from './list-generator-base';
+import { collectDomains, writeOutputFile } from './list-generator';
 
 export { getTitle, parseFrontmatter };
 

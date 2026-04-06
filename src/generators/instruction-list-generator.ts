@@ -6,7 +6,7 @@ import {
   generateDomainListMarkdown,
   writeOutputFile,
   type DomainEntry,
-} from './list-generator-base';
+} from './list-generator';
 
 export function generateInstructionList(
   templatesBaseDir = 'templates',
