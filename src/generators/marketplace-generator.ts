@@ -71,6 +71,7 @@ export function generateMarketplace(
     return;
   }
 
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, json, 'utf8');
   console.log(`Successfully generated ${outputPath} (${entries.length} plugins)`);
 }

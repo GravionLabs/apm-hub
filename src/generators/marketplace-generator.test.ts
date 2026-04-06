@@ -51,6 +51,7 @@ describe('generateMarketplace', () => {
 
     generateMarketplace('plugins', 'marketplace.json');
 
+    expect(fs.mkdirSync).toHaveBeenCalledWith('.', { recursive: true });
     expect(fs.writeFileSync).toHaveBeenCalled();
     const parsed = JSON.parse(written);
     expect(parsed.name).toBe('copilot-hub');
@@ -171,6 +172,7 @@ describe('generateMarketplace', () => {
 
     generateMarketplace('plugins', 'marketplace.json');
 
+    expect(fs.mkdirSync).not.toHaveBeenCalled();
     expect(fs.writeFileSync).not.toHaveBeenCalled();
   });
 
