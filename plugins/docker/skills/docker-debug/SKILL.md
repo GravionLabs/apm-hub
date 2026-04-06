@@ -2,6 +2,7 @@
 name: docker-debug
 description: 'Diagnose container startup failures, networking issues, volume mount problems, and resource constraints using docker logs, inspect, exec, stats, and network commands.'
 allowed-tools: codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Diagnose why a Docker container is failing to start, crashing, or misbehaving.
@@ -91,3 +92,5 @@ docker run -it --entrypoint bash <image>
 - [ ] Volume mounts verified (paths exist, permissions correct)
 - [ ] Network connectivity tested between services
 - [ ] Resource limits checked — not hitting memory cap
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

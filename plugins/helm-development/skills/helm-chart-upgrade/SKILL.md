@@ -2,6 +2,7 @@
 name: helm-chart-upgrade
 description: 'Upgrade a Helm chart to a newer chart or app version: update Chart.yaml, migrate deprecated Kubernetes APIs, and handle values.yaml breaking changes.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Upgrade a Helm chart to a newer version.
@@ -36,3 +37,8 @@ Analyzes the current chart version, identifies required changes (Kubernetes API 
 ## Constraints
 - Never downgrade `apiVersion` — always upgrade to supported versions
 - Document breaking value changes in `NOTES.txt` or chart README
+
+## Stack
+`helm` `helm lint` `helm template` `helm dependency update`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

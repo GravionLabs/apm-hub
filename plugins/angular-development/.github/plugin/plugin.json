@@ -1,7 +1,7 @@
 {
   "name": "angular-development",
   "description": "Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.",
-  "version": "1.0.31",
+  "version": "1.0.32",
   "author": {
     "name": "Gravion"
   },
@@ -18,6 +18,7 @@
     "./agents"
   ],
   "skills": [
+    "./skills/create-angular-project",
     "./skills/setup-prettier-eslint-husky",
     "./skills/angular-component",
     "./skills/sakai-ui-component",

@@ -2,6 +2,7 @@
 name: csharp-nunit
 description: 'Write NUnit tests using NSubstitute for mocking and Shouldly for assertions, following project naming and category conventions.'
 allowed-tools: codebase editFiles
+model: claude-sonnet-4.6
 ---
 
 Write NUnit tests for C# code using NSubstitute and Shouldly.
@@ -49,3 +50,5 @@ public async Task GetUser_WithValidId_ReturnsUser()
 2. Identify test cases: happy path, boundary values, null inputs, error paths
 3. Create one test class per source class; one test method per scenario
 4. Keep tests independent and deterministic — no shared mutable state
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

@@ -90,11 +90,12 @@ gh copilot plugin uninstall csharp-development
 This repository contains a wide range of production-ready templates:
 
 <!-- AUTO:start template-stats -->
-| Category         | Count | Location                  | Purpose                                  |
-| :--------------- | :---: | :------------------------ | :--------------------------------------- |
-| **Agents**       |   0   | `templates/agents/`       | Specialized expert roles (@-mentions)    |
-| **Prompts**      |   0   | `templates/prompts/`      | Task-specific workflows (slash commands) |
-| **Instructions** |   0   | `templates/instructions/` | Persistent project rules and standards   |
+| Category         | Count | Location                            | Purpose                                  |
+| :--------------- | :---: | :---------------------------------- | :--------------------------------------- |
+| **Agents**       |  44   | `templates/<domain>/agents/`        | Specialized expert roles (@-mentions)    |
+| **Skills**       |  78   | `templates/<domain>/skills/<name>/` | Reusable task-specific workflows         |
+| **Prompts**      |  75   | `templates/<domain>/prompts/`       | Task-specific workflows (slash commands) |
+| **Instructions** |  30   | `templates/<domain>/instructions/`  | Persistent project rules and standards   |
 <!-- AUTO:end template-stats -->
 
 📄 **[Browse All Templates](docs/template-list.md)**
@@ -120,7 +121,7 @@ Copilot CLI **plugins** are installable bundles of agents, skills (prompts), and
 | [`python-development`](plugins/python-development)                   | Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | [`security`](plugins/security)                                       | Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | [`terraform-development`](plugins/terraform-development)             | Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| [`typescript-node-development`](plugins/typescript-node-development) | TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, Playwright TypeScript testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| [`typescript-node-development`](plugins/typescript-node-development) | TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, debugging, Playwright TypeScript testing, and containerization.                                                                                                                                                                                                                                                                                                                                                                                                                             |
 <!-- AUTO:end plugin-table -->
 
 Plugins live in the `plugins/` folder. The template counts and plugin table above are **auto-generated** on every change.

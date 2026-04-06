@@ -2,6 +2,7 @@
 name: angular-migration
 description: 'Migrate an Angular application to a newer version. Covers ng update, standalone component migration, new @if/@for/@switch control flow syntax, and signals-first patterns.'
 allowed-tools: codebase editFiles runCommands
+model: claude-sonnet-4.6
 ---
 
 Migrate an Angular application to a newer version.
@@ -66,3 +67,5 @@ Common breaking changes per version:
 - Test after each major version bump: `ng test`, `ng build`
 - Check `@angular/material`, `@ngrx/*`, `@angular/cdk` — update separately if needed
 - Review `BREAKING_CHANGES.md` in each package's changelog
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

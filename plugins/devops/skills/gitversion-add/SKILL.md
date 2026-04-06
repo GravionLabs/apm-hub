@@ -2,6 +2,7 @@
 name: gitversion-add
 description: 'Add GitVersion to a repository for automatic semantic versioning from git history, configured for use with GravionLabs/ci reusable workflows.'
 allowed-tools: editFiles codebase
+model: gpt-4.1
 ---
 
 Set up GitVersion for automatic semantic versioning based on git history.
@@ -38,3 +39,5 @@ Creates a `GitVersion.yml` configuration file and updates CI workflow files to u
 - `GitVersion.yml` must be at the repository root
 - Do not commit version numbers in source files — let GitVersion calculate them at build time
 - For `GravionLabs/ci` workflows: GitVersion integration is handled by the reusable workflow; manual configuration in the workflow file is not needed
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

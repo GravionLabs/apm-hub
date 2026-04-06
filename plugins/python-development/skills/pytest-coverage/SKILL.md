@@ -2,6 +2,7 @@
 name: pytest-coverage
 description: 'Run pytest with coverage, identify uncovered lines, and write additional tests to achieve full (or target) coverage.'
 allowed-tools: codebase editFiles runCommands
+model: gpt-4.1
 ---
 
 Improve pytest test coverage for Python code.
@@ -47,3 +48,9 @@ pytest --cov=<source-dir> --cov-report=term-missing --cov-fail-under=<target>
 - Do not mock internal implementation details — test the public interface
 - Do not write tests that trivially pass without actually exercising the logic
 - If coverage cannot reach 100% due to platform-specific code, use `# pragma: no cover` with a comment
+
+## Tips
+> **Use the `task` tool** for coverage runs — they are mechanical.
+> Example: `#task uv run pytest --cov=src --cov-report=term-missing --cov-fail-under=80`
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

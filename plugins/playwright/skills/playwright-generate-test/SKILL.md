@@ -2,6 +2,7 @@
 name: playwright-generate-test
 description: 'Generate a Playwright TypeScript test for a given scenario using the Playwright MCP. Explores the page live, identifies locators, writes and runs the test until it passes.'
 allowed-tools: editFiles runCommands playwright
+model: claude-sonnet-4.6
 ---
 
 Generate a passing Playwright TypeScript test for a user scenario.
@@ -41,3 +42,5 @@ test('scenario description', async ({ page }) => {
 - One scenario per test — keep tests independent and isolated
 - Use `expect` assertions — never silent clicks with no verification
 - Await all Playwright actions — never `.then()` chains
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

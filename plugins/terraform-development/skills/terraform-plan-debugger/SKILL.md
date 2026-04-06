@@ -2,6 +2,7 @@
 name: terraform-plan-debugger
 description: 'Diagnose unexpected Terraform plan changes: drift, missing lifecycle blocks, provider mismatches, state inconsistencies, incorrect variable values, and missing moved{} blocks.'
 allowed-tools: codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Diagnose why a Terraform plan shows unexpected changes.
@@ -70,3 +71,5 @@ terraform workspace show             # confirm active workspace
 
 ## Output format
 Report the most likely cause first, with the exact command or config change to resolve it.
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

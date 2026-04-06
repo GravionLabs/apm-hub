@@ -2,6 +2,7 @@
 name: gh-copilot-setup
 description: 'Interactive wizard to install GitHub Copilot configuration (instructions, prompts, agents) from GravionLabs/copilot-hub into .github/. Requires pwsh and gh CLI.'
 allowed-tools: codebase runCommands editFiles
+model: gpt-4.1
 ---
 
 Bootstrap GitHub Copilot configuration for a repository from GravionLabs/copilot-hub.
@@ -30,3 +31,5 @@ Interactively browses the copilot-hub repository, lets the user select relevant 
 ## Constraints
 - For ongoing sync of already-installed files, use `gh-copilot-sync` instead
 - Never overwrite customized files without user confirmation (unless `--autopilot`)
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

@@ -2,6 +2,7 @@
 name: create-pr
 description: 'Analyze git history and diff, generate a structured PR description, and create a pull request.'
 allowed-tools: runCommands codebase
+model: gpt-4.1
 ---
 
 Create a well-structured pull request by analyzing the current branch's commits and diff.
@@ -30,3 +31,5 @@ Analyzes git history and file changes, generates a structured PR title and descr
    - GitHub: `gh pr create --title "..." --body "..." --base main`
    - Azure DevOps: `az repos pr create --title "..." --description "..." --target-branch main`
 5. Output the PR URL
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

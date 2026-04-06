@@ -2,6 +2,7 @@
 name: terraform-drift-detection
 description: 'Detect and remediate infrastructure drift: resources modified outside Terraform that are no longer consistent with state or configuration.'
 allowed-tools: codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Detect and remediate Terraform drift — resources that changed outside Terraform.
@@ -63,3 +64,5 @@ import {
 - Use `lifecycle { ignore_changes = [...] }` for auto-managed attributes (e.g., ASG `desired_capacity`)
 - Run `terraform plan -refresh-only` in CI on a schedule to detect drift early
 - Use Terraform Cloud / Atlantis drift detection features
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

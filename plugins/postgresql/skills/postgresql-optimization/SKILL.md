@@ -2,6 +2,7 @@
 name: postgresql-optimization
 description: 'Optimize PostgreSQL query performance: analyze EXPLAIN ANALYZE output, suggest indexes, rewrite inefficient queries, and identify table bloat or vacuum issues.'
 allowed-tools: codebase
+model: claude-sonnet-4.6
 ---
 
 Optimize PostgreSQL query performance and database health.
@@ -69,3 +70,5 @@ FROM pg_stat_user_tables ORDER BY n_dead_tup DESC LIMIT 20;
 -- Manual vacuum if autovacuum is behind
 VACUUM ANALYZE <table>;
 ```
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

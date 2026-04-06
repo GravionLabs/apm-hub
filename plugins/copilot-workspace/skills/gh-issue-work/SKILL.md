@@ -1,7 +1,8 @@
 ---
 name: gh-issue-work
 description: 'End-to-end workflow for a GitHub issue: read issue, create branch, implement with tests and docs, review, and open a pull request.'
-allowed-tools: codebase editFiles runCommands
+allowed-tools: codebase editFiles runCommands mcp_github_get_issue mcp_github_create_branch mcp_github_create_pull_request mcp_github_list_pull_requests
+model: claude-sonnet-4.6
 ---
 
 Complete end-to-end workflow for a GitHub issue — from branch creation to pull request.
@@ -14,14 +15,21 @@ Combines `gh-issue-implement` and `gh-issue-finish` into a single workflow for s
 > 2. `gh-issue-finish {issue-number}` — review + PR
 
 ## Prerequisites
-- `gh` CLI installed and authenticated (`gh auth status`)
+- `gh` CLI installed and authenticated (`gh auth status`) — used as fallback when GH MCP is unavailable
 - Run from the repository root
 
 ## Steps
 
 ### Phase 1 — Prepare
+
+*Primary — GH MCP:*
+1. Call `mcp_github_get_issue` to read title, body, and labels
+2. Determine branch prefix from labels: `feature/`, `bugfix/`, `hotfix/`, `chore/`
+3. Call `mcp_github_create_branch` to create the branch, then `git checkout <branch>`
+
+*Fallback — GH CLI (when MCP not available):*
 1. `gh issue view {issue-number} --json title,body,labels,assignees`
-2. Determine branch prefix from labels (`feature/`, `fix/`, `chore/`, `docs/`)
+2. Determine branch prefix from labels: `feature/`, `bugfix/`, `hotfix/`, `chore/`
 3. `git checkout -b <prefix>/<issue-number>-<slug>`
 
 ### Phase 2 — Implement
@@ -38,3 +46,5 @@ Combines `gh-issue-implement` and `gh-issue-finish` into a single workflow for s
 ## Constraints
 - Tests must pass before the PR is opened
 - PR body must include `Closes #<issue-number>`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

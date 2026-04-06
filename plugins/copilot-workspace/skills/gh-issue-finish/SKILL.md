@@ -2,6 +2,7 @@
 name: gh-issue-finish
 description: 'Review implemented changes and create a pull request for a GitHub issue. Run this after gh-issue-implement when the implementation is complete.'
 allowed-tools: codebase editFiles runCommands
+model: gpt-4.1
 ---
 
 Review the implementation and open a pull request for a GitHub issue.
@@ -47,3 +48,5 @@ EOF
 - PR title must reference the issue number
 - All CI checks should be green before requesting review
 - Link the issue with `Closes #<issue-number>` in the PR body
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

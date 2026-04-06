@@ -6,6 +6,136 @@ This page lists all available instructions organized by domain. This file is aut
 
 ## Overview
 
-| Instruction | Domain | Description |
-| :---------- | :----- | :---------- |
+| Instruction                                                                                               | Domain                    | Description                                                                                                                                                                                                           |
+| :-------------------------------------------------------------------------------------------------------- | :------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [angular](../templates/angular/instructions/angular.instructions.md)                                      | [Angular](#angular)       | Angular 21 coding standards and best practices                                                                                                                                                                        |
+| [ngrx-signals](../templates/angular/instructions/ngrx-signals.instructions.md)                            | [Angular](#angular)       | NgRx Signal Store conventions for Angular applications                                                                                                                                                                |
+| [sakai-ui](../templates/angular/instructions/sakai-ui.instructions.md)                                    | [Angular](#angular)       | Coding standards for @gravion/sakai-ui Angular library development                                                                                                                                                    |
+| [agent-skills](../templates/copilot/instructions/agent-skills.instructions.md)                            | [Copilot](#copilot)       | Guidelines for creating high-quality Agent Skills for GitHub Copilot                                                                                                                                                  |
+| [copilot-thought-logging](../templates/copilot/instructions/copilot-thought-logging.instructions.md)      | [Copilot](#copilot)       | Instructs Copilot to log its reasoning steps inline, making the thought process visible and editable during complex interactions                                                                                      |
+| [instructions](../templates/copilot/instructions/instructions.instructions.md)                            | [Copilot](#copilot)       | Guidelines for creating high-quality custom instruction files for GitHub Copilot                                                                                                                                      |
+| [issue-workflow](../templates/copilot/instructions/issue-workflow.instructions.md)                        | [Copilot](#copilot)       | Branch and PR conventions for working on GitHub issues: naming, commits, and pull request format                                                                                                                      |
+| [prompt](../templates/copilot/instructions/prompt.instructions.md)                                        | [Copilot](#copilot)       | Guidelines for creating high-quality prompt files for GitHub Copilot                                                                                                                                                  |
+| [csharp-nunit](../templates/csharp/instructions/csharp-nunit.instructions.md)                             | [Csharp](#csharp)         | Guidelines for C# testing with NUnit, NSubstitute and Shouldly                                                                                                                                                        |
+| [csharp](../templates/csharp/instructions/csharp.instructions.md)                                         | [Csharp](#csharp)         | C# coding standards for .NET projects: naming conventions, structure, async/await, LINQ, error handling, and SOLID principles                                                                                         |
+| [playwright-dotnet](../templates/csharp/instructions/playwright-dotnet.instructions.md)                   | [Csharp](#csharp)         | Playwright .NET C# test generation: page objects, locators, assertions, and test structure for C# test projects                                                                                                       |
+| [github-actions](../templates/devops/instructions/github-actions.instructions.md)                         | [Devops](#devops)         | GitHub Actions best practices: permissions, OIDC, secrets, caching, action pinning, and workflow structure                                                                                                            |
+| [powershell](../templates/devops/instructions/powershell.instructions.md)                                 | [Devops](#devops)         | PowerShell cmdlet and scripting best practices based on Microsoft guidelines                                                                                                                                          |
+| [shell](../templates/devops/instructions/shell.instructions.md)                                           | [Devops](#devops)         | Shell scripting best practices and conventions for bash, sh, zsh, and other shells                                                                                                                                    |
+| [docker](../templates/docker/instructions/docker.instructions.md)                                         | [Docker](#docker)         | Comprehensive best practices for creating optimized, secure, and efficient Docker images and managing containers. Covers multi-stage builds, image layer optimization, security scanning, and runtime best practices. |
+| [go](../templates/go/instructions/go.instructions.md)                                                     | [Go](#go)                 | Go coding standards: idiomatic Go, error handling, package design, interfaces, concurrency patterns, and module conventions                                                                                           |
+| [helm](../templates/helm/instructions/helm.instructions.md)                                               | [Helm](#helm)             | Helm chart conventions: chart structure, values.yaml design, named templates, helpers, versioning, and Kubernetes packaging best practices                                                                            |
+| [playwright](../templates/playwright/instructions/playwright.instructions.md)                             | [Playwright](#playwright) | Playwright E2E testing conventions: Page Object Model, locator best practices, data-testid, test isolation, async/await patterns, and CI configuration                                                                |
+| [postgresql](../templates/postgresql/instructions/postgresql.instructions.md)                             | [Postgresql](#postgresql) | PostgreSQL 16/17 development conventions: naming, data types, indexing strategy, migrations, connection pooling, Row Level Security, and query best practices                                                         |
+| [playwright-python](../templates/python/instructions/playwright-python.instructions.md)                   | [Python](#python)         | Playwright Python test generation using pytest-playwright: page objects, browser fixtures, locators, and async test patterns                                                                                          |
+| [python-pytest](../templates/python/instructions/python-pytest.instructions.md)                           | [Python](#python)         | Guidelines for Python testing with pytest                                                                                                                                                                             |
+| [python](../templates/python/instructions/python.instructions.md)                                         | [Python](#python)         | Python coding standards: naming conventions, type hints, error handling, imports, and project structure for modern Python applications                                                                                |
+| [security](../templates/security/instructions/security.instructions.md)                                   | [Security](#security)     | Security best practices: OWASP Top 10 2021, supply chain security, AI/LLM risks, secrets management, Zero Trust, and secure coding for any language                                                                   |
+| [code-review-generic](../templates/shared/instructions/code-review-generic.instructions.md)               | [Shared](#shared)         | Code review guidelines for any language or framework: readability, naming, complexity, error handling, security, and test coverage                                                                                    |
+| [html-css-style-color-guide](../templates/shared/instructions/html-css-style-color-guide.instructions.md) | [Shared](#shared)         | Color usage guidelines and styling rules for HTML elements to ensure accessible, professional designs.                                                                                                                |
+| [markdown](../templates/shared/instructions/markdown.instructions.md)                                     | [Shared](#shared)         | Markdown documentation standards: structure, formatting, headings, lists, code blocks, and writing style for technical docs                                                                                           |
+| [terraform](../templates/terraform/instructions/terraform.instructions.md)                                | [Terraform](#terraform)   | Terraform IaC standards: module structure, naming conventions, variable and output usage, state management, security best practices, and modern Terraform 1.9+ syntax                                                 |
+| [nodejs](../templates/typescript/instructions/nodejs.instructions.md)                                     | [Typescript](#typescript) | Node.js conventions: module system, error handling, async patterns, environment config, logging, and project structure for server-side TypeScript/JavaScript                                                          |
+| [playwright-typescript](../templates/typescript/instructions/playwright-typescript.instructions.md)       | [Typescript](#typescript) | Playwright TypeScript test generation: locators, page objects, fixtures, async/await patterns, and browser automation                                                                                                 |
+| [typescript](../templates/typescript/instructions/typescript.instructions.md)                             | [Typescript](#typescript) | TypeScript coding standards: strict types, ESM modules, naming conventions, async/await patterns, and modern TypeScript features                                                                                      |
+
+## Angular
+
+| Instruction                                                                      | Description                                                        |
+| :------------------------------------------------------------------------------- | :----------------------------------------------------------------- |
+| [`angular`](../templates/angular/instructions/angular.instructions.md)           | Angular 21 coding standards and best practices                     |
+| [`ngrx-signals`](../templates/angular/instructions/ngrx-signals.instructions.md) | NgRx Signal Store conventions for Angular applications             |
+| [`sakai-ui`](../templates/angular/instructions/sakai-ui.instructions.md)         | Coding standards for @gravion/sakai-ui Angular library development |
+
+## Copilot
+
+| Instruction                                                                                            | Description                                                                                                                      |
+| :----------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| [`agent-skills`](../templates/copilot/instructions/agent-skills.instructions.md)                       | Guidelines for creating high-quality Agent Skills for GitHub Copilot                                                             |
+| [`copilot-thought-logging`](../templates/copilot/instructions/copilot-thought-logging.instructions.md) | Instructs Copilot to log its reasoning steps inline, making the thought process visible and editable during complex interactions |
+| [`instructions`](../templates/copilot/instructions/instructions.instructions.md)                       | Guidelines for creating high-quality custom instruction files for GitHub Copilot                                                 |
+| [`issue-workflow`](../templates/copilot/instructions/issue-workflow.instructions.md)                   | Branch and PR conventions for working on GitHub issues: naming, commits, and pull request format                                 |
+| [`prompt`](../templates/copilot/instructions/prompt.instructions.md)                                   | Guidelines for creating high-quality prompt files for GitHub Copilot                                                             |
+
+## Csharp
+
+| Instruction                                                                               | Description                                                                                                                   |
+| :---------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| [`csharp-nunit`](../templates/csharp/instructions/csharp-nunit.instructions.md)           | Guidelines for C# testing with NUnit, NSubstitute and Shouldly                                                                |
+| [`csharp`](../templates/csharp/instructions/csharp.instructions.md)                       | C# coding standards for .NET projects: naming conventions, structure, async/await, LINQ, error handling, and SOLID principles |
+| [`playwright-dotnet`](../templates/csharp/instructions/playwright-dotnet.instructions.md) | Playwright .NET C# test generation: page objects, locators, assertions, and test structure for C# test projects               |
+
+## Devops
+
+| Instruction                                                                         | Description                                                                                                |
+| :---------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| [`github-actions`](../templates/devops/instructions/github-actions.instructions.md) | GitHub Actions best practices: permissions, OIDC, secrets, caching, action pinning, and workflow structure |
+| [`powershell`](../templates/devops/instructions/powershell.instructions.md)         | PowerShell cmdlet and scripting best practices based on Microsoft guidelines                               |
+| [`shell`](../templates/devops/instructions/shell.instructions.md)                   | Shell scripting best practices and conventions for bash, sh, zsh, and other shells                         |
+
+## Docker
+
+| Instruction                                                         | Description                                                                                                                                                                                                           |
+| :------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`docker`](../templates/docker/instructions/docker.instructions.md) | Comprehensive best practices for creating optimized, secure, and efficient Docker images and managing containers. Covers multi-stage builds, image layer optimization, security scanning, and runtime best practices. |
+
+## Go
+
+| Instruction                                             | Description                                                                                                                 |
+| :------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------- |
+| [`go`](../templates/go/instructions/go.instructions.md) | Go coding standards: idiomatic Go, error handling, package design, interfaces, concurrency patterns, and module conventions |
+
+## Helm
+
+| Instruction                                                   | Description                                                                                                                                |
+| :------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------- |
+| [`helm`](../templates/helm/instructions/helm.instructions.md) | Helm chart conventions: chart structure, values.yaml design, named templates, helpers, versioning, and Kubernetes packaging best practices |
+
+## Playwright
+
+| Instruction                                                                     | Description                                                                                                                                            |
+| :------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`playwright`](../templates/playwright/instructions/playwright.instructions.md) | Playwright E2E testing conventions: Page Object Model, locator best practices, data-testid, test isolation, async/await patterns, and CI configuration |
+
+## Postgresql
+
+| Instruction                                                                     | Description                                                                                                                                                   |
+| :------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`postgresql`](../templates/postgresql/instructions/postgresql.instructions.md) | PostgreSQL 16/17 development conventions: naming, data types, indexing strategy, migrations, connection pooling, Row Level Security, and query best practices |
+
+## Python
+
+| Instruction                                                                               | Description                                                                                                                            |
+| :---------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| [`playwright-python`](../templates/python/instructions/playwright-python.instructions.md) | Playwright Python test generation using pytest-playwright: page objects, browser fixtures, locators, and async test patterns           |
+| [`python-pytest`](../templates/python/instructions/python-pytest.instructions.md)         | Guidelines for Python testing with pytest                                                                                              |
+| [`python`](../templates/python/instructions/python.instructions.md)                       | Python coding standards: naming conventions, type hints, error handling, imports, and project structure for modern Python applications |
+
+## Security
+
+| Instruction                                                               | Description                                                                                                                                         |
+| :------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`security`](../templates/security/instructions/security.instructions.md) | Security best practices: OWASP Top 10 2021, supply chain security, AI/LLM risks, secrets management, Zero Trust, and secure coding for any language |
+
+## Shared
+
+| Instruction                                                                                                 | Description                                                                                                                        |
+| :---------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+| [`code-review-generic`](../templates/shared/instructions/code-review-generic.instructions.md)               | Code review guidelines for any language or framework: readability, naming, complexity, error handling, security, and test coverage |
+| [`html-css-style-color-guide`](../templates/shared/instructions/html-css-style-color-guide.instructions.md) | Color usage guidelines and styling rules for HTML elements to ensure accessible, professional designs.                             |
+| [`markdown`](../templates/shared/instructions/markdown.instructions.md)                                     | Markdown documentation standards: structure, formatting, headings, lists, code blocks, and writing style for technical docs        |
+
+## Terraform
+
+| Instruction                                                                  | Description                                                                                                                                                           |
+| :--------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`terraform`](../templates/terraform/instructions/terraform.instructions.md) | Terraform IaC standards: module structure, naming conventions, variable and output usage, state management, security best practices, and modern Terraform 1.9+ syntax |
+
+## Typescript
+
+| Instruction                                                                                           | Description                                                                                                                                                  |
+| :---------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`nodejs`](../templates/typescript/instructions/nodejs.instructions.md)                               | Node.js conventions: module system, error handling, async patterns, environment config, logging, and project structure for server-side TypeScript/JavaScript |
+| [`playwright-typescript`](../templates/typescript/instructions/playwright-typescript.instructions.md) | Playwright TypeScript test generation: locators, page objects, fixtures, async/await patterns, and browser automation                                        |
+| [`typescript`](../templates/typescript/instructions/typescript.instructions.md)                       | TypeScript coding standards: strict types, ESM modules, naming conventions, async/await patterns, and modern TypeScript features                             |
 

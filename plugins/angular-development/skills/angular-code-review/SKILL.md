@@ -2,6 +2,7 @@
 name: angular-code-review
 description: 'Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list.'
 allowed-tools: codebase problems
+model: claude-sonnet-4.6
 ---
 
 Review Angular 21 code with priority ratings.
@@ -43,3 +44,5 @@ Review Angular 21 code with priority ratings.
 - Large lists use virtual scrolling where applicable
 - Lazy-loaded routes for feature modules
 - No unnecessary `async` pipes wrapping static values
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

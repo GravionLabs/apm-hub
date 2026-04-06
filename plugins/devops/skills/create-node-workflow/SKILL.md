@@ -2,6 +2,7 @@
 name: create-node-workflow
 description: 'Create a GitHub Actions CI workflow for a Node.js project using GravionLabs/ci reusable workflows (install, lint, test, build).'
 allowed-tools: editFiles codebase
+model: gpt-4.1
 ---
 
 Create a `.github/workflows/` file for Node.js CI using `GravionLabs/ci`.
@@ -34,3 +35,5 @@ Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable Nod
 - Use `secrets: inherit` to pass secrets to the reusable workflow
 - `package.json` must define `test` and `build` scripts — the reusable workflow calls them
 - Do not hardcode Node.js version if the project uses `.nvmrc` — check if the reusable workflow reads it automatically
+
+> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

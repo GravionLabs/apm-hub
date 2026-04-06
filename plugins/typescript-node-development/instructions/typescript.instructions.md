@@ -32,6 +32,9 @@ applyTo: '**/*.ts,**/*.tsx'
 - Use **`Readonly<T>`** and **`ReadonlyArray<T>`** for immutable data structures.
 - Prefer **discriminated unions** over class hierarchies for sum types.
 - Use **`satisfies`** operator (TS 4.9+) for type-checked literals without widening.
+- Use **`const` type parameters** (TS 5.0) for better inference in generic functions: `function identity<const T>(value: T): T`.
+- Use the **`using`** keyword (TS 5.2) for deterministic cleanup of disposable resources.
+- Use **decorator metadata** (TS 5.2) via `experimentalDecorators` + `emitDecoratorMetadata` only when a framework requires it.
 - Avoid `enum` — prefer `const` objects with `as const` or union types.
 
 ## Async & Error Handling

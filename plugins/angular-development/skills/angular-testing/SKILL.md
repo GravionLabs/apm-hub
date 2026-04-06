@@ -2,6 +2,7 @@
 name: angular-testing
 description: 'Write Angular 21 unit tests using Vitest and TestBed. Covers standalone component testing, signal testing, service mocking, and async patterns.'
 allowed-tools: editFiles codebase runCommands
+model: claude-sonnet-4.6
 ---
 
 Write Angular 21 unit tests with Vitest and TestBed.
@@ -56,3 +57,5 @@ TestBed.configureTestingModule({
 - Use `fixture.debugElement.query(By.css(...))` for DOM queries
 - Always call `fixture.detectChanges()` after state changes
 - Use `fakeAsync` + `tick()` for Observable/timer-based async
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

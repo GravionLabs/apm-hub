@@ -2,6 +2,7 @@
 name: gh-agents-md
 description: 'Analyze the repository and generate a complete AGENTS.md file tailored to the project type (dotnet, node, python, github-actions, or generic).'
 allowed-tools: codebase editFiles runCommands
+model: claude-sonnet-4.6
 ---
 
 Generate a complete `AGENTS.md` file for the repository.
@@ -29,3 +30,5 @@ Detects the project type from indicator files, then creates a tailored `AGENTS.m
 ## Constraints
 - Tailor commands to the actual project — do not use generic placeholders
 - If build/test commands are ambiguous, read `package.json` scripts or `.github/workflows/` to infer them
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
