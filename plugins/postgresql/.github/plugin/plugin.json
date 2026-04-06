@@ -1,7 +1,7 @@
 {
   "name": "postgresql",
   "description": "PostgreSQL development and administration plugin. Schema design, query optimization, performance diagnostics, code review, Row Level Security, JSONB, and SQL best practices.",
-  "version": "1.0.32",
+  "version": "1.0.33",
   "author": {
     "name": "Gravion"
   },
