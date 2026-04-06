@@ -21,6 +21,22 @@ Runs `helm lint`, `helm template`, and optional deep validation (kubeval schema 
    # With a values file
    helm lint <chart-dir>/ -f <values-file>
    ```
+3. Render templates to stdout and check for YAML errors:
+   ```bash
+   # Without a values file
+   helm template <release> <chart-dir>/
+
+   # With a values file
+   helm template <release> <chart-dir>/ -f <values-file>
+   ```
+4. If `kubeval` is available, pipe rendered output for schema validation:
+   ```bash
+   # Without a values file
+   helm template <release> <chart-dir>/ | kubeval --strict
+
+   # With a values file
+   helm template <release> <chart-dir>/ -f <values-file> | kubeval --strict
+   ```
 5. If `helm-unittest` plugin is installed and `tests/` directory exists:
    ```bash
    helm unittest <chart-dir>/
