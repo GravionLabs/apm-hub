@@ -5,12 +5,54 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.32] — 2026-04-06
+
+### Bug Fixes
+- Restore steps 3-4 and add conditional values file examples in helm-template-validate SKILL.md
+- Restore doc generation for new template directory structure
+- Ensure output directory exists before writing marketplace.json (closes #86)
+- Update branch type labels in SKILL.md and Start-Issue.ps1 (closes #86)
+- Standardize branch naming conventions across skills and instructions (closes #84)
+
+
+### Documentation
+- Clarify model/version fields are aspirational in agentskills-spec
+
+
+### Features
+- **templates/python**: Refresh python templates for issue #51
+- **templates/typescript**: Refresh typescript templates for issue #52
+- **typescript**: Finalize issue #52 — trim mcp-server-generator SKILL.md, update plugin config
+- **typescript**: Enrich TypeScript skills with templates, PS1 scripts, and task tips
+- Add create-node-project and create-angular-project scaffolding skills
+- Python templates refresh — Issue #51
+- Skill model hints, gh-issue-implement scripts, gh-* install
+- Add model hint to SKILL.md body + branch format fix
+- **helm**: Audit and refresh templates for issue #50
+
+
+### Refactoring
+- Rename list-generator-base.ts to list-generator.ts
+
+
 ## [1.0.31] — 2026-04-05
+
+### Bug Fixes
+- Generator SKILL.md basename bug, devops agents config, and template-list links
+- **generator**: Fix agent-list-generator to scan agents/ subdirectory
+
+
+### Documentation
+- Update skill source resolution comments to directory layout
+- Update CHANGELOG.md for v1.0.31 [skip ci]
+
 
 ### Features
 - **templates**: Restructure templates to domain/type layout
 - **skill**: Enrich create-dotnet-solution companion templates
 - **skill**: Use slnx, minimal .csproj, package update support
+- **templates**: Migrate all skills to agentskills.io directory layout (*/SKILL.md)
+- **generator**: Rewrite template-list-generator for domain/type subdirectory layout
 
 
 ## [1.0.30] — 2026-04-05
