@@ -5,6 +5,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.33] — 2026-04-06
+
+### Features
+- Template-list — separate tables per type for better readability (closes #88)
+
+
 ## [1.0.32] — 2026-04-06
 
 ### Bug Fixes
@@ -17,6 +23,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - Clarify model/version fields are aspirational in agentskills-spec
+- Update CHANGELOG.md for v1.0.32 [skip ci]
 
 
 ### Features
