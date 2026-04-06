@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fs from 'fs';
+import * as path from 'path';
 import { generateMarketplace } from './marketplace-generator';
 
 vi.mock('fs');
@@ -26,10 +27,11 @@ beforeEach(() => {
 
 describe('generateMarketplace', () => {
   it('generates marketplace.json with all plugins sorted by directory', () => {
+    const outputPath = path.join('.github', 'plugin', 'marketplace.json');
     (fs.existsSync as ReturnType<typeof vi.fn>).mockImplementation((p: unknown) => {
       if (p === 'plugins') return true;
       if (String(p).endsWith('plugin.config.yml')) return true;
-      if (p === 'marketplace.json') return false;
+      if (p === outputPath) return false;
       return false;
     });
     (fs.readdirSync as ReturnType<typeof vi.fn>).mockReturnValue([
@@ -49,9 +51,9 @@ describe('generateMarketplace', () => {
       }
     );
 
-    generateMarketplace('plugins', 'marketplace.json');
+    generateMarketplace('plugins', outputPath);
 
-    expect(fs.mkdirSync).toHaveBeenCalledWith('.', { recursive: true });
+    expect(fs.mkdirSync).toHaveBeenCalledWith(path.dirname(outputPath), { recursive: true });
     expect(fs.writeFileSync).toHaveBeenCalled();
     const parsed = JSON.parse(written);
     expect(parsed.name).toBe('copilot-hub');
