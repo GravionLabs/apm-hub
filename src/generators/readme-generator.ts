@@ -32,24 +32,53 @@ export function injectBlock(content: string, id: string, generated: string): str
 
 /**
  * Build the template-stats table from the templates/ directory.
+ * Traverses the new domain-based structure: templates/<domain>/<type>/
  */
 export function buildTemplateStatsBlock(templatesDir: string): string {
-  const countMd = (dir: string): number => {
-    const fullPath = path.join(templatesDir, dir);
-    if (!fs.existsSync(fullPath)) return 0;
-    return fs.readdirSync(fullPath).filter((f) => f.endsWith('.md')).length;
-  };
+  let agents = 0;
+  let prompts = 0;
+  let instructions = 0;
+  let skills = 0;
 
-  const agents = countMd('agents');
-  const prompts = countMd('prompts');
-  const instructions = countMd('instructions');
+  if (fs.existsSync(templatesDir)) {
+    for (const entry of fs.readdirSync(templatesDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const domainDir = path.join(templatesDir, entry.name);
+
+      const agentsDir = path.join(domainDir, 'agents');
+      if (fs.existsSync(agentsDir)) {
+        agents += fs.readdirSync(agentsDir).filter((f) => f.endsWith('.agent.md')).length;
+      }
+
+      const promptsDir = path.join(domainDir, 'prompts');
+      if (fs.existsSync(promptsDir)) {
+        prompts += fs.readdirSync(promptsDir).filter((f) => f.endsWith('.prompt.md')).length;
+      }
+
+      const instructionsDir = path.join(domainDir, 'instructions');
+      if (fs.existsSync(instructionsDir)) {
+        instructions += fs
+          .readdirSync(instructionsDir)
+          .filter((f) => f.endsWith('.instructions.md')).length;
+      }
+
+      const skillsDir = path.join(domainDir, 'skills');
+      if (fs.existsSync(skillsDir)) {
+        skills += fs
+          .readdirSync(skillsDir, { withFileTypes: true })
+          .filter((d) => d.isDirectory() && fs.existsSync(path.join(skillsDir, d.name, 'SKILL.md')))
+          .length;
+      }
+    }
+  }
 
   return [
     '| Category | Count | Location | Purpose |',
     '| :--- | :---: | :--- | :--- |',
-    `| **Agents** | ${agents} | \`templates/agents/\` | Specialized expert roles (@-mentions) |`,
-    `| **Prompts** | ${prompts} | \`templates/prompts/\` | Task-specific workflows (slash commands) |`,
-    `| **Instructions** | ${instructions} | \`templates/instructions/\` | Persistent project rules and standards |`,
+    `| **Agents** | ${agents} | \`templates/<domain>/agents/\` | Specialized expert roles (@-mentions) |`,
+    `| **Skills** | ${skills} | \`templates/<domain>/skills/<name>/\` | Reusable task-specific workflows |`,
+    `| **Prompts** | ${prompts} | \`templates/<domain>/prompts/\` | Task-specific workflows (slash commands) |`,
+    `| **Instructions** | ${instructions} | \`templates/<domain>/instructions/\` | Persistent project rules and standards |`,
   ].join('\n');
 }
 

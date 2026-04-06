@@ -13,7 +13,7 @@ describe('generateInstructionList', () => {
     templatesDir = path.join(tmpDir, 'templates');
     outputFile = path.join(tmpDir, 'docs', 'instruction-list.md');
 
-    const csDir = path.join(templatesDir, 'csharp');
+    const csDir = path.join(templatesDir, 'csharp', 'instructions');
     fs.mkdirSync(csDir, { recursive: true });
     fs.writeFileSync(
       path.join(csDir, 'csharp.instructions.md'),
@@ -24,12 +24,14 @@ describe('generateInstructionList', () => {
       '---\ndescription: NUnit testing conventions for C#.\n---\nContent'
     );
     // Non-instruction files should be ignored
+    const csAgentsDir = path.join(templatesDir, 'csharp', 'agents');
+    fs.mkdirSync(csAgentsDir, { recursive: true });
     fs.writeFileSync(
-      path.join(csDir, 'csharp-expert.agent.md'),
+      path.join(csAgentsDir, 'csharp-expert.agent.md'),
       '---\nname: C# Expert\n---\nContent'
     );
 
-    const devopsDir = path.join(templatesDir, 'devops');
+    const devopsDir = path.join(templatesDir, 'devops', 'instructions');
     fs.mkdirSync(devopsDir, { recursive: true });
     fs.writeFileSync(
       path.join(devopsDir, 'shell.instructions.md'),
@@ -69,7 +71,7 @@ describe('generateInstructionList', () => {
   it('should link to template files', () => {
     generateInstructionList(templatesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
-    expect(content).toContain('csharp.instructions.md');
-    expect(content).toContain('shell.instructions.md');
+    expect(content).toContain('csharp/instructions/csharp.instructions.md');
+    expect(content).toContain('devops/instructions/shell.instructions.md');
   });
 });

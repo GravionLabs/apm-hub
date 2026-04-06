@@ -61,8 +61,12 @@ describe('buildTemplateStatsBlock', () => {
   it('counts .md files in each subdirectory', () => {
     mockFs.existsSync = vi.fn().mockReturnValue(true);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockFs.readdirSync = vi.fn((dir: unknown) => {
+    mockFs.readdirSync = vi.fn((dir: unknown, opts?: unknown) => {
       const d = dir as string;
+      // Top-level templates dir → return domain entries (withFileTypes: true)
+      if (d === 'templates' && (opts as Record<string, unknown>)?.withFileTypes) {
+        return [{ name: 'csharp', isDirectory: () => true }] as unknown as fs.Dirent[];
+      }
       if (d.endsWith('agents')) return ['a.agent.md', 'b.agent.md'] as unknown as fs.Dirent[];
       if (d.endsWith('prompts')) return ['p.prompt.md'] as unknown as fs.Dirent[];
       if (d.endsWith('instructions'))
@@ -71,6 +75,7 @@ describe('buildTemplateStatsBlock', () => {
           'j.instructions.md',
           'k.instructions.md',
         ] as unknown as fs.Dirent[];
+      if (d.endsWith('skills')) return [] as unknown as fs.Dirent[];
       return [] as unknown as fs.Dirent[];
     }) as any;
 
@@ -88,12 +93,17 @@ describe('buildTemplateStatsBlock', () => {
     expect(result).toContain('| **Instructions** | 0 |');
   });
 
-  it('ignores non-.md files', () => {
+  it('ignores non-.agent.md files in agents dir', () => {
     mockFs.existsSync = vi.fn().mockReturnValue(true);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockFs.readdirSync = vi.fn(
-      () => ['file.md', 'file.yml', 'file.txt'] as unknown as fs.Dirent[]
-    ) as any;
+    mockFs.readdirSync = vi.fn((dir: unknown, opts?: unknown) => {
+      const d = dir as string;
+      if (d === 'templates' && (opts as Record<string, unknown>)?.withFileTypes) {
+        return [{ name: 'shared', isDirectory: () => true }] as unknown as fs.Dirent[];
+      }
+      if (d.endsWith('agents')) return ['agent.agent.md', 'readme.md', 'config.yml'] as unknown as fs.Dirent[];
+      return [] as unknown as fs.Dirent[];
+    }) as any;
     const result = buildTemplateStatsBlock('templates');
     expect(result).toContain('| **Agents** | 1 |');
   });
@@ -178,16 +188,16 @@ describe('updateReadme', () => {
     // Pre-build the exact output to simulate idempotency
     mockFs.existsSync = vi.fn().mockReturnValue(true);
     mockFs.readdirSync = vi.fn().mockReturnValue([] as unknown as fs.Dirent[]);
-    mockFs.readFileSync = vi.fn().mockReturnValue('');
     mockFs.writeFileSync = vi.fn();
 
-    // File that already contains the generated content
+    // File that already contains the generated content (new domain-based structure)
     const statsBlock = [
       '| Category | Count | Location | Purpose |',
       '| :--- | :---: | :--- | :--- |',
-      '| **Agents** | 0 | `templates/agents/` | Specialized expert roles (@-mentions) |',
-      '| **Prompts** | 0 | `templates/prompts/` | Task-specific workflows (slash commands) |',
-      '| **Instructions** | 0 | `templates/instructions/` | Persistent project rules and standards |',
+      '| **Agents** | 0 | `templates/<domain>/agents/` | Specialized expert roles (@-mentions) |',
+      '| **Skills** | 0 | `templates/<domain>/skills/<name>/` | Reusable task-specific workflows |',
+      '| **Prompts** | 0 | `templates/<domain>/prompts/` | Task-specific workflows (slash commands) |',
+      '| **Instructions** | 0 | `templates/<domain>/instructions/` | Persistent project rules and standards |',
     ].join('\n');
     const pluginBlock = '| Plugin | Description |\n| :--- | :--- |';
     const alreadyGenerated = [
