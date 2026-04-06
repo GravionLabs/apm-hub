@@ -17,6 +17,7 @@ keywords:
 # Agents copied as-is from templates/agents/
 agents:
   - source: helm/agents/helm-expert
+  - source: helm/agents/helm-reviewer
 
 # Skills generated from prompt templates
 skills:
@@ -29,6 +30,12 @@ skills:
   # Upgrade a Helm chart to newer API versions or Kubernetes API versions
   - name: helm-chart-upgrade
     source: helm/skills/helm-chart-upgrade
+  # Diagnose a failed or stuck Helm release
+  - name: helm-debug
+    source: helm/skills/helm-debug
+  # Validate a chart locally: lint, template, schema, unit tests
+  - name: helm-template-validate
+    source: helm/skills/helm-template-validate
 
 instructions:
   - source: helm/instructions/helm

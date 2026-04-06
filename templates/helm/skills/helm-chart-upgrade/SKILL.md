@@ -38,4 +38,7 @@ Analyzes the current chart version, identifies required changes (Kubernetes API 
 - Never downgrade `apiVersion` — always upgrade to supported versions
 - Document breaking value changes in `NOTES.txt` or chart README
 
+## Stack
+`helm` `helm lint` `helm template` `helm dependency update`
+
 > 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
