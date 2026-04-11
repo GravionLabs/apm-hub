@@ -125,7 +125,7 @@ Useful Delve commands: `break main.main`, `continue`, `next`, `step`, `print <va
 ## Checklist
 
 - [ ] Reproduce with `go test -race ./...` to catch data races early
-- [ ] Enable pprof endpoint in dev: `import _ "net/http/pprof"` + `go ListenAndServe(":6060", nil)`
+- [ ] Enable pprof endpoint in dev: `import _ "net/http/pprof"` + `go func() { log.Println(http.ListenAndServe(":6060", nil)) }()`
 - [ ] Check goroutine count is stable under load (no steady growth)
 - [ ] Profile before optimising — never guess hot paths
 - [ ] Use `dlv` for complex logic bugs; use pprof for performance issues
