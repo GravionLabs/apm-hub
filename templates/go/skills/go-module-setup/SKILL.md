@@ -97,12 +97,11 @@ GOPROXY=https://proxy.golang.org,direct go mod download
 GOPROXY=direct go mod download
 
 # Private modules (bypass proxy for your org)
-GONOSUMCHECK=github.com/myorg/*
 GONOSUMDB=github.com/myorg/*
 GOPRIVATE=github.com/myorg/*
 
 # Authenticate to private GitHub modules
-GONOSUMCHECK=github.com/myorg/* go get github.com/myorg/private-pkg@latest
+GOPRIVATE=github.com/myorg/* go get github.com/myorg/private-pkg@latest
 ```
 
 ## Diagnosing Module Issues
