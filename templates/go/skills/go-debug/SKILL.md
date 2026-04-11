@@ -1,7 +1,7 @@
 ---
 name: go-debug
 description: 'Diagnose Go runtime issues: panics, data races, goroutine leaks, memory pressure, and CPU hot spots using Go toolchain diagnostics'
-allowed-tools: ["codebase", "runCommands", "problems"]
+allowed-tools: codebase runCommands problems
 model: claude-sonnet-4.6
 ---
 
