@@ -32,8 +32,8 @@ GOTRACEBACK=all go run ./...
 # Capture panic in tests
 go test -v ./... 2>&1 | tee test.log
 
-# Set max goroutine stack depth (default 1000; increase for deep recursion)
-GOMAXPROCS=1 go run ./...
+# Include runtime frames and more panic detail
+GOTRACEBACK=system go run ./...
 ```
 
 Read the stack trace from the bottom up — the goroutine that panicked is listed first, followed by the call stack.
