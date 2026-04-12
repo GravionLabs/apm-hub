@@ -1,6 +1,6 @@
 {
   "name": "go-development",
-  "description": "Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, and containerization.",
+  "description": "Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, benchmarking, debugging, and containerization.",
   "version": "1.0.33",
   "author": {
     "name": "Gravion"
@@ -19,6 +19,9 @@
   "skills": [
     "./skills/go-code-review",
     "./skills/go-test-generate",
+    "./skills/go-debug",
+    "./skills/go-module-setup",
+    "./skills/go-benchmark",
     "./skills/write-tests"
   ]
 }
