@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.34] — 2026-04-12
+
+### Features
+- **go**: Audit and refresh Go templates (#49)
+
+
 ## [1.0.33] — 2026-04-06
+
+### Documentation
+- Update CHANGELOG.md for v1.0.33 [skip ci]
+
 
 ### Features
 - Template-list — separate tables per type for better readability (closes #88)
