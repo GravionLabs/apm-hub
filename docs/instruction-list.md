@@ -23,7 +23,7 @@ This page lists all available instructions organized by domain. This file is aut
 | [powershell](../templates/devops/instructions/powershell.instructions.md)                                 | [Devops](#devops)         | PowerShell cmdlet and scripting best practices based on Microsoft guidelines                                                                                                                                          |
 | [shell](../templates/devops/instructions/shell.instructions.md)                                           | [Devops](#devops)         | Shell scripting best practices and conventions for bash, sh, zsh, and other shells                                                                                                                                    |
 | [docker](../templates/docker/instructions/docker.instructions.md)                                         | [Docker](#docker)         | Comprehensive best practices for creating optimized, secure, and efficient Docker images and managing containers. Covers multi-stage builds, image layer optimization, security scanning, and runtime best practices. |
-| [go](../templates/go/instructions/go.instructions.md)                                                     | [Go](#go)                 | Go coding standards: idiomatic Go, error handling, package design, interfaces, concurrency patterns, and module conventions                                                                                           |
+| [go](../templates/go/instructions/go.instructions.md)                                                     | [Go](#go)                 | Go coding standards: idiomatic Go, error handling, package design, interfaces, concurrency patterns, module conventions, and Go 1.22–1.24 features                                                                    |
 | [helm](../templates/helm/instructions/helm.instructions.md)                                               | [Helm](#helm)             | Helm chart conventions: chart structure, values.yaml design, named templates, helpers, versioning, and Kubernetes packaging best practices                                                                            |
 | [playwright](../templates/playwright/instructions/playwright.instructions.md)                             | [Playwright](#playwright) | Playwright E2E testing conventions: Page Object Model, locator best practices, data-testid, test isolation, async/await patterns, and CI configuration                                                                |
 | [postgresql](../templates/postgresql/instructions/postgresql.instructions.md)                             | [Postgresql](#postgresql) | PostgreSQL 16/17 development conventions: naming, data types, indexing strategy, migrations, connection pooling, Row Level Security, and query best practices                                                         |
@@ -81,9 +81,9 @@ This page lists all available instructions organized by domain. This file is aut
 
 ## Go
 
-| Instruction                                             | Description                                                                                                                 |
-| :------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------- |
-| [`go`](../templates/go/instructions/go.instructions.md) | Go coding standards: idiomatic Go, error handling, package design, interfaces, concurrency patterns, and module conventions |
+| Instruction                                             | Description                                                                                                                                        |
+| :------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`go`](../templates/go/instructions/go.instructions.md) | Go coding standards: idiomatic Go, error handling, package design, interfaces, concurrency patterns, module conventions, and Go 1.22–1.24 features |
 
 ## Helm
 

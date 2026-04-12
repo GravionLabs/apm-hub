@@ -257,28 +257,35 @@ This page lists all available templates (Agents, Skills, Prompts, Instructions) 
 
 ### Agents
 
-| Name      | Description                                                                                                                              | File                                                            |
-| :-------- | :--------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------- |
-| Go Expert | Go development specialist for implementation, refactoring, and code quality — idiomatic Go, concurrency, modules, testing, and toolchain | [go-expert.agent.md](../templates/go/agents/go-expert.agent.md) |
+| Name        | Description                                                                                                                                                              | File                                                                |
+| :---------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------ |
+| Go Expert   | Go development specialist for implementation, refactoring, and code quality — idiomatic Go, concurrency, modules, testing, and toolchain                                 | [go-expert.agent.md](../templates/go/agents/go-expert.agent.md)     |
+| Go Reviewer | Reviews Go code for bugs, security vulnerabilities, goroutine leaks, data races, and non-idiomatic patterns. Returns a prioritised findings list — does not modify code. | [go-reviewer.agent.md](../templates/go/agents/go-reviewer.agent.md) |
 
 ### Instructions
 
-| Name                  | Description                                                                                                                 | File                                                                  |
-| :-------------------- | :-------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
-| Go Coding Conventions | Go coding standards: idiomatic Go, error handling, package design, interfaces, concurrency patterns, and module conventions | [go.instructions.md](../templates/go/instructions/go.instructions.md) |
+| Name                  | Description                                                                                                                                        | File                                                                  |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| Go Coding Conventions | Go coding standards: idiomatic Go, error handling, package design, interfaces, concurrency patterns, module conventions, and Go 1.22–1.24 features | [go.instructions.md](../templates/go/instructions/go.instructions.md) |
 
 ### Prompts
 
 | Name              | Description                                                                                                            | File                                                                             |
 | :---------------- | :--------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------- |
+| Go Benchmark      | Write and analyse Go benchmarks using testing.B, benchstat, and pprof to identify and fix performance bottlenecks      | [go-benchmark.prompt.md](../templates/go/prompts/go-benchmark.prompt.md)         |
 | Go Code Review    | Review Go code for idiomatic patterns, error handling, interface design, concurrency safety, and Go module conventions | [go-code-review.prompt.md](../templates/go/prompts/go-code-review.prompt.md)     |
+| Go Debug          | Diagnose Go runtime issues: panics, data races, goroutine leaks, memory pressure, and CPU hot spots                    | [go-debug.prompt.md](../templates/go/prompts/go-debug.prompt.md)                 |
+| Go Module Setup   | Set up and manage Go modules: go.mod initialisation, go.work workspaces, vendor mode, and dependency hygiene           | [go-module-setup.prompt.md](../templates/go/prompts/go-module-setup.prompt.md)   |
 | Generate Go Tests | Generate table-driven Go tests with subtests, error cases, mocks, and race detector compatibility                      | [go-test-generate.prompt.md](../templates/go/prompts/go-test-generate.prompt.md) |
 
 ### Skills
 
 | Name             | Description                                                                                                                                          | File                                                                 |
 | :--------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
+| go-benchmark     | Write and analyse Go benchmarks using testing.B, go test -bench, benchstat, and pprof to identify and fix performance bottlenecks                    | [go-benchmark](../templates/go/skills/go-benchmark/SKILL.md)         |
 | go-code-review   | Perform a structured Go code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions for idiomatic style. | [go-code-review](../templates/go/skills/go-code-review/SKILL.md)     |
+| go-debug         | Diagnose Go runtime issues: panics, data races, goroutine leaks, memory pressure, and CPU hot spots using Go toolchain diagnostics                   | [go-debug](../templates/go/skills/go-debug/SKILL.md)                 |
+| go-module-setup  | Set up and manage Go modules: go.mod initialisation, go.work workspaces, vendor mode, module proxy, and dependency hygiene                           | [go-module-setup](../templates/go/skills/go-module-setup/SKILL.md)   |
 | go-test-generate | Generate idiomatic Go tests using table-driven subtests, covering happy path, error cases, and edge cases. Compatible with the race detector.        | [go-test-generate](../templates/go/skills/go-test-generate/SKILL.md) |
 
 ## Helm
