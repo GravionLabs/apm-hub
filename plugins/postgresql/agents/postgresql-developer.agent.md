@@ -54,3 +54,10 @@ SELECT * FROM ranked_orders WHERE rn = 1;
 - Use PgBouncer in transaction mode for web applications
 - Set `statement_timeout` and `lock_timeout` for application connections
 - Never open long-running transactions from application code
+
+## Available Skills
+
+Use `/postgresql-code-review` to review PostgreSQL schema and query code for correctness, security, and PG-specific best practices.
+Use `/postgresql-optimization` to optimize PostgreSQL query performance using EXPLAIN ANALYZE and index strategy.
+Use `/sql-optimization` to optimize SQL queries across any SQL database: execution plan analysis, index strategy, and query rewrites.
+Use `/postgresql-debug` to diagnose PostgreSQL performance issues: slow queries, lock contention, and connection exhaustion.

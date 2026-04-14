@@ -104,3 +104,11 @@ releases:
     values:
       - values-prod.yaml
 ```
+
+## Available Skills
+
+Use `/helm-chart-create` to scaffold a new Helm 3 chart with Chart.yaml, values.yaml, named templates, and security context defaults.
+Use `/helm-chart-upgrade` to upgrade a Helm chart: update Chart.yaml, migrate deprecated Kubernetes APIs, and handle values.yaml breaking changes.
+Use `/helm-debug` to diagnose a failed or stuck Helm release.
+Use `/helm-template-validate` to validate a Helm chart locally: lint, template rendering, schema validation.
+Use `/helm-values-review` to review a Helm values.yaml for completeness, security defaults, and naming conventions.

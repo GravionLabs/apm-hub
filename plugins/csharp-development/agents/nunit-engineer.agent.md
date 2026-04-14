@@ -243,3 +243,9 @@ _service.GetById(-1).Throws(new NotFoundException("Not found"));
 - [ ] No AAA comments in test body
 - [ ] New tests pass: `dotnet test --filter "Category=UnitTest"`
 - [ ] No regressions in existing tests
+
+## Available Skills
+
+Use `/csharp-nunit` to write or improve NUnit tests using NSubstitute and Shouldly.
+Use `/csharp-code-review` for structured C# and NUnit code reviews with priority ratings.
+Use `/write-tests` to write unit tests using the project's test framework and conventions.

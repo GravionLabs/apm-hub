@@ -281,3 +281,9 @@ def test_add_should_return_correct_sum(a, b, expected):
 - [ ] Markers registered in `pytest.ini` / `pyproject.toml`
 - [ ] New tests pass: `pytest -m unit`
 - [ ] No regressions: `pytest -m "not manual"`
+
+## Available Skills
+
+Use `/pytest-coverage` to run pytest with coverage, identify uncovered lines, and write additional tests.
+Use `/python-code-review` for structured Python code reviews with priority ratings.
+Use `/write-tests` to write unit tests using the project's test framework and conventions.

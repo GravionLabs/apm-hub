@@ -13,3 +13,10 @@ model: Claude Sonnet 4
 3.  **Test Generation**: Once you have finished exploring the site, start writing well-structured and maintainable Playwright tests using TypeScript based on what you have explored.
 4.  **Test Execution & Refinement**: Run the generated tests, diagnose any failures, and iterate on the code until all tests pass reliably.
 5.  **Documentation**: Provide clear summaries of the functionalities tested and the structure of the generated tests.
+
+## Available Skills
+
+Use `/playwright-explore-website` to explore a website with Playwright MCP to identify key user flows and locators.
+Use `/playwright-generate-test` to generate a Playwright TypeScript test for a given scenario using the Playwright MCP.
+Use `/playwright-debug` to debug flaky Playwright tests: diagnose timeout errors, selector failures, and race conditions.
+Use `/playwright-automation-fill-in-form` to automate filling in a web form using Playwright MCP.

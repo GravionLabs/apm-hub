@@ -10,7 +10,7 @@
       "name": "angular-development",
       "source": "plugins/angular-development",
       "description": "Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "angular",
         "ngrx",
@@ -24,7 +24,7 @@
       "name": "copilot-workspace",
       "source": "plugins/copilot-workspace",
       "description": "Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "copilot",
         "github-copilot",
@@ -40,7 +40,7 @@
       "name": "csharp-development",
       "source": "plugins/csharp-development",
       "description": "C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "csharp",
         "dotnet",
@@ -53,7 +53,7 @@
       "name": "devops",
       "source": "plugins/devops",
       "description": "Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "devops",
         "azure-devops",
@@ -67,7 +67,7 @@
       "name": "docker",
       "source": "plugins/docker",
       "description": "Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "docker",
         "containers",
@@ -79,7 +79,7 @@
       "name": "go-development",
       "source": "plugins/go-development",
       "description": "Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, benchmarking, debugging, and containerization.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "go",
         "golang",
@@ -92,7 +92,7 @@
       "name": "helm-development",
       "source": "plugins/helm-development",
       "description": "Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "helm",
         "kubernetes",
@@ -105,7 +105,7 @@
       "name": "playwright",
       "source": "plugins/playwright",
       "description": "Cross-language Playwright testing plugin. Browser automation, form filling, test generation, and website exploration. Language-specific instructions (playwright-dotnet, playwright-python, playwright-typescript) are bundled with the respective language plugins (csharp-development, python-development, typescript-node-development).",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "playwright",
         "testing",
@@ -117,7 +117,7 @@
       "name": "postgresql",
       "source": "plugins/postgresql",
       "description": "PostgreSQL development and administration plugin. Schema design, query optimization, performance diagnostics, code review, Row Level Security, JSONB, and SQL best practices.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "postgresql",
         "postgres",
@@ -130,7 +130,7 @@
       "name": "python-development",
       "source": "plugins/python-development",
       "description": "Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "python",
         "pytest",
@@ -145,7 +145,7 @@
       "name": "security",
       "source": "plugins/security",
       "description": "Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "security",
         "threat-model",
@@ -158,7 +158,7 @@
       "name": "terraform-development",
       "source": "plugins/terraform-development",
       "description": "Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "terraform",
         "iac",
@@ -172,7 +172,7 @@
       "name": "typescript-node-development",
       "source": "plugins/typescript-node-development",
       "description": "TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, debugging, Playwright TypeScript testing, and containerization.",
-      "version": "1.0.34",
+      "version": "1.0.35",
       "keywords": [
         "typescript",
         "nodejs",

@@ -156,3 +156,11 @@ func (m *mockUserRepo) FindByID(ctx context.Context, id string) (*User, error) {
 go test -coverprofile=coverage.out ./...
 go tool cover -html=coverage.out
 ```
+
+## Available Skills
+
+Use `/go-module-setup` to set up and manage Go modules: go.mod initialisation, workspaces, vendor mode, and dependency hygiene.
+Use `/go-test-generate` to generate idiomatic Go tests using table-driven subtests covering happy path, error cases, and edge cases.
+Use `/go-code-review` for structured Go code reviews with priority ratings.
+Use `/go-debug` to diagnose Go runtime issues: panics, data races, goroutine leaks, and memory pressure.
+Use `/go-benchmark` to write and analyse Go benchmarks using testing.B and pprof to identify performance bottlenecks.

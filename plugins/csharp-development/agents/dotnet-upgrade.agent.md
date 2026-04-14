@@ -220,4 +220,7 @@ Ensure pipelines use the detected **target version** dynamically:
 4. "Summarize build/test results post-upgrade for <ProjectName>."
 5. "Create PR description and checklist for the upgrade."
 
----
+## Available Skills
+
+Use `/dotnet-upgrade` to analyze and execute a .NET framework or package upgrade.
+Use `/create-pr` to generate a structured PR description and create a pull request.

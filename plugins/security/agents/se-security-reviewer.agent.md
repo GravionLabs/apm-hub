@@ -160,3 +160,9 @@ for attempt in range(3):
 ```
 
 Remember: Goal is enterprise-grade code that is secure, maintainable, and compliant.
+
+## Available Skills
+
+Use `/security-review` for structured security review against OWASP Top 10 — any language or framework.
+Use `/owasp-audit` for focused OWASP Top 10 2021 audit — analyze one or more categories in depth.
+Use `/secrets-audit` to scan for hardcoded secrets, credentials, and insecure secret storage patterns.
