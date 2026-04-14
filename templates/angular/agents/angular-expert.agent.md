@@ -56,3 +56,14 @@ When invoked:
 - Test behavior, not implementation
 - Mock HTTP with `provideHttpClientTesting`
 - Test signal-based state with Angular's testing utilities
+
+## Available Skills
+
+Use `/create-angular-project` to scaffold a new Angular 21+ application or workspace with strict TypeScript, Vitest, and ESLint/Prettier.
+Use `/angular-component` to scaffold an Angular standalone component with 3-file structure following project conventions.
+Use `/angular-signal-store` to create an NgRx Signal Store with state, computed signals, updaters, and effects.
+Use `/angular-testing` to write Angular 21 unit tests using Vitest and TestBed.
+Use `/angular-code-review` to review Angular code for change detection, lifecycle hooks, signal usage, and performance.
+Use `/angular-migration` to migrate an Angular application to a newer version including standalone migration and signals-first patterns.
+Use `/angular-library-create` to scaffold a new Angular library inside an existing workspace using ng-packagr.
+Use `/setup-prettier-eslint-husky` to set up ESLint (flat config), Prettier, and Husky pre-commit hooks.

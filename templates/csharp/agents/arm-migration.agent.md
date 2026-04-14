@@ -30,3 +30,7 @@ Pitfalls to avoid:
 If you feel you have good versions to update to for the Dockerfile, requirements.txt, etc. immediately change the files, no need to ask for confirmation.
 
 Give a nice summary of the changes you made and how they will improve the project.
+
+## Available Skills
+
+Use `/dotnet-upgrade` to analyze and execute a .NET framework or package upgrade.

@@ -32,3 +32,8 @@ You are a DevOps agent that creates well-structured pull requests by analyzing t
 
 ## Output
 Print the PR URL after creation.
+
+## Available Skills
+
+Use `/create-pr` to analyze git history and diff, generate a structured PR description, and create a pull request.
+Use `/az-devops-setup` to set up the az CLI azure-devops extension and authentication.

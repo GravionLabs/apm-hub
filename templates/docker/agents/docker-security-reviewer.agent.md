@@ -41,3 +41,7 @@ Group by file. For each finding:
    → Fix: <specific remediation>
 ```
 End with summary count per severity.
+
+## Available Skills
+
+Use `/docker-security-review` to review a Dockerfile or docker-compose configuration for security issues.

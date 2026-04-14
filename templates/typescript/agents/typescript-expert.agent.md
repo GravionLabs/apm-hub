@@ -157,3 +157,13 @@ npx jest --coverage
 ```
 
 Ensure `vitest.config.ts` or `jest.config.ts` configures coverage thresholds.
+
+## Available Skills
+
+Use `/create-node-project` to scaffold a new TypeScript/Node.js project (library, CLI, or application) with strict tsconfig and Vitest.
+Use `/typescript-code-review` for structured TypeScript/JavaScript code reviews with priority ratings.
+Use `/typescript-debug` to diagnose and fix TypeScript type errors, module resolution issues, and build failures.
+Use `/setup-prettier-eslint-husky` to set up ESLint (flat config), Prettier, and Husky pre-commit hooks.
+Use `/typescript-mcp-server-generator` to generate a complete MCP server in TypeScript with tools, resources, and prompts.
+Use `/create-node-workflow` to create a GitHub Actions CI workflow for a Node.js project.
+Use `/write-tests` to write unit tests using the project's test framework and conventions.

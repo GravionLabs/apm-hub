@@ -46,3 +46,7 @@ Group findings by file. For each finding:
 ```
 
 End with a summary count per severity level. Do not rewrite or edit any files.
+
+## Available Skills
+
+Use `/go-code-review` for structured Go code reviews with priority ratings.

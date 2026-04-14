@@ -43,3 +43,10 @@ docker buildx build --platform linux/amd64,linux/arm64 -t myapp:latest --push .
 - Never put secrets in environment variables in compose files — use Docker secrets or external vaults
 - Scan images with `docker scout` or `trivy` before pushing
 - Use distroless or scratch base images for compiled languages where possible
+
+## Available Skills
+
+Use `/multi-stage-dockerfile` to create an optimized multi-stage Dockerfile minimizing final image size.
+Use `/docker-compose-setup` to generate or review a docker-compose.yml for local development or testing.
+Use `/docker-debug` to diagnose container startup failures, networking issues, and volume mount problems.
+Use `/docker-security-review` to review a Dockerfile or docker-compose configuration for security issues.

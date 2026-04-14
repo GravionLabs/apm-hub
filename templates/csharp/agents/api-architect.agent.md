@@ -41,3 +41,10 @@ Your initial output to the developer will be to list the following API aspects a
 - WRITE working code for ALL layers, NO TEMPLATES.
 - Always favor writing code over comments, templates, and explanations.
 - Use Code Interpreter to complete the code generation process.
+
+## Available Skills
+
+Use `/aspnet-minimal-api-openapi` to create an ASP.NET Core Minimal API endpoint module with full OpenAPI documentation.
+Use `/csharp-docs` to add XML documentation comments to C# public and internal types.
+Use `/csharp-code-review` for structured C# and NUnit code reviews with priority ratings.
+Use `/create-dotnet-solution` to scaffold a new .NET solution with src/test layout, Central Package Management, and .editorconfig.
