@@ -565,3 +565,9 @@ The entire process typically involves 2-3 interactions with **significant analys
 - Implementation plan can be fed directly to Copilot Coding Agent
 - Suitable for regulated industries requiring audit trails
 - Works best with repositories containing 1000+ files or complex business logic
+
+## Available Skills
+
+Use `/dotnet-design-pattern-review` to review C#/.NET code for design pattern implementation quality.
+Use `/dotnet-upgrade` to analyze and execute a .NET framework or package upgrade.
+Use `/dotnet-best-practices` to review and improve .NET/C# code for nullability, async patterns, DI, and modern idioms.

@@ -73,6 +73,24 @@ npm run build && npm run generate
 ```
 Never commit generated files (`docs/*.md`, `.github/plugin/marketplace.json`) — CI regenerates them.
 
+## Agent ↔ Skill Relationship
+
+When a new skill is created, update the relevant agent(s) in the same domain to reference it. Add an `## Available Skills` section at the end of each applicable agent file:
+
+```markdown
+## Available Skills
+
+Use `/skill-name` to <one-line description matching the skill's SKILL.md description>.
+```
+
+### Rules for `## Available Skills`
+
+- **Placement**: Last section in the agent file (after all behavioral rules and checklists)
+- **Format**: One `Use /skill-name to ...` line per skill; no nested lists
+- **Description**: Copy or paraphrase the `description` field from the skill's `SKILL.md` frontmatter
+- **Scope**: Include domain-specific skills, relevant cross-domain skills (e.g., devops skills for CI/CD agents), and `shared` skills where applicable
+- **Reciprocal**: When authoring a new skill, always check which agents in the domain (and adjacent domains) should reference it
+
 ## Naming Conventions
 
 - Skill directory name: `kebab-case` (e.g., `setup-prettier-eslint-husky`)

@@ -12,3 +12,7 @@ infer: false
 - Propose test list first, then generate tests
 - Prefer readable, minimal fixtures
 - Keep tests deterministic
+
+## Available Skills
+
+Use `/write-tests` to write unit tests using the project's test framework and conventions, covering happy path, edge cases, and error scenarios.

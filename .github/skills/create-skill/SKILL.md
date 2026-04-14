@@ -58,6 +58,14 @@ skills:
 ```
 Then run `npm run generate` to rebuild the plugin.
 
+After registering, **update the relevant agent(s)** in the same domain to reference the new skill:
+```markdown
+## Available Skills
+
+Use `/<skill-name>` to <one-line description from SKILL.md>.
+```
+Add the entry to the `## Available Skills` section in each agent file where the skill is applicable.
+
 ## Tips
 > **Use the `task` tool** for mechanical steps (file creation, npm install, `npm run generate`).
 > Routes work to a cheaper model. Example: `#task npm run generate`

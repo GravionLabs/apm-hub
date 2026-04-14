@@ -25,3 +25,7 @@ You are a DevOps agent that guides users through installing and authenticating t
 
 ## Output
 Confirm successful configuration with organization URL and project name.
+
+## Available Skills
+
+Use `/az-devops-setup` to set up the az CLI azure-devops extension and authentication.

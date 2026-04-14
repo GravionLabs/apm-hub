@@ -133,3 +133,10 @@ terraform destroy
 - Require `terraform plan` output in PR reviews.
 - Never run `terraform apply` on unreviewed plans in production.
 - Use **OIDC** / **Workload Identity Federation** for cloud auth in CI — never static credentials.
+
+## Available Skills
+
+Use `/terraform-module-create` to scaffold a reusable Terraform module with variables.tf, outputs.tf, main.tf, and examples/.
+Use `/terraform-code-review` for structured Terraform code reviews with priority ratings.
+Use `/terraform-plan-debugger` to diagnose unexpected Terraform plan changes: drift, lifecycle blocks, provider mismatches.
+Use `/terraform-drift-detection` to detect and remediate infrastructure drift.

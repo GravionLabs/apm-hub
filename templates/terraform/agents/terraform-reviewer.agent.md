@@ -44,3 +44,7 @@ Group findings by file. For each finding:
 ```
 
 End with a summary count per severity. Do not rewrite files — output findings only.
+
+## Available Skills
+
+Use `/terraform-code-review` for structured Terraform code reviews with priority ratings.
