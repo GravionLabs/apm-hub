@@ -31,7 +31,15 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
 - [ ] Indirect trigger phrasing included where relevant ("even if the user does not mention X") — 🟢
 
 **`allowed-tools` (🟡 if shell/bash is pre-approved without justification):**
-- [ ] If `shell` or `bash` is listed, all bundled scripts have been fully reviewed
+- [ ] If `execute`, `shell`, `runCommands`, or `bash` is listed, all bundled scripts have been fully reviewed
+- [ ] Cross-platform alias coverage — if any platform-specific identifier is present, its counterparts for other platforms should also be present (🟡 if missing):
+  - `execute` present but `runCommands` absent → add `runCommands` for VS Code
+  - `runCommands` present but `execute` absent → add `execute` for Cloud Agent
+  - `edit` or `write` present but `editFiles` absent → add `editFiles` for VS Code
+  - `editFiles` present but `edit` absent → add `edit` for Cloud Agent
+  - `codebase` present but `read` or `search` absent → add `read search` for Cloud Agent (🟡)
+  - `read` or `search` present but `codebase` absent → add `codebase` for VS Code (🟢)
+  - Recommended full cross-platform set: `execute read edit search codebase editFiles runCommands`
 
 **`compatibility` (🟢):**
 - [ ] Present if the skill has specific runtime or environment requirements
@@ -118,5 +126,5 @@ For each script in `scripts/`:
 [ ] scripts: no interactive prompts, --help, structured stdout, helpful errors
 [ ] references: conditional load instructions, relative paths, one level deep
 [ ] assets: referenced conditionally, not loaded automatically
-[ ] allowed-tools: shell/bash only if all scripts are fully reviewed
+[ ] allowed-tools: shell/execute/runCommands only if all scripts are fully reviewed; cross-platform aliases present (execute+runCommands, edit+editFiles, read+search+codebase)
 ```

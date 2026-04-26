@@ -52,7 +52,20 @@ Read `references/frontmatter-schema.md` now.
 Frontmatter rules (apply strictly):
 - `name`: must match the directory name
 - `description`: imperative phrasing, specific keywords, 1–1,024 chars
-- `allowed-tools`: space-separated; do not pre-approve `shell`/`bash` unless all scripts are reviewed
+- `allowed-tools`: space-separated; use the cross-platform combination for the capabilities the skill needs. Read `references/frontmatter-schema.md` for the full mapping table.
+
+  | Capability needed | Add these identifiers |
+  |---|---|
+  | Read/search files | `read search codebase` |
+  | Edit/create files | `edit codebase editFiles` |
+  | Execute shell commands | `execute shell runCommands` |
+  | Web fetch | `web` |
+
+  Combine as needed. Example for a skill that reads, edits, and runs commands:
+  ```
+  allowed-tools: execute read edit search codebase editFiles runCommands
+  ```
+  Do not pre-approve `execute`/`shell`/`runCommands` unless all bundled scripts are reviewed.
 - `model`: include only if a specific model capability is needed (e.g. complex reasoning)
 
 Body rules — read `references/skill-best-practices-summary.md` now:
@@ -92,7 +105,7 @@ Check against the quick-reference list:
 ## Gotchas
 
 - The directory name **must** match the `name` frontmatter field exactly — case-sensitive.
-- Do not pre-approve `shell` or `bash` in `allowed-tools` unless you have reviewed all bundled scripts.
+- Do not pre-approve `execute`, `shell`, or `runCommands` in `allowed-tools` unless you have reviewed all bundled scripts.
 - Prefer one default tool/library with a brief fallback over listing equal alternatives.
 
 > 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
