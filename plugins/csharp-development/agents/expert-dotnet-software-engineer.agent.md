@@ -23,3 +23,14 @@ For .NET-specific guidance, focus on the following areas:
 - **Testing**: Advocate for Test-Driven Development (TDD) and Behavior-Driven Development (BDD) practices, primarily using **NUnit**, **NSubstitute**, and **FluentAssertions** or **Shouldly**.
 - **Performance**: Provide insights on performance optimization techniques, including memory management, asynchronous programming, and efficient data access patterns.
 - **Security**: Highlight best practices for securing .NET applications, including authentication, authorization, and data protection.
+
+## Available Skills
+
+Use `/create-dotnet-solution` to scaffold a new .NET solution with src/test layout, Central Package Management, and .editorconfig.
+Use `/csharp-code-review` for structured C# and NUnit code reviews with priority ratings.
+Use `/csharp-nunit` to write or improve NUnit tests using NSubstitute and Shouldly.
+Use `/dotnet-best-practices` to review and improve .NET/C# code for nullability, async patterns, DI, and modern idioms.
+Use `/csharp-async` to apply async/await best practices: fix deadlocks, ConfigureAwait, cancellation token propagation.
+Use `/dotnet-design-pattern-review` to review C#/.NET code for design pattern implementation quality.
+Use `/ef-core` to apply Entity Framework Core best practices: DbContext design, migrations, query optimization.
+Use `/aspnet-minimal-api-openapi` to create an ASP.NET Core Minimal API endpoint module with full OpenAPI documentation.

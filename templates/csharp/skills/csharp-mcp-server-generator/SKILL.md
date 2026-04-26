@@ -1,7 +1,7 @@
 ---
 name: csharp-mcp-server-generator
 description: 'Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.'
-allowed-tools: editFiles codebase runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
 

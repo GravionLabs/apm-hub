@@ -1,7 +1,7 @@
 ---
 name: "create-k8s-deploy-workflow"
 description: "Create a GitHub Actions workflow for deploying to Kubernetes (kubectl apply, Helm, or Kustomize) with OIDC auth"
-allowed-tools: ["editFiles", "codebase"]
+allowed-tools: read write edit editFiles search codebase
 model: gpt-4.1
 ---
 

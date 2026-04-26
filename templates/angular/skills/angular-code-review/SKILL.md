@@ -1,7 +1,7 @@
 ---
 name: angular-code-review
 description: 'Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list.'
-allowed-tools: codebase problems
+allowed-tools: read search codebase problems
 model: claude-sonnet-4.6
 ---
 

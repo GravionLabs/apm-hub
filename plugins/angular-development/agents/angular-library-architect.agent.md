@@ -89,3 +89,10 @@ ng build demo          # Then demo (uses dist/<lib-name>)
 - ❌ Providing library-internal stores in demo's `app.config.ts` (use `providedIn: 'root'`)
 - ❌ Forgetting to export new symbols from `public-api.ts`
 - ❌ Creating `.component.ts` files — Angular 21 drops this suffix
+
+## Available Skills
+
+Use `/angular-library-create` to scaffold a new Angular library inside an existing workspace using ng-packagr.
+Use `/angular-component` to scaffold an Angular standalone component with 3-file structure following project conventions.
+Use `/angular-testing` to write Angular 21 unit tests using Vitest and TestBed.
+Use `/sakai-ui-component` to scaffold a new @gravion/sakai-ui Angular library component with gv- prefix and PrimeNG dependencies.

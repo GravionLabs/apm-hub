@@ -93,7 +93,7 @@ This repository contains a wide range of production-ready templates:
 | Category         | Count | Location                            | Purpose                                  |
 | :--------------- | :---: | :---------------------------------- | :--------------------------------------- |
 | **Agents**       |  45   | `templates/<domain>/agents/`        | Specialized expert roles (@-mentions)    |
-| **Skills**       |  81   | `templates/<domain>/skills/<name>/` | Reusable task-specific workflows         |
+| **Skills**       |  85   | `templates/<domain>/skills/<name>/` | Reusable task-specific workflows         |
 | **Prompts**      |  78   | `templates/<domain>/prompts/`       | Task-specific workflows (slash commands) |
 | **Instructions** |  30   | `templates/<domain>/instructions/`  | Persistent project rules and standards   |
 <!-- AUTO:end template-stats -->

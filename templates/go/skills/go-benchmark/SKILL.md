@@ -1,7 +1,7 @@
 ---
 name: go-benchmark
 description: 'Write and analyse Go benchmarks using testing.B, go test -bench, benchstat, and pprof to identify and fix performance bottlenecks'
-allowed-tools: codebase editFiles runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
 

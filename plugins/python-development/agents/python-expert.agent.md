@@ -152,3 +152,13 @@ markers = [
     "manual: Tests requiring manual setup — skipped by default",
 ]
 ```
+
+## Available Skills
+
+Use `/create-python-project` to scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, and asyncio support.
+Use `/python-code-review` for structured Python code reviews with priority ratings.
+Use `/pytest-coverage` to run pytest with coverage, identify uncovered lines, and write additional tests.
+Use `/python-debug` to diagnose and fix Python runtime errors, memory leaks, and performance issues.
+Use `/python-packaging` to set up or modernize Python project packaging using pyproject.toml, uv, and hatch.
+Use `/create-python-workflow` to create a GitHub Actions CI/CD workflow for a Python package.
+Use `/write-tests` to write unit tests using the project's test framework and conventions.

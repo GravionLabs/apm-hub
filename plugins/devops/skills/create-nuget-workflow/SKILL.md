@@ -1,7 +1,7 @@
 ---
 name: create-nuget-workflow
 description: 'Create a GitHub Actions CI/CD workflow for building and publishing a NuGet package using GravionLabs/ci reusable workflows.'
-allowed-tools: editFiles codebase
+allowed-tools: read write edit editFiles search codebase
 model: gpt-4.1
 ---
 

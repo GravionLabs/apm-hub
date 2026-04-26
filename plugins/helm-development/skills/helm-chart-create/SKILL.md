@@ -1,7 +1,7 @@
 ---
 name: helm-chart-create
 description: 'Scaffold a new Helm 3 chart with Chart.yaml, values.yaml, named templates, standard Kubernetes resources, and security context defaults.'
-allowed-tools: editFiles codebase runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
 

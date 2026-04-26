@@ -1,7 +1,7 @@
 ---
 name: python-code-review
 description: 'Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions.'
-allowed-tools: codebase
+allowed-tools: read search codebase
 model: claude-sonnet-4.6
 ---
 

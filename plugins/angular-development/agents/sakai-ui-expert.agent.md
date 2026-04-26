@@ -86,3 +86,9 @@ The `projects/demo/` app shows the library in action:
 - [ ] Demo imports from `@gravion/sakai-ui` (not from source path)
 - [ ] `ng build sakai-ui` passes
 - [ ] `ng build demo` passes
+
+## Available Skills
+
+Use `/sakai-ui-component` to scaffold a new @gravion/sakai-ui Angular library component with gv- prefix, 3-file structure, and PrimeNG dependencies.
+Use `/angular-component` to scaffold an Angular standalone component with 3-file structure following project conventions.
+Use `/angular-testing` to write Angular 21 unit tests using Vitest and TestBed.

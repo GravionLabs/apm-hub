@@ -1,7 +1,7 @@
 ---
 name: helm-debug
 description: 'Diagnose a failed or stuck Helm release: inspect release state, history, rendered manifests, and Kubernetes event logs to identify the root cause.'
-allowed-tools: codebase runCommands
+allowed-tools: execute shell runCommands read search codebase
 model: claude-sonnet-4.6
 ---
 

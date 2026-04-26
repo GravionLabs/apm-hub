@@ -1,7 +1,7 @@
 ---
 name: go-module-setup
 description: 'Set up and manage Go modules: go.mod initialisation, go.work workspaces, vendor mode, module proxy, and dependency hygiene'
-allowed-tools: codebase editFiles runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
 

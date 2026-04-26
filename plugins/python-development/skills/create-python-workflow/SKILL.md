@@ -1,7 +1,7 @@
 ---
 name: create-python-workflow
 description: 'Create a GitHub Actions CI/CD workflow for a Python package using GravionLabs/ci reusable workflows (lint, test, build, publish).'
-allowed-tools: editFiles codebase
+allowed-tools: read write edit editFiles search codebase
 model: gpt-4.1
 ---
 

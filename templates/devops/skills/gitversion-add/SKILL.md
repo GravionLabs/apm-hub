@@ -1,7 +1,7 @@
 ---
 name: gitversion-add
 description: 'Add GitVersion to a repository for automatic semantic versioning from git history, configured for use with GravionLabs/ci reusable workflows.'
-allowed-tools: editFiles codebase
+allowed-tools: read write edit editFiles search codebase
 model: gpt-4.1
 ---
 

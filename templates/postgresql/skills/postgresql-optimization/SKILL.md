@@ -1,7 +1,7 @@
 ---
 name: postgresql-optimization
 description: 'Optimize PostgreSQL query performance: analyze EXPLAIN ANALYZE output, suggest indexes, rewrite inefficient queries, and identify table bloat or vacuum issues.'
-allowed-tools: codebase
+allowed-tools: read search codebase
 model: claude-sonnet-4.6
 ---
 

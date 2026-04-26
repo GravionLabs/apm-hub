@@ -43,3 +43,8 @@ Always end with a brief summary of overall chart quality and top 3 action items.
 - `helm lint` warnings left unaddressed
 - Undeclared value keys used in templates (typo risk)
 - Empty `resources: {}` (runtime scheduling risk)
+
+## Available Skills
+
+Use `/helm-values-review` to review a Helm values.yaml for completeness, security defaults, and naming conventions.
+Use `/helm-template-validate` to validate a Helm chart locally: lint, template rendering, schema validation.

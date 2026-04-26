@@ -1,7 +1,7 @@
 ---
 name: pytest-coverage
 description: 'Run pytest with coverage, identify uncovered lines, and write additional tests to achieve full (or target) coverage.'
-allowed-tools: codebase editFiles runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: gpt-4.1
 ---
 

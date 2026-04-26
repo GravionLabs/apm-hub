@@ -1,7 +1,7 @@
 ---
 name: gh-agents-md
 description: 'Analyze the repository and generate a complete AGENTS.md file tailored to the project type (dotnet, node, python, github-actions, or generic).'
-allowed-tools: codebase editFiles runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
 

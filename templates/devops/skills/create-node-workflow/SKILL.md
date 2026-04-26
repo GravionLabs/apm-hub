@@ -1,7 +1,7 @@
 ---
 name: create-node-workflow
 description: 'Create a GitHub Actions CI workflow for a Node.js project using GravionLabs/ci reusable workflows (install, lint, test, build).'
-allowed-tools: editFiles codebase
+allowed-tools: read write edit editFiles search codebase
 model: gpt-4.1
 ---
 

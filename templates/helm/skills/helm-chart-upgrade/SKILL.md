@@ -1,7 +1,7 @@
 ---
 name: helm-chart-upgrade
 description: 'Upgrade a Helm chart to a newer chart or app version: update Chart.yaml, migrate deprecated Kubernetes APIs, and handle values.yaml breaking changes.'
-allowed-tools: editFiles codebase runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
 

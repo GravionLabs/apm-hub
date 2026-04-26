@@ -1,7 +1,7 @@
 ---
 name: terraform-plan-debugger
 description: 'Diagnose unexpected Terraform plan changes: drift, missing lifecycle blocks, provider mismatches, state inconsistencies, incorrect variable values, and missing moved{} blocks.'
-allowed-tools: codebase runCommands
+allowed-tools: execute shell runCommands read search codebase
 model: claude-sonnet-4.6
 ---
 

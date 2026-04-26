@@ -11,11 +11,11 @@ An Agent Skill is a folder containing a `SKILL.md` file. It packages procedural 
 
 ### Progressive Disclosure — how agents load a skill
 
-| Stage | What loads | Token budget |
-|-------|-----------|--------------|
-| **Discovery** (startup) | `name` + `description` only | ~100 tokens |
-| **Activation** (task match) | Full `SKILL.md` body | < 5,000 tokens recommended |
-| **Execution** (on demand) | Files from `scripts/`, `references/`, `assets/` | as needed |
+| Stage                       | What loads                                      | Token budget               |
+| :-------------------------- | :---------------------------------------------- | :------------------------- |
+| **Discovery** (startup)     | `name` + `description` only                     | ~100 tokens                |
+| **Activation** (task match) | Full `SKILL.md` body                            | < 5,000 tokens recommended |
+| **Execution** (on demand)   | Files from `scripts/`, `references/`, `assets/` | as needed                  |
 
 Agents only read the full instructions when the skill is relevant. Scripts and reference files are loaded even more lazily — only when the agent is explicitly instructed to use them.
 
@@ -65,14 +65,14 @@ description: >
 
 ### 4.1 Field overview
 
-| Field | Required | Max length | Description |
-|-------|----------|-----------|-------------|
-| `name` | ✅ | 64 chars | Unique identifier. Must match the directory name. |
-| `description` | ✅ | 1,024 chars | What the skill does and when to use it. |
-| `license` | ❌ | — | License name or reference to a bundled license file. |
-| `compatibility` | ❌ | 500 chars | Environment requirements (OS packages, network, runtime). |
-| `metadata` | ❌ | — | Arbitrary key-value map for additional properties. |
-| `allowed-tools` | ❌ (experimental) | — | Space-separated list of pre-approved tools. |
+| Field           | Required         | Max length  | Description                                               |
+| :-------------- | :--------------- | :---------- | :-------------------------------------------------------- |
+| `name`          | ✅                | 64 chars    | Unique identifier. Must match the directory name.         |
+| `description`   | ✅                | 1,024 chars | What the skill does and when to use it.                   |
+| `license`       | ❌                | —           | License name or reference to a bundled license file.      |
+| `compatibility` | ❌                | 500 chars   | Environment requirements (OS packages, network, runtime). |
+| `metadata`      | ❌                | —           | Arbitrary key-value map for additional properties.        |
+| `allowed-tools` | ❌ (experimental) | —           | Space-separated list of pre-approved tools.               |
 
 ---
 
@@ -95,24 +95,24 @@ Rules:
 
 **Good names:**
 
-| Name | Why it works |
-|------|-------------|
-| `pdf-extraction` | Short, lowercase, kebab-case |
-| `github-actions-debugger` | Descriptive, clear domain |
-| `csv-data-analysis` | Action + subject, no ambiguity |
-| `db-migration-runner` | Concise, readable |
+| Name                      | Why it works                   |
+| :------------------------ | :----------------------------- |
+| `pdf-extraction`          | Short, lowercase, kebab-case   |
+| `github-actions-debugger` | Descriptive, clear domain      |
+| `csv-data-analysis`       | Action + subject, no ambiguity |
+| `db-migration-runner`     | Concise, readable              |
 
 **Bad names:**
 
-| Name | Problem |
-|------|---------|
-| `PDFExtraction` | Uppercase letters not allowed |
-| `pdf_extraction` | Underscores not allowed — use hyphens |
-| `my skill` | Spaces not allowed |
-| `-invalid-start` | Must not start with a hyphen |
-| `invalid-end-` | Must not end with a hyphen |
-| `my--skill` | Consecutive hyphens not allowed |
-| `this-skill-name-is-way-too-long-and-exceeds-the-64-char-limit-x` | Exceeds 64 characters |
+| Name                                                              | Problem                               |
+| :---------------------------------------------------------------- | :------------------------------------ |
+| `PDFExtraction`                                                   | Uppercase letters not allowed         |
+| `pdf_extraction`                                                  | Underscores not allowed — use hyphens |
+| `my skill`                                                        | Spaces not allowed                    |
+| `-invalid-start`                                                  | Must not start with a hyphen          |
+| `invalid-end-`                                                    | Must not end with a hyphen            |
+| `my--skill`                                                       | Consecutive hyphens not allowed       |
+| `this-skill-name-is-way-too-long-and-exceeds-the-64-char-limit-x` | Exceeds 64 characters                 |
 
 ---
 
@@ -133,11 +133,11 @@ description: >
 
 Write descriptions following this formula:
 
-| Part | Purpose | Example |
-|------|---------|---------|
-| **What it does** | One sentence: the action the skill performs | "Debugs failing GitHub Actions workflows." |
-| **When to use it** | Imperative: "Use this skill when…" | "Use this skill when asked to investigate or fix CI/CD failures…" |
-| **Key capabilities** | Specific keywords and indirect triggers | "…even if the user does not mention GitHub Actions explicitly." |
+| Part                 | Purpose                                     | Example                                                           |
+| :------------------- | :------------------------------------------ | :---------------------------------------------------------------- |
+| **What it does**     | One sentence: the action the skill performs | "Debugs failing GitHub Actions workflows."                        |
+| **When to use it**   | Imperative: "Use this skill when…"          | "Use this skill when asked to investigate or fix CI/CD failures…" |
+| **Key capabilities** | Specific keywords and indirect triggers     | "…even if the user does not mention GitHub Actions explicitly."   |
 
 All three parts are important for accurate triggering. Agents match against the description at startup — if "when to use it" is missing, the skill won't activate at the right time; if "key capabilities" is missing, near-miss prompts may over-trigger.
 
@@ -202,7 +202,7 @@ Rules:
 **Optional. Experimental.**
 
 ```yaml
-allowed-tools: execute read edit codebase editFiles runCommands
+allowed-tools: execute read edit search codebase editFiles runCommands
 ```
 
 Rules:
@@ -215,19 +215,19 @@ Rules:
 
 Tool names are platform-specific. Use the **primary alias** (from [GitHub Copilot custom agents docs](https://docs.github.com/en/copilot/reference/custom-agents-configuration#tool-aliases)) where possible, and add platform-specific identifiers alongside it to maximise coverage.
 
-| Identifier | Platform | Purpose |
-|-----------|----------|---------|
-| **`execute`** | Cloud Agent (primary alias) | Execute shell commands; compatible aliases: `shell`, `Bash`, `powershell` |
-| **`read`** | Cloud Agent (primary alias) | Read file contents; compatible alias: `Read` |
-| **`edit`** | Cloud Agent (primary alias) | Edit/create files; compatible aliases: `Edit`, `Write` |
-| **`search`** | Cloud Agent (primary alias) | Search files and text; compatible aliases: `Grep`, `Glob` |
-| **`web`** | Cloud Agent (primary alias) | Fetch URLs / web search; compatible aliases: `WebSearch`, `WebFetch` |
-| `shell` | Copilot CLI (permission kind) | Shell command execution (also a Cloud Agent alias for `execute`) |
-| `write` | Copilot CLI (permission kind) | File write access (also a Cloud Agent alias for `edit`) |
-| `codebase` | VS Code Copilot | Semantic codebase search |
-| `editFiles` | VS Code Copilot | Create and edit files |
-| `runCommands` | VS Code Copilot | Execute terminal commands |
-| `mcp_github_*` | All platforms | GitHub MCP server tools (wildcard) |
+| Identifier     | Platform                      | Purpose                                                                   |
+| :------------- | :---------------------------- | :------------------------------------------------------------------------ |
+| **`execute`**  | Cloud Agent (primary alias)   | Execute shell commands; compatible aliases: `shell`, `Bash`, `powershell` |
+| **`read`**     | Cloud Agent (primary alias)   | Read file contents; compatible alias: `Read`                              |
+| **`edit`**     | Cloud Agent (primary alias)   | Edit/create files; compatible aliases: `Edit`, `Write`                    |
+| **`search`**   | Cloud Agent (primary alias)   | Search files and text; compatible aliases: `Grep`, `Glob`                 |
+| **`web`**      | Cloud Agent (primary alias)   | Fetch URLs / web search; compatible aliases: `WebSearch`, `WebFetch`      |
+| `shell`        | Copilot CLI (permission kind) | Shell command execution (also a Cloud Agent alias for `execute`)          |
+| `write`        | Copilot CLI (permission kind) | File write access (also a Cloud Agent alias for `edit`)                   |
+| `codebase`     | VS Code Copilot               | Semantic codebase search                                                  |
+| `editFiles`    | VS Code Copilot               | Create and edit files                                                     |
+| `runCommands`  | VS Code Copilot               | Execute terminal commands                                                 |
+| `mcp_github_*` | All platforms                 | GitHub MCP server tools (wildcard)                                        |
 
 #### Recommendation: targeting all platforms
 
@@ -251,10 +251,10 @@ The Markdown body is the full instruction set for the agent. It loads entirely w
 
 ### 5.1 Length limits
 
-| Limit | Recommended |
-|-------|------------|
-| Lines | < 500 |
-| Tokens | < 5,000 |
+| Limit  | Recommended |
+| :----- | :---------- |
+| Lines  | < 500       |
+| Tokens | < 5,000     |
 
 These limits exist because a skill's body loads **in full** into the same context window as everything else the agent is working with. Every token you add to `SKILL.md` directly displaces conversation history, tool results, and other active skills. Exceeding these limits doesn't cause an error, but it degrades the agent's ability to track what matters.
 
@@ -366,15 +366,15 @@ Pin versions explicitly for reproducibility.
 
 ### 6.4 Script design rules for agentic use
 
-| Rule | Reason |
-|------|--------|
-| **No interactive prompts** | Agents run in non-interactive shells; a blocking prompt hangs indefinitely. Accept all input via flags, env vars, or stdin. |
-| **Implement `--help`** | The agent reads `--help` output to learn the script's interface. Include description, flags, and examples. |
-| **Write helpful error messages** | On error, state what went wrong, what was expected, and what to try next. |
-| **Use structured output (JSON/CSV/TSV)** | Structured formats are composable with other tools (`jq`, `cut`, `awk`). |
-| **Separate data from diagnostics** | Write structured data to **stdout**, progress/warnings to **stderr**. |
-| **Handle edge cases gracefully** | Return a non-zero exit code and a meaningful message — not a Python traceback. |
-| **Document dependencies** | State prerequisites in `SKILL.md` (or use the `compatibility` frontmatter field). |
+| Rule                                     | Reason                                                                                                                      |
+| :--------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------- |
+| **No interactive prompts**               | Agents run in non-interactive shells; a blocking prompt hangs indefinitely. Accept all input via flags, env vars, or stdin. |
+| **Implement `--help`**                   | The agent reads `--help` output to learn the script's interface. Include description, flags, and examples.                  |
+| **Write helpful error messages**         | On error, state what went wrong, what was expected, and what to try next.                                                   |
+| **Use structured output (JSON/CSV/TSV)** | Structured formats are composable with other tools (`jq`, `cut`, `awk`).                                                    |
+| **Separate data from diagnostics**       | Write structured data to **stdout**, progress/warnings to **stderr**.                                                       |
+| **Handle edge cases gracefully**         | Return a non-zero exit code and a meaningful message — not a Python traceback.                                              |
+| **Document dependencies**                | State prerequisites in `SKILL.md` (or use the `compatibility` frontmatter field).                                           |
 
 ---
 
@@ -438,11 +438,11 @@ assets/
 
 **When to use `assets/` vs `references/`:**
 
-| | `references/` | `assets/` |
-|--|--------------|----------|
-| Content type | Documentation, prose | Templates, binary/structured data, images |
-| Typical format | Markdown | Any format |
-| Purpose | Agent reads to understand | Agent uses to produce output |
+|                | `references/`             | `assets/`                                 |
+| :------------- | :------------------------ | :---------------------------------------- |
+| Content type   | Documentation, prose      | Templates, binary/structured data, images |
+| Typical format | Markdown                  | Any format                                |
+| Purpose        | Agent reads to understand | Agent uses to produce output              |
 
 For output format templates, short templates can live inline in `SKILL.md`; longer ones belong in `assets/` — reference them explicitly so the agent only loads them when needed.
 
@@ -506,10 +506,10 @@ Create ~20 test prompts: 8–10 that _should_ trigger the skill, 8–10 that _sh
 
 **Should-not-trigger queries** — use near-misses (same keywords, different intent):
 
-| ❌ Weak negative | ✅ Strong negative |
-|------|------|
+| ❌ Weak negative              | ✅ Strong negative                                                 |
+| :--------------------------- | :---------------------------------------------------------------- |
 | "Write a fibonacci function" | "Write a Python script to read a CSV and upload rows to Postgres" |
-| "What's the weather today?" | "Update the formulas in my Excel budget spreadsheet" |
+| "What's the weather today?"  | "Update the formulas in my Excel budget spreadsheet"              |
 
 Run each query multiple times (nondeterministic models); compute a **trigger rate**. A should-trigger query passes if trigger rate > 0.5; a should-not-trigger query passes if trigger rate < 0.5.
 
@@ -655,17 +655,17 @@ For scanned PDFs requiring OCR, use pdf2image with pytesseract instead.
 
 ## 12. Anti-patterns to Avoid
 
-| Anti-pattern | Problem | Fix |
-|---|---|---|
-| Generic LLM-generated skill with no real context | Produces vague, unhelpful instructions | Ground the skill in real tasks, actual code, or project-specific docs |
-| Explaining things the agent already knows | Wastes context; dilutes important instructions | Cut anything the agent handles correctly without the skill |
-| Overly broad scope | Skill activates for unrelated tasks; instructions conflict | Split into focused skills, each covering a coherent unit of work |
-| Overly narrow scope | Multiple skills must load simultaneously | Merge closely related workflows into one skill |
-| Reference chains deeper than one level | Hard to follow; risks context overload | Keep all file references one level deep |
-| Interactive prompts in scripts | Script hangs waiting for input the agent cannot provide | Accept all input via flags, env vars, or stdin |
-| Vague error messages in scripts | Agent can't self-correct; wastes turns | State what went wrong, what was expected, and what to try next |
-| Listing equal alternatives for tools/libraries | Agent makes arbitrary choices | Pick one default; mention alternatives briefly as fallbacks |
-| Instructions specific to one concrete task | Skill not reusable | Write reusable procedures; keep specific details in templates or gotchas |
+| Anti-pattern                                     | Problem                                                    | Fix                                                                      |
+| :----------------------------------------------- | :--------------------------------------------------------- | :----------------------------------------------------------------------- |
+| Generic LLM-generated skill with no real context | Produces vague, unhelpful instructions                     | Ground the skill in real tasks, actual code, or project-specific docs    |
+| Explaining things the agent already knows        | Wastes context; dilutes important instructions             | Cut anything the agent handles correctly without the skill               |
+| Overly broad scope                               | Skill activates for unrelated tasks; instructions conflict | Split into focused skills, each covering a coherent unit of work         |
+| Overly narrow scope                              | Multiple skills must load simultaneously                   | Merge closely related workflows into one skill                           |
+| Reference chains deeper than one level           | Hard to follow; risks context overload                     | Keep all file references one level deep                                  |
+| Interactive prompts in scripts                   | Script hangs waiting for input the agent cannot provide    | Accept all input via flags, env vars, or stdin                           |
+| Vague error messages in scripts                  | Agent can't self-correct; wastes turns                     | State what went wrong, what was expected, and what to try next           |
+| Listing equal alternatives for tools/libraries   | Agent makes arbitrary choices                              | Pick one default; mention alternatives briefly as fallbacks              |
+| Instructions specific to one concrete task       | Skill not reusable                                         | Write reusable procedures; keep specific details in templates or gotchas |
 
 ---
 
@@ -689,9 +689,9 @@ This checks:
 
 Agents discover skills from the following directories:
 
-| Scope | Directories |
-|-------|------------|
-| **Project** (single repo) | `.github/skills/`, `.claude/skills/`, `.agents/skills/` |
+| Scope                          | Directories                                                    |
+| :----------------------------- | :------------------------------------------------------------- |
+| **Project** (single repo)      | `.github/skills/`, `.claude/skills/`, `.agents/skills/`        |
 | **Personal** (across projects) | `~/.copilot/skills/`, `~/.claude/skills/`, `~/.agents/skills/` |
 
 Each skill must be in its own subdirectory. Subdirectory name must match the `name` field in `SKILL.md`.

@@ -1,7 +1,7 @@
 ---
 name: csharp-nunit
 description: 'Write NUnit tests using NSubstitute for mocking and Shouldly for assertions, following project naming and category conventions.'
-allowed-tools: codebase editFiles
+allowed-tools: read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
 

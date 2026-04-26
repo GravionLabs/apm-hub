@@ -1,7 +1,7 @@
 ---
 name: helm-values-review
 description: 'Review a Helm values.yaml for completeness, security defaults, naming conventions, and documentation quality. Read-only — outputs findings only.'
-allowed-tools: codebase
+allowed-tools: read search codebase
 model: claude-sonnet-4.6
 ---
 

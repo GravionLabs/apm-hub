@@ -199,3 +199,20 @@ When invoked:
 - Avoid mocks/Fakes if possible
 - External dependencies can be mocked. Never mock code whose implementation is part of the solution under test.
 - Try to verify that the outputs (e.g. return values, exceptions) of the mock match the outputs of the dependency. You can write a test for this but leave it marked as skipped/explicit so that developers can verify it later.
+
+## Available Skills
+
+Use `/create-dotnet-solution` to scaffold a new .NET solution with src/test layout, Central Package Management, and .editorconfig.
+Use `/csharp-code-review` for structured C# and NUnit code reviews with priority ratings.
+Use `/csharp-nunit` to write or improve NUnit tests using NSubstitute and Shouldly.
+Use `/dotnet-best-practices` to review and improve .NET/C# code for nullability, async patterns, DI, and modern idioms.
+Use `/csharp-async` to apply async/await best practices: fix deadlocks, ConfigureAwait, cancellation token propagation.
+Use `/csharp-docs` to add XML documentation comments to C# public and internal types.
+Use `/dotnet-design-pattern-review` to review C#/.NET code for design pattern implementation quality.
+Use `/ef-core` to apply Entity Framework Core best practices: DbContext design, migrations, query optimization.
+Use `/dotnet-upgrade` to analyze and execute a .NET framework or package upgrade.
+Use `/aspnet-minimal-api-openapi` to create an ASP.NET Core Minimal API endpoint with full OpenAPI documentation.
+Use `/dotnet-debug` to diagnose .NET runtime issues: slow performance, memory leaks, high CPU, crashes, and deadlocks.
+Use `/csharp-mcp-server-generator` to generate a complete MCP server project in C#.
+Use `/create-nuget-workflow` to create a GitHub Actions CI/CD workflow for building and publishing a NuGet package.
+Use `/write-tests` to write unit tests using the project's test framework and conventions.

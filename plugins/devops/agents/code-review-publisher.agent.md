@@ -24,3 +24,8 @@ You are a DevOps agent that publishes structured code review feedback as pull re
 
 ## Output
 Confirm each comment posted with PR number and platform.
+
+## Available Skills
+
+Use `/code-review-publisher` to publish code review results as PR comments on GitHub or Azure DevOps.
+Use `/create-pr` to analyze git history and diff, generate a structured PR description, and create a pull request.
