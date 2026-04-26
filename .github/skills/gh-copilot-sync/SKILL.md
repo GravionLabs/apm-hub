@@ -1,7 +1,12 @@
 ---
 name: gh-copilot-sync
-description: 'Sync installed GitHub Copilot configuration files (.github/instructions, prompts, agents) with the latest versions from GravionLabs/copilot-hub.'
-allowed-tools: codebase runCommands editFiles
+description: >
+  Syncs installed GitHub Copilot configuration files with the latest versions from
+  GravionLabs/copilot-hub. Use this skill when updating or refreshing existing
+  Copilot instructions, prompts, or agents in .github/ — even if the user just says
+  "update Copilot files" or "sync the instructions." Requires pwsh and gh CLI.
+  For first-time setup, use gh-copilot-setup instead.
+allowed-tools: execute read edit search codebase editFiles runCommands
 model: gpt-4.1
 ---
 

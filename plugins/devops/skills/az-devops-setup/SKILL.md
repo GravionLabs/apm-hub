@@ -1,7 +1,7 @@
 ---
 name: az-devops-setup
 description: 'Interactive setup guide for the az CLI azure-devops extension and authentication.'
-allowed-tools: runCommands codebase
+allowed-tools: execute shell runCommands read search codebase
 model: gpt-4.1
 ---
 

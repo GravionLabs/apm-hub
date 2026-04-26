@@ -1,7 +1,7 @@
 ---
 name: "create-docker-workflow"
 description: "Create a GitHub Actions workflow for building and pushing Docker images (multi-platform, OIDC auth, registry cache)"
-allowed-tools: ["editFiles", "codebase"]
+allowed-tools: read write edit editFiles search codebase
 model: gpt-4.1
 ---
 

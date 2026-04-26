@@ -1,7 +1,7 @@
 ---
 name: playwright-debug
 description: 'Debug flaky Playwright tests: diagnose timeout errors, selector failures, race conditions, and browser-specific issues using --debug, --trace, and Playwright Inspector.'
-allowed-tools: codebase runCommands
+allowed-tools: execute shell runCommands read search codebase
 model: claude-sonnet-4.6
 ---
 

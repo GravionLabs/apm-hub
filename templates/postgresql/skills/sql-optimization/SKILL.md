@@ -1,7 +1,7 @@
 ---
 name: sql-optimization
 description: 'Optimize SQL queries across any SQL database (PostgreSQL, MySQL, SQL Server, SQLite): execution plan analysis, index strategy, query rewrites, pagination, and batch operations.'
-allowed-tools: codebase
+allowed-tools: read search codebase
 model: claude-sonnet-4.6
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: code-review-publisher
 description: 'Publish code review results as PR comments on GitHub or Azure DevOps.'
-allowed-tools: runCommands codebase
+allowed-tools: execute shell runCommands read search codebase
 model: claude-sonnet-4.6
 ---
 

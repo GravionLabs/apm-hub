@@ -7,6 +7,19 @@
   "description": "A curated hub for sharing GitHub Copilot instructions, agents, prompts, and CLI plugins — your team's Copilot marketplace.",
   "plugins": [
     {
+      "name": "ag-grid-development",
+      "source": "plugins/ag-grid-development",
+      "description": "AG Grid Enterprise development plugin for Angular. Provides expert guidance on AG Grid Enterprise setup, column definitions, row models, filtering, cell rendering/editing, row grouping, pivoting, master-detail, and Excel export. Includes the ag-mcp MCP server setup skill for version-specific doc search inside your IDE.",
+      "version": "1.0.0",
+      "keywords": [
+        "ag-grid",
+        "ag-grid-enterprise",
+        "angular",
+        "data-grid",
+        "mcp"
+      ]
+    },
+    {
       "name": "angular-development",
       "source": "plugins/angular-development",
       "description": "Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.",

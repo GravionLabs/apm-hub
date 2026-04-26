@@ -1,7 +1,7 @@
 ---
 name: multi-stage-dockerfile
 description: 'Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.'
-allowed-tools: codebase editFiles
+allowed-tools: read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
 

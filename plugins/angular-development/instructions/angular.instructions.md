@@ -49,13 +49,32 @@ Guidelines for building high-quality Angular 21 applications with TypeScript, An
 ```typescript
 // ✅ Correct
 export class UserProfile {
-  private userService = inject(UserService);
+  #userService = inject(UserService);
   userId = input<string>();
 }
 
 // ❌ Wrong
 export class UserProfile {
   constructor(private userService: UserService) {}
+}
+```
+
+## TypeScript Conventions
+
+- Prefer ECMAScript private fields (`#field`) over TypeScript's `private` keyword for class members not accessed from outside the class — this applies to injected services, internal signals, and any other private state
+- `readonly` and `#` are orthogonal: use both together for private signals that must not be reassigned (`readonly #count = signal(0)`)
+
+```typescript
+// ✅ Correct
+export class OrderList {
+  #orderService = inject(OrderService);
+  readonly #items = signal<Order[]>([]);
+}
+
+// ❌ Avoid
+export class OrderList {
+  private orderService = inject(OrderService);
+  private readonly items = signal<Order[]>([]);
 }
 ```
 

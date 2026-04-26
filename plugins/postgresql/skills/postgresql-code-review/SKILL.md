@@ -1,7 +1,7 @@
 ---
 name: postgresql-code-review
 description: 'Review PostgreSQL schema and query code for correctness, security, and PG-specific best practices: JSONB usage, RLS, index strategy, naming conventions, and anti-patterns.'
-allowed-tools: codebase
+allowed-tools: read search codebase
 model: claude-sonnet-4.6
 ---
 

@@ -1,7 +1,12 @@
 ---
 name: gh-copilot-setup
-description: 'Interactive wizard to install GitHub Copilot configuration (instructions, prompts, agents) from GravionLabs/copilot-hub into .github/. Requires pwsh and gh CLI.'
-allowed-tools: codebase runCommands editFiles
+description: >
+  Installs GitHub Copilot configuration (instructions, prompts, agents) from
+  GravionLabs/copilot-hub into .github/. Use this skill when setting up Copilot
+  in a repository for the first time — even if the user just says "configure Copilot"
+  or "add Copilot instructions." Requires pwsh and gh CLI. For ongoing sync of
+  already-installed files, use gh-copilot-sync instead.
+allowed-tools: execute read edit search codebase editFiles runCommands
 model: gpt-4.1
 ---
 

@@ -4,6 +4,7 @@ This page lists all available templates (Agents, Skills, Prompts, Instructions) 
 
 ## Table of Contents
 
+- [Ag-grid](#ag-grid)
 - [Angular](#angular)
 - [Copilot](#copilot)
 - [Csharp](#csharp)
@@ -18,6 +19,15 @@ This page lists all available templates (Agents, Skills, Prompts, Instructions) 
 - [Shared](#shared)
 - [Terraform](#terraform)
 - [Typescript](#typescript)
+
+## Ag-grid
+
+### Skills
+
+| Name              | Description | File                                                                        |
+| :---------------- | :---------- | :-------------------------------------------------------------------------- |
+| ag-grid-developer | >           | [ag-grid-developer](../templates/ag-grid/skills/ag-grid-developer/SKILL.md) |
+| ag-grid-mcp-setup | >           | [ag-grid-mcp-setup](../templates/ag-grid/skills/ag-grid-mcp-setup/SKILL.md) |
 
 ## Angular
 
@@ -53,10 +63,13 @@ This page lists all available templates (Agents, Skills, Prompts, Instructions) 
 
 | Name                   | Description                                                                                                                                                                     | File                                                                                  |
 | :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------ |
+| angular                | -                                                                                                                                                                               | [angular](../templates/angular/skills/angular/SKILL.md)                               |
 | angular-code-review    | Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list. | [angular-code-review](../templates/angular/skills/angular-code-review/SKILL.md)       |
 | angular-component      | Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.                 | [angular-component](../templates/angular/skills/angular-component/SKILL.md)           |
+| angular-developer      | >                                                                                                                                                                               | [angular-developer](../templates/angular/skills/angular-developer/SKILL.md)           |
 | angular-library-create | Scaffold a new Angular library inside an existing workspace using ng-packagr, with public-api.ts, 3-file component structure, and injection tokens.                             | [angular-library-create](../templates/angular/skills/angular-library-create/SKILL.md) |
 | angular-migration      | Migrate an Angular application to a newer version. Covers ng update, standalone component migration, new @if/@for/@switch control flow syntax, and signals-first patterns.      | [angular-migration](../templates/angular/skills/angular-migration/SKILL.md)           |
+| angular-new-app        | >                                                                                                                                                                               | [angular-new-app](../templates/angular/skills/angular-new-app/SKILL.md)               |
 | angular-signal-store   | Create an NgRx Signal Store for Angular state management with state, computed signals, updaters, and effects. Follows @ngrx/signals patterns.                                   | [angular-signal-store](../templates/angular/skills/angular-signal-store/SKILL.md)     |
 | angular-testing        | Write Angular 21 unit tests using Vitest and TestBed. Covers standalone component testing, signal testing, service mocking, and async patterns.                                 | [angular-testing](../templates/angular/skills/angular-testing/SKILL.md)               |
 | create-angular-project | Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier.                                                  | [create-angular-project](../templates/angular/skills/create-angular-project/SKILL.md) |

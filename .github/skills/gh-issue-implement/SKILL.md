@@ -1,7 +1,11 @@
 ---
 name: gh-issue-implement
-description: 'Read a GitHub issue, create the appropriate branch, and implement it with code, tests, and docs. Use this to start work on a new issue.'
-allowed-tools: codebase editFiles runCommands mcp_github_get_issue mcp_github_create_branch mcp_github_list_branches
+description: >
+  Reads a GitHub issue, creates the appropriate branch, and fully implements it with
+  code, tests, and documentation. Use this skill when starting work on a new issue —
+  even if the user just provides an issue number or says "implement issue #42." Handles
+  branch naming, codebase exploration, and atomic commits following project conventions.
+allowed-tools: execute read edit search codebase editFiles runCommands mcp_github_get_issue mcp_github_create_branch mcp_github_list_branches
 model: claude-sonnet-4.6
 ---
 

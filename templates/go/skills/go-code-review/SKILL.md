@@ -1,7 +1,7 @@
 ---
 name: go-code-review
 description: 'Perform a structured Go code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions for idiomatic style.'
-allowed-tools: codebase
+allowed-tools: read search codebase
 model: claude-sonnet-4.6
 ---
 

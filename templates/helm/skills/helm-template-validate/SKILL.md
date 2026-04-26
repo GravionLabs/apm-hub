@@ -1,7 +1,7 @@
 ---
 name: helm-template-validate
 description: 'Validate a Helm chart locally: lint, template rendering, schema validation, and optional kubeval or helm-unittest checks — no cluster required.'
-allowed-tools: codebase runCommands
+allowed-tools: execute shell runCommands read search codebase
 model: gpt-4.1
 ---
 

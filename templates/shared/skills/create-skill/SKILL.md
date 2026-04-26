@@ -1,7 +1,7 @@
 ---
 name: create-skill
 description: 'Create a new skill in copilot-hub following the agentskills.io directory layout and copilot-hub conventions.'
-allowed-tools: editFiles codebase runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: gpt-4.1
 ---
 
@@ -22,10 +22,20 @@ Skills live in `templates/<domain>/skills/<name>/SKILL.md`. Use the `shared` dom
 ---
 name: <name>           # must match directory name exactly
 description: '...'     # one sentence; used for auto-selection
-allowed-tools: ...     # space-separated: editFiles codebase runCommands problems
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: gpt-4.1
 ---
 ```
+
+`allowed-tools` must include cross-platform aliases for every capability the skill needs:
+
+| Capability | Add these identifiers |
+|---|---|
+| Read / search files | `read search codebase` |
+| Edit / create files | `write edit editFiles` |
+| Execute shell commands | `execute shell runCommands` |
+
+Keep VS Code-only tools (`problems`, `changes`, `playwright`, `mcp_*`) when needed, but always pair them with the cross-platform set above.
 
 ## When to use `## Stack`
 Add a `## Stack` block only for skills that run commands — list the key CLI tools and packages.

@@ -1,7 +1,7 @@
 ---
 name: create-pr
 description: 'Analyze git history and diff, generate a structured PR description, and create a pull request.'
-allowed-tools: runCommands codebase
+allowed-tools: execute shell runCommands read search codebase
 model: gpt-4.1
 ---
 

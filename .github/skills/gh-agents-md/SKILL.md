@@ -1,7 +1,11 @@
 ---
 name: gh-agents-md
-description: 'Analyze the repository and generate a complete AGENTS.md file tailored to the project type (dotnet, node, python, github-actions, or generic).'
-allowed-tools: codebase editFiles runCommands
+description: >
+  Analyzes a repository and generates a complete AGENTS.md file. Use this skill
+  when asked to create, generate, or bootstrap an AGENTS.md — even if the user
+  just says "add an AGENTS.md" or "document the build and test commands." Supports
+  dotnet, node, python, github-actions, and generic project types.
+allowed-tools: execute read edit search codebase editFiles runCommands
 model: claude-sonnet-4.6
 ---
 

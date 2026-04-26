@@ -1,7 +1,7 @@
 ---
 name: docker-security-review
 description: 'Review a Dockerfile or docker-compose configuration for security issues: base image hygiene, running as root, exposed secrets, ADD vs COPY, .dockerignore, and image pinning.'
-allowed-tools: codebase
+allowed-tools: read search codebase
 model: claude-sonnet-4.6
 ---
 

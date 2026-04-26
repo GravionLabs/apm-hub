@@ -1,7 +1,7 @@
 ---
 name: "Secrets Audit"
 description: "Scan for hardcoded secrets, credentials, and insecure secret storage patterns"
-allowed-tools: ["codebase", "changes", "runCommands", "problems"]
+allowed-tools: execute shell runCommands read search codebase changes problems
 model: claude-sonnet-4.6
 ---
 

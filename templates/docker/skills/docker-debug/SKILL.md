@@ -1,7 +1,7 @@
 ---
 name: docker-debug
 description: 'Diagnose container startup failures, networking issues, volume mount problems, and resource constraints using docker logs, inspect, exec, stats, and network commands.'
-allowed-tools: codebase runCommands
+allowed-tools: execute shell runCommands read search codebase
 model: claude-sonnet-4.6
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: "review-ci-workflow"
 description: "Review a GitHub Actions CI/CD workflow file for correctness, security, and best practices"
-allowed-tools: ["codebase", "changes", "problems"]
+allowed-tools: read search codebase changes problems
 model: claude-sonnet-4.6
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: docker-compose-setup
 description: 'Generate or review a docker-compose.yml for local development or testing: services, networking, volumes, health checks, environment variables, and resource limits.'
-allowed-tools: codebase editFiles runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
 
