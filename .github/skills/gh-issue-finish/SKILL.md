@@ -1,7 +1,12 @@
 ---
 name: gh-issue-finish
-description: 'Review implemented changes and create a pull request for a GitHub issue. Run this after gh-issue-implement when the implementation is complete.'
-allowed-tools: codebase editFiles runCommands
+description: >
+  Reviews implemented changes and opens a pull request for a GitHub issue. Use this
+  skill after gh-issue-implement when the implementation is complete and the code is
+  ready for review — even if the user just says "open a PR" or "create the pull
+  request." Runs build and tests, self-reviews the diff, and creates the PR with a
+  structured body.
+allowed-tools: execute read edit search codebase editFiles runCommands
 model: gpt-4.1
 ---
 

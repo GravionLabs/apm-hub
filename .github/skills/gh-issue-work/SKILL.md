@@ -1,7 +1,12 @@
 ---
 name: gh-issue-work
-description: 'End-to-end workflow for a GitHub issue: read issue, create branch, implement with tests and docs, review, and open a pull request.'
-allowed-tools: codebase editFiles runCommands mcp_github_get_issue mcp_github_create_branch mcp_github_create_pull_request mcp_github_list_pull_requests
+description: >
+  End-to-end workflow for a GitHub issue: reads the issue, creates a branch,
+  implements with tests and docs, reviews, and opens a pull request. Use this skill
+  for straightforward issues that can be handled in one pass — even if the user just
+  says "work on issue #N" or "implement and PR this." For complex issues, use
+  gh-issue-implement and gh-issue-finish separately.
+allowed-tools: execute read edit search codebase editFiles runCommands mcp_github_get_issue mcp_github_create_branch mcp_github_create_pull_request mcp_github_list_pull_requests
 model: claude-sonnet-4.6
 ---
 
