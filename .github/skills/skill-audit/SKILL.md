@@ -5,7 +5,7 @@ description: >
   when asked to review, validate, check, or audit a skill — even if the user just says
   "look at this skill" or "is this skill correct". Outputs a prioritised findings list
   and writes audit-report.md to the skill directory for use in automated pipelines.
-allowed-tools: read edit search codebase editFiles
+allowed-tools: read write edit editFiles search codebase
 ---
 
 ## Overview

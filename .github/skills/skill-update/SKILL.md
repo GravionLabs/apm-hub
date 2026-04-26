@@ -5,7 +5,7 @@ description: >
   audit findings are ready to be applied — after running skill-audit or when the user
   provides a list of improvements. Works best when audit-report.md exists in the skill
   directory.
-allowed-tools: execute read edit search codebase editFiles runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 ---
 
 ## Overview

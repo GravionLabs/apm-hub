@@ -4,7 +4,7 @@ description: >
   Creates a complete agent skill from a user-provided description or prompt. Use this
   skill when asked to build, scaffold, or generate a new skill — even if the user only
   provides a rough idea, domain name, or workflow description.
-allowed-tools: execute read edit search codebase editFiles runCommands
+allowed-tools: execute shell runCommands read write edit editFiles search codebase
 ---
 
 ## Overview
@@ -57,13 +57,13 @@ Frontmatter rules (apply strictly):
   | Capability needed | Add these identifiers |
   |---|---|
   | Read/search files | `read search codebase` |
-  | Edit/create files | `edit codebase editFiles` |
+  | Edit/create files | `write edit editFiles` |
   | Execute shell commands | `execute shell runCommands` |
   | Web fetch | `web` |
 
   Combine as needed. Example for a skill that reads, edits, and runs commands:
   ```
-  allowed-tools: execute read edit search codebase editFiles runCommands
+  allowed-tools: execute shell runCommands read write edit editFiles search codebase
   ```
   Do not pre-approve `execute`/`shell`/`runCommands` unless all bundled scripts are reviewed.
 - `model`: include only if a specific model capability is needed (e.g. complex reasoning)
