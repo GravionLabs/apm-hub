@@ -6,11 +6,13 @@ description: >
   filtering, cell rendering, cell editing, row grouping, pivoting, master/detail, Excel export,
   theming, and TypeScript generics. Triggers on tasks like "add ag-grid", "configure columns",
   "enable row grouping", "export to Excel", "set up SSRM", or "customize cell renderer".
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
+allowed-tools: execute shell runCommands read write edit editFiles search codebase mcp_ag-mcp_search_docs mcp_ag-mcp_detect_version
 license: MIT
 ---
 
-## Grundregeln
+## Basic Rules
+
+If ag‑mcp is available → use search_docs; otherwise fall back to references/.
 
 - AG Grid version: always verify with `npm ls ag-grid-angular ag-grid-enterprise` before making changes
 - Enterprise is the standard — use `AllEnterpriseModule`, never `AllCommunityModule` on its own

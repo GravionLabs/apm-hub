@@ -4,6 +4,7 @@ This page lists all available templates (Agents, Skills, Prompts, Instructions) 
 
 ## Table of Contents
 
+- [Ag-grid](#ag-grid)
 - [Angular](#angular)
 - [Copilot](#copilot)
 - [Csharp](#csharp)
@@ -18,6 +19,15 @@ This page lists all available templates (Agents, Skills, Prompts, Instructions) 
 - [Shared](#shared)
 - [Terraform](#terraform)
 - [Typescript](#typescript)
+
+## Ag-grid
+
+### Skills
+
+| Name              | Description | File                                                                        |
+| :---------------- | :---------- | :-------------------------------------------------------------------------- |
+| ag-grid-developer | >           | [ag-grid-developer](../templates/ag-grid/skills/ag-grid-developer/SKILL.md) |
+| ag-grid-mcp-setup | >           | [ag-grid-mcp-setup](../templates/ag-grid/skills/ag-grid-mcp-setup/SKILL.md) |
 
 ## Angular
 
@@ -53,7 +63,6 @@ This page lists all available templates (Agents, Skills, Prompts, Instructions) 
 
 | Name                   | Description                                                                                                                                                                     | File                                                                                  |
 | :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------ |
-| ag-grid-developer      | >                                                                                                                                                                               | [ag-grid-developer](../templates/angular/skills/ag-grid-developer/SKILL.md)           |
 | angular                | -                                                                                                                                                                               | [angular](../templates/angular/skills/angular/SKILL.md)                               |
 | angular-code-review    | Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list. | [angular-code-review](../templates/angular/skills/angular-code-review/SKILL.md)       |
 | angular-component      | Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.                 | [angular-component](../templates/angular/skills/angular-component/SKILL.md)           |
