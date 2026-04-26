@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.35] — 2026-04-14
+
+### Features
+- Add skill references to agent files (closes #80)
+
+
 ## [1.0.34] — 2026-04-12
+
+### Documentation
+- Update CHANGELOG.md for v1.0.34 [skip ci]
+
 
 ### Features
 - **go**: Audit and refresh Go templates (#49)

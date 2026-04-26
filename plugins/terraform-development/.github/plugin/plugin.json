@@ -1,7 +1,7 @@
 {
   "name": "terraform-development",
   "description": "Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.",
-  "version": "1.0.34",
+  "version": "1.0.35",
   "author": {
     "name": "Gravion"
   },

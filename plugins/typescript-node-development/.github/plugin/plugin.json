@@ -1,7 +1,7 @@
 {
   "name": "typescript-node-development",
   "description": "TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, debugging, Playwright TypeScript testing, and containerization.",
-  "version": "1.0.34",
+  "version": "1.0.35",
   "author": {
     "name": "Gravion"
   },
