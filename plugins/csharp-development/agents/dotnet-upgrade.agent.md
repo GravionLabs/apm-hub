@@ -224,5 +224,3 @@ Ensure pipelines use the detected **target version** dynamically:
 
 Use `/dotnet-upgrade` to analyze and execute a .NET framework or package upgrade.
 Use `/create-pr` to generate a structured PR description and create a pull request.
-
----

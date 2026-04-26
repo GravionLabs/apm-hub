@@ -3,7 +3,7 @@ description: >-
   Helm chart development plugin for Kubernetes packaging.
   Covers chart structure, values.yaml design, named templates, security contexts,
   OCI distribution, Helmfile, and chart upgrades.
-version: "1.0.35"
+version: "1.0.36"
 author:
   name: Gravion
 license: MIT
