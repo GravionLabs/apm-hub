@@ -5,6 +5,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.38] — 2026-04-28
+
+### Refactoring
+- Standardize readonly #field pattern for injected dependencies
+
+
+## [1.0.37] — 2026-04-28
+
+### Documentation
+- Update CHANGELOG.md for v1.0.37 [skip ci]
+
+
 ## [1.0.36] — 2026-04-26
 
 ### Documentation
