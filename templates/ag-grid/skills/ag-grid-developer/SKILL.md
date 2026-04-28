@@ -12,7 +12,8 @@ license: MIT
 
 ## Basic Rules
 
-If ag‑mcp is available → use search_docs; otherwise fall back to references/.
+If ag‑mcp is available → use `search_docs` to query live AG Grid documentation.
+Otherwise fall back to the reference files in `references/`.
 
 - AG Grid version: always verify with `npm ls ag-grid-angular ag-grid-enterprise` before making changes
 - Enterprise is the standard — use `AllEnterpriseModule`, never `AllCommunityModule` on its own

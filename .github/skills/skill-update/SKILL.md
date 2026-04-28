@@ -32,6 +32,16 @@ Process findings in severity order: 🔴 → 🟡 → 🟢.
 
 For each finding, apply the appropriate fix:
 
+**Location issues (🟢):**
+- If the skill is in `.github/skills/` but belongs in a domain package:
+  1. Identify the correct domain package under `packages/` (or create one with an `apm.yml`)
+  2. Move the skill directory: `mv .github/skills/<name> packages/<domain>/.apm/skills/<name>`
+  3. Update any references to the old path in config files or other skills
+- If the skill is in a domain package but belongs in `.github/skills/` (i.e. it is a meta/tooling skill):
+  1. Move the skill directory: `mv packages/<domain>/.apm/skills/<name> .github/skills/<name>`
+  2. Update any references to the old path
+- Note: location moves are manual operations — confirm with the user before proceeding.
+
 **Name issues (🔴):**
 - If `name` frontmatter does not match the directory: update the frontmatter field
 - If the directory name itself is invalid (uppercase, underscores, consecutive hyphens): rename the directory with `mv`, then update `name` in `SKILL.md`
@@ -65,6 +75,11 @@ For each finding, apply the appropriate fix:
 - Missing `--help`: add a help handler
 - Stdout/stderr confusion: route data to stdout, diagnostics to stderr
 - Missing non-zero exit on error: add `sys.exit(1)` / `exit 1` where appropriate
+
+**Decision Flow issues (🟢):**
+- Replace vague conditional prose with explicit `If X → do Y; otherwise do Z` blocks
+- If the skill uses optional tools (e.g. MCP server), add a tool-availability Decision Flow near the top: `"If [tool] is available → use it; otherwise fall back to [alternative]"`
+- If the skill conditionally loads references, replace `"see references/"` with `"If [condition], read references/Y.md"`
 
 **Anti-patterns (🟡/🟢):**
 - Generic vague content: rewrite with project-specific context, or remove if redundant

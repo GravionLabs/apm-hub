@@ -1,0 +1,24 @@
+name: common-azuredevops
+version: 0.1.0
+description: Shared Azure DevOps primitives — work item data access, backlog authoring, PR creation, and ADO MCP server configuration.
+author: RWEST Generation & Operations
+dependencies:
+  apm: []
+  mcp:
+    # NOTE: @azure-devops/mcp requires the ADO org as a positional argument.
+    # APM only supports ${input:...} substitution in `env:` and `headers:`, NOT in `args:`.
+    # This means the org is hardcoded here per project.
+    #
+    # To reconfigure for your org, re-run:
+    #   apm install --mcp azure-devops -- npx -y @azure-devops/mcp YOUR_ORG_NAME
+    #
+    # VS Code users: after `apm install`, you can manually edit the generated
+    # .vscode/mcp.json to replace the hardcoded org with ${input:ado_org} for a runtime prompt.
+    #
+    # Global install: APM MCP servers are always project-scoped.
+    # `apm install -g --mcp` is explicitly not supported by APM.
+    - name: azure-devops
+      registry: false
+      transport: stdio
+      command: npx
+      args: ["-y", "@azure-devops/mcp", "RWEST-MTI-AC"]

@@ -209,6 +209,7 @@ Rules:
 - A **space-separated** string of tool identifiers.
 - Pre-approves those tools so the agent does not ask for confirmation on each use.
 - ⚠️ **Only pre-approve `execute` / `shell` / `bash` if you have fully reviewed all bundled scripts and trust the skill source.** Pre-approval removes the confirmation step, allowing attacker-controlled content to execute arbitrary commands.
+- Pre-approving `execute`/`shell`/`runCommands` is also valid when the skill body contains **inline shell commands** (e.g. `npm ls …`) rather than bundled scripts. In that case there is no `scripts/` directory to review — instead confirm that every inline command in the body is safe and intentional.
 - Support varies between agent implementations — unrecognised identifiers are ignored.
 
 #### Tool identifier reference
@@ -596,6 +597,42 @@ Checklists help the agent track progress and avoid skipping validation gates.
 
 The validation step prevents irreversible mistakes by checking the plan against a source of truth before execution.
 
+### 10.6 Decision Flows
+
+A **Decision Flow** is a conditional instruction block that tells the agent which branch to take based on environment state, tool availability, or task context. Use them whenever the correct action depends on a condition that the agent cannot determine in advance.
+
+#### Three sub-patterns
+
+**1. Conditional reference loading** — the most common form. Replace a monolithic "always read this" instruction with a condition-gated one:
+
+```markdown
+If the grid uses Server-Side Row Model (SSRM), read `references/row-models.md`
+to implement the datasource correctly.
+```
+
+This avoids loading large reference files when they are irrelevant, saving context budget.
+
+**2. Tool availability check** — guides the agent to use an optional tool when present, or fall back gracefully:
+
+```markdown
+If ag-mcp is available → use `search_docs` to find the latest API details.
+Otherwise fall back to `references/api-reference.md`.
+```
+
+**3. Conditional execution path** — routes the agent to the correct workflow branch:
+
+```markdown
+If the current version is AG Grid v31+, use `ModuleRegistry.registerModules()`.
+If the version is v30 or earlier, read `references/legacy-modules.md` instead.
+```
+
+#### Best practices
+
+- Use `If … → …; otherwise …` phrasing for clarity.
+- Keep each Decision Flow self-contained: the condition, the action, and the fallback in one block.
+- Place tool-availability checks near the top of the skill body so the agent resolves them before starting work.
+- Do **not** create Decision Flows for things the agent can determine on its own (e.g., "if the file exists, read it" — the agent already knows this).
+
 ---
 
 ## 11. Calibrating Control
@@ -706,9 +743,10 @@ Each skill must be in its own subdirectory. Subdirectory name must match the `na
 [ ] body: < 500 lines, < 5,000 tokens
 [ ] body: add only what the agent wouldn't know on its own
 [ ] gotchas section present for non-obvious environment facts
+[ ] decision flows: "If X → Y; otherwise Z" blocks used for conditional paths and reference loading
 [ ] scripts: no interactive prompts, --help implemented, structured output, helpful errors
 [ ] references: conditional load instructions ("if X, read references/Y.md")
 [ ] file references: relative paths, one level deep
-[ ] allowed-tools: only added if source is fully trusted
+[ ] allowed-tools: only added if source is fully trusted; execute/shell pre-approved only after reviewing all scripts or confirming all inline commands are safe
 [ ] skills-ref validate passes
 ```

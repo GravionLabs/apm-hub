@@ -1,0 +1,8 @@
+name: refinement-work-items
+version: 0.1.0
+description: Azure DevOps work item refinement — breaks down Features into PBIs and improves existing backlog items.
+author: RWEST Generation & Operations
+dependencies:
+  apm:
+    - dev.azure.com/RWEST-MTI-AC/Generation%20and%20Operations/_git/rwest.cao.apm-agent-packages/packages/common-azuredevops
+  mcp: []

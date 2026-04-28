@@ -1,0 +1,9 @@
+name: development-dotnet-engineer
+version: 0.1.0
+description: .NET implementation specialist — dependency hygiene (renovate, NuGet), code implementation, modernization, unit tests, and SSDLC compliance. Invoked by development-workflow; does not handle branching, commits, or PRs.
+author: RWEST Generation & Operations
+dependencies:
+  apm:
+    - dev.azure.com/RWEST-MTI-AC/Generation%20and%20Operations/_git/rwest.cao.apm-agent-packages/packages/common-azuredevops
+    - dev.azure.com/RWEST-MTI-AC/Generation%20and%20Operations/_git/rwest.cao.apm-agent-packages/packages/common-ssdlc
+  mcp: []

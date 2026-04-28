@@ -1,0 +1,7 @@
+name: common-git
+version: 0.1.0
+description: Shared git workflow primitives — branch creation, commits, and push operations.
+author: RWEST Generation & Operations
+dependencies:
+  apm: []
+  mcp: []

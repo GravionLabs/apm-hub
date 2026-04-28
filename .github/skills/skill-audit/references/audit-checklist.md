@@ -10,9 +10,19 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
 
 ---
 
+### Location check
+
+**Skill placement (🟢 if misplaced):**
+
+- [ ] The skill is located in `packages/<domain>/.apm/skills/<skill-name>/` **or** in `.github/skills/<skill-name>/` (meta/tooling skills only — i.e. skills that manage other skills, such as skill-create, skill-audit, skill-update)
+- [ ] If placed under `.github/skills/`: confirm the skill's purpose is repo-level tooling, not a domain-specific workflow — 🟢 if it belongs in a domain package instead
+
+---
+
 ### Frontmatter checks
 
 **`name` field (🔴 if absent, 🟡 if malformed):**
+
 - [ ] Field is present
 - [ ] Matches the parent directory name exactly
 - [ ] 1–64 characters
@@ -21,6 +31,7 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
 - [ ] No consecutive hyphens (`--`)
 
 **`description` field (🔴 if absent, 🟡/🟢 for quality):**
+
 - [ ] Field is present
 - [ ] 1–1,024 characters
 - [ ] Uses `>` folded scalar (YAML multiline) for multi-sentence descriptions — 🟢 if single-quoted and multi-sentence
@@ -31,7 +42,10 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
 - [ ] Indirect trigger phrasing included where relevant ("even if the user does not mention X") — 🟢
 
 **`allowed-tools` (🟡 if shell/bash is pre-approved without justification):**
-- [ ] If `execute`, `shell`, `runCommands`, or `bash` is listed, all bundled scripts have been fully reviewed
+
+- [ ] If `execute`, `shell`, `runCommands`, or `bash` is listed:
+  - If a `scripts/` directory exists: all bundled scripts have been fully reviewed
+  - If no `scripts/` directory: at least one inline shell command is referenced in the body (e.g. `npm ls …`, `git status`) — confirm all inline commands are safe
 - [ ] Cross-platform alias coverage — if any platform-specific identifier is present, its counterparts for other platforms should also be present (🟡 if missing):
   - `execute` present but `runCommands` absent → add `runCommands` for VS Code
   - `runCommands` present but `execute` absent → add `execute` for Cloud Agent
@@ -42,6 +56,7 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
   - Recommended full cross-platform set: `execute read edit search codebase editFiles runCommands`
 
 **`compatibility` (🟢):**
+
 - [ ] Present if the skill has specific runtime or environment requirements
 - [ ] 1–500 characters if provided
 
@@ -50,21 +65,27 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
 ### Body checks
 
 **Length:**
+
 - [ ] < 500 lines — 🟡 if exceeded; move content to `references/`
 - [ ] Token count estimated < 5,000 — 🟡 if likely exceeded
 
 **Content placement:**
+
 - [ ] Reference material (specs, error codes, long tables) is in `references/`, not inline — 🟡
 - [ ] Output templates longer than ~20 lines are in `assets/`, not inline — 🟢
 - [ ] Complex multi-step commands are in `scripts/`, not copy-pasted — 🟢
+- [ ] Shell command code fences use ` ```powershell ` (not ` ```bash ` or ` ```sh `) — PowerShell is the required shell — 🟢
 
 **Structure:**
+
 - [ ] Contains an overview or goal section — 🟢
 - [ ] Step-by-step workflow is numbered and prescriptive where fragility demands it — 🟢
 - [ ] Gotchas section present for non-obvious environment facts — 🟢
 - [ ] Output format is specified (template or description) — 🟢 if applicable
+- [ ] Decision Flows used for conditional paths (`"If X → Y; otherwise Z"`) — 🟢 if the skill has conditional behaviour but uses only prose descriptions instead
 
 **Content quality:**
+
 - [ ] No content explaining things the agent already knows (HTTP basics, common tools) — 🟡
 - [ ] No generic, vague advice ("handle errors appropriately") — 🟡
 - [ ] No equal alternatives listed without a default — 🟡 (provide one default with brief fallback)
@@ -74,6 +95,7 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
 ### `scripts/` checks (if present)
 
 For each script in `scripts/`:
+
 - [ ] `--help` flag implemented — 🟡 if missing
 - [ ] No interactive prompts (blocking reads from stdin without flags) — 🔴 if present
 - [ ] Structured output (JSON, CSV, TSV) on stdout — 🟢
@@ -103,28 +125,31 @@ For each script in `scripts/`:
 
 ### Anti-pattern checks
 
-| Anti-pattern | Severity | Detection |
-|---|---|---|
-| Generic vague content with no project context | 🟡 | Applies to any project without changes |
-| Scope is overly broad (activates for unrelated tasks) | 🟡 | Description mentions many unrelated domains |
-| Scope is overly narrow (multiple skills must load together) | 🟢 | Workflow is incomplete without another skill |
-| Reference chain > 1 level deep | 🟡 | File A references file B which references file C |
-| Interactive prompts in scripts | 🔴 | `input()`, `read -p`, or blocking stdin reads |
-| Listing equal alternatives | 🟡 | "You can use X, Y, or Z…" without choosing one |
-| Instructions tied to one concrete task | 🟢 | Hardcoded names, URLs, or identifiers |
+| Anti-pattern                                                | Severity | Detection                                        |
+| ----------------------------------------------------------- | -------- | ------------------------------------------------ |
+| Generic vague content with no project context               | 🟡       | Applies to any project without changes           |
+| Scope is overly broad (activates for unrelated tasks)       | 🟡       | Description mentions many unrelated domains      |
+| Scope is overly narrow (multiple skills must load together) | 🟢       | Workflow is incomplete without another skill     |
+| Reference chain > 1 level deep                              | 🟡       | File A references file B which references file C |
+| Interactive prompts in scripts                              | 🔴       | `input()`, `read -p`, or blocking stdin reads    |
+| Listing equal alternatives                                  | 🟡       | "You can use X, Y, or Z…" without choosing one   |
+| Instructions tied to one concrete task                      | 🟢       | Hardcoded names, URLs, or identifiers            |
 
 ---
 
 ### Quick-reference summary
 
 ```
+[ ] location: in packages/<domain>/.apm/skills/ OR .github/skills/ (meta/tooling only)
 [ ] name: present, lowercase kebab-case, 1-64 chars, matches directory, no leading/trailing/consecutive hyphens
 [ ] description: present, 1-1024 chars, imperative phrasing, specific trigger keywords
 [ ] body: < 500 lines, < 5,000 tokens
 [ ] body: only content the agent wouldn't know on its own
+[ ] body: shell code fences use ```powershell (not ```bash or ```sh)
 [ ] gotchas section present for non-obvious environment facts
+[ ] decision flows: "If X → Y; otherwise Z" blocks used where skill has conditional behaviour
 [ ] scripts: no interactive prompts, --help, structured stdout, helpful errors
 [ ] references: conditional load instructions, relative paths, one level deep
 [ ] assets: referenced conditionally, not loaded automatically
-[ ] allowed-tools: shell/execute/runCommands only if all scripts are fully reviewed; cross-platform aliases present (execute+runCommands, edit+editFiles, read+search+codebase)
+[ ] allowed-tools: shell/execute/runCommands only if scripts reviewed OR inline commands confirmed safe; cross-platform aliases present (execute+runCommands, edit+editFiles, read+search+codebase)
 ```

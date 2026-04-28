@@ -64,8 +64,8 @@ Reference scripts from `SKILL.md` using relative paths from the skill root:
 
 ```markdown
 Run the validation script:
-```bash
-bash scripts/validate.sh "$INPUT_FILE"
+```powershell
+pwsh scripts/validate.ps1 $INPUT_FILE
 ```
 ```
 

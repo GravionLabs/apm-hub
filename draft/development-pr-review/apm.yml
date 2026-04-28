@@ -1,0 +1,10 @@
+name: development-pr-review
+version: 0.1.0
+description: Generic Pull Request review pipeline — PR fetch, tech-stack detection, language-specific code analysis dispatch, inline comment posting, and vote setting.
+author: RWEST Generation & Operations
+dependencies:
+  apm:
+    - dev.azure.com/RWEST-MTI-AC/Generation%20and%20Operations/_git/rwest.cao.apm-agent-packages/packages/common-azuredevops
+    - dev.azure.com/RWEST-MTI-AC/Generation%20and%20Operations/_git/rwest.cao.apm-agent-packages/packages/common-ssdlc
+    - dev.azure.com/RWEST-MTI-AC/Generation%20and%20Operations/_git/rwest.cao.apm-agent-packages/packages/development-dotnet-engineer
+  mcp: []
