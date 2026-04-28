@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.39] — 2026-04-28
+
+### Features
+- Add playwright-cli-developer skill for enhanced Playwright test management
+
+
 ## [1.0.38] — 2026-04-28
+
+### Documentation
+- Update CHANGELOG.md for v1.0.38 [skip ci]
+
 
 ### Refactoring
 - Standardize readonly #field pattern for injected dependencies
