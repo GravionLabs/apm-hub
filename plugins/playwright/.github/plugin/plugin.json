@@ -1,7 +1,7 @@
 {
   "name": "playwright",
   "description": "Cross-language Playwright testing plugin. Browser automation, form filling, test generation, and website exploration. Language-specific instructions (playwright-dotnet, playwright-python, playwright-typescript) are bundled with the respective language plugins (csharp-development, python-development, typescript-node-development).",
-  "version": "1.0.36",
+  "version": "1.0.37",
   "author": {
     "name": "Gravion"
   },

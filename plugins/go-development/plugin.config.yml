@@ -3,7 +3,7 @@ description: >-
   Go development plugin for idiomatic Go applications.
   Covers module structure, error handling, interface design, concurrency patterns,
   table-driven testing, code review, benchmarking, debugging, and containerization.
-version: "1.0.36"
+version: "1.0.37"
 author:
   name: Gravion
 license: MIT
