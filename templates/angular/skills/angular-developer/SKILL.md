@@ -120,18 +120,43 @@ When implementing styling and animations in Angular, consult the following refer
 
 ## Testing
 
-When writing or updating tests, consult the following references based on the task:
+**Always write tests during development.** Choose the test runner appropriate for your Angular version:
 
-- **Fundamentals**: Best practices for unit testing (Vitest), async patterns, and `TestBed`. Read [testing-fundamentals.md](references/testing-fundamentals.md)
-- **Component Harnesses**: Standard patterns for robust component interaction. Read [component-harnesses.md](references/component-harnesses.md)
+### Test Runner Selection
+
+- **Vitest (Standard, Recommended)**: Modern Angular projects (v21+). Faster, ESM-native, seamless DX. Read [testing-vitest.md](references/testing-vitest.md)
+- **Jest (Legacy)**: Angular v20 and earlier, or projects with existing Jest infrastructure. Read [testing-jest.md](references/testing-jest.md)
+
+### Testing References
+
+- **Fundamentals**: Best practices for unit testing (TestBed, component fixtures), async patterns (`fakeAsync`, `tick`), and service mocking. Read [testing-fundamentals.md](references/testing-fundamentals.md)
+- **Component Harnesses**: Standard patterns for robust component interaction and testing. Read [component-harnesses.md](references/component-harnesses.md)
 - **Router Testing**: Using `RouterTestingHarness` for reliable navigation tests. Read [router-testing.md](references/router-testing.md)
 - **End-to-End (E2E) Testing**: Best practices for E2E tests with Cypress. Read [e2e-testing.md](references/e2e-testing.md)
+
+### Key Testing Patterns
+
+**TestBed for component and service testing:**
+- Set up test module with `TestBed.configureTestingModule()`
+- Create component/service with `TestBed.createComponent()` or `TestBed.inject()`
+- Use `fixture.detectChanges()` after state mutations
+- Call `TestBed.flushEffects()` when testing Angular Signals
+
+**Mocking dependencies:**
+- Use `vi.fn()` (Vitest) or `jest.fn()` (Jest) for mock functions
+- Mock services with `{ provide: Service, useValue: mockService }`
+- HTTP requests: Use `HttpTestingController` to intercept and respond
+
+**Async testing patterns:**
+- Use `fakeAsync`/`tick` for timer-based code
+- Use `async`/`await` for promise-based operations
+- Subscribe to observables in test and verify behavior
 
 ## Tooling
 
 When working with Angular tooling, consult the following references:
 
-- **Angular CLI**: Creating applications, generating code (components, routes, services), serving, and building. Read [cli.md](references/cli.md)
+- **Angular CLI**: Creating applications, generating code (components, routes, services, guards, resolvers), serving, and building. Read [cli.md](references/cli.md)
 - **Angular MCP Server**: Available tools, configuration, and experimental features. Read [mcp.md](references/mcp.md)
 
 ## Gotchas

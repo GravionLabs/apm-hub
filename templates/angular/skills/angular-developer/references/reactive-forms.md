@@ -25,10 +25,10 @@ import {ReactiveFormsModule, FormGroup, FormControl, Validators, FormBuilder} fr
   templateUrl: './profile-editor.component.html',
 })
 export class ProfileEditor {
-  private fb = inject(FormBuilder);
+  readonly #fb = inject(FormBuilder);
 
   // Using FormBuilder for concise definition
-  profileForm = this.fb.group({
+  profileForm = this.#fb.group({
     firstName: ['', Validators.required],
     lastName: [''],
     address: this.fb.group({

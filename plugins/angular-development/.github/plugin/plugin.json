@@ -20,6 +20,7 @@
   "skills": [
     "./skills/create-angular-project",
     "./skills/setup-prettier-eslint-husky",
+    "./skills/angular-developer",
     "./skills/angular-component",
     "./skills/sakai-ui-component",
     "./skills/angular-signal-store",

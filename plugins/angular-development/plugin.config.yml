@@ -31,6 +31,10 @@ skills:
   - name: setup-prettier-eslint-husky
     source: typescript/skills/setup-prettier-eslint-husky
 
+  # Core development skill
+  - name: angular-developer
+    source: angular/skills/angular-developer
+
   # Component scaffolding
   - name: angular-component
     source: angular/skills/angular-component

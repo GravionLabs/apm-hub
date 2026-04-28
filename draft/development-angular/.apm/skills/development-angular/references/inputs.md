@@ -20,8 +20,8 @@ export class User {
   // Required input
   readonly age = input.required<number>();
 
-  // Inputs are reactive signals — computed values used only in the template are protected
-  protected readonly label = computed(() => `Name: ${this.name()}`);
+  // Inputs are reactive signals
+  readonly label = computed(() => `Name: ${this.name()}`);
 }
 ```
 

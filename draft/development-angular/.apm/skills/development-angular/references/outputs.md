@@ -15,10 +15,10 @@ import {Component, output} from '@angular/core';
 })
 export class CustomSlider {
   // Output without event data
-  readonly panelClosed = output<void>();
+  panelClosed = output<void>();
 
   // Output with event data (number)
-  readonly valueChanged = output<number>();
+  valueChanged = output<number>();
 
   changeValue(newValue: number) {
     this.valueChanged.emit(newValue);
@@ -43,7 +43,7 @@ The `output` function accepts a config object to specify an alias.
 export class CustomSlider {
   // The event is named 'valueChanged' in the template,
   // but accessed as 'changed' in the component class.
-  readonly changed = output<number>({ alias: 'valueChanged' });
+  changed = output<number>({ alias: 'valueChanged' });
 }
 ```
 

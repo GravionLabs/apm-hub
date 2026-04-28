@@ -6,7 +6,7 @@ The Angular CLI (`ng`) is the primary tool for managing an Angular workspace. Al
 
 **ALWAYS use `ng add` for Angular libraries** instead of `npm install`. `ng add` installs the package AND runs initialization schematics (e.g., configuring `angular.json`, updating root providers).
 
-```powershell
+```bash
 ng add @angular/material
 ng add tailwindcss
 ng add @angular/fire
@@ -14,7 +14,7 @@ ng add @angular/fire
 
 To update the application and its dependencies (which automatically runs code migrations):
 
-```powershell
+```bash
 ng update @angular/core@<latest or specific version> @angular/cli<latest or specific version>
 ```
 
@@ -24,11 +24,12 @@ Always use the CLI to generate code to ensure it adheres to Angular standards an
 
 | Target       | Command               | Notes                                                                                          |
 | :----------- | :-------------------- | :--------------------------------------------------------------------------------------------- |
-| Component    | `ng g c path/to/name` | Generates a component. Use `--inline-style` (`-s`) or `--inline-template` (`-t`) if requested. |
+| Component    | `ng g c path/to/name` | Generates a component. Use `--inline-style` (`-s`) or `--inline-template` (`-t`) if requested. Add `--standalone` for standalone components (default in v17+). |
 | Service      | `ng g s path/to/name` | Generates an `@Injectable({providedIn: 'root'})` service.                                      |
-| Directive    | `ng g d path/to/name` | Generates a directive.                                                                         |
-| Pipe         | `ng g p path/to/name` | Generates a pipe.                                                                              |
+| Directive    | `ng g d path/to/name` | Generates a directive. Add `--standalone` for standalone directives.                           |
+| Pipe         | `ng g p path/to/name` | Generates a pipe. Add `--standalone` for standalone pipes.                                     |
 | Guard        | `ng g g path/to/name` | Generates a functional route guard.                                                            |
+| Resolver     | `ng g r path/to/name` | Generates a functional `ResolveFn` resolver. Add to route config as `resolve: { data: myResolver }`. |
 | Environments | `ng g environments`   | Scaffolds `src/environments/` and updates `angular.json` with file replacements.               |
 
 _Note: There is no command to generate a single route definition. Generate a component, then manually add it to the `Routes` array in `app.routes.ts`._
@@ -37,7 +38,7 @@ _Note: There is no command to generate a single route definition. Generate a com
 
 Start the local development server with hot-module replacement (HMR):
 
-```powershell
+```bash
 ng serve
 ```
 
@@ -63,7 +64,7 @@ To proxy API requests during development (e.g., rerouting `/api` to a local Node
 
 Compile the application into an output directory (default: `dist/<project-name>/browser`). Modern Angular uses the `@angular/build:application` builder (esbuild-based).
 
-```powershell
+```bash
 ng build
 ```
 
@@ -79,7 +80,7 @@ ng build
 
 To deploy an application, you must first add a deployment builder, then run the deploy command:
 
-```powershell
+```bash
 # Example for Firebase
 ng add @angular/fire
 ng deploy

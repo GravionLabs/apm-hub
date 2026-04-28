@@ -27,9 +27,9 @@ count.update((value) => value + 1);
 When exposing state from a service, it is a best practice to expose a readonly version to prevent external mutation.
 
 ```ts
-private readonly _count = signal(0);
+readonly #count = signal(0);
 // Consumers can read this, but cannot call .set() or .update()
-readonly count = this._count.asReadonly();
+readonly count = this.#count.asReadonly();
 ```
 
 ## Computed Signals (`computed`)

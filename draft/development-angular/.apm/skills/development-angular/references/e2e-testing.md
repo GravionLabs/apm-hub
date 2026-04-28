@@ -8,17 +8,17 @@ The primary way to run E2E tests is through the `pnpm` script defined in the roo
 
 1.  **Build DevTools:** The E2E tests run against a built version of the devtools extension. You must build it first:
 
-    ```powershell
+    ```shell
     pnpm -F ng-devtools-mcp build:dev
     ```
 
 2.  **Run Cypress:** Use the `cy:open` or `cy:run` script:
     - To open the interactive Cypress Test Runner:
-      ```powershell
+      ```shell
       pnpm -F ng-devtools-mcp cy:open
       ```
     - To run the tests headlessly in the terminal (ideal for CI):
-      ```powershell
+      ```shell
       pnpm -F ng-devtools-mcp cy:run
       ```
 

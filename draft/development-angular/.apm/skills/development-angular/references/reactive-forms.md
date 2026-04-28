@@ -31,11 +31,11 @@ export class ProfileEditor {
   profileForm = this.#fb.group({
     firstName: ['', Validators.required],
     lastName: [''],
-    address: this.#fb.group({
+    address: this.fb.group({
       street: [''],
       city: [''],
     }),
-    aliases: this.#fb.array([this.#fb.control('')]),
+    aliases: this.fb.array([this.fb.control('')]),
   });
 
   onSubmit() {

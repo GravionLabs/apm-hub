@@ -59,6 +59,8 @@ import {AnalyticsLogger} from './analytics-logger.service';
 })
 export class Navbar {
   // Injecting dependencies using class field initializers
+  // Angular 17+: readonly #field (native private, runtime-enforced)
+  // Angular < 17: private readonly field (TypeScript access modifier)
   readonly #router = inject(Router);
   readonly #analytics = inject(AnalyticsLogger);
 

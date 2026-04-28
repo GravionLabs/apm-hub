@@ -24,11 +24,12 @@ Always use the CLI to generate code to ensure it adheres to Angular standards an
 
 | Target       | Command               | Notes                                                                                          |
 | :----------- | :-------------------- | :--------------------------------------------------------------------------------------------- |
-| Component    | `ng g c path/to/name` | Generates a component. Use `--inline-style` (`-s`) or `--inline-template` (`-t`) if requested. |
+| Component    | `ng g c path/to/name` | Generates a component. Use `--inline-style` (`-s`) or `--inline-template` (`-t`) if requested. Add `--standalone` for standalone components (default in v17+). |
 | Service      | `ng g s path/to/name` | Generates an `@Injectable({providedIn: 'root'})` service.                                      |
-| Directive    | `ng g d path/to/name` | Generates a directive.                                                                         |
-| Pipe         | `ng g p path/to/name` | Generates a pipe.                                                                              |
+| Directive    | `ng g d path/to/name` | Generates a directive. Add `--standalone` for standalone directives.                           |
+| Pipe         | `ng g p path/to/name` | Generates a pipe. Add `--standalone` for standalone pipes.                                     |
 | Guard        | `ng g g path/to/name` | Generates a functional route guard.                                                            |
+| Resolver     | `ng g r path/to/name` | Generates a functional `ResolveFn` resolver. Add to route config as `resolve: { data: myResolver }`. |
 | Environments | `ng g environments`   | Scaffolds `src/environments/` and updates `angular.json` with file replacements.               |
 
 _Note: There is no command to generate a single route definition. Generate a component, then manually add it to the `Routes` array in `app.routes.ts`._

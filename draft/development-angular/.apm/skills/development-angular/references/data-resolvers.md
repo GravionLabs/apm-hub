@@ -35,7 +35,7 @@ Add the resolver under the `resolve` key.
 ```ts
 readonly #route = inject(ActivatedRoute);
 data = toSignal(this.#route.data);
-user = computed(() => this.data()?.user);
+user = computed(() => this.data().user);
 ```
 
 ### 2. Via Component Inputs (Modern)

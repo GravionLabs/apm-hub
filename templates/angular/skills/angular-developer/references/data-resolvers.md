@@ -33,8 +33,8 @@ Add the resolver under the `resolve` key.
 ### 1. Via `ActivatedRoute` (Traditional)
 
 ```ts
-private route = inject(ActivatedRoute);
-data = toSignal(this.route.data);
+readonly #route = inject(ActivatedRoute);
+data = toSignal(this.#route.data);
 user = computed(() => this.data().user);
 ```
 

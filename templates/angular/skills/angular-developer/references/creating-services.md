@@ -77,13 +77,13 @@ import {AdvancedDataStore} from './advanced-data-store.service';
 })
 export class BasicDataStore {
   // Injecting another service
-  private advancedDataStore = inject(AdvancedDataStore);
+  readonly #advancedDataStore = inject(AdvancedDataStore);
 
   private data: string[] = [];
 
   getData(): string[] {
     // Combine data from this service and the injected service
-    return [...this.data, ...this.advancedDataStore.getData()];
+    return [...this.data, ...this.#advancedDataStore.getData()];
   }
 }
 ```
