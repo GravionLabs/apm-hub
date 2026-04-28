@@ -3,7 +3,7 @@ description: >-
   Security and resilience tooling.
   STRIDE threat modeling, security compliance review.
   Tech-stack agnostic – usable alongside any language plugin.
-version: "1.0.38"
+version: "1.0.39"
 author:
   name: Gravion
 license: MIT

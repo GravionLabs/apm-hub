@@ -1,7 +1,7 @@
 {
   "name": "ag-grid-development",
   "description": "AG Grid Enterprise development plugin for Angular. Provides expert guidance on AG Grid Enterprise setup, column definitions, row models, filtering, cell rendering/editing, row grouping, pivoting, master-detail, and Excel export. Includes the ag-mcp MCP server setup skill for version-specific doc search inside your IDE.",
-  "version": "1.0.38",
+  "version": "1.0.39",
   "author": {
     "name": "Gravion"
   },
