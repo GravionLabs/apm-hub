@@ -1,0 +1,40 @@
+name: typescript-node-development
+version: 1.0.39
+description: TypeScript and Node.js development plugin. Covers strict typing, ESM
+  modules, async/await patterns, error handling, code review, debugging, Playwright
+  TypeScript testing, and containerization.
+author:
+  name: Gravion
+license: MIT
+status: production
+keywords:
+- typescript
+- nodejs
+- playwright
+- vitest
+- eslint
+primitives:
+  agents:
+  - source: typescript/agents/typescript-expert
+  - source: typescript/agents/typescript-reviewer
+  - source: shared/agents/documentation-writer
+  - source: shared/agents/test-engineer
+  skills:
+  - source: typescript/skills/create-node-project
+    name: create-node-project
+  - source: devops/skills/create-node-workflow
+    name: create-node-workflow
+  - source: typescript/skills/typescript-code-review
+    name: typescript-code-review
+  - source: typescript/skills/typescript-debug
+    name: typescript-debug
+  - source: typescript/skills/setup-prettier-eslint-husky
+    name: setup-prettier-eslint-husky
+  - source: typescript/skills/typescript-mcp-server-generator
+    name: typescript-mcp-server-generator
+  - source: shared/skills/write-tests
+    name: write-tests
+  instructions:
+  - source: typescript/instructions/typescript
+  - source: typescript/instructions/nodejs
+  - source: typescript/instructions/playwright-typescript

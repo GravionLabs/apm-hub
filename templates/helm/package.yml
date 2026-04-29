@@ -1,0 +1,32 @@
+name: helm-development
+version: 1.0.39
+description: Helm chart development plugin for Kubernetes packaging. Covers chart
+  structure, values.yaml design, named templates, security contexts, OCI distribution,
+  Helmfile, and chart upgrades.
+author:
+  name: Gravion
+license: MIT
+status: production
+keywords:
+- helm
+- kubernetes
+- k8s
+- helmfile
+- oci
+primitives:
+  agents:
+  - source: helm/agents/helm-expert
+  - source: helm/agents/helm-reviewer
+  skills:
+  - source: helm/skills/helm-chart-create
+    name: helm-chart-create
+  - source: helm/skills/helm-values-review
+    name: helm-values-review
+  - source: helm/skills/helm-chart-upgrade
+    name: helm-chart-upgrade
+  - source: helm/skills/helm-debug
+    name: helm-debug
+  - source: helm/skills/helm-template-validate
+    name: helm-template-validate
+  instructions:
+  - source: helm/instructions/helm

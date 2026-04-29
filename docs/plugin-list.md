@@ -10,6 +10,7 @@ This page lists all available Copilot CLI plugins in this repository. This file 
 | :---------------------------------------------------------- | :------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----: | :----: | :----------: |
 | [ag-grid-development](#ag-grid-development)                 | `1.0.39` | AG Grid Enterprise development plugin for Angular. Provides expert guidance on AG Grid Enterprise setup, column definitions, row models, filtering, cell rendering/editing, row grouping, pivoting, master-detail, and Excel export. Includes the ag-mcp MCP server setup skill for version-specific doc search inside your IDE.                                                                                                                                                                                                                                                                                             |   2    |   0    |      0       |
 | [angular-development](#angular-development)                 | `1.0.39` | Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.                                                                                                                                                                                                                                                                                                                                                                                                                                 |   10   |   3    |      3       |
+| [common](#common)                                           | `1.0.0`  | Shared primitives for git, GitHub, and Azure DevOps workflows. Provides common git operations (branch creation, commits, push), GitHub pull request management, and issue linking.                                                                                                                                                                                                                                                                                                                                                                                                                                           |   2    |   1    |      1       |
 | [copilot-workspace](#copilot-workspace)                     | `1.0.39` | Setup and sync GitHub Copilot configuration from GravionLabs/copilot-hub. Provides an interactive wizard (gh-copilot-setup) to bootstrap .github/ with instructions, prompts, and agents tailored to your stack, plus a sync prompt (gh-copilot-sync) to keep them up to date. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle. The standalone scripts (copilot-sync.ps1, New-AgentsMd.ps1) are included for manual or scheduled runs without the AI prompt. |   6    |   0    |      0       |
 | [csharp-development](#csharp-development)                   | `1.0.39` | C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.                                                                                                                                                                                                                                                                                                                                                          |   12   |   9    |      3       |
 | [devops](#devops)                                           | `1.0.39` | Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.                                                                                                                                                                                                                                                                                                                                                                        |   8    |   3    |      3       |
@@ -64,6 +65,24 @@ Angular 21 full-stack development plugin. Covers standalone components, NgRx Sig
 - [`angular/instructions/angular.instructions.md`](../plugins/angular-development/instructions/angular/instructions/angular.instructions.md)
 - [`angular/instructions/ngrx-signals.instructions.md`](../plugins/angular-development/instructions/angular/instructions/ngrx-signals.instructions.md)
 - [`angular/instructions/sakai-ui.instructions.md`](../plugins/angular-development/instructions/angular/instructions/sakai-ui.instructions.md)
+
+## common
+
+📁 [`plugins/common`](../plugins/common) · **v1.0.0**
+
+Shared primitives for git, GitHub, and Azure DevOps workflows. Provides common git operations (branch creation, commits, push), GitHub pull request management, and issue linking.
+
+**Keywords:** `git`, `github`, `azure-devops`, `pull-request`, `workflow`, `branch-management`
+
+**Skills (2):**
+- [`common-git-workflow`](../plugins/common/skills/common-git-workflow)
+- [`common-github-workflow`](../plugins/common/skills/common-github-workflow)
+
+**Agents (1):**
+- [`common/github/agents/common-github-pull-request.agent.md`](../plugins/common/agents/common/github/agents/common-github-pull-request.agent.md)
+
+**Instructions (1):**
+- [`common/github/agents/common-github-context.instructions.md`](../plugins/common/instructions/common/github/agents/common-github-context.instructions.md)
 
 ## copilot-workspace
 

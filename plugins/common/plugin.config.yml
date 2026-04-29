@@ -1,0 +1,32 @@
+name: common
+description: >-
+  Shared primitives for git, GitHub, and Azure DevOps workflows.
+  Provides common git operations (branch creation, commits, push),
+  GitHub pull request management, and issue linking.
+version: "1.0.0"
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - git
+  - github
+  - azure-devops
+  - pull-request
+  - workflow
+  - branch-management
+
+# Agents for GitHub PR creation
+agents:
+  - source: common/github/agents/common-github-pull-request
+
+# Skills for git and GitHub workflows
+skills:
+  # Generic git workflow — fetches from origin/main, creates branches, stages files, commits, and pushes
+  - name: common-git-workflow
+    source: common/git/skills/common-git-workflow
+  # Generic GitHub workflow — creates pull requests and links issues
+  - name: common-github-workflow
+    source: common/github/skills/common-github-workflow
+
+instructions:
+  - source: common/github/agents/common-github-context

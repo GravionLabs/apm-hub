@@ -1,0 +1,29 @@
+name: playwright
+version: 1.0.39
+description: Cross-language Playwright testing plugin. Browser automation, form filling,
+  test generation, and website exploration. Language-specific instructions (playwright-dotnet,
+  playwright-python, playwright-typescript) are bundled with the respective language
+  plugins (csharp-development, python-development, typescript-node-development).
+author:
+  name: Gravion
+license: MIT
+status: production
+keywords:
+- playwright
+- testing
+- browser-automation
+- e2e
+primitives:
+  agents:
+  - source: playwright/agents/playwright-tester
+  skills:
+  - source: playwright/skills/playwright-generate-test
+    name: playwright-generate-test
+  - source: playwright/skills/playwright-explore-website
+    name: playwright-explore-website
+  - source: playwright/skills/playwright-automation-fill-in-form
+    name: playwright-automation-fill-in-form
+  - source: playwright/skills/playwright-debug
+    name: playwright-debug
+  instructions:
+  - source: playwright/instructions/playwright

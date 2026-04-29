@@ -9,6 +9,7 @@ import { generateMarketplace } from './generators/marketplace-generator';
 import { generateSkillList } from './generators/skill-list-generator';
 import { generateAgentList } from './generators/agent-list-generator';
 import { generateInstructionList } from './generators/instruction-list-generator';
+import PackageGenerator from './generators/package-generator';
 
 function generateAllPlugins(version?: string) {
   const pluginsDir = 'plugins';
@@ -40,6 +41,13 @@ function generateAggregateDocs(version?: string) {
   generateMarketplace();
 }
 
+function generatePackages(verbose = false) {
+  console.log('🔄 Generating unified packages...');
+  const generator = new PackageGenerator({ verbose });
+  const result = generator.generate();
+  console.log(`   Hub packages: ${result.hubPackages}, APM packages: ${result.apmPackages}, Obsolete: ${result.obsoletePackages}`);
+}
+
 function main() {
   const args = process.argv.slice(2);
 
@@ -64,14 +72,15 @@ function main() {
 
   // --aggregate: regenerate all aggregate docs (CI-only, not for feature branches)
   if (inputPath === '--aggregate') {
-    console.log('Regenerating plugins + all aggregate docs...');
+    console.log('Regenerating plugins + packages + all aggregate docs...');
     generateAllPlugins(version);
+    generatePackages(true); // Verbose during CI
     generateAggregateDocs(version);
     return;
   }
 
-  if (inputPath === '--template-list') {
-    generateTemplateList();
+  if (inputPath === '--packages') {
+    generatePackages(true);
     return;
   }
 

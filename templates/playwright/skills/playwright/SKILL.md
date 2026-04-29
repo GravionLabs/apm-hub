@@ -1,5 +1,5 @@
 ---
-name: playwright-cli-developer
+name: playwright
 description: >
   Use this skill when creating, modifying, or debugging Playwright tests using the Playwright CLI.
   This skill is language-agnostic and works for Angular (TypeScript), .NET, and Python projects.

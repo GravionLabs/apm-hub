@@ -33,9 +33,22 @@ Thumbs.db
 # Test results
 test-results/
 
-# Generated plugin artifacts — managed by CI (regenerate-and-commit job)
-# Source of truth: templates/agents/, templates/instructions/, templates/skills/
-# Edit templates, not these copies. CI regenerates them after merge to main.
+# Generated package distribution — managed by CI (regenerate-and-commit job)
+# Source of truth: templates/*/package.yml (manifests in templates/)
+# CI generates packages/ → .github/ + .apm/ + apm.yml
+packages/
+!packages/.gitkeep
+
+# Generated Copilot Hub runtime artifacts — managed by CI
+# Source of truth: templates/*/package.yml
+# Edit manifests in templates/, not generated copies
+.github/agents/
+.github/instructions/
+.github/skills/
+.github/plugin/
+
+# Legacy plugin artifacts (deprecated, use packages/ instead)
+# Keeping for reference during migration
 plugins/*/agents/
 plugins/*/instructions/
 plugins/*/skills/
@@ -48,6 +61,3 @@ docs/instruction-list.md
 docs/skill-list.md
 docs/template-list.md
 docs/plugin-list.md
-
-# Generated marketplace manifest — managed by CI (regenerate-and-commit job)
-.github/plugin/marketplace.json
