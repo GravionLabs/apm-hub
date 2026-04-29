@@ -3,7 +3,7 @@ description: >-
   Shared primitives for git, GitHub, and Azure DevOps workflows.
   Provides common git operations (branch creation, commits, push),
   GitHub pull request management, and issue linking.
-version: "1.0.0"
+version: "1.0.40"
 author:
   name: Gravion
 license: MIT
