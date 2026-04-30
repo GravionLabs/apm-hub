@@ -54,26 +54,172 @@ Trigger this skill when the user asks to:
    - Test folder: `tests/`
    - Test extension: `.py`
 
-## Code Generation Rules
+## Code Generation Examples
 
 ### TypeScript (Angular)
-- Use `@playwright/test`
-- Use fixtures: `test.beforeEach(async ({ page }) => {})`
-- Prefer `getByRole`, `getByLabel`, `getByTestId`
-- Use async/await everywhere
-- Use `expect(locator).toBeVisible()`
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Login Flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('https://app.example.com/login');
+  });
+
+  test('should log in with valid credentials', async ({ page }) => {
+    // Use data-testid for Angular components
+    await page.fill('[data-testid="username"]', 'user@example.com');
+    await page.fill('[data-testid="password"]', 'password123');
+    
+    await page.click('[data-testid="login-button"]');
+    
+    // Wait for navigation
+    await page.waitForURL('**/dashboard');
+    
+    // Verify logged-in state
+    await expect(page.locator('[data-testid="user-menu"]')).toBeVisible();
+  });
+});
+```
+
+**File placement:** `e2e/login.spec.ts` or `src/tests/login.spec.ts`
+
+**Run with:** `npx playwright test e2e/login.spec.ts`
 
 ### .NET
-- Use `using Microsoft.Playwright;`
-- Use async test methods: `public async Task TestName()`
-- Use `await using var browser = playwright.Chromium.LaunchAsync(...)`
-- Use strongly typed locators: `page.GetByRole(...)`
+
+```csharp
+using Microsoft.Playwright;
+using NUnit.Framework;
+
+namespace Tests.Playwright;
+
+[TestFixture]
+public class LoginTests
+{
+    private IBrowser _browser;
+    private IPage _page;
+
+    [SetUp]
+    public async Task Setup()
+    {
+        var playwright = await Playwright.CreateAsync();
+        _browser = await playwright.Chromium.LaunchAsync();
+        var context = await _browser.NewContextAsync();
+        _page = await context.NewPageAsync();
+        await _page.GotoAsync("https://app.example.com/login");
+    }
+
+    [TearDown]
+    public async Task Teardown()
+    {
+        await _browser?.CloseAsync();
+    }
+
+    [Test]
+    public async Task LoginTest_ValidCredentials_LogsInSuccessfully()
+    {
+        await _page.FillAsync("[data-testid='username']", "user@example.com");
+        await _page.FillAsync("[data-testid='password']", "password123");
+        
+        await _page.ClickAsync("[data-testid='login-button']");
+        
+        await _page.WaitForURLAsync("**/dashboard");
+        
+        await Assertions.Expect(_page.Locator("[data-testid='user-menu']")).ToBeVisibleAsync();
+    }
+}
+```
+
+**File placement:** `Tests/Playwright/LoginTests.cs`
+
+**Run with:** `dotnet test Tests/Playwright/LoginTests.cs`
 
 ### Python
-- Use pytest with the Playwright plugin
-- Use async mode when needed
-- Use fixtures: `def test_example(page):`
-- Use `page.get_by_role(...)`
+
+```python
+import pytest
+from playwright.async_api import async_playwright, expect
+
+@pytest.fixture
+async def page():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        context = await browser.new_context()
+        page = await context.new_page()
+        await page.goto("https://app.example.com/login")
+        yield page
+        await context.close()
+        await browser.close()
+
+@pytest.mark.asyncio
+async def test_login_with_valid_credentials(page):
+    await page.fill('[data-testid="username"]', 'user@example.com')
+    await page.fill('[data-testid="password"]', 'password123')
+    
+    await page.click('[data-testid="login-button"]')
+    
+    await page.wait_for_url('**/dashboard')
+    
+    await expect(page.locator('[data-testid="user-menu"]')).to_be_visible()
+```
+
+**File placement:** `tests/test_login.py`
+
+**Run with:** `pytest tests/test_login.py`
+
+## Codegen → Test Conversion Workflow
+
+1. **Explore the app using `playwright-cli`** to understand structure and find stable selectors:
+   ```bash
+   playwright-cli open https://app.example.com/login
+   playwright-cli snapshot           # Get accessibility tree
+   playwright-cli screenshot         # Visual verification
+   ```
+
+2. **Record test code** using `npx playwright codegen` (`@playwright/test`):
+   ```bash
+   npx playwright codegen https://app.example.com/login
+   # Browser opens → click, type, verify → Playwright records code
+   ```
+
+3. **Copy generated code** into test file and adapt for language:
+   - **TypeScript:** Wrap in `test()` block, add `@playwright/test` imports
+   - **.NET:** Convert JavaScript syntax to C# (async Task, GetByRole, etc.)
+   - **Python:** Convert to pytest fixture pattern, use snake_case locators
+
+4. **Run tests** via language-specific runner:
+   ```bash
+   npx playwright test e2e/login.spec.ts   # TypeScript/Angular
+   dotnet test Tests/Playwright/           # .NET
+   pytest tests/test_login.py              # Python
+   ```
+
+## Language-Specific Tips
+
+### TypeScript (Angular)
+
+- Use `data-testid` attributes in your Angular templates for stable selectors
+- Import fixtures from `@playwright/test` for setup/teardown
+- Use `test.describe()` for test groups
+- Async/await is native to TypeScript
+- Run `npm install -D @playwright/test` first
+
+### .NET
+
+- Follow `async Task` pattern (not sync methods)
+- Use `await using var browser` for proper cleanup
+- Test naming: `TestName_Scenario_ExpectedResult` (csharp-nunit convention)
+- Use `Assertions.Expect(locator).ToBeVisibleAsync()` (not `Assert`)
+- Add `NUnit` or MSTest framework reference in `.csproj`
+
+### Python
+
+- Use pytest fixtures for setup/teardown (not class-based)
+- Import `async_playwright` if using async
+- Use `await` for all browser operations (even in sync tests with pytest-asyncio)
+- Use `@pytest.mark.asyncio` decorator
+- Use `pytest.ini` or `pyproject.toml` for configuration
 
 ## Test Placement Rules
 
@@ -96,4 +242,4 @@ Trigger this skill when the user asks to:
 - Do not use CSS selectors for Angular Material components
 - Do not store browser contexts in global variables
 - Do not use `waitForTimeout` unless unavoidable
-- Always run `npx playwright install` after dependency changes
+- Always run `npx playwright install` after dependency changes (`@playwright/test` projects)

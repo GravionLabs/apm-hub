@@ -37,9 +37,11 @@ Trigger this skill when the user asks to:
 - view console logs or errors
 - analyze slow tests or performance issues
 
-## Debugging Tools (CLI)
+## Debugging Tools
 
-Always use the Playwright CLI for debugging:
+The commands below vary by language. Always prefer CLI over manual log inspection.
+
+### TypeScript / Angular (`@playwright/test`)
 
 - View trace:
   - `npx playwright show-trace trace.zip`
@@ -61,6 +63,46 @@ Always use the Playwright CLI for debugging:
 
 - Run with slow motion:
   - `npx playwright test --headed --slow-mo=500`
+
+### .NET (Microsoft.Playwright + NUnit)
+
+- Run tests with tracing:
+  - `dotnet test` (configure tracing in `playwright.config.json` or per-test)
+
+- View trace (using .NET Playwright CLI script):
+  - `pwsh bin/Debug/net8.0/playwright.ps1 show-trace trace.zip`
+
+- Run in headed mode:
+  - `HEADED=true dotnet test`
+
+### Python (pytest-playwright)
+
+- View trace:
+  - `playwright show-trace trace.zip`
+
+- Run with tracing on failure:
+  - `pytest --tracing retain-on-failure`
+
+- Run in headed mode:
+  - `pytest --headed`
+
+- Run with slow motion:
+  - `pytest --slow-mo 500`
+
+- Run with video:
+  - `pytest --video on-failure`
+
+### Agent CLI (all languages — for live exploration)
+
+Use `playwright-cli` to interact with the running app during debugging:
+
+```bash
+playwright-cli open https://app.example.com
+playwright-cli snapshot         # See current accessibility tree
+playwright-cli screenshot       # Visual state
+playwright-cli console          # View console errors
+playwright-cli network          # View network requests
+```
 
 ## Decision Flow
 
@@ -84,10 +126,13 @@ Always use the Playwright CLI for debugging:
    - `npx playwright test --trace=on`
 
 5. **If test is flaky → run in loop**
-   - `npx playwright test --repeat-each=10`
+   - TypeScript: `npx playwright test --repeat-each=10`
+   - Python: `pytest --count=10` (requires `pytest-repeat`)
+   - .NET: `dotnet test --filter "Category=E2E"` (adjust retries in config)
 
-6. **If selectors fail → use codegen**
-   - `npx playwright codegen URL`
+6. **If selectors fail → use codegen or playwright-cli**
+   - `npx playwright codegen URL` — record new selectors (TypeScript)
+   - `playwright-cli open URL && playwright-cli snapshot` — inspect live accessibility tree
 
 7. **If navigation fails → inspect network logs**
    - Use trace viewer network tab
@@ -133,8 +178,10 @@ Always use the Playwright CLI for debugging:
 
 ## Gotchas
 
-- Do not debug using the MCP server — always use the CLI
+- Do not confuse `playwright-cli` (agent browser tool) with `npx playwright` (test runner) — they are separate tools
+- `playwright-cli` does NOT have `test`, `show-trace`, `show-report` commands — those belong to `@playwright/test`
 - Do not rely on CSS selectors for Angular Material
 - Do not use `waitForTimeout` unless absolutely necessary
 - Do not store browser contexts globally
 - Do not mix headed and headless modes in CI
+- For Python trace viewing use `playwright show-trace` (not `npx playwright`)

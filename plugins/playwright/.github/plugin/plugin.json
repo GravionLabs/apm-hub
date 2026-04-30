@@ -14,11 +14,5 @@
   ],
   "agents": [
     "./agents"
-  ],
-  "skills": [
-    "./skills/playwright-generate-test",
-    "./skills/playwright-explore-website",
-    "./skills/playwright-automation-fill-in-form",
-    "./skills/playwright-debug"
   ]
 }

@@ -49,11 +49,11 @@ status: production
 
 Controls which distribution channels include this package:
 
-| Status | Hub | APM | Meaning |
-|--------|-----|-----|---------|
-| `production` | ✅ | ✅ | Ready for release; published to all channels |
-| `draft` | ✅ | ❌ | In development; Hub only (internal testing) |
-| `obsolete` | ❌ | ❌ | Deprecated; kept for reference only; not published |
+| Status       | Hub | APM | Meaning                                            |
+| :----------- | :-- | :-- | :------------------------------------------------- |
+| `production` | ✅   | ✅   | Ready for release; published to all channels       |
+| `draft`      | ✅   | ❌   | In development; Hub only (internal testing)        |
+| `obsolete`   | ❌   | ❌   | Deprecated; kept for reference only; not published |
 
 **Examples:**
 
