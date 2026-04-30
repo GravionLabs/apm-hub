@@ -9,6 +9,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - Add PACKAGE_FORMAT.md guide for package.yml manifest format
+- Update CHANGELOG.md for v1.0.40 [skip ci]
 
 
 ### Features
