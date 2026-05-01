@@ -1,8 +1,9 @@
 name: apm-hub
 version: 1.0.0
-description: >
-  Marketplace for GravionLabs apm-hub packages.
-  Use individual packages (e.g. gravion/apm-hub/packages/angular) in your projects.
+description: 'Marketplace for GravionLabs apm-hub packages. Use individual packages
+  (e.g. gravion/apm-hub/packages/angular) in your projects.
+
+  '
 author:
   name: Gravion
 license: MIT
@@ -10,68 +11,90 @@ marketplace:
   owner:
     name: Gravion
     url: https://github.com/GravionLabs
-
   packages:
-    - name: ag-grid
-      description: AG Grid Enterprise development plugin for Angular. Provides expert guidance on AG Grid Enterprise setup, column definitions, row models, filtering, cell rendering/editing, row grouping, pivoting, master-detail, and Excel export. Includes the ag-mcp MCP server setup skill for version-specific doc search inside your IDE.
-      source: ./packages/ag-grid
-
-    - name: angular
-      description: Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.
-      source: ./packages/angular
-
-    - name: common
-      description: Shared primitives for git, GitHub, and Azure DevOps workflows. Provides common git operations (branch creation, commits, push), GitHub pull request management, and issue linking.
-      source: ./packages/common
-
-    - name: copilot-workspace
-      description: GitHub Copilot workspace setup for GravionLabs/apm-hub contributors. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills automate the full branch → implement → review → PR lifecycle.
-      source: ./packages/copilot-workspace
-
-    - name: csharp
-      description: "C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization."
-      source: ./packages/csharp
-
-    - name: devops
-      description: Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.
-      source: ./packages/devops
-
-    - name: docker
-      description: Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.
-      source: ./packages/docker
-
-    - name: go
-      description: Go development plugin for idiomatic Go applications. Covers module structure, error handling, interface design, concurrency patterns, table-driven testing, code review, benchmarking, debugging, and containerization.
-      source: ./packages/go
-
-    - name: helm
-      description: Helm chart development plugin for Kubernetes packaging. Covers chart structure, values.yaml design, named templates, security contexts, OCI distribution, Helmfile, and chart upgrades.
-      source: ./packages/helm
-
-    - name: playwright
-      description: CLI-based Playwright testing plugin for .NET, Python, and Angular. Includes test generation, debugging, and language-specific patterns.
-      source: ./packages/playwright
-
-    - name: postgresql
-      description: PostgreSQL development and administration plugin. Schema design, query optimization, performance diagnostics, code review, Row Level Security, JSONB, and SQL best practices.
-      source: ./packages/postgresql
-
-    - name: python
-      description: Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.
-      source: ./packages/python
-
-    - name: security
-      description: Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic — usable alongside any language plugin.
-      source: ./packages/security
-
-    - name: shared
-      description: Shared agents, instructions and skills used across all GravionLabs apm-hub packages. Includes general-purpose SE agents, code review and markdown instructions, and reusable skills for test writing and skill creation.
-      source: ./packages/shared
-
-    - name: terraform
-      description: Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.
-      source: ./packages/terraform
-
-    - name: typescript
-      description: TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, debugging, Playwright TypeScript testing, and containerization.
-      source: ./packages/typescript
+  - name: ag-grid
+    description: AG Grid Enterprise development plugin for Angular. Provides expert
+      guidance on AG Grid Enterprise setup, column definitions, row models, filtering,
+      cell rendering/editing, row grouping, pivoting, master-detail, and Excel export.
+      Includes the ag-mcp MCP server setup skill for version-specific doc search inside
+      your IDE.
+    source: ./packages/ag-grid
+  - name: angular
+    description: Angular 21 full-stack development plugin. Covers standalone components,
+      NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui
+      conventions, and testing with Vitest.
+    source: ./packages/angular
+  - name: common
+    description: Shared primitives for git, GitHub, and Azure DevOps workflows. Provides
+      common git operations (branch creation, commits, push), GitHub pull request
+      management, and issue linking.
+    source: ./packages/common
+  - name: copilot-workspace
+    description: GitHub Copilot workspace setup for GravionLabs/apm-hub contributors.
+      Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue
+      workflow skills automate the full branch → implement → review → PR lifecycle.
+    source: ./packages/copilot-workspace
+  - name: csharp
+    description: C#/.NET full-stack development plugin. Covers project setup, NUnit
+      testing, async/await, code review, XML documentation, design patterns, EF Core,
+      ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright
+      .NET testing, and containerization.
+    source: ./packages/csharp
+  - name: devops
+    description: Cross-cutting DevOps tooling. Publish code reviews as PR comments
+      to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline
+      integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci
+      reusable workflows.
+    source: ./packages/devops
+  - name: docker
+    description: Docker containerization plugin. Optimized multi-stage Dockerfiles
+      for any language or framework.
+    source: ./packages/docker
+  - name: go
+    description: Go development plugin for idiomatic Go applications. Covers module
+      structure, error handling, interface design, concurrency patterns, table-driven
+      testing, code review, benchmarking, debugging, and containerization.
+    source: ./packages/go
+  - name: helm
+    description: Helm chart development plugin for Kubernetes packaging. Covers chart
+      structure, values.yaml design, named templates, security contexts, OCI distribution,
+      Helmfile, and chart upgrades.
+    source: ./packages/helm
+  - name: playwright
+    description: CLI-based Playwright testing plugin for .NET, Python, and Angular.
+      Includes test generation, debugging, and language-specific patterns.
+    source: ./packages/playwright
+  - name: postgresql
+    description: PostgreSQL development and administration plugin. Schema design,
+      query optimization, performance diagnostics, code review, Row Level Security,
+      JSONB, and SQL best practices.
+    source: ./packages/postgresql
+  - name: python
+    description: Python development plugin. Covers project setup with uv, pytest testing
+      with fixtures and markers, type hints, code review, Playwright Python testing,
+      and containerization.
+    source: ./packages/python
+  - name: security
+    description: Security and resilience tooling. STRIDE threat modeling, security
+      compliance review. Tech-stack agnostic — usable alongside any language plugin.
+    source: ./packages/security
+  - name: shared
+    description: Shared agents, instructions and skills used across all GravionLabs
+      apm-hub packages. Includes general-purpose SE agents, code review and markdown
+      instructions, and reusable skills for test writing and skill creation.
+    source: ./packages/shared
+  - name: terraform
+    description: Terraform infrastructure-as-code development plugin. Covers module
+      design, naming conventions, state management, security best practices, code
+      review, and multi-cloud provider configurations.
+    source: ./packages/terraform
+  - name: typescript
+    description: TypeScript and Node.js development plugin. Covers strict typing,
+      ESM modules, async/await patterns, error handling, code review, debugging, Playwright
+      TypeScript testing, and containerization.
+    source: ./packages/typescript
+dependencies:
+  apm:
+  - ./packages/github
+  - ./packages/apm-workspace
+  - ./packages/common
