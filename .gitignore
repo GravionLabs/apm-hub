@@ -37,14 +37,6 @@ test-results/
 packages/*/apm_modules/
 apm_modules/
 
-# Generated Copilot Hub runtime artifacts — deployed by `apm install` from root apm.yml
-# Source of truth: packages/*/.apm/ — run `apm install` to deploy locally.
-# These are gitignored: contributors run `apm install` once after cloning.
-.github/agents/
-.github/instructions/
-.github/skills/
-.github/plugin/
-
 # Deployed APM artifacts in package subdirectories — source of truth is .apm/
 packages/*/.github/
 

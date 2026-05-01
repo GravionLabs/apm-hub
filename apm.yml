@@ -7,14 +7,6 @@ author:
   name: Gravion
 license: MIT
 
-# devDependencies are used by contributors only (not bundled, not published).
-# Running `apm install` in this repo deploys copilot-workspace + shared to .github/
-# (locally only — .github/skills/ etc. are gitignored).
-devDependencies:
-  apm:
-    - ./packages/copilot-workspace
-    - ./packages/shared
-
 marketplace:
   owner:
     name: Gravion

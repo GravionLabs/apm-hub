@@ -80,13 +80,19 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ### Contributor setup
 
-After cloning, install the workspace packages locally (not committed):
+After cloning, install Node.js dependencies:
 
 ```bash
-apm install   # deploys copilot-workspace + shared to .github/ (gitignored)
+npm install
 ```
 
-The `.github/skills/`, `.github/instructions/` etc. directories are intentionally **not committed** in this repo — the source of truth is `packages/*/.apm/`. Run `apm install` once after cloning to get all workspace skills active in your IDE.
+The `.github/skills/`, `.github/instructions/` and `.github/agents/` directories are committed directly to this repo. When the `copilot-workspace` or `shared` packages are updated, run:
+
+```bash
+apm install ./packages/copilot-workspace ./packages/shared --force
+```
+
+Then commit the updated `.github/` files.
 
 ---
 

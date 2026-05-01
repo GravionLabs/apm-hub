@@ -1,0 +1,55 @@
+---
+name: gh-issue-work
+description: >
+  End-to-end workflow for a GitHub issue: reads the issue, creates a branch,
+  implements with tests and docs, reviews, and opens a pull request. Use this skill
+  for straightforward issues that can be handled in one pass — even if the user just
+  says "work on issue #N" or "implement and PR this." For complex issues, use
+  gh-issue-implement and gh-issue-finish separately.
+allowed-tools: execute read edit search codebase editFiles runCommands mcp_github_get_issue mcp_github_create_branch mcp_github_create_pull_request mcp_github_list_pull_requests
+model: claude-sonnet-4.6
+---
+
+Complete end-to-end workflow for a GitHub issue — from branch creation to pull request.
+
+## What this skill does
+Combines `gh-issue-implement` and `gh-issue-finish` into a single workflow for straightforward issues.
+
+> **Tip:** For complex issues, use the individual skills:
+> 1. `gh-issue-implement {issue-number}` — branch + implementation
+> 2. `gh-issue-finish {issue-number}` — review + PR
+
+## Prerequisites
+- `gh` CLI installed and authenticated (`gh auth status`) — used as fallback when GH MCP is unavailable
+- Run from the repository root
+
+## Steps
+
+### Phase 1 — Prepare
+
+*Primary — GH MCP:*
+1. Call `mcp_github_get_issue` to read title, body, and labels
+2. Determine branch prefix from labels: `feature/`, `bugfix/`, `hotfix/`, `chore/`
+3. Call `mcp_github_create_branch` to create the branch, then `git checkout <branch>`
+
+*Fallback — GH CLI (when MCP not available):*
+1. `gh issue view {issue-number} --json title,body,labels,assignees`
+2. Determine branch prefix from labels: `feature/`, `bugfix/`, `hotfix/`, `chore/`
+3. `git checkout -b <prefix>/<issue-number>-<slug>`
+
+### Phase 2 — Implement
+4. Explore affected areas of the codebase
+5. Write code, tests, and update docs as needed
+6. Atomic commits: `git commit -m "<type>: <description> (#<issue-number>)"`
+
+### Phase 3 — Finish
+7. Run build and tests — fix any failures
+8. Self-review: `git diff main...HEAD`
+9. Push and open PR: `git push -u origin HEAD && gh pr create ...`
+10. Verify CI: `gh pr checks`
+
+## Constraints
+- Tests must pass before the PR is opened
+- PR body must include `Closes #<issue-number>`
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
