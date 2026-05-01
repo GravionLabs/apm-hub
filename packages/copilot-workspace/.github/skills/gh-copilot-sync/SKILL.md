@@ -1,11 +1,11 @@
 ---
 name: gh-copilot-sync
-description: 'Sync installed GitHub Copilot configuration files (.github/instructions, prompts, agents) with the latest versions from GravionLabs/copilot-hub.'
+description: 'Sync installed GitHub Copilot configuration files (.github/instructions, prompts, agents) with the latest versions from GravionLabs/apm-hub.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: gpt-4.1
 ---
 
-Sync existing `.github/` Copilot configuration files to their latest versions from GravionLabs/copilot-hub.
+Sync existing `.github/` Copilot configuration files to their latest versions from GravionLabs/apm-hub.
 
 ## What this skill does
 Compares currently installed instructions, prompts, and agents against the latest versions in copilot-hub, applies updates, and reports on newly available templates not yet installed.
@@ -19,7 +19,7 @@ Compares currently installed instructions, prompts, and agents against the lates
 1. Check prerequisites: verify `pwsh` and `gh` are available
 2. Discover installed files in `.github/instructions/`, `.github/prompts/`, `.github/agents/`
 3. Also check `~/.github` if a global base directory is configured
-4. Fetch latest versions of each installed file from `GravionLabs/copilot-hub`
+4. Fetch latest versions of each installed file from `GravionLabs/apm-hub`
 5. Show a diff summary of what would change; ask for confirmation (unless `--autopilot`)
 6. Apply updates to changed files
 7. Report any newly available templates in copilot-hub that aren't installed yet

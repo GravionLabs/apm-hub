@@ -1,12 +1,12 @@
-﻿# copilot-hub
+﻿# apm-hub
 
 A curated hub for sharing GitHub Copilot instructions, agents, prompts, and APM packages — your team's Copilot marketplace.
 
 ---
 
-## What is copilot-hub?
+## What is apm-hub?
 
-**copilot-hub** is a shared library of reusable GitHub Copilot templates — instructions, agents, and prompts — distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of agents, skills, and instructions you can install into any repository with a single command.
+**apm-hub** is a shared library of reusable GitHub Copilot templates — instructions, agents, and prompts — distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of agents, skills, and instructions you can install into any repository with a single command.
 
 ---
 
@@ -32,8 +32,8 @@ A curated hub for sharing GitHub Copilot instructions, agents, prompts, and APM 
    version: 1.0.0
    dependencies:
      apm:
-       - gravion/copilot-hub/packages/angular#v1.2.3
-       - gravion/copilot-hub/packages/common#v1.2.3
+       - gravion/apm-hub/packages/angular#v1.2.3
+       - gravion/apm-hub/packages/common#v1.2.3
    ```
 
 3. Install and deploy to `.github/`:
@@ -77,7 +77,7 @@ This repository contains a wide range of production-ready templates:
 
 ## 📦 APM Packages
 
-copilot-hub distributes domain packages via APM. Each package is installed with `apm install` and deployed to `.github/`, `.claude/`, `.cursor/`, `.opencode/`, and `.gemini/` automatically.
+apm-hub distributes domain packages via APM. Each package is installed with `apm install` and deployed to `.github/`, `.claude/`, `.cursor/`, `.opencode/`, and `.gemini/` automatically.
 
 📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)**
 

@@ -1,11 +1,11 @@
 ---
 name: gh-copilot-setup
-description: 'Interactive wizard to install GitHub Copilot configuration (instructions, prompts, agents) from GravionLabs/copilot-hub into .github/. Requires pwsh and gh CLI.'
+description: 'Interactive wizard to install GitHub Copilot configuration (instructions, prompts, agents) from GravionLabs/apm-hub into .github/. Requires pwsh and gh CLI.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: gpt-4.1
 ---
 
-Bootstrap GitHub Copilot configuration for a repository from GravionLabs/copilot-hub.
+Bootstrap GitHub Copilot configuration for a repository from GravionLabs/apm-hub.
 
 ## What this skill does
 Interactively browses the copilot-hub repository, lets the user select relevant Instructions/Prompts/Agents, installs them to `.github/`, and generates a `copilot-instructions.md`.
@@ -17,7 +17,7 @@ Interactively browses the copilot-hub repository, lets the user select relevant 
 
 ## Steps
 1. Check prerequisites: verify `pwsh` and `gh` are available
-2. Fetch available templates from `GravionLabs/copilot-hub` via `gh api` or `gh release`
+2. Fetch available templates from `GravionLabs/apm-hub` via `gh api` or `gh release`
 3. Detect the project type by scanning for indicator files (`.csproj`, `package.json`, `pyproject.toml`, etc.)
 4. Present matching templates grouped by category (instructions, prompts, agents); ask user to confirm selection
 5. Download selected files into `.github/instructions/`, `.github/prompts/`, `.github/agents/`

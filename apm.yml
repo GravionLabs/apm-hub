@@ -1,8 +1,8 @@
-name: copilot-hub
+name: apm-hub
 version: 1.0.0
 description: >
-  Meta-package — installs all copilot-hub packages for repository contributors.
-  Use individual packages (e.g. gravion/copilot-hub/packages/angular) in your projects.
+  Meta-package — installs all apm-hub packages for repository contributors.
+  Use individual packages (e.g. gravion/apm-hub/packages/angular) in your projects.
 author:
   name: Gravion
 license: MIT

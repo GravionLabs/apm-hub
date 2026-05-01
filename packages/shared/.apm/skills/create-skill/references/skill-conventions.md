@@ -1,6 +1,6 @@
 # copilot-hub Skill Conventions
 
-Internal conventions for creating and maintaining skills in the `GravionLabs/copilot-hub` repository.
+Internal conventions for creating and maintaining skills in the `GravionLabs/apm-hub` repository.
 
 ## Directory Layout
 

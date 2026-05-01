@@ -5,7 +5,7 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: gpt-4.1
 ---
 
-Create a new skill in the `GravionLabs/copilot-hub` repository.
+Create a new skill in the `GravionLabs/apm-hub` repository.
 
 ## Directory Layout
 ```
