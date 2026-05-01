@@ -1,0 +1,6 @@
+steps:
+  - name: Install APM CLI
+    run: curl -sSL https://aka.ms/apm-unix | sh
+
+  - name: Install APM packages
+    run: apm install

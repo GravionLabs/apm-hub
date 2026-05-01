@@ -6,6 +6,15 @@ description: >
 author:
   name: Gravion
 license: MIT
+
+# devDependencies are used by contributors only (not bundled, not published).
+# Running `apm install` in this repo deploys copilot-workspace + shared to .github/
+# (locally only — .github/skills/ etc. are gitignored).
+devDependencies:
+  apm:
+    - ./packages/copilot-workspace
+    - ./packages/shared
+
 marketplace:
   owner:
     name: Gravion
@@ -75,3 +84,7 @@ marketplace:
     - name: typescript
       description: TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, debugging, Playwright TypeScript testing, and containerization.
       source: ./packages/typescript
+
+    - name: all
+      description: Meta-package that installs all GravionLabs apm-hub packages in one step.
+      source: ./packages/all
