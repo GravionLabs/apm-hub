@@ -1,0 +1,28 @@
+name: copilot-hub
+version: 1.0.0
+description: >
+  Meta-package — installs all copilot-hub packages for repository contributors.
+  Use individual packages (e.g. gravion/copilot-hub/packages/angular) in your projects.
+author:
+  name: Gravion
+license: MIT
+includes: auto
+dependencies:
+  apm:
+    - ./packages/ag-grid
+    - ./packages/angular
+    - ./packages/common
+    - ./packages/copilot-workspace
+    - ./packages/csharp
+    - ./packages/devops
+    - ./packages/docker
+    - ./packages/go
+    - ./packages/helm
+    - ./packages/playwright
+    - ./packages/postgresql
+    - ./packages/python
+    - ./packages/security
+    - ./packages/shared
+    - ./packages/terraform
+    - ./packages/typescript
+  mcp: []

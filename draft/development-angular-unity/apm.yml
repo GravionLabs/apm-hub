@@ -1,7 +1,0 @@
-name: development-angular-unity
-version: 0.1.0
-description: Angular RWE Unity component framework — components, directives, services, and utilities from @rwe/unity-lib.
-author: RWEST Generation & Operations
-dependencies:
-  apm: []
-  mcp: []

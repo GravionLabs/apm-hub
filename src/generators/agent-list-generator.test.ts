@@ -5,16 +5,16 @@ import { generateAgentList } from './agent-list-generator';
 
 describe('generateAgentList', () => {
   let tmpDir: string;
-  let templatesDir: string;
+  let packagesDir: string;
   let outputFile: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-list-test-'));
-    templatesDir = path.join(tmpDir, 'templates');
+    packagesDir = path.join(tmpDir, 'packages');
     outputFile = path.join(tmpDir, 'docs', 'agent-list.md');
 
-    // Agents are in templates/<domain>/agents/*.agent.md
-    const csAgentsDir = path.join(templatesDir, 'csharp', 'agents');
+    // Agents are in packages/<domain>/.apm/agents/*.agent.md
+    const csAgentsDir = path.join(packagesDir, 'csharp', '.apm', 'agents');
     fs.mkdirSync(csAgentsDir, { recursive: true });
     fs.writeFileSync(
       path.join(csAgentsDir, 'csharp-expert.agent.md'),
@@ -28,14 +28,14 @@ describe('generateAgentList', () => {
     fs.writeFileSync(path.join(csAgentsDir, 'README.md'), '# readme');
 
     // Skills should not appear in agent list
-    const csSkillsDir = path.join(templatesDir, 'csharp', 'skills', 'csharp-async');
+    const csSkillsDir = path.join(packagesDir, 'csharp', '.apm', 'skills', 'csharp-async');
     fs.mkdirSync(csSkillsDir, { recursive: true });
     fs.writeFileSync(
       path.join(csSkillsDir, 'SKILL.md'),
       '---\nname: csharp-async\n---\nContent'
     );
 
-    const sharedAgentsDir = path.join(templatesDir, 'shared', 'agents');
+    const sharedAgentsDir = path.join(packagesDir, 'shared', '.apm', 'agents');
     fs.mkdirSync(sharedAgentsDir, { recursive: true });
     fs.writeFileSync(
       path.join(sharedAgentsDir, 'documentation-writer.agent.md'),
@@ -48,7 +48,7 @@ describe('generateAgentList', () => {
   });
 
   it('should generate domain sections with only agent files', () => {
-    generateAgentList(templatesDir, outputFile);
+    generateAgentList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('# Agent List');
     expect(content).toContain('## Csharp');
@@ -59,23 +59,23 @@ describe('generateAgentList', () => {
   });
 
   it('should not include skills in agent list', () => {
-    generateAgentList(templatesDir, outputFile);
+    generateAgentList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).not.toContain('csharp-async');
   });
 
   it('should include overview table with domain links', () => {
-    generateAgentList(templatesDir, outputFile);
+    generateAgentList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('## Overview');
     expect(content).toContain('[Csharp](#csharp)');
     expect(content).toContain('[Shared](#shared)');
   });
 
-  it('should link to template files using agents/ subdir path', () => {
-    generateAgentList(templatesDir, outputFile);
+  it('should link to package files using agents/ subdir path', () => {
+    generateAgentList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
-    expect(content).toContain('csharp/agents/csharp-expert.agent.md');
-    expect(content).toContain('shared/agents/documentation-writer.agent.md');
+    expect(content).toContain('packages/csharp/.apm/agents/csharp-expert.agent.md');
+    expect(content).toContain('packages/shared/.apm/agents/documentation-writer.agent.md');
   });
 });

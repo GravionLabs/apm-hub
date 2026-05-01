@@ -9,15 +9,15 @@ import {
 } from './list-generator';
 
 export function generateInstructionList(
-  templatesBaseDir = 'templates',
+  packagesBaseDir = 'packages',
   outputFile = 'docs/instruction-list.md'
 ) {
-  const domains = collectDomains(templatesBaseDir);
+  const domains = collectDomains(packagesBaseDir);
   const allInstructions: DomainEntry[] = [];
   const byDomain: Record<string, DomainEntry[]> = {};
 
   for (const domain of domains) {
-    const instructionsDir = path.join(templatesBaseDir, domain, 'instructions');
+    const instructionsDir = path.join(packagesBaseDir, domain, '.apm', 'instructions');
     if (!fs.existsSync(instructionsDir)) continue;
 
     const files = fs
@@ -34,7 +34,7 @@ export function generateInstructionList(
       const fm = parseFrontmatter(content);
       const name = fm.name || filename.replace('.instructions.md', '');
       const description = fm.description || '-';
-      const relPath = `${domain}/instructions/${filename}`;
+      const relPath = `packages/${domain}/.apm/instructions/${filename}`;
       const entry: DomainEntry = { domain, name, description, relPath };
       allInstructions.push(entry);
       byDomain[domain].push(entry);

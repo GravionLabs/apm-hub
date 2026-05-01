@@ -1,8 +1,0 @@
-name: planning2-task-breakdown
-version: 0.1.0
-description: Planning 2 workflow — resolves technical ambiguities in ADO tickets, conducts structured interviews, and creates child task work items.
-author: RWEST Generation & Operations
-dependencies:
-  apm:
-    - dev.azure.com/RWEST-MTI-AC/Generation%20and%20Operations/_git/rwest.cao.apm-agent-packages/packages/common-azuredevops
-  mcp: []

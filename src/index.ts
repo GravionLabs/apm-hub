@@ -1,51 +1,25 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import { generateTemplateList } from './generators/template-list-generator';
-import { generatePlugin } from './generators/plugin-generator';
-import { generatePluginList } from './generators/plugin-list-generator';
 import { updateReadme, updateFileBlock } from './generators/readme-generator';
 import { formatAllDocs } from './generators/format-docs-generator';
-import { generateMarketplace } from './generators/marketplace-generator';
 import { generateSkillList } from './generators/skill-list-generator';
 import { generateAgentList } from './generators/agent-list-generator';
 import { generateInstructionList } from './generators/instruction-list-generator';
-import PackageGenerator from './generators/package-generator';
-
-function generateAllPlugins(version?: string) {
-  const pluginsDir = 'plugins';
-  if (fs.existsSync(pluginsDir)) {
-    const pluginDirs = fs
-      .readdirSync(pluginsDir, { withFileTypes: true })
-      .filter((d) => d.isDirectory())
-      .map((d) => d.name);
-    for (const pluginDirName of pluginDirs) {
-      const configPath = path.join(pluginsDir, pluginDirName, 'plugin.config.yml');
-      if (fs.existsSync(configPath)) {
-        processPluginConfig(configPath, version);
-      }
-    }
-  }
-}
+import { updatePackageVersions } from './generators/version-updater';
+import { generateRootApm } from './generators/root-apm-generator';
 
 function generateAggregateDocs(version?: string) {
+  if (version) {
+    updatePackageVersions(version);
+  }
   generateTemplateList();
   generateSkillList();
   generateAgentList();
   generateInstructionList();
-  generatePluginList();
   updateReadme();
   if (version) {
     updateFileBlock('docs/overview.md', 'version', `Welcome to **copilot-hub** v${version} 👋`);
   }
   formatAllDocs();
-  generateMarketplace();
-}
-
-function generatePackages(verbose = false) {
-  console.log('🔄 Generating unified packages...');
-  const generator = new PackageGenerator({ verbose });
-  const result = generator.generate();
-  console.log(`   Hub packages: ${result.hubPackages}, APM packages: ${result.apmPackages}, Obsolete: ${result.obsoletePackages}`);
 }
 
 function main() {
@@ -59,28 +33,19 @@ function main() {
     args.splice(versionFlagIndex, 2);
   }
 
-  // Default (no args): only regenerate plugin-specific files (SKILL.md, plugin.json).
-  // Safe to run locally or in feature branches — does NOT touch aggregate docs.
+  // Default (no args): regenerate aggregate docs
   if (args.length === 0) {
-    console.log('Regenerating plugin files (SKILL.md, plugin.json)...');
-    console.log('Tip: use --aggregate to also regenerate docs/plugin-list.md, skill-list.md, marketplace.json, etc.');
-    generateAllPlugins(version);
+    console.log('Regenerating aggregate docs...');
+    generateAggregateDocs(version);
     return;
   }
 
   const inputPath = args[0];
 
-  // --aggregate: regenerate all aggregate docs (CI-only, not for feature branches)
+  // --aggregate: regenerate all aggregate docs (CI use)
   if (inputPath === '--aggregate') {
-    console.log('Regenerating plugins + packages + all aggregate docs...');
-    generateAllPlugins(version);
-    generatePackages(true); // Verbose during CI
+    console.log('Regenerating all aggregate docs...');
     generateAggregateDocs(version);
-    return;
-  }
-
-  if (inputPath === '--packages') {
-    generatePackages(true);
     return;
   }
 
@@ -99,44 +64,13 @@ function main() {
     return;
   }
 
-  if (inputPath === '--plugins') {
-    generateAllPlugins(version);
+  if (inputPath === '--root-apm') {
+    generateRootApm();
     return;
   }
 
-  if (!fs.existsSync(inputPath)) {
-    console.error(`Error: Path not found: ${inputPath}`);
-    process.exit(1);
-  }
-
-  const stats = fs.statSync(inputPath);
-
-  if (inputPath.endsWith('plugin.config.yml')) {
-    processPluginConfig(inputPath, version);
-    return;
-  }
-
-  if (stats.isDirectory()) {
-    // Check if it's a plugin directory
-    const pluginConfig = path.join(inputPath, 'plugin.config.yml');
-    if (fs.existsSync(pluginConfig)) {
-      processPluginConfig(pluginConfig, version);
-      return;
-    }
-    console.error(`Error: No plugin.config.yml found in directory: ${inputPath}`);
-    process.exit(1);
-  } else {
-    processPluginConfig(inputPath, version);
-  }
-}
-
-function processPluginConfig(configPath: string, version?: string) {
-  try {
-    const templatesDir = path.join(process.cwd(), 'templates');
-    generatePlugin(configPath, templatesDir, version);
-  } catch (error) {
-    console.error(`Error processing plugin config ${configPath}:`, error);
-  }
+  console.error(`Error: Unknown argument: ${inputPath}`);
+  process.exit(1);
 }
 
 main();

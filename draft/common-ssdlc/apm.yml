@@ -1,7 +1,0 @@
-name: common-ssdlc
-version: 0.1.0
-description: Shared security and compliance primitives — SSDLC validation and CodeQL suppression.
-author: RWEST Generation & Operations
-dependencies:
-  apm: []
-  mcp: []

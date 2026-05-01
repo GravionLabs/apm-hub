@@ -1,0 +1,13 @@
+name: shared
+version: 1.0.0
+description: Shared agents, instructions and skills used across all GravionLabs copilot-hub packages. Includes general-purpose SE agents (documentation writer, technical writer, UX/UI designer, test engineer), code review and markdown instructions, and reusable skills for test writing and skill creation.
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - shared
+  - agents
+  - instructions
+  - skills
+  - code-review
+  - testing

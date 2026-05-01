@@ -1,0 +1,13 @@
+name: copilot-workspace
+version: 1.0.39
+description: GitHub Copilot workspace setup for GravionLabs/copilot-hub contributors. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills (gh-issue-implement, gh-issue-finish, gh-issue-work) automate the full branch → implement → review → PR lifecycle.
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - copilot
+  - github-copilot
+  - workspace
+  - configuration
+  - agents-md
+  - issue-workflow

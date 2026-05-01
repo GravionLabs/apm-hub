@@ -1,0 +1,13 @@
+name: angular-development
+version: 1.0.39
+description: Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - angular
+  - ngrx
+  - signals
+  - primeng
+  - sakai-ui
+  - typescript

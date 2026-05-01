@@ -1,7 +1,0 @@
-name: development-angular
-version: 0.1.0
-description: Angular framework — components, directives, services, and utilities.
-author: RWEST Generation & Operations
-dependencies:
-  apm: []
-  mcp: []

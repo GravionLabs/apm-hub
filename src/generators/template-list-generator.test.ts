@@ -58,46 +58,39 @@ describe('template-list-generator helpers', () => {
 
 describe('generateTemplateList', () => {
   let tmpDir: string;
-  let templatesDir: string;
+  let packagesDir: string;
   let outputFile: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'template-list-test-'));
-    templatesDir = path.join(tmpDir, 'templates');
+    packagesDir = path.join(tmpDir, 'packages');
     outputFile = path.join(tmpDir, 'docs', 'template-list.md');
 
-    // Create domain/type subdirectory structure (agentskills.io / copilot-hub layout)
-    const agentsDir = path.join(templatesDir, 'csharp', 'agents');
+    // Create packages/<domain>/.apm/ subdirectory structure
+    const agentsDir = path.join(packagesDir, 'csharp', '.apm', 'agents');
     fs.mkdirSync(agentsDir, { recursive: true });
     fs.writeFileSync(
       path.join(agentsDir, 'csharp-expert.agent.md'),
       '---\nname: C# Expert\ndescription: Expert C# developer agent.\n---\nContent'
     );
 
-    // Skill directory layout: skills/<name>/SKILL.md
-    const skillDir = path.join(templatesDir, 'csharp', 'skills', 'csharp-async');
+    // Skill directory layout: .apm/skills/<name>/SKILL.md
+    const skillDir = path.join(packagesDir, 'csharp', '.apm', 'skills', 'csharp-async');
     fs.mkdirSync(skillDir, { recursive: true });
     fs.writeFileSync(
       path.join(skillDir, 'SKILL.md'),
       '---\nname: csharp-async\ndescription: Best practices for C# async/await.\n---\nContent'
     );
 
-    const instructionsDir = path.join(templatesDir, 'csharp', 'instructions');
+    const instructionsDir = path.join(packagesDir, 'csharp', '.apm', 'instructions');
     fs.mkdirSync(instructionsDir, { recursive: true });
     fs.writeFileSync(
       path.join(instructionsDir, 'csharp.instructions.md'),
       '---\ndescription: C# coding standards.\n---\nContent'
     );
 
-    const promptsDir = path.join(templatesDir, 'csharp', 'prompts');
-    fs.mkdirSync(promptsDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(promptsDir, 'create-dotnet-solution.prompt.md'),
-      '---\nname: create-dotnet-solution\ndescription: Scaffold a .NET solution.\n---\nContent'
-    );
-
     // Shared domain with a skill
-    const sharedSkillDir = path.join(templatesDir, 'shared', 'skills', 'write-tests');
+    const sharedSkillDir = path.join(packagesDir, 'shared', '.apm', 'skills', 'write-tests');
     fs.mkdirSync(sharedSkillDir, { recursive: true });
     fs.writeFileSync(
       path.join(sharedSkillDir, 'SKILL.md'),
@@ -109,55 +102,53 @@ describe('generateTemplateList', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('should generate domain sections with all template types', () => {
-    generateTemplateList(templatesDir, outputFile);
+  it('should generate domain sections with all package types', () => {
+    generateTemplateList(packagesDir, outputFile);
 
     const content = fs.readFileSync(outputFile, 'utf8');
-    expect(content).toContain('# Template List');
+    expect(content).toContain('# Package List');
     expect(content).toContain('## Csharp');
     expect(content).toContain('## Shared');
     expect(content).toContain('C# Expert');
     expect(content).toContain('### Agents');
     expect(content).toContain('### Skills');
     expect(content).toContain('### Instructions');
-    expect(content).toContain('### Prompts');
+    expect(content).not.toContain('### Prompts');
     expect(content).toContain('csharp-async');
   });
 
   it('should not include a Type column header in tables', () => {
-    generateTemplateList(templatesDir, outputFile);
+    generateTemplateList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).not.toContain('| Type |');
     expect(content).not.toContain('| :--- | :--- | :---------- |');
   });
 
-  it('should include links to template files using correct paths', () => {
-    generateTemplateList(templatesDir, outputFile);
+  it('should include links to package files using correct paths', () => {
+    generateTemplateList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     // Agents: flat file link
-    expect(content).toContain('csharp/agents/csharp-expert.agent.md');
+    expect(content).toContain('packages/csharp/.apm/agents/csharp-expert.agent.md');
     // Skills: directory layout link
-    expect(content).toContain('csharp/skills/csharp-async/SKILL.md');
+    expect(content).toContain('packages/csharp/.apm/skills/csharp-async/SKILL.md');
     // Instructions: flat file link
-    expect(content).toContain('csharp/instructions/csharp.instructions.md');
-    // Prompts: flat file link
-    expect(content).toContain('csharp/prompts/create-dotnet-solution.prompt.md');
+    expect(content).toContain('packages/csharp/.apm/instructions/csharp.instructions.md');
   });
 
   it('should generate table of contents with domain anchors', () => {
-    generateTemplateList(templatesDir, outputFile);
+    generateTemplateList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('[Csharp](#csharp)');
     expect(content).toContain('[Shared](#shared)');
   });
 
-  it('should skip unknown subdirectories and non-template files', () => {
+  it('should skip unknown subdirectories and non-package files', () => {
     // An unknown subdir (e.g. a scripts/ folder) should be ignored
-    const unknownDir = path.join(templatesDir, 'csharp', 'scripts');
+    const unknownDir = path.join(packagesDir, 'csharp', '.apm', 'scripts');
     fs.mkdirSync(unknownDir, { recursive: true });
     fs.writeFileSync(path.join(unknownDir, 'setup.ps1'), '# script');
 
-    generateTemplateList(templatesDir, outputFile);
+    generateTemplateList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).not.toContain('setup.ps1');
   });

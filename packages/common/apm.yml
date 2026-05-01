@@ -1,0 +1,13 @@
+name: common
+version: 1.0.0
+description: Shared primitives for git, GitHub, and Azure DevOps workflows. Provides common git operations (branch creation, commits, push), GitHub pull request management, and issue linking.
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - git
+  - github
+  - azure-devops
+  - pull-request
+  - workflow
+  - branch-management

@@ -9,15 +9,15 @@ import {
 } from './list-generator';
 
 export function generateAgentList(
-  templatesBaseDir = 'templates',
+  packagesBaseDir = 'packages',
   outputFile = 'docs/agent-list.md'
 ) {
-  const domains = collectDomains(templatesBaseDir);
+  const domains = collectDomains(packagesBaseDir);
   const allAgents: DomainEntry[] = [];
   const byDomain: Record<string, DomainEntry[]> = {};
 
   for (const domain of domains) {
-    const agentsDir = path.join(templatesBaseDir, domain, 'agents');
+    const agentsDir = path.join(packagesBaseDir, domain, '.apm', 'agents');
     if (!fs.existsSync(agentsDir)) continue;
 
     const files = fs
@@ -34,7 +34,7 @@ export function generateAgentList(
       const fm = parseFrontmatter(content);
       const name = fm.name || getTitle(content, filename);
       const description = fm.description || '-';
-      const relPath = `${domain}/agents/${filename}`;
+      const relPath = `packages/${domain}/.apm/agents/${filename}`;
       const entry: DomainEntry = { domain, name, description, relPath };
       allAgents.push(entry);
       byDomain[domain].push(entry);

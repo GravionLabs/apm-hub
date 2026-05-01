@@ -5,16 +5,16 @@ import { generateSkillList } from './skill-list-generator';
 
 describe('generateSkillList', () => {
   let tmpDir: string;
-  let templatesDir: string;
+  let packagesDir: string;
   let outputFile: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-list-test-'));
-    templatesDir = path.join(tmpDir, 'templates');
+    packagesDir = path.join(tmpDir, 'packages');
     outputFile = path.join(tmpDir, 'docs', 'skill-list.md');
 
-    // csharp/skills/<name>/SKILL.md — agentskills.io directory layout
-    const csSkillsDir = path.join(templatesDir, 'csharp', 'skills');
+    // csharp/packages/<domain>/.apm/skills/<name>/SKILL.md — agentskills.io directory layout
+    const csSkillsDir = path.join(packagesDir, 'csharp', '.apm', 'skills');
     fs.mkdirSync(path.join(csSkillsDir, 'csharp-async'), { recursive: true });
     fs.writeFileSync(
       path.join(csSkillsDir, 'csharp-async', 'SKILL.md'),
@@ -26,15 +26,15 @@ describe('generateSkillList', () => {
       '---\nname: csharp-docs\ndescription: Document C# types with XML comments.\n---\nContent'
     );
     // Agents/instructions in csharp domain should be ignored by skill-list
-    const csAgentsDir = path.join(templatesDir, 'csharp', 'agents');
+    const csAgentsDir = path.join(packagesDir, 'csharp', '.apm', 'agents');
     fs.mkdirSync(csAgentsDir, { recursive: true });
     fs.writeFileSync(path.join(csAgentsDir, 'csharp-expert.agent.md'), '---\nname: C# Expert\n---\n');
-    const csInstrDir = path.join(templatesDir, 'csharp', 'instructions');
+    const csInstrDir = path.join(packagesDir, 'csharp', '.apm', 'instructions');
     fs.mkdirSync(csInstrDir, { recursive: true });
     fs.writeFileSync(path.join(csInstrDir, 'csharp.instructions.md'), '---\ndescription: C# standards.\n---\n');
 
-    // shared/skills/write-tests/SKILL.md
-    const sharedSkillsDir = path.join(templatesDir, 'shared', 'skills');
+    // shared/.apm/skills/write-tests/SKILL.md
+    const sharedSkillsDir = path.join(packagesDir, 'shared', '.apm', 'skills');
     fs.mkdirSync(path.join(sharedSkillsDir, 'write-tests'), { recursive: true });
     fs.writeFileSync(
       path.join(sharedSkillsDir, 'write-tests', 'SKILL.md'),
@@ -47,7 +47,7 @@ describe('generateSkillList', () => {
   });
 
   it('should generate domain sections with only skill files', () => {
-    generateSkillList(templatesDir, outputFile);
+    generateSkillList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('# Skill List');
     expect(content).toContain('## Csharp');
@@ -58,24 +58,24 @@ describe('generateSkillList', () => {
   });
 
   it('should not include agents or instructions in skill list', () => {
-    generateSkillList(templatesDir, outputFile);
+    generateSkillList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).not.toContain('C# Expert');
     expect(content).not.toContain('csharp.instructions');
   });
 
   it('should include overview table with domain links', () => {
-    generateSkillList(templatesDir, outputFile);
+    generateSkillList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('## Overview');
     expect(content).toContain('[Csharp](#csharp)');
     expect(content).toContain('[Shared](#shared)');
   });
 
-  it('should link to skill directory layout template files', () => {
-    generateSkillList(templatesDir, outputFile);
+  it('should link to skill directory layout package files', () => {
+    generateSkillList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
-    expect(content).toContain('skills/csharp-async/SKILL.md');
-    expect(content).toContain('skills/write-tests/SKILL.md');
+    expect(content).toContain('packages/csharp/.apm/skills/csharp-async/SKILL.md');
+    expect(content).toContain('packages/shared/.apm/skills/write-tests/SKILL.md');
   });
 });

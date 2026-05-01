@@ -9,15 +9,15 @@ import {
 } from './list-generator';
 
 export function generateSkillList(
-  templatesBaseDir = 'templates',
+  packagesBaseDir = 'packages',
   outputFile = 'docs/skill-list.md'
 ) {
-  const domains = collectDomains(templatesBaseDir);
+  const domains = collectDomains(packagesBaseDir);
   const allSkills: DomainEntry[] = [];
   const byDomain: Record<string, DomainEntry[]> = {};
 
   for (const domain of domains) {
-    const skillsSubdir = path.join(templatesBaseDir, domain, 'skills');
+    const skillsSubdir = path.join(packagesBaseDir, domain, '.apm', 'skills');
     if (!fs.existsSync(skillsSubdir)) continue;
 
     const skillDirs = fs
@@ -38,7 +38,7 @@ export function generateSkillList(
       const fm = parseFrontmatter(content);
       const name = fm.name || skillName;
       const description = fm.description || '-';
-      const relPath = `${domain}/skills/${skillName}/SKILL.md`;
+      const relPath = `packages/${domain}/.apm/skills/${skillName}/SKILL.md`;
       const entry: DomainEntry = { domain, name, description, relPath };
       allSkills.push(entry);
       byDomain[domain].push(entry);

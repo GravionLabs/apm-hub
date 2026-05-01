@@ -1,7 +1,0 @@
-name: common-onboarding
-version: 0.1.0
-description: Repository onboarding — analyses an existing codebase and generates a concise AGENTS.md file that gives AI coding agents immediate, project-specific context.
-author: RWEST Generation & Operations
-dependencies:
-  apm: []
-  mcp: []

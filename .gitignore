@@ -33,25 +33,17 @@ Thumbs.db
 # Test results
 test-results/
 
-# Generated package distribution — managed by CI (regenerate-and-commit job)
-# Source of truth: templates/*/package.yml (manifests in templates/)
-# CI generates packages/ → .github/ + .apm/ + apm.yml
-packages/
-!packages/.gitkeep
+# APM package cache — installed by `apm install`, not committed
+packages/*/apm_modules/
+apm_modules/
 
-# Generated Copilot Hub runtime artifacts — managed by CI
-# Source of truth: templates/*/package.yml
-# Edit manifests in templates/, not generated copies
+# Generated Copilot Hub runtime artifacts — deployed by `apm install` from root apm.yml
+# Source of truth: templates/*/package.yml → packages/*/.apm/ → apm install → .github/
+# Edit templates/, regenerate packages via CI, then apm install redeploys to .github/.
 .github/agents/
 .github/instructions/
 .github/skills/
 .github/plugin/
-
-# Legacy plugin artifacts (deprecated, use packages/ instead)
-# Keeping for reference during migration
-plugins/*/agents/
-plugins/*/instructions/
-plugins/*/skills/
 
 # Generated aggregate docs — managed by CI (regenerate-and-commit job)
 # These are auto-generated from templates/ after merge to main.
@@ -60,4 +52,3 @@ docs/agent-list.md
 docs/instruction-list.md
 docs/skill-list.md
 docs/template-list.md
-docs/plugin-list.md

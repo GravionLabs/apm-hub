@@ -5,15 +5,15 @@ export interface DomainEntry {
   domain: string;
   name: string;
   description: string;
-  /** Relative path from templatesBaseDir used in doc links */
+  /** Repo-relative path used in doc links (e.g. packages/angular/.apm/skills/foo/SKILL.md) */
   relPath: string;
 }
 
-/** Returns sorted domain directory names from the templates base directory. */
-export function collectDomains(templatesBaseDir: string): string[] {
-  if (!fs.existsSync(templatesBaseDir)) return [];
+/** Returns sorted domain directory names from the packages base directory. */
+export function collectDomains(packagesBaseDir: string): string[] {
+  if (!fs.existsSync(packagesBaseDir)) return [];
   return fs
-    .readdirSync(templatesBaseDir, { withFileTypes: true })
+    .readdirSync(packagesBaseDir, { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => d.name)
     .sort();
@@ -49,7 +49,7 @@ export function generateDomainListMarkdown(
   output += `| ${':'.padEnd(config.overviewHeader.length + 1, '-')} | :----- | :---------- |\n`;
 
   for (const e of allEntries) {
-    const link = `[${e.name}](../templates/${e.relPath})`;
+    const link = `[${e.name}](../${e.relPath})`;
     const domainLabel = e.domain.charAt(0).toUpperCase() + e.domain.slice(1);
     const domainLink = `[${domainLabel}](#${e.domain})`;
     output += `| ${link} | ${domainLink} | ${e.description} |\n`;
@@ -62,7 +62,7 @@ export function generateDomainListMarkdown(
     output += `| ${config.itemColumnHeader} | Description |\n`;
     output += `| ${':'.padEnd(config.itemColumnHeader.length + 1, '-')} | :---------- |\n`;
     for (const e of entries) {
-      const link = `[\`${e.name}\`](../templates/${e.relPath})`;
+      const link = `[\`${e.name}\`](../${e.relPath})`;
       output += `| ${link} | ${e.description} |\n`;
     }
     output += `\n`;

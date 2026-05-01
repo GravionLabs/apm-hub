@@ -5,15 +5,15 @@ import { generateInstructionList } from './instruction-list-generator';
 
 describe('generateInstructionList', () => {
   let tmpDir: string;
-  let templatesDir: string;
+  let packagesDir: string;
   let outputFile: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'instruction-list-test-'));
-    templatesDir = path.join(tmpDir, 'templates');
+    packagesDir = path.join(tmpDir, 'packages');
     outputFile = path.join(tmpDir, 'docs', 'instruction-list.md');
 
-    const csDir = path.join(templatesDir, 'csharp', 'instructions');
+    const csDir = path.join(packagesDir, 'csharp', '.apm', 'instructions');
     fs.mkdirSync(csDir, { recursive: true });
     fs.writeFileSync(
       path.join(csDir, 'csharp.instructions.md'),
@@ -24,14 +24,14 @@ describe('generateInstructionList', () => {
       '---\ndescription: NUnit testing conventions for C#.\n---\nContent'
     );
     // Non-instruction files should be ignored
-    const csAgentsDir = path.join(templatesDir, 'csharp', 'agents');
+    const csAgentsDir = path.join(packagesDir, 'csharp', '.apm', 'agents');
     fs.mkdirSync(csAgentsDir, { recursive: true });
     fs.writeFileSync(
       path.join(csAgentsDir, 'csharp-expert.agent.md'),
       '---\nname: C# Expert\n---\nContent'
     );
 
-    const devopsDir = path.join(templatesDir, 'devops', 'instructions');
+    const devopsDir = path.join(packagesDir, 'devops', '.apm', 'instructions');
     fs.mkdirSync(devopsDir, { recursive: true });
     fs.writeFileSync(
       path.join(devopsDir, 'shell.instructions.md'),
@@ -44,7 +44,7 @@ describe('generateInstructionList', () => {
   });
 
   it('should generate domain sections with only instruction files', () => {
-    generateInstructionList(templatesDir, outputFile);
+    generateInstructionList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('# Instruction List');
     expect(content).toContain('## Csharp');
@@ -55,23 +55,23 @@ describe('generateInstructionList', () => {
   });
 
   it('should not include agents or skills in instruction list', () => {
-    generateInstructionList(templatesDir, outputFile);
+    generateInstructionList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).not.toContain('C# Expert');
   });
 
   it('should include overview table with domain links', () => {
-    generateInstructionList(templatesDir, outputFile);
+    generateInstructionList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('## Overview');
     expect(content).toContain('[Csharp](#csharp)');
     expect(content).toContain('[Devops](#devops)');
   });
 
-  it('should link to template files', () => {
-    generateInstructionList(templatesDir, outputFile);
+  it('should link to package files', () => {
+    generateInstructionList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
-    expect(content).toContain('csharp/instructions/csharp.instructions.md');
-    expect(content).toContain('devops/instructions/shell.instructions.md');
+    expect(content).toContain('packages/csharp/.apm/instructions/csharp.instructions.md');
+    expect(content).toContain('packages/devops/.apm/instructions/shell.instructions.md');
   });
 });

@@ -1,0 +1,13 @@
+name: devops
+version: 1.0.39
+description: Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - devops
+  - azure-devops
+  - code-review
+  - pull-request
+  - github-actions
+  - ci-cd

@@ -25,8 +25,6 @@ jobs:
       - name: Check for auto-generated aggregate files
         run: |
           GENERATED_FILES=(
-            ".github/plugin/marketplace.json"
-            "docs/plugin-list.md"
             "docs/skill-list.md"
             "docs/template-list.md"
             "docs/agent-list.md"
@@ -108,6 +106,21 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Install APM
+        uses: microsoft/apm-action@v1
+
+      - name: Audit APM packages
+        run: apm audit --ci
+
+      - name: Check APM integration drift
+        run: |
+          apm install
+          if [ -n "$(git status --porcelain -- .github/agents/ .github/skills/ .github/instructions/)" ]; then
+            echo "❌ APM integration files are out of date. Run 'apm install' and commit."
+            exit 1
+          fi
+          echo "✅ APM integration files are up to date."
+
   determine-version:
     name: Determine Version
     runs-on: ubuntu-latest
@@ -158,18 +171,16 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add plugins/**/.github/plugin/plugin.json plugins/*/plugin.config.yml README.md
-          # Force-add gitignored plugin artifacts (agents, instructions, skills are in .gitignore
-          # but must be committed so plugins work when installed from this repo)
-          git add -f plugins/*/agents/ plugins/*/instructions/ plugins/*/skills/
-          # Force-add gitignored aggregate docs and marketplace manifest
-          git add -f docs/agent-list.md docs/instruction-list.md docs/skill-list.md docs/template-list.md docs/plugin-list.md
-          git add -f .github/plugin/marketplace.json
+          git add README.md
+          # Force-add gitignored aggregate docs
+          git add -f docs/agent-list.md docs/instruction-list.md docs/skill-list.md docs/template-list.md
+          # Commit APM packages output (packages/ is gitignored for apm_modules/ only)
+          git add packages/*/apm.yml packages/*/apm.lock.yaml "packages/*/.apm/"
           if git diff --staged --quiet; then
             echo "No generated changes to commit"
             exit 0
           fi
-          git commit -m "chore: regenerate plugin artifacts, docs and manifests [skip ci]"
+          git commit -m "chore: regenerate APM packages and docs [skip ci]"
           git push
 
   release:
