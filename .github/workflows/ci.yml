@@ -167,6 +167,12 @@ jobs:
       - name: Regenerate plugins & documentation
         run: npm run generate:ci -- --version ${{ needs.determine-version.outputs.semver }}
 
+      - name: Install APM CLI
+        run: curl -sSL https://aka.ms/apm-unix | sh
+
+      - name: Pack marketplace
+        run: apm pack
+
       - name: Commit generated files
         run: |
           git config user.name "github-actions[bot]"
@@ -176,6 +182,8 @@ jobs:
           git add -f docs/agent-list.md docs/instruction-list.md docs/skill-list.md docs/template-list.md
           # Commit APM packages output (packages/ is gitignored for apm_modules/ only)
           git add packages/*/apm.yml packages/*/apm.lock.yaml "packages/*/.apm/"
+          # Commit marketplace definition
+          git add apm.yml .claude-plugin/marketplace.json
           if git diff --staged --quiet; then
             echo "No generated changes to commit"
             exit 0

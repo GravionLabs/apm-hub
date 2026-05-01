@@ -1,7 +1,7 @@
 [changelog]
 header = """# Changelog
 
-All notable changes to GravionLabs/copilot-hub are documented here.
+All notable changes to GravionLabs/apm-hub are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
