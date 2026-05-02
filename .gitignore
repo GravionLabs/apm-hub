@@ -37,13 +37,8 @@ test-results/
 packages/*/apm_modules/
 apm_modules/
 
-# Generated Copilot Hub runtime artifacts — deployed by `apm install` from root apm.yml
-# Source of truth: templates/*/package.yml → packages/*/.apm/ → apm install → .github/
-# Edit templates/, regenerate packages via CI, then apm install redeploys to .github/.
-.github/agents/
-.github/instructions/
-.github/skills/
-.github/plugin/
+# Deployed APM artifacts in package subdirectories — source of truth is .apm/
+packages/*/.github/
 
 # Generated aggregate docs — managed by CI (regenerate-and-commit job)
 # These are auto-generated from templates/ after merge to main.

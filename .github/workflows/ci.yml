@@ -112,15 +112,6 @@ jobs:
       - name: Audit APM packages
         run: apm audit --ci
 
-      - name: Check APM integration drift
-        run: |
-          apm install
-          if [ -n "$(git status --porcelain -- .github/agents/ .github/skills/ .github/instructions/)" ]; then
-            echo "❌ APM integration files are out of date. Run 'apm install' and commit."
-            exit 1
-          fi
-          echo "✅ APM integration files are up to date."
-
   determine-version:
     name: Determine Version
     runs-on: ubuntu-latest
@@ -180,8 +171,8 @@ jobs:
           git add README.md
           # Force-add gitignored aggregate docs
           git add -f docs/agent-list.md docs/instruction-list.md docs/skill-list.md docs/template-list.md
-          # Commit APM packages output (packages/ is gitignored for apm_modules/ only)
-          git add packages/*/apm.yml packages/*/apm.lock.yaml "packages/*/.apm/"
+          # Commit APM packages output (packages/ is gitignored for apm_modules/ and .github/ only)
+          git add packages/*/apm.yml packages/*/apm.lock.yaml "packages/*/.apm/" packages/all/
           # Commit marketplace definition
           git add apm.yml .claude-plugin/marketplace.json
           if git diff --staged --quiet; then

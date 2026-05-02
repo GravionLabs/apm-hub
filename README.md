@@ -26,24 +26,35 @@ A curated hub for sharing GitHub Copilot instructions, agents, prompts, and APM 
    # or: winget install Microsoft.APM
    ```
 
-2. Create an `apm.yml` in your repository:
+2. Register the apm-hub marketplace (once per machine):
+   ```bash
+   apm marketplace add GravionLabs/apm-hub
+   ```
+
+3. Install individual packages:
+   ```bash
+   apm install angular@apm-hub
+   apm install typescript@apm-hub
+   apm install csharp@apm-hub
+   ```
+
+   Or install **all packages** at once:
+   ```bash
+   apm install all@apm-hub
+   ```
+
+4. Or add packages directly to your project's `apm.yml`:
    ```yaml
    name: my-project
    version: 1.0.0
    dependencies:
      apm:
-       - gravion/apm-hub/packages/angular#v1.2.3
-       - gravion/apm-hub/packages/common#v1.2.3
+       - GravionLabs/apm-hub/packages/angular
+       - GravionLabs/apm-hub/packages/common
    ```
+   Then run `apm install` to deploy to `.github/`, `.claude/`, `.cursor/` etc.
 
-3. Install and deploy to `.github/`:
-   ```bash
-   apm install          # first install
-   apm install --update # update to latest
-   apm audit            # security scan
-   ```
-
-### What to commit
+### What to commit in your project
 
 | Path                                                          | Action                              |
 | :------------------------------------------------------------ | :---------------------------------- |
@@ -51,29 +62,6 @@ A curated hub for sharing GitHub Copilot instructions, agents, prompts, and APM 
 | `apm.lock.yaml`                                               | ✅ Commit                            |
 | `.github/agents/`, `.github/instructions/`, `.github/skills/` | ✅ Commit (instant context on clone) |
 | `apm_modules/`                                                | ❌ Add to `.gitignore`               |
-
-### Using Templates Directly
-
-1. Browse the [**Template List**](docs/template-list.md) to find what you need.
-2. Copy the relevant `.md` files from `templates/` into your repository:
-   - **[Instructions](templates/instructions/)** → `.github/instructions/`
-   - **[Prompts](templates/prompts/)** → `.github/prompts/`
-   - **[Agents](templates/agents/)** → `.github/agents/`
-
-## 🛠️ Template Library
-
-This repository contains a wide range of production-ready templates:
-
-<!-- AUTO:start template-stats -->
-| Category         | Count | Location                            | Purpose                                  |
-| :--------------- | :---: | :---------------------------------- | :--------------------------------------- |
-| **Agents**       |   0   | `templates/<domain>/agents/`        | Specialized expert roles (@-mentions)    |
-| **Skills**       |   0   | `templates/<domain>/skills/<name>/` | Reusable task-specific workflows         |
-| **Prompts**      |   0   | `templates/<domain>/prompts/`       | Task-specific workflows (slash commands) |
-| **Instructions** |   0   | `templates/<domain>/instructions/`  | Persistent project rules and standards   |
-<!-- AUTO:end template-stats -->
-
-📄 **[Browse All Templates](docs/template-list.md)**
 
 ## 📦 APM Packages
 
@@ -89,6 +77,22 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 ## 🤝 Contributing
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a template or package.
+
+### Contributor setup
+
+After cloning, install Node.js dependencies:
+
+```bash
+npm install
+```
+
+The `.github/skills/`, `.github/instructions/` and `.github/agents/` directories are committed directly to this repo. When the `copilot-workspace` or `shared` packages are updated, run:
+
+```bash
+apm install ./packages/copilot-workspace ./packages/shared --force
+```
+
+Then commit the updated `.github/` files.
 
 ---
 
