@@ -1,16 +1,17 @@
 name: apm-hub
 version: 1.0.0
-description: >
-  Marketplace for GravionLabs apm-hub packages.
-  Use individual packages (e.g. gravion/apm-hub/packages/angular) in your projects.
+description: 'Marketplace for GravionLabs apm-hub packages. Use individual packages
+  (e.g. gravion/apm-hub/packages/angular) in your projects.
+
+  '
 author:
   name: Gravion
 license: MIT
+
 marketplace:
   owner:
     name: Gravion
     url: https://github.com/GravionLabs
-
   packages:
     - name: all
     description: Meta-package that installs all GravionLabs apm-hub packages in one step. Use this if you want every language plugin and shared tooling available in your workspace.
