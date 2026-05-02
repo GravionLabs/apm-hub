@@ -1,5 +1,5 @@
 ---
-name: apm-skill-update
+name: skill-update
 description: >
   Applies improvements from a skill audit to an existing skill. Use this skill when
   audit findings are ready to be applied — after running skill-audit or when the user

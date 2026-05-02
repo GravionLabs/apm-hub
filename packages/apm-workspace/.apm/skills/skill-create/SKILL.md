@@ -1,5 +1,5 @@
 ---
-name: apm-skill-create
+name: skill-create
 description: >
   Creates a complete agent skill from a user-provided description or prompt. Use this
   skill when asked to build, scaffold, or generate a new skill — even if the user only

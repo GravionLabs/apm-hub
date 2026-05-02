@@ -1,5 +1,5 @@
 ---
-name: apm-skill-audit
+name: skill-audit
 description: >
   Audits an existing agent skill against agentskills.io best practices. Use this skill
   when asked to review, validate, check, or audit a skill — even if the user just says
