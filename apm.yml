@@ -12,7 +12,10 @@ marketplace:
     url: https://github.com/GravionLabs
 
   packages:
-    - name: ag-grid
+    - name: all
+    description: Meta-package that installs all GravionLabs apm-hub packages in one step. Use this if you want every language plugin and shared tooling available in your workspace.
+    source: ./packages/all
+  - name: ag-grid
       description: AG Grid Enterprise development plugin for Angular. Provides expert guidance on AG Grid Enterprise setup, column definitions, row models, filtering, cell rendering/editing, row grouping, pivoting, master-detail, and Excel export. Includes the ag-mcp MCP server setup skill for version-specific doc search inside your IDE.
       source: ./packages/ag-grid
 
@@ -32,7 +35,10 @@ marketplace:
       description: "C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization."
       source: ./packages/csharp
 
-    - name: devops
+    - name: development-workflow
+    description: GitHub development workflow orchestration with issue-driven implementation, tech-stack detection, multi-repo support, and PR review. Includes github-software-engineer (router), github-engineer (orchestrator), and github-pr-reviewer agents.
+    source: ./packages/development-workflow
+  - name: devops
       description: Cross-cutting DevOps tooling. Publish code reviews as PR comments to GitHub or Azure DevOps, configure the az CLI azure-devops extension for pipeline integration, and create GitHub Actions CI/CD workflows using GravionLabs/ci reusable workflows.
       source: ./packages/devops
 
