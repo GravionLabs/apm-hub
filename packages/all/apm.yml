@@ -11,10 +11,12 @@ dependencies:
   apm:
     - GravionLabs/apm-hub/packages/ag-grid
     - GravionLabs/apm-hub/packages/angular
+    - GravionLabs/apm-hub/packages/apm-workspace
     - GravionLabs/apm-hub/packages/common
     - GravionLabs/apm-hub/packages/csharp
     - GravionLabs/apm-hub/packages/devops
     - GravionLabs/apm-hub/packages/docker
+    - GravionLabs/apm-hub/packages/github
     - GravionLabs/apm-hub/packages/go
     - GravionLabs/apm-hub/packages/helm
     - GravionLabs/apm-hub/packages/playwright
