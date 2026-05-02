@@ -6,26 +6,27 @@ This page lists all available instructions organized by domain. This file is aut
 
 ## Overview
 
-| Instruction                                                                                                        | Domain                                  | Description                                                                                                                        |
-| :----------------------------------------------------------------------------------------------------------------- | :-------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-| [agent-skills](../packages/copilot-workspace/.apm/instructions/agent-skills.instructions.md)                       | [Copilot-workspace](#copilot-workspace) | Guidelines for creating high-quality Agent Skills for GitHub Copilot                                                               |
-| [copilot-thought-logging](../packages/copilot-workspace/.apm/instructions/copilot-thought-logging.instructions.md) | [Copilot-workspace](#copilot-workspace) | Instructs Copilot to log its reasoning steps inline, making the thought process visible and editable during complex interactions   |
-| [instructions](../packages/copilot-workspace/.apm/instructions/instructions.instructions.md)                       | [Copilot-workspace](#copilot-workspace) | Guidelines for creating high-quality custom instruction files for GitHub Copilot                                                   |
-| [issue-workflow](../packages/copilot-workspace/.apm/instructions/issue-workflow.instructions.md)                   | [Copilot-workspace](#copilot-workspace) | Branch and PR conventions for working on GitHub issues: naming, commits, and pull request format                                   |
-| [prompt](../packages/copilot-workspace/.apm/instructions/prompt.instructions.md)                                   | [Copilot-workspace](#copilot-workspace) | Guidelines for creating high-quality prompt files for GitHub Copilot                                                               |
-| [code-review-generic](../packages/shared/.apm/instructions/code-review-generic.instructions.md)                    | [Shared](#shared)                       | Code review guidelines for any language or framework: readability, naming, complexity, error handling, security, and test coverage |
-| [html-css-style-color-guide](../packages/shared/.apm/instructions/html-css-style-color-guide.instructions.md)      | [Shared](#shared)                       | Color usage guidelines and styling rules for HTML elements to ensure accessible, professional designs.                             |
-| [markdown](../packages/shared/.apm/instructions/markdown.instructions.md)                                          | [Shared](#shared)                       | Markdown documentation standards: structure, formatting, headings, lists, code blocks, and writing style for technical docs        |
+| Instruction                                                                                                   | Domain            | Description                                                                                                                        |
+| :------------------------------------------------------------------------------------------------------------ | :---------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+| [conventional-commits](../packages/common/.apm/instructions/conventional-commits.instructions.md)             | [Common](#common) | -                                                                                                                                  |
+| [github-context](../packages/github/.apm/instructions/github-context.instructions.md)                         | [Github](#github) | -                                                                                                                                  |
+| [github-mcp](../packages/github/.apm/instructions/github-mcp.instructions.md)                                 | [Github](#github) | -                                                                                                                                  |
+| [code-review-generic](../packages/shared/.apm/instructions/code-review-generic.instructions.md)               | [Shared](#shared) | Code review guidelines for any language or framework: readability, naming, complexity, error handling, security, and test coverage |
+| [html-css-style-color-guide](../packages/shared/.apm/instructions/html-css-style-color-guide.instructions.md) | [Shared](#shared) | Color usage guidelines and styling rules for HTML elements to ensure accessible, professional designs.                             |
+| [markdown](../packages/shared/.apm/instructions/markdown.instructions.md)                                     | [Shared](#shared) | Markdown documentation standards: structure, formatting, headings, lists, code blocks, and writing style for technical docs        |
 
-## Copilot-workspace
+## Common
 
-| Instruction                                                                                                          | Description                                                                                                                      |
-| :------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
-| [`agent-skills`](../packages/copilot-workspace/.apm/instructions/agent-skills.instructions.md)                       | Guidelines for creating high-quality Agent Skills for GitHub Copilot                                                             |
-| [`copilot-thought-logging`](../packages/copilot-workspace/.apm/instructions/copilot-thought-logging.instructions.md) | Instructs Copilot to log its reasoning steps inline, making the thought process visible and editable during complex interactions |
-| [`instructions`](../packages/copilot-workspace/.apm/instructions/instructions.instructions.md)                       | Guidelines for creating high-quality custom instruction files for GitHub Copilot                                                 |
-| [`issue-workflow`](../packages/copilot-workspace/.apm/instructions/issue-workflow.instructions.md)                   | Branch and PR conventions for working on GitHub issues: naming, commits, and pull request format                                 |
-| [`prompt`](../packages/copilot-workspace/.apm/instructions/prompt.instructions.md)                                   | Guidelines for creating high-quality prompt files for GitHub Copilot                                                             |
+| Instruction                                                                                         | Description |
+| :-------------------------------------------------------------------------------------------------- | :---------- |
+| [`conventional-commits`](../packages/common/.apm/instructions/conventional-commits.instructions.md) | -           |
+
+## Github
+
+| Instruction                                                                             | Description |
+| :-------------------------------------------------------------------------------------- | :---------- |
+| [`github-context`](../packages/github/.apm/instructions/github-context.instructions.md) | -           |
+| [`github-mcp`](../packages/github/.apm/instructions/github-mcp.instructions.md)         | -           |
 
 ## Shared
 

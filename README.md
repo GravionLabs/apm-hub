@@ -69,6 +69,15 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 
 📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)**
 
+<!-- AUTO:start template-stats -->
+| Category         | Count | Location                            | Purpose                                  |
+| :--------------- | :---: | :---------------------------------- | :--------------------------------------- |
+| **Agents**       |   0   | `templates/<domain>/agents/`        | Specialized expert roles (@-mentions)    |
+| **Skills**       |   0   | `templates/<domain>/skills/<name>/` | Reusable task-specific workflows         |
+| **Prompts**      |   0   | `templates/<domain>/prompts/`       | Task-specific workflows (slash commands) |
+| **Instructions** |   0   | `templates/<domain>/instructions/`  | Persistent project rules and standards   |
+<!-- AUTO:end template-stats -->
+
 <!-- AUTO:start plugin-table -->
 | Plugin | Description |
 | :----- | :---------- |
@@ -97,4 +106,3 @@ Then commit the updated `.github/` files.
 ---
 
 > **Tip**: Add individual packages to your project's `apm.yml` and run `apm install` to get started.
-
