@@ -1,5 +1,5 @@
 ---
-name: csharp-code-review
+name: dotnet-code-review
 description: 'Perform a structured C# and NUnit code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions.'
 allowed-tools: read search codebase
 model: claude-sonnet-4.6

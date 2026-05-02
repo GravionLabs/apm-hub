@@ -1,5 +1,5 @@
 ---
-name: csharp-docs
+name: dotnet-docs
 description: 'Add XML documentation comments to C# public and internal types and members following summary/param/returns/remarks conventions.'
 allowed-tools: read write edit editFiles search codebase
 model: claude-sonnet-4.6

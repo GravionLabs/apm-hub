@@ -1,5 +1,5 @@
 ---
-name: write-tests
+name: dotnet-write-tests
 description: 'Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.'
 allowed-tools: read write edit editFiles search codebase
 model: claude-sonnet-4.6

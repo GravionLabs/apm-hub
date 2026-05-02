@@ -1,5 +1,5 @@
 ---
-name: create-dotnet-solution
+name: dotnet-create-solution
 description: 'Scaffold a new .NET solution with src/test layout, Central Package Management (Directory.Packages.props), Directory.Build.props, and .editorconfig. Supports both NuGet libraries (multi-target) and applications (webapi/worker/console).'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: gpt-4.1

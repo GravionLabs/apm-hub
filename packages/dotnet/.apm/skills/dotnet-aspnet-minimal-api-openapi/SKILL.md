@@ -1,5 +1,5 @@
 ---
-name: aspnet-minimal-api-openapi
+name: dotnet-aspnet-minimal-api-openapi
 description: 'Create an ASP.NET Core Minimal API endpoint module using Carter with full OpenAPI documentation, typed request/response models, and proper error responses.'
 allowed-tools: read write edit editFiles search codebase
 model: claude-sonnet-4.6
