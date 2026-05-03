@@ -33,7 +33,7 @@ Managed settings > `--agents` CLI flag > project > global > plugin
 - **Required cross-platform minimum:** `name`, `description`, `tools`, `model`
 - `description`: one sentence, imperative, answers "when to use this agent" — this is shown in the @-picker
 - `tools`: list format, minimal — grant only what the agent requires
-- `model`: repo-local advisory; align with `docs/model-overview.md`; treat as convention, not an officially required field
+- `model`: officially supported by **Claude Code** (values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`; defaults to `inherit`). Not officially documented for Copilot CLI/VS Code — treated as advisory there.
 
 **Cross-platform `tools` aliases:**
 

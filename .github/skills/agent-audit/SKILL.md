@@ -28,7 +28,7 @@ Audit an agent file, show the user a summary report, and automatically apply fix
 ✓ Checkpoint: Agent file loaded and structure understood
 
 1. Read the `.agent.md` file and list any sibling `references/` and `assets/` items.
-2. **Check for model guidance:** If the agent has `model:` or body "Model hint" → **read `references/model-selection.md`** and treat `model` as a repo-local convention.
+2. **Check for model guidance:** If the agent has `model:` or body "Model hint" → **read `references/model-selection.md`**. Remember: `model` is official in Claude Code; advisory for Copilot CLI/VS Code.
 3. **Shell enforcement:** Check all code blocks. Flag any ` ```bash ` or ` ```sh `. All shell must use ` ```powershell ` — report 🔴 critical if any non-PowerShell shells are found.
 
 ### Phase 2 — Audit & Report
@@ -57,7 +57,7 @@ Audit an agent file, show the user a summary report, and automatically apply fix
 
 - A zero-finding report is valid — don't force fixes if nothing's broken.
 - Filename must match `name` in frontmatter exactly.
-- `model` is repo-local advisory; audit it as a convention, not a required field.
+- `model` is officially supported in Claude Code; advisory for Copilot CLI/VS Code — audit severity 🟡 if the value is unrecognized, not because it's missing.
 - Write `audit-report.json` in the agent directory as an archive, not for inter-tool communication.
 - Do not proceed with `agent-update` if user cancels.
 - Critical findings (shell enforcement) should always be fixed.

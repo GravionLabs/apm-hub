@@ -71,8 +71,10 @@ when correctness matters. Use fast/cheap models when speed and retry cost matter
 ## Applying in Frontmatter
 
 ```yaml
-model: claude-sonnet-4.6   # advisory — not an officially required field
+model: claude-sonnet-4.6
 ```
 
-> `model` is a repo-local convention in this repository, not part of the official
-> GitHub skill or agent spec. Use it to signal the intended model to users.
+> `model` is officially supported in **Claude Code** subagents (values: `sonnet`, `opus`, `haiku`,
+> full model ID, or `inherit`; defaults to `inherit`).
+> For **Copilot CLI / VS Code** agents, `model` is not officially documented — it is treated as
+> an advisory convention in this repository for those targets.

@@ -50,7 +50,7 @@ Use this checklist when auditing an `.agent.md` file. Apply all checks and repor
 
 **`model` field (🟢 if omitted, 🟡 if misleading):**
 
-- [ ] Treat `model` as a repo-local convention, not an officially required field
+- [ ] `model` is officially supported in **Claude Code** (values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`). For Copilot CLI/VS Code it is not officially documented — treat as advisory.
 - [ ] If present, value matches a model listed in `docs/model-overview.md` — 🟡 if unrecognized
 - [ ] If present, fits the agent's dominant task (mechanical → `gpt-4.1`; complex → `claude-sonnet-4.6`) — 🟡 if unjustified
 - [ ] If a body-level "Model hint" exists, it is consistent with frontmatter `model` — 🟡 if they conflict
@@ -122,7 +122,7 @@ Use this checklist when auditing an `.agent.md` file. Apply all checks and repor
 [ ] name: present, kebab-case, 1-64 chars, matches filename, no leading/trailing/consecutive hyphens
 [ ] description: present, one sentence, imperative, answers "when to use"
 [ ] tools: minimal, cross-platform aliases present if needed
-[ ] model: optional; if present, repo-local, aligned with docs/model-overview.md
+[ ] model: optional; officially supported in Claude Code; advisory for Copilot CLI/VS Code; align with docs/model-overview.md
 [ ] body: Persona → Capabilities → Constraints (→ Behavior)
 [ ] body: no prose paragraphs, no duplicated project instructions
 [ ] shell code fences: ```powershell only (not ```bash or ```sh)

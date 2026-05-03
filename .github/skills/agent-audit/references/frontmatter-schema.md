@@ -19,7 +19,7 @@ Use this file when an agent needs the shared frontmatter rules.
 | Field   | Rules                                                                                                                                                    |
 |:--------|:---------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `tools` | List of tool aliases. Minimal — grant only what the agent requires. Omit for full access; use `[]` to disable all tools.                                 |
-| `model` | Repo-local advisory field only. If used, pick a value from `docs/model-overview.md`, consistent with any body-level "Model hint". Not officially required.|
+| `model` | Officially supported by **Claude Code** (values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`; defaults to `inherit`). Not officially documented for Copilot CLI/VS Code — advisory for those targets. Align value with `docs/model-overview.md`.|
 
 ### Platform-specific fields
 
