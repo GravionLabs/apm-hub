@@ -33,7 +33,9 @@ Managed settings > `--agents` CLI flag > project > global > plugin
 - **Required cross-platform minimum:** `name`, `description`, `tools`, `model`
 - `description`: one sentence, imperative, answers "when to use this agent" — this is shown in the @-picker
 - `tools`: list format, minimal — grant only what the agent requires
-- `model`: officially supported by **Claude Code** (values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`; defaults to `inherit`). Not officially documented for Copilot CLI/VS Code — treated as advisory there.
+- `model`: official optional field in **both** GitHub Copilot and Claude Code. GitHub Copilot: inherits default if unset. Claude Code values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`.
+- `target`: **do not set** unless explicitly targeting one environment (`vscode` or `github-copilot`); omitting makes the agent available everywhere
+- `infer`: **retired** — use `disable-model-invocation` instead
 
 **Cross-platform `tools` aliases:**
 

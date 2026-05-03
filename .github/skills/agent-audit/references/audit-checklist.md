@@ -50,16 +50,19 @@ Use this checklist when auditing an `.agent.md` file. Apply all checks and repor
 
 **`model` field (🟢 if omitted, 🟡 if misleading):**
 
-- [ ] `model` is officially supported in **Claude Code** (values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`). For Copilot CLI/VS Code it is not officially documented — treat as advisory.
+- [ ] `model` is an officially supported optional field in **both** GitHub Copilot and Claude Code. It is always valid to set it.
 - [ ] If present, value matches a model listed in `docs/model-overview.md` — 🟡 if unrecognized
 - [ ] If present, fits the agent's dominant task (mechanical → `gpt-4.1`; complex → `claude-sonnet-4.6`) — 🟡 if unjustified
 - [ ] If a body-level "Model hint" exists, it is consistent with frontmatter `model` — 🟡 if they conflict
 
 **Platform-specific field safety (🔴 if misused):**
 
-- [ ] If target is `all` or multi-platform: no platform-specific fields (`user-invocable`, `permissionMode`, `target`, `argument-hint`) — 🔴 if present
+- [ ] `target` is absent unless explicitly needed for a single-platform agent — 🟢 suggestion to remove if set without clear reason
+- [ ] `target` value is `vscode` or `github-copilot` (not `jetbrains`, `all`, or other values) — 🔴 if invalid
+- [ ] `infer` is NOT used — it is retired; use `disable-model-invocation` instead — 🟡 if present
 - [ ] `user-invocable: false` only set for agents that are sub-agents, not user-facing
 - [ ] `permissionMode: bypassPermissions` only in trusted automated contexts — 🟡 otherwise
+- [ ] `mcp-servers` and `metadata` only used in Cloud Agent profiles — 🟡 if found in VS Code/CLI agents
 
 ---
 
@@ -104,14 +107,14 @@ Use this checklist when auditing an `.agent.md` file. Apply all checks and repor
 
 ### Anti-pattern checks
 
-| Anti-pattern                                             | Severity | Detection                                          |
-|:---------------------------------------------------------|:---------|:---------------------------------------------------|
-| Two unrelated responsibilities in one agent              | 🟡       | Description needs "and" more than twice            |
-| Generic agent with no project context                    | 🟡       | Body applies to any project without changes        |
-| Platform-specific fields used with `all` target          | 🔴       | `user-invocable` or `permissionMode` + multi-platform |
-| Over-granted tools (shell when only reading)             | 🟡       | `execute`/`shell` present; no commands in body     |
-| Prose paragraphs instead of bullets                      | 🟡       | Capabilities/constraints written as sentences      |
-| Duplicating project-level instructions                   | 🟡       | Content mirrors `.github/copilot-instructions.md`  |
+| Anti-pattern                                    | Severity | Detection                                             |
+|:------------------------------------------------|:---------|:------------------------------------------------------|
+| Two unrelated responsibilities in one agent     | 🟡       | Description needs "and" more than twice               |
+| Generic agent with no project context           | 🟡       | Body applies to any project without changes           |
+| Platform-specific fields used with `all` target | 🔴       | `user-invocable` or `permissionMode` + multi-platform |
+| Over-granted tools (shell when only reading)    | 🟡       | `execute`/`shell` present; no commands in body        |
+| Prose paragraphs instead of bullets             | 🟡       | Capabilities/constraints written as sentences         |
+| Duplicating project-level instructions          | 🟡       | Content mirrors `.github/copilot-instructions.md`     |
 
 ---
 
@@ -122,7 +125,9 @@ Use this checklist when auditing an `.agent.md` file. Apply all checks and repor
 [ ] name: present, kebab-case, 1-64 chars, matches filename, no leading/trailing/consecutive hyphens
 [ ] description: present, one sentence, imperative, answers "when to use"
 [ ] tools: minimal, cross-platform aliases present if needed
-[ ] model: optional; officially supported in Claude Code; advisory for Copilot CLI/VS Code; align with docs/model-overview.md
+[ ] model: optional; officially supported in both GitHub Copilot and Claude Code; align with docs/model-overview.md
+[ ] target: do NOT set unless explicitly targeting a single platform (vscode or github-copilot)
+[ ] infer: do NOT use — retired; use disable-model-invocation instead
 [ ] body: Persona → Capabilities → Constraints (→ Behavior)
 [ ] body: no prose paragraphs, no duplicated project instructions
 [ ] shell code fences: ```powershell only (not ```bash or ```sh)

@@ -44,10 +44,10 @@ Is the agent's task complex or multi-step (implementation, refactoring, analysis
 
 | Model ID            | Category     | Context | Verbosity   | Instruction Following | Token Cost   |
 |:--------------------|:-------------|--------:|:-----------:|:---------------------:|:------------:|
-| `claude-sonnet-4.6` | Standard     |  200 K  | High        | ✅ Excellent           | High         |
+| `claude-sonnet-4.6` | Standard     |  200 K  |    High     | ✅ Excellent           | High         |
 | `claude-sonnet-4.5` | Standard     |  200 K  | High        | ✅ Excellent           | High         |
-| `claude-haiku-4.5`  | Fast / Cheap |  200 K  | Low         | ✅ Good (short only)   | Low          |
-| `gpt-5.4`           | Standard     | ~128 K  | Medium–High | ✅ Excellent           | High         |
+| `claude-haiku-4.5`  | Fast / Cheap |  200 K  | Low         |  ✅ Good (short only)  | Low          |
+| `gpt-5.4`           | Standard     | ~128 K  | Medium–High |      ✅ Excellent      | High         |
 | `gpt-5.3-codex`     | Standard     | ~128 K  | Medium      | ✅ Good                | Medium–High  |
 | `gpt-5.2`           | Standard     | ~128 K  | Medium      | ✅ Good                | Medium       |
 | `gpt-5.4-mini`      | Fast / Cheap | ~128 K  | Low–Medium  | ⚠️ Partial            | Low          |
@@ -74,7 +74,6 @@ when correctness matters. Use fast/cheap models when speed and retry cost matter
 model: claude-sonnet-4.6
 ```
 
-> `model` is officially supported in **Claude Code** subagents (values: `sonnet`, `opus`, `haiku`,
-> full model ID, or `inherit`; defaults to `inherit`).
-> For **Copilot CLI / VS Code** agents, `model` is not officially documented — it is treated as
-> an advisory convention in this repository for those targets.
+> `model` is an **officially supported optional field** in both GitHub Copilot and Claude Code.
+> GitHub Copilot: "Model to use when this custom agent executes. If unset, inherits the default model."
+> Claude Code values: `sonnet`, `opus`, `haiku`, a full model ID (e.g. `claude-sonnet-4.6`), or `inherit`.

@@ -67,7 +67,7 @@ The result is a focused agent with correct frontmatter, a clear persona, explici
 
 ## Gotchas
 
-- `model` is officially supported in Claude Code agents; not documented for Copilot CLI/VS Code — advisory there.
+- `model` is officially supported in both GitHub Copilot and Claude Code — always valid to set.
 - Claude Code does not support `user-invocable`; Copilot CLI ignores `permissionMode` — use cross-platform fields for `all` targets.
 - Directory/file name must match `name` field exactly.
 - Do not duplicate content from `.github/copilot-instructions.md`.

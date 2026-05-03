@@ -2,41 +2,43 @@
 
 Use this file when an agent needs the shared frontmatter rules.
 
-> **Official vs repo-local fields:** GitHub Copilot CLI currently documents
-> `name`, `description`, `tools`, `user-invocable`, and `infer`. Claude Code
-> documents a broader set. This schema records the cross-platform minimum plus
-> repo-local conventions used in this repository.
+> **Platform note:** The fields below are based on the official GitHub Copilot custom agent
+> documentation and the Claude Code subagent specification. Both platforms document `model`
+> as an official optional field. Platform-specific fields are listed separately.
 
-### Required cross-platform fields
+### Required fields (all platforms)
 
-| Field         | Rules                                                                                                                      |
-|:--------------|:---------------------------------------------------------------------------------------------------------------------------|
-| `name`        | Kebab-case only, 1-64 chars, must match the filename exactly, no leading/trailing/consecutive hyphens.                     |
-| `description` | One sentence, imperative phrasing, shown in @-picker, answers "when should I use this agent?", includes trigger keywords. |
+| Field         | Rules                                                                                                                                                                                               |
+|:--------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`        | Kebab-case only, 1-64 chars, must match the filename exactly, no leading/trailing/consecutive hyphens. **Always set** — even though GitHub marks it as optional, it is required in this repository. |
+| `description` | **Required.** One sentence, imperative phrasing, shown in @-picker, answers "when should I use this agent?", includes trigger keywords.                                                             |
 
 ### Optional cross-platform fields
 
-| Field   | Rules                                                                                                                                                    |
-|:--------|:---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `tools` | List of tool aliases. Minimal — grant only what the agent requires. Omit for full access; use `[]` to disable all tools.                                 |
-| `model` | Officially supported by **Claude Code** (values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`; defaults to `inherit`). Not officially documented for Copilot CLI/VS Code — advisory for those targets. Align value with `docs/model-overview.md`.|
+| Field   | Rules                                                                                                                                                                                                                                                                                    |
+|:--------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `tools` | List of tool aliases. Minimal — grant only what the agent requires. Omit for full access; use `[]` to disable all tools.                                                                                                                                                                 |
+| `model` | Official optional field in **both** GitHub Copilot and Claude Code. GitHub: "Model to use when this custom agent executes. If unset, inherits the default model." Claude Code values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`. Align value with `docs/model-overview.md`. |
 
 ### Platform-specific fields
 
-| Field              | Platform     | Description                                                            |
-|:-------------------|:-------------|:-----------------------------------------------------------------------|
-| `user-invocable`   | Copilot CLI  | `false` for sub-agents called by other agents, not by users            |
-| `infer`            | Copilot CLI  | `false` to disable automatic inference/delegation                      |
-| `target`           | VS Code      | `vscode` \| `jetbrains` \| `all`                                      |
-| `argument-hint`    | VS Code      | Placeholder text shown in the chat input box                           |
-| `permissionMode`   | Claude Code  | `default` \| `acceptEdits` \| `bypassPermissions` \| `plan`           |
-| `maxTurns`         | Claude Code  | Maximum agentic turns before stopping                                  |
-| `isolation`        | Claude Code  | `shared` (default) or `isolated` (fresh context per invocation)       |
-| `disallowedTools`  | Claude Code  | Tools the agent may NOT use (overrides `tools`)                        |
-| `color`            | Claude Code  | Terminal color: `red` \| `green` \| `blue` \| `yellow` \| `magenta` \| `cyan` \| `white` |
+| Field                      | Platform            | Description                                                                                             |
+|:---------------------------|:--------------------|:--------------------------------------------------------------------------------------------------------|
+| `user-invocable`           | Copilot / Cloud     | `false` for sub-agents that should not be manually selected by users                                    |
+| `disable-model-invocation` | Cloud Agent         | `true` to prevent auto-invocation based on task context (replaces retired `infer`)                      |
+| `target`                   | Copilot CLI / Cloud | `vscode` or `github-copilot`. **Do not set unless explicitly targeting one environment.** Unset = both. |
+| `mcp-servers`              | Cloud Agent         | Additional MCP servers. Not used in VS Code / IDE agents.                                               |
+| `metadata`                 | Cloud Agent         | Key-value annotation pairs. Not used in VS Code / IDE agents.                                           |
+| `argument-hint`            | VS Code             | Placeholder text shown in the chat input box                                                            |
+| `permissionMode`           | Claude Code         | `default` \| `acceptEdits` \| `bypassPermissions` \| `plan`                                             |
+| `maxTurns`                 | Claude Code         | Maximum agentic turns before stopping                                                                   |
+| `isolation`                | Claude Code         | `shared` (default) or `isolated` (fresh context per invocation)                                         |
+| `disallowedTools`          | Claude Code         | Tools the agent may NOT use (overrides `tools`)                                                         |
+| `color`                    | Claude Code         | Terminal color: `red` \| `green` \| `blue` \| `yellow` \| `magenta` \| `cyan` \| `white`                |
 
-> ⚠️ Do not use platform-specific fields for `all`-platform agents. They will
-> cause runtime errors on incompatible runtimes.
+> ⚠️ `infer` is **retired** — use `disable-model-invocation` and `user-invocable` instead.
+> Do not use `target` unless explicitly needed; omitting it makes the agent available everywhere.
+> Do not use platform-specific fields for agents intended for multiple platforms.
 
 ### `tools` aliases
 
@@ -63,7 +65,7 @@ tools:
 ---
 ```
 
-### Minimal frontmatter with repo-local model
+### Minimal frontmatter with model
 
 ```yaml
 ---
@@ -83,3 +85,19 @@ model: claude-sonnet-4.6
 |:----------|:-------------------------|:-------------------------|:-------------------------------------|
 | Project   | `.github/agents/`        | `.claude/agents/`        | `packages/<domain>/.apm/agents/`     |
 | Global    | `~/.copilot/agents/`     | `~/.claude/agents/`      | —                                    |
+
+### Official GitHub Copilot frontmatter reference (source: docs, 2025-05-03)
+
+| Property                   | Type                | Purpose                                                                          |
+|:---------------------------|:--------------------|:---------------------------------------------------------------------------------|
+| `name`                     | string (optional*)  | Display name for the custom agent. *Required by repo convention.*                |
+| `description`              | **Required** string | Description of the custom agent's purpose and capabilities.                      |
+| `target`                   | string              | `vscode` or `github-copilot`. Unset = both. Do not set unless explicitly needed. |
+| `tools`                    | list / string       | Tool names the agent can use. Unset = all tools.                                 |
+| `model`                    | string              | Model to use when the agent executes. Unset = inherits default.                  |
+| `disable-model-invocation` | boolean             | Disables cloud agent auto-use. `true` = manual selection only. Replaces `infer`. |
+| `user-invocable`           | boolean             | Can the user manually select this agent? Unset = `true`.                         |
+| `infer`                    | boolean             | **Retired.** Use `disable-model-invocation` and `user-invocable` instead.        |
+| `mcp-servers`              | object              | Additional MCP servers. **Not used in VS Code / IDE agents.**                    |
+| `metadata`                 | object              | Key-value annotation. **Not used in VS Code / IDE agents.**                      |
+

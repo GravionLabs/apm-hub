@@ -74,7 +74,6 @@ when correctness matters. Use fast/cheap models when speed and retry cost matter
 model: claude-sonnet-4.6
 ```
 
-> `model` is officially supported in **Claude Code** subagents (values: `sonnet`, `opus`, `haiku`,
-> full model ID, or `inherit`; defaults to `inherit`).
-> For **Copilot CLI / VS Code** agents, `model` is not officially documented — it is treated as
-> an advisory convention in this repository for those targets.
+> `model` is an **officially supported optional field** in both GitHub Copilot and Claude Code.
+> GitHub Copilot: "Model to use when this custom agent executes. If unset, inherits the default model."
+> Claude Code values: `sonnet`, `opus`, `haiku`, a full model ID (e.g. `claude-sonnet-4.6`), or `inherit`.

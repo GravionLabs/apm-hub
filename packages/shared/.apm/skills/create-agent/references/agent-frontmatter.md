@@ -5,7 +5,7 @@ Cross-platform field compatibility for `.agent.md` files across Copilot CLI, VS 
 ### Load this reference when
 
 - Target platform is `claude` or `all`
-- You need platform-specific fields (`permissionMode`, `user-invocable`, `infer`, etc.)
+- You need platform-specific fields (`permissionMode`, `user-invocable`, `disable-model-invocation`, etc.)
 - Validating cross-platform compatibility before writing frontmatter
 
 ---
@@ -21,7 +21,7 @@ description: '...'       # one sentence shown in @-picker
 tools:                   # list of tool aliases (see below)
   - read
   - search
-model: claude-sonnet-4.6 # officially supported by Claude Code; advisory for Copilot CLI/VS Code
+model: claude-sonnet-4.6 # officially supported optional field in both GitHub Copilot and Claude Code
 ---
 ```
 
@@ -47,24 +47,25 @@ Use `[]` to disable all tools.
 
 ## Platform-Specific Fields
 
-### Copilot CLI only
+### Copilot CLI / Cloud Agent
 
-| Field            | Type    | Description                                             |
-|:-----------------|:--------|:--------------------------------------------------------|
-| `user-invocable` | boolean | `false` = agent is called by other agents, not by users |
-| `infer`          | boolean | `false` = disable automatic inference/delegation        |
+| Field                      | Type    | Description                                                                        |
+|:---------------------------|:--------|:-----------------------------------------------------------------------------------|
+| `user-invocable`           | boolean | `false` = agent is called by other agents, not by users                            |
+| `disable-model-invocation` | boolean | `true` = disable automatic invocation based on task context (replaces retired `infer`) |
 
 ```yaml
 user-invocable: false
 ```
 
+> `infer` is **retired** — use `disable-model-invocation` and `user-invocable` instead.
+
 ### VS Code / Copilot Chat only
 
-| Field           | Type   | Description                                        |
-|:----------------|:-------|:---------------------------------------------------|
-| `target`        | string | `vscode` \| `jetbrains` \| `all`                  |
-| `argument-hint` | string | Shown as placeholder in the chat input             |
-| `infer`         | boolean | `false` = disable automatic inference             |
+| Field           | Type    | Description                                        |
+|:----------------|:--------|:---------------------------------------------------|
+| `target`        | string  | `vscode` or `github-copilot`. **Do not set unless explicitly targeting one environment.** |
+| `argument-hint` | string  | Shown as placeholder in the chat input             |
 
 ```yaml
 target: vscode
@@ -130,7 +131,7 @@ Add platform-specific fields in a comment if documentation is needed:
 ```yaml
 # CLI only: user-invocable: false
 # Claude only: permissionMode: acceptEdits
-# VS Code only: target: vscode
+# VS Code only (if needed): target: vscode
 ```
 
 ---

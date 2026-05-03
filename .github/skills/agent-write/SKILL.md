@@ -69,7 +69,7 @@ Use this skill to keep agent files compact, cross-platform compatible, and conve
 ## Gotchas
 
 - Filename must match `name` exactly.
-- `model` is officially supported by Claude Code; not documented for Copilot CLI/VS Code (advisory there).
+- `model` is officially supported in both GitHub Copilot and Claude Code — always valid to set.
 - Claude Code ignores `user-invocable`; Copilot CLI ignores `permissionMode`. For `all` targets, use cross-platform fields only.
 - Do not duplicate content from `.github/copilot-instructions.md`.
 - Keep reference chains one level deep.
