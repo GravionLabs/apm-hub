@@ -95,16 +95,8 @@ You are a [role] specializing in [domain]. [Communication style sentence].
 ### Model guidance
 
 - `model` frontmatter and any body-level "Model hint" must be consistent.
-- Choose model by *dominant task*, not worst case:
-
-| Agent task type                           | Recommended model                  |
-|:------------------------------------------|:-----------------------------------|
-| Complex multi-step (implement, analyze)   | `claude-sonnet-4.6`                |
-| Code review / quality analysis            | `gpt-5.4` or `claude-sonnet-4.6`  |
-| Mechanical (PR, commit, changelog)        | `gpt-4.1`                          |
-| Read-only exploration / lookup            | `claude-haiku-4.5`                 |
-| Large-context (long files, deep history)  | `claude-sonnet-4.6` (200 K ctx)    |
-| Ultra-fast simple sub-agent               | `gpt-5-mini`                       |
+- Choose model by *dominant task*, not worst case.
+- If model choice is unclear → load `references/model-selection.md` from SKILL.md (decision tree + quick reference by agent role).
 
 Avoid vague phrasing like "use a better model" — explain the task shape instead.
 

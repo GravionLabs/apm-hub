@@ -18,7 +18,7 @@ Audit an agent file, show the user a summary report, and automatically apply fix
 - Agent path (`.agent.md` file or containing directory)
 - Read `references/frontmatter-schema.md`
 - Read `references/audit-checklist.md`
-- If the agent uses `model:` or a body-level "Model hint" → read `../../../docs/model-overview.md`
+- If the agent uses `model:` or a body-level "Model hint" → read `references/model-selection.md`
 - If you are preparing the final audit response → read `assets/audit-output-template.md`
 
 ## Instructions
@@ -28,7 +28,7 @@ Audit an agent file, show the user a summary report, and automatically apply fix
 ✓ Checkpoint: Agent file loaded and structure understood
 
 1. Read the `.agent.md` file and list any sibling `references/` and `assets/` items.
-2. **Check for model guidance:** If the agent has `model:` or body "Model hint" → **read `../../../docs/model-overview.md`** and treat `model` as a repo-local convention.
+2. **Check for model guidance:** If the agent has `model:` or body "Model hint" → **read `references/model-selection.md`** and treat `model` as a repo-local convention.
 3. **Shell enforcement:** Check all code blocks. Flag any ` ```bash ` or ` ```sh `. All shell must use ` ```powershell ` — report 🔴 critical if any non-PowerShell shells are found.
 
 ### Phase 2 — Audit & Report

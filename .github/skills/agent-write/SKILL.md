@@ -41,7 +41,7 @@ Use this skill to keep agent files compact, cross-platform compatible, and conve
 5. Build frontmatter using minimum cross-platform fields: `name`, `description`, `tools`, `model`.
    - If target is `claude` or `all` → check `references/agent-writing-rules.md` Platform-Specific section before adding platform-specific fields.
    - Keep `tools` minimal — grant only what the agent requires.
-   - If `model` choice is unclear → load `../../../docs/model-overview.md`.
+   - If `model` choice is unclear → load `references/model-selection.md`.
    - Set `user-invocable: false` for sub-agents called by other agents, not by users.
 6. Write body using `assets/agent-template-optimized.md` as starting point:
    1. **Persona** (≤ 3 sentences) — role, expertise, communication style
@@ -101,5 +101,5 @@ if ($content -match "tools:") { Write-Host "✓ tools field present" }
 
 - [Agent Writing Rules](references/agent-writing-rules.md)
 - [Agent Frontmatter Reference](../../../packages/shared/.apm/skills/create-agent/references/agent-frontmatter.md)
-- [Model Selection](../../../packages/shared/.apm/skills/create-agent/references/model-selection.md)
+- [Model Selection](references/model-selection.md)
 - [Designing Agents](../../../docs/best-practices/designing-agents.md)
