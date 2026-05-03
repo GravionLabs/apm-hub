@@ -65,14 +65,22 @@ Perform the following steps:
 
 ## Model Override (`model` parameter)
 
-| Model ID            | Type         | Recommended for            |
-| :------------------ | :----------- | :------------------------- |
-| `claude-sonnet-4.6` | Standard     | General tasks              |
-| `claude-haiku-4.5`  | Fast / Cheap | Simple explore tasks       |
-| `claude-opus-4.6`   | Premium      | Very complex analysis      |
-| `gpt-5.4`           | Standard     | Code review (high quality) |
-| `gpt-5.4-mini`      | Fast / Cheap | Creating PRs, simple tasks |
-| `gpt-5.2-codex`     | Standard     | Code-specific tasks        |
+For the full model reference including context windows, verbosity, and instruction-following
+ratings, see [Model Overview](../model-overview.md).
+
+| Model ID | Type | Recommended for |
+| :--- | :--- | :--- |
+| `claude-sonnet-4.6` | Standard | Complex multi-step tasks, large codebases |
+| `claude-sonnet-4.5` | Standard | Same as 4.6; prefer 4.6 when available |
+| `claude-haiku-4.5` | Fast / Cheap | Quick lookups, simple explore tasks |
+| `gpt-5.4` | Standard | Code review, high-quality analysis |
+| `gpt-5.3-codex` | Standard | Code-heavy generation and refactoring |
+| `gpt-5.2-codex` | Standard | Code-specific tasks |
+| `gpt-5.2` | Standard | Balanced general-purpose tasks |
+| `gpt-5.4-mini` | Fast / Cheap | PR creation, simple structured tasks |
+| `gpt-5-mini` | Fast / Cheap | Ultra-fast simple sub-tasks |
+| `gpt-4.1` | Fast / Cheap | Mechanical tasks (PRs, commits, formatting) |
+| `claude-sonnet-4` | Standard | General-purpose; older Sonnet generation |
 
 ---
 

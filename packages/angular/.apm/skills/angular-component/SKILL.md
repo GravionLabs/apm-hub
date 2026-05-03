@@ -3,34 +3,94 @@ name: angular-component
 description: 'Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: claude-sonnet-4.6
+chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 
-Generate an Angular standalone component following project conventions.
+Scaffold one standalone Angular component in your project.
 
 ## What this skill does
-Creates three files (`<name>.ts`, `<name>.html`, `<name>.scss`) for a standalone Angular component. Follows the project's selector prefix, import patterns, and folder conventions.
+
+Creates a ready-to-use Angular component with TypeScript class, HTML template, and SCSS stylesheet. Follows your project's naming conventions, selector prefix, and import patterns. **One component per session.**
+
+**Optimized for:**
+- ✓ Chronicle session tracking (clear phases, checkpoints)
+- ✓ LSP-enabled type checking
+- ✓ Context efficiency (structured output, minimal file reads)
 
 ## Steps
-1. Ask if not provided: component name (kebab-case), selector prefix (e.g. `app`, `gv`), target folder, and any Angular/PrimeNG modules to import
-2. Create `<name>.ts`:
-   ```typescript
-   @Component({
-     selector: '<prefix>-<name>',
-     standalone: true,
-     imports: [...],
-     templateUrl: './<name>.html',
-     styleUrl: './<name>.scss',
-   })
-   export class <ClassName>Component { }
-   ```
-3. Create `<name>.html` with a minimal placeholder template
-4. Create `<name>.scss` as an empty file
-5. Add the component to the nearest barrel (`index.ts` / `public-api.ts`) if one exists
+
+### Phase 1 — Gather Input
+
+Collect all required information upfront:
+1. Ask: component name (kebab-case), selector prefix, target folder, modules to import
+2. Validate inputs: name format, folder exists
+3. ✓ **Checkpoint:** All inputs collected and validated. Ready for Phase 2.
+
+### Phase 2 — Create Files
+
+Generate the 3-file component structure:
+1. Create `<name>.component.ts` with:
+   - `@Component` decorator
+   - `selector: '<prefix>-<name>'`
+   - `standalone: true`
+   - Proper imports ordered: Angular core → Angular common → PrimeNG → local
+   - Empty component class
+2. Create `<name>.component.html` with minimal placeholder template
+3. Create `<name>.component.scss` as empty stylesheet
+4. Update barrel export: add to `index.ts` or `public-api.ts` if exists
+
+✓ **Checkpoint:** All 3 component files created and barrel updated.
+
+### Phase 3 — Verify
+
+Validate the generated component:
+1. Check all files exist and are syntactically valid
+2. Verify imports are in correct order
+3. ✓ **Checkpoint:** Component ready to use.
 
 ## Constraints
+
 - Always `standalone: true` — no NgModules
 - Use `styleUrl` (singular, Angular 17+), not `styleUrls`
 - Class name: PascalCase + `Component` suffix
-- Follow project's import ordering (Angular core → Angular common → PrimeNG → local)
+- Import ordering: Angular core → Angular common → PrimeNG → local
+- Selector prefix matches project convention
 
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
+## Output Format
+
+### ✅ Summary
+Angular component `{name}` created as standalone with selector `{prefix}-{name}`.
+
+### 📝 What Changed
+- Created: `{path}/{name}.component.ts` (52 lines)
+- Created: `{path}/{name}.component.html`
+- Created: `{path}/{name}.component.scss`
+- Updated: `{path}/index.ts` (added export)
+
+### ✔️ Verify
+```powershell
+# Check component syntax
+ng lint
+
+# Build to verify compilation
+ng build
+
+# Run tests (when tests are added)
+ng test --include="**/{name}.component.spec.ts"
+```
+
+### 🚀 Next Steps
+1. Write unit tests in `{path}/{name}.component.spec.ts`
+2. Add component logic and imports as needed
+3. Integrate into a parent component or route
+4. Test in dev server: `ng serve`
+
+## Gotchas
+
+- **Component name must match file name:** If component class is `HeaderComponent`, files must be `header.component.*`
+- **PascalCase for class, kebab-case for files:** Class: `NavbarComponent`, Files: `navbar.component.*`
+- **Selector prefix consistency:** Use same prefix across all components (e.g., `app-*`, `gv-*`)
+- **Barrel exports:** Verify nearest `index.ts` or `public-api.ts` is updated, or component won't be easily importable
+- **Import ordering matters:** Tools may reformat if order is wrong — follow project convention
+
+> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better).

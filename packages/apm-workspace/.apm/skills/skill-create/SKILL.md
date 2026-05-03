@@ -11,11 +11,13 @@ allowed-tools: read search codebase write edit editFiles
 
 Create the smallest skill that still captures the required workflow.
 
+**PowerShell requirement:** All shell code blocks must use ` ```powershell ` syntax. This is enforced by skill-write and skill-audit.
+
 ## Prerequisites
 
 - Skill name
 - Target location and domain
-- Read `references/frontmatter-schema.md`
+- **Shell requirement:** If the skill will contain shell examples, they must be written in PowerShell syntax
 
 ## Instructions
 
@@ -24,25 +26,11 @@ Create the smallest skill that still captures the required workflow.
    - Use `.github/skills/<name>/` only for repo-level skill tooling.
    - If no package fits, create one with `apm.yml`.
 2. Validate the name: kebab-case, 1-64 chars, matches the directory.
-3. Create `SKILL.md` first; add `scripts/`, `references/`, or `assets/` only if they reduce repeated context.
-4. Write frontmatter:
-   - `name`
-   - `description`: imperative, specific triggers, ≤1,024 chars
-   - `allowed-tools`: use the shared matrix; avoid shell access unless reviewed commands require it
-5. Keep the body compact:
-   - Overview
-   - Prerequisites
-   - Instructions
-   - Gotchas
-   - Output format
-   - Use `If X → do Y; otherwise do Z` for conditional behavior.
-   - Load references only when needed.
-   - Move long specs/tables to `references/` and long templates to `assets/`.
-6. If scripts are needed, make them flag-based, `--help` enabled, stdout-data/stderr-diagnostics, and non-zero on error.
-7. Final validation: name matches directory, description is specific, body stays focused, and references are only loaded conditionally.
+3. Use skill `skill-write` to draft and validate the SKILL.md content. skill-write will enforce PowerShell syntax for all shell code.
+4. Final validation: name matches directory, description is specific, body stays
+   focused, references are only loaded conditionally, and all shell code uses PowerShell.
 
 ## Gotchas
 
 - Directory name must match `name` exactly.
-- Use ` ```powershell ` for shell blocks.
-- Do not pre-approve `execute`, `shell`, or `runCommands` unless the commands are safe and necessary.
+- PowerShell is required for all shell code — skill-write will enforce this.

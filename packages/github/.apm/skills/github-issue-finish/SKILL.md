@@ -2,7 +2,8 @@
 name: github-issue-finish
 description: 'Review implementation and create a GitHub pull request. Run after github-issue-start when implementation is complete.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase mcp_github_create_pull_request mcp_github_get_issue
-model: gpt-4.1
+model: claude-sonnet-4.6
+chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 
 Review the implementation and open a pull request for a GitHub issue.
@@ -14,44 +15,86 @@ Review the implementation and open a pull request for a GitHub issue.
 
 ## Steps
 
-### 1. Verify build and tests
-Run the full build and test suite for the project. Fix any failures before continuing.
+### Phase 1 — Verify
 
-### 2. Self-review changes
-- `git diff main...HEAD` — review all changes
-- Check for: leftover debug code, missing error handling, incomplete TODOs, missing tests
+✓ Checkpoint: Build and tests green; ready for review
 
-### 3. Create the pull request
+1. Run the full build and test suite for the project. Fix any failures before continuing.
+2. Run `git diff main...HEAD` — review all changes
+3. Check for: leftover debug code, missing error handling, incomplete TODOs, missing tests
 
-*Primary — github-pull-request agent:*
-Run `@github-pull-request {issue-number}` to auto-generate PR title and body.
+### Phase 2 — Create PR
 
-*Secondary — MCP:*
-```
-mcp_github_create_pull_request(
-  owner: <owner>,
-  repo: <repo>,
-  title: "<type>: <description> (#<issue-number>)",
-  body: "<body with Closes #<issue-number>>",
-  head: <branch>,
-  base: "main"
-)
-```
+✓ Checkpoint: PR created and CI running
 
-*Fallback — gh CLI:*
-```bash
-gh pr create \
-  --title "<type>: <description> (#<issue-number>)" \
-  --body "$(cat .apm/skills/github-issue-finish/templates/pr-body.md)"
-```
+4. Create the pull request (choose one):
 
-### 4. Confirm
-- Verify the PR link is accessible
-- Check CI status: `gh pr checks`
+   *Preferred — agent:*
+   ```powershell
+   # Use @github-pull-request agent to auto-generate
+   @github-pull-request {issue-number}
+   ```
+
+   *Alternative — MCP:*
+   ```powershell
+   # Call mcp_github_create_pull_request with:
+   # - title: "<type>: <description> (#<issue-number>)"
+   # - body: "Closes #<issue-number>\n\n<summary>"
+   # - head: <current-branch>
+   # - base: "main"
+   ```
+
+   *Fallback — gh CLI:*
+   ```powershell
+   gh pr create `
+     --title "<type>: <description> (#<issue-number>)" `
+     --body "Closes #<issue-number>`n`n$(Get-Content templates/pr-body.md)"
+   ```
+
+### Phase 3 — Confirm
+
+✓ Checkpoint: PR linked and CI status checked; ready for review
+
+5. Verify the PR link is accessible: `gh pr view`
+6. Check CI status: `gh pr checks` — confirm all checks are running or green
 
 ## Constraints
 - PR title must reference the issue number
 - All CI checks should be green before requesting review
 - Link the issue with `Closes #<issue-number>` in the PR body
 
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.
+## Gotchas
+- Don't create the PR until tests pass locally
+- Always include `Closes #<issue-number>` in body so GitHub auto-closes issue
+- Use PR title format: `<type>: <description> (#<issue-number>)` — include parentheses
+- Don't wait for CI to complete; just confirm it's running
+
+## Output Format
+
+### ✅ Summary
+PR #`{pr-number}` created for issue #`{issue-number}` on branch `{branch-name}`.
+
+### 📝 What Changed
+- PR URL: `{pr-url}`
+- Title: `{pr-title}`
+- Issue link: `Closes #{issue-number}` (auto-close configured)
+- CI status: {status} (Running / All Green / {X failed})
+- Files: {count} ({total lines changed})
+
+### ✔️ Verify
+```powershell
+# Open PR in browser
+gh pr view --web
+
+# Check CI status
+gh pr checks
+
+# Verify issue is linked
+gh pr view | Select-String "Closes #"
+```
+
+### 🚀 Next Steps
+1. Share PR link with team
+2. Monitor CI checks — fix any failures
+3. Request review from code owners
+4. Once approved, merge or rebase and merge (depends on project policy)

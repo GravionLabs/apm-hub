@@ -1,60 +1,51 @@
 # End-to-End (E2E) Testing
 
-This project uses [Cypress](https://www.cypress.io/) for end-to-end (E2E) testing, which simulates real user interactions in a browser. The E2E tests are located primarily within the `devtools/` package.
+Prefer the end-to-end framework that is already configured in the Angular workspace. If the project has no E2E framework and the user wants one added, default to Cypress unless the repo already standardizes on Playwright.
 
 ## Running E2E Tests
 
-The primary way to run E2E tests is through the `pnpm` script defined in the root `package.json`.
+1. **Prefer the project script if one exists:**
 
-1.  **Build DevTools:** The E2E tests run against a built version of the devtools extension. You must build it first:
+   ```powershell
+   npm run e2e
+   ```
 
-    ```shell
-    pnpm -F ng-devtools-mcp build:dev
-    ```
+2. **If the workspace is configured through Angular CLI:**
 
-2.  **Run Cypress:** Use the `cy:open` or `cy:run` script:
-    - To open the interactive Cypress Test Runner:
-      ```shell
-      pnpm -F ng-devtools-mcp cy:open
-      ```
-    - To run the tests headlessly in the terminal (ideal for CI):
-      ```shell
-      pnpm -F ng-devtools-mcp cy:run
-      ```
+   ```powershell
+   ng e2e
+   ```
+
+3. **If the project uses Cypress directly:**
+
+   ```powershell
+   npx cypress open
+   npx cypress run
+   ```
 
 ## Test Structure
 
-- **Configuration:** The main Cypress configuration is located at `devtools/cypress.json`.
-- **Specs:** Test files (specs) are located in `devtools/cypress/integration/`.
-- **Custom Commands:** Reusable custom commands and actions are defined in `devtools/cypress/support/`.
+- **Configuration:** Look for the framework config first, such as `cypress.config.ts` or `playwright.config.ts`.
+- **Specs:** Keep E2E specs in the location already used by the project instead of inventing a new layout.
+- **Shared helpers:** Put reusable selectors and workflows in test support utilities so specs stay short and readable.
 
 ### Example E2E Test Snippet
 
-A typical test might look like this:
+A typical Cypress test might look like this:
 
 ```typescript
-// in devtools/cypress/integration/profiler.spec.ts
+// example: cypress/e2e/profile.cy.ts
 
 describe('Profiler', () => {
   beforeEach(() => {
-    cy.visit('/?e2e-app');
-    cy.wait(1000);
-    cy.get('ng-devtools-tabs').find('a').contains('Profiler').click();
+    cy.visit('/profile');
   });
 
   it('should record and display profiling data', () => {
-    // Find the record button and click it
-    cy.get('button[aria-label="start-recording-button"]').click();
-
-    // Interact with the test application to generate profiling data
-    cy.get('body').find('#cards button').first().click();
-    cy.wait(500);
-
-    // Stop recording
-    cy.get('button[aria-label="stop-recording-button"]').click();
-
-    // Assert that the flame graph is now visible
-    cy.get('ng-devtools-recording-timeline').find('canvas').should('be.visible');
+    cy.get('[data-cy="start-recording"]').click();
+    cy.get('[data-cy="profile-card"]').first().click();
+    cy.get('[data-cy="stop-recording"]').click();
+    cy.get('[data-cy="recording-result"]').should('be.visible');
   });
 });
 ```

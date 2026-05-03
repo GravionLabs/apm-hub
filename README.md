@@ -13,10 +13,27 @@ A curated hub for sharing GitHub Copilot instructions, agents, prompts, and APM 
 ## 📖 Documentation
 
 - **[Overview](docs/overview.md)**: Introduction, core concepts, and guiding principles.
+- **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
+- **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
+- **[Chronicle Optimization](docs/chronicle-optimization.md)**: Design skills for better session tracking and summarization.
+- **[Context Management](docs/context-management.md)**: Optimize skills for long sessions and token efficiency.
+- **[Context Audit Template](docs/context-audit-template.md)**: Audit and optimize existing large skills.
 - **[JetBrains AI Support](docs/jetbrains-ai.md)**: How to use these templates with JetBrains Junie.
 - **[Skills](docs/concepts/skills.md)**: What skills are and how they are generated from prompt templates.
 
 ## 🚀 Quick Start
+
+### Prerequisites
+
+Before using apm-hub skills, verify that your system has all required prerequisites:
+
+```powershell
+pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1
+```
+
+See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup instructions for your platform.
+
+### Installing packages with APM
 
 ### Installing packages with APM
 

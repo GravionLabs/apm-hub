@@ -11,12 +11,12 @@
 
 ### Existing projects (Karma → Jest)
 
-```bash
+```powershell
 # Install Jest dependencies
 npm install --save-dev jest @types/jest jest-preset-angular
 
 # Create jest.config.js
-cat > jest.config.js << 'EOF'
+@'
 export default {
   preset: 'jest-preset-angular',
   setupFilesAfterEnv: ['<rootDir>/setup-jest.ts'],
@@ -28,12 +28,10 @@ export default {
     '/node_modules/'
   ],
 };
-EOF
+'@ | Set-Content -Path jest.config.js
 
 # Create setup-jest.ts
-cat > setup-jest.ts << 'EOF'
-import 'jest-preset-angular/setup-jest';
-EOF
+"import 'jest-preset-angular/setup-jest';" | Set-Content -Path setup-jest.ts
 
 # Update package.json
 npm set-script test "jest"
@@ -196,7 +194,7 @@ jest.useRealTimers();
 
 ## Running Tests (Jest)
 
-```bash
+```powershell
 # Run all tests
 npm test
 

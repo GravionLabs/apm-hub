@@ -3,6 +3,7 @@ name: typescript-mcp-server-generator
 description: 'Generate a complete MCP server in TypeScript with tools, resources, and prompts using @modelcontextprotocol/sdk and zod validation.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: claude-sonnet-4.6
+chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 
 Generate a complete, production-ready Model Context Protocol (MCP) server in TypeScript.
@@ -14,7 +15,10 @@ Generate a complete, production-ready Model Context Protocol (MCP) server in Typ
 
 ## Steps
 
-### 1. Scaffold the project
+### Phase 1 — Scaffold
+
+✓ Checkpoint: Project created, dependencies installed, ready to add tools
+
 **Run the scaffold script** (recommended):
 ```powershell
 pwsh scripts/New-McpServer.ps1 -ServerName my-mcp-server
@@ -22,13 +26,18 @@ pwsh scripts/New-McpServer.ps1 -ServerName my-mcp-server
 The script creates the project directory, copies starter templates, and runs `npm install`.
 
 **Alternatively — manual:**
-```bash
-mkdir my-mcp-server && cd my-mcp-server
+```powershell
+mkdir my-mcp-server
+cd my-mcp-server
 # Copy templates/package.json, templates/tsconfig.json, templates/src/index.ts
 npm install
 ```
 
-### 2. Register tools
+### Phase 2 — Implement Tools & Resources
+
+✓ Checkpoint: All tools, resources, and prompts registered; ready to test
+
+**Register tools:**
 ```typescript
 server.registerTool(
   'tool-name',
@@ -47,7 +56,7 @@ server.registerTool(
 );
 ```
 
-### 3. Register resources and prompts (optional)
+**Register resources and prompts (optional):**
 ```typescript
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 server.registerResource('name', new ResourceTemplate('resource://{id}', { list: undefined }),
@@ -60,15 +69,24 @@ server.registerPrompt('prompt-name',
 );
 ```
 
-### 4. Connect transport
-**stdio** (local/CLI): `await server.connect(new StdioServerTransport());`
+### Phase 3 — Configure & Test
 
-**HTTP** (remote): Use `StreamableHTTPServerTransport` with Express — expose a POST `/mcp` endpoint.
+✓ Checkpoint: Server running; tools validated with MCP Inspector
 
-### 5. Validate config and test
-```bash
+**Connect transport:**
+```powershell
+# stdio (local/CLI)
+await server.connect(new StdioServerTransport());
+
+# HTTP (remote) — use StreamableHTTPServerTransport with Express
+# Expose POST /mcp endpoint
+```
+
+**Validate and test:**
+```powershell
 # Validate env vars with zod at startup
-const env = z.object({ API_KEY: z.string() }).parse(process.env);
+$env = z.object({ API_KEY: z.string() }).parse([Environment]::GetEnvironmentVariables())
+
 # Test with MCP Inspector
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
@@ -89,9 +107,42 @@ npx @modelcontextprotocol/inspector node dist/index.js
 - Import from specific SDK paths (e.g., `@modelcontextprotocol/sdk/server/mcp.js`)
 - Use ES module imports only (`"type": "module"` in package.json)
 
-## Tips
-> **Use the `task` tool** for scaffolding — it's mechanical. Example:
-> `#task pwsh scripts/New-McpServer.ps1 -ServerName "my-tool-server"`
+## Gotchas
+- Don't throw errors from tool handlers — always return `isError: true`
+- MCP Inspector only works with stdio transport (HTTP requires external client)
+- Resource URIs must be valid (e.g., `resource://{id}` with proper substitution)
+- Environment validation must happen before server starts, not in tools
 
+## Output Format
 
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
+### ✅ Summary
+MCP server `{server-name}` generated at `{path}` with `{N}` tools registered and {resources/prompts}.
+
+### 📝 What Changed
+- Project: `{path}/` (created)
+- Tools registered: {count} ({names listed})
+- Resources: {count} (if any)
+- Prompts: {count} (if any)
+- Transport: {stdio/HTTP}
+- Dependencies: installed and locked
+
+### ✔️ Verify
+```powershell
+# Check scaffold
+Test-Path "{path}/src/index.ts"
+Test-Path "{path}/package.json"
+Test-Path "{path}/node_modules"
+
+# Validate TypeScript
+npm run build
+
+# Test with Inspector
+npx @modelcontextprotocol/inspector node dist/index.js
+# (Should show all tools in Inspector UI)
+```
+
+### 🚀 Next Steps
+1. Register additional tools as needed (follow pattern in src/index.ts)
+2. Test each tool with MCP Inspector
+3. Deploy: stdio (CLI) or HTTP (remote client)
+4. Document tool schemas in README.md
