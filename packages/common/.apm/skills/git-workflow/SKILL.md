@@ -2,7 +2,7 @@
 name: git-workflow
 description: "Generic git workflow — fetches from origin/main, creates branches, stages files, creates structured commits, and pushes to remote. Use this skill for any git branch, commit, or push operation. Preferred model: gpt-4.1."
 model: gpt-4.1
-allowed-tools: shell
+allowed-tools: execute shell runCommands
 ---
 
 ## Instructions
@@ -23,10 +23,9 @@ When asked to create a branch (branch name is always provided by the caller):
 ```powershell
 git fetch origin main
 git checkout -b <branch-name> origin/main
-git branch --show-current
 ```
 - Always base the branch on `origin/main`, never on the local `main`.
-- Confirm the active branch after creation.
+- The `git checkout -b` output confirms successful branch creation.
 
 ### Stage and Commit
 
@@ -48,6 +47,12 @@ When asked to push the current branch to remote (required before PR creation):
 git push --set-upstream origin <branch-name>
 ```
 Report the pushed branch name and remote URL.
+
+### Gotchas
+
+- **Local `main` vs. `origin/main`**: Always base new branches on `origin/main` (remote), not the local `main`. The remote is the source of truth.
+- **English-only branch and commit names**: All branch names and commit messages must be in English. Translate non-English ticket titles and descriptions before generating names.
+- **No source file modifications**: This skill only performs git operations; it never modifies repository files.
 
 ### Rules
 - **All branch names and commit messages MUST be in English.** If the ticket title or description is in any non-English language, translate it to English before generating the branch name or commit message. Never use non-English characters in branch names or commit messages.

@@ -1,6 +1,9 @@
 ---
 name: dotnet-nunit
-description: 'Write NUnit tests using NSubstitute for mocking and Shouldly for assertions, following project naming and category conventions.'
+description: >
+  Use this skill when creating, extending, or fixing NUnit tests for C# code
+  with NSubstitute and Shouldly, following the project's naming and category
+  conventions.
 allowed-tools: read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
@@ -50,5 +53,9 @@ public async Task GetUser_WithValidId_ReturnsUser()
 2. Identify test cases: happy path, boundary values, null inputs, error paths
 3. Create one test class per source class; one test method per scenario
 4. Keep tests independent and deterministic — no shared mutable state
+
+## Gotchas
+- Put the test project under `test/<ProjectName>.Tests`, not alongside the source project.
+- Add `[Category("Unit")]` or `[Category("Integration")]` explicitly so test filtering stays consistent.
 
 > 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

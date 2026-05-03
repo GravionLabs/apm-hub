@@ -60,6 +60,14 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
 - [ ] Present if the skill has specific runtime or environment requirements
 - [ ] 1–500 characters if provided
 
+**`model` (🟢 if omitted, 🟡 if misleading):**
+
+- [ ] Treat `model` as a repo-local convention, not an officially documented GitHub skill field
+- [ ] If present, value matches a model listed in `docs/model-overview.md`
+- [ ] If present, recommendation fits the task complexity (mechanical vs complex, short vs long instructions) — 🟡 if unjustified
+- [ ] If a body-level "Model hint" exists, it is consistent with frontmatter `model` — 🟡 if they conflict
+- [ ] Do not require `model`; omission is valid under the official skill docs — 🟢 if absent
+
 ---
 
 ### Body checks
@@ -89,6 +97,7 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
 - [ ] No content explaining things the agent already knows (HTTP basics, common tools) — 🟡
 - [ ] No generic, vague advice ("handle errors appropriately") — 🟡
 - [ ] No equal alternatives listed without a default — 🟡 (provide one default with brief fallback)
+- [ ] If a body-level "Model hint" exists, it explains why the suggested model fits the task and avoids vague wording such as "better model" — 🟡
 
 ---
 
@@ -126,7 +135,7 @@ For each script in `scripts/`:
 ### Anti-pattern checks
 
 | Anti-pattern                                                | Severity | Detection                                        |
-| ----------------------------------------------------------- | -------- | ------------------------------------------------ |
+|-------------------------------------------------------------|----------|--------------------------------------------------|
 | Generic vague content with no project context               | 🟡       | Applies to any project without changes           |
 | Scope is overly broad (activates for unrelated tasks)       | 🟡       | Description mentions many unrelated domains      |
 | Scope is overly narrow (multiple skills must load together) | 🟢       | Workflow is incomplete without another skill     |
@@ -143,6 +152,7 @@ For each script in `scripts/`:
 [ ] location: in packages/<domain>/.apm/skills/ OR .github/skills/ (meta/tooling only)
 [ ] name: present, lowercase kebab-case, 1-64 chars, matches directory, no leading/trailing/consecutive hyphens
 [ ] description: present, 1-1024 chars, imperative phrasing, specific trigger keywords
+[ ] model: optional; if present, treat as repo-local, align with docs/model-overview.md, and keep consistent with any body-level Model hint
 [ ] body: < 500 lines, < 5,000 tokens
 [ ] body: only content the agent wouldn't know on its own
 [ ] body: shell code fences use ```powershell (not ```bash or ```sh)

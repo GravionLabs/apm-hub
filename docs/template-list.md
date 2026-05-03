@@ -4,13 +4,14 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ## Table of Contents
 
-- [Ag-grid](#ag-grid)
 - [Angular](#angular)
+- [Apm-workspace](#apm-workspace)
 - [Common](#common)
-- [Copilot-workspace](#copilot-workspace)
-- [Csharp](#csharp)
+- [Development-workflow](#development-workflow)
 - [Devops](#devops)
 - [Docker](#docker)
+- [Dotnet](#dotnet)
+- [Github](#github)
 - [Go](#go)
 - [Helm](#helm)
 - [Playwright](#playwright)
@@ -20,21 +21,14 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 - [Terraform](#terraform)
 - [Typescript](#typescript)
 
-## Ag-grid
-
-### Skills
-
-| Name              | Description | File                                                                            |
-| :---------------- | :---------- | :------------------------------------------------------------------------------ |
-| ag-grid-developer | >           | [ag-grid-developer](../packages/ag-grid/.apm/skills/ag-grid-developer/SKILL.md) |
-| ag-grid-mcp-setup | >           | [ag-grid-mcp-setup](../packages/ag-grid/.apm/skills/ag-grid-mcp-setup/SKILL.md) |
-
 ## Angular
 
 ### Skills
 
 | Name                        | Description                                                                                                                                                                     | File                                                                                                |
 | :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------- |
+| ag-grid-developer           | >                                                                                                                                                                               | [ag-grid-developer](../packages/angular/.apm/skills/ag-grid-developer/SKILL.md)                     |
+| ag-grid-mcp-setup           | >                                                                                                                                                                               | [ag-grid-mcp-setup](../packages/angular/.apm/skills/ag-grid-mcp-setup/SKILL.md)                     |
 | angular-code-review         | Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list. | [angular-code-review](../packages/angular/.apm/skills/angular-code-review/SKILL.md)                 |
 | angular-component           | Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.                 | [angular-component](../packages/angular/.apm/skills/angular-component/SKILL.md)                     |
 | angular-developer           | >                                                                                                                                                                               | [angular-developer](../packages/angular/.apm/skills/angular-developer/SKILL.md)                     |
@@ -46,65 +40,50 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 | sakai-ui-component          | Scaffold a new @gravion/sakai-ui Angular library component with gv- prefix, 3-file structure, PrimeNG dependencies, and public-api.ts export.                                   | [sakai-ui-component](../packages/angular/.apm/skills/sakai-ui-component/SKILL.md)                   |
 | setup-prettier-eslint-husky | Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm.             | [setup-prettier-eslint-husky](../packages/angular/.apm/skills/setup-prettier-eslint-husky/SKILL.md) |
 
-## Common
-
-### Skills
-
-| Name                   | Description                                                                                                                                                                                                                | File                                                                                     |
-| :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
-| common-git-workflow    | Generic git workflow — fetches from origin/main, creates branches, stages files, creates structured commits, and pushes to remote. Use this skill for any git branch, commit, or push operation. Preferred model: gpt-4.1. | [common-git-workflow](../packages/common/.apm/skills/common-git-workflow/SKILL.md)       |
-| common-github-workflow | Generic GitHub workflow — creates pull requests, links issues, and manages GitHub-based development. Use this skill for any GitHub PR or issue linking operation. Preferred model: gpt-4.1.                                | [common-github-workflow](../packages/common/.apm/skills/common-github-workflow/SKILL.md) |
-
-## Copilot-workspace
+## Apm-workspace
 
 ### Agents
 
-| Name                                          | Description                                                                                                                                                                                                                                                                                                                                                                | File                                                                                                   |
-| :-------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------- |
-| Implementation Plan Generation Mode           | Generate an implementation plan for new features or refactoring existing code.                                                                                                                                                                                                                                                                                             | [implementation-plan.agent.md](../packages/copilot-workspace/.apm/agents/implementation-plan.agent.md) |
-| Plan Mode - Strategic Planning & Architecture | Strategic planning and architecture assistant focused on thoughtful analysis before implementation. Helps developers understand codebases, clarify requirements, and develop comprehensive implementation strategies.                                                                                                                                                      | [plan.agent.md](../packages/copilot-workspace/.apm/agents/plan.agent.md)                               |
-| Prompt Builder Instructions                   | Expert prompt engineering and validation system for creating high-quality prompts                                                                                                                                                                                                                                                                                          | [prompt-builder.agent.md](../packages/copilot-workspace/.apm/agents/prompt-builder.agent.md)           |
-| Prompt Engineer                               | A specialized chat mode for analyzing and improving prompts. Every user input is treated as a prompt to be improved. It first provides a detailed analysis of the original prompt within a <reasoning> tag, evaluating it against a systematic framework based on OpenAI's prompt engineering best practices. Following the analysis, it generates a new, improved prompt. | [prompt-engineer.agent.md](../packages/copilot-workspace/.apm/agents/prompt-engineer.agent.md)         |
-| Refine Requirement or Issue Chat Mode         | Refine the requirement or issue with Acceptance Criteria, Technical Considerations, Edge Cases, and NFRs                                                                                                                                                                                                                                                                   | [refine-issue.agent.md](../packages/copilot-workspace/.apm/agents/refine-issue.agent.md)               |
-| Specification mode instructions               | Generate or update specification documents for new or existing functionality.                                                                                                                                                                                                                                                                                              | [specification.agent.md](../packages/copilot-workspace/.apm/agents/specification.agent.md)             |
+| Name                                          | Description                                                                                                                                                                                                                                                                                                                                                                | File                                                                                               |
+| :-------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- |
+| Implementation Plan Generation Mode           | Generate an implementation plan for new features or refactoring existing code.                                                                                                                                                                                                                                                                                             | [implementation-plan.agent.md](../packages/apm-workspace/.apm/agents/implementation-plan.agent.md) |
+| Plan Mode - Strategic Planning & Architecture | Strategic planning and architecture assistant focused on thoughtful analysis before implementation. Helps developers understand codebases, clarify requirements, and develop comprehensive implementation strategies.                                                                                                                                                      | [plan.agent.md](../packages/apm-workspace/.apm/agents/plan.agent.md)                               |
+| Prompt Builder Instructions                   | Expert prompt engineering and validation system for creating high-quality prompts                                                                                                                                                                                                                                                                                          | [prompt-builder.agent.md](../packages/apm-workspace/.apm/agents/prompt-builder.agent.md)           |
+| Prompt Engineer                               | A specialized chat mode for analyzing and improving prompts. Every user input is treated as a prompt to be improved. It first provides a detailed analysis of the original prompt within a <reasoning> tag, evaluating it against a systematic framework based on OpenAI's prompt engineering best practices. Following the analysis, it generates a new, improved prompt. | [prompt-engineer.agent.md](../packages/apm-workspace/.apm/agents/prompt-engineer.agent.md)         |
+| Refine Requirement or Issue Chat Mode         | Refine the requirement or issue with Acceptance Criteria, Technical Considerations, Edge Cases, and NFRs                                                                                                                                                                                                                                                                   | [refine-issue.agent.md](../packages/apm-workspace/.apm/agents/refine-issue.agent.md)               |
+| Specification mode instructions               | Generate or update specification documents for new or existing functionality.                                                                                                                                                                                                                                                                                              | [specification.agent.md](../packages/apm-workspace/.apm/agents/specification.agent.md)             |
+
+### Skills
+
+| Name         | Description | File                                                                        |
+| :----------- | :---------- | :-------------------------------------------------------------------------- |
+| skill-audit  | >           | [skill-audit](../packages/apm-workspace/.apm/skills/skill-audit/SKILL.md)   |
+| skill-create | >           | [skill-create](../packages/apm-workspace/.apm/skills/skill-create/SKILL.md) |
+| skill-update | >           | [skill-update](../packages/apm-workspace/.apm/skills/skill-update/SKILL.md) |
+
+## Common
 
 ### Instructions
 
-| Name                                  | Description                                                                                                                      | File                                                                                                                               |
-| :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-| Agent Skills File Guidelines          | Guidelines for creating high-quality Agent Skills for GitHub Copilot                                                             | [agent-skills.instructions.md](../packages/copilot-workspace/.apm/instructions/agent-skills.instructions.md)                       |
-| Copilot Process tracking Instructions | Instructs Copilot to log its reasoning steps inline, making the thought process visible and editable during complex interactions | [copilot-thought-logging.instructions.md](../packages/copilot-workspace/.apm/instructions/copilot-thought-logging.instructions.md) |
-| Custom Instructions File Guidelines   | Guidelines for creating high-quality custom instruction files for GitHub Copilot                                                 | [instructions.instructions.md](../packages/copilot-workspace/.apm/instructions/instructions.instructions.md)                       |
-| issue-workflow.instructions.md        | Branch and PR conventions for working on GitHub issues: naming, commits, and pull request format                                 | [issue-workflow.instructions.md](../packages/copilot-workspace/.apm/instructions/issue-workflow.instructions.md)                   |
-| Copilot Prompt Files Guidelines       | Guidelines for creating high-quality prompt files for GitHub Copilot                                                             | [prompt.instructions.md](../packages/copilot-workspace/.apm/instructions/prompt.instructions.md)                                   |
+| Name                 | Description | File                                                                                                              |
+| :------------------- | :---------- | :---------------------------------------------------------------------------------------------------------------- |
+| Conventional Commits | -           | [conventional-commits.instructions.md](../packages/common/.apm/instructions/conventional-commits.instructions.md) |
 
 ### Skills
 
-| Name               | Description                                                                                                                                     | File                                                                                        |
-| :----------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
-| gh-agents-md       | Analyze the repository and generate a complete AGENTS.md file tailored to the project type (dotnet, node, python, github-actions, or generic).  | [gh-agents-md](../packages/copilot-workspace/.apm/skills/gh-agents-md/SKILL.md)             |
-| gh-issue-finish    | Review implemented changes and create a pull request for a GitHub issue. Run this after gh-issue-implement when the implementation is complete. | [gh-issue-finish](../packages/copilot-workspace/.apm/skills/gh-issue-finish/SKILL.md)       |
-| gh-issue-implement | Read a GitHub issue, create the appropriate branch, and implement it with code, tests, and docs. Use this to start work on a new issue.         | [gh-issue-implement](../packages/copilot-workspace/.apm/skills/gh-issue-implement/SKILL.md) |
-| gh-issue-work      | End-to-end workflow for a GitHub issue: read issue, create branch, implement with tests and docs, review, and open a pull request.              | [gh-issue-work](../packages/copilot-workspace/.apm/skills/gh-issue-work/SKILL.md)           |
+| Name         | Description                                                                                                                                                                                                                | File                                                                 |
+| :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
+| git-workflow | Generic git workflow — fetches from origin/main, creates branches, stages files, creates structured commits, and pushes to remote. Use this skill for any git branch, commit, or push operation. Preferred model: gpt-4.1. | [git-workflow](../packages/common/.apm/skills/git-workflow/SKILL.md) |
 
-## Csharp
+## Development-workflow
 
-### Skills
+### Agents
 
-| Name                         | Description                                                                                                                                                                                                                                | File                                                                                                 |
-| :--------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
-| aspnet-minimal-api-openapi   | Create an ASP.NET Core Minimal API endpoint module using Carter with full OpenAPI documentation, typed request/response models, and proper error responses.                                                                                | [aspnet-minimal-api-openapi](../packages/csharp/.apm/skills/aspnet-minimal-api-openapi/SKILL.md)     |
-| create-dotnet-solution       | Scaffold a new .NET solution with src/test layout, Central Package Management (Directory.Packages.props), Directory.Build.props, and .editorconfig. Supports both NuGet libraries (multi-target) and applications (webapi/worker/console). | [create-dotnet-solution](../packages/csharp/.apm/skills/create-dotnet-solution/SKILL.md)             |
-| csharp-async                 | Apply C# async/await best practices to existing code: fix deadlocks, ConfigureAwait usage, async void, cancellation token propagation, and naming conventions.                                                                             | [csharp-async](../packages/csharp/.apm/skills/csharp-async/SKILL.md)                                 |
-| csharp-code-review           | Perform a structured C# and NUnit code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions.                                                                                                 | [csharp-code-review](../packages/csharp/.apm/skills/csharp-code-review/SKILL.md)                     |
-| csharp-docs                  | Add XML documentation comments to C# public and internal types and members following summary/param/returns/remarks conventions.                                                                                                            | [csharp-docs](../packages/csharp/.apm/skills/csharp-docs/SKILL.md)                                   |
-| csharp-mcp-server-generator  | Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.                                                                                                            | [csharp-mcp-server-generator](../packages/csharp/.apm/skills/csharp-mcp-server-generator/SKILL.md)   |
-| csharp-nunit                 | Write NUnit tests using NSubstitute for mocking and Shouldly for assertions, following project naming and category conventions.                                                                                                            | [csharp-nunit](../packages/csharp/.apm/skills/csharp-nunit/SKILL.md)                                 |
-| dotnet-best-practices        | Review and improve .NET/C# code to meet project-specific best practices: nullability, async patterns, DI, logging, and modern C# idioms.                                                                                                   | [dotnet-best-practices](../packages/csharp/.apm/skills/dotnet-best-practices/SKILL.md)               |
-| dotnet-design-pattern-review | Review C#/.NET code for design pattern implementation quality and suggest improvements. Read-only — outputs findings, does not modify code.                                                                                                | [dotnet-design-pattern-review](../packages/csharp/.apm/skills/dotnet-design-pattern-review/SKILL.md) |
-| dotnet-upgrade               | Analyze and execute a .NET framework or package upgrade: assess current state, identify breaking changes, update target frameworks and NuGet packages, and verify the build.                                                               | [dotnet-upgrade](../packages/csharp/.apm/skills/dotnet-upgrade/SKILL.md)                             |
-| ef-core                      | Apply Entity Framework Core best practices: DbContext design, migrations, query optimization, owned entities, and avoiding N+1 problems.                                                                                                   | [ef-core](../packages/csharp/.apm/skills/ef-core/SKILL.md)                                           |
-| write-tests                  | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                                                                                           | [write-tests](../packages/csharp/.apm/skills/write-tests/SKILL.md)                                   |
+| Name                     | Description                                                                                                                                                                                                                    | File                                                                                                                |
+| :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| github-engineer          | GitHub issue implementation orchestrator. Fetches the issue, resolves repositories (multi-repo support), creates a branch, detects tech stacks, delegates to specialists, commits, and opens a PR.                             | [github-engineer.agent.md](../packages/development-workflow/.apm/agents/github-engineer.agent.md)                   |
+| github-pr-reviewer       | GitHub PR review orchestrator. Fetches the PR diff, detects tech stacks from changed files, invokes specialist review skills in parallel, posts inline GitHub review comments via MCP, and submits Approve or Request Changes. | [github-pr-reviewer.agent.md](../packages/development-workflow/.apm/agents/github-pr-reviewer.agent.md)             |
+| github-software-engineer | Top-level router for GitHub development workflows. Checks for AGENTS.md and routes to the correct specialist agent based on user intent.                                                                                       | [github-software-engineer.agent.md](../packages/development-workflow/.apm/agents/github-software-engineer.agent.md) |
 
 ## Devops
 
@@ -131,6 +110,50 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 | docker-debug           | Diagnose container startup failures, networking issues, volume mount problems, and resource constraints using docker logs, inspect, exec, stats, and network commands.        | [docker-debug](../packages/docker/.apm/skills/docker-debug/SKILL.md)                     |
 | docker-security-review | Review a Dockerfile or docker-compose configuration for security issues: base image hygiene, running as root, exposed secrets, ADD vs COPY, .dockerignore, and image pinning. | [docker-security-review](../packages/docker/.apm/skills/docker-security-review/SKILL.md) |
 | multi-stage-dockerfile | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.                                  | [multi-stage-dockerfile](../packages/docker/.apm/skills/multi-stage-dockerfile/SKILL.md) |
+
+## Dotnet
+
+### Skills
+
+| Name                              | Description                                                                                                                                                                                                                                | File                                                                                                           |
+| :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| dotnet-aspnet-minimal-api-openapi | Create an ASP.NET Core Minimal API endpoint module using Carter with full OpenAPI documentation, typed request/response models, and proper error responses.                                                                                | [dotnet-aspnet-minimal-api-openapi](../packages/dotnet/.apm/skills/dotnet-aspnet-minimal-api-openapi/SKILL.md) |
+| dotnet-async                      | Apply C# async/await best practices to existing code: fix deadlocks, ConfigureAwait usage, async void, cancellation token propagation, and naming conventions.                                                                             | [dotnet-async](../packages/dotnet/.apm/skills/dotnet-async/SKILL.md)                                           |
+| dotnet-best-practices             | Review and improve .NET/C# code to meet project-specific best practices: nullability, async patterns, DI, logging, and modern C# idioms.                                                                                                   | [dotnet-best-practices](../packages/dotnet/.apm/skills/dotnet-best-practices/SKILL.md)                         |
+| dotnet-code-review                | Perform a structured C# and NUnit code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions.                                                                                                 | [dotnet-code-review](../packages/dotnet/.apm/skills/dotnet-code-review/SKILL.md)                               |
+| dotnet-create-solution            | Scaffold a new .NET solution with src/test layout, Central Package Management (Directory.Packages.props), Directory.Build.props, and .editorconfig. Supports both NuGet libraries (multi-target) and applications (webapi/worker/console). | [dotnet-create-solution](../packages/dotnet/.apm/skills/dotnet-create-solution/SKILL.md)                       |
+| dotnet-design-pattern-review      | Review C#/.NET code for design pattern implementation quality and suggest improvements. Read-only — outputs findings, does not modify code.                                                                                                | [dotnet-design-pattern-review](../packages/dotnet/.apm/skills/dotnet-design-pattern-review/SKILL.md)           |
+| dotnet-docs                       | Add XML documentation comments to C# public and internal types and members following summary/param/returns/remarks conventions.                                                                                                            | [dotnet-docs](../packages/dotnet/.apm/skills/dotnet-docs/SKILL.md)                                             |
+| dotnet-ef-core                    | Apply Entity Framework Core best practices: DbContext design, migrations, query optimization, owned entities, and avoiding N+1 problems.                                                                                                   | [dotnet-ef-core](../packages/dotnet/.apm/skills/dotnet-ef-core/SKILL.md)                                       |
+| dotnet-mcp-server-generator       | Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.                                                                                                            | [dotnet-mcp-server-generator](../packages/dotnet/.apm/skills/dotnet-mcp-server-generator/SKILL.md)             |
+| dotnet-nunit                      | Write NUnit tests using NSubstitute for mocking and Shouldly for assertions, following project naming and category conventions.                                                                                                            | [dotnet-nunit](../packages/dotnet/.apm/skills/dotnet-nunit/SKILL.md)                                           |
+| dotnet-upgrade                    | Analyze and execute a .NET framework or package upgrade: assess current state, identify breaking changes, update target frameworks and NuGet packages, and verify the build.                                                               | [dotnet-upgrade](../packages/dotnet/.apm/skills/dotnet-upgrade/SKILL.md)                                       |
+| dotnet-write-tests                | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                                                                                           | [dotnet-write-tests](../packages/dotnet/.apm/skills/dotnet-write-tests/SKILL.md)                               |
+
+## Github
+
+### Agents
+
+| Name                | Description                                                                                                                                                                                        | File                                                                                        |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
+| github-pull-request | Creates a structured GitHub pull request from the current branch and linked issue. Gathers context from the issue and git log, generates PR title and body, then creates the PR via MCP or gh CLI. | [github-pull-request.agent.md](../packages/github/.apm/agents/github-pull-request.agent.md) |
+
+### Instructions
+
+| Name              | Description | File                                                                                                  |
+| :---------------- | :---------- | :---------------------------------------------------------------------------------------------------- |
+| GitHub Context    | -           | [github-context.instructions.md](../packages/github/.apm/instructions/github-context.instructions.md) |
+| GitHub MCP Server | -           | [github-mcp.instructions.md](../packages/github/.apm/instructions/github-mcp.instructions.md)         |
+
+### Skills
+
+| Name                  | Description                                                                                                                                                                                 | File                                                                                   |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------- |
+| github-agents-md      | Analyze the repository and generate a complete AGENTS.md file tailored to the project type (dotnet, node, python, github-actions, or generic).                                              | [github-agents-md](../packages/github/.apm/skills/github-agents-md/SKILL.md)           |
+| github-issue-finish   | Review implementation and create a GitHub pull request. Run after github-issue-start when implementation is complete.                                                                       | [github-issue-finish](../packages/github/.apm/skills/github-issue-finish/SKILL.md)     |
+| github-issue-start    | Read a GitHub issue, create the appropriate branch, and implement it with code, tests, and docs. Use this to start work on a new issue.                                                     | [github-issue-start](../packages/github/.apm/skills/github-issue-start/SKILL.md)       |
+| github-issue-workflow | End-to-end workflow for a GitHub issue: read issue, create branch, implement with tests and docs, review, and open a pull request.                                                          | [github-issue-workflow](../packages/github/.apm/skills/github-issue-workflow/SKILL.md) |
+| github-workflow       | Generic GitHub workflow — creates pull requests, links issues, and manages GitHub-based development. Use this skill for any GitHub PR or issue linking operation. Preferred model: gpt-4.1. | [github-workflow](../packages/github/.apm/skills/github-workflow/SKILL.md)             |
 
 ## Go
 

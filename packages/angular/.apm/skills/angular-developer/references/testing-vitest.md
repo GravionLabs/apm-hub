@@ -6,13 +6,13 @@
 
 ### New projects
 Vitest is configured by default when using `ng new`:
-```bash
+```powershell
 ng new my-app
 # Vitest builder already configured
 ```
 
 ### Existing projects (migrate from Karma/Jest)
-```bash
+```powershell
 ng add @analogjs/vite-plugin-angular
 # OR for Angular CLI with Vitest builder
 npm install --save-dev @angular/build @vitejs/plugin-vue vitest @vitest/ui
@@ -131,7 +131,7 @@ TestBed.configureTestingModule({
 
 ## Running Tests
 
-```bash
+```powershell
 # Run all tests
 ng test
 

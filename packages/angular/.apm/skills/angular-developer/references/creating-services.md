@@ -6,7 +6,7 @@ Services in Angular are reusable pieces of code that handle data fetching, busin
 
 You can generate a service using the Angular CLI:
 
-```bash
+```powershell
 ng generate service my-data
 ```
 

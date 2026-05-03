@@ -1,117 +1,86 @@
 ---
 name: skill-audit
 description: >
-  Audits an existing agent skill against agentskills.io best practices. Use this skill
-  when asked to review, validate, check, or audit a skill — even if the user just says
-  "look at this skill" or "is this skill correct". Outputs a prioritised findings list
-  and writes audit-report.md to the skill directory for use in automated pipelines.
-  Invoke as: apm-skill-audit
-allowed-tools: execute read edit search codebase editFiles runCommands
+  Use this skill to audit, validate, or review a skill and emit a compact JSON
+  report, even if the user only says to check it or verify it.
+allowed-tools: read search codebase write edit editFiles execute shell runCommands
+model: claude-sonnet-4.6
+chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 
 ## Overview
 
-Systematically audit a skill directory and produce a structured findings report.
+Audit a skill, show the user a summary report, and automatically apply fixes via skill-update (with user confirmation for important findings).
 
 ## Prerequisites
 
-- The skill directory path (ask if not provided)
+- Skill path
+- Read `references/frontmatter-schema.md`
+- Read `references/audit-checklist.md`
+- If the skill uses frontmatter `model` or a body-level "Model hint", read
+  `../../../docs/model-overview.md`
+- If the skill includes CLI examples, scripts, or output-format guidance, read
+  `references/tool-efficiency-guidance.md`
+- If you are preparing the final audit response, read
+  `assets/audit-output-template.md`
 
 ## Instructions
 
-### Phase 1 — Load rules
+### Phase 1 — Load & Analyze
 
-Read both reference files before starting any checks:
-1. Read `references/frontmatter-schema.md` — frontmatter field rules and length limits
-2. Read `references/audit-checklist.md` — full checklist with severity levels
+✓ Checkpoint: Skill loaded and content structure understood
 
-### Phase 2 — Read the skill
+1. Read `{skill-dir}/SKILL.md` and list files in `{skill-dir}/`.
+2. **Check for model guidance:** If the skill frontmatter contains `model:` or the
+   body contains "Model hint" → **read `../../../docs/model-overview.md`** and
+   treat `model` as a repo-local convention unless the official skill docs say
+   otherwise.
+3. **Check for CLI content:** If the skill contains code blocks, shell command
+   examples, scripts in `scripts/`, or output-format guidance → **immediately
+   read `references/tool-efficiency-guidance.md`** before proceeding.
+4. **Shell enforcement:** Check all code blocks and shell examples. Flag any use
+   of ` ```bash `, ` ```sh `, or other shells. **All shell code must use
+   ` ```powershell `** — report this as 🔴 critical if any non-PowerShell
+   shells are found.
 
-1. Identify the skill path (ask the user if not provided or not obvious from context)
-2. Read `{skill-dir}/SKILL.md`
-3. List all files in `{skill-dir}/` to know which companion directories exist
+### Phase 2 — Audit & Report
 
-### Phase 3 — Run all checks
+✓ Checkpoint: All checks complete; audit-report.json written
 
-Work through `references/audit-checklist.md` in order:
+5. Run the checklist across frontmatter, body, references, assets, and
+   anti-patterns.
+6. Apply tool-efficiency guidance to all CLI examples and command output in the
+   skill (if step 3 applied).
+7. Record each finding as severity, category, finding, and recommendation.
+8. **Write `{skill-dir}/audit-report.json`** as an archive (not for passing to skill-update).
+9. **Display audit report to user:**
+   - Show summary (passed checks + any findings)
+   - Format findings by severity (🔴 critical → 🟡 important → 🟢 suggestions)
 
-1. **Frontmatter** — name, description, allowed-tools, compatibility
-2. **Body** — length, content placement, structure, quality
-3. **`scripts/`** — if the directory exists, check every script file
-4. **`references/`** — conditional load instructions, path style, chain depth
-5. **`assets/`** — referenced conditionally, appropriate content type
-6. **Anti-patterns** — scan for the patterns in the anti-pattern table
+### Phase 3 — Remediate (if needed)
 
-For each issue found, record:
-- Severity: 🔴 Critical / 🟡 Important / 🟢 Suggestion
-- Category: `name` | `description` | `body` | `scripts` | `references` | `assets` | `anti-pattern`
-- Finding: concise description of the problem
-- Recommendation: what to change
+✓ Checkpoint: User decision made; fixes applied or cancelled
 
-### Phase 4 — Write `audit-report.md`
-
-Write findings to `{skill-dir}/audit-report.md` using this template:
-
-```markdown
-# Skill Audit: {name}
-
-Audited: {skill-dir}
-Date: {ISO date}
-
-## Summary
-
-{N} critical · {N} important · {N} suggestions
-
-## Findings
-
-### 🔴 Critical
-
-- **[category]** {finding}
-  → {recommendation}
-
-### 🟡 Important
-
-- **[category]** {finding}
-  → {recommendation}
-
-### 🟢 Suggestions
-
-- **[category]** {finding}
-  → {recommendation}
-
-## Passed checks
-
-- {check 1 that passed}
-- {check 2 that passed}
-```
-
-If there are no findings in a severity category, omit that section header.
-
-Write the file even when there are zero findings — an empty audit report signals a clean audit.
-
-### Phase 5 — Report to the user
-
-Print a brief summary:
-- Total findings by severity
-- The 1–3 most important issues (if any)
-- Confirm that `audit-report.md` was written
+9. **Decision flow:** If findings exist (any severity) → ask user:
+   "Apply these fixes with skill-update?" (choices: Yes / Review findings
+   first / Cancel).
+   - If user confirms → invoke skill-update with the skill path
+   - Otherwise if user chooses "Review" → show detailed audit-report.json and
+     ask again
+   - Otherwise → stop without remediation
+10. Otherwise → report as ✅ PASS and done.
 
 ## Gotchas
 
-- A skill with zero findings is a valid outcome — write the report with an empty findings section.
-- When the skill has no `scripts/` directory, skip all script checks entirely.
-- Check the **directory name**, not just the frontmatter `name` field — both must match.
-- `audit-report.md` is written to the audited skill's directory, not the current working directory.
+- A zero-finding report is valid — don't force fixes if nothing's broken.
+- The directory name must match `name` in frontmatter.
+- Frontmatter `model` is not part of the official GitHub skill minimum; audit it
+  as a repo-local convention, not as a required field.
+- Write `audit-report.json` in the skill directory as an archive, not for inter-tool communication.
+- Do not proceed with skill-update if user cancels.
+- Critical findings (shell enforcement) should always be fixed — don't skip them.
 
-## Output format
+## Output Format
 
-```
-Audit complete: {name}
-  🔴 {N} critical
-  🟡 {N} important
-  🟢 {N} suggestions
-
-Report written to: {skill-dir}/audit-report.md
-```
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
+If you are ready to present the audit result, read
+`assets/audit-output-template.md` and fill in the placeholders.
