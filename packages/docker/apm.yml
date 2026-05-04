@@ -1,5 +1,5 @@
 name: docker
-version: 1.0.39
+version: 1.0.0
 description: Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.
 author:
   name: Gravion

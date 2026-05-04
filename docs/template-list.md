@@ -55,11 +55,17 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name         | Description | File                                                                        |
-| :----------- | :---------- | :-------------------------------------------------------------------------- |
-| skill-audit  | >           | [skill-audit](../packages/apm-workspace/.apm/skills/skill-audit/SKILL.md)   |
-| skill-create | >           | [skill-create](../packages/apm-workspace/.apm/skills/skill-create/SKILL.md) |
-| skill-update | >           | [skill-update](../packages/apm-workspace/.apm/skills/skill-update/SKILL.md) |
+| Name                | Description | File                                                                                      |
+| :------------------ | :---------- | :---------------------------------------------------------------------------------------- |
+| agent-audit         | >           | [agent-audit](../packages/apm-workspace/.apm/skills/agent-audit/SKILL.md)                 |
+| agent-create        | >           | [agent-create](../packages/apm-workspace/.apm/skills/agent-create/SKILL.md)               |
+| agent-update        | >           | [agent-update](../packages/apm-workspace/.apm/skills/agent-update/SKILL.md)               |
+| agent-write         | >           | [agent-write](../packages/apm-workspace/.apm/skills/agent-write/SKILL.md)                 |
+| check-prerequisites | >           | [check-prerequisites](../packages/apm-workspace/.apm/skills/check-prerequisites/SKILL.md) |
+| skill-audit         | >           | [skill-audit](../packages/apm-workspace/.apm/skills/skill-audit/SKILL.md)                 |
+| skill-create        | >           | [skill-create](../packages/apm-workspace/.apm/skills/skill-create/SKILL.md)               |
+| skill-update        | >           | [skill-update](../packages/apm-workspace/.apm/skills/skill-update/SKILL.md)               |
+| skill-write         | >           | [skill-write](../packages/apm-workspace/.apm/skills/skill-write/SKILL.md)                 |
 
 ## Common
 
@@ -126,7 +132,7 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 | dotnet-docs                       | Add XML documentation comments to C# public and internal types and members following summary/param/returns/remarks conventions.                                                                                                            | [dotnet-docs](../packages/dotnet/.apm/skills/dotnet-docs/SKILL.md)                                             |
 | dotnet-ef-core                    | Apply Entity Framework Core best practices: DbContext design, migrations, query optimization, owned entities, and avoiding N+1 problems.                                                                                                   | [dotnet-ef-core](../packages/dotnet/.apm/skills/dotnet-ef-core/SKILL.md)                                       |
 | dotnet-mcp-server-generator       | Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.                                                                                                            | [dotnet-mcp-server-generator](../packages/dotnet/.apm/skills/dotnet-mcp-server-generator/SKILL.md)             |
-| dotnet-nunit                      | Write NUnit tests using NSubstitute for mocking and Shouldly for assertions, following project naming and category conventions.                                                                                                            | [dotnet-nunit](../packages/dotnet/.apm/skills/dotnet-nunit/SKILL.md)                                           |
+| dotnet-nunit                      | >                                                                                                                                                                                                                                          | [dotnet-nunit](../packages/dotnet/.apm/skills/dotnet-nunit/SKILL.md)                                           |
 | dotnet-upgrade                    | Analyze and execute a .NET framework or package upgrade: assess current state, identify breaking changes, update target frameworks and NuGet packages, and verify the build.                                                               | [dotnet-upgrade](../packages/dotnet/.apm/skills/dotnet-upgrade/SKILL.md)                                       |
 | dotnet-write-tests                | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                                                                                           | [dotnet-write-tests](../packages/dotnet/.apm/skills/dotnet-write-tests/SKILL.md)                               |
 
@@ -245,6 +251,7 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 | Name         | Description                                                                                                                                      | File                                                                 |
 | :----------- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
+| create-agent | >                                                                                                                                                | [create-agent](../packages/shared/.apm/skills/create-agent/SKILL.md) |
 | create-skill | Create a new skill in copilot-hub following the agentskills.io directory layout and copilot-hub conventions.                                     | [create-skill](../packages/shared/.apm/skills/create-skill/SKILL.md) |
 | write-tests  | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios. | [write-tests](../packages/shared/.apm/skills/write-tests/SKILL.md)   |
 

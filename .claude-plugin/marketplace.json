@@ -6,13 +6,13 @@
   },
   "plugins": [
     {
-      "name": "ag-grid",
-      "description": "AG Grid Enterprise development plugin for Angular. Provides expert guidance on AG Grid Enterprise setup, column definitions, row models, filtering, cell rendering/editing, row grouping, pivoting, master-detail, and Excel export. Includes the ag-mcp MCP server setup skill for version-specific doc search inside your IDE.",
-      "source": "./packages/ag-grid"
+      "name": "all",
+      "description": "Meta-package that installs all GravionLabs apm-hub packages in one go. Suitable for workspaces that use multiple tech stacks and want the full skill set available.",
+      "source": "./packages/all"
     },
     {
       "name": "angular",
-      "description": "Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, and testing with Vitest.",
+      "description": "Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, AG Grid integration, and testing with Vitest.",
       "source": "./packages/angular"
     },
     {
@@ -21,14 +21,19 @@
       "source": "./packages/common"
     },
     {
-      "name": "copilot-workspace",
-      "description": "GitHub Copilot workspace setup for GravionLabs/apm-hub contributors. Includes gh-agents-md to scaffold an AGENTS.md repository context file. Issue workflow skills automate the full branch → implement → review → PR lifecycle.",
-      "source": "./packages/copilot-workspace"
+      "name": "apm-workspace",
+      "description": "APM workspace tooling for apm-hub contributors. Provides skills for auditing, creating, and updating APM skill packages.",
+      "source": "./packages/apm-workspace"
     },
     {
-      "name": "csharp",
+      "name": "dotnet",
       "description": "C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.",
-      "source": "./packages/csharp"
+      "source": "./packages/dotnet"
+    },
+    {
+      "name": "development-workflow",
+      "description": "GitHub-based development workflow automation. Orchestrates the full GitHub issue-to-PR lifecycle with multi-repo support, tech-stack detection, and PR review automation across Angular, TypeScript, Python, Go, and .NET stacks.",
+      "source": "./packages/development-workflow"
     },
     {
       "name": "devops",
@@ -39,6 +44,11 @@
       "name": "docker",
       "description": "Docker containerization plugin. Optimized multi-stage Dockerfiles for any language or framework.",
       "source": "./packages/docker"
+    },
+    {
+      "name": "github",
+      "description": "GitHub workflow primitives for issue management, branch workflows, and pull request automation. Provides agents and skills for the full GitHub issue-to-PR lifecycle using GitHub MCP and gh CLI.",
+      "source": "./packages/github"
     },
     {
       "name": "go",
@@ -84,11 +94,6 @@
       "name": "typescript",
       "description": "TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, debugging, Playwright TypeScript testing, and containerization.",
       "source": "./packages/typescript"
-    },
-    {
-      "name": "all",
-      "description": "Meta-package that installs all GravionLabs apm-hub packages in one step.",
-      "source": "./packages/all"
     }
   ]
 }
