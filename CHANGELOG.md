@@ -5,6 +5,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.1] — 2026-05-04
+
+### Refactoring
+- Simplify audit output templates and enhance prerequisite checks
+
+
 ## [1.0.0] — 2026-05-04
 
 ### Bug Fixes
@@ -101,6 +107,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Correct model field platform support across agent skills
 - Model is officially supported in both GitHub Copilot and Claude Code
 - Update agents and skills documentation for APM packages
+- Update CHANGELOG.md for v1.0.0 [skip ci]
 
 
 ### Features
