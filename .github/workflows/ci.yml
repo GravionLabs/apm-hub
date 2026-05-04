@@ -168,11 +168,15 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md
+          git add README.md docs/overview.md
           # Force-add gitignored aggregate docs
           git add -f docs/agent-list.md docs/instruction-list.md docs/skill-list.md docs/template-list.md
+          # Commit generated diagrams
+          git add docs/diagrams/*.svg
           # Commit APM packages output (packages/ is gitignored for apm_modules/ and .github/ only)
-          git add packages/*/apm.yml packages/*/apm.lock.yaml "packages/*/.apm/" packages/all/
+          git add packages/*/apm.yml packages/*/apm.lock.yaml packages/all/
+          # Add .apm directories (use find to handle glob expansion reliably)
+          find packages -maxdepth 2 -name '.apm' -type d -exec git add {} + 2>/dev/null || true
           # Commit marketplace definition
           git add apm.yml .claude-plugin/marketplace.json
           if git diff --staged --quiet; then
