@@ -77,9 +77,9 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name         | Description                                                                                                                                                                                                                | File                                                                 |
-| :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
-| git-workflow | Generic git workflow — fetches from origin/main, creates branches, stages files, creates structured commits, and pushes to remote. Use this skill for any git branch, commit, or push operation. Preferred model: gpt-4.1. | [git-workflow](../packages/common/.apm/skills/git-workflow/SKILL.md) |
+| Name         | Description | File                                                                 |
+| :----------- | :---------- | :------------------------------------------------------------------- |
+| git-workflow | >           | [git-workflow](../packages/common/.apm/skills/git-workflow/SKILL.md) |
 
 ## Development-workflow
 
@@ -89,7 +89,7 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
 | github-engineer          | GitHub issue implementation orchestrator. Fetches the issue, resolves repositories (multi-repo support), creates a branch, detects tech stacks, delegates to specialists, commits, and opens a PR.                             | [github-engineer.agent.md](../packages/development-workflow/.apm/agents/github-engineer.agent.md)                   |
 | github-pr-reviewer       | GitHub PR review orchestrator. Fetches the PR diff, detects tech stacks from changed files, invokes specialist review skills in parallel, posts inline GitHub review comments via MCP, and submits Approve or Request Changes. | [github-pr-reviewer.agent.md](../packages/development-workflow/.apm/agents/github-pr-reviewer.agent.md)             |
-| github-software-engineer | Top-level router for GitHub development workflows. Checks for AGENTS.md and routes to the correct specialist agent based on user intent.                                                                                       | [github-software-engineer.agent.md](../packages/development-workflow/.apm/agents/github-software-engineer.agent.md) |
+| github-software-engineer | Route GitHub development requests — implementing issues, reviewing PRs, or refining backlog items — to the correct specialist agent.                                                                                           | [github-software-engineer.agent.md](../packages/development-workflow/.apm/agents/github-software-engineer.agent.md) |
 
 ## Devops
 
@@ -218,15 +218,16 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name                   | Description                                                                                                                                      | File                                                                                     |
-| :--------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
-| create-python-project  | Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, and asyncio support.                                                  | [create-python-project](../packages/python/.apm/skills/create-python-project/SKILL.md)   |
-| create-python-workflow | Create a GitHub Actions CI/CD workflow for a Python package using GravionLabs/ci reusable workflows (lint, test, build, publish).                | [create-python-workflow](../packages/python/.apm/skills/create-python-workflow/SKILL.md) |
-| pytest-coverage        | Run pytest with coverage, identify uncovered lines, and write additional tests to achieve full (or target) coverage.                             | [pytest-coverage](../packages/python/.apm/skills/pytest-coverage/SKILL.md)               |
-| python-code-review     | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions.       | [python-code-review](../packages/python/.apm/skills/python-code-review/SKILL.md)         |
-| python-debug           | Diagnose and fix Python runtime errors, memory leaks, and performance issues using pdb, mypy, and profiling tools.                               | [python-debug](../packages/python/.apm/skills/python-debug/SKILL.md)                     |
-| python-packaging       | Set up or modernize Python project packaging using pyproject.toml, uv, and hatch — covers dependencies, build backends, and publishing.          | [python-packaging](../packages/python/.apm/skills/python-packaging/SKILL.md)             |
-| write-tests            | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios. | [write-tests](../packages/python/.apm/skills/write-tests/SKILL.md)                       |
+| Name                   | Description                                                                                                                                | File                                                                                     |
+| :--------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
+| create-python-project  | Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, and asyncio support.                                            | [create-python-project](../packages/python/.apm/skills/create-python-project/SKILL.md)   |
+| create-python-workflow | Create a GitHub Actions CI/CD workflow for a Python package using GravionLabs/ci reusable workflows (lint, test, build, publish).          | [create-python-workflow](../packages/python/.apm/skills/create-python-workflow/SKILL.md) |
+| pytest-cov             | >                                                                                                                                          | [pytest-cov](../packages/python/.apm/skills/pytest-cov/SKILL.md)                         |
+| python-code-review     | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions. | [python-code-review](../packages/python/.apm/skills/python-code-review/SKILL.md)         |
+| python-debug           | Diagnose and fix Python runtime errors, memory leaks, and performance issues using pdb, mypy, and profiling tools.                         | [python-debug](../packages/python/.apm/skills/python-debug/SKILL.md)                     |
+| python-packaging       | Set up or modernize Python project packaging using pyproject.toml, uv, and hatch — covers dependencies, build backends, and publishing.    | [python-packaging](../packages/python/.apm/skills/python-packaging/SKILL.md)             |
+| python-pytest          | >                                                                                                                                          | [python-pytest](../packages/python/.apm/skills/python-pytest/SKILL.md)                   |
+| python-uv-cli          | >                                                                                                                                          | [python-uv-cli](../packages/python/.apm/skills/python-uv-cli/SKILL.md)                   |
 
 ## Shared
 

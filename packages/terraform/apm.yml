@@ -1,5 +1,5 @@
 name: terraform-development
-version: 1.0.0
+version: 1.0.1
 description: Terraform infrastructure-as-code development plugin. Covers module design, naming conventions, state management, security best practices, code review, and multi-cloud provider configurations.
 author:
   name: Gravion

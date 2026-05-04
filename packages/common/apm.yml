@@ -1,5 +1,5 @@
 name: common
-version: 1.0.0
+version: 1.0.1
 description: Core git primitives for any repository. Provides git workflow operations (branch creation, commits, push) and conventional commit conventions for changelog generation.
 author:
   name: Gravion

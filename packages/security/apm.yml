@@ -1,5 +1,5 @@
 name: security
-version: 1.0.0
+version: 1.0.1
 description: Security and resilience tooling. STRIDE threat modeling, security compliance review. Tech-stack agnostic – usable alongside any language plugin.
 author:
   name: Gravion
