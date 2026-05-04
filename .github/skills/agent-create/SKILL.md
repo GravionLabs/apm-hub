@@ -12,6 +12,7 @@ allowed-tools: read search codebase write edit editFiles
 Create the smallest agent that still captures the required role and behavior.
 
 **PowerShell requirement:** All shell code blocks must use ` ```powershell ` syntax. This is enforced by agent-write.
+Avoid verbose reasoning.
 
 ## Prerequisites
 

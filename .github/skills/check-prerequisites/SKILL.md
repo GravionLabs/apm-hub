@@ -3,8 +3,9 @@ name: check-prerequisites
 description: >
   Checks and validates that all global prerequisites are installed for apm-hub skills.
   Use this skill when setting up a new environment, before running skills, or to verify
-  system readiness. Optionally auto-installs missing tools. Run with -Full flag to check
-  optional tools like jq, yq, ast-grep.
+  system readiness, even if the user does not explicitly mention prerequisites or
+  check-prerequisites. Optionally auto-installs missing tools. Run with -Full flag to
+  check optional tools like jq, yq, ast-grep.
 allowed-tools: execute shell runCommands
 compatibility: Requires PowerShell 7+ on Windows, macOS, or Linux.
 ---
@@ -75,38 +76,7 @@ pwsh scripts/Check-Prerequisites.ps1 -Full -AutoInstall
 
 ## Output
 
-### Success Example
-
-```
-✓ Core Prerequisites
-  • PowerShell: 7.4.0
-  • Git: 2.42.0
-
-✓ Runtime Prerequisites
-  • Node.js: v20.10.0
-  • npm: 10.2.4
-
-✓ All required tools are available!
-```
-
-### Failure Example with Suggestions
-
-```
-✗ Missing Prerequisites
-
-  • PowerShell: NOT FOUND
-    → Windows: winget install Microsoft.PowerShell
-    → macOS: brew install powershell
-    → Linux: sudo apt-get install powershell
-
-  • Node.js: NOT FOUND (required for TypeScript/Angular skills)
-    → Windows: winget install OpenJS.NodeJS
-    → macOS: brew install node
-    → Linux: sudo apt-get install nodejs
-
-Run with -AutoInstall flag to attempt automatic installation.
-See docs/prerequisites.md for detailed instructions.
-```
+Read `assets/output-examples.md` for success and failure output examples.
 
 ## Gotchas
 

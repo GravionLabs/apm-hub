@@ -186,51 +186,42 @@ if ($results.missing.Count -eq 0) {
     Write-Host "✓ All required prerequisites are installed!" -ForegroundColor Green
     exit 0
 } else {
-    Write-Host "✗ Missing prerequisites:" -ForegroundColor Red
-    foreach ($tool in $results.missing) {
-        Write-Host "  • $tool" -ForegroundColor Red
+    $installHints = @{
+        'PowerShell' = @{ windows = 'winget install Microsoft.PowerShell'; macos = 'brew install powershell'; linux = 'sudo apt-get install powershell' }
+        'Git'        = @{ windows = 'winget install Git.Git';              macos = 'brew install git';        linux = 'sudo apt-get install git' }
+        'Node.js'    = @{ windows = 'winget install OpenJS.NodeJS';        macos = 'brew install node';       linux = 'sudo apt-get install nodejs' }
+        'npm'        = @{ windows = 'included with Node.js';               macos = 'brew install node';       linux = 'sudo apt-get install npm' }
     }
-    
-    Write-Host "`n  Installation instructions (see docs/prerequisites.md for details):" -ForegroundColor Yellow
-    
-    if ($AutoInstall) {
-        Write-Host "  Attempting auto-install..." -ForegroundColor Yellow
-        
-        $installers = @{
-            'PowerShell' = @{
-                winget  = 'Microsoft.PowerShell'
-                brew    = 'powershell'
-                apt     = 'powershell'
-                dnf     = 'powershell'
-                windows = 'winget install Microsoft.PowerShell'
-            }
-            'Git' = @{
-                winget  = 'Git.Git'
-                brew    = 'git'
-                apt     = 'git'
-                dnf     = 'git'
-                windows = 'winget install Git.Git'
-            }
-            'Node.js' = @{
-                winget  = 'OpenJS.NodeJS'
-                brew    = 'node'
-                apt     = 'nodejs'
-                dnf     = 'nodejs'
-                windows = 'winget install OpenJS.NodeJS'
-            }
-            'npm' = @{
-                winget  = 'OpenJS.NodeJS'
-                brew    = 'node'
-                apt     = 'npm'
-                dnf     = 'npm'
-                windows = 'npm is included with Node.js'
-            }
+
+    $installers = @{
+        'PowerShell' = @{ winget = 'Microsoft.PowerShell'; brew = 'powershell'; apt = 'powershell'; dnf = 'powershell' }
+        'Git'        = @{ winget = 'Git.Git';              brew = 'git';        apt = 'git';        dnf = 'git' }
+        'Node.js'    = @{ winget = 'OpenJS.NodeJS';        brew = 'node';       apt = 'nodejs';     dnf = 'nodejs' }
+        'npm'        = @{ winget = 'OpenJS.NodeJS';        brew = 'node';       apt = 'npm';        dnf = 'npm' }
+    }
+
+    Write-Host "✗ Missing Prerequisites" -ForegroundColor Red
+    Write-Host ""
+    foreach ($tool in $results.missing) {
+        $hints = $installHints[$tool]
+        Write-Host "  • $tool : NOT FOUND" -ForegroundColor Red
+        if ($hints) {
+            Write-Host "    → Windows: $($hints.windows)" -ForegroundColor Yellow
+            Write-Host "    → macOS:   $($hints.macos)" -ForegroundColor Yellow
+            Write-Host "    → Linux:   $($hints.linux)" -ForegroundColor Yellow
         }
-        
+        Write-Host ""
+    }
+
+    Write-Host "Run with -AutoInstall flag to attempt automatic installation." -ForegroundColor Yellow
+    Write-Host "See docs/prerequisites.md for detailed instructions." -ForegroundColor Yellow
+
+    if ($AutoInstall) {
+        Write-Host "`n  Attempting auto-install..." -ForegroundColor Yellow
         foreach ($tool in $results.missing) {
             Install-Tool $tool $installers
         }
     }
-    
+
     exit 1
 }

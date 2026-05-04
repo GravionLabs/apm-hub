@@ -11,18 +11,17 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 
 Apply audit findings in severity order and keep the change set focused.
 
-When invoked from `agent-audit`, findings are passed in context and `audit-report.json` is available as reference. When called standalone, read `audit-report.json` from the agent directory.
+When invoked from `agent-audit`, findings are passed in context. When called standalone, invoke `agent-audit` first to get findings in context.
+Avoid verbose reasoning.
 
 ## Prerequisites
 
 - Agent path (`.agent.md` file or containing directory)
-- Findings in context from `agent-audit` **OR** `audit-report.json` in the agent directory
+- Findings in context from `agent-audit` (run `agent-audit` first if not already done)
 
 ## Instructions
 
-1. **Get findings:**
-   - If invoked from `agent-audit`: Use findings from context (skip JSON parsing)
-   - If called standalone: Read `{agent-dir}/audit-report.json`
+1. **Get findings:** Use findings from context. If not available, invoke `agent-audit` on the agent path first.
 2. Read the `.agent.md` file.
 3. Fix issues in severity order (critical → important → suggestions). Use skill `agent-write` when rewriting or restructuring agent content.
 4. Use this mapping:
@@ -42,11 +41,9 @@ When invoked from `agent-audit`, findings are passed in context and `audit-repor
    | Vague or generic content | Tighten or remove it. |
 
 5. Validate the result.
-6. Archive `audit-report.json` with a resolution note: `// audit-report archived — all findings applied on <date>` at the top.
 
 ## Gotchas
 
 - Confirm before any file rename or location move.
 - Do not widen the scope beyond the audit findings.
 - Ask before large restructures.
-- When findings come from context (`agent-audit` invocation), treat them as source of truth; when reading JSON, validate it matches the current agent state.

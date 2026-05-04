@@ -45,15 +45,14 @@ Audit a skill, show the user a summary report, and automatically apply fixes via
 
 ### Phase 2 — Audit & Report
 
-✓ Checkpoint: All checks complete; audit-report.json written
+✓ Checkpoint: All checks complete; findings ready
 
 5. Run the checklist across frontmatter, body, references, assets, and
    anti-patterns.
 6. Apply tool-efficiency guidance to all CLI examples and command output in the
    skill (if step 3 applied).
 7. Record each finding as severity, category, finding, and recommendation.
-8. **Write `{skill-dir}/audit-report.json`** as an archive (not for passing to skill-update).
-9. **Display audit report to user:**
+8. **Display audit report to user:**
    - Show summary (passed checks + any findings)
    - Format findings by severity (🔴 critical → 🟡 important → 🟢 suggestions)
 
@@ -65,7 +64,7 @@ Audit a skill, show the user a summary report, and automatically apply fixes via
    "Apply these fixes with skill-update?" (choices: Yes / Review findings
    first / Cancel).
    - If user confirms → invoke skill-update with the skill path
-   - Otherwise if user chooses "Review" → show detailed audit-report.json and
+   - Otherwise if user chooses "Review" → show full findings list and
      ask again
    - Otherwise → stop without remediation
 10. Otherwise → report as ✅ PASS and done.
@@ -76,7 +75,6 @@ Audit a skill, show the user a summary report, and automatically apply fixes via
 - The directory name must match `name` in frontmatter.
 - Frontmatter `model` is not part of the official GitHub skill minimum; audit it
   as a repo-local convention, not as a required field.
-- Write `audit-report.json` in the skill directory as an archive, not for inter-tool communication.
 - Do not proceed with skill-update if user cancels.
 - Critical findings (shell enforcement) should always be fixed — don't skip them.
 

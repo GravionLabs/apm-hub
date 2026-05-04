@@ -9,20 +9,19 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 
 ## Overview
 
-Apply audit findings in severity order and keep the change set focused. 
+Apply audit findings in severity order and keep the change set focused.
+Avoid verbose reasoning.
 
-When invoked from skill-audit, findings are passed in context and audit-report.json is available as reference. When called standalone, read audit-report.json from the skill directory.
+When invoked from skill-audit, findings are passed in context. When called standalone, invoke `skill-audit` first to get findings in context.
 
 ## Prerequisites
 
 - Skill path (required)
-- Findings in context from skill-audit **OR** `audit-report.json` file in skill directory
+- Findings in context from skill-audit (run `skill-audit` first if not already done)
 
 ## Instructions
 
-1. **Get findings:**
-   - If invoked from skill-audit: Use findings from context (skip JSON parsing)
-   - If called standalone: Read `{skill-dir}/audit-report.json` 
+1. **Get findings:** Use findings from context. If not available, invoke `skill-audit` on the skill path first.
 2. List files in `{skill-dir}/` and read `{skill-dir}/SKILL.md`.
 3. Fix issues in severity order (critical → important → suggestions). Use skill `skill-write` when rewriting or restructuring `SKILL.md` content.
 4. Use this mapping:
@@ -38,11 +37,9 @@ When invoked from skill-audit, findings are passed in context and audit-report.j
    | Vague or duplicated content | Tighten or remove it. |
    | Verbose CLI output or JSON misuse | Apply the output-efficiency rules from `skill-write` and trim examples to the minimum useful signal. |
 5. Validate the result.
-6. Archive `audit-report.json` with a resolution note: `// audit-report archived — all findings applied on <date>` at the top.
 
 ## Gotchas
 
 - Confirm before any location move.
 - Do not widen the scope beyond the audit findings.
 - Ask before large restructures.
-- When findings come from context (skill-audit invocation), treat them as the source of truth; when reading JSON, validate it matches the current skill state.
