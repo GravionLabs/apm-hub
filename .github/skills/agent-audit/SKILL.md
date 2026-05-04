@@ -12,6 +12,7 @@ chronicle-hints: 'single-purpose, structured-output, phases'
 ## Overview
 
 Audit an agent file, show the user a summary report, and automatically apply fixes via `agent-update` (with user confirmation for important findings).
+Avoid verbose reasoning.
 
 ## Prerequisites
 
@@ -33,12 +34,11 @@ Audit an agent file, show the user a summary report, and automatically apply fix
 
 ### Phase 2 — Audit & Report
 
-✓ Checkpoint: All checks complete; audit-report.json written
+✓ Checkpoint: All checks complete; findings ready
 
 4. Run the checklist from `references/audit-checklist.md` across frontmatter, body, tools, and cross-platform compatibility.
 5. Record each finding: severity, category, finding, recommendation.
-6. **Write `{agent-dir}/audit-report.json`** as an archive (not for inter-tool communication).
-7. **Display audit report to user:**
+6. **Display audit report to user:**
    - Summary (passed checks + any findings)
    - Findings by severity: 🔴 critical → 🟡 important → 🟢 suggestions
 
@@ -49,7 +49,7 @@ Audit an agent file, show the user a summary report, and automatically apply fix
 8. **Decision flow:** If findings exist (any severity) → ask user:
    "Apply these fixes with agent-update?" (choices: Yes / Review findings first / Cancel)
    - If confirmed → invoke `agent-update` with the agent path
-   - If "Review" → show detailed `audit-report.json` and ask again
+   - If "Review" → show full findings list and ask again
    - If cancelled → stop without remediation
 9. Otherwise → report ✅ PASS and done.
 
@@ -58,7 +58,6 @@ Audit an agent file, show the user a summary report, and automatically apply fix
 - A zero-finding report is valid — don't force fixes if nothing's broken.
 - Filename must match `name` in frontmatter exactly.
 - `model` is officially supported in both GitHub Copilot and Claude Code — audit severity 🟡 if the value is unrecognized, not because it's missing.
-- Write `audit-report.json` in the agent directory as an archive, not for inter-tool communication.
 - Do not proceed with `agent-update` if user cancels.
 - Critical findings (shell enforcement) should always be fixed.
 

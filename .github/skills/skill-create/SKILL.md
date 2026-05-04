@@ -10,6 +10,7 @@ allowed-tools: read search codebase write edit editFiles
 ## Overview
 
 Create the smallest skill that still captures the required workflow.
+Avoid verbose reasoning.
 
 **PowerShell requirement:** All shell code blocks must use ` ```powershell ` syntax. This is enforced by skill-write and skill-audit.
 

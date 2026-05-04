@@ -16,6 +16,8 @@ Use this skill to keep agent files compact, cross-platform compatible, and conve
 
 **PowerShell is required:** All shell code blocks must use ` ```powershell ` syntax — never Bash or sh.
 
+Avoid verbose reasoning.
+
 ## Prerequisites
 
 - Agent path or name

@@ -17,6 +17,8 @@ Use this skill to keep skill files compact, reusable, and convention-compliant. 
 
 **PowerShell is required:** All shell code blocks must use ` ```powershell ` syntax. This is a non-negotiable requirement for cross-platform tooling compatibility.
 
+Avoid verbose reasoning.
+
 ## Prerequisites
 
 - Skill path
