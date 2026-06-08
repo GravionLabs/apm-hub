@@ -10,3 +10,5 @@ keywords:
   - playwright
   - vitest
   - eslint
+skills:
+  - pnpm-workflow

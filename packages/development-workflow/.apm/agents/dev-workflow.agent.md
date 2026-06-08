@@ -11,6 +11,10 @@ Tool-agnostic dev workflow. Plan → implement → verify in one pass.
 
 ## Pipeline
 
+### Phase 0 — Setup
+
+0. Load `pnpm-workflow` skill to ensure pnpm is set up as the package manager
+
 ### Phase 1 — Plan
 
 1. Read issue/task from input
@@ -34,8 +38,9 @@ Tool-agnostic dev workflow. Plan → implement → verify in one pass.
 1. Run build — must pass
 2. Run tests — must pass
 3. Run lint/format — must pass
-4. Commit if all pass: conventional commit format with `Closes #N`
-5. Push: `git push -u origin HEAD`
+4. Load `cliff-setup` skill to update CHANGELOG.md with new changes
+5. Commit if all pass: conventional commit format with `Closes #N`
+6. Push: `git push -u origin HEAD`
 
 ## Output (JSON only per phase)
 

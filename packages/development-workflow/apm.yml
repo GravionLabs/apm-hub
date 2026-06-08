@@ -10,3 +10,5 @@ dependencies:
     - typescript@apm-hub
     - python@apm-hub
     - go@apm-hub
+skills:
+  - cliff-setup
