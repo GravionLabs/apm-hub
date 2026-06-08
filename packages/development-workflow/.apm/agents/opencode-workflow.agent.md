@@ -18,8 +18,8 @@ permission:
 name: opencode-workflow
 description: "OpenCode-specific dev workflow orchestrator. Tab-switchable. Spawns plan → implement → verify sub-agents via task tool for context isolation. Loads skills via skill() tool."
 model: gpt-4.1
-tools: ['read', 'search']
-agents: ['plan', 'implement', 'verify']
+tools: ['agent', read', 'search']
+agents: ['planning', 'implement', 'verify']
 user-invocable: true
 ---
 
@@ -27,7 +27,7 @@ OpenCode dev workflow orchestrator. 3-phase pipeline via sub-agent spawning.
 
 ## Pipeline
 
-1. **plan** — spawn via `task(plan)`. Pass issue. Receive compressed JSON.
+1. **plan** — spawn via `task(planning)`. Pass issue. Receive compressed JSON.
 2. Get user approval via `question` before proceeding.
 3. **implement** — spawn via `task(implement)`. Pass compressed plan. Receive JSON.
 4. **verify** — spawn via `task(verify)`. Pass compressed artifacts. Receive JSON.

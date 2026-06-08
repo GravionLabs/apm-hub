@@ -22,14 +22,14 @@ permission:
   websearch: deny
   question: deny
 # Copilot/APM fields
-name: plan
+name: planning
 description: "Analyze issue, create implementation plan. Read-only phase with git/gh lookups. Outputs compressed JSON plan."
 model: gpt-4.1
 tools: ['read', 'search', 'shell']
 user-invocable: false
 ---
 
-Phase: plan. Analyze issue, affected files, patterns.
+Phase: planning. Analyze issue, affected files, patterns.
 
 ## Steps
 
