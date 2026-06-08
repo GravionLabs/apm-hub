@@ -149,6 +149,7 @@ These skills support development workflows within apm-hub itself and are committ
 **Placement rules:**
 - Domain workflows → `packages/<domain>/.apm/skills/<name>/`
 - Repo-level tooling → `.github/skills/<name>/` (only for apm-hub contributor tools)
+- APM package → `packages/apm-tooling/.apm/skills/<name>/`
 
 ### Environment
 
@@ -163,6 +164,21 @@ pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1
 # Full check with auto-install
 pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1 -Full -AutoInstall
 ```
+
+---
+
+### apm-tooling Package
+
+**Location:** `packages/apm-tooling/`
+
+**Purpose:** APM contributor tooling for managing skill lifecycle. Install via `apm install apm-tooling@apm-hub`.
+
+| Skill | Description |
+|:------|:------------|
+| `skill-audit` | Audits a SKILL.md for correctness; emits a JSON report; optionally calls `skill-update`. |
+| `skill-create` | Creates a new skill directory with SKILL.md; validates name and location. Calls `skill-write`. |
+| `skill-update` | Applies targeted fixes to an existing SKILL.md. |
+| `skill-write` | Drafts and validates SKILL.md content; enforces PowerShell syntax for all shell code. |
 
 ---
 

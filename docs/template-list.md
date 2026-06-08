@@ -5,6 +5,7 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 ## Table of Contents
 
 - [Angular](#angular)
+- [Apm-tooling](#apm-tooling)
 - [Development-workflow](#development-workflow)
 - [Dotnet](#dotnet)
 - [Github](#github)
@@ -26,6 +27,17 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 | angular-migration      | Migrate an Angular application to a newer version. Covers ng update, standalone component migration, new @if/@for/@switch control flow syntax, and signals-first patterns.      | [angular-migration](../packages/angular/.apm/skills/angular-migration/SKILL.md)           |
 | angular-testing        | Write Angular 21 unit tests using Vitest and TestBed. Covers standalone component testing, signal testing, service mocking, and async patterns.                                 | [angular-testing](../packages/angular/.apm/skills/angular-testing/SKILL.md)               |
 | create-angular-project | Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier.                                                  | [create-angular-project](../packages/angular/.apm/skills/create-angular-project/SKILL.md) |
+
+## Apm-tooling
+
+### Skills
+
+| Name         | Description | File                                                                      |
+| :----------- | :---------- | :------------------------------------------------------------------------ |
+| skill-audit  | >           | [skill-audit](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)   |
+| skill-create | >           | [skill-create](../packages/apm-tooling/.apm/skills/skill-create/SKILL.md) |
+| skill-update | >           | [skill-update](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md) |
+| skill-write  | >           | [skill-write](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)   |
 
 ## Development-workflow
 

@@ -31,3 +31,6 @@ marketplace:
   - name: typescript
     description: TypeScript and Node.js development plugin.
     source: ./packages/typescript
+  - name: apm-tooling
+    description: APM contributor tooling — skill lifecycle management (audit, create, update, write).
+    source: ./packages/apm-tooling
