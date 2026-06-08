@@ -4,11 +4,11 @@ description: "GitHub development workflow orchestration: issue-driven implementa
 registry: https://github.com/GravionLabs/apm-hub
 dependencies:
   apm:
-    - github@apm-hub
-    - shared@apm-hub
-    - typescript@apm-hub
-    - python@apm-hub
-    - angular@apm-hub
-    - dotnet@apm-hub
+    - GravionLabs/apm-hub/packages/github
+    - GravionLabs/apm-hub/packages/shared
+    - GravionLabs/apm-hub/packages/typescript
+    - GravionLabs/apm-hub/packages/python
+    - GravionLabs/apm-hub/packages/angular
+    - GravionLabs/apm-hub/packages/dotnet
 skills:
   - cliff-setup
