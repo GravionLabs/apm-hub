@@ -12,7 +12,6 @@ keywords:
 dependencies:
   apm:
     - github@apm-hub
-    - common@apm-hub
     - shared@apm-hub
     - typescript@apm-hub
     - angular@apm-hub

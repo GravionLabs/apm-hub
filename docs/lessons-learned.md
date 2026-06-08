@@ -307,16 +307,16 @@ Before running `@skill-audit`, verify:
 
 **Common findings (from our audits):**
 
-| Finding | Severity | Fix | Time |
-|---|---|---|---|
-| Description lacks "Use this skill when..." | 🔴 Critical | Rewrite description imperatively | 2 min |
-| Missing chronicle-hints | 🔴 Critical | Add to frontmatter | 1 min |
-| Bash code blocks (` ```bash `) | 🔴 Critical | Replace with ` ```powershell ` | 5-10 min |
-| Missing Output Format | 🟡 Important | Add standard format section | 5 min |
-| Gotchas ≤2 | 🟡 Important | Expand to 3-5 domain-specific | 5-10 min |
-| Tools not documented | 🟡 Important | Add examples in body | 5 min |
-| Phase structure unclear | 🟡 Important | Reorganize into 3 explicit phases | 10-15 min |
-| Missing Prerequisites | 🟢 Suggestion | Add explicit section | 3 min |
+| Finding                                    | Severity      | Fix                               | Time      |
+| :----------------------------------------- | :------------ | :-------------------------------- | :-------- |
+| Description lacks "Use this skill when..." | 🔴 Critical   | Rewrite description imperatively  | 2 min     |
+| Missing chronicle-hints                    | 🔴 Critical   | Add to frontmatter                | 1 min     |
+| Bash code blocks (` ```bash `)             | 🔴 Critical   | Replace with ` ```powershell `    | 5-10 min  |
+| Missing Output Format                      | 🟡 Important  | Add standard format section       | 5 min     |
+| Gotchas ≤2                                 | 🟡 Important  | Expand to 3-5 domain-specific     | 5-10 min  |
+| Tools not documented                       | 🟡 Important  | Add examples in body              | 5 min     |
+| Phase structure unclear                    | 🟡 Important  | Reorganize into 3 explicit phases | 10-15 min |
+| Missing Prerequisites                      | 🟢 Suggestion | Add explicit section              | 3 min     |
 
 **Lesson:** Most findings are fixable in <10 minutes. skill-update automates this.
 
@@ -326,12 +326,12 @@ Before running `@skill-audit`, verify:
 
 ### Benchmark Data (from 7 pilot skills)
 
-| Type | Complexity | Time | Notes |
-|---|---|---|---|
-| Vorbild (angular-component) | Low | 15 min | Already had structure, added format |
-| Meta (skill-write, skill-audit) | Medium | 20-22 min | Must be self-demonstrating |
-| Struktur (github-issue-*, typescript-mcp-*) | Medium | 18-28 min | Phase conversion straightforward |
-| Expert (angular-developer) | High | 52 min | Topics + phases restructuring |
+| Type                                        | Complexity | Time      | Notes                               |
+| :------------------------------------------ | :--------- | :-------- | :---------------------------------- |
+| Vorbild (angular-component)                 | Low        | 15 min    | Already had structure, added format |
+| Meta (skill-write, skill-audit)             | Medium     | 20-22 min | Must be self-demonstrating          |
+| Struktur (github-issue-*, typescript-mcp-*) | Medium     | 18-28 min | Phase conversion straightforward    |
+| Expert (angular-developer)                  | High       | 52 min    | Topics + phases restructuring       |
 
 ### Time Breakdown (52-min expert skill)
 

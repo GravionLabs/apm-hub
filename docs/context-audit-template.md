@@ -190,12 +190,12 @@ skill-B: "Call skill-A, then add custom logic..."
 
 These are the largest skills in the repository:
 
-| Skill | Size | Domain |
-|---|---|---|
-| `playwright-python` | 581 lines | Playwright |
-| `playwright-dotnet` | 501 lines | Playwright |
-| `playwright-angular` | 355 lines | Playwright |
-| `angular-developer` | 157 lines | Angular |
+| Skill                 | Size      | Domain       |
+| :-------------------- | :-------- | :----------- |
+| `playwright-python`   | 581 lines | Playwright   |
+| `playwright-dotnet`   | 501 lines | Playwright   |
+| `playwright-angular`  | 355 lines | Playwright   |
+| `angular-developer`   | 157 lines | Angular      |
 | `check-prerequisites` | 122 lines | Repo tooling |
 
 **Recommendation:** Start with `playwright-*` skills — longest ones likely have the most optimization potential.

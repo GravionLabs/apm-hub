@@ -35,33 +35,7 @@ This document describes the agents and skills available through apm-hub APM pack
 
 ---
 
-#### `git-workflow`
 
-**Location:** `packages/common/.apm/skills/git-workflow/SKILL.md`
-
-**Purpose:** Executes precise git operations — fetches from origin/main, creates branches, stages files, creates structured commits, and pushes to remote.
-
-**When to use:**
-- For any git branch, commit, or push operation
-- When you need reliable, scripted git workflows
-- For standardized commit messages and branch creation
-
-**Tools required:**
-- `shell` (PowerShell for git commands)
-
-**Model:** GPT-4.1
-
-**User-invocable:** Yes (foundational skill used by higher-level workflows)
-
-**Key features:**
-- Fetch origin/main reliably
-- Create branches based on origin/main (never local main)
-- Stage files and create commits with structured messages (`#<TicketNumber> <Title>`)
-- Push branches to remote with proper upstream tracking
-- Enforces English-only branch names and commit messages (auto-translates if needed)
-- Validates operations and reports results
-
----
 
 #### `github-workflow`
 
@@ -207,14 +181,6 @@ pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1 -Full -A
 - How to determine the default branch via `git symbolic-ref`
 - Rules for automatic owner/repo resolution
 
-### `conventional-commits.instructions.md`
-
-**Location:** `packages/common/.apm/instructions/conventional-commits.instructions.md`
-
-**Scope:** Global
-
-**Purpose:** Enforces Conventional Commits format for commit messages across all skills.
-
 ---
 
 ## APM Package Structure
@@ -243,8 +209,6 @@ Install packages into a project with APM:
 ```bash
 # Install individual packages
 apm install github@apm-hub
-apm install common@apm-hub
-
 # Install all packages
 apm install all@apm-hub
 ```

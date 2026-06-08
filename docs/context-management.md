@@ -257,14 +257,14 @@ Watch how context fills and compaction works. This helps you understand token ef
 
 ## Best Practices Summary
 
-| Practice | Context Saved | Difficulty |
-|---|---|---|
-| Ask all questions upfront | Medium | Easy |
-| Return structured output | Medium | Easy |
-| Avoid reading large files | High | Easy |
-| Redirect command output to files | High | Easy |
-| Use phases & checkpoints | Medium | Medium |
-| Optimize LSP usage (use it, don't avoid it) | Low | Hard |
+| Practice                                    | Context Saved | Difficulty |
+| :------------------------------------------ | :------------ | :--------- |
+| Ask all questions upfront                   | Medium        | Easy       |
+| Return structured output                    | Medium        | Easy       |
+| Avoid reading large files                   | High          | Easy       |
+| Redirect command output to files            | High          | Easy       |
+| Use phases & checkpoints                    | Medium        | Medium     |
+| Optimize LSP usage (use it, don't avoid it) | Low           | Hard       |
 
 ---
 

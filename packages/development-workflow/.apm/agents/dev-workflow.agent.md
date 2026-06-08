@@ -22,7 +22,7 @@ Tool-agnostic dev workflow. Plan → implement → verify in one pass.
 ### Phase 2 — Implement
 
 1. Create branch from plan
-2. Follow `git-workflow` skill for branch creation
+2. Create branch: `git fetch origin main && git checkout -b <branch> origin/main`
 3. Load `implementation` skill rules: every change MUST include tests
 4. Follow test triad: happy path, edge cases, error cases
 5. Write code changes + corresponding tests

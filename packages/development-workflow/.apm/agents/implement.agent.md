@@ -37,7 +37,7 @@ Phase: implement. Write code + tests per plan.
 
 ## Pre-flight
 
-1. Load `git-workflow` skill — create branch per convention
+1. Create branch per convention via `git fetch origin main && git checkout -b <branch> origin/main`
 2. Load `implementation` + `<lang>-implementation` skills via `skill()`
 
 ## Mandatory rules

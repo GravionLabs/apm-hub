@@ -35,7 +35,7 @@ Phase: plan. Analyze issue, affected files, patterns.
 
 1. Read issue/task from caller input
 2. Explore codebase — grep, glob affected files, read key files
-3. Load `git-workflow` skill — determine branch name convention
+3. Determine branch name convention per conventional-commits
 4. Suggest branch name: `<type>/<nr>-<kebab-desc>`
 5. Break task into implementation steps
 

@@ -10,9 +10,6 @@ marketplace:
     name: Gravion
     url: https://github.com/GravionLabs
   packages:
-  - name: common
-    description: Shared git and commit convention primitives. Provides git workflow operations (branch creation, commits, push) and conventional commit standards.
-    source: ./packages/common
   - name: shared
     description: Cross-cutting skills for AI development agents. Includes language-agnostic implementation rules, test triads, and pre-commit checks.
     source: ./packages/shared

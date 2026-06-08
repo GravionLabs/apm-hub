@@ -23,9 +23,9 @@ These are **required for all apm-hub skills**.
 
 PowerShell is the primary shell for all apm-hub scripts and skills. Native PowerShell support is required.
 
-| Requirement | Version |
-|---|---|
-| **Minimum** | PowerShell 7.0+ |
+| Requirement     | Version         |
+| :-------------- | :-------------- |
+| **Minimum**     | PowerShell 7.0+ |
 | **Recommended** | PowerShell 7.4+ |
 
 #### Verify Installation
@@ -63,9 +63,9 @@ sudo dnf install -y powershell
 
 Git is required for all version control and GitHub-related skills.
 
-| Requirement | Version |
-|---|---|
-| **Minimum** | Git 2.30+ |
+| Requirement     | Version   |
+| :-------------- | :-------- |
+| **Minimum**     | Git 2.30+ |
 | **Recommended** | Git 2.40+ |
 
 #### Verify Installation
@@ -107,9 +107,9 @@ These are required for domain-specific skill ecosystems.
 
 Required if you use skills from the `typescript`, `angular`, or similar domains.
 
-| Requirement | Version |
-|---|---|
-| **Minimum** | Node.js 18 LTS |
+| Requirement     | Version        |
+| :-------------- | :------------- |
+| **Minimum**     | Node.js 18 LTS |
 | **Recommended** | Node.js 20 LTS |
 
 #### Verify Installation
@@ -153,7 +153,7 @@ These tools are needed only for specific skills. Install as required.
 Used by `github-*` skills for GitHub API access and pull request creation.
 
 | Requirement | Version |
-|---|---|
+| :---------- | :------ |
 | **Minimum** | gh 2.0+ |
 
 #### Verify Installation
@@ -196,8 +196,8 @@ gh auth login
 
 Used for HTTP requests in various skills.
 
-| Requirement | Version |
-|---|---|
+| Requirement | Version   |
+| :---------- | :-------- |
 | **Minimum** | curl 7.0+ |
 
 #### Verify Installation
@@ -220,7 +220,7 @@ winget install cURL.cURL
 Used for JSON parsing. (PowerShell has native JSON support; this is optional for cross-platform compatibility.)
 
 | Requirement | Version |
-|---|---|
+| :---------- | :------ |
 | **Minimum** | jq 1.6+ |
 
 #### Verify Installation
@@ -254,7 +254,7 @@ sudo dnf install -y jq      # Fedora/RHEL
 Used for YAML parsing. (No native PowerShell equivalent; required for YAML manipulation.)
 
 | Requirement | Version |
-|---|---|
+| :---------- | :------ |
 | **Minimum** | yq 4.0+ |
 
 #### Verify Installation
@@ -287,8 +287,8 @@ sudo chmod +x /usr/local/bin/yq
 
 Used for code pattern matching and search across large codebases.
 
-| Requirement | Version |
-|---|---|
+| Requirement | Version        |
+| :---------- | :------------- |
 | **Minimum** | ast-grep 0.15+ |
 
 #### Verify Installation
@@ -322,9 +322,9 @@ cargo install ast-grep
 
 Some legacy scripts may require Python. Not needed for most modern skills.
 
-| Requirement | Version |
-|---|---|
-| **Minimum** | Python 3.8+ |
+| Requirement     | Version      |
+| :-------------- | :----------- |
+| **Minimum**     | Python 3.8+  |
 | **Recommended** | Python 3.10+ |
 
 #### Verify Installation
@@ -357,12 +357,12 @@ Language Servers enable GitHub Copilot CLI to provide precise code intelligence 
 
 ### Supported Language Servers
 
-| Language | Server | Command | Purpose |
-|---|---|---|---|
-| **TypeScript / JavaScript** | [typescript-language-server](https://github.com/typescript-language-server/typescript-language-server) | `typescript-language-server` | Accurate type checking & go-to-definition |
-| **Python** | [pylsp](https://github.com/python-lsp/python-lsp-server) or [Pyright](https://github.com/microsoft/pyright) | `pylsp` or `pyright` | Python code analysis & refactoring |
-| **Go** | [gopls](https://github.com/golang/tools/tree/master/gopls) | `gopls` | Official Go language server |
-| **C#** | [omnisharp](https://github.com/OmniSharp/omnisharp-roslyn) | `omnisharp -lsp` | .NET language server |
+| Language                    | Server                                                                                                      | Command                      | Purpose                                   |
+| :-------------------------- | :---------------------------------------------------------------------------------------------------------- | :--------------------------- | :---------------------------------------- |
+| **TypeScript / JavaScript** | [typescript-language-server](https://github.com/typescript-language-server/typescript-language-server)      | `typescript-language-server` | Accurate type checking & go-to-definition |
+| **Python**                  | [pylsp](https://github.com/python-lsp/python-lsp-server) or [Pyright](https://github.com/microsoft/pyright) | `pylsp` or `pyright`         | Python code analysis & refactoring        |
+| **Go**                      | [gopls](https://github.com/golang/tools/tree/master/gopls)                                                  | `gopls`                      | Official Go language server               |
+| **C#**                      | [omnisharp](https://github.com/OmniSharp/omnisharp-roslyn)                                                  | `omnisharp -lsp`             | .NET language server                      |
 
 ### Installation
 
