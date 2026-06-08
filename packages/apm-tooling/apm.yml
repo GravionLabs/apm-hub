@@ -1,0 +1,20 @@
+name: apm-tooling
+version: 1.0.0
+description: APM contributor tooling — agent and skill lifecycle management. Provides skills for auditing, creating, updating, and writing APM agents and skills.
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - apm
+  - tooling
+  - skill-lifecycle
+  - meta
+skills:
+  - agent-audit
+  - agent-create
+  - agent-update
+  - agent-write
+  - skill-audit
+  - skill-create
+  - skill-update
+  - skill-write

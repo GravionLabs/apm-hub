@@ -2,13 +2,11 @@
 name: dotnet-async
 description: 'Apply C# async/await best practices to existing code: fix deadlocks, ConfigureAwait usage, async void, cancellation token propagation, and naming conventions.'
 allowed-tools: read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 
-Apply C# async/await best practices to the specified code.
-
-## What this skill does
-Reviews and refactors async code to eliminate common pitfalls: deadlocks, missing `CancellationToken` propagation, `async void`, improper `Result`/`Wait()` usage, and incorrect `ConfigureAwait`.
+Apply C# async/await best practices to specified code.
 
 ## Key rules
 
@@ -25,7 +23,7 @@ Reviews and refactors async code to eliminate common pitfalls: deadlocks, missin
 
 ### CancellationToken
 - Accept `CancellationToken cancellationToken = default` in all async methods that do I/O
-- Pass the token through to every `await`-ed call
+- Pass token through to every `await`-ed call
 
 ### async void
 - Never use `async void` except for event handlers
@@ -36,8 +34,6 @@ Reviews and refactors async code to eliminate common pitfalls: deadlocks, missin
 - Use `IAsyncEnumerable<T>` for async streams
 
 ## Steps
-1. Identify all async violations in the target code
+1. Identify all async violations in target code
 2. Apply fixes in priority order: deadlocks first, then missing cancellation, then naming
 3. Verify no compilation errors after changes
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

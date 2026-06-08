@@ -2,10 +2,11 @@
 name: create-python-project
 description: 'Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, and asyncio support.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 model: gpt-4.1
 ---
 
-Scaffold a new Python project with a production-ready baseline using `uv`.
+Scaffold Python project with production-ready baseline using `uv`.
 
 ## Stack
 - **uv** — package manager and environment tool (`uv init`, `uv add`, `uv sync`, `uv run`)
@@ -18,11 +19,11 @@ Scaffold a new Python project with a production-ready baseline using `uv`.
    - Project name
    - Project type: **library** (publishable package), **app** (application), or **workspace** (uv monorepo with `libs/` + `apps/`)?
 
-2. **Run the scaffold script** (recommended):
+2. **Run scaffold script** (recommended):
    ```powershell
    pwsh scripts/New-PythonProject.ps1 -ProjectName <Name> -ProjectType <library|app|workspace>
    ```
-   The script runs `uv init`, applies template `pyproject.toml` (ruff + pytest config), creates `src/<package>/__init__.py` and `tests/conftest.py`, then runs `uv sync`.
+   Script runs `uv init`, applies template `pyproject.toml` (ruff + pytest config), creates `src/<package>/__init__.py` and `tests/conftest.py`, then runs `uv sync`.
 
 3. **Alternatively — manual steps:**
    ```bash
@@ -65,8 +66,34 @@ Scaffold a new Python project with a production-ready baseline using `uv`.
 - Always use `asyncio_mode = "auto"` in pytest config
 - Commit `uv.lock` to version control
 
-## Tips
-> **Use the `task` tool** for scaffolding — it's mechanical.
-> Example: `#task pwsh scripts/New-PythonProject.ps1 -ProjectName "my-lib" -ProjectType library`
+## CI Workflow
 
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.
+Create GitHub Actions CI/CD workflow for Python package using GravionLabs/ci reusable workflows.
+
+1. Ask: Python version, whether publish (PyPI / Test PyPI / none)
+2. Create `.github/workflows/ci.yml`:
+   ```yaml
+   name: CI
+
+   on:
+     push:
+       branches: [main]
+     pull_request:
+
+   jobs:
+     build:
+       uses: GravionLabs/ci/.github/workflows/python.yml@main
+       with:
+         python-version: '3.14'
+       secrets: inherit
+   ```
+3. Confirm `pyproject.toml` has `test`, `build` scripts
+4. If publishing: confirm `PYPI_TOKEN` secret configured
+
+**Constraints:**
+- Use `secrets: inherit`
+- `pyproject.toml` must define test and build commands
+
+## Tips
+> **Use `task` tool** for scaffolding — mechanical.
+> Example: `#task pwsh scripts/New-PythonProject.ps1 -ProjectName "my-pkg"`

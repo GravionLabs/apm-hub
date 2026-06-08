@@ -7,9 +7,9 @@ description: >
   accessibility (ARIA), animations, styling (component styles, Tailwind CSS),
   testing, or CLI tooling.
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 license: MIT
 model: claude-sonnet-4.6
-chronicle-hints: 'single-purpose, structured-output, phases'
 metadata:
   author: Copyright 2026 Google LLC
   version: '1.0'
@@ -19,14 +19,14 @@ metadata:
 
 ## Overview
 
-This skill provides comprehensive guidance for Angular development across all common tasks: project creation, components, reactivity (signals), forms, dependency injection, routing, accessibility, styling, animations, and testing.
+Comprehensive Angular development guidance: project creation, components, reactivity (signals), forms, DI, routing, accessibility, styling, animations, testing.
 
-**Key principle:** Always analyze the project's Angular version first — best practices vary significantly between versions.
+**Key principle:** Analyze project Angular version first — best practices vary significantly between versions.
 
 ## Prerequisites
 
 - Angular project or intent to create one
-- Familiarity with TypeScript (recommended but not required)
+- TypeScript familiarity (recommended but not required)
 - Angular CLI installed (or willingness to use `npx`)
 
 ## Steps
@@ -36,20 +36,20 @@ This skill provides comprehensive guidance for Angular development across all co
 ✓ Checkpoint: Project environment understood; version confirmed; references loaded
 
 1. **Analyze project version:**
-   - If working with existing project: run `ng version` to determine Angular version
-   - If creating new project: determine if user specified a version
+   - Existing project: run `ng version`
+   - New project: determine user-specified version
    - Load appropriate references based on version and task
 
 2. **Load task-specific references:**
-   - **Project creation:** Start with project scaffolding guidance. Read form references only if the user asks to scaffold forms or the initial feature set clearly includes forms. In that case, load [references/reactive-forms.md](references/reactive-forms.md), [template-driven-forms.md](references/template-driven-forms.md), then [signal-forms.md](references/signal-forms.md) only if the user explicitly asks for Signal Forms or the project already uses `@angular/forms/signals`
+   - **Project creation:** Start with scaffolding guidance. Load form references only if user asks or feature set clearly includes forms: [reactive-forms.md](references/reactive-forms.md), [template-driven-forms.md](references/template-driven-forms.md), [signal-forms.md](references/signal-forms.md) (only for explicit Signal Forms or existing Signal Forms codebase)
    - **Components:** Read [references/components.md](references/components.md), [inputs.md](references/inputs.md), [outputs.md](references/outputs.md), [host-elements.md](references/host-elements.md)
    - **Reactivity:** Read [references/signals-overview.md](references/signals-overview.md), [linked-signal.md](references/linked-signal.md), [resource.md](references/resource.md), [effects.md](references/effects.md)
-   - **Forms:** Read [references/reactive-forms.md](references/reactive-forms.md), [template-driven-forms.md](references/template-driven-forms.md), then [signal-forms.md](references/signal-forms.md) only for an explicit Signal-Forms task or an existing Signal-Forms codebase
+   - **Forms:** Read [references/reactive-forms.md](references/reactive-forms.md), [template-driven-forms.md](references/template-driven-forms.md), [signal-forms.md](references/signal-forms.md) (only for explicit Signal Forms task or existing Signal Forms codebase)
    - **DI:** Read [references/di-fundamentals.md](references/di-fundamentals.md), [creating-services.md](references/creating-services.md), [defining-providers.md](references/defining-providers.md), [injection-context.md](references/injection-context.md), [hierarchical-injectors.md](references/hierarchical-injectors.md)
    - **Accessibility:** Read [references/angular-aria.md](references/angular-aria.md)
-   - **Routing:** Read [references/routing-index.md](references/routing-index.md) for topic selection. If the task is routing-specific, read the relevant direct references: [define-routes.md](references/define-routes.md), [loading-strategies.md](references/loading-strategies.md), [show-routes-with-outlets.md](references/show-routes-with-outlets.md), [navigate-to-routes.md](references/navigate-to-routes.md), [route-guards.md](references/route-guards.md), [data-resolvers.md](references/data-resolvers.md), [router-lifecycle.md](references/router-lifecycle.md), [rendering-strategies.md](references/rendering-strategies.md), [route-animations.md](references/route-animations.md)
+   - **Routing:** Read [references/routing-index.md](references/routing-index.md) for topic selection. For routing-specific tasks, read relevant direct references: [define-routes.md](references/define-routes.md), [loading-strategies.md](references/loading-strategies.md), [show-routes-with-outlets.md](references/show-routes-with-outlets.md), [navigate-to-routes.md](references/navigate-to-routes.md), [route-guards.md](references/route-guards.md), [data-resolvers.md](references/data-resolvers.md), [router-lifecycle.md](references/router-lifecycle.md), [rendering-strategies.md](references/rendering-strategies.md), [route-animations.md](references/route-animations.md)
    - **Styling:** Read [references/tailwind-css.md](references/tailwind-css.md), [component-styling.md](references/component-styling.md), [angular-animations.md](references/angular-animations.md)
-   - **Testing:** Read [references/testing-vitest.md](references/testing-vitest.md) for Angular v21+ or [testing-jest.md](references/testing-jest.md) for Angular v20 and earlier, plus task-specific: [testing-fundamentals.md](references/testing-fundamentals.md), [component-harnesses.md](references/component-harnesses.md), [router-testing.md](references/router-testing.md), [e2e-testing.md](references/e2e-testing.md)
+   - **Testing:** Read [references/testing-vitest.md](references/testing-vitest.md) for Angular v21+ or [testing-jest.md](references/testing-jest.md) for v20 and earlier, plus task-specific: [testing-fundamentals.md](references/testing-fundamentals.md), [component-harnesses.md](references/component-harnesses.md), [router-testing.md](references/router-testing.md), [e2e-testing.md](references/e2e-testing.md)
    - **Tooling:** Read [references/cli.md](references/cli.md), [mcp.md](references/mcp.md)
 
 ### Phase 2 — Generate Code
@@ -61,39 +61,39 @@ This skill provides comprehensive guidance for Angular development across all co
    - Follow version-appropriate patterns from loaded references
    - Apply Angular style guide and best practices
 
-4. **For project creation specifically:**
+4. **Project creation specifically:**
    - **Step 1 — Check version:** If user requests specific version, use `npx @angular/cli@<version> new <project-name>`
    - **Step 2 — Check local install:** If no version specified, run `ng version` to detect local installation
    - **Step 3 — Fallback:** If `ng version` fails, use `npx @angular/cli@latest new <project-name>`
 
-5. **For component/service/other generation:**
+5. **Component/service/other generation:**
    - Use local CLI: `ng generate component <name>` or similar
    - Ensure project structure follows Angular conventions
 
 ### Phase 3 — Build & Validate
 
-✓ Checkpoint: Build successful; generated code is correct and functional
+✓ Checkpoint: Build successful; generated code correct and functional
 
 6. **Build to catch errors early:**
    - Run `ng build` immediately after code generation
-   - Prefer the smallest useful output; if the workspace/version supports a quiet or progress-suppressed build flag, use it
-   - Analyze any build errors and fix before proceeding
-   - **Do not skip this step** — it ensures code is correct
+   - Prefer smallest useful output; use quiet/progress-suppressed build flag if available
+   - Fix build errors before proceeding
+   - **Don't skip this step** — ensures code correctness
 
 7. **Run tests (if applicable):**
    - Determine test runner: Vitest (v21+, recommended) or Jest (v20 and earlier)
    - Write tests during development
-   - Prefer `npm --silent run test` to avoid npm wrapper noise; use watch mode only when the user explicitly wants an interactive test session
+   - Prefer `npm --silent run test` to avoid npm wrapper noise; use watch mode only for interactive test session
 
-8. **Prepare the response:**
-   - If you are ready to present the outcome, read [assets/output-template.md](assets/output-template.md)
-   - Fill in only the sections that match the work you actually completed
+8. **Prepare response:**
+   - Read [assets/output-template.md](assets/output-template.md)
+   - Fill in only sections matching work actually completed
 
 ## Architecture Guides by Topic
 
 ### Creating New Projects
 - Default: Latest stable Angular (unless user specifies)
-- Forms: Do not assume forms are part of project creation. If forms are in scope, default to Reactive Forms; use Template-driven Forms for simple template-led cases; use Signal Forms only when explicitly requested or already adopted in the codebase
+- Forms: Don't assume forms part of project creation. Default to Reactive Forms; use Template-driven Forms for simple template-led cases; use Signal Forms only when explicitly requested or already adopted
 - Follow "Execution Rules" in Phase 2, Step 4
 
 ### Components
@@ -113,9 +113,9 @@ This skill provides comprehensive guidance for Angular development across all co
 ### Forms
 - **Preference:** Reactive Forms by default
 - **Alternative:** Template-driven Forms for simple template-led forms
-- **Opt-in:** Signal Forms only when the user explicitly requests them or the project already uses them
+- **Opt-in:** Signal Forms only when user explicitly requests or project already uses them
 - Analyze project and choose appropriate strategy
-- See: [references/reactive-forms.md](references/reactive-forms.md), [template-driven-forms.md](references/template-driven-forms.md), and [signal-forms.md](references/signal-forms.md) when needed
+- See: [references/reactive-forms.md](references/reactive-forms.md), [template-driven-forms.md](references/template-driven-forms.md), [signal-forms.md](references/signal-forms.md) when needed
 
 ### Dependency Injection
 - Use `inject()` function (modern) over constructor injection
@@ -132,8 +132,8 @@ This skill provides comprehensive guidance for Angular development across all co
 - See: [references/angular-aria.md](references/angular-aria.md)
 
 ### Routing
-- Comprehensive routing guide covers: route definition, loading strategies, outlets, guards, resolvers, lifecycle events, rendering strategies, animations
-- See: [references/routing-index.md](references/routing-index.md) for the overview, then load the direct routing references named in Phase 1, Step 2
+- Comprehensive routing guide: route definition, loading strategies, outlets, guards, resolvers, lifecycle events, rendering strategies, animations
+- See: [references/routing-index.md](references/routing-index.md) for overview, then load direct routing references named in Phase 1, Step 2
 
 ### Styling & Animations
 - **Tailwind CSS:** Integrating with Angular projects
@@ -149,6 +149,80 @@ This skill provides comprehensive guidance for Angular development across all co
 - **E2E:** Best practices with Cypress
 - See: [references/testing-vitest.md](references/testing-vitest.md) and related files
 
+### Signal Store (NgRx)
+
+Scaffold NgRx Signal Store for Angular feature state management.
+
+1. Ask: feature name, state shape (fields + types + defaults), scope (`root` or feature), async operations needed
+2. Create `<feature>.models.ts` with state interface and supporting types
+3. Create `<feature>.store.ts`:
+   ```typescript
+   export const <Feature>Store = signalStore(
+     { providedIn: 'root' },
+     withState<FeatureState>(initialState),
+     withComputed((store) => ({...})),
+     withMethods((store) => ({...})),
+     withHooks({ onInit(store) {...} })
+   );
+   ```
+4. For async: use `rxMethod` or `patchState` with loading/error state fields
+5. Register in component or feature providers as needed
+
+**Constraints:**
+- Use `@ngrx/signals` — not `@ngrx/store`
+- Keep store files focused on single feature slice
+- Prefer `withComputed` for derived values over manual subscriptions
+- Export store type: `type <Feature>Store = InstanceType<typeof <Feature>Store>`
+
+---
+
+### Library Create
+
+Scaffold new Angular library inside existing workspace.
+
+1. Ask: library name (e.g. `@org/my-lib`), selector prefix, include sample component, publishing target
+2. Generate library: `ng generate library <lib-name> --prefix=<prefix>`
+3. Clean up generated scaffold — remove unnecessary boilerplate
+4. Set up `public-api.ts` as single export surface
+5. Add initial component using angular-component conventions (3-file structure)
+6. Configure `ng-packagr` in `ng-package.json` — set `lib.entryFile` to `public-api.ts`
+7. Add build script: `"build:<lib>": "ng build <lib>"`
+8. Verify library builds: `ng build <lib>`
+
+**Constraints:**
+- All exports through `public-api.ts` — no deep imports
+- Use standalone components — no NgModules
+- Library must compile before task complete
+
+---
+
+### Sakai UI Component
+
+Scaffold new component for `@gravion/sakai-ui` Angular library.
+
+1. Ask: component name (kebab-case), folder path within `sakai-ui/src/lib/`, PrimeNG components needed
+2. Create `<name>.ts` as standalone component with selector `gv-<name>`:
+   ```typescript
+   @Component({
+     selector: 'gv-<name>',
+     standalone: true,
+     imports: [/* PrimeNG modules */],
+     templateUrl: './<name>.html',
+     styleUrl: './<name>.scss',
+   })
+   export class Gv<Name>Component { }
+   ```
+3. Create `<name>.html` with PrimeNG markup
+4. Create `<name>.scss` (empty or with scoped styles)
+5. Export component in `public-api.ts`
+6. Build library to verify: `ng build sakai-ui`
+
+**Constraints:**
+- Selector prefix must be `gv-`
+- All exports via `public-api.ts` — no internal deep imports from consumers
+- PrimeNG components imported in component's `imports` array
+- Don't modify existing components unless fixing export
+
 ### Tooling
 - **Angular CLI:** Creating apps, generating code, serving, building
 - **Angular MCP Server:** Tools, configuration, experimental features
@@ -156,13 +230,13 @@ This skill provides comprehensive guidance for Angular development across all co
 
 ## Gotchas
 
-- **Always run `ng build` after generation** — don't skip this; it catches errors early
-- `ng version` may fail on systems without global Angular CLI — fall back to `npx @angular/cli@latest`
-- **Don't throw errors in tests** — use TestBed.flushEffects() when testing Signals
+- **Always run `ng build` after generation** — catches errors early
+- `ng version` may fail without global Angular CLI — fallback to `npx @angular/cli@latest`
+- **Don't throw errors in tests** — use `TestBed.flushEffects()` when testing Signals
 - **Test choice matters:** Vitest for modern Angular (v21+), Jest for legacy
-- Signal Forms are opt-in guidance here; do not assume them unless the user or codebase already points to `@angular/forms/signals`
+- Signal Forms opt-in — don't assume unless user or codebase points to `@angular/forms/signals`
 
 ## Output Format
 
-If you are preparing the final response, read [assets/output-template.md](assets/output-template.md).
-Use that template and keep the response focused on Angular version, generated artifacts, and build/test status.
+If preparing final response, read [assets/output-template.md](assets/output-template.md).
+Use template, keep response focused on Angular version, generated artifacts, and build/test status.

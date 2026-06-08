@@ -2,6 +2,7 @@
 name: python-debug
 description: 'Diagnose and fix Python runtime errors, memory leaks, and performance issues using pdb, mypy, and profiling tools.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase problems
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 
@@ -17,10 +18,10 @@ Diagnose and resolve Python runtime issues including crashes, unexpected behavio
 
 ## Steps
 
-### 1. Analyze the error
-- Read the full traceback from top to bottom
-- Identify the exact line and exception type
-- Check the call chain — the error source may be several frames up
+### 1. Analyze error
+- Read full traceback from top to bottom
+- Identify exact line and exception type
+- Check call chain — error source may be several frames up
 
 ### 2. Type errors (mypy)
 ```bash
@@ -47,15 +48,7 @@ Key pdb commands:
 - Catch `asyncio.CancelledError` explicitly — do not swallow it
 
 ### 5. Memory profiling
-```python
-import tracemalloc
-tracemalloc.start()
-# ... code to profile ...
-snapshot = tracemalloc.take_snapshot()
-top_stats = snapshot.statistics('lineno')
-for stat in top_stats[:10]:
-    print(stat)
-```
+See [memory-profiling.md](references/memory-profiling.md) for setup and usage.
 
 ### 6. Performance profiling
 ```bash
@@ -74,7 +67,5 @@ python -m cProfile -s cumulative <script>.py | head -20
 | `RuntimeError: coroutine never awaited` | asyncio | Add `await`; check event loop setup |
 
 ## Tips
-> **Use the `task` tool** for diagnostic commands — they are mechanical inspection steps.
+> **Use `task` tool** for diagnostic commands — they are mechanical inspection steps.
 > Example: `#task uv run mypy src/ --strict && uv run pytest --tb=short -x`
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

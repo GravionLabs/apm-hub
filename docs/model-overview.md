@@ -19,7 +19,7 @@ description: 'Reference table for all Copilot CLI models: context window, verbos
 ## Reference Table
 
 | Model ID            | Name              | Category     | Context Window |  Verbosity  | Short Instructions | Long Instructions | Token Error Cost | Best For                                                               |
-|:--------------------|:------------------|:-------------|---------------:|:-----------:|:------------------:|:-----------------:|:----------------:|:-----------------------------------------------------------------------|
+| :------------------ | :---------------- | :----------- | -------------: | :---------: | :----------------: | :---------------: | :--------------: | :--------------------------------------------------------------------- |
 | `claude-sonnet-4.6` | Claude Sonnet 4.6 | Standard     |          200 K |    High     |    ✅ Excellent     |    ✅ Excellent    |       High       | Complex multi-step workflows, large codebases, nuanced skill execution |
 | `claude-sonnet-4.5` | Claude Sonnet 4.5 | Standard     |          200 K |    High     |    ✅ Excellent     |    ✅ Excellent    |       High       | Same as 4.6; prefer 4.6 when available                                 |
 | `claude-sonnet-4`   | Claude Sonnet 4   | Standard     |          200 K | Medium–High |       ✅ Good       |      ✅ Good       |   Medium–High    | General-purpose tasks; slightly less capable than 4.5/4.6              |
@@ -52,7 +52,7 @@ into a small-context model leaves less room for code, history, and tool results.
 How much output the model produces without an explicit instruction to be concise.
 
 | Rating     | Meaning                                                 |
-|:-----------|:--------------------------------------------------------|
+| :--------- | :------------------------------------------------------ |
 | **Low**    | Short, direct answers; minimal explanation              |
 | **Medium** | Balanced; explains key decisions without over-narrating |
 | **High**   | Detailed explanations, intermediate steps, recaps       |
@@ -72,7 +72,7 @@ Whether the model reliably executes the workflow described in a `SKILL.md` body.
 Rating key:
 
 | Rating          | Meaning                                                                 |
-|:----------------|:------------------------------------------------------------------------|
+| :-------------- | :---------------------------------------------------------------------- |
 | ✅ **Excellent** | Follows multi-step, conditional, cross-reference instructions precisely |
 | ✅ **Good**      | Reliable on most structured skill workflows                             |
 | ⚠️ **Partial**  | May skip optional steps, merge phases, or miss conditional loads        |
@@ -83,7 +83,7 @@ When a model misinterprets an instruction, takes the wrong branch, or produces a
 incorrect intermediate result, how many tokens are consumed before the error surfaces?
 
 | Rating       | Meaning                                                                |
-|:-------------|:-----------------------------------------------------------------------|
+| :----------- | :--------------------------------------------------------------------- |
 | **Very Low** | Short outputs → errors surface quickly, recovery is cheap              |
 | **Low**      | Fast model + concise output → low total token waste                    |
 | **Medium**   | Standard quality; occasional re-runs                                   |
@@ -114,7 +114,7 @@ Is the task complex or multi-step (implementation, refactoring, analysis)?
 ### Quick Reference by Task
 
 | Task                                              | Recommended Model                |
-|:--------------------------------------------------|:---------------------------------|
+| :------------------------------------------------ | :------------------------------- |
 | Complex implementation (new feature, refactoring) | `claude-sonnet-4.6`              |
 | Code review                                       | `gpt-5.4` or `claude-sonnet-4.6` |
 | PR creation, commit messages, changelog           | `gpt-4.1`                        |

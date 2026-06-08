@@ -2,10 +2,11 @@
 name: python-packaging
 description: 'Set up or modernize Python project packaging using pyproject.toml, uv, and hatch — covers dependencies, build backends, and publishing.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 model: gpt-4.1
 ---
 
-Set up or modernize a Python project's packaging configuration using `pyproject.toml` and modern tooling.
+Set up or modernize Python project packaging configuration using `pyproject.toml` and modern tooling.
 
 ## Stack
 - **uv** — package manager and environment tool (`uv init`, `uv add`, `uv sync`, `uv run`)
@@ -19,21 +20,7 @@ Set up or modernize a Python project's packaging configuration using `pyproject.
 uv init <project-name> && cd <project-name>
 ```
 
-### 2. pyproject.toml structure
-```toml
-[build-system]
-requires = ["uv_build>=0.9,<0.10"]
-build-backend = "uv_build"
-
-[project]
-name = "my-package"
-version = "0.1.0"
-requires-python = ">=3.14"
-dependencies = ["httpx>=0.27"]
-
-[dependency-groups]
-dev = ["pytest>=8", "pytest-cov", "ruff"]
-```
+### 2. Configure pyproject.toml — see [pyproject-toml-example.md](references/pyproject-toml-example.md)
 
 ### 3. Manage dependencies
 ```bash
@@ -56,19 +43,6 @@ uv build             # dist/ with .whl and .tar.gz
 uv publish           # PyPI (requires PYPI_TOKEN)
 ```
 
-### 6. Tool configuration
-```toml
-[tool.ruff]
-line-length = 120
-target-version = "py314"
-fix = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-asyncio_mode = "auto"
-addopts = "--strict-markers"
-```
-
 ## Checklist
 - [ ] `[build-system]` and `[project]` sections present
 - [ ] `requires-python` set to minimum supported version
@@ -78,7 +52,5 @@ addopts = "--strict-markers"
 - [ ] `src/` layout prevents accidental imports from repo root
 
 ## Tips
-> **Use the `task` tool** for setup commands — they are mechanical.
+> **Use `task` tool** for setup commands — they are mechanical.
 > Example: `#task uv init my-package && cd my-package && uv add --dev pytest ruff`
-
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

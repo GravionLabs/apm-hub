@@ -2,6 +2,7 @@
 name: angular-code-review
 description: 'Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list.'
 allowed-tools: read search codebase problems
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 
@@ -17,12 +18,12 @@ Review Angular 21 code with priority ratings.
 ### Change Detection
 - Component uses `ChangeDetectionStrategy.OnPush` where appropriate
 - No direct DOM manipulation bypassing Angular
-- Signals used instead of mutable properties where state is reactive
+- Signals used instead of mutable properties where state reactive
 
 ### Lifecycle Hooks
 - No heavy logic in `ngOnInit` that should be deferred
 - `ngOnDestroy` / `DestroyRef` used to unsubscribe Observables and clean up effects
-- No subscriptions created without cleanup
+- No subscriptions without cleanup
 
 ### Templates
 - New control flow syntax (`@if`, `@for`, `@switch`) used — not `*ngIf`/`*ngFor`
@@ -44,5 +45,3 @@ Review Angular 21 code with priority ratings.
 - Large lists use virtual scrolling where applicable
 - Lazy-loaded routes for feature modules
 - No unnecessary `async` pipes wrapping static values
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

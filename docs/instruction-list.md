@@ -6,33 +6,6 @@ This page lists all available instructions organized by domain. This file is aut
 
 ## Overview
 
-| Instruction                                                                                                   | Domain            | Description                                                                                                                        |
-| :------------------------------------------------------------------------------------------------------------ | :---------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-| [conventional-commits](../packages/common/.apm/instructions/conventional-commits.instructions.md)             | [Common](#common) | -                                                                                                                                  |
-| [github-context](../packages/github/.apm/instructions/github-context.instructions.md)                         | [Github](#github) | -                                                                                                                                  |
-| [github-mcp](../packages/github/.apm/instructions/github-mcp.instructions.md)                                 | [Github](#github) | -                                                                                                                                  |
-| [code-review-generic](../packages/shared/.apm/instructions/code-review-generic.instructions.md)               | [Shared](#shared) | Code review guidelines for any language or framework: readability, naming, complexity, error handling, security, and test coverage |
-| [html-css-style-color-guide](../packages/shared/.apm/instructions/html-css-style-color-guide.instructions.md) | [Shared](#shared) | Color usage guidelines and styling rules for HTML elements to ensure accessible, professional designs.                             |
-| [markdown](../packages/shared/.apm/instructions/markdown.instructions.md)                                     | [Shared](#shared) | Markdown documentation standards: structure, formatting, headings, lists, code blocks, and writing style for technical docs        |
-
-## Common
-
-| Instruction                                                                                         | Description |
-| :-------------------------------------------------------------------------------------------------- | :---------- |
-| [`conventional-commits`](../packages/common/.apm/instructions/conventional-commits.instructions.md) | -           |
-
-## Github
-
-| Instruction                                                                             | Description |
-| :-------------------------------------------------------------------------------------- | :---------- |
-| [`github-context`](../packages/github/.apm/instructions/github-context.instructions.md) | -           |
-| [`github-mcp`](../packages/github/.apm/instructions/github-mcp.instructions.md)         | -           |
-
-## Shared
-
-| Instruction                                                                                                     | Description                                                                                                                        |
-| :-------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
-| [`code-review-generic`](../packages/shared/.apm/instructions/code-review-generic.instructions.md)               | Code review guidelines for any language or framework: readability, naming, complexity, error handling, security, and test coverage |
-| [`html-css-style-color-guide`](../packages/shared/.apm/instructions/html-css-style-color-guide.instructions.md) | Color usage guidelines and styling rules for HTML elements to ensure accessible, professional designs.                             |
-| [`markdown`](../packages/shared/.apm/instructions/markdown.instructions.md)                                     | Markdown documentation standards: structure, formatting, headings, lists, code blocks, and writing style for technical docs        |
+| Instruction | Domain | Description |
+| :---------- | :----- | :---------- |
 

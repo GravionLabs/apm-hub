@@ -2,10 +2,11 @@
 name: angular-migration
 description: 'Migrate an Angular application to a newer version. Covers ng update, standalone component migration, new @if/@for/@switch control flow syntax, and signals-first patterns.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 
-Migrate an Angular application to a newer version.
+Migrate Angular application to newer version.
 
 ## Stack
 - **CLI:** Angular CLI (`ng update`, `ng generate @angular/core:migrate-*`)
@@ -33,7 +34,7 @@ ng update
 
 ## Step 3 — Run standalone migration (if needed)
 
-If the project still uses NgModules:
+If project still uses NgModules:
 ```bash
 ng generate @angular/core:standalone
 ```
@@ -49,23 +50,21 @@ Replace legacy structural directives:
 [ngSwitch]             →    @switch (x) { @case (y) { ... } }
 ```
 
-Run the schematic:
+Run schematic:
 ```bash
 ng generate @angular/core:control-flow
 ```
 
 ## Step 5 — Review breaking changes
 
-Check the [Angular Update Guide](https://update.angular.io/) for the target version.
+Check [Angular Update Guide](https://update.angular.io/) for target version.
 Common breaking changes per version:
 - **v17**: standalone APIs stable, new control flow syntax
 - **v18**: zoneless experimental, `afterRenderEffect` added
 - **v19**: `linkedSignal`, `resource()`, `httpResource()`, required signal inputs stable
-- **v20/21**: check release notes at [angular.dev/reference/releases](https://angular.dev/reference/releases)
+- **v20/21**: check [angular.dev/reference/releases](https://angular.dev/reference/releases)
 
 ## Key rules
 - Test after each major version bump: `ng test`, `ng build`
 - Check `@angular/material`, `@ngrx/*`, `@angular/cdk` — update separately if needed
 - Review `BREAKING_CHANGES.md` in each package's changelog
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

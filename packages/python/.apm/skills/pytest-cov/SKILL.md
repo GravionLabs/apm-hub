@@ -7,18 +7,16 @@ description: >
   project, even if the user only says "add tests" or "improve coverage" without
   mentioning pytest.
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 
 Improve pytest test coverage for Python code.
 
 ## Stack
-- **uv run pytest** — run tests inside the uv-managed environment
+- **uv run pytest** — run tests inside uv-managed environment
 - **pytest-cov** — coverage plugin (`uv add --dev pytest-cov` to install)
 - **coverage** — coverage reporting CLI (`coverage report`, `coverage html`)
-
-## What this skill does
-Runs the test suite with coverage, identifies uncovered lines, and writes focused tests to close coverage gaps.
 
 ## Steps
 
@@ -32,13 +30,13 @@ uv run --frozen pytest --cov=<source-dir> --cov-report=term-missing --cov-report
 ```
 
 ### 2. Analyze gaps
-- Review the `term-missing` output for files and line numbers not covered
+- Review `term-missing` output for files and line numbers not covered
 - Prioritize: uncovered branches > uncovered error handlers > uncovered happy paths
 
 ### 3. Write missing tests
 For each uncovered line/branch:
 - Identify what condition or code path is not exercised
-- Write a focused pytest test that exercises exactly that path
+- Write focused pytest test that exercises exactly that path
 - Use `pytest.raises` for exception paths
 - Use `@pytest.mark.parametrize` for multiple inputs
 
@@ -48,26 +46,24 @@ uv run --frozen pytest --cov=<source-dir> --cov-report=term-missing --cov-fail-u
 ```
 
 ## Conventions
-- Test file: `test_<module>.py` mirroring the source structure
+- Test file: `test_<module>.py` mirroring source structure
 - Test function: `test_<function>_<scenario>`
 - Use fixtures for shared setup — avoid copy-paste between tests
 - Keep each test focused on one scenario
 
 ## Constraints
-- Do not mock internal implementation details — test the public interface
-- Do not write tests that trivially pass without actually exercising the logic
-- If coverage cannot reach 100% due to platform-specific code, use `# pragma: no cover` with a comment
+- Do not mock internal implementation details — test public interface
+- Do not write tests that trivially pass without actually exercising logic
+- If coverage cannot reach 100% due to platform-specific code, use `# pragma: no cover` with comment
 
 ## Gotchas
-- `uv` must be installed and configured for the project (`uv sync` before running tests).
+- `uv` must be installed and configured for project (`uv sync` before running tests).
 - `pytest-cov` must be a dev dependency (`uv add --dev pytest-cov` if missing).
-- Choose `--cov-fail-under` based on the project's target — default to 80 if unspecified.
-- `--cov-report=html` writes to `htmlcov/` and is optional; omit it if only gap analysis is needed.
-- **Repeated runs:** Use `--frozen` to skip the lockfile check (faster); use `--no-sync` to also skip the venv sync entirely when the environment is already up-to-date.
-- **CI:** Prefer `--locked` instead of `--frozen` — it asserts the lockfile is unchanged and fails fast if it drifted.
+- Choose `--cov-fail-under` based on project's target — default to 80 if unspecified.
+- `--cov-report=html` writes to `htmlcov/` and is optional; omit if only gap analysis needed.
+- **Repeated runs:** Use `--frozen` to skip lockfile check (faster); use `--no-sync` to also skip venv sync entirely when environment already up-to-date.
+- **CI:** Prefer `--locked` instead of `--frozen` — it asserts lockfile unchanged and fails fast if drifted.
 
 ## Tips
-> **Use the `task` tool** for coverage runs.
+> **Use `task` tool** for coverage runs.
 > Example: `#task uv run pytest --cov=src --cov-report=term-missing --cov-fail-under=80`
-
-> 💡 **Model hint:** Writing targeted tests requires understanding code logic and edge cases — `claude-sonnet-4.6` is recommended. Use `/model` to switch.
