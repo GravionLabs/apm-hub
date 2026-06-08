@@ -5,10 +5,31 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.1] — 2026-05-04
+## [1.0.2] — 2026-06-08
+
+### Bug Fixes
+- Skip puppeteer Chrome download in CI build-test job (#15)
+- Update CI to use pnpm with GravionLabs/ci/node composites (#15)
+- Remove --if-present from build commands (pnpm doesn't support it)
+- Remove deleted packages from all/meta, fix dev-workflow deps format
+- Libasound2 -> libasound2t64 for Ubuntu 24.04 Noble
+- Allow determine-version on workflow_dispatch so full release pipeline runs
+
+
+### Features
+- Add pnpm-workflow and cliff-setup skills (#15)
+- Add detect-techstack, <lang>-build, and <lang>-test skills (#15)
+
 
 ### Refactoring
-- Simplify audit output templates and enhance prerequisite checks
+- Extract planning agent, strip dev-workflow, add modes to opencode-workflow
+- Rename dev-workflow → implement-workflow, opencode-workflow → dev-workflow
+
+
+## [1.0.1] — 2026-05-04
+
+### Documentation
+- Update CHANGELOG.md for v1.0.1 [skip ci]
 
 
 ## [1.0.0] — 2026-05-04
@@ -41,6 +62,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Add Copilot CLI permission kinds to allowed-tools in 3 skills
 - Remove devDependencies, commit .github/ directly, fix apm audit
 - Use github.token fallback in CI when GH_PAT is not set
+- Rename plan agent to planning avoid OpenCode built-in collision (#8)
 
 
 ### Documentation
@@ -177,6 +199,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Add PR body template and update README with skill instructions
 - Add agent-write, agent-create, agent-audit, agent-update skills
 - Add integration tests and configuration for Copilot SDK
+- Create apm-tooling package with skill lifecycle skills
 
 
 ### Refactoring
@@ -187,6 +210,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Rename csharp to dotnet, merge ag-grid into angular, rename apm-workspace skills
 - Replace docs/model-overview.md refs with local model-selection.md in agent-write and agent-audit
 - Update code block syntax to use PowerShell in documentation files
+- Simplify audit output templates and enhance prerequisite checks
+- Restructure packages — rename csharp→dotnet, merge ag-grid→angular, strip unused domains (#8)
+- Remove common package + git-workflow skill (#8)
+- Merge duplicate/thin skills, extract inline code blocks (#8)
 
 
 
