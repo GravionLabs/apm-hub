@@ -98,6 +98,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        shell: bash
+        run: npm install -g pnpm
+
       - name: Build
         uses: GravionLabs/ci/node/build@main
         with:
@@ -154,6 +158,10 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT || github.token }}
+
+      - name: Install pnpm
+        shell: bash
+        run: npm install -g pnpm
 
       - name: Build
         uses: GravionLabs/ci/node/build@main
