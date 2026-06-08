@@ -1,13 +1,13 @@
 ---
 # Copilot/APM fields
-name: dev-workflow
+name: implement-workflow
 description: "Tool-agnostic implement-from-issue workflow: setup → implement → verify. Reads an existing GH issue, implements, verifies. Works in Copilot CLI, Claude Code, OpenCode, any AI coding tool."
-model: gpt-4.1
+model: deepseek-v4-flash-free
 tools: ['read', 'edit', 'shell', 'search']
 user-invocable: true
 ---
 
-Tool-agnostic dev workflow. Setup → implement → verify from an existing issue.
+Tool-agnostic implement workflow. Setup → implement → verify from an existing issue.
 
 ## Pipeline
 

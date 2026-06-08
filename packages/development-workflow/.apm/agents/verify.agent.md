@@ -25,7 +25,7 @@ permission:
 # Copilot/APM fields
 name: verify
 description: "Run build, tests, lint on project. Loads <lang>-build and <lang>-test skills for language-specific commands. Reports pass/fail with first error."
-model: gpt-4.1
+model: deepseek-v4-flash-free
 tools: ['read', 'shell', 'search']
 user-invocable: false
 ---

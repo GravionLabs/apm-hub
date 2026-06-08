@@ -29,7 +29,7 @@ permission:
 # Copilot/APM fields
 name: implement
 description: "Write code + tests. Loads detect-techstack, <lang>-implementation, <lang>-build, <lang>-test skills. Creates branch, implements, runs tests, commits."
-model: gpt-4.1
+model: deepseek-v4-flash-free
 tools: ['read', 'edit', 'execute', 'search']
 user-invocable: false
 ---

@@ -15,15 +15,15 @@ permission:
   webfetch: allow
   question: allow
 # Copilot/APM fields
-name: opencode-workflow
-description: "OpenCode dev workflow orchestrator. Modes: plan (create GH sub-issues), implement <issue> (skip planning), full (plan→implement→verify). Spawns sub-agents via task()."
-model: gpt-4.1
+name: dev-workflow
+description: "Dev workflow orchestrator. Modes: plan (create GH sub-issues), implement <issue> (skip planning), full (plan→implement→verify). Spawns sub-agents via task() (OpenCode) or runs inline (Copilot/Claude)."
+model: deepseek-v4-flash-free
 tools: ['agent', 'read', 'search']
 agents: ['planning', 'implement', 'verify']
 user-invocable: true
 ---
 
-OpenCode dev workflow orchestrator. Mode is determined from your first message:
+Dev workflow orchestrator. Mode is determined from your first message:
 - **plan <issue>** — planning only: explore, break into sub-tasks, create GH issues. Stop.
 - **implement <issue>** — skip planning, implement existing issue. Start at implement.
 - **full <issue>** — plan → implement → verify in one session (default).
