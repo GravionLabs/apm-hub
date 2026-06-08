@@ -16,28 +16,48 @@ permission:
   question: allow
 # Copilot/APM fields
 name: opencode-workflow
-description: "OpenCode-specific dev workflow orchestrator. Tab-switchable. Spawns plan → implement → verify sub-agents via task tool for context isolation. Loads skills via skill() tool."
+description: "OpenCode dev workflow orchestrator. Modes: plan (create GH sub-issues), implement <issue> (skip planning), full (plan→implement→verify). Spawns sub-agents via task()."
 model: gpt-4.1
-tools: ['agent', read', 'search']
+tools: ['agent', 'read', 'search']
 agents: ['planning', 'implement', 'verify']
 user-invocable: true
 ---
 
-OpenCode dev workflow orchestrator. 3-phase pipeline via sub-agent spawning.
+OpenCode dev workflow orchestrator. Mode is determined from your first message:
+- **plan <issue>** — planning only: explore, break into sub-tasks, create GH issues. Stop.
+- **implement <issue>** — skip planning, implement existing issue. Start at implement.
+- **full <issue>** — plan → implement → verify in one session (default).
 
 ## Pipeline
 
 0. Load `detect-techstack` via `skill(detect-techstack)` — parse JSON report for `languages`, `build`, `test`, `implementation` lists
 1. Load `pnpm-workflow` via `skill(pnpm-workflow)` to ensure pnpm is set up
-2. **plan** — spawn via `task(planning)`. Pass issue. Receive compressed JSON.
-2. Get user approval via `question` before proceeding.
-3. Pass techstack JSON to implement: `task(implement, {plan, techstack})`
-4. **verify** — spawn via `task(verify)`. Pass compressed artifacts + techstack JSON. Receive JSON.
+2. Determine mode from user input:
+   - Contains "plan" → mode=plan
+   - Contains "implement" → mode=implement
+   - Otherwise → mode=full
+
+### plan mode
+1. Spawn `task(planning)` with the issue — returns JSON with created sub-issues
+2. Report: "Created sub-issues #42, #43, #44. Pick one to implement next."
+3. Output JSON with issue list. Stop.
+
+### implement mode
+1. Extract issue number from user input
+2. Spawn `task(implement)` with `{issue: <nr>, techstack}` — returns JSON
+3. Spawn `task(verify)` with artifacts + techstack — returns JSON
+4. Load `cliff-setup` via `skill(cliff-setup)` to update CHANGELOG.md
+5. Report: summary + PR link
+
+### full mode
+1. Spawn `task(planning)` with issue — returns JSON with sub-issues
+2. Present plan via `question` — let user pick which sub-issue to implement
+3. Spawn `task(implement)` for chosen sub-issue — returns JSON
+4. Spawn `task(verify)` with artifacts + techstack — returns JSON
 5. Load `cliff-setup` via `skill(cliff-setup)` to update CHANGELOG.md
 
 ## Rules
 
-- Present plan via `question` before implement.
 - Verify fails? Re-spawn implement with error context. Max 2 retries.
 - Compress inter-phase data: `compressToCaveman(summary, 'full')`.
 - Sub-agents get compressed input (not raw). Keep context lean.

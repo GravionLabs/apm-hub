@@ -5,10 +5,10 @@ registry: https://github.com/GravionLabs/apm-hub
 dependencies:
   apm:
     - github@apm-hub
-    - common@apm-hub
-    - angular@apm-hub
+    - shared@apm-hub
     - typescript@apm-hub
     - python@apm-hub
-    - go@apm-hub
+    - angular@apm-hub
+    - dotnet@apm-hub
 skills:
   - cliff-setup
