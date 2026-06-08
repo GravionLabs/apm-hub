@@ -107,7 +107,7 @@ jobs:
         with:
           node-version: '24'
           package-manager: pnpm
-          build-command: pnpm run build --if-present
+          build-command: pnpm run build
 
       - name: Test
         uses: GravionLabs/ci/node/test@main
@@ -168,7 +168,7 @@ jobs:
         with:
           node-version: '24'
           package-manager: pnpm
-          build-command: pnpm run build --if-present
+          build-command: pnpm run build
 
       - name: Install puppeteer system deps
         shell: bash
