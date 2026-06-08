@@ -5,116 +5,279 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 ## Table of Contents
 
 - [Angular](#angular)
-- [Apm-tooling](#apm-tooling)
+- [Apm-workspace](#apm-workspace)
+- [Common](#common)
 - [Development-workflow](#development-workflow)
+- [Devops](#devops)
+- [Docker](#docker)
 - [Dotnet](#dotnet)
 - [Github](#github)
+- [Go](#go)
+- [Helm](#helm)
+- [Playwright](#playwright)
+- [Postgresql](#postgresql)
 - [Python](#python)
 - [Shared](#shared)
+- [Terraform](#terraform)
 - [Typescript](#typescript)
 
 ## Angular
 
 ### Skills
 
-| Name                   | Description                                                                                                                                                                     | File                                                                                      |
-| :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------- |
-| ag-grid-developer      | >                                                                                                                                                                               | [ag-grid-developer](../packages/angular/.apm/skills/ag-grid-developer/SKILL.md)           |
-| ag-grid-mcp-setup      | >                                                                                                                                                                               | [ag-grid-mcp-setup](../packages/angular/.apm/skills/ag-grid-mcp-setup/SKILL.md)           |
-| angular-code-review    | Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list. | [angular-code-review](../packages/angular/.apm/skills/angular-code-review/SKILL.md)       |
-| angular-component      | Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.                 | [angular-component](../packages/angular/.apm/skills/angular-component/SKILL.md)           |
-| angular-developer      | >                                                                                                                                                                               | [angular-developer](../packages/angular/.apm/skills/angular-developer/SKILL.md)           |
-| angular-migration      | Migrate an Angular application to a newer version. Covers ng update, standalone component migration, new @if/@for/@switch control flow syntax, and signals-first patterns.      | [angular-migration](../packages/angular/.apm/skills/angular-migration/SKILL.md)           |
-| angular-testing        | Write Angular 21 unit tests using Vitest and TestBed. Covers standalone component testing, signal testing, service mocking, and async patterns.                                 | [angular-testing](../packages/angular/.apm/skills/angular-testing/SKILL.md)               |
-| create-angular-project | Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier.                                                  | [create-angular-project](../packages/angular/.apm/skills/create-angular-project/SKILL.md) |
+| Name                        | Description                                                                                                                                                                     | File                                                                                                |
+| :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------- |
+| ag-grid-developer           | >                                                                                                                                                                               | [ag-grid-developer](../packages/angular/.apm/skills/ag-grid-developer/SKILL.md)                     |
+| ag-grid-mcp-setup           | >                                                                                                                                                                               | [ag-grid-mcp-setup](../packages/angular/.apm/skills/ag-grid-mcp-setup/SKILL.md)                     |
+| angular-code-review         | Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list. | [angular-code-review](../packages/angular/.apm/skills/angular-code-review/SKILL.md)                 |
+| angular-component           | Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.                 | [angular-component](../packages/angular/.apm/skills/angular-component/SKILL.md)                     |
+| angular-developer           | >                                                                                                                                                                               | [angular-developer](../packages/angular/.apm/skills/angular-developer/SKILL.md)                     |
+| angular-library-create      | Scaffold a new Angular library inside an existing workspace using ng-packagr, with public-api.ts, 3-file component structure, and injection tokens.                             | [angular-library-create](../packages/angular/.apm/skills/angular-library-create/SKILL.md)           |
+| angular-migration           | Migrate an Angular application to a newer version. Covers ng update, standalone component migration, new @if/@for/@switch control flow syntax, and signals-first patterns.      | [angular-migration](../packages/angular/.apm/skills/angular-migration/SKILL.md)                     |
+| angular-signal-store        | Create an NgRx Signal Store for Angular state management with state, computed signals, updaters, and effects. Follows @ngrx/signals patterns.                                   | [angular-signal-store](../packages/angular/.apm/skills/angular-signal-store/SKILL.md)               |
+| angular-testing             | Write Angular 21 unit tests using Vitest and TestBed. Covers standalone component testing, signal testing, service mocking, and async patterns.                                 | [angular-testing](../packages/angular/.apm/skills/angular-testing/SKILL.md)                         |
+| create-angular-project      | Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier.                                                  | [create-angular-project](../packages/angular/.apm/skills/create-angular-project/SKILL.md)           |
+| sakai-ui-component          | Scaffold a new @gravion/sakai-ui Angular library component with gv- prefix, 3-file structure, PrimeNG dependencies, and public-api.ts export.                                   | [sakai-ui-component](../packages/angular/.apm/skills/sakai-ui-component/SKILL.md)                   |
+| setup-prettier-eslint-husky | Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm.             | [setup-prettier-eslint-husky](../packages/angular/.apm/skills/setup-prettier-eslint-husky/SKILL.md) |
 
-## Apm-tooling
+## Apm-workspace
+
+### Agents
+
+| Name                                          | Description                                                                                                                                                                                                                                                                                                                                                                | File                                                                                               |
+| :-------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- |
+| Implementation Plan Generation Mode           | Generate an implementation plan for new features or refactoring existing code.                                                                                                                                                                                                                                                                                             | [implementation-plan.agent.md](../packages/apm-workspace/.apm/agents/implementation-plan.agent.md) |
+| Plan Mode - Strategic Planning & Architecture | Strategic planning and architecture assistant focused on thoughtful analysis before implementation. Helps developers understand codebases, clarify requirements, and develop comprehensive implementation strategies.                                                                                                                                                      | [plan.agent.md](../packages/apm-workspace/.apm/agents/plan.agent.md)                               |
+| Prompt Builder Instructions                   | Expert prompt engineering and validation system for creating high-quality prompts                                                                                                                                                                                                                                                                                          | [prompt-builder.agent.md](../packages/apm-workspace/.apm/agents/prompt-builder.agent.md)           |
+| Prompt Engineer                               | A specialized chat mode for analyzing and improving prompts. Every user input is treated as a prompt to be improved. It first provides a detailed analysis of the original prompt within a <reasoning> tag, evaluating it against a systematic framework based on OpenAI's prompt engineering best practices. Following the analysis, it generates a new, improved prompt. | [prompt-engineer.agent.md](../packages/apm-workspace/.apm/agents/prompt-engineer.agent.md)         |
+| Refine Requirement or Issue Chat Mode         | Refine the requirement or issue with Acceptance Criteria, Technical Considerations, Edge Cases, and NFRs                                                                                                                                                                                                                                                                   | [refine-issue.agent.md](../packages/apm-workspace/.apm/agents/refine-issue.agent.md)               |
+| Specification mode instructions               | Generate or update specification documents for new or existing functionality.                                                                                                                                                                                                                                                                                              | [specification.agent.md](../packages/apm-workspace/.apm/agents/specification.agent.md)             |
 
 ### Skills
 
-| Name         | Description | File                                                                      |
-| :----------- | :---------- | :------------------------------------------------------------------------ |
-| skill-audit  | >           | [skill-audit](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)   |
-| skill-create | >           | [skill-create](../packages/apm-tooling/.apm/skills/skill-create/SKILL.md) |
-| skill-update | >           | [skill-update](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md) |
-| skill-write  | >           | [skill-write](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)   |
+| Name                | Description | File                                                                                      |
+| :------------------ | :---------- | :---------------------------------------------------------------------------------------- |
+| agent-audit         | >           | [agent-audit](../packages/apm-workspace/.apm/skills/agent-audit/SKILL.md)                 |
+| agent-create        | >           | [agent-create](../packages/apm-workspace/.apm/skills/agent-create/SKILL.md)               |
+| agent-update        | >           | [agent-update](../packages/apm-workspace/.apm/skills/agent-update/SKILL.md)               |
+| agent-write         | >           | [agent-write](../packages/apm-workspace/.apm/skills/agent-write/SKILL.md)                 |
+| check-prerequisites | >           | [check-prerequisites](../packages/apm-workspace/.apm/skills/check-prerequisites/SKILL.md) |
+| skill-audit         | >           | [skill-audit](../packages/apm-workspace/.apm/skills/skill-audit/SKILL.md)                 |
+| skill-create        | >           | [skill-create](../packages/apm-workspace/.apm/skills/skill-create/SKILL.md)               |
+| skill-update        | >           | [skill-update](../packages/apm-workspace/.apm/skills/skill-update/SKILL.md)               |
+| skill-write         | >           | [skill-write](../packages/apm-workspace/.apm/skills/skill-write/SKILL.md)                 |
+
+## Common
+
+### Instructions
+
+| Name                 | Description | File                                                                                                              |
+| :------------------- | :---------- | :---------------------------------------------------------------------------------------------------------------- |
+| Conventional Commits | -           | [conventional-commits.instructions.md](../packages/common/.apm/instructions/conventional-commits.instructions.md) |
+
+### Skills
+
+| Name         | Description | File                                                                 |
+| :----------- | :---------- | :------------------------------------------------------------------- |
+| git-workflow | >           | [git-workflow](../packages/common/.apm/skills/git-workflow/SKILL.md) |
 
 ## Development-workflow
 
 ### Agents
 
-| Name              | Description                                                                                                                                                                  | File                                                                                                  |
-| :---------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------- |
-| dev-workflow      | Tool-agnostic development workflow: plan → implement → verify. Single agent does all phases sequentially. Works in Copilot CLI, Claude Code, OpenCode, any AI coding tool.   | [dev-workflow.agent.md](../packages/development-workflow/.apm/agents/dev-workflow.agent.md)           |
-| implement         | Write code + tests. Creates branch, follows implementation skill test triad, runs build/test/lint, commits.                                                                  | [implement.agent.md](../packages/development-workflow/.apm/agents/implement.agent.md)                 |
-| opencode-workflow | OpenCode-specific dev workflow orchestrator. Tab-switchable. Spawns plan → implement → verify sub-agents via task tool for context isolation. Loads skills via skill() tool. | [opencode-workflow.agent.md](../packages/development-workflow/.apm/agents/opencode-workflow.agent.md) |
-| planning          | Analyze issue, create implementation plan. Read-only phase with git/gh lookups. Outputs compressed JSON plan.                                                                | [planning.agent.md](../packages/development-workflow/.apm/agents/planning.agent.md)                   |
-| verify            | Run typecheck, tests, lint on project. Read-only + bash for commands. Reports pass/fail with first error.                                                                    | [verify.agent.md](../packages/development-workflow/.apm/agents/verify.agent.md)                       |
+| Name                     | Description                                                                                                                                                                                                                    | File                                                                                                                |
+| :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| github-engineer          | GitHub issue implementation orchestrator. Fetches the issue, resolves repositories (multi-repo support), creates a branch, detects tech stacks, delegates to specialists, commits, and opens a PR.                             | [github-engineer.agent.md](../packages/development-workflow/.apm/agents/github-engineer.agent.md)                   |
+| github-pr-reviewer       | GitHub PR review orchestrator. Fetches the PR diff, detects tech stacks from changed files, invokes specialist review skills in parallel, posts inline GitHub review comments via MCP, and submits Approve or Request Changes. | [github-pr-reviewer.agent.md](../packages/development-workflow/.apm/agents/github-pr-reviewer.agent.md)             |
+| github-software-engineer | Route GitHub development requests — implementing issues, reviewing PRs, or refining backlog items — to the correct specialist agent.                                                                                           | [github-software-engineer.agent.md](../packages/development-workflow/.apm/agents/github-software-engineer.agent.md) |
+
+## Devops
+
+### Skills
+
+| Name                   | Description                                                                                                                                   | File                                                                                     |
+| :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
+| az-devops-setup        | Interactive setup guide for the az CLI azure-devops extension and authentication.                                                             | [az-devops-setup](../packages/devops/.apm/skills/az-devops-setup/SKILL.md)               |
+| code-review-publisher  | Publish code review results as PR comments on GitHub or Azure DevOps.                                                                         | [code-review-publisher](../packages/devops/.apm/skills/code-review-publisher/SKILL.md)   |
+| create-node-workflow   | Create a GitHub Actions CI workflow for a Node.js project using GravionLabs/ci reusable workflows (install, lint, test, build).               | [create-node-workflow](../packages/devops/.apm/skills/create-node-workflow/SKILL.md)     |
+| create-nuget-workflow  | Create a GitHub Actions CI/CD workflow for building and publishing a NuGet package using GravionLabs/ci reusable workflows.                   | [create-nuget-workflow](../packages/devops/.apm/skills/create-nuget-workflow/SKILL.md)   |
+| create-pr              | Analyze git history and diff, generate a structured PR description, and create a pull request.                                                | [create-pr](../packages/devops/.apm/skills/create-pr/SKILL.md)                           |
+| create-python-workflow | Create a GitHub Actions CI/CD workflow for a Python package using GravionLabs/ci reusable workflows (lint, test, build, publish).             | [create-python-workflow](../packages/devops/.apm/skills/create-python-workflow/SKILL.md) |
+| create-wiki-workflow   | Create a GitHub Actions workflow that syncs a docs/ directory to the GitHub Wiki using GravionLabs/ci reusable workflows.                     | [create-wiki-workflow](../packages/devops/.apm/skills/create-wiki-workflow/SKILL.md)     |
+| gitversion-add         | Add GitVersion to a repository for automatic semantic versioning from git history, configured for use with GravionLabs/ci reusable workflows. | [gitversion-add](../packages/devops/.apm/skills/gitversion-add/SKILL.md)                 |
+
+## Docker
+
+### Skills
+
+| Name                   | Description                                                                                                                                                                   | File                                                                                     |
+| :--------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
+| docker-compose-setup   | Generate or review a docker-compose.yml for local development or testing: services, networking, volumes, health checks, environment variables, and resource limits.           | [docker-compose-setup](../packages/docker/.apm/skills/docker-compose-setup/SKILL.md)     |
+| docker-debug           | Diagnose container startup failures, networking issues, volume mount problems, and resource constraints using docker logs, inspect, exec, stats, and network commands.        | [docker-debug](../packages/docker/.apm/skills/docker-debug/SKILL.md)                     |
+| docker-security-review | Review a Dockerfile or docker-compose configuration for security issues: base image hygiene, running as root, exposed secrets, ADD vs COPY, .dockerignore, and image pinning. | [docker-security-review](../packages/docker/.apm/skills/docker-security-review/SKILL.md) |
+| multi-stage-dockerfile | Create an optimized multi-stage Dockerfile for any language or framework, minimizing final image size and following security best practices.                                  | [multi-stage-dockerfile](../packages/docker/.apm/skills/multi-stage-dockerfile/SKILL.md) |
 
 ## Dotnet
 
 ### Skills
 
-| Name                         | Description                                                                                                                                                                                                                                | File                                                                                                 |
-| :--------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
-| dotnet-async                 | Apply C# async/await best practices to existing code: fix deadlocks, ConfigureAwait usage, async void, cancellation token propagation, and naming conventions.                                                                             | [dotnet-async](../packages/dotnet/.apm/skills/dotnet-async/SKILL.md)                                 |
-| dotnet-best-practices        | Review and improve .NET/C# code to meet project-specific best practices: nullability, async patterns, DI, logging, and modern C# idioms.                                                                                                   | [dotnet-best-practices](../packages/dotnet/.apm/skills/dotnet-best-practices/SKILL.md)               |
-| dotnet-code-review           | Perform a structured C# and NUnit code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions.                                                                                                 | [dotnet-code-review](../packages/dotnet/.apm/skills/dotnet-code-review/SKILL.md)                     |
-| dotnet-create-solution       | Scaffold a new .NET solution with src/test layout, Central Package Management (Directory.Packages.props), Directory.Build.props, and .editorconfig. Supports both NuGet libraries (multi-target) and applications (webapi/worker/console). | [dotnet-create-solution](../packages/dotnet/.apm/skills/dotnet-create-solution/SKILL.md)             |
-| dotnet-design-pattern-review | Review C#/.NET code for design pattern implementation quality and suggest improvements. Read-only — outputs findings, does not modify code.                                                                                                | [dotnet-design-pattern-review](../packages/dotnet/.apm/skills/dotnet-design-pattern-review/SKILL.md) |
-| dotnet-docs                  | Add XML documentation comments to C# public and internal types and members following summary/param/returns/remarks conventions.                                                                                                            | [dotnet-docs](../packages/dotnet/.apm/skills/dotnet-docs/SKILL.md)                                   |
-| dotnet-ef-core               | Apply Entity Framework Core best practices: DbContext design, migrations, query optimization, owned entities, and avoiding N+1 problems.                                                                                                   | [dotnet-ef-core](../packages/dotnet/.apm/skills/dotnet-ef-core/SKILL.md)                             |
-| dotnet-mcp-server-generator  | Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.                                                                                                            | [dotnet-mcp-server-generator](../packages/dotnet/.apm/skills/dotnet-mcp-server-generator/SKILL.md)   |
-| dotnet-nunit                 | >                                                                                                                                                                                                                                          | [dotnet-nunit](../packages/dotnet/.apm/skills/dotnet-nunit/SKILL.md)                                 |
-| dotnet-upgrade               | Analyze and execute a .NET framework or package upgrade: assess current state, identify breaking changes, update target frameworks and NuGet packages, and verify the build.                                                               | [dotnet-upgrade](../packages/dotnet/.apm/skills/dotnet-upgrade/SKILL.md)                             |
+| Name                              | Description                                                                                                                                                                                                                                | File                                                                                                           |
+| :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| dotnet-aspnet-minimal-api-openapi | Create an ASP.NET Core Minimal API endpoint module using Carter with full OpenAPI documentation, typed request/response models, and proper error responses.                                                                                | [dotnet-aspnet-minimal-api-openapi](../packages/dotnet/.apm/skills/dotnet-aspnet-minimal-api-openapi/SKILL.md) |
+| dotnet-async                      | Apply C# async/await best practices to existing code: fix deadlocks, ConfigureAwait usage, async void, cancellation token propagation, and naming conventions.                                                                             | [dotnet-async](../packages/dotnet/.apm/skills/dotnet-async/SKILL.md)                                           |
+| dotnet-best-practices             | Review and improve .NET/C# code to meet project-specific best practices: nullability, async patterns, DI, logging, and modern C# idioms.                                                                                                   | [dotnet-best-practices](../packages/dotnet/.apm/skills/dotnet-best-practices/SKILL.md)                         |
+| dotnet-code-review                | Perform a structured C# and NUnit code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions.                                                                                                 | [dotnet-code-review](../packages/dotnet/.apm/skills/dotnet-code-review/SKILL.md)                               |
+| dotnet-create-solution            | Scaffold a new .NET solution with src/test layout, Central Package Management (Directory.Packages.props), Directory.Build.props, and .editorconfig. Supports both NuGet libraries (multi-target) and applications (webapi/worker/console). | [dotnet-create-solution](../packages/dotnet/.apm/skills/dotnet-create-solution/SKILL.md)                       |
+| dotnet-design-pattern-review      | Review C#/.NET code for design pattern implementation quality and suggest improvements. Read-only — outputs findings, does not modify code.                                                                                                | [dotnet-design-pattern-review](../packages/dotnet/.apm/skills/dotnet-design-pattern-review/SKILL.md)           |
+| dotnet-docs                       | Add XML documentation comments to C# public and internal types and members following summary/param/returns/remarks conventions.                                                                                                            | [dotnet-docs](../packages/dotnet/.apm/skills/dotnet-docs/SKILL.md)                                             |
+| dotnet-ef-core                    | Apply Entity Framework Core best practices: DbContext design, migrations, query optimization, owned entities, and avoiding N+1 problems.                                                                                                   | [dotnet-ef-core](../packages/dotnet/.apm/skills/dotnet-ef-core/SKILL.md)                                       |
+| dotnet-mcp-server-generator       | Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.                                                                                                            | [dotnet-mcp-server-generator](../packages/dotnet/.apm/skills/dotnet-mcp-server-generator/SKILL.md)             |
+| dotnet-nunit                      | >                                                                                                                                                                                                                                          | [dotnet-nunit](../packages/dotnet/.apm/skills/dotnet-nunit/SKILL.md)                                           |
+| dotnet-upgrade                    | Analyze and execute a .NET framework or package upgrade: assess current state, identify breaking changes, update target frameworks and NuGet packages, and verify the build.                                                               | [dotnet-upgrade](../packages/dotnet/.apm/skills/dotnet-upgrade/SKILL.md)                                       |
+| dotnet-write-tests                | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                                                                                           | [dotnet-write-tests](../packages/dotnet/.apm/skills/dotnet-write-tests/SKILL.md)                               |
 
 ## Github
 
 ### Agents
 
-| Name                | Description                                                                                                  | File                                                                                        |
-| :------------------ | :----------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
-| github-pull-request | Create GitHub PR from current branch + linked issue. Gather context, generate title/body, create via gh CLI. | [github-pull-request.agent.md](../packages/github/.apm/agents/github-pull-request.agent.md) |
+| Name                | Description                                                                                                                                                                                        | File                                                                                        |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
+| github-pull-request | Creates a structured GitHub pull request from the current branch and linked issue. Gathers context from the issue and git log, generates PR title and body, then creates the PR via MCP or gh CLI. | [github-pull-request.agent.md](../packages/github/.apm/agents/github-pull-request.agent.md) |
+
+### Instructions
+
+| Name              | Description | File                                                                                                  |
+| :---------------- | :---------- | :---------------------------------------------------------------------------------------------------- |
+| GitHub Context    | -           | [github-context.instructions.md](../packages/github/.apm/instructions/github-context.instructions.md) |
+| GitHub MCP Server | -           | [github-mcp.instructions.md](../packages/github/.apm/instructions/github-mcp.instructions.md)         |
 
 ### Skills
 
-| Name         | Description                                                                                                                                            | File                                                                 |
-| :----------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
-| github-issue | Read GitHub issue, branch, implement, verify, PR. Full lifecycle from issue to merged PR. Use for any GitHub issue work — covers start through finish. | [github-issue](../packages/github/.apm/skills/github-issue/SKILL.md) |
+| Name                  | Description                                                                                                                                                                                 | File                                                                                   |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------- |
+| github-agents-md      | Analyze the repository and generate a complete AGENTS.md file tailored to the project type (dotnet, node, python, github-actions, or generic).                                              | [github-agents-md](../packages/github/.apm/skills/github-agents-md/SKILL.md)           |
+| github-issue-finish   | Review implementation and create a GitHub pull request. Run after github-issue-start when implementation is complete.                                                                       | [github-issue-finish](../packages/github/.apm/skills/github-issue-finish/SKILL.md)     |
+| github-issue-start    | Read a GitHub issue, create the appropriate branch, and implement it with code, tests, and docs. Use this to start work on a new issue.                                                     | [github-issue-start](../packages/github/.apm/skills/github-issue-start/SKILL.md)       |
+| github-issue-workflow | End-to-end workflow for a GitHub issue: read issue, create branch, implement with tests and docs, review, and open a pull request.                                                          | [github-issue-workflow](../packages/github/.apm/skills/github-issue-workflow/SKILL.md) |
+| github-workflow       | Generic GitHub workflow — creates pull requests, links issues, and manages GitHub-based development. Use this skill for any GitHub PR or issue linking operation. Preferred model: gpt-4.1. | [github-workflow](../packages/github/.apm/skills/github-workflow/SKILL.md)             |
+
+## Go
+
+### Skills
+
+| Name             | Description                                                                                                                                          | File                                                                     |
+| :--------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| go-benchmark     | Write and analyse Go benchmarks using testing.B, go test -bench, benchstat, and pprof to identify and fix performance bottlenecks                    | [go-benchmark](../packages/go/.apm/skills/go-benchmark/SKILL.md)         |
+| go-code-review   | Perform a structured Go code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions for idiomatic style. | [go-code-review](../packages/go/.apm/skills/go-code-review/SKILL.md)     |
+| go-debug         | Diagnose Go runtime issues: panics, data races, goroutine leaks, memory pressure, and CPU hot spots using Go toolchain diagnostics                   | [go-debug](../packages/go/.apm/skills/go-debug/SKILL.md)                 |
+| go-module-setup  | Set up and manage Go modules: go.mod initialisation, go.work workspaces, vendor mode, module proxy, and dependency hygiene                           | [go-module-setup](../packages/go/.apm/skills/go-module-setup/SKILL.md)   |
+| go-test-generate | Generate idiomatic Go tests using table-driven subtests, covering happy path, error cases, and edge cases. Compatible with the race detector.        | [go-test-generate](../packages/go/.apm/skills/go-test-generate/SKILL.md) |
+| write-tests      | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.     | [write-tests](../packages/go/.apm/skills/write-tests/SKILL.md)           |
+
+## Helm
+
+### Skills
+
+| Name                   | Description                                                                                                                                           | File                                                                                   |
+| :--------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
+| helm-chart-create      | Scaffold a new Helm 3 chart with Chart.yaml, values.yaml, named templates, standard Kubernetes resources, and security context defaults.              | [helm-chart-create](../packages/helm/.apm/skills/helm-chart-create/SKILL.md)           |
+| helm-chart-upgrade     | Upgrade a Helm chart to a newer chart or app version: update Chart.yaml, migrate deprecated Kubernetes APIs, and handle values.yaml breaking changes. | [helm-chart-upgrade](../packages/helm/.apm/skills/helm-chart-upgrade/SKILL.md)         |
+| helm-debug             | Diagnose a failed or stuck Helm release: inspect release state, history, rendered manifests, and Kubernetes event logs to identify the root cause.    | [helm-debug](../packages/helm/.apm/skills/helm-debug/SKILL.md)                         |
+| helm-template-validate | Validate a Helm chart locally: lint, template rendering, schema validation, and optional kubeval or helm-unittest checks — no cluster required.       | [helm-template-validate](../packages/helm/.apm/skills/helm-template-validate/SKILL.md) |
+| helm-values-review     | Review a Helm values.yaml for completeness, security defaults, naming conventions, and documentation quality. Read-only — outputs findings only.      | [helm-values-review](../packages/helm/.apm/skills/helm-values-review/SKILL.md)         |
+
+## Playwright
+
+### Skills
+
+| Name                               | Description                                                                                                                                                                 | File                                                                                                                 |
+| :--------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------- |
+| playwright-angular                 | >                                                                                                                                                                           | [playwright-angular](../packages/playwright/.apm/skills/playwright-angular/SKILL.md)                                 |
+| playwright-automation-fill-in-form | Automate filling in a web form using Playwright MCP: navigate to the form, fill fields with provided data, validate before submitting.                                      | [playwright-automation-fill-in-form](../packages/playwright/.apm/skills/playwright-automation-fill-in-form/SKILL.md) |
+| playwright-cli                     | >                                                                                                                                                                           | [playwright-cli](../packages/playwright/.apm/skills/playwright-cli/SKILL.md)                                         |
+| playwright-debug                   | Debug flaky Playwright tests: diagnose timeout errors, selector failures, race conditions, and browser-specific issues using --debug, --trace, and Playwright Inspector.    | [playwright-debug](../packages/playwright/.apm/skills/playwright-debug/SKILL.md)                                     |
+| playwright-debugger                | >                                                                                                                                                                           | [playwright-debugger](../packages/playwright/.apm/skills/playwright-debugger/SKILL.md)                               |
+| playwright-dotnet                  | >                                                                                                                                                                           | [playwright-dotnet](../packages/playwright/.apm/skills/playwright-dotnet/SKILL.md)                                   |
+| playwright-explore-website         | Explore a website with Playwright MCP to identify key user flows, UI elements, and locators for testing. Returns a structured exploration report with proposed test cases.  | [playwright-explore-website](../packages/playwright/.apm/skills/playwright-explore-website/SKILL.md)                 |
+| playwright-generate-test           | Generate a Playwright TypeScript test for a given scenario using the Playwright MCP. Explores the page live, identifies locators, writes and runs the test until it passes. | [playwright-generate-test](../packages/playwright/.apm/skills/playwright-generate-test/SKILL.md)                     |
+| playwright-python                  | >                                                                                                                                                                           | [playwright-python](../packages/playwright/.apm/skills/playwright-python/SKILL.md)                                   |
+| playwright-test-generator          | >                                                                                                                                                                           | [playwright-test-generator](../packages/playwright/.apm/skills/playwright-test-generator/SKILL.md)                   |
+
+## Postgresql
+
+### Skills
+
+| Name                    | Description                                                                                                                                                                                  | File                                                                                           |
+| :---------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| postgresql-code-review  | Review PostgreSQL schema and query code for correctness, security, and PG-specific best practices: JSONB usage, RLS, index strategy, naming conventions, and anti-patterns.                  | [postgresql-code-review](../packages/postgresql/.apm/skills/postgresql-code-review/SKILL.md)   |
+| postgresql-debug        | Diagnose PostgreSQL performance issues: slow queries, lock contention, connection exhaustion, bloated tables, and autovacuum problems using pg_stat_activity, pg_locks, and EXPLAIN ANALYZE. | [postgresql-debug](../packages/postgresql/.apm/skills/postgresql-debug/SKILL.md)               |
+| postgresql-optimization | Optimize PostgreSQL query performance: analyze EXPLAIN ANALYZE output, suggest indexes, rewrite inefficient queries, and identify table bloat or vacuum issues.                              | [postgresql-optimization](../packages/postgresql/.apm/skills/postgresql-optimization/SKILL.md) |
+| sql-optimization        | Optimize SQL queries across any SQL database (PostgreSQL, MySQL, SQL Server, SQLite): execution plan analysis, index strategy, query rewrites, pagination, and batch operations.             | [sql-optimization](../packages/postgresql/.apm/skills/sql-optimization/SKILL.md)               |
 
 ## Python
 
 ### Skills
 
-| Name                  | Description                                                                                                                                | File                                                                                   |
-| :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
-| create-python-project | Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, and asyncio support.                                            | [create-python-project](../packages/python/.apm/skills/create-python-project/SKILL.md) |
-| pytest-cov            | >                                                                                                                                          | [pytest-cov](../packages/python/.apm/skills/pytest-cov/SKILL.md)                       |
-| python-code-review    | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions. | [python-code-review](../packages/python/.apm/skills/python-code-review/SKILL.md)       |
-| python-debug          | Diagnose and fix Python runtime errors, memory leaks, and performance issues using pdb, mypy, and profiling tools.                         | [python-debug](../packages/python/.apm/skills/python-debug/SKILL.md)                   |
-| python-packaging      | Set up or modernize Python project packaging using pyproject.toml, uv, and hatch — covers dependencies, build backends, and publishing.    | [python-packaging](../packages/python/.apm/skills/python-packaging/SKILL.md)           |
-| python-pytest         | Write pytest tests: structure, marks, naming, mocking. Load when user asks to write/add/improve Python tests.                              | [python-pytest](../packages/python/.apm/skills/python-pytest/SKILL.md)                 |
-| python-uv-cli         | >                                                                                                                                          | [python-uv-cli](../packages/python/.apm/skills/python-uv-cli/SKILL.md)                 |
+| Name                   | Description                                                                                                                                | File                                                                                     |
+| :--------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
+| create-python-project  | Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, and asyncio support.                                            | [create-python-project](../packages/python/.apm/skills/create-python-project/SKILL.md)   |
+| create-python-workflow | Create a GitHub Actions CI/CD workflow for a Python package using GravionLabs/ci reusable workflows (lint, test, build, publish).          | [create-python-workflow](../packages/python/.apm/skills/create-python-workflow/SKILL.md) |
+| pytest-cov             | >                                                                                                                                          | [pytest-cov](../packages/python/.apm/skills/pytest-cov/SKILL.md)                         |
+| python-code-review     | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions. | [python-code-review](../packages/python/.apm/skills/python-code-review/SKILL.md)         |
+| python-debug           | Diagnose and fix Python runtime errors, memory leaks, and performance issues using pdb, mypy, and profiling tools.                         | [python-debug](../packages/python/.apm/skills/python-debug/SKILL.md)                     |
+| python-packaging       | Set up or modernize Python project packaging using pyproject.toml, uv, and hatch — covers dependencies, build backends, and publishing.    | [python-packaging](../packages/python/.apm/skills/python-packaging/SKILL.md)             |
+| python-pytest          | >                                                                                                                                          | [python-pytest](../packages/python/.apm/skills/python-pytest/SKILL.md)                   |
+| python-uv-cli          | >                                                                                                                                          | [python-uv-cli](../packages/python/.apm/skills/python-uv-cli/SKILL.md)                   |
 
 ## Shared
 
+### Agents
+
+| Name                          | Description                                                                                                            | File                                                                                          |
+| :---------------------------- | :--------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
+| documentation-writer.agent.md | -                                                                                                                      | [documentation-writer.agent.md](../packages/shared/.apm/agents/documentation-writer.agent.md) |
+| SE: Tech Writer               | Technical writing specialist for creating developer documentation, technical blogs, tutorials, and educational content | [se-technical-writer.agent.md](../packages/shared/.apm/agents/se-technical-writer.agent.md)   |
+| SE: UX Designer               | Jobs-to-be-Done analysis, user journey mapping, and UX research artifacts for Figma and design workflows               | [se-ux-ui-designer.agent.md](../packages/shared/.apm/agents/se-ux-ui-designer.agent.md)       |
+| test-engineer.agent.md        | -                                                                                                                      | [test-engineer.agent.md](../packages/shared/.apm/agents/test-engineer.agent.md)               |
+
+### Instructions
+
+| Name                             | Description                                                                                                                        | File                                                                                                                          |
+| :------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| Generic Code Review Instructions | Code review guidelines for any language or framework: readability, naming, complexity, error handling, security, and test coverage | [code-review-generic.instructions.md](../packages/shared/.apm/instructions/code-review-generic.instructions.md)               |
+| HTML CSS Style Color Guide       | Color usage guidelines and styling rules for HTML elements to ensure accessible, professional designs.                             | [html-css-style-color-guide.instructions.md](../packages/shared/.apm/instructions/html-css-style-color-guide.instructions.md) |
+| markdown.instructions.md         | Markdown documentation standards: structure, formatting, headings, lists, code blocks, and writing style for technical docs        | [markdown.instructions.md](../packages/shared/.apm/instructions/markdown.instructions.md)                                     |
+
 ### Skills
 
-| Name                        | Description                                                                                                                                                                               | File                                                                                               |
-| :-------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- |
-| implementation              | >                                                                                                                                                                                         | [implementation](../packages/shared/.apm/skills/implementation/SKILL.md)                           |
-| setup-prettier-eslint-husky | Set up language-agnostic code quality pipeline: ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks. Configures auto-format on save for VSCode and WebStorm. | [setup-prettier-eslint-husky](../packages/shared/.apm/skills/setup-prettier-eslint-husky/SKILL.md) |
+| Name         | Description                                                                                                                                      | File                                                                 |
+| :----------- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
+| create-agent | >                                                                                                                                                | [create-agent](../packages/shared/.apm/skills/create-agent/SKILL.md) |
+| create-skill | Create a new skill in copilot-hub following the agentskills.io directory layout and copilot-hub conventions.                                     | [create-skill](../packages/shared/.apm/skills/create-skill/SKILL.md) |
+| write-tests  | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios. | [write-tests](../packages/shared/.apm/skills/write-tests/SKILL.md)   |
+
+## Terraform
+
+### Skills
+
+| Name                      | Description                                                                                                                                                                     | File                                                                                              |
+| :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------ |
+| terraform-code-review     | Perform a structured Terraform code review with priority ratings: 🔴 critical security/state risks, 🟡 important improvements, 🟢 best practice suggestions.                    | [terraform-code-review](../packages/terraform/.apm/skills/terraform-code-review/SKILL.md)         |
+| terraform-drift-detection | Detect and remediate infrastructure drift: resources modified outside Terraform that are no longer consistent with state or configuration.                                      | [terraform-drift-detection](../packages/terraform/.apm/skills/terraform-drift-detection/SKILL.md) |
+| terraform-module-create   | Scaffold a reusable Terraform module with variables.tf, outputs.tf, main.tf, examples/, and a terraform-docs README.                                                            | [terraform-module-create](../packages/terraform/.apm/skills/terraform-module-create/SKILL.md)     |
+| terraform-plan-debugger   | Diagnose unexpected Terraform plan changes: drift, missing lifecycle blocks, provider mismatches, state inconsistencies, incorrect variable values, and missing moved{} blocks. | [terraform-plan-debugger](../packages/terraform/.apm/skills/terraform-plan-debugger/SKILL.md)     |
 
 ## Typescript
 
 ### Skills
 
-| Name                            | Description                                                                                                                                                    | File                                                                                                           |
-| :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
-| create-node-project             | Scaffold a new TypeScript/Node.js project (library, CLI, or application) with strict tsconfig, Vitest, and ESM support.                                        | [create-node-project](../packages/typescript/.apm/skills/create-node-project/SKILL.md)                         |
-| ts-implementation               | >                                                                                                                                                              | [ts-implementation](../packages/typescript/.apm/skills/ts-implementation/SKILL.md)                             |
-| typescript-code-review          | Perform a structured TypeScript/JavaScript code review with priority ratings: 🔴 critical bugs/security, 🟡 important type/async issues, 🟢 style suggestions. | [typescript-code-review](../packages/typescript/.apm/skills/typescript-code-review/SKILL.md)                   |
-| typescript-debug                | Diagnose and fix TypeScript type errors, module resolution issues, build failures, and runtime errors using tsc, Node.js debugger, and source maps.            | [typescript-debug](../packages/typescript/.apm/skills/typescript-debug/SKILL.md)                               |
-| typescript-mcp-server-generator | Generate MCP server in TypeScript with tools, resources, prompts. @modelcontextprotocol/sdk + zod.                                                             | [typescript-mcp-server-generator](../packages/typescript/.apm/skills/typescript-mcp-server-generator/SKILL.md) |
-| write-tests                     | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.               | [write-tests](../packages/typescript/.apm/skills/write-tests/SKILL.md)                                         |
+| Name                            | Description                                                                                                                                                         | File                                                                                                           |
+| :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------- |
+| create-node-project             | Scaffold a new TypeScript/Node.js project (library, CLI, or application) with strict tsconfig, Vitest, and ESM support.                                             | [create-node-project](../packages/typescript/.apm/skills/create-node-project/SKILL.md)                         |
+| create-node-workflow            | Create a GitHub Actions CI workflow for a Node.js project using GravionLabs/ci reusable workflows (install, lint, test, build).                                     | [create-node-workflow](../packages/typescript/.apm/skills/create-node-workflow/SKILL.md)                       |
+| setup-prettier-eslint-husky     | Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm. | [setup-prettier-eslint-husky](../packages/typescript/.apm/skills/setup-prettier-eslint-husky/SKILL.md)         |
+| typescript-code-review          | Perform a structured TypeScript/JavaScript code review with priority ratings: 🔴 critical bugs/security, 🟡 important type/async issues, 🟢 style suggestions.      | [typescript-code-review](../packages/typescript/.apm/skills/typescript-code-review/SKILL.md)                   |
+| typescript-debug                | Diagnose and fix TypeScript type errors, module resolution issues, build failures, and runtime errors using tsc, Node.js debugger, and source maps.                 | [typescript-debug](../packages/typescript/.apm/skills/typescript-debug/SKILL.md)                               |
+| typescript-mcp-server-generator | Generate a complete MCP server in TypeScript with tools, resources, and prompts using @modelcontextprotocol/sdk and zod validation.                                 | [typescript-mcp-server-generator](../packages/typescript/.apm/skills/typescript-mcp-server-generator/SKILL.md) |
+| write-tests                     | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.                    | [write-tests](../packages/typescript/.apm/skills/write-tests/SKILL.md)                                         |
 

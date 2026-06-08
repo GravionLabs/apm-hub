@@ -1,0 +1,11 @@
+name: playwright
+version: 1.0.1
+description: CLI-based Playwright testing plugin for .NET, Python, and Angular. Includes test generation, debugging, and language-specific patterns. Use with Playwright CLI for recording, debugging, and trace analysis. Language-specific instructions are bundled with respective language plugins (csharp-development, python-development, typescript-node-development).
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - playwright
+  - testing
+  - browser-automation
+  - e2e

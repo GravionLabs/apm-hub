@@ -1,6 +1,6 @@
 name: github
-version: 1.0.0
-description: GitHub issue + PR workflow. Issue lifecycle, PR creation, repo automation.
+version: 1.0.1
+description: GitHub workflow skills for issue management, pull requests, and repository automation. Provides agents, instructions, and skills for the full GitHub development lifecycle.
 author:
   name: Gravion
 license: MIT
@@ -9,7 +9,5 @@ keywords:
   - pull-request
   - issue
   - workflow
-skills:
-  - github-issue
-agents:
-  - github-pull-request
+  - agents-md
+  - git
