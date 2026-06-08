@@ -47,15 +47,7 @@ Key pdb commands:
 - Catch `asyncio.CancelledError` explicitly — do not swallow it
 
 ### 5. Memory profiling
-```python
-import tracemalloc
-tracemalloc.start()
-# ... code to profile ...
-snapshot = tracemalloc.take_snapshot()
-top_stats = snapshot.statistics('lineno')
-for stat in top_stats[:10]:
-    print(stat)
-```
+See [memory-profiling.md](references/memory-profiling.md) for setup and usage.
 
 ### 6. Performance profiling
 ```bash

@@ -65,6 +65,34 @@ Scaffold Python project with production-ready baseline using `uv`.
 - Always use `asyncio_mode = "auto"` in pytest config
 - Commit `uv.lock` to version control
 
+## CI Workflow
+
+Create GitHub Actions CI/CD workflow for Python package using GravionLabs/ci reusable workflows.
+
+1. Ask: Python version, whether publish (PyPI / Test PyPI / none)
+2. Create `.github/workflows/ci.yml`:
+   ```yaml
+   name: CI
+
+   on:
+     push:
+       branches: [main]
+     pull_request:
+
+   jobs:
+     build:
+       uses: GravionLabs/ci/.github/workflows/python.yml@main
+       with:
+         python-version: '3.14'
+       secrets: inherit
+   ```
+3. Confirm `pyproject.toml` has `test`, `build` scripts
+4. If publishing: confirm `PYPI_TOKEN` secret configured
+
+**Constraints:**
+- Use `secrets: inherit`
+- `pyproject.toml` must define test and build commands
+
 ## Tips
-> **Use `task` tool** for scaffolding — it's mechanical.
-> Example: `#task pwsh scripts/New-PythonProject.ps1 -ProjectName "my-lib" -ProjectType library`
+> **Use `task` tool** for scaffolding — mechanical.
+> Example: `#task pwsh scripts/New-PythonProject.ps1 -ProjectName "my-pkg"`

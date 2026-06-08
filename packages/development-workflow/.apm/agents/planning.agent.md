@@ -19,13 +19,13 @@ permission:
   task: deny
   skill: allow
   webfetch: allow
-  websearch: deny
-  question: deny
+  websearch: allow
+  question: allow
 # Copilot/APM fields
 name: planning
 description: "Analyze issue, create implementation plan. Read-only phase with git/gh lookups. Outputs compressed JSON plan."
 model: gpt-4.1
-tools: ['read', 'search', 'shell']
+tools: ['read', 'search', 'execute']
 user-invocable: false
 ---
 

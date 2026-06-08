@@ -10,6 +10,10 @@ model: claude-sonnet-4.6
 
 Write NUnit tests for C# code using NSubstitute and Shouldly.
 
+## Scope
+
+Also covers general test-writing conventions for projects using any test framework. For framework-specific details, load the appropriate language skill.
+
 ## Conventions
 
 ### Project structure
@@ -24,23 +28,7 @@ MethodName_Scenario_ExpectedResult
 ```
 
 ### Test structure (AAA)
-```csharp
-[Test]
-public async Task GetUser_WithValidId_ReturnsUser()
-{
-    // Arrange
-    var repo = Substitute.For<IUserRepository>();
-    repo.GetByIdAsync("123", Arg.Any<CancellationToken>()).Returns(new User { Id = "123" });
-    var sut = new UserService(repo);
-
-    // Act
-    var result = await sut.GetUserAsync("123");
-
-    // Assert
-    result.ShouldNotBeNull();
-    result.Id.ShouldBe("123");
-}
-```
+See [aaa-test-example.md](references/aaa-test-example.md) for example.
 
 ### Categories
 - Use `[Category("Unit")]` for unit tests, `[Category("Integration")]` for integration tests

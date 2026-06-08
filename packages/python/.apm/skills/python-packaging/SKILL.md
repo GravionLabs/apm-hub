@@ -19,21 +19,7 @@ Set up or modernize Python project packaging configuration using `pyproject.toml
 uv init <project-name> && cd <project-name>
 ```
 
-### 2. pyproject.toml structure
-```toml
-[build-system]
-requires = ["uv_build>=0.9,<0.10"]
-build-backend = "uv_build"
-
-[project]
-name = "my-package"
-version = "0.1.0"
-requires-python = ">=3.14"
-dependencies = ["httpx>=0.27"]
-
-[dependency-groups]
-dev = ["pytest>=8", "pytest-cov", "ruff"]
-```
+### 2. Configure pyproject.toml — see [pyproject-toml-example.md](references/pyproject-toml-example.md)
 
 ### 3. Manage dependencies
 ```bash
@@ -54,19 +40,6 @@ uv add $(grep -v '#' requirements.txt | tr '\n' ' ')
 ```bash
 uv build             # dist/ with .whl and .tar.gz
 uv publish           # PyPI (requires PYPI_TOKEN)
-```
-
-### 6. Tool configuration
-```toml
-[tool.ruff]
-line-length = 120
-target-version = "py314"
-fix = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-asyncio_mode = "auto"
-addopts = "--strict-markers"
 ```
 
 ## Checklist

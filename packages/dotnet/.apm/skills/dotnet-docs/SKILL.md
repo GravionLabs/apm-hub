@@ -14,24 +14,7 @@ Add XML documentation comments to C# types and members.
 - `<remarks>`: additional context, usage notes, or implementation details
 - Do not document the obvious — add value, not noise
 
-### Methods
-```csharp
-/// <summary>Retrieves the user with the specified identifier.</summary>
-/// <param name="id">The unique identifier of the user.</param>
-/// <param name="cancellationToken">Token to cancel the operation.</param>
-/// <returns>The user, or <see langword="null"/> if not found.</returns>
-/// <exception cref="ArgumentNullException"><paramref name="id"/> is <see langword="null"/>.</exception>
-```
-
-### Properties
-```csharp
-/// <summary>Gets or sets the display name of the user.</summary>
-```
-
-### Classes/Interfaces
-```csharp
-/// <summary>Provides operations for managing user accounts.</summary>
-```
+See [xml-doc-examples.md](references/xml-doc-examples.md) for templates.
 
 ## Steps
 1. Identify all public (and internal if requested) types/members missing documentation

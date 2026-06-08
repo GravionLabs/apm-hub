@@ -148,6 +148,80 @@ Comprehensive Angular development guidance: project creation, components, reacti
 - **E2E:** Best practices with Cypress
 - See: [references/testing-vitest.md](references/testing-vitest.md) and related files
 
+### Signal Store (NgRx)
+
+Scaffold NgRx Signal Store for Angular feature state management.
+
+1. Ask: feature name, state shape (fields + types + defaults), scope (`root` or feature), async operations needed
+2. Create `<feature>.models.ts` with state interface and supporting types
+3. Create `<feature>.store.ts`:
+   ```typescript
+   export const <Feature>Store = signalStore(
+     { providedIn: 'root' },
+     withState<FeatureState>(initialState),
+     withComputed((store) => ({...})),
+     withMethods((store) => ({...})),
+     withHooks({ onInit(store) {...} })
+   );
+   ```
+4. For async: use `rxMethod` or `patchState` with loading/error state fields
+5. Register in component or feature providers as needed
+
+**Constraints:**
+- Use `@ngrx/signals` — not `@ngrx/store`
+- Keep store files focused on single feature slice
+- Prefer `withComputed` for derived values over manual subscriptions
+- Export store type: `type <Feature>Store = InstanceType<typeof <Feature>Store>`
+
+---
+
+### Library Create
+
+Scaffold new Angular library inside existing workspace.
+
+1. Ask: library name (e.g. `@org/my-lib`), selector prefix, include sample component, publishing target
+2. Generate library: `ng generate library <lib-name> --prefix=<prefix>`
+3. Clean up generated scaffold — remove unnecessary boilerplate
+4. Set up `public-api.ts` as single export surface
+5. Add initial component using angular-component conventions (3-file structure)
+6. Configure `ng-packagr` in `ng-package.json` — set `lib.entryFile` to `public-api.ts`
+7. Add build script: `"build:<lib>": "ng build <lib>"`
+8. Verify library builds: `ng build <lib>`
+
+**Constraints:**
+- All exports through `public-api.ts` — no deep imports
+- Use standalone components — no NgModules
+- Library must compile before task complete
+
+---
+
+### Sakai UI Component
+
+Scaffold new component for `@gravion/sakai-ui` Angular library.
+
+1. Ask: component name (kebab-case), folder path within `sakai-ui/src/lib/`, PrimeNG components needed
+2. Create `<name>.ts` as standalone component with selector `gv-<name>`:
+   ```typescript
+   @Component({
+     selector: 'gv-<name>',
+     standalone: true,
+     imports: [/* PrimeNG modules */],
+     templateUrl: './<name>.html',
+     styleUrl: './<name>.scss',
+   })
+   export class Gv<Name>Component { }
+   ```
+3. Create `<name>.html` with PrimeNG markup
+4. Create `<name>.scss` (empty or with scoped styles)
+5. Export component in `public-api.ts`
+6. Build library to verify: `ng build sakai-ui`
+
+**Constraints:**
+- Selector prefix must be `gv-`
+- All exports via `public-api.ts` — no internal deep imports from consumers
+- PrimeNG components imported in component's `imports` array
+- Don't modify existing components unless fixing export
+
 ### Tooling
 - **Angular CLI:** Creating apps, generating code, serving, building
 - **Angular MCP Server:** Tools, configuration, experimental features

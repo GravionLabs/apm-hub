@@ -7,6 +7,9 @@ model: claude-sonnet-4.6
 
 ## Overview
 
+This is the single skill for the full GitHub issue lifecycle. 
+For complex issues, you can also use the split approach: run `github-issue-start` for implementation, then `github-issue-finish` for PR creation.
+
 Read GitHub issue → branch → implement → verify → PR. Single flow.
 
 ## Prerequisites

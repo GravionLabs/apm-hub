@@ -39,7 +39,36 @@ Scaffold TypeScript/Node.js project with production-ready baseline.
    npm test        # vitest run — all tests pass
    ```
 
-5. **Next steps:** set up code quality with `setup-prettier-eslint-husky`, add CI with `create-node-workflow`
+5. **Next steps:** set up code quality with `setup-prettier-eslint-husky`
+
+## CI Workflow
+
+Create GitHub Actions CI workflow for project.
+
+1. Ask: Node.js version, package manager (npm / pnpm / yarn), whether publish (npm registry / GitHub Packages / none)
+2. Create `.github/workflows/ci.yml`:
+   ```yaml
+   name: CI
+
+   on:
+     push:
+       branches: [main]
+     pull_request:
+
+   jobs:
+     build:
+       uses: GravionLabs/ci/.github/workflows/node.yml@main
+       with:
+         node-version: '22'
+       secrets: inherit
+   ```
+3. Confirm `package.json` has `test`, `build`, and `lint` scripts
+4. If publishing: confirm `NPM_TOKEN` secret configured
+
+**Constraints:**
+- Use `secrets: inherit` to pass secrets
+- `package.json` must define `test` and `build` scripts — reusable workflow calls them
+- Do not hardcode Node.js version if project uses `.nvmrc`
 
 ## Template Files
 | File | Purpose |

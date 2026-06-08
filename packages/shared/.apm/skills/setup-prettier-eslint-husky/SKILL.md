@@ -1,11 +1,11 @@
 ---
 name: setup-prettier-eslint-husky
-description: 'Set up ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks in a JS/TS project. Configures auto-format on save for VSCode and WebStorm.'
+description: 'Set up language-agnostic code quality pipeline: ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks. Configures auto-format on save for VSCode and WebStorm.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: gpt-4.1
 ---
 
-Set up code quality pipeline for JS/TS or Angular project.
+Set up code quality pipeline: ESLint flat config, Prettier, Husky.
 
 ## Stack
 - **ESLint** — flat config (`eslint.config.mjs`), `@typescript-eslint`, `angular-eslint` for Angular
@@ -15,7 +15,7 @@ Set up code quality pipeline for JS/TS or Angular project.
 
 ## Steps
 1. Ask: project type (Angular / plain TS), selector prefix (Angular only), IDE (VSCode / WebStorm / both / none)
-2. **Run the setup script** (recommended):
+2. **Run setup script** (recommended):
    ```powershell
    pwsh scripts/Setup-CodeQuality.ps1 -ProjectType <angular|ts> [-SelectorPrefix app] [-IDE vscode]
    ```
@@ -53,8 +53,8 @@ Set up code quality pipeline for JS/TS or Angular project.
 ## Constraints
 - Use flat config (`eslint.config.mjs`) — not legacy `.eslintrc`
 - For Angular: update `SelectorPrefix` to match project's component/directive prefix
-- Do not override existing configs without confirmation
+- Don't override existing configs without confirmation
 
 ## Tips
-> **Use `task` tool** for setup script — mechanical. Example:
+> **Use `task` tool** for setup script — it's mechanical. Example:
 > `#task pwsh scripts/Setup-CodeQuality.ps1 -ProjectType angular -SelectorPrefix app`
