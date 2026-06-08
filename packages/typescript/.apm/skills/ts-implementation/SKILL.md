@@ -52,8 +52,7 @@ describe("GET /api/sources/:id", () => {
 });
 ```
 
-## Commands
+## Related Skills
 
-- Build: `pnpm build`
-- Test: `pnpm test` (all) or `npx vitest run <file>`
-- Format/Lint: `pnpm check`
+- **Build**: Load `ts-build` for build, format, and lint commands
+- **Test**: Load `ts-test` for test runner config, naming, and coverage details

@@ -12,3 +12,6 @@ keywords:
   - sakai-ui
   - ag-grid
   - typescript
+skills:
+  - angular-build
+  - angular-test

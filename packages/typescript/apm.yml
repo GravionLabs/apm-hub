@@ -12,3 +12,5 @@ keywords:
   - eslint
 skills:
   - pnpm-workflow
+  - ts-build
+  - ts-test

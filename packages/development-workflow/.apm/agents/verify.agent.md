@@ -10,21 +10,21 @@ permission:
   edit: deny
   bash:
     "*": deny
-    "pnpm build*": allow
-    "pnpm test*": allow
-    "pnpm check*": allow
-    "pnpm --filter*": allow
+    "pnpm *": allow
+    "uv *": allow
+    "dotnet *": allow
+    "npm *": allow
     "git status": allow
     "git diff*": allow
     "git log*": allow
   task: deny
-  skill: deny
+  skill: allow
   webfetch: deny
   websearch: deny
   question: deny
 # Copilot/APM fields
 name: verify
-description: "Run typecheck, tests, lint on project. Read-only + bash for commands. Reports pass/fail with first error."
+description: "Run build, tests, lint on project. Loads <lang>-build and <lang>-test skills for language-specific commands. Reports pass/fail with first error."
 model: gpt-4.1
 tools: ['read', 'shell', 'search']
 user-invocable: false
@@ -34,9 +34,10 @@ Phase: verify. Run checks on project.
 
 ## Steps
 
-1. `pnpm build` — pass
-2. `pnpm test` — pass
-3. `pnpm check` — lint + format, pass
+1. Load `detect-techstack` skill — parse JSON report for `build` and `test` skill lists
+2. For each build skill in `$stack.build`, load it and run the build command
+3. For each test skill in `$stack.test`, load it and run the test command
+4. Run lint/format per project conventions
 
 ## Output (JSON only)
 
