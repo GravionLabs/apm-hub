@@ -7,9 +7,6 @@ model: claude-sonnet-4.6
 
 Add XML documentation comments to C# types and members.
 
-## What this skill does
-Adds or improves `<summary>`, `<param>`, `<returns>`, `<exception>`, and `<remarks>` XML comments to public (and optionally internal) C# APIs.
-
 ## Rules
 
 ### All APIs
@@ -37,9 +34,7 @@ Adds or improves `<summary>`, `<param>`, `<returns>`, `<exception>`, and `<remar
 ```
 
 ## Steps
-1. Identify all public (and internal if requested) types and members missing documentation
+1. Identify all public (and internal if requested) types/members missing documentation
 2. Add XML comments — prioritize public surface area first
-3. Ensure every `<param>` and `<exception>` tag matches the actual signature
-4. Do not remove existing comments unless they are incorrect
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
+3. Ensure every `<param>` and `<exception>` tag matches actual signature
+4. Do not remove existing comments unless incorrect

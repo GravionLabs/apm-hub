@@ -5,7 +5,7 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: gpt-4.1
 ---
 
-Scaffold a new .NET solution following the standard project structure.
+Scaffold new .NET solution following standard project structure.
 
 ## Stack
 - **CLI:** `dotnet` SDK (key commands: `dotnet new`, `dotnet sln add`, `dotnet build`)
@@ -13,7 +13,7 @@ Scaffold a new .NET solution following the standard project structure.
 - **Package manager:** NuGet (via `Directory.Packages.props` — Central Package Management)
 - **Scripts:** `pwsh` (PowerShell Core, cross-platform) for the scaffold script
 
-Creates a solution with `src/` and `test/` directories, Central Package Management, shared build configuration, and an `.editorconfig` — ready for development.
+Creates solution with `src/` and `test/` directories, Central Package Management, shared build configuration, `.editorconfig` — ready for development.
 
 ## Steps
 1. **Ask first:**
@@ -22,11 +22,11 @@ Creates a solution with `src/` and `test/` directories, Central Package Manageme
    - Project template (classlib / webapi / worker / console / grpc)
    - Additional NuGet packages needed
 
-2. **Run the scaffold script** (recommended — one command creates the full structure):
+2. **Run scaffold script** (recommended — one command creates full structure):
    ```powershell
    pwsh scripts/New-Solution.ps1 -SolutionName <Name> -ProjectType <template> -OutputType <library|app> [-UpdatePackages]
    ```
-   The script:
+   Script:
    - Creates directory structure and `.slnx` solution file
    - Generates source + test projects, strips all redundant properties from `.csproj`
    - Copies all template files (Directory.Build.props, .editorconfig, CI workflow)
@@ -44,7 +44,7 @@ Creates a solution with `src/` and `test/` directories, Central Package Manageme
    dotnet add test/<SolutionName>.Tests reference src/<SolutionName>
    ```
 
-4. Copy template files from `templates/` to the solution root (see `## Templates` below)
+4. Copy template files from `templates/` to solution root (see `## Templates` below)
 
 5. **Clean generated `.csproj` files** — remove properties already defined in `Directory.Build.props`:
    - Remove from all projects: `TargetFramework`, `ImplicitUsings`, `Nullable`, `LangVersion`
@@ -55,7 +55,7 @@ Creates a solution with `src/` and `test/` directories, Central Package Manageme
    - Library → keep `<TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>` (multi-target)
    - Application → change to `<TargetFramework>net10.0</TargetFramework>` (single target)
 
-7. **Copy the appropriate CI workflow:**
+7. **Copy appropriate CI workflow:**
    - Library → `.github/workflows/ci-library.yml` → rename to `ci.yml`, update `verify-package-files`
    - Application → `.github/workflows/ci-app.yml` → rename to `ci.yml`
 
@@ -73,7 +73,7 @@ Creates a solution with `src/` and `test/` directories, Central Package Manageme
 10. Run `dotnet build` to verify
 
 ## Templates
-Starter files are available in `templates/` alongside this skill and get copied automatically when installing the plugin:
+Starter files available in `templates/` alongside this skill, copied automatically when installing plugin:
 
 | File | Purpose |
 |---|---|
@@ -98,10 +98,8 @@ Starter files are available in `templates/` alongside this skill and get copied 
 - All package versions in `Directory.Packages.props` — never in individual `.csproj` files
 - Generated `.csproj` files must not repeat properties already in `Directory.Build.props`
 - Solution must build cleanly before task is complete
-- Library projects should multi-target; application projects use a single target framework
+- Library projects should multi-target; application projects use single target framework
 
 ## Tips
-> **Use the `task` tool** for the scaffolding steps — they are mechanical and don't require reasoning. Example: `#task pwsh scripts/New-Solution.ps1 -SolutionName "Acme.Core" -OutputType library -UpdatePackages`
-> This allows routing scaffold work to a cheaper, faster model.
-
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.
+> **Use `task` tool** for scaffolding steps — mechanical, don't require reasoning. Example: `#task pwsh scripts/New-Solution.ps1 -SolutionName "Acme.Core" -OutputType library -UpdatePackages`
+> Allows routing scaffold work to cheaper, faster model.

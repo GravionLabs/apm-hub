@@ -3,19 +3,9 @@ name: angular-component
 description: 'Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 model: claude-sonnet-4.6
-chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 
-Scaffold one standalone Angular component in your project.
-
-## What this skill does
-
-Creates a ready-to-use Angular component with TypeScript class, HTML template, and SCSS stylesheet. Follows your project's naming conventions, selector prefix, and import patterns. **One component per session.**
-
-**Optimized for:**
-- ✓ Chronicle session tracking (clear phases, checkpoints)
-- ✓ LSP-enabled type checking
-- ✓ Context efficiency (structured output, minimal file reads)
+Scaffold one standalone Angular component.
 
 ## Steps
 
@@ -24,11 +14,11 @@ Creates a ready-to-use Angular component with TypeScript class, HTML template, a
 Collect all required information upfront:
 1. Ask: component name (kebab-case), selector prefix, target folder, modules to import
 2. Validate inputs: name format, folder exists
-3. ✓ **Checkpoint:** All inputs collected and validated. Ready for Phase 2.
+3. ✓ **Checkpoint:** All inputs collected and validated.
 
 ### Phase 2 — Create Files
 
-Generate the 3-file component structure:
+Generate 3-file component structure:
 1. Create `<name>.component.ts` with:
    - `@Component` decorator
    - `selector: '<prefix>-<name>'`
@@ -43,9 +33,9 @@ Generate the 3-file component structure:
 
 ### Phase 3 — Verify
 
-Validate the generated component:
+Validate generated component:
 1. Check all files exist and are syntactically valid
-2. Verify imports are in correct order
+2. Verify imports in correct order
 3. ✓ **Checkpoint:** Component ready to use.
 
 ## Constraints
@@ -82,15 +72,13 @@ ng test --include="**/{name}.component.spec.ts"
 ### 🚀 Next Steps
 1. Write unit tests in `{path}/{name}.component.spec.ts`
 2. Add component logic and imports as needed
-3. Integrate into a parent component or route
+3. Integrate into parent component or route
 4. Test in dev server: `ng serve`
 
 ## Gotchas
 
-- **Component name must match file name:** If component class is `HeaderComponent`, files must be `header.component.*`
+- **Component name must match file name:** If class is `HeaderComponent`, files must be `header.component.*`
 - **PascalCase for class, kebab-case for files:** Class: `NavbarComponent`, Files: `navbar.component.*`
 - **Selector prefix consistency:** Use same prefix across all components (e.g., `app-*`, `gv-*`)
-- **Barrel exports:** Verify nearest `index.ts` or `public-api.ts` is updated, or component won't be easily importable
-- **Import ordering matters:** Tools may reformat if order is wrong — follow project convention
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better).
+- **Barrel exports:** Verify nearest `index.ts` or `public-api.ts` updated, or component won't be easily importable
+- **Import ordering matters:** Tools may reformat if order wrong — follow project convention

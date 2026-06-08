@@ -5,10 +5,7 @@ allowed-tools: read write edit editFiles search codebase
 model: gpt-4.1
 ---
 
-Create a `.github/workflows/` file for Python package CI/CD using `GravionLabs/ci`.
-
-## What this skill does
-Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable Python workflow to lint, test, build, and optionally publish the package.
+Create `.github/workflows/` file for Python package CI/CD using `GravionLabs/ci`.
 
 ## Steps
 1. Ask if not provided: Python version(s), test framework (pytest default), publishing target (PyPI / GitHub Packages / none)
@@ -35,5 +32,3 @@ Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable Pyt
 - Use `secrets: inherit` to pass secrets to the reusable workflow
 - Matrix testing across multiple Python versions: pass `python-version` as a JSON array if supported by the reusable workflow
 - Do not duplicate lint/test steps already handled by the reusable workflow
-
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

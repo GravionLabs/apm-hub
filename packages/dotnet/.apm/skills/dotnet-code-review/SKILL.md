@@ -7,9 +7,6 @@ model: claude-sonnet-4.6
 
 Review C# code for correctness, readability, maintainability, and security.
 
-## What this skill does
-Provides a structured code review with prioritized findings. Does not modify code — outputs findings only.
-
 ## Priority ratings
 - 🔴 **Critical** — bugs, security vulnerabilities, data loss risk, broken tests
 - 🟡 **Important** — performance issues, missing error handling, API design problems
@@ -37,5 +34,3 @@ Provides a structured code review with prioritized findings. Does not modify cod
 
 ## Output format
 Group findings by file. For each finding: priority emoji, location, explanation, suggested fix.
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

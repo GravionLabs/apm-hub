@@ -5,7 +5,7 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: gpt-4.1
 ---
 
-Set up a complete code quality pipeline for a JS/TS or Angular project.
+Set up code quality pipeline for JS/TS or Angular project.
 
 ## Stack
 - **ESLint** — flat config (`eslint.config.mjs`), `@typescript-eslint`, `angular-eslint` for Angular
@@ -19,7 +19,7 @@ Set up a complete code quality pipeline for a JS/TS or Angular project.
    ```powershell
    pwsh scripts/Setup-CodeQuality.ps1 -ProjectType <angular|ts> [-SelectorPrefix app] [-IDE vscode]
    ```
-   The script installs packages, copies templates, inits Husky, and patches `package.json`.
+   Script installs packages, copies templates, inits Husky, patches `package.json`.
 3. **Alternatively — manual steps:**
    ```bash
    npm install --save-dev eslint prettier prettier-plugin-organize-imports \
@@ -52,11 +52,9 @@ Set up a complete code quality pipeline for a JS/TS or Angular project.
 
 ## Constraints
 - Use flat config (`eslint.config.mjs`) — not legacy `.eslintrc`
-- For Angular: update `SelectorPrefix` to match the project's component/directive prefix
+- For Angular: update `SelectorPrefix` to match project's component/directive prefix
 - Do not override existing configs without confirmation
 
 ## Tips
-> **Use the `task` tool** for the setup script — it's mechanical. Example:
+> **Use `task` tool** for setup script — mechanical. Example:
 > `#task pwsh scripts/Setup-CodeQuality.ps1 -ProjectType angular -SelectorPrefix app`
-
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

@@ -5,7 +5,7 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: claude-sonnet-4.6
 ---
 
-Diagnose and resolve TypeScript and Node.js issues including type errors, module resolution failures, build errors, and runtime crashes.
+Diagnose TypeScript and Node.js issues: type errors, module resolution failures, build errors, runtime crashes.
 
 ## Stack
 - **tsc** — TypeScript compiler for static type checking (`tsc --noEmit`)
@@ -17,8 +17,8 @@ Diagnose and resolve TypeScript and Node.js issues including type errors, module
 ## Steps
 
 ### 1. Analyze TypeScript errors
-- Read the full error output including file, line, and TS error code (e.g., `TS2345`)
-- Check the TypeScript version: `npx tsc --version`
+- Read full error output: file, line, TS error code (e.g., `TS2345`)
+- Check TypeScript version: `npx tsc --version`
 - Common error codes: `TS2345` (argument type mismatch), `TS2322` (assignment mismatch), `TS2339` (property does not exist), `TS7006` (implicit `any`)
 
 ### 2. Type errors (tsc)
@@ -28,7 +28,7 @@ npx tsc --noEmit --strict
 ```
 - Use `reveal_type` equivalent: add `const _: ExpectedType = value` to check inferred types
 - Add `// @ts-expect-error` with a comment to isolate a specific line; remove once fixed
-- For `any` errors, replace with `unknown` and add a type guard or `zod` parse
+- For `any` errors, replace with `unknown` and add type guard or `zod` parse
 
 ### 3. Runtime debugging (Node.js --inspect)
 ```bash
@@ -39,7 +39,7 @@ node --inspect --import tsx/esm src/index.ts
 ```
 - Open `chrome://inspect` in Chrome → click "inspect" under Remote Target
 - Set breakpoints in DevTools (source maps map to `.ts` files)
-- Use `debugger;` statement in source for a hard breakpoint
+- Use `debugger;` statement in source for hard breakpoint
 
 ### 4. Module resolution issues
 ```bash
@@ -47,7 +47,7 @@ node --inspect --import tsx/esm src/index.ts
 npx tsc --traceResolution 2>&1 | grep -A3 "your-module"
 ```
 - Verify `"moduleResolution": "NodeNext"` and `.js` extensions in imports when using ESM
-- Check `paths` aliases in `tsconfig.json` match the runtime resolver
+- Check `paths` aliases in `tsconfig.json` match runtime resolver
 - For ESM: `"type": "module"` in `package.json`; import paths must include `.js` extension
 
 ### 5. Build / bundler errors
@@ -58,7 +58,7 @@ rm -rf dist && npx tsc
 npx tsc --showConfig
 ```
 - Verify `outDir`, `rootDir`, `include`, and `exclude` in `tsconfig.json`
-- For monorepos: check `composite: true` and project references are configured
+- For monorepos: check `composite: true` and project references configured
 
 ## Common Patterns
 
@@ -74,11 +74,9 @@ npx tsc --showConfig
 
 ## Async Debugging
 - Add `process.on('unhandledRejection', (reason) => { console.error(reason); process.exit(1); })` to surface hidden async errors
-- Use `--inspect-brk` to pause on the first line and step through async startup code
-- For long chains, `await Promise.all([...])` errors show the first rejection — use `Promise.allSettled` to see all
+- Use `--inspect-brk` to pause on first line and step through async startup code
+- For long chains, `await Promise.all([...])` errors show first rejection — use `Promise.allSettled` to see all
 - Check for missing `await` with `@typescript-eslint/no-floating-promises` lint rule
 
 ## Tips
-> **Use the `task` tool** for diagnostic commands (`tsc --noEmit`, `--traceResolution`, `npx tsc --showConfig`) — they are mechanical inspection steps that don't require reasoning.
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
+> **Use `task` tool** for diagnostic commands (`tsc --noEmit`, `--traceResolution`, `npx tsc --showConfig`) — mechanical inspection steps.

@@ -5,10 +5,7 @@ allowed-tools: read write edit editFiles search codebase
 model: claude-sonnet-4.6
 ---
 
-Ensure .NET/C# code meets best practices for the solution.
-
-## What this skill does
-Reviews the specified code against project-specific and general .NET best practices, then applies improvements. Reads existing code patterns to stay consistent with the project.
+Ensure .NET/C# code meets best practices for solution.
 
 ## Key areas
 
@@ -36,8 +33,6 @@ Reviews the specified code against project-specific and general .NET best practi
 - Do not swallow exceptions with empty `catch` blocks
 
 ## Steps
-1. Read the target file(s) and project conventions
+1. Read target file(s) and project conventions
 2. List all violations found
 3. Apply fixes, staying consistent with existing style
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

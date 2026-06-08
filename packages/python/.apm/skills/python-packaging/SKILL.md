@@ -5,7 +5,7 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: gpt-4.1
 ---
 
-Set up or modernize a Python project's packaging configuration using `pyproject.toml` and modern tooling.
+Set up or modernize Python project packaging configuration using `pyproject.toml` and modern tooling.
 
 ## Stack
 - **uv** — package manager and environment tool (`uv init`, `uv add`, `uv sync`, `uv run`)
@@ -78,7 +78,5 @@ addopts = "--strict-markers"
 - [ ] `src/` layout prevents accidental imports from repo root
 
 ## Tips
-> **Use the `task` tool** for setup commands — they are mechanical.
+> **Use `task` tool** for setup commands — they are mechanical.
 > Example: `#task uv init my-package && cd my-package && uv add --dev pytest ruff`
-
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

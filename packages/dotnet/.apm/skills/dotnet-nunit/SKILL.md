@@ -10,9 +10,6 @@ model: claude-sonnet-4.6
 
 Write NUnit tests for C# code using NSubstitute and Shouldly.
 
-## What this skill does
-Creates focused, maintainable NUnit tests covering happy path, edge cases, and error scenarios. Follows project naming conventions and uses NSubstitute for mocking and Shouldly for fluent assertions.
-
 ## Conventions
 
 ### Project structure
@@ -49,13 +46,11 @@ public async Task GetUser_WithValidId_ReturnsUser()
 - Use `[Category("Unit")]` for unit tests, `[Category("Integration")]` for integration tests
 
 ## Steps
-1. Read the target code to understand dependencies and behaviour
+1. Read target code to understand dependencies and behaviour
 2. Identify test cases: happy path, boundary values, null inputs, error paths
-3. Create one test class per source class; one test method per scenario
+3. One test class per source class; one test method per scenario
 4. Keep tests independent and deterministic — no shared mutable state
 
 ## Gotchas
-- Put the test project under `test/<ProjectName>.Tests`, not alongside the source project.
-- Add `[Category("Unit")]` or `[Category("Integration")]` explicitly so test filtering stays consistent.
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
+- Put test project under `test/<ProjectName>.Tests`, not alongside source project.
+- Add `[Category("Unit")]` or `[Category("Integration")]` explicitly for consistent test filtering.

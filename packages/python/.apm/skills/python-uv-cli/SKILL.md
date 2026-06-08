@@ -11,10 +11,10 @@ model: gpt-4.1
 
 ## Overview
 
-Curated reference for the uv CLI. Load this skill when choosing uv flags for any
+Curated reference for uv CLI. Load when choosing uv flags for any
 Python development task.
 
-## `uv run` — Run a command in the project environment
+## `uv run` — Run command in project environment
 
 ```powershell
 uv run [OPTIONS] <COMMAND> [ARGS]
@@ -66,7 +66,7 @@ uv sync [OPTIONS]
 | `--group <name>`       | Include a specific dependency group                     |
 | `--no-install-project` | Skip installing the project itself (install deps only)  |
 
-## `uv lock` — Manage the lockfile
+## `uv lock` — Manage lockfile
 
 ```powershell
 uv lock [OPTIONS]
@@ -91,6 +91,6 @@ uv lock [OPTIONS]
 
 ## Gotchas
 - `--no-sync` implies `--frozen` — do not combine both flags.
-- `--locked` exits with an error if `uv.lock` would change — use for assertion only, not for normal dev runs.
-- `--frozen` silently uses potentially stale versions — ensure `uv.lock` is committed and correct before using it in CI.
+- `--locked` exits with error if `uv.lock` would change — use for assertion only, not for normal dev runs.
+- `--frozen` silently uses potentially stale versions — ensure `uv.lock` is committed and correct before using in CI.
 - `uv add --dev` writes to `[dependency-groups]` (uv-native); `--optional` writes to `[project.optional-dependencies]` (PEP 508, for published packages).

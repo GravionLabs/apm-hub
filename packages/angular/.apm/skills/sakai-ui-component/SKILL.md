@@ -5,14 +5,11 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: claude-sonnet-4.6
 ---
 
-Scaffold a new component for the `@gravion/sakai-ui` Angular library.
-
-## What this skill does
-Creates a PrimeNG-based Angular standalone component in the `sakai-ui` library, following all library conventions: `gv-` selector prefix, 3-file structure, and export via `public-api.ts`.
+Scaffold new component for `@gravion/sakai-ui` Angular library.
 
 ## Steps
 1. Ask if not provided: component name (kebab-case), folder path within `sakai-ui/src/lib/`, PrimeNG components needed
-2. Create `<name>.ts` as a standalone component with selector `gv-<name>`:
+2. Create `<name>.ts` as standalone component with selector `gv-<name>`:
    ```typescript
    @Component({
      selector: 'gv-<name>',
@@ -25,13 +22,11 @@ Creates a PrimeNG-based Angular standalone component in the `sakai-ui` library, 
    ```
 3. Create `<name>.html` with PrimeNG markup
 4. Create `<name>.scss` (empty or with scoped styles)
-5. Export the component in `public-api.ts`
-6. Build the library to verify: `ng build sakai-ui`
+5. Export component in `public-api.ts`
+6. Build library to verify: `ng build sakai-ui`
 
 ## Constraints
 - Selector prefix must be `gv-`
 - All exports via `public-api.ts` — no internal deep imports from consumers
-- PrimeNG components must be imported in the component's `imports` array
-- Do not modify existing components unless fixing an export
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
+- PrimeNG components imported in component's `imports` array
+- Don't modify existing components unless fixing export

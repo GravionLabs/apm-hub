@@ -5,13 +5,10 @@ allowed-tools: read write edit editFiles search codebase
 model: gpt-4.1
 ---
 
-Create a `.github/workflows/` file for Node.js CI using `GravionLabs/ci`.
-
-## What this skill does
-Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable Node.js CI workflow to install dependencies, lint, test, and build the project.
+Create `.github/workflows/` file for Node.js CI using `GravionLabs/ci`.
 
 ## Steps
-1. Ask if not provided: Node.js version, package manager (npm / pnpm / yarn), whether to publish (npm registry / GitHub Packages / none)
+1. Ask: Node.js version, package manager (npm / pnpm / yarn), whether publish (npm registry / GitHub Packages / none)
 2. Create `.github/workflows/ci.yml`:
    ```yaml
    name: CI
@@ -29,11 +26,9 @@ Scaffolds a GitHub Actions workflow that calls the `GravionLabs/ci` reusable Nod
        secrets: inherit
    ```
 3. Confirm `package.json` has `test`, `build`, and `lint` scripts
-4. If publishing: confirm `NPM_TOKEN` secret is configured
+4. If publishing: confirm `NPM_TOKEN` secret configured
 
 ## Constraints
-- Use `secrets: inherit` to pass secrets to the reusable workflow
-- `package.json` must define `test` and `build` scripts — the reusable workflow calls them
-- Do not hardcode Node.js version if the project uses `.nvmrc` — check if the reusable workflow reads it automatically
-
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.
+- Use `secrets: inherit` to pass secrets
+- `package.json` must define `test` and `build` scripts — reusable workflow calls them
+- Do not hardcode Node.js version if project uses `.nvmrc` — check if reusable workflow reads it automatically

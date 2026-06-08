@@ -52,7 +52,7 @@ Avoid verbose reasoning.
    4. **Behavior** (optional) — specific rules as imperative bullets
 7. Token-efficiency rules:
    - Prefer imperative bullets over prose paragraphs
-   - Do not repeat content from `.github/copilot-instructions.md`
+   - Do not repeat content from `.github/copilot-instructions.md` or `AGENTS.md`
    - Move specs or examples longer than ~20 lines to `references/` files loaded conditionally
 8. ✓ **Checkpoint:** Frontmatter and body complete. Ready for Phase 3.
 

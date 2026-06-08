@@ -1,12 +1,20 @@
 name: development-workflow
 version: 1.0.0
-description: "GitHub development workflow orchestration: issue-driven implementation, tech-stack detection, multi-repo support, and PR review."
-registry: https://github.com/GravionLabs/apm-hub
+description: Development workflow orchestration. Provides tool-agnostic and OpenCode-specific agents for plan → implement → verify pipeline with sub-agent delegation.
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - workflow
+  - orchestration
+  - development
+  - opencode
 dependencies:
   apm:
     - github@apm-hub
     - common@apm-hub
-    - angular@apm-hub
+    - shared@apm-hub
     - typescript@apm-hub
+    - angular@apm-hub
     - python@apm-hub
-    - go@apm-hub
+    - dotnet@apm-hub

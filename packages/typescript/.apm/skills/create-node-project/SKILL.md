@@ -5,7 +5,7 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: gpt-4.1
 ---
 
-Scaffold a new TypeScript/Node.js project with a production-ready baseline.
+Scaffold TypeScript/Node.js project with production-ready baseline.
 
 ## Stack
 - **TypeScript** — NodeNext modules, strict mode, `tsc` for builds
@@ -23,8 +23,7 @@ Scaffold a new TypeScript/Node.js project with a production-ready baseline.
    ```powershell
    pwsh scripts/New-NodeProject.ps1 -ProjectName <Name> -ProjectType <app|library|cli> [-PackageManager npm]
    ```
-   The script creates the directory, copies templates, patches `package.json` for the project type,
-   runs `npm install`, and initializes a git repository.
+   Script creates directory, copies templates, patches `package.json`, runs `npm install`, initializes git repository.
 
 3. **Alternatively — manual steps:**
    ```bash
@@ -60,13 +59,11 @@ Scaffold a new TypeScript/Node.js project with a production-ready baseline.
   Parameters: `-ProjectName` (required), `-ProjectType` (app/library/cli), `-PackageManager` (npm/pnpm), `-OutputDirectory`
 
 ## Constraints
-- Always use `"type": "module"` (ESM) — avoid CJS `require()`
-- Library projects: include `exports`, `types`, and `files` fields in `package.json`
+- Use `"type": "module"` (ESM) — avoid CJS `require()`
+- Library projects: include `exports`, `types`, `files` fields in `package.json`
 - CLI projects: include `bin` field and `#!/usr/bin/env node` shebang
-- Solution must build and test cleanly before task is complete
+- Solution must build and test cleanly before task complete
 
 ## Tips
-> **Use the `task` tool** for scaffolding — it's mechanical.
+> **Use `task` tool** for scaffolding — mechanical.
 > Example: `#task pwsh scripts/New-NodeProject.ps1 -ProjectName "my-cli" -ProjectType cli`
-
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

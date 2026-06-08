@@ -7,9 +7,6 @@ model: claude-sonnet-4.6
 
 Review Python code for correctness, readability, maintainability, and security.
 
-## What this skill does
-Provides a structured, prioritized code review. Does not modify code — outputs findings only.
-
 ## Priority ratings
 - 🔴 **Critical** — bugs, security vulnerabilities, data corruption risk, broken tests
 - 🟡 **Important** — performance issues, missing error handling, type annotation gaps
@@ -45,5 +42,3 @@ Provides a structured, prioritized code review. Does not modify code — outputs
 
 ## Output format
 Group by file. Priority emoji, location, explanation, suggested fix.
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

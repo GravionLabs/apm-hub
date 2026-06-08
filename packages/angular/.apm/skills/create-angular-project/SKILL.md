@@ -5,7 +5,7 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: gpt-4.1
 ---
 
-Scaffold a new Angular 21+ project with a production-ready baseline.
+Scaffold new Angular 21+ project with production-ready baseline.
 
 ## Stack
 - **`@angular/cli`** — `ng new` for project generation (standalone by default)
@@ -21,11 +21,11 @@ Scaffold a new Angular 21+ project with a production-ready baseline.
    - Include Vitest? (default: yes)
    - Set up ESLint/Prettier? (default: yes)
 
-2. **Run the scaffold script** (recommended):
+2. **Run scaffold script** (recommended):
    ```powershell
    pwsh scripts/New-AngularProject.ps1 -ProjectName <Name> [-SelectorPrefix app] [-UseVitest] [-UseEslint]
    ```
-   The script runs `ng new`, replaces the tsconfig with strict settings, and sets up Vitest and ESLint.
+   Script runs `ng new`, replaces tsconfig with strict settings, sets up Vitest and ESLint.
 
 3. **Alternatively — manual steps:**
    ```bash
@@ -60,12 +60,10 @@ Scaffold a new Angular 21+ project with a production-ready baseline.
 
 ## Constraints
 - Angular 21+ only — requires `@angular/cli` ≥ 21 installed globally (`npm install -g @angular/cli`)
-- Standalone components by default — do not use `NgModule` for new code
+- Standalone components by default — don't use `NgModule` for new code
 - Always use SCSS for styles
 - SSR disabled by default (`--ssr false`) unless explicitly requested
 
 ## Tips
-> **Use the `task` tool** for scaffolding — it's mechanical.
+> **Use `task` tool** for scaffolding — it's mechanical.
 > Example: `#task pwsh scripts/New-AngularProject.ps1 -ProjectName "my-app" -UseVitest -UseEslint`
-
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.

@@ -5,17 +5,17 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: claude-sonnet-4.6
 ---
 
-Analyze and execute a .NET upgrade for the solution.
+Analyze and execute .NET upgrade for solution.
 
 ## Stack
 - **CLI:** `dotnet` SDK (key commands: `dotnet build`, `dotnet test`, `dotnet outdated`)
 - **Package manager:** NuGet (via `Directory.Packages.props` or `.csproj`)
-Assesses the current .NET version and package state, plans the upgrade path, applies changes, and verifies the solution builds and tests pass.
+Assesses current .NET version and package state, plans upgrade path, applies changes, verifies solution builds and tests pass.
 
 ## Steps
 
 ### Phase 1 — Assess
-1. Identify all projects in the solution and their `TargetFramework` values
+1. Identify all projects in solution and their `TargetFramework` values
 2. Identify project types (`.NET Framework`, `.NET Core`, `.NET Standard`)
 3. List all NuGet packages and current versions
 4. Use `dotnet outdated` (if available) to identify outdated packages
@@ -33,8 +33,6 @@ Assesses the current .NET version and package state, plans the upgrade path, app
 12. Run `dotnet test` and fix failing tests
 
 ## Constraints
-- Update `Directory.Packages.props` centrally when Central Package Management is in use
+- Update `Directory.Packages.props` centrally when Central Package Management in use
 - Document breaking changes addressed in commit message
 - Do not upgrade to pre-release versions unless explicitly requested
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.

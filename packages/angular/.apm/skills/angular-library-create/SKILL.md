@@ -5,27 +5,22 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: claude-sonnet-4.6
 ---
 
-Scaffold a new Angular library inside an existing Angular workspace.
-
-## What this skill does
-Creates a library project using `ng generate library`, configures `ng-packagr`, sets up `public-api.ts`, adds an initial component, and wires up the barrel exports.
+Scaffold new Angular library inside existing workspace.
 
 ## Steps
-1. Ask: library name (e.g. `@org/my-lib`), selector prefix, whether to include a sample component, publishing target (npm / internal)
-2. Generate the library:
+1. Ask: library name (e.g. `@org/my-lib`), selector prefix, include sample component, publishing target (npm / internal)
+2. Generate library:
    ```bash
    ng generate library <lib-name> --prefix=<prefix>
    ```
-3. Clean up the generated scaffold — remove boilerplate files not needed
-4. Set up `public-api.ts` as the single export surface
-5. Add an initial component using the `angular-component` conventions (3-file structure)
+3. Clean up generated scaffold — remove unnecessary boilerplate
+4. Set up `public-api.ts` as single export surface
+5. Add initial component using `angular-component` conventions (3-file structure)
 6. Configure `ng-packagr` in `ng-package.json` — set `lib.entryFile` to `public-api.ts`
 7. Add build script in `package.json` if not present: `"build:<lib>": "ng build <lib>"`
-8. Verify the library builds: `ng build <lib>`
+8. Verify library builds: `ng build <lib>`
 
 ## Constraints
-- All exports go through `public-api.ts` — no deep imports
+- All exports through `public-api.ts` — no deep imports
 - Use standalone components — no NgModules
-- Library must compile with `ng build` before task is complete
-
-> 💡 **Model hint:** This task benefits from a capable model (`claude-sonnet-4.6` or better). Use `/model` to switch.
+- Library must compile with `ng build` before task complete

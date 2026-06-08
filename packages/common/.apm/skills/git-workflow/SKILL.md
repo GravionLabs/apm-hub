@@ -10,57 +10,56 @@ allowed-tools: execute shell runCommands
 
 ## Overview
 
-Executes precise git operations — branch creation, staged commits, and remote
-push. Never modifies source files.
+Git operations — branch creation, staged commits, remote push. Never modifies source files.
 
 ## Instructions
 
 ### Fetch origin/main
 
-When asked to pre-fetch or refresh origin/main:
+On pre-fetch or refresh origin/main:
 ```powershell
 git fetch origin main
 ```
-Report success or any errors.
+Report success or errors.
 
 ### Create Branch
 
-When asked to create a branch (branch name is always provided by the caller):
+On create branch (name from caller):
 ```powershell
 git fetch origin main
 git checkout -b <branch-name> origin/main
 ```
-- Always base the branch on `origin/main`, never on the local `main`.
-- The `git checkout -b` output confirms successful branch creation.
+- Base branch on `origin/main`, not local `main`.
+- `git checkout -b` output confirms creation.
 
 ### Stage and Commit
 
-When asked to commit with a provided message and description:
+On commit with message + description:
 ```powershell
 git status
 git add -A
 git commit -m "<message>" -m "<description>"
 git log --oneline -1
 ```
-- The commit message must match: `#<TicketNumber> <Title>`
-- If `git status` shows no changes, report this and do not create an empty commit.
-- Show the short commit hash from `git log --oneline -1` as confirmation.
+- Commit message: `#<TicketNumber> <Title>`
+- No changes? Report it. No empty commit.
+- Show short commit hash from `git log --oneline -1`.
 
 ### Push Branch to Remote
 
-When asked to push the current branch to remote (required before PR creation):
+Push current branch to remote (before PR):
 ```powershell
 git push --set-upstream origin <branch-name>
 ```
-Report the pushed branch name and remote URL.
+Report pushed branch name + remote URL.
 
 ### Gotchas
 
-- **Local `main` vs. `origin/main`**: Always base new branches on `origin/main` (remote), not the local `main`. The remote is the source of truth.
-- **English-only branch and commit names**: All branch names and commit messages must be in English. Translate non-English ticket titles and descriptions before generating names.
-- **No source file modifications**: This skill only performs git operations; it never modifies repository files.
+- **Local `main` vs. `origin/main`**: Base on `origin/main` (remote). Remote = source of truth.
+- **English-only names**: Branch names + commit messages English. Translate non-English titles before generating.
+- **No source modifications**: Git operations only.
 
 ### Rules
-- Never push unless explicitly instructed to do so.
-- Never modify any source files.
-- Run all commands in the current working directory.
+- Never push unless instructed.
+- Never modify source files.
+- Run commands in current directory.

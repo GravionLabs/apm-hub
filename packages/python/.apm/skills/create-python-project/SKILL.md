@@ -5,7 +5,7 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 model: gpt-4.1
 ---
 
-Scaffold a new Python project with a production-ready baseline using `uv`.
+Scaffold Python project with production-ready baseline using `uv`.
 
 ## Stack
 - **uv** — package manager and environment tool (`uv init`, `uv add`, `uv sync`, `uv run`)
@@ -18,11 +18,11 @@ Scaffold a new Python project with a production-ready baseline using `uv`.
    - Project name
    - Project type: **library** (publishable package), **app** (application), or **workspace** (uv monorepo with `libs/` + `apps/`)?
 
-2. **Run the scaffold script** (recommended):
+2. **Run scaffold script** (recommended):
    ```powershell
    pwsh scripts/New-PythonProject.ps1 -ProjectName <Name> -ProjectType <library|app|workspace>
    ```
-   The script runs `uv init`, applies template `pyproject.toml` (ruff + pytest config), creates `src/<package>/__init__.py` and `tests/conftest.py`, then runs `uv sync`.
+   Script runs `uv init`, applies template `pyproject.toml` (ruff + pytest config), creates `src/<package>/__init__.py` and `tests/conftest.py`, then runs `uv sync`.
 
 3. **Alternatively — manual steps:**
    ```bash
@@ -66,7 +66,5 @@ Scaffold a new Python project with a production-ready baseline using `uv`.
 - Commit `uv.lock` to version control
 
 ## Tips
-> **Use the `task` tool** for scaffolding — it's mechanical.
+> **Use `task` tool** for scaffolding — it's mechanical.
 > Example: `#task pwsh scripts/New-PythonProject.ps1 -ProjectName "my-lib" -ProjectType library`
-
-> 💡 **Model hint:** This is a mechanical task — a fast model like `gpt-4.1` is sufficient. Use `/model` to switch.
