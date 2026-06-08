@@ -10,3 +10,6 @@ keywords:
   - nunit
   - aspnet
   - efcore
+skills:
+  - dotnet-build
+  - dotnet-test

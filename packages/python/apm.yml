@@ -12,3 +12,6 @@ keywords:
   - typing
   - mcp
   - debugging
+skills:
+  - py-build
+  - py-test

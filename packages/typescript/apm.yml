@@ -10,3 +10,7 @@ keywords:
   - playwright
   - vitest
   - eslint
+skills:
+  - pnpm-workflow
+  - ts-build
+  - ts-test

@@ -16,7 +16,7 @@ permission:
 # Copilot/APM fields
 name: github-pull-request
 description: 'Create GitHub PR from current branch + linked issue. Gather context, generate title/body, create via gh CLI.'
-model: gpt-4.1
+model: deepseek-v4-flash-free
 tools: ['shell']
 user-invocable: false
 ---
