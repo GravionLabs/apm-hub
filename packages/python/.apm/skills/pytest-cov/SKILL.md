@@ -7,6 +7,7 @@ description: >
   project, even if the user only says "add tests" or "improve coverage" without
   mentioning pytest.
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 

@@ -5,6 +5,7 @@ description: >
   compact JSON report. Use this skill when checking an agent for correctness,
   even if the user only says to verify or review it.
 allowed-tools: read search codebase write edit editFiles execute shell runCommands
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 chronicle-hints: 'single-purpose, structured-output, phases'
 ---
@@ -29,7 +30,7 @@ Avoid verbose reasoning.
 ✓ Checkpoint: Agent file loaded and structure understood
 
 1. Read the `.agent.md` file and list any sibling `references/` and `assets/` items.
-2. **Check for model guidance:** If the agent has `model:` or body "Model hint" → **read `references/model-selection.md`**. `model` is officially supported in both GitHub Copilot and Claude Code.
+2. **Check for model guidance:** If the agent has `model:` or body "Model hint" → **read `references/model-selection.md`**. `model` is an official optional field in Claude Code; repo-local convention in GitHub Copilot.
 3. **Shell enforcement:** Check all code blocks. Flag any ` ```bash ` or ` ```sh `. All shell must use ` ```powershell ` — report 🔴 critical if any non-PowerShell shells are found.
 
 ### Phase 2 — Audit & Report
@@ -57,7 +58,7 @@ Avoid verbose reasoning.
 
 - A zero-finding report is valid — don't force fixes if nothing's broken.
 - Filename must match `name` in frontmatter exactly.
-- `model` is officially supported in both GitHub Copilot and Claude Code — audit severity 🟡 if the value is unrecognized, not because it's missing.
+- `model` is an official optional field in Claude Code; repo-local convention in GitHub Copilot — audit severity 🟡 if unrecognized value, not because it's missing.
 - Do not proceed with `agent-update` if user cancels.
 - Critical findings (shell enforcement) should always be fixed.
 

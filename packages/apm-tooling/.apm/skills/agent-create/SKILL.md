@@ -5,6 +5,7 @@ description: >
   scaffolding an agent from a prompt, rough idea, or role description, even
   if the request is underspecified.
 allowed-tools: read search codebase write edit editFiles
+compatibility: opencode, github-copilot
 ---
 
 ## Overview
@@ -17,7 +18,7 @@ Avoid verbose reasoning.
 ## Prerequisites
 
 - Agent name (kebab-case)
-- Target platform(s): `cli` | `vscode` | `claude` | `all`
+- Target platform(s): `cli` | `vscode` | `claude` | `opencode` | `all`
 - One sentence describing the agent's role
 
 ## Instructions
@@ -25,6 +26,7 @@ Avoid verbose reasoning.
 1. Pick placement:
    - CLI / VS Code → `.github/agents/` (project) or `~/.copilot/agents/` (global)
    - Claude Code → `.claude/agents/` (project) or `~/.claude/agents/` (global)
+   - opencode → `.opencode/agents/` (project) or `~/.config/opencode/agents/` (global)
    - Plugin → `packages/<domain>/.apm/agents/`
 2. Validate the name: kebab-case, 1-64 chars, matches filename.
 3. Use skill `agent-write` to draft and validate the agent content. `agent-write` enforces PowerShell syntax and cross-platform conventions.

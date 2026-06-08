@@ -5,6 +5,7 @@ description: >
   Triggers on "implement", "write code", "add feature", "create function",
   "test", "test function". Automatically loads <lang>-implementation sub-skill.
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 model: gpt-4.1
 ---
 

@@ -173,5 +173,5 @@ See: [`docs/chronicle-optimization.md`](../../chronicle-optimization.md) and [`d
 - References are loaded conditionally, not automatically.
 - Output follows Chronicle-optimized structure (Summary → What Changed → Verify → Next Steps)
 - Token efficiency: avoid prose, use structured lists and checkpoints
-- The final skill should be easy to reuse from `skill-create` and
+- The final skill should be easy to reuse from `skill-write` and
   `skill-update`.

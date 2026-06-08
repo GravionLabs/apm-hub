@@ -3,8 +3,9 @@
 Use this file when an agent needs the shared frontmatter rules.
 
 > **Platform note:** The fields below are based on the official GitHub Copilot custom agent
-> documentation and the Claude Code subagent specification. Both platforms document `model`
-> as an official optional field. Platform-specific fields are listed separately.
+> documentation and the Claude Code subagent specification. Claude Code documents `model`
+> as an official optional field; GitHub Copilot silently ignores unknown frontmatter fields.
+> Treat `model` as a repo-local convention for Copilot agents. Platform-specific fields are listed separately.
 
 ### Required fields (all platforms)
 
@@ -18,7 +19,7 @@ Use this file when an agent needs the shared frontmatter rules.
 | Field   | Rules                                                                                                                                                                                                                                                                                    |
 |:--------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `tools` | List of tool aliases. Minimal — grant only what the agent requires. Omit for full access; use `[]` to disable all tools.                                                                                                                                                                 |
-| `model` | Official optional field in **both** GitHub Copilot and Claude Code. GitHub: "Model to use when this custom agent executes. If unset, inherits the default model." Claude Code values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`. Align value with `docs/model-overview.md`. |
+| `model` | Official optional field in Claude Code; repo-local advisory convention in GitHub Copilot (silently ignored by official loaders). Claude Code values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`. Align value with `docs/model-overview.md`. |
 
 ### Platform-specific fields
 
@@ -81,10 +82,10 @@ model: claude-sonnet-4.6
 
 ### File placement
 
-| Scope     | Copilot CLI / VS Code    | Claude Code              | Plugin                               |
-|:----------|:-------------------------|:-------------------------|:-------------------------------------|
-| Project   | `.github/agents/`        | `.claude/agents/`        | `packages/<domain>/.apm/agents/`     |
-| Global    | `~/.copilot/agents/`     | `~/.claude/agents/`      | —                                    |
+| Scope     | Copilot CLI / VS Code    | Claude Code              | opencode                    | Plugin                               |
+|:----------|:-------------------------|:-------------------------|:----------------------------|:-------------------------------------|
+| Project   | `.github/agents/`        | `.claude/agents/`        | `.opencode/agents/`         | `packages/<domain>/.apm/agents/`     |
+| Global    | `~/.copilot/agents/`     | `~/.claude/agents/`      | `~/.config/opencode/agents/`| —                                    |
 
 ### Official GitHub Copilot frontmatter reference (source: docs, 2025-05-03)
 
@@ -94,7 +95,7 @@ model: claude-sonnet-4.6
 | `description`              | **Required** string | Description of the custom agent's purpose and capabilities.                      |
 | `target`                   | string              | `vscode` or `github-copilot`. Unset = both. Do not set unless explicitly needed. |
 | `tools`                    | list / string       | Tool names the agent can use. Unset = all tools.                                 |
-| `model`                    | string              | Model to use when the agent executes. Unset = inherits default.                  |
+| `model`                    | string              | Model to use (Claude Code) or repo-local convention (Copilot). Unset = inherits default. |
 | `disable-model-invocation` | boolean             | Disables cloud agent auto-use. `true` = manual selection only. Replaces `infer`. |
 | `user-invocable`           | boolean             | Can the user manually select this agent? Unset = `true`.                         |
 | `infer`                    | boolean             | **Retired.** Use `disable-model-invocation` and `user-invocable` instead.        |

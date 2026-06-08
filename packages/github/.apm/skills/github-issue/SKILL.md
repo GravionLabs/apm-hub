@@ -2,6 +2,7 @@
 name: github-issue
 description: 'Read GitHub issue, branch, implement, verify, PR. Full lifecycle from issue to merged PR. Use for any GitHub issue work — covers start through finish.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 

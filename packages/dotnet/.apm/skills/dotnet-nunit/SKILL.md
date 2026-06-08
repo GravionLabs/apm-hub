@@ -5,6 +5,7 @@ description: >
   with NSubstitute and Shouldly, following the project's naming and category
   conventions.
 allowed-tools: read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 

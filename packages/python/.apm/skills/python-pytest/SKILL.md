@@ -2,6 +2,7 @@
 name: python-pytest
 description: 'Write pytest tests: structure, marks, naming, mocking. Load when user asks to write/add/improve Python tests.'
 allowed-tools: read write edit editFiles search codebase
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 

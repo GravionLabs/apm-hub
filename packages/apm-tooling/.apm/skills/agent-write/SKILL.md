@@ -3,9 +3,10 @@ name: agent-write
 description: >
   Creates and edits custom agent files (.agent.md). Use this skill when
   drafting or refining an agent so the result is cross-platform compatible,
-  token-efficient, and convention-compliant for Copilot CLI, VS Code, and
-  Claude Code.
+  token-efficient, and convention-compliant for opencode, Copilot CLI, VS
+  Code, and Claude Code.
 allowed-tools: read search codebase write edit editFiles
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 chronicle-hints: 'single-purpose, structured-output, phases'
 ---
@@ -34,16 +35,19 @@ Avoid verbose reasoning.
    - Copilot CLI / VS Code (global) → `~/.copilot/agents/`
    - Claude Code (project) → `.claude/agents/`
    - Claude Code (global) → `~/.claude/agents/`
+   - opencode (project) → `.opencode/agents/`
+   - opencode (global) → `~/.config/opencode/agents/`
    - Plugin → `packages/<domain>/.apm/agents/<name>.agent.md`
 3. Validate name: kebab-case, 1-64 chars, matches filename exactly, no leading/trailing/consecutive hyphens.
 4. ✓ **Checkpoint:** Location and name validated. Ready for Phase 2.
 
 ### Phase 2 — Create & Structure
 
-5. Build frontmatter using minimum cross-platform fields: `name`, `description`, `tools`, `model`.
+5. Build frontmatter using minimum cross-platform fields: `name`, `description`, `tools`, `model`, optional `compatibility`.
    - If target is `claude` or `all` → check `references/agent-writing-rules.md` Platform-Specific section before adding platform-specific fields.
    - Keep `tools` minimal — grant only what the agent requires.
    - If `model` choice is unclear → load `references/model-selection.md`.
+   - Use `compatibility` to declare platform support (e.g. `compatibility: opencode, github-copilot`).
    - Set `user-invocable: false` for sub-agents called by other agents, not by users.
 6. Write body using `assets/agent-template-optimized.md` as starting point:
    1. **Persona** (≤ 3 sentences) — role, expertise, communication style
@@ -71,7 +75,7 @@ Avoid verbose reasoning.
 ## Gotchas
 
 - Filename must match `name` exactly.
-- `model` is officially supported in both GitHub Copilot and Claude Code — always valid to set.
+- `model` is an official optional field in Claude Code; in GitHub Copilot and opencode it's a repo-local convention silently ignored by official loaders.
 - Claude Code ignores `user-invocable`; Copilot CLI ignores `permissionMode`. For `all` targets, use cross-platform fields only.
 - Do not duplicate content from `.github/copilot-instructions.md`.
 - Keep reference chains one level deep.
@@ -95,13 +99,12 @@ if ($content -match "tools:") { Write-Host "✓ tools field present" }
 ```
 
 ### 🚀 Next Steps
-1. Test: `copilot @{name}` (CLI) or `@{name}` in VS Code Chat
+1. Test: `opencode @{name}` or `copilot @{name}` (CLI) or `@{name}` in VS Code Chat
 2. Audit with `agent-audit` to validate conventions
 3. Commit and reference from plugin config if distributing
 
 ## See Also
 
 - [Agent Writing Rules](references/agent-writing-rules.md)
-- [Agent Frontmatter Reference](../../../packages/shared/.apm/skills/create-agent/references/agent-frontmatter.md)
 - [Model Selection](references/model-selection.md)
-- [Designing Agents](../../../docs/best-practices/designing-agents.md)
+- [Designing Agents](../../../../../../docs/best-practices/designing-agents.md)

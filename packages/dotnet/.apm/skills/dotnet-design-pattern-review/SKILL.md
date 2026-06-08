@@ -2,6 +2,7 @@
 name: dotnet-design-pattern-review
 description: 'Review C#/.NET code for design pattern implementation quality and suggest improvements. Read-only — outputs findings, does not modify code.'
 allowed-tools: read search codebase
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 

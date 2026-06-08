@@ -2,6 +2,7 @@
 name: angular-code-review
 description: 'Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list.'
 allowed-tools: read search codebase problems
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 ---
 

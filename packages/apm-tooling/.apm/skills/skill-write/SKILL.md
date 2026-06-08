@@ -1,9 +1,11 @@
 ---
 name: skill-write
 description: >
-  Creates and edits Copilot skills. Use this skill when drafting or refining a
-  skill so the result stays small, valid, reusable, and convention-compliant.
+  Creates and edits opencode and Copilot skills. Use this skill when drafting or
+  refining a skill so the result stays small, valid, reusable, and
+  convention-compliant.
 allowed-tools: read search codebase write edit editFiles
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 chronicle-hints: 'single-purpose, structured-output, phases'
 ---
@@ -41,7 +43,7 @@ Avoid verbose reasoning.
 ### Phase 2 — Create & Structure
 
 4. Create `SKILL.md` first; add `scripts/`, `references/`, or `assets/` only if they reduce repeated context.
-5. Write frontmatter (`name`, `description`, `allowed-tools`, optional repo-local `model`, optional `chronicle-hints`); keep `allowed-tools` minimal and pre-approve shell access only for reviewed commands. If you include `model`, choose it using `docs/model-overview.md` and treat it as advisory repo convention rather than officially required skill syntax.
+5. Write frontmatter (`name`, `description`, `allowed-tools`, optional `compatibility`, optional repo-local `model`, optional `chronicle-hints`); keep `allowed-tools` minimal and pre-approve shell access only for reviewed commands. If you include `model`, choose it using `docs/model-overview.md` and treat it as advisory repo convention rather than officially required skill syntax. Use `compatibility` to declare platform support (e.g. `compatibility: opencode, github-copilot`).
 6. Keep the body compact using standard sections: Overview → Prerequisites → Instructions → Gotchas → Output format.
 7. ✓ **Checkpoint:** Frontmatter complete and structure ready. Ready for Phase 3.
 

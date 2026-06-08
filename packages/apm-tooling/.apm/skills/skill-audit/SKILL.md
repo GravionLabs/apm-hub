@@ -4,6 +4,7 @@ description: >
   Use this skill to audit, validate, or review a skill and emit a compact JSON
   report, even if the user only says to check it or verify it.
 allowed-tools: read search codebase write edit editFiles execute shell runCommands
+compatibility: opencode, github-copilot
 model: claude-sonnet-4.6
 chronicle-hints: 'single-purpose, structured-output, phases'
 ---

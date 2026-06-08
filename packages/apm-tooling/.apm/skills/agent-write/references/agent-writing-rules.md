@@ -18,10 +18,10 @@ Do not load it when the task is unrelated to agent authoring.
 - No leading, trailing, or consecutive hyphens.
 - Placement by platform and scope:
 
-| Scope     | Copilot CLI / VS Code    | Claude Code              | Plugin                          |
-|:----------|:-------------------------|:-------------------------|:--------------------------------|
-| Project   | `.github/agents/`        | `.claude/agents/`        | `packages/<domain>/.apm/agents/`|
-| Global    | `~/.copilot/agents/`     | `~/.claude/agents/`      | —                               |
+| Scope     | Copilot CLI / VS Code    | Claude Code              | opencode                    | Plugin                          |
+|:----------|:-------------------------|:-------------------------|:----------------------------|:--------------------------------|
+| Project   | `.github/agents/`        | `.claude/agents/`        | `.opencode/agents/`         | `packages/<domain>/.apm/agents/`|
+| Global    | `~/.copilot/agents/`     | `~/.claude/agents/`      | `~/.config/opencode/agents/`| —                               |
 
 Higher-priority locations win when multiple agents share the same `name`:
 Managed settings > `--agents` CLI flag > project > global > plugin
@@ -33,7 +33,7 @@ Managed settings > `--agents` CLI flag > project > global > plugin
 - **Required cross-platform minimum:** `name`, `description`, `tools`, `model`
 - `description`: one sentence, imperative, answers "when to use this agent" — this is shown in the @-picker
 - `tools`: list format, minimal — grant only what the agent requires
-- `model`: official optional field in **both** GitHub Copilot and Claude Code. GitHub Copilot: inherits default if unset. Claude Code values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`.
+- `model`: official optional field in Claude Code; repo-local advisory convention in GitHub Copilot (ignored by official loaders). Claude Code values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`.
 - `target`: **do not set** unless explicitly targeting one environment (`vscode` or `github-copilot`); omitting makes the agent available everywhere
 - `infer`: **retired** — use `disable-model-invocation` instead
 
