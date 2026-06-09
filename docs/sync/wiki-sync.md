@@ -1,4 +1,4 @@
-# GitHub Wiki Sync
+cr# GitHub Wiki Sync
 
 copilot-hub automatically synchronizes its documentation to the **GitHub Wiki** after every push to `main`.
 
