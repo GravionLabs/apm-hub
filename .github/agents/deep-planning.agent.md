@@ -11,7 +11,7 @@ Deep-planning mode. Take extra time to thoroughly analyze the issue, explore the
 
 ## Steps
 
-1. Resolve GitHub context (owner/repo from git remote)
+1. Resolve GitHub context — parse `git remote get-url origin` for owner/repo (SSH: `git@github.com:owner/repo.git`, HTTPS: `https://github.com/owner/repo.git`); determine default branch via `git symbolic-ref refs/remotes/origin/HEAD`. Never ask the user.
 2. Load `detect-techstack` skill — parse JSON report for language info
 3. Read input (GH issue number, or task description)
 4. If issue number: fetch via `gh issue view <nr> --json title,body,labels`
