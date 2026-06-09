@@ -24,7 +24,7 @@ permission:
 # Copilot/APM fields
 name: planning
 description: "Analyze a GitHub issue, explore codebase, break into sub-tasks, create GH issues. Outputs structured plan JSON consumable by implement/verify agents."
-model: deepseek-v4-flash-free
+model: claude-sonnet-4.6
 tools: ['read', 'search', 'shell', 'webfetch']
 user-invocable: true
 ---
