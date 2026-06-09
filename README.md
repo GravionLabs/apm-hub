@@ -50,9 +50,9 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
 
 3. Install individual packages:
    ```bash
-   apm install angular@apm-hub
-   apm install typescript@apm-hub
-   apm install csharp@apm-hub
+   apm install ng@apm-hub
+   apm install ts@apm-hub
+   apm install dotnet@apm-hub
    ```
 
    Or install **all packages** at once:
@@ -66,8 +66,8 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    version: 1.0.0
    dependencies:
      apm:
-       - GravionLabs/apm-hub/packages/angular
-       - GravionLabs/apm-hub/packages/common
+       - GravionLabs/apm-hub/packages/ng
+       - GravionLabs/apm-hub/packages/ts
    ```
    Then run `apm install` to deploy to `.github/`, `.claude/`, `.cursor/` etc.
 

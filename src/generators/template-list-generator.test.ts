@@ -90,11 +90,11 @@ describe('generateTemplateList', () => {
     );
 
     // Shared domain with a skill
-    const sharedSkillDir = path.join(packagesDir, 'shared', '.apm', 'skills', 'write-tests');
+    const sharedSkillDir = path.join(packagesDir, 'shared', '.apm', 'skills', 'ts-write-tests');
     fs.mkdirSync(sharedSkillDir, { recursive: true });
     fs.writeFileSync(
       path.join(sharedSkillDir, 'SKILL.md'),
-      '---\nname: write-tests\ndescription: Write unit tests.\n---\nContent'
+      '---\nname: ts-write-tests\ndescription: Write unit tests.\n---\nContent'
     );
   });
 

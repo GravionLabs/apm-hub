@@ -31,7 +31,7 @@ Dev workflow orchestrator. Mode is determined from your first message:
 ## Pipeline
 
 0. Load `detect-techstack` via `skill(detect-techstack)` — parse JSON report for `languages`, `build`, `test`, `implementation` lists
-1. Load `pnpm-workflow` via `skill(pnpm-workflow)` to ensure pnpm is set up
+1. Load `ts-pnpm-workflow` via `skill(ts-pnpm-workflow)` to ensure pnpm is set up
 2. Determine mode from user input:
    - Contains "plan" → mode=plan
    - Contains "implement" → mode=implement

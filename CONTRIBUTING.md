@@ -76,7 +76,7 @@ This repository should remain **generic, reusable, and safe**.
 Examples:
 
 - explain-code.prompt.md
-- write-tests.prompt.md
+- ts-write-tests.prompt.md
 - code-review.prompt.md
 
 ### Instructions

@@ -18,11 +18,11 @@ marketplace:
       go. Suitable for workspaces that use multiple tech stacks and want the full
       skill set available.
     source: ./packages/all
-  - name: angular
+  - name: ng
     description: Angular 21 full-stack development plugin. Covers standalone components,
       NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui
       conventions, AG Grid integration, and testing with Vitest.
-    source: ./packages/angular
+    source: ./packages/ng
   - name: common
     description: Shared primitives for git, GitHub, and Azure DevOps workflows. Provides
       common git operations (branch creation, commits, push), GitHub pull request
@@ -77,11 +77,11 @@ marketplace:
       query optimization, performance diagnostics, code review, Row Level Security,
       JSONB, and SQL best practices.
     source: ./packages/postgresql
-  - name: python
+  - name: py
     description: Python development plugin. Covers project setup with uv, pytest testing
       with fixtures and markers, type hints, code review, Playwright Python testing,
       and containerization.
-    source: ./packages/python
+    source: ./packages/py
   - name: security
     description: Security and resilience tooling. STRIDE threat modeling, security
       compliance review. Tech-stack agnostic — usable alongside any language plugin.
@@ -96,8 +96,8 @@ marketplace:
       design, naming conventions, state management, security best practices, code
       review, and multi-cloud provider configurations.
     source: ./packages/terraform
-  - name: typescript
+  - name: ts
     description: TypeScript and Node.js development plugin. Covers strict typing,
       ESM modules, async/await patterns, error handling, code review, debugging, Playwright
       TypeScript testing, and containerization.
-    source: ./packages/typescript
+    source: ./packages/ts

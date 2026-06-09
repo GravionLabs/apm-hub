@@ -1,0 +1,30 @@
+// audit-report archived — all findings applied on 2026-05-03
+{
+  "skill": "ng-developer",
+  "skillPath": "packages/ng/.apm/skills/ng-developer",
+  "status": "resolved",
+  "summary": {
+    "passedChecks": 10,
+    "critical": 1,
+    "important": 2,
+    "suggestions": 1
+  },
+  "appliedCategories": [
+    "shell-enforcement",
+    "references",
+    "reference-quality",
+    "output-assets"
+  ],
+  "updatedSkillFiles": [
+    "packages/ng/.apm/skills/ng-developer/SKILL.md",
+    "packages/ng/.apm/skills/ng-developer/assets/output-template.md",
+    "packages/ng/.apm/skills/ng-developer/references/cli.md",
+    "packages/ng/.apm/skills/ng-developer/references/creating-services.md",
+    "packages/ng/.apm/skills/ng-developer/references/e2e-testing.md",
+    "packages/ng/.apm/skills/ng-developer/references/routing-index.md",
+    "packages/ng/.apm/skills/ng-developer/references/tailwind-css.md",
+    "packages/ng/.apm/skills/ng-developer/references/testing-jest.md",
+    "packages/ng/.apm/skills/ng-developer/references/testing-vitest.md"
+  ],
+  "resolutionNote": "All audit findings from 2026-05-03 were applied and revalidated."
+}
