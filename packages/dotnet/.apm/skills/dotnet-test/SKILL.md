@@ -31,7 +31,8 @@ using Shouldly;
 public class MyServiceTests
 {
     [Test]
-    public void MethodName_StateUnderTest_ExpectedBehavior()
+    [Category("UnitTest")]
+    public void Should_return_user_when_valid_id()
     {
         // Arrange
         // Act
@@ -44,8 +45,8 @@ public class MyServiceTests
 
 - File naming: `{ClassName}Tests.cs` in `tests/` project
 - Namespace matches the source project with `.Tests` suffix
-- Test method naming: `MethodName_Scenario_ExpectedResult`
-- Categories for slow/integration tests: `[Category("Integration")]`
+- Test method naming: `Should_<expected>_when_<condition>`
+- Categories: `[Category("UnitTest")]` for unit, `[Category("IntegrationTest")]` for integration, `[Category("ManualTest")]` + `[Explicit]` for manual
 
 ### Mocking with NSubstitute
 
@@ -86,5 +87,5 @@ dotnet test --collect:"XPlat Code Coverage"
 - Tests in separate test project, mirroring `src/` structure
 - Use `[SetUp]` for shared arrangement, `[TearDown]` for cleanup
 - Avoid `async void` — use `async Task` for async tests
-- Use `[Category("Unit")]` or `[Category("Integration")]` explicitly for consistent test filtering
+- Use `[Category("UnitTest")]`, `[Category("IntegrationTest")]`, or `[Category("ManualTest")]` + `[Explicit]` explicitly for consistent test filtering
 - Put test project under `test/<ProjectName>.Tests`, not alongside source project

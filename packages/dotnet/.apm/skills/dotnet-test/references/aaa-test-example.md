@@ -2,7 +2,8 @@
 
 ```csharp
 [Test]
-public async Task GetUser_WithValidId_ReturnsUser()
+[Category("UnitTest")]
+public async Task Should_return_user_when_valid_id()
 {
     // Arrange
     var repo = Substitute.For<IUserRepository>();

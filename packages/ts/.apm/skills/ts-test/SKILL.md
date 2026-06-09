@@ -44,9 +44,26 @@ pnpm test:ci
 
 1. Read target code — understand structure, dependencies, existing test patterns
 2. Identify test cases — happy path, boundary values, error handling, null/empty inputs
-3. Write tests using Vitest with `describe`/`it` blocks
+3. Write tests using Vitest with `describe`/`it` blocks in BDD style
 4. Use mocking frameworks already in project (`vi.fn()`, `vi.mock()`)
 5. Follow project naming conventions
+
+### describe/it convention
+
+```typescript
+describe('getUser', () => {
+  it('returns user when valid id', () => { ... });
+  it('throws when null id', () => { ... });
+});
+```
+
+Use a top-level `describe` per service/module. Nest `describe` blocks for unit vs integration:
+```typescript
+describe('UserService', () => {
+  describe('unit', () => { ... });
+  describe('integration', () => { ... });
+});
+```
 
 ### Reference files
 - Load `references/test-cases.md` for test case identification patterns and conventions

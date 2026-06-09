@@ -38,7 +38,7 @@ uv run pytest --cov=src --cov-report=xml --cov-report=term
 1. Read target code — understand public interface, dependencies, existing test patterns
 2. Identify test cases — happy path, boundary values, error handling, missing/null inputs
 3. Choose test type — unit (no I/O) → `tests/unit/`, integration (DB/HTTP) → `tests/integration/`
-4. Write tests — one scenario per function, one mark per function, mirror source structure
+4. Write tests — one scenario per function, one mark per function (`@pytest.mark.unit`, `.integration`, or `.manual`), mirror source structure
 5. Verify — `uv run --frozen pytest tests/unit/`
 
 ### Reference files
