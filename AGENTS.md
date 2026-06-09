@@ -184,18 +184,6 @@ pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1 -Full -A
 
 ## Instructions
 
-### `github-context.instructions.md`
-
-**Location:** `packages/github/.apm/instructions/github-context.instructions.md`
-
-**Scope:** Global (applies to all files)
-
-**Purpose:** Instructs agents to always resolve the GitHub owner and repository name from the git remote — never ask the user.
-
-**Contents:**
-- How to parse `git remote get-url origin` for SSH and HTTPS remotes
-- How to determine the default branch via `git symbolic-ref`
-- Rules for automatic owner/repo resolution
 
 ---
 
