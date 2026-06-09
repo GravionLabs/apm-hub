@@ -5,6 +5,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.9] — 2026-06-09
+
+### Bug Fixes
+- Update agents to use packageManager instead of build skills (#22)
+
+
 ## [1.0.8] — 2026-06-09
 
 ### Bug Fixes
@@ -12,6 +18,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Merge py-pytest-cov into py-pytest with reference templates
 - Merge test-writing skills into registered test skills
 - Standardise test naming and categories across dotnet, py, ts
+
+
+### Documentation
+- Update CHANGELOG.md for v1.0.8 [skip ci]
 
 
 ## [1.0.7] — 2026-06-09
