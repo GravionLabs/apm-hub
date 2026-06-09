@@ -14,6 +14,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Detect slnx files, map languages to skill prefixes (#18)
 
 
+### Documentation
+- Update CHANGELOG.md for v1.0.4 [skip ci]
+
+
 ## [1.0.3] — 2026-06-09
 
 ### Documentation
