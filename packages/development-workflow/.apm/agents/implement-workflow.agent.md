@@ -16,22 +16,21 @@ Tool-agnostic implement workflow. Setup → implement → verify from an existin
 1. Read GH issue number from input
 2. Fetch issue via `gh issue view <nr> --json title,body,labels`
 3. Load `detect-techstack` skill — parse JSON report for `languages`, `build`, `test`, `implementation` skill lists
-4. Load `ts-pnpm-workflow` skill to ensure pnpm is set up as the package manager
-5. Suggest branch name per conventional-commits: `<type>/<nr>-<kebab-desc>`
+4. Suggest branch name per conventional-commits: `<type>/<nr>-<kebab-desc>`
 
 ### Phase 1 — Implement
 
 1. Create branch: `git fetch origin main && git checkout -b <branch> origin/main`
 2. Load `implementation` skill rules: every change MUST include tests
 3. Load each `<lang>-implementation` skill from detect-techstack report
-4. Load each `<lang>-build` + `<lang>-test` skill for build/test commands
+4. Load each `<lang>-test` skill for test commands
 5. Follow test triad: happy path, edge cases, error cases
 6. Write code changes + corresponding tests
 7. Follow project conventions (imports, naming, patterns)
 
 ### Phase 2 — Verify
 
-1. For each build skill in detect-techstack `build` list: load it and run the build command
+1. Run build using detected package manager
 2. For each test skill in detect-techstack `test` list: load it and run the test command
 3. Run lint/format per project conventions
 4. Load `cliff-setup` skill to update CHANGELOG.md with new changes
