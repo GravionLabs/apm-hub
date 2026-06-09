@@ -57,13 +57,13 @@ Error message written to stderr.
 
 | File/Folder | Detects |
 |---|---|
-| `angular.json` (recursive, depth 3) | Angular framework |
-| `package.json` + `tsconfig.json` pair (recursive, depth 3) | TypeScript |
-| `pyproject.toml`, `requirements.txt`, or `setup.py` (recursive, depth 3) | Python |
-| `*.csproj` or `*.sln` (recursive, depth 3 / 2) | .NET / C# |
-| `package.json` alone, no `tsconfig.json` (recursive, depth 3) | JavaScript (Node.js) |
+| `angular.json` (recursive, depth 5) | Angular framework |
+| `package.json` + `tsconfig.json` pair (recursive, depth 5) | TypeScript |
+| `pyproject.toml`, `requirements.txt`, or `setup.py` (recursive, depth 5) | Python |
+| `*.csproj` or `*.sln` (recursive, depth 5) | .NET / C# |
+| `package.json` alone, no `tsconfig.json` (recursive, depth 5) | JavaScript (Node.js) |
 | `packageManager` field in `package.json` (highest priority) | Package manager |
-| Lockfiles `pnpm-lock.yaml`, `bun.lockb`, `yarn.lock`, `package-lock.json`, `uv.lock` (recursive, depth 2) | Package manager |
+| Lockfiles `pnpm-lock.yaml`, `bun.lockb`, `yarn.lock`, `package-lock.json`, `uv.lock` (recursive, depth 5) | Package manager |
 | `*.csproj` | Package manager (dotnet) |
 | `Cargo.toml` | Package manager (cargo) |
 
