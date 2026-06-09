@@ -3,9 +3,9 @@
   Detect the project tech stack and output a JSON report.
 
 .DESCRIPTION
-  Scans the project root for indicator files and returns a JSON object
-  listing detected languages, frameworks, and the matching <lang>-build,
-  <lang>-test, and <lang>-implementation skills.
+  Scans the project root recursively for indicator files and returns a JSON object
+  listing detected languages, frameworks, packageManager, and the matching <lang>-test
+  and <lang>-implementation skills.
 
 .PARAMETER ProjectRoot
   Path to the project root directory. Defaults to the current directory.
@@ -24,56 +24,130 @@ if (-not (Test-Path $ProjectRoot -PathType Container)) {
   exit 1
 }
 
+function Get-IndicatorFile {
+  param([string]$Path, [string]$Filter, [int]$Depth)
+  Get-ChildItem -Path $Path -Recurse -Depth $Depth -Filter $Filter -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -notmatch '[\\/]node_modules[\\/]' -and $_.FullName -notmatch '[\\/]\.git[\\/]' -and $_.FullName -notmatch '[\\/]\.opencode[\\/]' }
+}
+
 $languages = [System.Collections.Generic.List[string]]::new()
 $frameworks = [System.Collections.Generic.List[string]]::new()
 
-# --- Angular ---
-if (Test-Path (Join-Path $ProjectRoot "angular.json")) {
-  $frameworks.Add("angular")
-  $languages.Add("typescript")
+# --- packageManager detection ---
+$packageManagers = [System.Collections.Generic.List[string]]::new()
+
+$pkgJsonFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "package.json" -Depth 5
+foreach ($pkg in $pkgJsonFiles) {
+  try {
+    $content = Get-Content $pkg.FullName -Raw | ConvertFrom-Json -ErrorAction Stop
+    if ($content.packageManager) {
+      $name = ($content.packageManager -split '@')[0]
+      if (-not $packageManagers.Contains($name)) {
+        $packageManagers.Add($name)
+      }
+    }
+  } catch {
+    continue
+  }
 }
 
-# --- TypeScript ---
-$pkgJson = Join-Path $ProjectRoot "package.json"
-$tsConfig = Join-Path $ProjectRoot "tsconfig.json"
-if ((Test-Path $pkgJson) -and (Test-Path $tsConfig)) {
+$lockfileChecks = @(
+  @{ Name = "pnpm-lock.yaml"; Value = "pnpm" }
+  @{ Name = "bun.lockb";      Value = "bun" }
+  @{ Name = "yarn.lock";      Value = "yarn" }
+  @{ Name = "package-lock.json"; Value = "npm" }
+  @{ Name = "uv.lock";        Value = "uv" }
+  @{ Name = "Cargo.toml";     Value = "cargo" }
+)
+
+foreach ($entry in $lockfileChecks) {
+  $found = Get-IndicatorFile -Path $ProjectRoot -Filter $entry.Name -Depth 5
+  if ($found -and -not $packageManagers.Contains($entry.Value)) {
+    $packageManagers.Add($entry.Value)
+  }
+}
+
+$csprojForPkg = Get-IndicatorFile -Path $ProjectRoot -Filter "*.csproj" -Depth 5
+if ($csprojForPkg -and -not $packageManagers.Contains("dotnet")) {
+  $packageManagers.Add("dotnet")
+}
+
+# --- Angular ---
+$angularJson = Get-IndicatorFile -Path $ProjectRoot -Filter "angular.json" -Depth 5
+if ($angularJson) {
+  $frameworks.Add("angular")
   if (-not $languages.Contains("typescript")) {
     $languages.Add("typescript")
   }
 }
 
-# --- JavaScript (Node.js only, no TypeScript) ---
-if ((Test-Path $pkgJson) -and -not (Test-Path $tsConfig)) {
+# --- TypeScript (package.json + tsconfig.json pair in same directory) ---
+$allPkgJson = Get-IndicatorFile -Path $ProjectRoot -Filter "package.json" -Depth 5
+$hasTypescript = $false
+foreach ($pkg in $allPkgJson) {
+  $tsConfig = Join-Path $pkg.Directory.FullName "tsconfig.json"
+  if (Test-Path $tsConfig) {
+    $hasTypescript = $true
+    break
+  }
+}
+if ($hasTypescript) {
+  if (-not $languages.Contains("typescript")) {
+    $languages.Add("typescript")
+  }
+}
+
+# --- JavaScript (package.json exists but no tsconfig.json anywhere) ---
+$hasAnyTsConfig = Get-IndicatorFile -Path $ProjectRoot -Filter "tsconfig.json" -Depth 5
+if ($allPkgJson -and -not $hasAnyTsConfig) {
   if (-not $languages.Contains("javascript")) {
     $languages.Add("javascript")
   }
 }
 
 # --- Python ---
-$pyProject = Join-Path $ProjectRoot "pyproject.toml"
-$requirements = Join-Path $ProjectRoot "requirements.txt"
-$setupPy = Join-Path $ProjectRoot "setup.py"
-if ((Test-Path $pyProject) -or (Test-Path $requirements) -or (Test-Path $setupPy)) {
+$pyIndicators = @("pyproject.toml", "requirements.txt", "setup.py")
+$hasPython = $false
+foreach ($indicator in $pyIndicators) {
+  $found = Get-IndicatorFile -Path $ProjectRoot -Filter $indicator -Depth 5
+  if ($found) {
+    $hasPython = $true
+    break
+  }
+}
+if ($hasPython) {
   $languages.Add("python")
 }
 
 # --- .NET / C# ---
-$csprojFiles = Get-ChildItem -Path $ProjectRoot -Recurse -Filter "*.csproj" -Depth 3 -ErrorAction SilentlyContinue
-$slnFiles = Get-ChildItem -Path $ProjectRoot -Recurse -Filter "*.sln" -Depth 2 -ErrorAction SilentlyContinue
-if ($csprojFiles -or $slnFiles) {
+$csprojFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.csproj" -Depth 5
+$slnFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.sln" -Depth 5
+$slnxFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.slnx" -Depth 5
+if ($csprojFiles -or $slnFiles -or $slnxFiles) {
   $languages.Add("csharp")
   $frameworks.Add("dotnet")
 }
 
-# --- Build skill list ---
-$build = $languages | ForEach-Object { "${_}-build" }
+$langPrefixMap = @{
+  typescript = "ts"
+  python     = "py"
+  csharp     = "dotnet"
+  javascript = "js"
+}
+
+for ($i = 0; $i -lt $languages.Count; $i++) {
+  if ($langPrefixMap.ContainsKey($languages[$i])) {
+    $languages[$i] = $langPrefixMap[$languages[$i]]
+  }
+}
+
 $test = $languages | ForEach-Object { "${_}-test" }
 $implementation = $languages | ForEach-Object { "${_}-implementation" }
 
 $report = @{
   languages       = @($languages)
   frameworks      = @($frameworks)
-  build           = @($build)
+  packageManager  = @($packageManagers)
   test            = @($test)
   implementation  = @($implementation)
 }
