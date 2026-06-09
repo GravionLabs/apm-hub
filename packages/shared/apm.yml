@@ -1,5 +1,5 @@
 name: shared
-version: 1.0.8
+version: 1.0.9
 description: Shared agents, instructions and skills used across all GravionLabs apm-hub packages. Includes general-purpose SE agents (documentation writer, technical writer, UX/UI designer, test engineer), code review and markdown instructions, and reusable skills for test writing and skill creation.
 author:
   name: Gravion
