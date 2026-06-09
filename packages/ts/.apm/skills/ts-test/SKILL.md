@@ -10,14 +10,14 @@ compatibility: opencode, github-copilot
 
 ## Prerequisites
 
-- Node.js v18+, pnpm installed
+- Node.js v18+, a package manager (pnpm, npm, yarn)
 - Project root with `vitest.config.ts`
 
 ## Test Runner
 
 - **Framework**: Vitest (`globals: true`, `environment: node`)
 - **Config**: `vitest.config.ts` at project root
-- **Run all**: `pnpm test`
+- **Run all**: `$packageManager test`
 - **Run single file**: `npx vitest run <path>`
 
 ## File Naming
@@ -28,7 +28,7 @@ compatibility: opencode, github-copilot
 ## Coverage
 
 ```powershell
-pnpm test:ci
+$packageManager test:ci
 ```
 
 - Uses `@vitest/coverage-v8`

@@ -51,6 +51,3 @@ describe("GET /api/sources/:id", () => {
 });
 ```
 
-## Related Skills
-
-- **Test**: Load `ts-test` for test runner config, naming, and coverage details

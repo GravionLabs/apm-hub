@@ -17,7 +17,7 @@ compatibility: opencode, github-copilot
 
 - **Framework**: Vitest (replaces Karma/Jasmine)
 - **Config**: `vitest.config.ts` at project root
-- **Run all**: `pnpm test`
+- **Run all**: `$packageManager test`
 - **Run single**: `npx vitest run <path>`
 
 ## Component Testing
