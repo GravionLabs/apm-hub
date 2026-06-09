@@ -5,6 +5,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.4] — 2026-06-09
+
+### Bug Fixes
+- Update Detect-TechStack.ps1 for recursive scanning and packageManager detection (#18)
+- Make packageManager an array, exclude node_modules from scans (#18)
+- Increase max depth to 5 for recursive scans (#18)
+- Detect slnx files, map languages to skill prefixes (#18)
+
+
+## [1.0.3] — 2026-06-09
+
+### Documentation
+- Update CHANGELOG.md for v1.0.3 [skip ci]
+
+
 ## [1.0.2] — 2026-06-08
 
 ### Bug Fixes
