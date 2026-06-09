@@ -11,6 +11,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Update agents to use packageManager instead of build skills (#22)
 
 
+### Documentation
+- Update CHANGELOG.md for v1.0.9 [skip ci]
+
+
 ## [1.0.8] — 2026-06-09
 
 ### Bug Fixes
