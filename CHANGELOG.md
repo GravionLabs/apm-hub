@@ -16,6 +16,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Allow determine-version on workflow_dispatch so full release pipeline runs
 
 
+### Documentation
+- Update CHANGELOG.md for v1.0.2 [skip ci]
+
+
 ### Features
 - Add pnpm-workflow and cliff-setup skills (#15)
 - Add detect-techstack, <lang>-build, and <lang>-test skills (#15)
