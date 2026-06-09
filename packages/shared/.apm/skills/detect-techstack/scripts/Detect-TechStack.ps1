@@ -24,55 +24,56 @@ if (-not (Test-Path $ProjectRoot -PathType Container)) {
   exit 1
 }
 
+function Get-IndicatorFile {
+  param([string]$Path, [string]$Filter, [int]$Depth)
+  Get-ChildItem -Path $Path -Recurse -Depth $Depth -Filter $Filter -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -notmatch '[\\/]node_modules[\\/]' -and $_.FullName -notmatch '[\\/]\.git[\\/]' -and $_.FullName -notmatch '[\\/]\.opencode[\\/]' }
+}
+
 $languages = [System.Collections.Generic.List[string]]::new()
 $frameworks = [System.Collections.Generic.List[string]]::new()
 
-# --- packageManager detection (depth 2) ---
-$packageManager = $null
+# --- packageManager detection ---
+$packageManagers = [System.Collections.Generic.List[string]]::new()
 
-$pkgJsonFiles = Get-ChildItem -Path $ProjectRoot -Recurse -Depth 3 -Filter "package.json" -ErrorAction SilentlyContinue
-if ($pkgJsonFiles) {
-  foreach ($pkg in $pkgJsonFiles) {
-    try {
-      $content = Get-Content $pkg.FullName -Raw | ConvertFrom-Json -ErrorAction Stop
-      if ($content.packageManager) {
-        $packageManager = ($content.packageManager -split '@')[0]
-        break
+$pkgJsonFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "package.json" -Depth 3
+foreach ($pkg in $pkgJsonFiles) {
+  try {
+    $content = Get-Content $pkg.FullName -Raw | ConvertFrom-Json -ErrorAction Stop
+    if ($content.packageManager) {
+      $name = ($content.packageManager -split '@')[0]
+      if (-not $packageManagers.Contains($name)) {
+        $packageManagers.Add($name)
       }
-    } catch {
-      continue
     }
+  } catch {
+    continue
   }
 }
 
-if (-not $packageManager) {
-  $lockfilePriority = @(
-    @{ Name = "pnpm-lock.yaml"; Value = "pnpm" }
-    @{ Name = "bun.lockb";      Value = "bun" }
-    @{ Name = "yarn.lock";      Value = "yarn" }
-    @{ Name = "package-lock.json"; Value = "npm" }
-    @{ Name = "uv.lock";        Value = "uv" }
-    @{ Name = "Cargo.toml";     Value = "cargo" }
-  )
+$lockfileChecks = @(
+  @{ Name = "pnpm-lock.yaml"; Value = "pnpm" }
+  @{ Name = "bun.lockb";      Value = "bun" }
+  @{ Name = "yarn.lock";      Value = "yarn" }
+  @{ Name = "package-lock.json"; Value = "npm" }
+  @{ Name = "uv.lock";        Value = "uv" }
+  @{ Name = "Cargo.toml";     Value = "cargo" }
+)
 
-  foreach ($entry in $lockfilePriority) {
-    $found = Get-ChildItem -Path $ProjectRoot -Recurse -Depth 2 -Filter $entry.Name -ErrorAction SilentlyContinue
-    if ($found) {
-      $packageManager = $entry.Value
-      break
-    }
+foreach ($entry in $lockfileChecks) {
+  $found = Get-IndicatorFile -Path $ProjectRoot -Filter $entry.Name -Depth 2
+  if ($found -and -not $packageManagers.Contains($entry.Value)) {
+    $packageManagers.Add($entry.Value)
   }
 }
 
-if (-not $packageManager) {
-  $csprojForPkg = Get-ChildItem -Path $ProjectRoot -Recurse -Depth 3 -Filter "*.csproj" -ErrorAction SilentlyContinue
-  if ($csprojForPkg) {
-    $packageManager = "dotnet"
-  }
+$csprojForPkg = Get-IndicatorFile -Path $ProjectRoot -Filter "*.csproj" -Depth 3
+if ($csprojForPkg -and -not $packageManagers.Contains("dotnet")) {
+  $packageManagers.Add("dotnet")
 }
 
 # --- Angular ---
-$angularJson = Get-ChildItem -Path $ProjectRoot -Recurse -Depth 3 -Filter "angular.json" -ErrorAction SilentlyContinue
+$angularJson = Get-IndicatorFile -Path $ProjectRoot -Filter "angular.json" -Depth 3
 if ($angularJson) {
   $frameworks.Add("angular")
   if (-not $languages.Contains("typescript")) {
@@ -81,7 +82,7 @@ if ($angularJson) {
 }
 
 # --- TypeScript (package.json + tsconfig.json pair in same directory) ---
-$allPkgJson = Get-ChildItem -Path $ProjectRoot -Recurse -Depth 3 -Filter "package.json" -ErrorAction SilentlyContinue
+$allPkgJson = Get-IndicatorFile -Path $ProjectRoot -Filter "package.json" -Depth 3
 $hasTypescript = $false
 foreach ($pkg in $allPkgJson) {
   $tsConfig = Join-Path $pkg.Directory.FullName "tsconfig.json"
@@ -97,7 +98,7 @@ if ($hasTypescript) {
 }
 
 # --- JavaScript (package.json exists but no tsconfig.json anywhere) ---
-$hasAnyTsConfig = Get-ChildItem -Path $ProjectRoot -Recurse -Depth 3 -Filter "tsconfig.json" -ErrorAction SilentlyContinue
+$hasAnyTsConfig = Get-IndicatorFile -Path $ProjectRoot -Filter "tsconfig.json" -Depth 3
 if ($allPkgJson -and -not $hasAnyTsConfig) {
   if (-not $languages.Contains("javascript")) {
     $languages.Add("javascript")
@@ -108,7 +109,7 @@ if ($allPkgJson -and -not $hasAnyTsConfig) {
 $pyIndicators = @("pyproject.toml", "requirements.txt", "setup.py")
 $hasPython = $false
 foreach ($indicator in $pyIndicators) {
-  $found = Get-ChildItem -Path $ProjectRoot -Recurse -Depth 3 -Filter $indicator -ErrorAction SilentlyContinue
+  $found = Get-IndicatorFile -Path $ProjectRoot -Filter $indicator -Depth 3
   if ($found) {
     $hasPython = $true
     break
@@ -119,8 +120,8 @@ if ($hasPython) {
 }
 
 # --- .NET / C# ---
-$csprojFiles = Get-ChildItem -Path $ProjectRoot -Recurse -Depth 3 -Filter "*.csproj" -ErrorAction SilentlyContinue
-$slnFiles = Get-ChildItem -Path $ProjectRoot -Recurse -Depth 2 -Filter "*.sln" -ErrorAction SilentlyContinue
+$csprojFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.csproj" -Depth 3
+$slnFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.sln" -Depth 2
 if ($csprojFiles -or $slnFiles) {
   $languages.Add("csharp")
   $frameworks.Add("dotnet")
@@ -132,7 +133,7 @@ $implementation = $languages | ForEach-Object { "${_}-implementation" }
 $report = @{
   languages       = @($languages)
   frameworks      = @($frameworks)
-  packageManager  = $packageManager
+  packageManager  = @($packageManagers)
   test            = @($test)
   implementation  = @($implementation)
 }

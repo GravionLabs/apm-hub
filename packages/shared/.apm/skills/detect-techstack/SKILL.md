@@ -44,7 +44,7 @@ The script returns JSON conforming to the schema below. If detection fails, it e
 {
   "languages": ["typescript", "python", "csharp"],
   "frameworks": ["angular", "dotnet"],
-  "packageManager": "pnpm",
+  "packageManager": ["pnpm", "dotnet"],
   "test": ["ts-test", "py-test", "dotnet-test"],
   "implementation": ["ts-implementation", "py-implementation", "dotnet-implementation"]
 }
@@ -70,4 +70,4 @@ Error message written to stderr.
 ## Gotchas
 
 - A project may have multiple languages (e.g. Angular frontend + .NET backend in a monorepo).
-- If no tech stack is detected, the script returns `{"languages": [], "frameworks": [], "packageManager": null, "test": [], "implementation": []}`.
+- If no tech stack is detected, the script returns `{"languages": [], "frameworks": [], "packageManager": [], "test": [], "implementation": []}`.
