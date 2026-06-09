@@ -16,15 +16,16 @@ permission:
   question: allow
 # Copilot/APM fields
 name: dev-workflow
-description: "Dev workflow orchestrator. Modes: plan (create GH sub-issues), implement <issue> (skip planning), full (plan→implement→verify). Spawns sub-agents via task() (OpenCode) or runs inline (Copilot/Claude)."
+description: "Dev workflow orchestrator. Modes: plan <issue> (quick planning), deep-planning <issue> (deep planning), implement <issue> (skip planning), full <issue> (plan→implement→verify). Spawns sub-agents via task() (OpenCode) or runs inline (Copilot/Claude)."
 model: deepseek-v4-flash-free
 tools: ['agent', 'read', 'search']
-agents: ['planning', 'implement', 'verify']
+agents: ['planning', 'deep-planning', 'implement', 'verify']
 user-invocable: true
 ---
 
 Dev workflow orchestrator. Mode is determined from your first message:
-- **plan <issue>** — planning only: explore, break into sub-tasks, create GH issues. Stop.
+- **plan <issue>** — quick planning (tasks `planning`): explore, break into sub-tasks, create GH issues. Stop.
+- **deep-planning <issue>** — deep planning (tasks `deep-planning`): thorough analysis, detailed sub-tasks, create GH issues. Stop.
 - **implement <issue>** — skip planning, implement existing issue. Start at implement.
 - **full <issue>** — plan → implement → verify in one session (default).
 
@@ -33,6 +34,7 @@ Dev workflow orchestrator. Mode is determined from your first message:
 0. Load `detect-techstack` via `skill(detect-techstack)` — parse JSON report for `languages`, `build`, `test`, `implementation` lists
 1. Load `ts-pnpm-workflow` via `skill(ts-pnpm-workflow)` to ensure pnpm is set up
 2. Determine mode from user input:
+   - Contains "deep-planning" → mode=deep-planning
    - Contains "plan" → mode=plan
    - Contains "implement" → mode=implement
    - Otherwise → mode=full
@@ -40,6 +42,11 @@ Dev workflow orchestrator. Mode is determined from your first message:
 ### plan mode
 1. Spawn `task(planning)` with the issue — returns JSON with created sub-issues
 2. Report: "Created sub-issues #42, #43, #44. Pick one to implement next."
+3. Output JSON with issue list. Stop.
+
+### deep-planning mode
+1. Spawn `task(deep-planning)` with the issue — returns JSON with created sub-issues
+2. Report: "Created sub-issues with detailed breakdown. Pick one to implement next."
 3. Output JSON with issue list. Stop.
 
 ### implement mode
