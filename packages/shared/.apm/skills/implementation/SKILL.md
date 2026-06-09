@@ -41,4 +41,4 @@ Before commit:
 
 Run `detect-techstack` first to determine project languages. Then load each `<lang>-implementation` skill from the report (e.g. `ts-implementation`, `py-implementation`). Each contains framework-specific rules.
 
-Load each `<lang>-test` skill for test framework details. Use the detected `packageManager` for build commands.
+Also load each `<lang>-test` skill for language-specific test commands.
