@@ -28,7 +28,7 @@ permission:
   question: deny
 # Copilot/APM fields
 name: implement
-description: "Write code + tests. Loads detect-techstack, <lang>-implementation, <lang>-build, <lang>-test skills. Creates branch, implements, runs tests, commits."
+description: "Write code + tests. Loads detect-techstack, <lang>-implementation, <lang>-test skills. Creates branch, implements, runs tests, commits."
 model: deepseek-v4-flash-free
 tools: ['read', 'edit', 'execute', 'search']
 user-invocable: false
@@ -41,7 +41,7 @@ Phase: implement. Write code + tests per plan.
 1. Create branch per convention via `git fetch origin main && git checkout -b <branch> origin/main`
 2. Load `detect-techstack` skill — parse JSON report for `build`, `test`, `implementation` skill lists
 3. Load `implementation` + each `<lang>-implementation` skill via `skill()`
-4. Load each `<lang>-build` + `<lang>-test` skill for build/test commands
+4. Load each `<lang>-test` skill for test commands
 
 ## Mandatory rules
 
@@ -62,7 +62,7 @@ Phase: implement. Write code + tests per plan.
 
 ## Post-flight
 
-1. Run build per loaded `<lang>-build` skills — pass
+1. Run build using detected package manager — pass
 2. Run tests per loaded `<lang>-test` skills — pass
 3. Run lint/format per project conventions — pass
 4. All pass? Commit with conventional commit msg, body `Closes #N`
