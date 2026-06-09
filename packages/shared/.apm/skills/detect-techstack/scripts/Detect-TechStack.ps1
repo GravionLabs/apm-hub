@@ -122,9 +122,23 @@ if ($hasPython) {
 # --- .NET / C# ---
 $csprojFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.csproj" -Depth 5
 $slnFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.sln" -Depth 5
-if ($csprojFiles -or $slnFiles) {
+$slnxFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.slnx" -Depth 5
+if ($csprojFiles -or $slnFiles -or $slnxFiles) {
   $languages.Add("csharp")
   $frameworks.Add("dotnet")
+}
+
+$langPrefixMap = @{
+  typescript = "ts"
+  python     = "py"
+  csharp     = "dotnet"
+  javascript = "js"
+}
+
+for ($i = 0; $i -lt $languages.Count; $i++) {
+  if ($langPrefixMap.ContainsKey($languages[$i])) {
+    $languages[$i] = $langPrefixMap[$languages[$i]]
+  }
 }
 
 $test = $languages | ForEach-Object { "${_}-test" }

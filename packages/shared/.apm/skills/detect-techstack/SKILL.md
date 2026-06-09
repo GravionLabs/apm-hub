@@ -42,7 +42,7 @@ The script returns JSON conforming to the schema below. If detection fails, it e
 ### Success (exit 0)
 ```json
 {
-  "languages": ["typescript", "python", "csharp"],
+  "languages": ["ts", "py", "dotnet"],
   "frameworks": ["angular", "dotnet"],
   "packageManager": ["pnpm", "dotnet"],
   "test": ["ts-test", "py-test", "dotnet-test"],
@@ -60,12 +60,13 @@ Error message written to stderr.
 | `angular.json` (recursive, depth 5) | Angular framework |
 | `package.json` + `tsconfig.json` pair (recursive, depth 5) | TypeScript |
 | `pyproject.toml`, `requirements.txt`, or `setup.py` (recursive, depth 5) | Python |
-| `*.csproj` or `*.sln` (recursive, depth 5) | .NET / C# |
+| `*.csproj`, `*.sln`, or `*.slnx` (recursive, depth 5) | .NET / C# |
 | `package.json` alone, no `tsconfig.json` (recursive, depth 5) | JavaScript (Node.js) |
 | `packageManager` field in `package.json` (highest priority) | Package manager |
 | Lockfiles `pnpm-lock.yaml`, `bun.lockb`, `yarn.lock`, `package-lock.json`, `uv.lock` (recursive, depth 5) | Package manager |
 | `*.csproj` | Package manager (dotnet) |
 | `Cargo.toml` | Package manager (cargo) |
+| Language mapping | `typescript`→`ts`, `python`→`py`, `csharp`→`dotnet`, `javascript`→`js` |
 
 ## Gotchas
 
