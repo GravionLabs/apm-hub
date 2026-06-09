@@ -5,10 +5,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.7] — 2026-06-09
+
+### Features
+- Assign tiered models to agents based on complexity (#29)
+- Add deep-planning and quick-planning agents for tiered planning (#29)
+
+
 ## [1.0.6] — 2026-06-09
 
 ### Bug Fixes
 - Use concrete skill names in implementation descriptions (#20)
+
+
+### Documentation
+- Update CHANGELOG.md for v1.0.6 [skip ci]
 
 
 ### Features
