@@ -3,7 +3,6 @@ name: ts-write-tests
 description: 'Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.'
 allowed-tools: read write edit editFiles search codebase
 compatibility: opencode, github-copilot
-model: claude-sonnet-4.6
 ---
 
 Write unit tests for specified code.

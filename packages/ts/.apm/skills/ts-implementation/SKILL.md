@@ -6,7 +6,6 @@ description: >
   `implementation` skill dispatches to <lang>-implementation.
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 compatibility: opencode, github-copilot
-model: gpt-4.1
 ---
 
 ## Framework

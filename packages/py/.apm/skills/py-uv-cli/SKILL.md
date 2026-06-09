@@ -7,7 +7,6 @@ description: >
   if the user only mentions "uv", "venv", or "dependencies" without naming specific flags.
 allowed-tools: read search codebase
 compatibility: opencode, github-copilot
-model: gpt-4.1
 ---
 
 ## Overview

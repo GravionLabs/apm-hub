@@ -3,7 +3,6 @@ name: dotnet-code-review
 description: 'Perform a structured C# and NUnit code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions.'
 allowed-tools: read search codebase
 compatibility: opencode, github-copilot
-model: claude-sonnet-4.6
 ---
 
 Review C# code for correctness, readability, maintainability, and security.

@@ -2,7 +2,6 @@
 name: github-issue-finish
 description: 'Review implementation and create a GitHub pull request. Run after github-issue-start when implementation is complete.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase mcp_github_create_pull_request mcp_github_get_issue
-model: claude-sonnet-4.6
 chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 

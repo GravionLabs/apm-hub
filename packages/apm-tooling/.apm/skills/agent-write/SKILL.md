@@ -7,7 +7,6 @@ description: >
   Code, and Claude Code.
 allowed-tools: read search codebase write edit editFiles
 compatibility: opencode, github-copilot
-model: claude-sonnet-4.6
 chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 

@@ -1,7 +1,6 @@
 ---
 name: github-workflow
 description: "Generic GitHub workflow — creates pull requests, links issues, and manages GitHub-based development. Use this skill for any GitHub PR or issue linking operation. Preferred model: gpt-4.1."
-model: gpt-4.1
 allowed-tools: shell execute runCommands mcp_github_create_pull_request mcp_github_list_pull_requests
 ---
 
