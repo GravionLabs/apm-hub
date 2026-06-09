@@ -130,10 +130,10 @@ describe('findAgentFiles', () => {
     // Non-agent file in agents dir — should be ignored
     fs.writeFileSync(path.join(dotnetAgentsDir, 'README.md'), '# readme\n');
 
-    // packages/python/.apm/agents/python-expert.agent.md
-    const pyAgentsDir = path.join(tmpDir, 'python', '.apm', 'agents');
+    // packages/py/.apm/agents/py-expert.agent.md
+    const pyAgentsDir = path.join(tmpDir, 'py', '.apm', 'agents');
     fs.mkdirSync(pyAgentsDir, { recursive: true });
-    fs.writeFileSync(path.join(pyAgentsDir, 'python-expert.agent.md'), '# python-expert\n');
+    fs.writeFileSync(path.join(pyAgentsDir, 'py-expert.agent.md'), '# py-expert\n');
 
     // packages/dotnet/.apm/skills — should not be picked up by findAgentFiles
     const dotnetSkillsDir = path.join(tmpDir, 'dotnet', '.apm', 'skills', 'dotnet-async');
@@ -150,7 +150,7 @@ describe('findAgentFiles', () => {
     expect(files).toHaveLength(3);
     expect(files.some((f) => f.endsWith('dotnet-expert.agent.md'))).toBe(true);
     expect(files.some((f) => f.endsWith('dotnet-upgrade.agent.md'))).toBe(true);
-    expect(files.some((f) => f.endsWith('python-expert.agent.md'))).toBe(true);
+    expect(files.some((f) => f.endsWith('py-expert.agent.md'))).toBe(true);
   });
 
   it('should not include non-.agent.md files', () => {

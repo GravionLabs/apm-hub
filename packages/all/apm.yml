@@ -9,10 +9,10 @@ license: MIT
 
 dependencies:
   apm:
-    - GravionLabs/apm-hub/packages/angular
+    - GravionLabs/apm-hub/packages/ng
     - GravionLabs/apm-hub/packages/development-workflow
     - GravionLabs/apm-hub/packages/dotnet
     - GravionLabs/apm-hub/packages/github
-    - GravionLabs/apm-hub/packages/python
+    - GravionLabs/apm-hub/packages/py
     - GravionLabs/apm-hub/packages/shared
-    - GravionLabs/apm-hub/packages/typescript
+    - GravionLabs/apm-hub/packages/ts

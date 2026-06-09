@@ -16,7 +16,7 @@ Tool-agnostic implement workflow. Setup → implement → verify from an existin
 1. Read GH issue number from input
 2. Fetch issue via `gh issue view <nr> --json title,body,labels`
 3. Load `detect-techstack` skill — parse JSON report for `languages`, `build`, `test`, `implementation` skill lists
-4. Load `pnpm-workflow` skill to ensure pnpm is set up as the package manager
+4. Load `ts-pnpm-workflow` skill to ensure pnpm is set up as the package manager
 5. Suggest branch name per conventional-commits: `<type>/<nr>-<kebab-desc>`
 
 ### Phase 1 — Implement

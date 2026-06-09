@@ -33,12 +33,12 @@ describe('generateSkillList', () => {
     fs.mkdirSync(csInstrDir, { recursive: true });
     fs.writeFileSync(path.join(csInstrDir, 'csharp.instructions.md'), '---\ndescription: C# standards.\n---\n');
 
-    // shared/.apm/skills/write-tests/SKILL.md
+    // shared/.apm/skills/ts-write-tests/SKILL.md
     const sharedSkillsDir = path.join(packagesDir, 'shared', '.apm', 'skills');
-    fs.mkdirSync(path.join(sharedSkillsDir, 'write-tests'), { recursive: true });
+    fs.mkdirSync(path.join(sharedSkillsDir, 'ts-write-tests'), { recursive: true });
     fs.writeFileSync(
-      path.join(sharedSkillsDir, 'write-tests', 'SKILL.md'),
-      '---\nname: write-tests\ndescription: Write unit tests.\n---\nContent'
+      path.join(sharedSkillsDir, 'ts-write-tests', 'SKILL.md'),
+      '---\nname: ts-write-tests\ndescription: Write unit tests.\n---\nContent'
     );
   });
 
@@ -54,7 +54,7 @@ describe('generateSkillList', () => {
     expect(content).toContain('## Shared');
     expect(content).toContain('csharp-async');
     expect(content).toContain('csharp-docs');
-    expect(content).toContain('write-tests');
+    expect(content).toContain('ts-write-tests');
   });
 
   it('should not include agents or instructions in skill list', () => {
@@ -76,6 +76,6 @@ describe('generateSkillList', () => {
     generateSkillList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('packages/csharp/.apm/skills/csharp-async/SKILL.md');
-    expect(content).toContain('packages/shared/.apm/skills/write-tests/SKILL.md');
+    expect(content).toContain('packages/shared/.apm/skills/ts-write-tests/SKILL.md');
   });
 });

@@ -1,0 +1,16 @@
+name: ts-development
+version: 1.0.2
+description: TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, debugging, Playwright TypeScript testing, and containerization.
+author:
+  name: Gravion
+license: MIT
+keywords:
+  - ts
+  - nodejs
+  - playwright
+  - vitest
+  - eslint
+skills:
+  - ts-pnpm-workflow
+  - ts-build
+  - ts-test
