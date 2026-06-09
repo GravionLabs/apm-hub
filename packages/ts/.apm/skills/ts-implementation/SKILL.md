@@ -54,5 +54,4 @@ describe("GET /api/sources/:id", () => {
 
 ## Related Skills
 
-- **Build**: Load `ts-build` for build, format, and lint commands
 - **Test**: Load `ts-test` for test runner config, naming, and coverage details
