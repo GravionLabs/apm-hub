@@ -5,6 +5,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.6] — 2026-06-09
+
+### Bug Fixes
+- Use concrete skill names in implementation descriptions (#20)
+
+
+### Features
+- Create missing py, ng, and dotnet implementation skills (#20)
+
+
+## [1.0.5] — 2026-06-09
+
+### Documentation
+- Update CHANGELOG.md for v1.0.5 [skip ci]
+
+
 ## [1.0.4] — 2026-06-09
 
 ### Bug Fixes
