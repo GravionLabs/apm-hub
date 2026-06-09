@@ -11,9 +11,9 @@
       "source": "./packages/all"
     },
     {
-      "name": "angular",
+      "name": "ng",
       "description": "Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, AG Grid integration, and testing with Vitest.",
-      "source": "./packages/angular"
+      "source": "./packages/ng"
     },
     {
       "name": "common",
@@ -71,9 +71,9 @@
       "source": "./packages/postgresql"
     },
     {
-      "name": "python",
+      "name": "py",
       "description": "Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.",
-      "source": "./packages/python"
+      "source": "./packages/py"
     },
     {
       "name": "security",
@@ -91,9 +91,9 @@
       "source": "./packages/terraform"
     },
     {
-      "name": "typescript",
+      "name": "ts",
       "description": "TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, debugging, Playwright TypeScript testing, and containerization.",
-      "source": "./packages/typescript"
+      "source": "./packages/ts"
     }
   ]
 }

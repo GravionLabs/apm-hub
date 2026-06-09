@@ -4,31 +4,14 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ## Table of Contents
 
-- [Angular](#angular)
 - [Apm-tooling](#apm-tooling)
 - [Development-workflow](#development-workflow)
 - [Dotnet](#dotnet)
 - [Github](#github)
-- [Python](#python)
+- [Ng](#ng)
+- [Py](#py)
 - [Shared](#shared)
-- [Typescript](#typescript)
-
-## Angular
-
-### Skills
-
-| Name                   | Description                                                                                                                                                                     | File                                                                                      |
-| :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------- |
-| ag-grid-developer      | >                                                                                                                                                                               | [ag-grid-developer](../packages/angular/.apm/skills/ag-grid-developer/SKILL.md)           |
-| ag-grid-mcp-setup      | >                                                                                                                                                                               | [ag-grid-mcp-setup](../packages/angular/.apm/skills/ag-grid-mcp-setup/SKILL.md)           |
-| angular-build          | >                                                                                                                                                                               | [angular-build](../packages/angular/.apm/skills/angular-build/SKILL.md)                   |
-| angular-code-review    | Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list. | [angular-code-review](../packages/angular/.apm/skills/angular-code-review/SKILL.md)       |
-| angular-component      | Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.                 | [angular-component](../packages/angular/.apm/skills/angular-component/SKILL.md)           |
-| angular-developer      | >                                                                                                                                                                               | [angular-developer](../packages/angular/.apm/skills/angular-developer/SKILL.md)           |
-| angular-migration      | Migrate an Angular application to a newer version. Covers ng update, standalone component migration, new @if/@for/@switch control flow syntax, and signals-first patterns.      | [angular-migration](../packages/angular/.apm/skills/angular-migration/SKILL.md)           |
-| angular-test           | >                                                                                                                                                                               | [angular-test](../packages/angular/.apm/skills/angular-test/SKILL.md)                     |
-| angular-testing        | Write Angular 21 unit tests using Vitest and TestBed. Covers standalone component testing, signal testing, service mocking, and async patterns.                                 | [angular-testing](../packages/angular/.apm/skills/angular-testing/SKILL.md)               |
-| create-angular-project | Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier.                                                  | [create-angular-project](../packages/angular/.apm/skills/create-angular-project/SKILL.md) |
+- [Ts](#ts)
 
 ## Apm-tooling
 
@@ -96,21 +79,38 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 | :----------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
 | github-issue | Read GitHub issue, branch, implement, verify, PR. Full lifecycle from issue to merged PR. Use for any GitHub issue work — covers start through finish. | [github-issue](../packages/github/.apm/skills/github-issue/SKILL.md) |
 
-## Python
+## Ng
 
 ### Skills
 
-| Name                  | Description                                                                                                                                | File                                                                                   |
-| :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
-| create-python-project | Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, and asyncio support.                                            | [create-python-project](../packages/python/.apm/skills/create-python-project/SKILL.md) |
-| py-build              | >                                                                                                                                          | [py-build](../packages/python/.apm/skills/py-build/SKILL.md)                           |
-| py-test               | >                                                                                                                                          | [py-test](../packages/python/.apm/skills/py-test/SKILL.md)                             |
-| pytest-cov            | >                                                                                                                                          | [pytest-cov](../packages/python/.apm/skills/pytest-cov/SKILL.md)                       |
-| python-code-review    | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions. | [python-code-review](../packages/python/.apm/skills/python-code-review/SKILL.md)       |
-| python-debug          | Diagnose and fix Python runtime errors, memory leaks, and performance issues using pdb, mypy, and profiling tools.                         | [python-debug](../packages/python/.apm/skills/python-debug/SKILL.md)                   |
-| python-packaging      | Set up or modernize Python project packaging using pyproject.toml, uv, and hatch — covers dependencies, build backends, and publishing.    | [python-packaging](../packages/python/.apm/skills/python-packaging/SKILL.md)           |
-| python-pytest         | Write pytest tests: structure, marks, naming, mocking. Load when user asks to write/add/improve Python tests.                              | [python-pytest](../packages/python/.apm/skills/python-pytest/SKILL.md)                 |
-| python-uv-cli         | >                                                                                                                                          | [python-uv-cli](../packages/python/.apm/skills/python-uv-cli/SKILL.md)                 |
+| Name                 | Description                                                                                                                                                                     | File                                                                             |
+| :------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------- |
+| ng-ag-grid-developer | >                                                                                                                                                                               | [ng-ag-grid-developer](../packages/ng/.apm/skills/ng-ag-grid-developer/SKILL.md) |
+| ng-ag-grid-mcp-setup | >                                                                                                                                                                               | [ng-ag-grid-mcp-setup](../packages/ng/.apm/skills/ng-ag-grid-mcp-setup/SKILL.md) |
+| ng-build             | >                                                                                                                                                                               | [ng-build](../packages/ng/.apm/skills/ng-build/SKILL.md)                         |
+| ng-code-review       | Review Angular code for change detection strategy, lifecycle hooks, signal usage, template best practices, accessibility, and performance. Returns a prioritised findings list. | [ng-code-review](../packages/ng/.apm/skills/ng-code-review/SKILL.md)             |
+| ng-component         | Scaffold an Angular standalone component with 3-file structure (ts/html/scss) following project conventions for selector prefix, imports, and folder placement.                 | [ng-component](../packages/ng/.apm/skills/ng-component/SKILL.md)                 |
+| ng-create-project    | Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier.                                                  | [ng-create-project](../packages/ng/.apm/skills/ng-create-project/SKILL.md)       |
+| ng-developer         | >                                                                                                                                                                               | [ng-developer](../packages/ng/.apm/skills/ng-developer/SKILL.md)                 |
+| ng-migration         | Migrate an Angular application to a newer version. Covers ng update, standalone component migration, new @if/@for/@switch control flow syntax, and signals-first patterns.      | [ng-migration](../packages/ng/.apm/skills/ng-migration/SKILL.md)                 |
+| ng-test              | >                                                                                                                                                                               | [ng-test](../packages/ng/.apm/skills/ng-test/SKILL.md)                           |
+| ng-testing           | Write Angular 21 unit tests using Vitest and TestBed. Covers standalone component testing, signal testing, service mocking, and async patterns.                                 | [ng-testing](../packages/ng/.apm/skills/ng-testing/SKILL.md)                     |
+
+## Py
+
+### Skills
+
+| Name              | Description                                                                                                                                | File                                                                       |
+| :---------------- | :----------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------- |
+| py-build          | >                                                                                                                                          | [py-build](../packages/py/.apm/skills/py-build/SKILL.md)                   |
+| py-code-review    | Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions. | [py-code-review](../packages/py/.apm/skills/py-code-review/SKILL.md)       |
+| py-create-project | Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, and asyncio support.                                            | [py-create-project](../packages/py/.apm/skills/py-create-project/SKILL.md) |
+| py-debug          | Diagnose and fix Python runtime errors, memory leaks, and performance issues using pdb, mypy, and profiling tools.                         | [py-debug](../packages/py/.apm/skills/py-debug/SKILL.md)                   |
+| py-packaging      | Set up or modernize Python project packaging using pyproject.toml, uv, and hatch — covers dependencies, build backends, and publishing.    | [py-packaging](../packages/py/.apm/skills/py-packaging/SKILL.md)           |
+| py-pytest         | Write pytest tests: structure, marks, naming, mocking. Load when user asks to write/add/improve Python tests.                              | [py-pytest](../packages/py/.apm/skills/py-pytest/SKILL.md)                 |
+| py-pytest-cov     | >                                                                                                                                          | [py-pytest-cov](../packages/py/.apm/skills/py-pytest-cov/SKILL.md)         |
+| py-test           | >                                                                                                                                          | [py-test](../packages/py/.apm/skills/py-test/SKILL.md)                     |
+| py-uv-cli         | >                                                                                                                                          | [py-uv-cli](../packages/py/.apm/skills/py-uv-cli/SKILL.md)                 |
 
 ## Shared
 
@@ -122,19 +122,19 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 | implementation              | >                                                                                                                                                                                         | [implementation](../packages/shared/.apm/skills/implementation/SKILL.md)                           |
 | setup-prettier-eslint-husky | Set up language-agnostic code quality pipeline: ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks. Configures auto-format on save for VSCode and WebStorm. | [setup-prettier-eslint-husky](../packages/shared/.apm/skills/setup-prettier-eslint-husky/SKILL.md) |
 
-## Typescript
+## Ts
 
 ### Skills
 
-| Name                            | Description                                                                                                                                                    | File                                                                                                           |
-| :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
-| create-node-project             | Scaffold a new TypeScript/Node.js project (library, CLI, or application) with strict tsconfig, Vitest, and ESM support.                                        | [create-node-project](../packages/typescript/.apm/skills/create-node-project/SKILL.md)                         |
-| pnpm-workflow                   | >                                                                                                                                                              | [pnpm-workflow](../packages/typescript/.apm/skills/pnpm-workflow/SKILL.md)                                     |
-| ts-build                        | >                                                                                                                                                              | [ts-build](../packages/typescript/.apm/skills/ts-build/SKILL.md)                                               |
-| ts-implementation               | >                                                                                                                                                              | [ts-implementation](../packages/typescript/.apm/skills/ts-implementation/SKILL.md)                             |
-| ts-test                         | >                                                                                                                                                              | [ts-test](../packages/typescript/.apm/skills/ts-test/SKILL.md)                                                 |
-| typescript-code-review          | Perform a structured TypeScript/JavaScript code review with priority ratings: 🔴 critical bugs/security, 🟡 important type/async issues, 🟢 style suggestions. | [typescript-code-review](../packages/typescript/.apm/skills/typescript-code-review/SKILL.md)                   |
-| typescript-debug                | Diagnose and fix TypeScript type errors, module resolution issues, build failures, and runtime errors using tsc, Node.js debugger, and source maps.            | [typescript-debug](../packages/typescript/.apm/skills/typescript-debug/SKILL.md)                               |
-| typescript-mcp-server-generator | Generate MCP server in TypeScript with tools, resources, prompts. @modelcontextprotocol/sdk + zod.                                                             | [typescript-mcp-server-generator](../packages/typescript/.apm/skills/typescript-mcp-server-generator/SKILL.md) |
-| write-tests                     | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.               | [write-tests](../packages/typescript/.apm/skills/write-tests/SKILL.md)                                         |
+| Name                    | Description                                                                                                                                                    | File                                                                                   |
+| :---------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
+| ts-build                | >                                                                                                                                                              | [ts-build](../packages/ts/.apm/skills/ts-build/SKILL.md)                               |
+| ts-code-review          | Perform a structured TypeScript/JavaScript code review with priority ratings: 🔴 critical bugs/security, 🟡 important type/async issues, 🟢 style suggestions. | [ts-code-review](../packages/ts/.apm/skills/ts-code-review/SKILL.md)                   |
+| ts-create-project       | Scaffold a new TypeScript/Node.js project (library, CLI, or application) with strict tsconfig, Vitest, and ESM support.                                        | [ts-create-project](../packages/ts/.apm/skills/ts-create-project/SKILL.md)             |
+| ts-debug                | Diagnose and fix TypeScript type errors, module resolution issues, build failures, and runtime errors using tsc, Node.js debugger, and source maps.            | [ts-debug](../packages/ts/.apm/skills/ts-debug/SKILL.md)                               |
+| ts-implementation       | >                                                                                                                                                              | [ts-implementation](../packages/ts/.apm/skills/ts-implementation/SKILL.md)             |
+| ts-mcp-server-generator | Generate MCP server in TypeScript with tools, resources, prompts. @modelcontextprotocol/sdk + zod.                                                             | [ts-mcp-server-generator](../packages/ts/.apm/skills/ts-mcp-server-generator/SKILL.md) |
+| ts-pnpm-workflow        | >                                                                                                                                                              | [ts-pnpm-workflow](../packages/ts/.apm/skills/ts-pnpm-workflow/SKILL.md)               |
+| ts-test                 | >                                                                                                                                                              | [ts-test](../packages/ts/.apm/skills/ts-test/SKILL.md)                                 |
+| ts-write-tests          | Write unit tests for the specified code using the project''s test framework and conventions. Covers happy path, edge cases, and error scenarios.               | [ts-write-tests](../packages/ts/.apm/skills/ts-write-tests/SKILL.md)                   |
 
