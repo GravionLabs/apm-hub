@@ -18,8 +18,6 @@ permission:
 name: dev-workflow
 description: "Dev workflow orchestrator. Modes: plan <issue> (quick planning), deep-planning <issue> (deep planning), implement <issue> (skip planning), full <issue> (plan→implement→verify). Spawns sub-agents via task() (OpenCode) or runs inline (Copilot/Claude)."
 model: deepseek-v4-flash-free
-tools: ['agent', 'read', 'search']
-agents: ['planning', 'deep-planning', 'implement', 'verify']
 user-invocable: true
 ---
 
