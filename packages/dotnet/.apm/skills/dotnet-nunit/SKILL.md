@@ -6,7 +6,6 @@ description: >
   conventions.
 allowed-tools: read write edit editFiles search codebase
 compatibility: opencode, github-copilot
-model: claude-sonnet-4.6
 ---
 
 Write NUnit tests for C# code using NSubstitute and Shouldly.

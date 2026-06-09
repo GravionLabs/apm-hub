@@ -3,7 +3,6 @@ name: py-code-review
 description: 'Perform a structured Python code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 style suggestions.'
 allowed-tools: read search codebase
 compatibility: opencode, github-copilot
-model: claude-sonnet-4.6
 ---
 
 Review Python code for correctness, readability, maintainability, and security.

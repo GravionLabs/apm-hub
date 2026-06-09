@@ -8,7 +8,6 @@ description: >
   mentioning pytest.
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 compatibility: opencode, github-copilot
-model: claude-sonnet-4.6
 ---
 
 Improve pytest test coverage for Python code.

@@ -3,7 +3,6 @@ name: ts-create-project
 description: 'Scaffold a new TypeScript/Node.js project (library, CLI, or application) with strict tsconfig, Vitest, and ESM support.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 compatibility: opencode, github-copilot
-model: gpt-4.1
 ---
 
 Scaffold TypeScript/Node.js project with production-ready baseline.

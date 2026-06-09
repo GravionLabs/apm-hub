@@ -3,7 +3,6 @@ name: dotnet-mcp-server-generator
 description: 'Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 compatibility: opencode, github-copilot
-model: claude-sonnet-4.6
 ---
 
 Generate complete Model Context Protocol (MCP) server in C#.

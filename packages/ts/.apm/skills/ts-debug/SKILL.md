@@ -3,7 +3,6 @@ name: ts-debug
 description: 'Diagnose and fix TypeScript type errors, module resolution issues, build failures, and runtime errors using tsc, Node.js debugger, and source maps.'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase problems
 compatibility: opencode, github-copilot
-model: claude-sonnet-4.6
 ---
 
 Diagnose TypeScript and Node.js issues: type errors, module resolution failures, build errors, runtime crashes.

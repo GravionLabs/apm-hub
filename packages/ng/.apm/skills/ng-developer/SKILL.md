@@ -9,7 +9,6 @@ description: >
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 compatibility: opencode, github-copilot
 license: MIT
-model: claude-sonnet-4.6
 metadata:
   author: Copyright 2026 Google LLC
   version: '1.0'
