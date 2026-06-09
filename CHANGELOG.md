@@ -5,7 +5,20 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.8] — 2026-06-09
+
+### Bug Fixes
+- Update implementation and test skills to use packageManager (#21)
+- Merge py-pytest-cov into py-pytest with reference templates
+- Merge test-writing skills into registered test skills
+- Standardise test naming and categories across dotnet, py, ts
+
+
 ## [1.0.7] — 2026-06-09
+
+### Documentation
+- Update CHANGELOG.md for v1.0.7 [skip ci]
+
 
 ### Features
 - Assign tiered models to agents based on complexity (#29)
