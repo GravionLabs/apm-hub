@@ -1,5 +1,5 @@
 name: all
-version: 1.0.11
+version: 1.0.12
 description: >
   Meta-package that installs all GravionLabs apm-hub packages in one step.
   Use this if you want every language plugin and shared tooling available in your workspace.
