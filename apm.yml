@@ -28,6 +28,11 @@ marketplace:
       common git operations (branch creation, commits, push), GitHub pull request
       management, and issue linking.
     source: ./packages/common
+  - name: apm-tooling
+    description: APM contributor tooling for managing skill lifecycle, agent
+      creation, and sync/transform utilities. Includes sync-opencode for
+      sanitizing Copilot agent frontmatter into OpenCode-compatible format.
+    source: ./packages/apm-tooling
   - name: apm-workspace
     description: APM workspace tooling for apm-hub contributors. Provides skills
       for auditing, creating, and updating APM skill packages.
