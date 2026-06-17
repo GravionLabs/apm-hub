@@ -1,0 +1,74 @@
+name: Publish apm-install
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/apm-install/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  determine-version:
+    name: Determine Version
+    runs-on: ubuntu-latest
+    outputs:
+      semver: ${{ steps.version.outputs.semver }}
+      python-version: ${{ steps.version.outputs.python-version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Determine version
+        id: version
+        uses: GravionLabs/ci/versioning/determine-version@main
+        with:
+          gitversion-config-file: .github/GitVersion-apm-install.yml
+
+  publish:
+    name: Build & Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    needs: determine-version
+    defaults:
+      run:
+        working-directory: packages/apm-install
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Write version to pyproject.toml
+        run: |
+          VERSION="${{ needs.determine-version.outputs.python-version }}"
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to GitHub Packages
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          uv publish \
+            --publish-url https://pypi.pkg.github.com/${{ github.repository_owner }}/
+
+      - name: Tag release
+        run: |
+          TAG="apm-install-v${{ needs.determine-version.outputs.semver }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
