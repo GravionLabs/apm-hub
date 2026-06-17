@@ -1,5 +1,7 @@
 ---
-# OpenCode fields
+name: github-pull-request
+description: 'Create GitHub PR from current branch + linked issue. Gather context, generate title/body, create via gh CLI.'
+model: deepseek-v4-flash-free
 mode: subagent
 steps: 10
 permission:
@@ -13,11 +15,7 @@ permission:
   task: deny
   skill: allow
   webfetch: deny
-# Copilot/APM fields
-name: github-pull-request
-description: 'Create GitHub PR from current branch + linked issue. Gather context, generate title/body, create via gh CLI.'
-model: deepseek-v4-flash-free
-tools: ['shell']
+tools: ['execute']
 user-invocable: false
 ---
 
