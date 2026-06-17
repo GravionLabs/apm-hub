@@ -1,4 +1,6 @@
 import argparse
+import os
+import platform as _platform
 import re
 import shutil
 import subprocess
@@ -14,20 +16,66 @@ TARGET_DIRS = {
     "codex": ".codex",
 }
 
+TARGET_STRIP_FIELDS = {
+    "opencode": ["tools", "user-invocable", "agents"],
+    "copilot": ["mode", "steps", "color", "permission", "task"],
+    "claude": ["mode", "steps", "color", "tools"],
+    "cursor": ["mode", "permission"],
+    "codex": ["mode", "permission"],
+}
+
+GLOBAL_PATHS: dict[str, dict[str, list[str]]] = {
+    "opencode": {
+        "Linux": ["~/.config/opencode/agents"],
+        "Darwin": ["~/Library/Application Support/opencode/agents"],
+        "Windows": ["%APPDATA%\\opencode\\agents"],
+    },
+    "copilot": {
+        "Linux": ["~/.config/github-copilot/agents"],
+        "Darwin": ["~/Library/Application Support/github-copilot/agents"],
+        "Windows": ["%APPDATA%\\GitHub Copilot\\agents"],
+    },
+    "claude": {
+        "Linux": ["~/.claude/agents", "~/.config/claude/agents"],
+        "Darwin": ["~/Library/Application Support/claude/agents"],
+        "Windows": ["%APPDATA%\\Claude\\agents"],
+    },
+    "cursor": {
+        "Linux": ["~/.cursor/agents", "~/.config/cursor/agents"],
+        "Darwin": ["~/Library/Application Support/cursor/agents"],
+        "Windows": ["%APPDATA%\\Cursor\\agents"],
+    },
+    "codex": {
+        "Linux": ["~/.codex/agents"],
+        "Darwin": ["~/.codex/agents"],
+        "Windows": ["%APPDATA%\\Codex\\agents"],
+    },
+}
+
 TOOLS_ARRAY_RE = re.compile(r'^tools:\s*\[')
 TOOLS_BLOCK_RE = re.compile(r'^tools:\s*$')
-USER_INVOCABLE_RE = re.compile(r'^user-invocable:\s*(true|false)')
 PERMISSION_RE = re.compile(r'^permission:')
 
 
-def parse_args(argv: list[str]) -> argparse.Namespace:
+def resolve_path(raw: str) -> Path:
+    expanded = os.path.expandvars(os.path.expanduser(raw))
+    return Path(expanded)
+
+
+def get_global_agents_dirs(target: str) -> list[Path]:
+    system = _platform.system()
+    dirs = GLOBAL_PATHS.get(target, {}).get(system, [])
+    return [resolve_path(d) / "agents" for d in dirs]
+
+
+def parse_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
     parser = argparse.ArgumentParser(
-        description="apm install wrapper — runs apm install then sanitizes agent frontmatter per target."
+        description="Run apm install then sanitize agent frontmatter per target."
     )
     parser.add_argument(
-        "-t", "--target",
+        "-p", "--platform",
         default="opencode",
-        choices=list(TARGET_DIRS.keys()),
+        choices=list(TARGET_STRIP_FIELDS.keys()),
         help="Target platform (default: opencode)",
     )
     parser.add_argument(
@@ -36,11 +84,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Also add permission block to source agent files under packages/",
     )
     parser.add_argument(
-        "apm_args",
-        nargs=argparse.REMAINDER,
-        help="Arguments forwarded to apm install",
+        "-g", "--global",
+        action="store_true",
+        dest="global_",
+        help="Sanitize global installation paths instead of CWD",
     )
-    return parser.parse_args(argv)
+    ns, unknown = parser.parse_known_args(argv)
+    return ns, unknown
 
 
 def find_frontmatter(lines: list[str]) -> tuple[int, int] | None:
@@ -59,22 +109,37 @@ def has_array_tools(fm_lines: list[str]) -> bool:
     return False
 
 
-def strip_copilot_only(fm_lines: list[str]) -> list[str] | None:
+def strip_fields(fm_lines: list[str], fields: list[str]) -> list[str] | None:
+    patterns = [re.compile(r'^' + re.escape(f) + r'\s*:') for f in fields]
+
     new_lines: list[str] = []
-    in_block_list = False
+    skip_indent = False
+    skip_indent_level = 0
+
     for line in fm_lines:
-        if in_block_list:
-            if line.startswith("    -") or line.startswith("  -") or line.strip().startswith("-"):
-                continue
-            in_block_list = False
-        if TOOLS_ARRAY_RE.match(line):
-            continue
-        if TOOLS_BLOCK_RE.match(line):
-            in_block_list = True
-            continue
-        if USER_INVOCABLE_RE.match(line):
-            continue
-        new_lines.append(line)
+        if skip_indent:
+            if line and not line[0].isspace():
+                skip_indent = False
+            elif line and line[0].isspace():
+                indent = len(line) - len(line.lstrip())
+                if indent <= skip_indent_level:
+                    skip_indent = False
+                else:
+                    continue
+            else:
+                skip_indent = False
+
+        matched = False
+        for pat in patterns:
+            if pat.match(line):
+                matched = True
+                skip_indent = True
+                skip_indent_level = len(line) - len(line.lstrip()) if line else 0
+                break
+
+        if not matched:
+            new_lines.append(line)
+
     if len(new_lines) == len(fm_lines):
         return None
     return new_lines
@@ -99,7 +164,7 @@ def add_permission_block(fm_lines: list[str]) -> list[str] | None:
             rest = line[m.end():]
             if rest.endswith("]"):
                 rest = rest[:-1]
-            tool_names = [t.strip().strip("'\"" ) for t in rest.split(",") if t.strip()]
+            tool_names = [t.strip().strip("'\"") for t in rest.split(",") if t.strip()]
             break
         elif TOOLS_BLOCK_RE.match(line):
             in_block = True
@@ -132,8 +197,7 @@ def rewrite_file(path: Path, new_fm_lines: list[str], original_lines: list[str],
     path.write_text(text)
 
 
-def sanitize_installed(target_dir: Path) -> int:
-    agents_dir = target_dir / "agents"
+def sanitize_installed(agents_dir: Path, fields: list[str]) -> int:
     if not agents_dir.is_dir():
         return 0
 
@@ -146,14 +210,15 @@ def sanitize_installed(target_dir: Path) -> int:
         _, fm_end = fm
         fm_lines = lines[1:fm_end]
 
-        new_fm = strip_copilot_only(fm_lines)
+        new_fm = strip_fields(fm_lines, fields)
         if new_fm is None:
             continue
 
         rewrite_file(f, new_fm, lines, fm_end)
         changed += 1
         name = f.stem
-        print(f"  [strip]   {name} — removed Copilot-only fields")
+        removed = [k for k in fields if any(re.match(r'^' + re.escape(k) + r'\s*:', l) for l in fm_lines)]
+        print(f"  [strip]   {name} — removed {', '.join(removed)}")
 
     return changed
 
@@ -193,6 +258,9 @@ def run_apm_install(args: list[str]) -> int:
         print("error: 'apm' command not found in PATH", file=sys.stderr)
         return 1
 
+    if not args:
+        print("warning: no arguments passed to apm install (dry run?)", file=sys.stderr)
+
     cmd = [apm_exe, "install"] + args
     print(f"$ {' '.join(cmd)}")
     result = subprocess.run(cmd)
@@ -200,29 +268,41 @@ def run_apm_install(args: list[str]) -> int:
 
 
 def main() -> None:
-    ns = parse_args(sys.argv[1:])
+    ns, apm_args = parse_args(sys.argv[1:])
 
-    apm_args = ns.apm_args
-    if apm_args and apm_args[0] == "--":
-        apm_args = apm_args[1:]
+    if ns.global_:
+        apm_args = ["-g"] + apm_args
 
     rc = run_apm_install(apm_args)
     if rc != 0:
         sys.exit(rc)
 
-    target_subdir = TARGET_DIRS[ns.target]
-    target_dir = Path.cwd() / target_subdir
+    platform_name = ns.platform
+    fields = TARGET_STRIP_FIELDS.get(platform_name, [])
     packages_dir = Path.cwd() / "packages"
 
-    changed_installed = sanitize_installed(target_dir)
+    changed_installed = 0
+
+    if ns.global_:
+        dirs = get_global_agents_dirs(platform_name)
+        for d in dirs:
+            cnt = sanitize_installed(d, fields)
+            if cnt:
+                print(f"  ({d})")
+            changed_installed += cnt
+    else:
+        target_subdir = TARGET_DIRS.get(platform_name, f".{platform_name}")
+        target_dir = Path.cwd() / target_subdir
+        changed_installed = sanitize_installed(target_dir / "agents", fields)
+
     changed_source = 0
     if ns.source:
         changed_source = sanitize_source(packages_dir)
 
-    print(f"\nDone: {changed_installed} installed files sanitized", end="")
+    parts = [f"{changed_installed} {'global ' if ns.global_ else ''}installed files sanitized"]
     if ns.source:
-        print(f", {changed_source} source files updated", end="")
-    print()
+        parts.append(f"{changed_source} source files updated")
+    print(f"\nDone: {', '.join(parts)}")
 
 
 if __name__ == "__main__":
