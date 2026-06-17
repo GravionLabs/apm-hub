@@ -16,3 +16,4 @@ dependencies:
     - GravionLabs/apm-hub/packages/py
     - GravionLabs/apm-hub/packages/shared
     - GravionLabs/apm-hub/packages/ts
+    - GravionLabs/apm-hub/packages/apm-install

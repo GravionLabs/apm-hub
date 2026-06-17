@@ -1,0 +1,13 @@
+[project]
+name = "apm-install"
+version = "1.0.0"
+description = "Cross-platform apm install wrapper — sanitizes agent frontmatter per target"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+apm-install = "apm_install:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
