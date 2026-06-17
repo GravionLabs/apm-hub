@@ -68,10 +68,7 @@ def get_global_agents_dirs(target: str) -> list[Path]:
     return [resolve_path(d) / "agents" for d in dirs]
 
 
-def parse_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
-    parser = argparse.ArgumentParser(
-        description="Run apm install then sanitize agent frontmatter per target."
-    )
+def _add_sanitize_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "-p", "--platform",
         default="opencode",
@@ -88,6 +85,34 @@ def parse_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
         action="store_true",
         dest="global_",
         help="Sanitize global installation paths instead of CWD",
+    )
+
+
+def parse_args_install(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
+    parser = argparse.ArgumentParser(
+        prog="apm-install",
+        description="Run apm install then sanitize agent frontmatter per target.",
+    )
+    _add_sanitize_args(parser)
+    ns, unknown = parser.parse_known_args(argv)
+    return ns, unknown
+
+
+def parse_args_update(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
+    parser = argparse.ArgumentParser(
+        prog="apm-update",
+        description="Run apm update then sanitize agent frontmatter per target.",
+    )
+    _add_sanitize_args(parser)
+    parser.add_argument(
+        "-y", "--yes",
+        action="store_true",
+        help="Skip the consent prompt (passed as --yes to apm update)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without writing (passed to apm update, skips sanitization)",
     )
     ns, unknown = parser.parse_known_args(argv)
     return ns, unknown
@@ -252,38 +277,25 @@ def sanitize_source(packages_dir: Path) -> int:
     return changed
 
 
-def run_apm_install(args: list[str]) -> int:
+def run_apm(subcommand: str, args: list[str]) -> int:
     apm_exe = shutil.which("apm")
     if apm_exe is None:
         print("error: 'apm' command not found in PATH", file=sys.stderr)
         return 1
 
-    if not args:
-        print("warning: no arguments passed to apm install (dry run?)", file=sys.stderr)
-
-    cmd = [apm_exe, "install"] + args
+    cmd = [apm_exe, subcommand] + args
     print(f"$ {' '.join(cmd)}")
     result = subprocess.run(cmd)
     return result.returncode
 
 
-def main() -> None:
-    ns, apm_args = parse_args(sys.argv[1:])
-
-    if ns.global_:
-        apm_args = ["-g"] + apm_args
-
-    rc = run_apm_install(apm_args)
-    if rc != 0:
-        sys.exit(rc)
-
-    platform_name = ns.platform
+def do_sanitize(platform_name: str, global_: bool, source: bool) -> None:
     fields = TARGET_STRIP_FIELDS.get(platform_name, [])
     packages_dir = Path.cwd() / "packages"
 
     changed_installed = 0
 
-    if ns.global_:
+    if global_:
         dirs = get_global_agents_dirs(platform_name)
         for d in dirs:
             cnt = sanitize_installed(d, fields)
@@ -296,14 +308,40 @@ def main() -> None:
         changed_installed = sanitize_installed(target_dir / "agents", fields)
 
     changed_source = 0
-    if ns.source:
+    if source:
         changed_source = sanitize_source(packages_dir)
 
-    parts = [f"{changed_installed} {'global ' if ns.global_ else ''}installed files sanitized"]
-    if ns.source:
+    parts = [f"{changed_installed} {'global ' if global_ else ''}installed files sanitized"]
+    if source:
         parts.append(f"{changed_source} source files updated")
     print(f"\nDone: {', '.join(parts)}")
 
 
-if __name__ == "__main__":
-    main()
+def main_install() -> None:
+    ns, apm_args = parse_args_install(sys.argv[1:])
+
+    if ns.global_:
+        apm_args = ["-g"] + apm_args
+
+    rc = run_apm("install", apm_args)
+    if rc != 0:
+        sys.exit(rc)
+
+    do_sanitize(ns.platform, ns.global_, ns.source)
+
+
+def main_update() -> None:
+    ns, apm_args = parse_args_update(sys.argv[1:])
+
+    if ns.global_:
+        apm_args.insert(0, "-g")
+    if ns.yes:
+        apm_args.insert(0, "--yes")
+    if ns.dry_run:
+        apm_args.insert(0, "--dry-run")
+
+    rc = run_apm("update", apm_args)
+    if rc != 0 or ns.dry_run:
+        return
+
+    do_sanitize(ns.platform, ns.global_, ns.source)
