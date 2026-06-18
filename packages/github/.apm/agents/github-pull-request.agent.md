@@ -1,5 +1,7 @@
 ---
-# OpenCode fields
+name: github-pull-request
+description: 'Create GitHub PR from current branch + linked issue. Gather context, generate title/body, create via gh CLI.'
+model: deepseek-v4-flash-free
 mode: subagent
 steps: 10
 permission:
@@ -10,14 +12,12 @@ permission:
     "git log*": allow
     "git diff*": allow
     "gh pr*": allow
+    "gh pr edit*": allow
+    "gh pr merge*": allow
   task: deny
   skill: allow
   webfetch: deny
-# Copilot/APM fields
-name: github-pull-request
-description: 'Create GitHub PR from current branch + linked issue. Gather context, generate title/body, create via gh CLI.'
-model: deepseek-v4-flash-free
-tools: ['shell']
+tools: ['execute']
 user-invocable: false
 ---
 
@@ -28,6 +28,9 @@ Specialized agent for creating GitHub PRs. No dialogue — tool calls only.
 ## Input
 - `issue_number` (required): GitHub issue number
 - `branch` (optional): derive from `git branch --show-current` if not provided
+- `base_branch` (optional, default: `main`): target branch for the PR
+- `auto_merge` (optional, boolean, default: false): enable auto-merge after creation
+- `add_reviewer` (optional, boolean, default: true): request Copilot review after creation
 
 ## Steps
 
@@ -68,14 +71,30 @@ Closes #<issue_number>
 ### 4. Create PR
 
 ```bash
-gh pr create --title "<title>" --body "<body>" --base main
+gh pr create --title "<title>" --body "<body>" --base <base_branch>
 ```
 
-### 5. Output
+### 5. Add Reviewer
+
+If `add_reviewer` is true:
+
+```bash
+gh pr edit <pr-number> --add-reviewer "github-copilot[bot]"
+```
+
+### 6. Auto-merge
+
+If `auto_merge` is true:
+
+```bash
+gh pr merge <pr-number> --auto --squash
+```
+
+### 7. Output
 
 Return: PR number, PR URL, confirm `Closes #<issue_number>` in body.
 
 ## Rules
-- Never create empty PR (no commits beyond main)
+- Never create empty PR (no commits beyond base branch)
 - Verify branch pushed: `git log origin/<branch>..HEAD` empty
 - If not pushed: `git push -u origin HEAD` first

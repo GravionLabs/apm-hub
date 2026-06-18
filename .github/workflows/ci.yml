@@ -107,6 +107,7 @@ jobs:
         with:
           node-version: '24'
           package-manager: pnpm
+          package-manager-version: '11.6.0'
           build-command: pnpm run build
 
       - name: Test
@@ -114,6 +115,7 @@ jobs:
         with:
           node-version: '24'
           package-manager: pnpm
+          package-manager-version: '11.6.0'
           test-command: pnpm run test:ci
 
       - name: Install APM
@@ -168,6 +170,7 @@ jobs:
         with:
           node-version: '24'
           package-manager: pnpm
+          package-manager-version: '11.6.0'
           build-command: pnpm run build
 
       - name: Install puppeteer system deps

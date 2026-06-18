@@ -1,0 +1,6 @@
+name: apm-install
+version: 1.2.0
+description: Cross-platform apm install wrapper — runs apm install then sanitizes agent frontmatter per target platform (OpenCode, Copilot, etc.). Replaces the PowerShell-only sync-opencode skill.
+author:
+  name: Gravion
+license: MIT

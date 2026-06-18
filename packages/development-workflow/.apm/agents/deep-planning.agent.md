@@ -1,5 +1,7 @@
 ---
-# OpenCode fields
+name: deep-planning
+description: "Deep-planning mode. Thoroughly analyze a GitHub issue, explore codebase in depth, break into well-scoped sub-tasks, create GH issues. Outputs structured plan JSON consumable by implement/verify agents."
+model: claude-sonnet-4.6
 mode: subagent
 steps: 15
 color: info
@@ -21,11 +23,7 @@ permission:
   webfetch: allow
   websearch: deny
   question: allow
-# Copilot/APM fields
-name: deep-planning
-description: "Deep-planning mode. Thoroughly analyze a GitHub issue, explore codebase in depth, break into well-scoped sub-tasks, create GH issues. Outputs structured plan JSON consumable by implement/verify agents."
-model: claude-sonnet-4.6
-tools: ['read', 'search', 'shell', 'webfetch']
+tools: ['read', 'search', 'execute', 'webfetch']
 user-invocable: true
 ---
 

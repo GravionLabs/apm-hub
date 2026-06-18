@@ -1,24 +1,24 @@
 ---
-# OpenCode fields
+name: dev-workflow
+description: "Dev workflow orchestrator. Modes: plan <issue> (quick planning), deep-planning <issue> (deep planning), implement <issue> (skip planning), full <issue> (plan→implement→verify). Spawns sub-agents via task() (OpenCode) or runs inline (Copilot/Claude)."
+model: deepseek-v4-flash-free
 mode: all
 steps: 40
 color: primary
 permission:
-  task: allow
-  skill: allow
   read: allow
+  edit: deny
   glob: allow
   grep: allow
-  edit: deny
   bash:
     "*": deny
+  task: allow
+  skill: allow
   webfetch: allow
   question: allow
-# Copilot/APM fields
-name: dev-workflow
-description: "Dev workflow orchestrator. Modes: plan <issue> (quick planning), deep-planning <issue> (deep planning), implement <issue> (skip planning), full <issue> (plan→implement→verify). Spawns sub-agents via task() (OpenCode) or runs inline (Copilot/Claude)."
-model: deepseek-v4-flash-free
+tools: ['agent', 'read', 'search']
 user-invocable: true
+agents: ['planning', 'deep-planning', 'implement', 'verify']
 ---
 
 Dev workflow orchestrator. Mode is determined from your first message:

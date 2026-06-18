@@ -1,6 +1,7 @@
 {
   "name": "apm-hub-tools",
   "version": "1.0.0",
+  "packageManager": "pnpm@11.6.0",
   "description": "Tools for managing GitHub Copilot templates",
   "main": "dist/index.js",
   "scripts": {

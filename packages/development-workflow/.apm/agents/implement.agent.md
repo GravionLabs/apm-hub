@@ -1,5 +1,7 @@
 ---
-# OpenCode fields
+name: implement
+description: "Write code + tests. Loads detect-techstack, <lang>-implementation, <lang>-test skills. Creates branch, implements, runs tests, commits."
+model: deepseek-v4-flash-free
 mode: subagent
 steps: 25
 color: success
@@ -21,24 +23,30 @@ permission:
     "git branch*": allow
     "git status": allow
     "git log*": allow
+    "gh pr*": allow
+    "gh issue*": allow
   task: deny
   skill: allow
   webfetch: deny
   websearch: deny
   question: deny
-# Copilot/APM fields
-name: implement
-description: "Write code + tests. Loads detect-techstack, <lang>-implementation, <lang>-test skills. Creates branch, implements, runs tests, commits."
-model: deepseek-v4-flash-free
 tools: ['read', 'edit', 'execute', 'search']
 user-invocable: false
 ---
 
 Phase: implement. Write code + tests per plan.
 
+## Input
+
+- `issue_number` (required): GitHub issue number
+- `epic_branch` (optional, string): release branch name (e.g. `release/epic-42`) when implementing a sub-task of an epic
+
 ## Pre-flight
 
-1. Create branch per convention via `git fetch origin main && git checkout -b <branch> origin/main`
+1. If `epic_branch` provided:
+   `git checkout <epic_branch> && git pull && git checkout -b <type>/<sub-task-N>-<slug>`
+   Otherwise:
+   `git fetch origin main && git checkout -b <branch> origin/main`
 2. Load `detect-techstack` skill — parse JSON report for `build`, `test`, `implementation` skill lists
 3. Load `implementation` + each `<lang>-implementation` skill via `skill()`
 4. Load each `<lang>-test` skill for test commands
@@ -57,7 +65,8 @@ Phase: implement. Write code + tests per plan.
   "summary": "caveman 120-char summary",
   "artifacts": ["relative/file/paths.ts"],
   "commit": "short-sha",
-  "branch": "feature/42-foo"
+  "branch": "feature/42-foo",
+  "epic_branch": "release/epic-42"
 }
 
 ## Post-flight
@@ -65,7 +74,7 @@ Phase: implement. Write code + tests per plan.
 1. Run build using detected package manager — pass
 2. Run tests per loaded `<lang>-test` skills — pass
 3. Run lint/format per project conventions — pass
-4. All pass? Commit with conventional commit msg, body `Closes #N`
+4. All pass? Commit with conventional commit msg, body `Closes #N`. If `epic_branch` was provided, use `Part of epic #<N>` instead and append it to commit body.
 5. Push only if caller approved prior.
 
 ## Constraints
