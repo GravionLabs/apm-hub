@@ -5,6 +5,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.13] — 2026-06-18
+
+### Features
+- Add sync-opencode skill to apm-tooling for OpenCode frontmatter compat
+
+
 ## [1.0.12] — 2026-06-10
 
 ### Bug Fixes
@@ -14,14 +20,31 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **agents**: Add provider prefix to model field
 
 
+### Documentation
+- Update CHANGELOG.md for v1.0.12 [skip ci]
+
+
 ## [1.0.11] — 2026-06-09
 
 ### Bug Fixes
+- Add packageManager field to package.json for pnpm/action-setup auto-detection
+- Pass explicit pnpm version 11.6.0 to GravionLabs/ci/node actions
 - Remove invalid agents frontmatter, add mode to implement-workflow
 
 
 ### Documentation
 - Update CHANGELOG.md for v1.0.11 [skip ci]
+
+
+### Features
+- Add apm-install package — cross-platform uv-managed Python wrapper for apm install with agent frontmatter sanitization
+- Per-target strip fields, -p/--platform flag, -g/--global support, apm flag passthrough via parse_known_args
+- Add apm-update command, refactor shared run_apm, remove obsolete __main__.py and .cmd
+- Add epic and sub-issue support to implement-workflow, implement, github-pull-request agents
+
+
+### Refactoring
+- Unify agent frontmatter order, remove comments, shell→execute, add OpenCode fields to implement-workflow
 
 
 ## [1.0.10] — 2026-06-09
