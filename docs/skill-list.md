@@ -16,7 +16,9 @@ This page lists all available skills organized by domain. This file is automatic
 | [skill-create](../packages/apm-tooling/.apm/skills/skill-create/SKILL.md)                            | [Apm-tooling](#apm-tooling)                   | >                                                                                                                                                                                                                                          |
 | [skill-update](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md)                            | [Apm-tooling](#apm-tooling)                   | >                                                                                                                                                                                                                                          |
 | [skill-write](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)                              | [Apm-tooling](#apm-tooling)                   | >                                                                                                                                                                                                                                          |
+| [sync-opencode](../packages/apm-tooling/.apm/skills/sync-opencode/SKILL.md)                          | [Apm-tooling](#apm-tooling)                   | >                                                                                                                                                                                                                                          |
 | [cliff-setup](../packages/development-workflow/.apm/skills/cliff-setup/SKILL.md)                     | [Development-workflow](#development-workflow) | >                                                                                                                                                                                                                                          |
+| [github-issue](../packages/development-workflow/.apm/skills/github-issue/SKILL.md)                   | [Development-workflow](#development-workflow) | >                                                                                                                                                                                                                                          |
 | [dotnet-async](../packages/dotnet/.apm/skills/dotnet-async/SKILL.md)                                 | [Dotnet](#dotnet)                             | Apply C# async/await best practices to existing code: fix deadlocks, ConfigureAwait usage, async void, cancellation token propagation, and naming conventions.                                                                             |
 | [dotnet-best-practices](../packages/dotnet/.apm/skills/dotnet-best-practices/SKILL.md)               | [Dotnet](#dotnet)                             | Review and improve .NET/C# code to meet project-specific best practices: nullability, async patterns, DI, logging, and modern C# idioms.                                                                                                   |
 | [dotnet-code-review](../packages/dotnet/.apm/skills/dotnet-code-review/SKILL.md)                     | [Dotnet](#dotnet)                             | Perform a structured C# and NUnit code review with priority ratings: 🔴 critical bugs/security, 🟡 important improvements, 🟢 suggestions.                                                                                                 |
@@ -59,22 +61,24 @@ This page lists all available skills organized by domain. This file is automatic
 
 ## Apm-tooling
 
-| Skill                                                                       | Description |
-| :-------------------------------------------------------------------------- | :---------- |
-| [`agent-audit`](../packages/apm-tooling/.apm/skills/agent-audit/SKILL.md)   | >           |
-| [`agent-create`](../packages/apm-tooling/.apm/skills/agent-create/SKILL.md) | >           |
-| [`agent-update`](../packages/apm-tooling/.apm/skills/agent-update/SKILL.md) | >           |
-| [`agent-write`](../packages/apm-tooling/.apm/skills/agent-write/SKILL.md)   | >           |
-| [`skill-audit`](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)   | >           |
-| [`skill-create`](../packages/apm-tooling/.apm/skills/skill-create/SKILL.md) | >           |
-| [`skill-update`](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md) | >           |
-| [`skill-write`](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)   | >           |
+| Skill                                                                         | Description |
+| :---------------------------------------------------------------------------- | :---------- |
+| [`agent-audit`](../packages/apm-tooling/.apm/skills/agent-audit/SKILL.md)     | >           |
+| [`agent-create`](../packages/apm-tooling/.apm/skills/agent-create/SKILL.md)   | >           |
+| [`agent-update`](../packages/apm-tooling/.apm/skills/agent-update/SKILL.md)   | >           |
+| [`agent-write`](../packages/apm-tooling/.apm/skills/agent-write/SKILL.md)     | >           |
+| [`skill-audit`](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)     | >           |
+| [`skill-create`](../packages/apm-tooling/.apm/skills/skill-create/SKILL.md)   | >           |
+| [`skill-update`](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md)   | >           |
+| [`skill-write`](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)     | >           |
+| [`sync-opencode`](../packages/apm-tooling/.apm/skills/sync-opencode/SKILL.md) | >           |
 
 ## Development-workflow
 
-| Skill                                                                              | Description |
-| :--------------------------------------------------------------------------------- | :---------- |
-| [`cliff-setup`](../packages/development-workflow/.apm/skills/cliff-setup/SKILL.md) | >           |
+| Skill                                                                                | Description |
+| :----------------------------------------------------------------------------------- | :---------- |
+| [`cliff-setup`](../packages/development-workflow/.apm/skills/cliff-setup/SKILL.md)   | >           |
+| [`github-issue`](../packages/development-workflow/.apm/skills/github-issue/SKILL.md) | >           |
 
 ## Dotnet
 

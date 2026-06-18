@@ -17,16 +17,17 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name         | Description | File                                                                      |
-| :----------- | :---------- | :------------------------------------------------------------------------ |
-| agent-audit  | >           | [agent-audit](../packages/apm-tooling/.apm/skills/agent-audit/SKILL.md)   |
-| agent-create | >           | [agent-create](../packages/apm-tooling/.apm/skills/agent-create/SKILL.md) |
-| agent-update | >           | [agent-update](../packages/apm-tooling/.apm/skills/agent-update/SKILL.md) |
-| agent-write  | >           | [agent-write](../packages/apm-tooling/.apm/skills/agent-write/SKILL.md)   |
-| skill-audit  | >           | [skill-audit](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)   |
-| skill-create | >           | [skill-create](../packages/apm-tooling/.apm/skills/skill-create/SKILL.md) |
-| skill-update | >           | [skill-update](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md) |
-| skill-write  | >           | [skill-write](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)   |
+| Name          | Description | File                                                                        |
+| :------------ | :---------- | :-------------------------------------------------------------------------- |
+| agent-audit   | >           | [agent-audit](../packages/apm-tooling/.apm/skills/agent-audit/SKILL.md)     |
+| agent-create  | >           | [agent-create](../packages/apm-tooling/.apm/skills/agent-create/SKILL.md)   |
+| agent-update  | >           | [agent-update](../packages/apm-tooling/.apm/skills/agent-update/SKILL.md)   |
+| agent-write   | >           | [agent-write](../packages/apm-tooling/.apm/skills/agent-write/SKILL.md)     |
+| skill-audit   | >           | [skill-audit](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)     |
+| skill-create  | >           | [skill-create](../packages/apm-tooling/.apm/skills/skill-create/SKILL.md)   |
+| skill-update  | >           | [skill-update](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md)   |
+| skill-write   | >           | [skill-write](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)     |
+| sync-opencode | >           | [sync-opencode](../packages/apm-tooling/.apm/skills/sync-opencode/SKILL.md) |
 
 ## Development-workflow
 
@@ -44,9 +45,10 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name        | Description | File                                                                             |
-| :---------- | :---------- | :------------------------------------------------------------------------------- |
-| cliff-setup | >           | [cliff-setup](../packages/development-workflow/.apm/skills/cliff-setup/SKILL.md) |
+| Name         | Description | File                                                                               |
+| :----------- | :---------- | :--------------------------------------------------------------------------------- |
+| cliff-setup  | >           | [cliff-setup](../packages/development-workflow/.apm/skills/cliff-setup/SKILL.md)   |
+| github-issue | >           | [github-issue](../packages/development-workflow/.apm/skills/github-issue/SKILL.md) |
 
 ## Dotnet
 
