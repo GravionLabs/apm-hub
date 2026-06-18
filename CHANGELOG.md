@@ -5,6 +5,31 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.12] — 2026-06-10
+
+### Bug Fixes
+- **agents**: Add provider prefix to model field
+- **agents**: Add provider prefix to model field
+- **agents**: Add provider prefix to model field
+- **agents**: Add provider prefix to model field
+
+
+## [1.0.11] — 2026-06-09
+
+### Bug Fixes
+- Remove invalid agents frontmatter, add mode to implement-workflow
+
+
+### Documentation
+- Update CHANGELOG.md for v1.0.11 [skip ci]
+
+
+## [1.0.10] — 2026-06-09
+
+### Documentation
+- Update CHANGELOG.md for v1.0.10 [skip ci]
+
+
 ## [1.0.9] — 2026-06-09
 
 ### Bug Fixes
