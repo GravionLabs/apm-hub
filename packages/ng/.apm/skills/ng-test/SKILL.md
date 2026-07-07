@@ -57,6 +57,14 @@ TestBed.configureTestingModule({
 });
 ```
 
+## TestBed rules
+
+- `TestBed.configureTestingModule()` for component/service wiring; one `describe` per component/service
+- Use `fixture.debugElement.query(By.css(...))` for DOM queries
+- Call `fixture.detectChanges()` after state changes; `TestBed.flushEffects()` when testing signal effects
+
+See [test-examples.md](references/test-examples.md) for full TestBed examples.
+
 ## Gotchas
 
 - Angular standalone components don't need `NgModule` wrapping
