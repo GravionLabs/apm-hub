@@ -86,20 +86,20 @@ See [`packages/apm-install`](packages/apm-install/) for details.
 
 ### Where things land
 
-| Platform       | Skills                    | Agents             |
-| :------------- | :------------------------ | :----------------- |
-| GitHub Copilot | `.github/skills/<name>/`  | `.github/agents/`  |
-| Claude Code    | `.claude/skills/<name>/`  | `.claude/agents/`  |
-| OpenCode       | `.opencode/skills/<name>/`| `.opencode/agents/`|
+| Platform       | Skills                     | Agents              |
+| :------------- | :------------------------- | :------------------ |
+| GitHub Copilot | `.github/skills/<name>/`   | `.github/agents/`   |
+| Claude Code    | `.claude/skills/<name>/`   | `.claude/agents/`   |
+| OpenCode       | `.opencode/skills/<name>/` | `.opencode/agents/` |
 
 ### What to commit in your project
 
-| Path                                                          | Action                              |
-| :------------------------------------------------------------ | :---------------------------------- |
-| `apm.yml`                                                     | ✅ Commit                            |
-| `apm.lock.yaml`                                               | ✅ Commit                            |
-| `.github/skills/`, `.claude/skills/`, `.opencode/`            | ✅ Commit (instant context on clone) |
-| `apm_modules/`                                                | ❌ Add to `.gitignore`               |
+| Path                                               | Action                              |
+| :------------------------------------------------- | :---------------------------------- |
+| `apm.yml`                                          | ✅ Commit                            |
+| `apm.lock.yaml`                                    | ✅ Commit                            |
+| `.github/skills/`, `.claude/skills/`, `.opencode/` | ✅ Commit (instant context on clone) |
+| `apm_modules/`                                     | ❌ Add to `.gitignore`               |
 
 ## 📦 APM Packages
 
