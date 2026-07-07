@@ -1,5 +1,5 @@
 name: github
-version: 1.0.14
+version: 1.0.15
 description: GitHub workflow skills for issue management, pull requests, and repository automation. Provides skills for the full GitHub development lifecycle.
 author:
   name: Gravion

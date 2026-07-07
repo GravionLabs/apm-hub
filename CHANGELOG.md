@@ -5,7 +5,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.15] — 2026-07-07
+
+### Documentation
+- Define spec-compliant skill frontmatter convention (#43)
+
+
+### Refactoring
+- Normalize SKILL.md frontmatter to the spec convention (#44)
+
+
 ## [1.0.14] — 2026-07-07
+
+### Documentation
+- Update CHANGELOG.md for v1.0.14 [skip ci]
+
 
 ### Features
 - Merge epic-implementation into github-issue as a router skill (#40)
