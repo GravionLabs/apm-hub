@@ -13,3 +13,4 @@ dependencies:
 skills:
   - cliff-setup
   - implement-workflow
+  - issue-planning
