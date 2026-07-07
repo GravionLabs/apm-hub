@@ -47,20 +47,15 @@ Tool-agnostic implement workflow. Setup → implement → verify from an existin
 
 #### Epic path (mode=epic)
 
-1. Load `github-issue` skill — follow `references/epic-workflow.md`
-2. Create release branch: `git checkout main && git pull --rebase && git checkout -b release/epic-<N> && git push -u origin release/epic-<N>`
+1. Load `github-issue` skill — follow `references/epic-batch.md`
+2. Create one feature branch for the whole epic: `git fetch origin main && git checkout -b epics/<N>-<slug> origin/main`
 3. For each sub-task in checklist sequence:
    a. Read sub-task: `gh issue view <sub-N> --json title,body,labels`
-   b. Create feature branch off release branch: `git checkout release/epic-<N> && git pull && git checkout -b <type>/<sub-N>-<slug>`
-   c. Load `implementation` + `<lang>-implementation` + `<lang>-test` skills
-   d. Implement changes + tests (test triad required)
-   e. Run build, lint, test per detected package manager
-   f. Commit: `git commit -m "<type>(<scope>): <description> (#<sub-N>)\n\nPart of epic #<N>"`
-   g. Push: `git push -u origin <type>/<sub-N>-<slug>`
-   h. Create PR to release branch: `gh pr create --title "<title> (#<sub-N>)" --base release/epic-<N> --head <type>/<sub-N>-<slug> --body "Part of epic #<N>."`
-   i. Add reviewer: `gh pr edit <pr-number> --add-reviewer "github-copilot[bot]"`
-   j. Auto-merge: `gh pr merge <pr-number> --auto --squash`
-   k. Wait for merge, close sub-task: `gh issue close <sub-N> --reason completed`
+   b. Load `implementation` + `<lang>-implementation` + `<lang>-test` skills
+   c. Implement changes + tests (test triad required)
+   d. Run build, lint, test per detected package manager — never continue on a red suite
+   e. Commit only that sub-task's files: `git commit -m "<type>: <description> (#<sub-N>)"`
+   f. Close sub-task: `gh issue close <sub-N> --comment "Implemented on <branch> at <short-sha>."`
 
 #### Standalone path (mode=standalone)
 
@@ -77,10 +72,11 @@ Tool-agnostic implement workflow. Setup → implement → verify from an existin
 
 #### Epic finalize
 
-1. After all sub-tasks merged into `release/epic-<N>`:
-   a. Create final release PR to main: `gh pr create --title "[EPIC] <title> (#<N>)" --base main --head release/epic-<N> --body "Closes #<N>.\n\n## Sub-tasks completed\n\n- [x] #<sub-1>\n- [x] #<sub-2>\n..."`
-   b. Add reviewer: `gh pr edit <release-pr> --add-reviewer "github-copilot[bot]"`
-   c. Do NOT auto-merge — leave open for review
+1. After all sub-tasks are committed and closed:
+   a. Run the full build/lint/test suite once more from a clean state
+   b. Push: `git push -u origin HEAD`
+   c. Create one PR to main: `gh pr create --title "<title> (#<N>)" --base main --body "Closes #<N>.\n\n## Sub-tasks completed\n\n- [x] #<sub-1>\n- [x] #<sub-2>\n..."`
+   d. Watch checks (`gh pr checks --watch`); merge once green per `references/epic-batch.md`
 
 #### Standalone finalize
 

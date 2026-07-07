@@ -39,12 +39,12 @@ Phase: implement. Write code + tests per plan.
 ## Input
 
 - `issue_number` (required): GitHub issue number
-- `epic_branch` (optional, string): release branch name (e.g. `release/epic-42`) when implementing a sub-task of an epic
+- `epic_branch` (optional, string): shared epic feature branch (e.g. `epics/42-foo`) when implementing a sub-task of an epic
 
 ## Pre-flight
 
-1. If `epic_branch` provided:
-   `git checkout <epic_branch> && git pull && git checkout -b <type>/<sub-task-N>-<slug>`
+1. If `epic_branch` provided, work directly on it (one commit per sub-task, no per-sub-task branch):
+   `git checkout <epic_branch>`
    Otherwise:
    `git fetch origin main && git checkout -b <branch> origin/main`
 2. Load `detect-techstack` skill — parse JSON report for `build`, `test`, `implementation` skill lists
@@ -66,7 +66,7 @@ Phase: implement. Write code + tests per plan.
   "artifacts": ["relative/file/paths.ts"],
   "commit": "short-sha",
   "branch": "feature/42-foo",
-  "epic_branch": "release/epic-42"
+  "epic_branch": "epics/42-foo"
 }
 
 ## Post-flight
