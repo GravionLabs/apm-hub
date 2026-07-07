@@ -1,5 +1,5 @@
 name: development-workflow
-version: 1.0.13
+version: 1.0.14
 description: "GitHub development workflow orchestration: issue-driven implementation, tech-stack detection, multi-repo support, and PR review."
 registry: https://github.com/GravionLabs/apm-hub
 dependencies:

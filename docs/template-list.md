@@ -45,10 +45,9 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name         | Description | File                                                                               |
-| :----------- | :---------- | :--------------------------------------------------------------------------------- |
-| cliff-setup  | >           | [cliff-setup](../packages/development-workflow/.apm/skills/cliff-setup/SKILL.md)   |
-| github-issue | >           | [github-issue](../packages/development-workflow/.apm/skills/github-issue/SKILL.md) |
+| Name        | Description | File                                                                             |
+| :---------- | :---------- | :------------------------------------------------------------------------------- |
+| cliff-setup | >           | [cliff-setup](../packages/development-workflow/.apm/skills/cliff-setup/SKILL.md) |
 
 ## Dotnet
 
@@ -78,9 +77,9 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name         | Description                                                                                                                                            | File                                                                 |
-| :----------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
-| github-issue | Read GitHub issue, branch, implement, verify, PR. Full lifecycle from issue to merged PR. Use for any GitHub issue work — covers start through finish. | [github-issue](../packages/github/.apm/skills/github-issue/SKILL.md) |
+| Name         | Description                                                                                                                                                                                                                                                                                                                                                                                                    | File                                                                 |
+| :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
+| github-issue | Implement GitHub issues or epics: read issue, branch, implement, verify, PR, merge. Routing skill: detects whether the input is an epic (issue body contains a `- [ ] #N` sub-issue checklist) or a standalone issue and follows the matching reference. Use for any GitHub issue work — single issues start to finish, or batch requests like "implement all epics" / "work through these issues one by one". | [github-issue](../packages/github/.apm/skills/github-issue/SKILL.md) |
 
 ## Ng
 
