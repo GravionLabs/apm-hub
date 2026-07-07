@@ -19,9 +19,12 @@ TARGET_DIRS = {
 TARGET_STRIP_FIELDS = {
     "opencode": ["tools", "user-invocable", "agents"],
     "copilot": ["mode", "steps", "color", "permission", "task"],
-    "claude": ["mode", "steps", "color", "tools"],
-    "cursor": ["mode", "permission"],
-    "codex": ["mode", "permission"],
+    # Claude Code accepts only name/description/tools/model; source `tools`
+    # arrays use Copilot names and `model` values are rarely valid Anthropic
+    # ids, so both are stripped — Claude then inherits the session model.
+    "claude": ["mode", "steps", "color", "tools", "permission", "user-invocable", "agents", "model"],
+    "cursor": ["mode", "steps", "color", "permission"],
+    "codex": ["mode", "steps", "color", "permission"],
 }
 
 GLOBAL_PATHS: dict[str, dict[str, list[str]]] = {
