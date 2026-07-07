@@ -33,21 +33,18 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Agents
 
-| Name               | Description                                                                                                                                                                                                                                               | File                                                                                                    |
-| :----------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------ |
-| deep-planning      | Deep-planning mode. Thoroughly analyze a GitHub issue, explore codebase in depth, break into well-scoped sub-tasks, create GH issues. Outputs structured plan JSON consumable by implement/verify agents.                                                 | [deep-planning.agent.md](../packages/development-workflow/.apm/agents/deep-planning.agent.md)           |
-| dev-workflow       | Dev workflow orchestrator. Modes: plan <issue> (quick planning), deep-planning <issue> (deep planning), implement <issue> (skip planning), full <issue> (plan→implement→verify). Spawns sub-agents via task() (OpenCode) or runs inline (Copilot/Claude). | [dev-workflow.agent.md](../packages/development-workflow/.apm/agents/dev-workflow.agent.md)             |
-| implement-workflow | Tool-agnostic implement-from-issue workflow: setup → implement → verify. Reads an existing GH issue, implements, verifies. Works in Copilot CLI, Claude Code, OpenCode, any AI coding tool.                                                               | [implement-workflow.agent.md](../packages/development-workflow/.apm/agents/implement-workflow.agent.md) |
-| implement          | Write code + tests. Loads detect-techstack, <lang>-implementation, <lang>-test skills. Creates branch, implements, runs tests, commits.                                                                                                                   | [implement.agent.md](../packages/development-workflow/.apm/agents/implement.agent.md)                   |
-| planning           | Analyze a GitHub issue, explore codebase, break into sub-tasks, create GH issues. Outputs structured plan JSON consumable by implement/verify agents.                                                                                                     | [planning.agent.md](../packages/development-workflow/.apm/agents/planning.agent.md)                     |
-| quick-planning     | Quick-planning mode. Rapidly analyze a GitHub issue and produce a concise plan. Skip deep codebase exploration for straightforward tasks. Outputs structured plan JSON consumable by implement/verify agents.                                             | [quick-planning.agent.md](../packages/development-workflow/.apm/agents/quick-planning.agent.md)         |
-| verify             | Run build, tests, lint on project. Loads <lang>-test skills for language-specific test commands. Uses detected package manager for build. Reports pass/fail with first error.                                                                             | [verify.agent.md](../packages/development-workflow/.apm/agents/verify.agent.md)                         |
+| Name         | Description                                                                                                                                                                                                                                                                                                                      | File                                                                                        |
+| :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
+| dev-workflow | Dev workflow orchestrator. Modes: plan <issue> (quick planning), deep-planning <issue> (deep planning), implement <issue> (skip planning), full <issue> (plan→implement→verify). Delegates to the issue-planning, implement-workflow, and verify-project skills — via task() sub-agents on OpenCode or inline on Copilot/Claude. | [dev-workflow.agent.md](../packages/development-workflow/.apm/agents/dev-workflow.agent.md) |
 
 ### Skills
 
-| Name        | Description | File                                                                             |
-| :---------- | :---------- | :------------------------------------------------------------------------------- |
-| cliff-setup | >           | [cliff-setup](../packages/development-workflow/.apm/skills/cliff-setup/SKILL.md) |
+| Name               | Description | File                                                                                           |
+| :----------------- | :---------- | :--------------------------------------------------------------------------------------------- |
+| cliff-setup        | >           | [cliff-setup](../packages/development-workflow/.apm/skills/cliff-setup/SKILL.md)               |
+| implement-workflow | >           | [implement-workflow](../packages/development-workflow/.apm/skills/implement-workflow/SKILL.md) |
+| issue-planning     | >           | [issue-planning](../packages/development-workflow/.apm/skills/issue-planning/SKILL.md)         |
+| verify-project     | >           | [verify-project](../packages/development-workflow/.apm/skills/verify-project/SKILL.md)         |
 
 ## Dotnet
 
@@ -69,17 +66,12 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ## Github
 
-### Agents
-
-| Name                | Description                                                                                                  | File                                                                                        |
-| :------------------ | :----------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
-| github-pull-request | Create GitHub PR from current branch + linked issue. Gather context, generate title/body, create via gh CLI. | [github-pull-request.agent.md](../packages/github/.apm/agents/github-pull-request.agent.md) |
-
 ### Skills
 
-| Name         | Description                                                                                                                                                                                                                                                                                                                                                                                                    | File                                                                 |
-| :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
-| github-issue | Implement GitHub issues or epics: read issue, branch, implement, verify, PR, merge. Routing skill: detects whether the input is an epic (issue body contains a `- [ ] #N` sub-issue checklist) or a standalone issue and follows the matching reference. Use for any GitHub issue work — single issues start to finish, or batch requests like "implement all epics" / "work through these issues one by one". | [github-issue](../packages/github/.apm/skills/github-issue/SKILL.md) |
+| Name                | Description                                                                                                                                                                                                                                                                                                                                                                                                    | File                                                                               |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| github-issue        | Implement GitHub issues or epics: read issue, branch, implement, verify, PR, merge. Routing skill: detects whether the input is an epic (issue body contains a `- [ ] #N` sub-issue checklist) or a standalone issue and follows the matching reference. Use for any GitHub issue work — single issues start to finish, or batch requests like "implement all epics" / "work through these issues one by one". | [github-issue](../packages/github/.apm/skills/github-issue/SKILL.md)               |
+| github-pull-request | >                                                                                                                                                                                                                                                                                                                                                                                                              | [github-pull-request](../packages/github/.apm/skills/github-pull-request/SKILL.md) |
 
 ## Ng
 

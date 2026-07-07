@@ -7,12 +7,25 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [1.0.15] — 2026-07-07
 
+### Bug Fixes
+- Complete apm-install claude target sanitization (#52)
+
+
 ### Documentation
 - Define spec-compliant skill frontmatter convention (#43)
+- Update CHANGELOG.md for v1.0.15 [skip ci]
+
+
+### Features
+- Convert implement-workflow agent to a skill (#47)
+- Consolidate planning agents into issue-planning skill (#48)
+- Convert verify agent to verify-project skill (#49)
 
 
 ### Refactoring
 - Normalize SKILL.md frontmatter to the spec convention (#44)
+- Convert github-pull-request agent to a skill (#50)
+- Slim dev-workflow to the sole skill-orchestrating agent (#51)
 
 
 ## [1.0.14] — 2026-07-07
