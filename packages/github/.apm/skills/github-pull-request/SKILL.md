@@ -1,29 +1,16 @@
 ---
 name: github-pull-request
-description: 'Create GitHub PR from current branch + linked issue. Gather context, generate title/body, create via gh CLI.'
-model: deepseek-v4-flash-free
-mode: subagent
-steps: 10
-permission:
-  read: allow
-  bash:
-    "*": deny
-    "git branch*": allow
-    "git log*": allow
-    "git diff*": allow
-    "gh pr*": allow
-    "gh pr edit*": allow
-    "gh pr merge*": allow
-  task: deny
-  skill: allow
-  webfetch: deny
-tools: ['execute']
-user-invocable: false
+description: >
+  Create a GitHub PR from the current branch and its linked issue: gather
+  commit/diff context, generate a conventional title and structured body,
+  create via gh CLI, optionally request review and auto-merge. Use when asked
+  to "create a PR", "open a pull request", or to finish a branch whose issue
+  work is already committed.
 ---
 
 # GitHub Pull Request Creator
 
-Specialized agent for creating GitHub PRs. No dialogue — tool calls only.
+Create a PR from the current branch. No dialogue — tool calls only.
 
 ## Input
 - `issue_number` (required): GitHub issue number

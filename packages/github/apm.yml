@@ -1,6 +1,6 @@
 name: github
 version: 1.0.14
-description: GitHub workflow skills for issue management, pull requests, and repository automation. Provides agents, instructions, and skills for the full GitHub development lifecycle.
+description: GitHub workflow skills for issue management, pull requests, and repository automation. Provides skills for the full GitHub development lifecycle.
 author:
   name: Gravion
 license: MIT
@@ -13,3 +13,4 @@ keywords:
   - git
 skills:
   - github-issue
+  - github-pull-request
