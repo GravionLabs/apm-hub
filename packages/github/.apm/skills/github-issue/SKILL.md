@@ -1,65 +1,31 @@
 ---
 name: github-issue
-description: 'Read GitHub issue, branch, implement, verify, PR. Full lifecycle from issue to merged PR. Use for any GitHub issue work — covers start through finish.'
+description: 'Implement GitHub issues or epics: read issue, branch, implement, verify, PR, merge. Routing skill: detects whether the input is an epic (issue body contains a `- [ ] #N` sub-issue checklist) or a standalone issue and follows the matching reference. Use for any GitHub issue work — single issues start to finish, or batch requests like "implement all epics" / "work through these issues one by one".'
 allowed-tools: execute shell runCommands read write edit editFiles search codebase
 compatibility: opencode, github-copilot
 ---
 
 ## Overview
 
-This is the single skill for the full GitHub issue lifecycle. 
-For complex issues, you can also use the split approach: run `github-issue-start` for implementation, then `github-issue-finish` for PR creation.
-
-Read GitHub issue → branch → implement → verify → PR. Single flow.
+Single entry point for the GitHub issue lifecycle. Detect the shape of the input, then strictly follow the matching reference document.
 
 ## Prerequisites
 
 - `gh` CLI authenticated (`gh auth status`)
 - Run from repo root
+- Check `git status` first; never commit unrelated pre-existing changes (add files explicitly, never `git add -A`/`.`)
 
-## Steps
+## Routing
 
-### Phase 1 — Read + Branch
+1. Read the issue(s): `gh issue view <nr> --json title,body,labels`
+2. Pick the workflow:
+   - **Epic / batch** — the issue body contains a checklist of sub-issues (`- [ ] #N`), or the user asks to implement several issues/epics in sequence: strictly follow `references/epic-batch.md`.
+   - **Standalone issue** — no sub-issue checklist: strictly follow `references/standalone-issue.md`.
 
-1. Read issue: `gh issue view <nr> --json title,body,labels`
-2. Derive branch type from labels (feature/bugfix/hotfix/chore)
-3. Create branch: `git fetch origin main && git checkout -b <type>/<nr>-<slug> origin/main`
+## Shared constraints (both workflows)
 
-### Phase 2 — Implement
-
-4. Explore codebase, affected areas
-5. Break issue into implementation tasks
-6. Write code + tests per project conventions
-7. Atomic commits per conventional-commits reference
-
-### Phase 3 — Verify + PR
-
-8. Run full build + test suite. Fix failures.
-9. Review diff: `git diff main...HEAD` — no debug code, TODOs, missing tests
-10. Push: `git push -u origin HEAD`
-11. Create PR:
-    ```bash
-    gh pr create --title "<type>: <desc> (#<nr>)" --body "$(cat)" <<-BODY
-    ## Summary
-
-    ## Changes
-
-    ## Testing
-    - [ ] Unit tests pass
-
-    Closes #<nr>
-    BODY
-    ```
-12. Confirm: `gh pr view --json number,url`
-
-## Constraints
-
-- Branch name includes issue number
-- One logical change per commit
-- PR title format: `<type>: <description> (#<issue-number>)`
-- PR body contains `Closes #<issue-number>`
-- All CI checks green before review
-
-## Load conventional-commits reference
-
-Load `references/conventional-commits.md` for commit format rules.
+- Branch names include the issue number; derive `<slug>` from the issue title (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
+- One logical change per commit; commit format per `references/conventional-commits.md`.
+- Commit and PR titles reference the issue: `<type>: <description> (#<nr>)`; the PR body contains `Closes #<nr>` for every issue it completes.
+- Verify before every commit: run build + full test suite (load the `detect-techstack` skill if the project's commands are unknown). Never commit or move on with a red suite.
+- Never merge a PR with failing checks.
