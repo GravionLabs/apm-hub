@@ -2,10 +2,9 @@
 
 Use this file when a skill needs the shared frontmatter rules.
 
-> **Official vs repo-local fields:** Official GitHub skill docs currently
-> document `name`, `description`, optional `license`, and `allowed-tools`.
-> This schema also records copilot-hub conventions that are useful in this
-> repository, even when they are not part of the official minimum.
+> **Source of truth:** `docs/concepts/skill-frontmatter.md`. Skills must load
+> on GitHub Copilot, Claude Code, and OpenCode from one source file, so only
+> agentskills.io-legal keys are allowed at the top level.
 
 ### Required fields
 
@@ -16,20 +15,19 @@ Use this file when a skill needs the shared frontmatter rules.
 
 ### Optional fields
 
-| Field           | Rules                                                                                                                                                                                              |
-|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `compatibility` | Only add when the skill has specific runtime/environment requirements.                                                                                                                             |
-| `allowed-tools` | Space-separated tool identifiers. Only pre-approve shell access when bundled scripts or inline shell commands have been reviewed.                                                                  |
-| `model`         | Repo-local advisory field only. If used, pick a value from `docs/model-overview.md`, keep it consistent with any body-level "Model hint", and do not treat it as officially required skill syntax. |
+| Field      | Rules                                                                                       |
+|------------|----------------------------------------------------------------------------------------------|
+| `license`  | SPDX identifier (e.g. `MIT`).                                                                |
+| `metadata` | Map of free-form string annotations (e.g. `chronicle-hints`, authorship). Hosts ignore them. |
 
-### `allowed-tools` aliases
+### Forbidden top-level fields (🔴 audit finding)
 
-| Capability             | Add these identifiers       |
-|------------------------|-----------------------------|
-| Read/search files      | `read search codebase`      |
-| Edit/create files      | `write edit editFiles`      |
-| Execute shell commands | `execute shell runCommands` |
-| Web fetch              | `web`                       |
+| Field           | Why forbidden                                                                                        |
+|-----------------|------------------------------------------------------------------------------------------------------|
+| `allowed-tools` | Matched no platform's tool vocabulary; tool policy belongs to the host platform, not the skill.      |
+| `model`         | Platform-specific and goes stale; skills are instructions, not runtime configuration.                |
+| `compatibility` | Spec-compliant skills run on all agentskills.io hosts; a uniform claim carries no information.       |
+| anything else   | Non-standard keys break strict loaders. Move custom annotations under `metadata:`.                   |
 
 ### Minimal valid frontmatter
 
@@ -42,17 +40,15 @@ description: >
 ---
 ```
 
-### Repo-local advisory `model`
-
-Use `model` only when this repository benefits from an explicit preferred model.
-It is not part of the official GitHub skill minimum and may be ignored by
-official Copilot skill loaders.
+### With optional fields
 
 ```yaml
 ---
 name: my-skill
 description: >
   Does X. Use this skill when the user needs Y or Z.
-model: claude-sonnet-4.6
+license: MIT
+metadata:
+  chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 ```

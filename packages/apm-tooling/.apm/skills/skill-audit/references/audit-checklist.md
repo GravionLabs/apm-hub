@@ -41,23 +41,17 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
 - [ ] Not so broad it would trigger for unrelated tasks — 🟡 if overly broad
 - [ ] Indirect trigger phrasing included where relevant ("even if the user does not mention X") — 🟢
 
-**`allowed-tools` (🟡 if shell/bash is pre-approved without justification):**
+**Forbidden top-level fields (🔴 per `docs/concepts/skill-frontmatter.md`):**
 
-- [ ] If `execute`, `shell`, `runCommands`, or `bash` is listed:
-  - If a `scripts/` directory exists: all bundled scripts have been fully reviewed
-  - If no `scripts/` directory: at least one inline shell command is referenced in the body (e.g. `npm ls …`, `git status`) — confirm all inline commands are safe
-- [ ] Cross-platform alias coverage — if any platform-specific identifier is present, its counterparts for other platforms should also be present (🟡 if missing):
-  - `execute` present but `runCommands` absent → add `runCommands` for VS Code
-  - `runCommands` present but `execute` absent → add `execute` for Cloud Agent
-  - `edit` or `write` present but `editFiles` absent → add `editFiles` for VS Code
-  - `editFiles` present but `edit` absent → add `edit` for Cloud Agent
-  - `codebase` present but `read` or `search` absent → add `read search` for Cloud Agent (🟡)
-  - `read` or `search` present but `codebase` absent → add `codebase` for VS Code (🟢)
-  - Recommended full cross-platform set: `execute read edit search codebase editFiles runCommands`
+- [ ] No `allowed-tools` — tool policy belongs to the host platform, not the skill
+- [ ] No `model` — platform-specific, goes stale
+- [ ] No `compatibility` — spec-compliant skills run on all agentskills.io hosts
+- [ ] No other non-standard top-level keys — custom annotations (e.g. `chronicle-hints`) belong under `metadata:`
 
-**`compatibility` (🟢):**
+**`license` / `metadata` (🟢):**
 
-- [ ] Present if the skill has specific runtime or environment requirements
+- [ ] `license` is a valid SPDX identifier if present
+- [ ] `metadata` values are free-form strings; no nested platform configuration
 - [ ] 1–500 characters if provided
 
 **`model` (🟢 if omitted, 🟡 if misleading):**
@@ -161,5 +155,5 @@ For each script in `scripts/`:
 [ ] scripts: no interactive prompts, --help, structured stdout, helpful errors
 [ ] references: conditional load instructions, relative paths, one level deep
 [ ] assets: referenced conditionally, not loaded automatically
-[ ] allowed-tools: shell/execute/runCommands only if scripts reviewed OR inline commands confirmed safe; cross-platform aliases present (execute+runCommands, edit+editFiles, read+search+codebase)
+[ ] frontmatter: only name/description/license/metadata at top level (no allowed-tools, model, compatibility)
 ```
