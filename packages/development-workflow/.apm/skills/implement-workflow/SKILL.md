@@ -1,34 +1,11 @@
 ---
 name: implement-workflow
-description: "Tool-agnostic implement-from-issue workflow: setup → implement → verify. Reads an existing GH issue, implements, verifies. Works in Copilot CLI, Claude Code, OpenCode, any AI coding tool."
-model: deepseek-v4-flash-free
-mode: all
-steps: 50
-color: success
-permission:
-  read: allow
-  edit: allow
-  glob: allow
-  grep: allow
-  bash:
-    "*": ask
-    "git *": allow
-    "gh *": allow
-    "gh pr *": allow
-    "gh issue close*": allow
-    "pnpm *": allow
-    "npm *": allow
-    "npx *": allow
-    "uv *": allow
-    "dotnet *": allow
-    "pytest *": allow
-  task: deny
-  skill: allow
-  webfetch: deny
-  websearch: deny
-  question: deny
-tools: ['read', 'edit', 'execute', 'search']
-user-invocable: true
+description: >
+  Tool-agnostic implement-from-issue workflow: setup → implement → verify.
+  Reads an existing GitHub issue, implements it with tests, verifies, and
+  finalizes with a PR. Use when asked to "implement issue #N", "work on this
+  issue", or to run the full setup-implement-verify pipeline in Copilot CLI,
+  Claude Code, OpenCode, or any AI coding tool.
 ---
 
 Tool-agnostic implement workflow. Setup → implement → verify from an existing issue.

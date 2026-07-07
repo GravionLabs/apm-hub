@@ -12,3 +12,4 @@ dependencies:
     - GravionLabs/apm-hub/packages/dotnet
 skills:
   - cliff-setup
+  - implement-workflow
