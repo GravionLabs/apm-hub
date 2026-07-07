@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
     "test:integration": "cd test/integration && npm install --silent && vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:manifests": "node scripts/check-manifests.mjs"
   },
   "dependencies": {
     "yaml": "^2.8.3"

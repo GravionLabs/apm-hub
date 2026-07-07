@@ -118,6 +118,9 @@ jobs:
           package-manager-version: '11.6.0'
           test-command: pnpm run test:ci
 
+      - name: Check manifest skills lists
+        run: node scripts/check-manifests.mjs
+
       - name: Install APM
         uses: microsoft/apm-action@v1
 

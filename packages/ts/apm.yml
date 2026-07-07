@@ -11,6 +11,10 @@ keywords:
   - vitest
   - eslint
 skills:
-  - ts-pnpm-workflow
+  - ts-code-review
+  - ts-create-project
+  - ts-debug
   - ts-implementation
+  - ts-mcp-server-generator
+  - ts-pnpm-workflow
   - ts-test

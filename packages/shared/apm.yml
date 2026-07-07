@@ -1,15 +1,16 @@
 name: shared
 version: 1.0.16
-description: Shared agents, instructions and skills used across all GravionLabs apm-hub packages. Includes general-purpose SE agents (documentation writer, technical writer, UX/UI designer, test engineer), code review and markdown instructions, and reusable skills for test writing and skill creation.
+description: "Shared skills used across all GravionLabs apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules with test requirements (implementation), and code-quality pipeline setup (setup-prettier-eslint-husky)."
 author:
   name: Gravion
 license: MIT
 keywords:
   - shared
-  - agents
-  - instructions
   - skills
-  - code-review
+  - implementation
+  - techstack
   - testing
 skills:
   - detect-techstack
+  - implementation
+  - setup-prettier-eslint-husky

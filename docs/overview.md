@@ -15,12 +15,12 @@ Welcome to **copilot-hub** v1.0.16 👋
 >
 > Always consult the [official GitHub Copilot documentation](https://docs.github.com/en/copilot) for the authoritative and most current information.
 
-This repository is a **shared reference, documentation hub, and template library** for using **GitHub Copilot** effectively and responsibly across teams and projects.
+This repository is a **shared skill library, reference, and documentation hub** for AI-assisted development — skills-first, usable with **GitHub Copilot**, **Claude Code**, and **OpenCode** — to help teams work effectively and responsibly across projects.
 
 It is designed to help developers, teams, and organizations:
 
 - Understand how GitHub Copilot works
-- Learn the key concepts (Prompts, Instructions, Agents)
+- Learn the key concepts (Skills, Prompts, Instructions, Agents)
 - Reuse proven templates instead of starting from scratch
 - Establish consistent, high‑quality AI‑assisted workflows
 
