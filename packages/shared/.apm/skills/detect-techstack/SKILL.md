@@ -5,8 +5,6 @@ description: >
   package manager, and the matching <lang>-test and <lang>-implementation skills.
   Use this skill before loading language-specific skills so agents can dispatch
   to the correct sub-skills for each language/framework detected.
-allowed-tools: execute shell runCommands read search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Overview

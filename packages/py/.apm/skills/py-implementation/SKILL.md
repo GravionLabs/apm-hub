@@ -4,9 +4,6 @@ description: >
   Python-specific implementation and test rules. Extends the parent
   `implementation` skill with Python/pytest conventions. Auto-loaded when
   `implementation` skill dispatches to `py-implementation`.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
-model: gpt-4.1
 ---
 
 ## Framework

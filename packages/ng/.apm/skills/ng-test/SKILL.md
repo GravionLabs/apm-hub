@@ -4,8 +4,6 @@ description: >
   Angular test rules using Vitest and TestBed. Covers standalone component
   testing, signal testing, service mocking, and async patterns. Use this
   skill when writing or running tests in an Angular project.
-allowed-tools: execute shell runCommands read search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Prerequisites

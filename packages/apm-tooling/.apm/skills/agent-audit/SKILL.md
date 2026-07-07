@@ -4,9 +4,8 @@ description: >
   Audits, validates, or reviews a custom agent file (.agent.md) and emits a
   compact JSON report. Use this skill when checking an agent for correctness,
   even if the user only says to verify or review it.
-allowed-tools: read search codebase write edit editFiles execute shell runCommands
-compatibility: opencode, github-copilot
-chronicle-hints: 'single-purpose, structured-output, phases'
+metadata:
+  chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 
 ## Overview

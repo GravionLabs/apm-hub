@@ -4,8 +4,6 @@ description: >
   Use this skill when setting up the AG Grid MCP server (`ag-mcp`) for the first time
   in a project. Installs the correct configuration for VS Code, Claude Code, or Cursor
   so the LLM can access version-specific AG Grid documentation, examples, and API refs.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Overview

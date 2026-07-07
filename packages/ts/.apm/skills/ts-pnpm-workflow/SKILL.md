@@ -5,8 +5,6 @@ description: >
   pnpm, converts lockfiles, updates scripts, and configures the project for
   pnpm-based development. Use this skill when starting a new TypeScript/Node.js
   project or migrating an existing npm project to pnpm.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Overview

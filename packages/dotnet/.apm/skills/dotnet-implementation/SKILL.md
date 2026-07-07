@@ -4,9 +4,6 @@ description: >
   C#/.NET-specific implementation and test rules. Extends the parent
   `implementation` skill with .NET conventions. Auto-loaded when
   `implementation` skill dispatches to `dotnet-implementation`.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
-model: gpt-4.1
 ---
 
 ## Framework

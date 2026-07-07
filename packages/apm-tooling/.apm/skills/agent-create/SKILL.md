@@ -4,8 +4,6 @@ description: >
   Creates a new custom agent (.agent.md). Use this skill when building or
   scaffolding an agent from a prompt, rough idea, or role description, even
   if the request is underspecified.
-allowed-tools: read search codebase write edit editFiles
-compatibility: opencode, github-copilot
 ---
 
 ## Overview

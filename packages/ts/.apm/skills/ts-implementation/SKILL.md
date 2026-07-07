@@ -4,8 +4,6 @@ description: >
   TypeScript-specific implementation and test rules. Extends the parent
   `implementation` skill with TS/Vitest conventions. Auto-loaded when
   `implementation` skill dispatches to <lang>-implementation.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Framework

@@ -4,9 +4,8 @@ description: >
   Creates and edits opencode and Copilot skills. Use this skill when drafting or
   refining a skill so the result stays small, valid, reusable, and
   convention-compliant.
-allowed-tools: read search codebase write edit editFiles
-compatibility: opencode, github-copilot
-chronicle-hints: 'single-purpose, structured-output, phases'
+metadata:
+  chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 
 ## Overview

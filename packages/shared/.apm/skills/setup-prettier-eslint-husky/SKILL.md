@@ -1,8 +1,6 @@
 ---
 name: setup-prettier-eslint-husky
 description: 'Set up language-agnostic code quality pipeline: ESLint (flat config), Prettier with import organizer, and Husky pre-commit hooks. Configures auto-format on save for VSCode and WebStorm.'
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 Set up code quality pipeline: ESLint flat config, Prettier, Husky.

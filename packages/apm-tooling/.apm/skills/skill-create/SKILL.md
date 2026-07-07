@@ -4,8 +4,6 @@ description: >
   Creates a complete agent skill. Use this skill when building or scaffolding a
   new skill from a prompt, rough idea, or domain name, even if the request is
   underspecified.
-allowed-tools: read search codebase write edit editFiles
-compatibility: opencode, github-copilot
 ---
 
 ## Overview

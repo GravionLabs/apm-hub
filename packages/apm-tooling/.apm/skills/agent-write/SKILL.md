@@ -5,9 +5,8 @@ description: >
   drafting or refining an agent so the result is cross-platform compatible,
   token-efficient, and convention-compliant for opencode, Copilot CLI, VS
   Code, and Claude Code.
-allowed-tools: read search codebase write edit editFiles
-compatibility: opencode, github-copilot
-chronicle-hints: 'single-purpose, structured-output, phases'
+metadata:
+  chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 
 ## Overview

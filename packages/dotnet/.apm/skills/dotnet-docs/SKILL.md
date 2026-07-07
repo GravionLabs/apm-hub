@@ -1,8 +1,6 @@
 ---
 name: dotnet-docs
 description: 'Add XML documentation comments to C# public and internal types and members following summary/param/returns/remarks conventions.'
-allowed-tools: read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 Add XML documentation comments to C# types and members.

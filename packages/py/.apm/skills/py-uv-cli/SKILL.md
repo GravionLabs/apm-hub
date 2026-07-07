@@ -5,8 +5,6 @@ description: >
   Use this skill when you need the correct uv command flags for running commands,
   managing dependencies, syncing environments, or configuring CI pipelines — even
   if the user only mentions "uv", "venv", or "dependencies" without naming specific flags.
-allowed-tools: read search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Overview
