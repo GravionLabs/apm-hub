@@ -5,7 +5,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.14] — 2026-07-07
+
+### Features
+- Merge epic-implementation into github-issue as a router skill (#40)
+
+
+### Refactoring
+- Remove duplicate github-issue skill from development-workflow (#41)
+
+
 ## [1.0.13] — 2026-06-18
+
+### Documentation
+- Update CHANGELOG.md for v1.0.13 [skip ci]
+
 
 ### Features
 - Add sync-opencode skill to apm-tooling for OpenCode frontmatter compat
