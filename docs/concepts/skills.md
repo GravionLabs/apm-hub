@@ -59,24 +59,20 @@ Skills can be stored in two scopes:
 
 > See [global-sharing.md](../sync/global-sharing.md) for the full tool-support matrix and cross-machine sync setup.
 
-### Plugin Skills vs. Native Agent Skills
+### Package Skills vs. Native Agent Skills
 
-This repository uses a **plugin-based distribution** for skills. Plugin skills follow the same `SKILL.md` format but are bundled and installed via the copilot-hub plugin system:
+This repository distributes skills as **APM packages**. Package skills follow the same `SKILL.md` format but are bundled per domain and installed via the APM CLI:
 
-| Aspect           | Native Agent Skill                                 | Plugin Skill (copilot-hub)                         |
-| :--------------- | :------------------------------------------------- | :------------------------------------------------- |
-| **Location**     | `.github/skills/` or `~/.copilot/skills/`          | `plugins/<plugin>/skills/<name>/SKILL.md`          |
-| **Distribution** | Manual copy or sync                                | `gh copilot plugin install`                        |
-| **Trigger**      | Automatic (context-based) + explicit `/skill-name` | Automatic (context-based) + explicit `/skill-name` |
-| **Versioning**   | Repository-level                                   | Plugin version                                     |
+| Aspect           | Native Agent Skill                                 | Package Skill (apm-hub)                             |
+| :--------------- | :------------------------------------------------- | :-------------------------------------------------- |
+| **Location**     | `.github/skills/` or `~/.copilot/skills/`          | `packages/<domain>/.apm/skills/<name>/SKILL.md`     |
+| **Distribution** | Manual copy or sync                                | `apm install <package>@apm-hub`                     |
+| **Trigger**      | Automatic (context-based) + explicit `/skill-name` | Automatic (context-based) + explicit `/skill-name`  |
+| **Versioning**   | Repository-level                                   | Package version (`apm.yml`)                         |
 
-Skills are the plugin-scoped equivalent of `.prompt.md` files. Where a prompt file lives in `.github/prompts/` of a single repository, a skill lives inside a plugin and travels with it.
+### Skills in This Repository
 
-### Skills and Prompts in This Repository
-
-Skills in this repository are sourced from dedicated **`.skill.md`** templates located in `templates/<domain>/` (e.g., `templates/csharp/csharp-async.skill.md`). The plugin generator copies these templates directly into each plugin's `skills/` directory as `SKILL.md` files.
-
-This means every skill has its own concise, purpose-built source template — separate from the `.prompt.md` files used for VS Code slash commands.
+Skills are authored directly as `SKILL.md` files under `packages/<domain>/.apm/skills/<name>/`, following the [skill frontmatter convention](skill-frontmatter.md). `apm install` deploys them to each platform's skills directory (`.github/skills/`, `.claude/skills/`, `.opencode/`), so one source file serves GitHub Copilot, Claude Code, and OpenCode.
 
 ---
 
@@ -84,14 +80,14 @@ This means every skill has its own concise, purpose-built source template — se
 
 | Aspect              | Prompt (`.prompt.md`)          | Skill (`SKILL.md`)                                   |
 | :------------------ | :----------------------------- | :--------------------------------------------------- |
-| **Location**        | `.github/prompts/` (per repo)  | `.github/skills/`, `~/.copilot/skills/`, or plugin   |
-| **Scope**           | Single repository              | Project, personal, or any repo with plugin installed |
-| **Distribution**    | Manual copy or sync script     | `gh copilot plugin install` (plugin) or manual       |
-| **Source of truth** | Template file in `templates/`  | `plugin.config.yml` → generator (plugin)             |
+| **Location**        | `.github/prompts/` (per repo)  | `.github/skills/`, `~/.copilot/skills/`, or package  |
+| **Scope**           | Single repository              | Project, personal, or any repo with package installed |
+| **Distribution**    | Manual copy or sync script     | `apm install` (package) or manual                    |
+| **Source of truth** | Template file in `templates/`  | `packages/<domain>/.apm/skills/<name>/SKILL.md`      |
 | **Trigger**         | `/prompt-name` (slash command) | Automatic (context-based) or explicit `/skill-name`  |
-| **Versioning**      | Repository-level               | Plugin version (plugin) or repository-level          |
+| **Versioning**      | Repository-level               | Package version (`apm.yml`) or repository-level      |
 
-**Key insight:** Every skill is backed by a prompt template. The plugin generator reads the template, optionally extends it with additional agent content, and writes the result as a `SKILL.md` file.
+**Key insight:** skills are the portable, cross-platform artifact; prompts remain repo-local slash commands.
 
 ---
 
@@ -231,7 +227,7 @@ Skills become available immediately after installing the plugin or placing a `SK
 /skills info      # show details including skill location and source plugin
 /skills add       # add an alternative skills location
 /skills reload    # reload skills added during the current session
-/skills remove SKILL-DIR  # remove a directly-added skill (not plugin skills)
+/skills remove SKILL-DIR  # remove a directly-added skill (not package skills)
 ```
 
 **Explicitly reference a skill in a prompt:**
@@ -240,15 +236,15 @@ Skills become available immediately after installing the plugin or placing a `SK
 Use the /csharp-async skill to improve the async code in this file.
 ```
 
-**After installing a plugin, use its skills:**
+**After installing a package, use its skills:**
 
 ```bash
-# Install the plugin (once per machine)
-gh copilot plugin install csharp-development@copilot-hub
+# Install the package (once per project)
+apm install dotnet@apm-hub
 
-# Skills are now available — Copilot selects them automatically,
+# Skills are now available — the agent selects them automatically,
 # or you can reference them explicitly:
-Use the /create-dotnet-solution skill to scaffold the project.
+Use the /dotnet-create-solution skill to scaffold the project.
 ```
 
 In supported IDEs (VS Code, JetBrains), skills appear in the slash-command autocomplete list alongside regular prompts.
@@ -285,7 +281,7 @@ In supported IDEs (VS Code, JetBrains), skills appear in the slash-command autoc
 
 ## Skills in This Repository
 
-All skills available in copilot-hub are listed in **[`docs/skill-list.md`](../skill-list.md)**.
+All skills available in apm-hub are listed in **[`docs/skill-list.md`](../skill-list.md)**.
 
 Each skill is part of a plugin. See **[`docs/plugin-list.md`](../plugin-list.md)** for the full plugin overview, or **[`docs/concepts/plugins.md`](plugins.md)** for details on the plugin system.
 
