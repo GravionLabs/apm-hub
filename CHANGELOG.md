@@ -5,6 +5,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.16] — 2026-07-07
+
+### Bug Fixes
+- Align shared package manifest with actual contents (#56)
+
+
+### Documentation
+- Reposition README and docs for skills-first publishing (#57)
+- Update CHANGELOG.md for v1.0.16 [skip ci]
+
+
+### Refactoring
+- Merge ng-testing into ng-test (#54)
+
+
 ## [1.0.15] — 2026-07-07
 
 ### Bug Fixes
