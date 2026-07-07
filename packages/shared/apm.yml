@@ -13,3 +13,5 @@ keywords:
   - testing
 skills:
   - detect-techstack
+  - implementation
+  - setup-prettier-eslint-husky

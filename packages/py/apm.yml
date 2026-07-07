@@ -13,5 +13,10 @@ keywords:
   - mcp
   - debugging
 skills:
+  - py-code-review
+  - py-create-project
+  - py-debug
   - py-implementation
+  - py-packaging
   - py-test
+  - py-uv-cli

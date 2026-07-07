@@ -11,5 +11,14 @@ keywords:
   - aspnet
   - efcore
 skills:
+  - dotnet-async
+  - dotnet-best-practices
+  - dotnet-code-review
+  - dotnet-create-solution
+  - dotnet-design-pattern-review
+  - dotnet-docs
+  - dotnet-ef-core
   - dotnet-implementation
+  - dotnet-mcp-server-generator
   - dotnet-test
+  - dotnet-upgrade
