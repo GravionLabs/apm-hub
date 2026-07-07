@@ -6,8 +6,6 @@ description: >
   filtering, cell rendering, cell editing, row grouping, pivoting, master/detail, Excel export,
   theming, and TypeScript generics. Triggers on tasks like "add ag-grid", "configure columns",
   "enable row grouping", "export to Excel", "set up SSRM", or "customize cell renderer".
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 license: MIT
 ---
 

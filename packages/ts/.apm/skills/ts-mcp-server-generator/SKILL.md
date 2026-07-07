@@ -1,8 +1,6 @@
 ---
 name: ts-mcp-server-generator
 description: 'Generate MCP server in TypeScript with tools, resources, prompts. @modelcontextprotocol/sdk + zod.'
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 Generate MCP server in TypeScript.

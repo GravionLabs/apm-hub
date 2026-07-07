@@ -3,8 +3,6 @@ name: dotnet-test
 description: >
   .NET / C# test rules using NUnit with NSubstitute and Shouldly. Covers
   test structure, mocking, assertions, coverage, and test-writing methodology.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Prerequisites

@@ -3,8 +3,6 @@ name: ts-test
 description: >
   TypeScript/Node.js test rules using Vitest. Covers test runner config,
   file naming, mocking patterns, coverage, and test-writing methodology.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Prerequisites

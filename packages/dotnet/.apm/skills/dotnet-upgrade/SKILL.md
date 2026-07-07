@@ -1,8 +1,6 @@
 ---
 name: dotnet-upgrade
 description: 'Analyze and execute a .NET framework or package upgrade: assess current state, identify breaking changes, update target frameworks and NuGet packages, and verify the build.'
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 Analyze and execute .NET upgrade for solution.

@@ -4,9 +4,8 @@ description: >
   Creates and edits opencode and Copilot skills. Use this skill when drafting or
   refining a skill so the result stays small, valid, reusable, and
   convention-compliant.
-allowed-tools: read search codebase write edit editFiles
-compatibility: opencode, github-copilot
-chronicle-hints: 'single-purpose, structured-output, phases'
+metadata:
+  chronicle-hints: 'single-purpose, structured-output, phases'
 ---
 
 ## Overview
@@ -42,7 +41,7 @@ Avoid verbose reasoning.
 ### Phase 2 — Create & Structure
 
 4. Create `SKILL.md` first; add `scripts/`, `references/`, or `assets/` only if they reduce repeated context.
-5. Write frontmatter (`name`, `description`, `allowed-tools`, optional `compatibility`, optional repo-local `model`, optional `chronicle-hints`); keep `allowed-tools` minimal and pre-approve shell access only for reviewed commands. If you include `model`, choose it using `docs/model-overview.md` and treat it as advisory repo convention rather than officially required skill syntax. Use `compatibility` to declare platform support (e.g. `compatibility: opencode, github-copilot`).
+5. Write frontmatter per `docs/concepts/skill-frontmatter.md`: `name` and `description` only, plus optional `license` and `metadata` (custom annotations like `chronicle-hints` go under `metadata:`). Never add `allowed-tools`, `model`, `compatibility`, or any other top-level key — skills must load unchanged on GitHub Copilot, Claude Code, and OpenCode.
 6. Keep the body compact using standard sections: Overview → Prerequisites → Instructions → Gotchas → Output format.
 7. ✓ **Checkpoint:** Frontmatter complete and structure ready. Ready for Phase 3.
 
@@ -83,7 +82,7 @@ Skill `{name}` created at `{path}/SKILL.md` following all conventions.
 ```powershell
 # Check frontmatter syntax
 $skill = Get-Content "{path}/SKILL.md" | Select-Object -First 10
-Write-Host "Frontmatter valid if contains: name, description, allowed-tools"
+Write-Host "Frontmatter valid if it contains name + description and no keys beyond name, description, license, metadata"
 
 # Check structure
 $content = Get-Content "{path}/SKILL.md"

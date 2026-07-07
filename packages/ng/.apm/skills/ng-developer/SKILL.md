@@ -6,8 +6,6 @@ description: >
   (signals, linkedSignal, resource), forms, dependency injection, routing, SSR,
   accessibility (ARIA), animations, styling (component styles, Tailwind CSS),
   testing, or CLI tooling.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 license: MIT
 metadata:
   author: Copyright 2026 Google LLC

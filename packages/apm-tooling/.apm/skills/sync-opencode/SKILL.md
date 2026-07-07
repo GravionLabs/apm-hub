@@ -4,8 +4,6 @@ description: >
   Strips Copilot-only `tools: [...]` arrays from `.opencode/agents/*.md`
   frontmatter so OpenCode can load them without crashing. Run after
   `apm install -t opencode`.
-allowed-tools: read write edit search
-compatibility: opencode, github-copilot
 ---
 
 Sanitize agent files for OpenCode. OpenCode rejects `tools:` when it's a YAML

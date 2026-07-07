@@ -4,9 +4,6 @@ description: >
   Angular-specific implementation and test rules. Extends the parent
   `implementation` skill with Angular 21+ conventions. Auto-loaded when
   `implementation` skill dispatches to `ng-implementation`.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
-model: gpt-4.1
 ---
 
 ## Framework

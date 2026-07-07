@@ -6,8 +6,6 @@ description: >
   configuration, generates CHANGELOG.md, and adds a changelog script to
   package.json. Use this skill when setting up changelog generation or updating
   the changelog before a release.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Overview

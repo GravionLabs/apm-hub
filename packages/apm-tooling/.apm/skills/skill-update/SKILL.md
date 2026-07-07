@@ -4,8 +4,6 @@ description: >
   Applies improvements from a skill audit. Invoked automatically by skill-audit
   after user confirmation, or can be called standalone when audit findings are
   ready to be applied to an existing skill.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Overview

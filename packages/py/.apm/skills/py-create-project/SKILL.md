@@ -1,8 +1,6 @@
 ---
 name: py-create-project
 description: 'Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, and asyncio support.'
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 Scaffold Python project with production-ready baseline using `uv`.

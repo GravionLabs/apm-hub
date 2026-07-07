@@ -1,8 +1,6 @@
 ---
 name: ng-create-project
 description: 'Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier.'
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 Scaffold new Angular 21+ project with production-ready baseline.

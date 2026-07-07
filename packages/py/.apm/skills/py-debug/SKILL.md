@@ -1,8 +1,6 @@
 ---
 name: py-debug
 description: 'Diagnose and fix Python runtime errors, memory leaks, and performance issues using pdb, mypy, and profiling tools.'
-allowed-tools: execute shell runCommands read write edit editFiles search codebase problems
-compatibility: opencode, github-copilot
 ---
 
 Diagnose and resolve Python runtime issues including crashes, unexpected behavior, memory leaks, and slow performance.

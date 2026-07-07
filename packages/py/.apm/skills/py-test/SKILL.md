@@ -3,8 +3,6 @@ name: py-test
 description: >
   Python test rules using pytest with pytest-asyncio. Covers test runner
   config, test-writing methodology, mocking, coverage, and gap analysis.
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Prerequisites

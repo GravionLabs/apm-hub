@@ -1,8 +1,6 @@
 ---
 name: github-issue
 description: 'Implement GitHub issues or epics: read issue, branch, implement, verify, PR, merge. Routing skill: detects whether the input is an epic (issue body contains a `- [ ] #N` sub-issue checklist) or a standalone issue and follows the matching reference. Use for any GitHub issue work — single issues start to finish, or batch requests like "implement all epics" / "work through these issues one by one".'
-allowed-tools: execute shell runCommands read write edit editFiles search codebase
-compatibility: opencode, github-copilot
 ---
 
 ## Overview

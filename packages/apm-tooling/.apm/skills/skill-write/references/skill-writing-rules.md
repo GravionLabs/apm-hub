@@ -17,16 +17,13 @@ Do not load it when the change is only unrelated prose outside skill authoring.
   `packages/<domain>/.apm/skills/<name>/` for domain workflows.
 - Validate `name` carefully: kebab-case, 1-64 chars, and matching the folder.
 - Frontmatter must stay specific and imperative.
-- Treat frontmatter `model` as a repo-local convention, not official GitHub
-  skill syntax. Use it only when an advisory default helps in this repository,
-  and keep it aligned with `docs/model-overview.md`.
-- Add `compatibility` only when the skill has real runtime or environment needs.
+- Frontmatter carries only `name`, `description`, optional `license`, optional
+  `metadata` (see `docs/concepts/skill-frontmatter.md`). `model`,
+  `allowed-tools`, and `compatibility` are forbidden top-level keys.
 - Use `references/` for stable specs and long tables.
 - Use `assets/` for templates or output examples longer than a short snippet.
 - Use `scripts/` only for repeatable, flag-based procedures with `--help`,
   structured stdout, diagnostics on stderr, and non-zero failure codes.
-- Keep `allowed-tools` minimal; do not pre-approve shell access unless reviewed
-  commands require it.
 - Use conditional loads and keep reference chains to one level.
 - Write conditional behavior as `If X → do Y; otherwise do Z`.
 - Use ` ```powershell ` for shell blocks in skill docs.
@@ -94,7 +91,7 @@ Unnecessary tokens increase cost and reduce precision.
 | Duplicate content across skills               | Double the tokens for the same info              |
 | Reference file auto-loaded on every run       | Tokens spent even when irrelevant                |
 | Long inline fallback blocks                   | Token cost on every invocation even if MCP works |
-| Over-specified allowed-tools                  | May widen permissions unnecessarily              |
+| Non-standard frontmatter keys                 | Break strict loaders; move under `metadata:`     |
 | Composite skill that clones sub-skill content | Triples token cost; drifts out of sync           |
 
 ### Agent tool-call efficiency
