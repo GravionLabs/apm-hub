@@ -86,11 +86,11 @@ See [`packages/apm-install`](packages/apm-install/) for details.
 
 ### Where things land
 
-| Platform       | Skills                    | Agents             |
-| :------------- | :------------------------ | :----------------- |
-| GitHub Copilot | `.github/skills/<name>/`  | `.github/agents/`  |
-| Claude Code    | `.claude/skills/<name>/`  | `.claude/agents/`  |
-| OpenCode       | `.opencode/skills/<name>/`| `.opencode/agents/`|
+| Platform       | Skills                     | Agents              |
+| :------------- | :------------------------- | :------------------ |
+| GitHub Copilot | `.github/skills/<name>/`   | `.github/agents/`   |
+| Claude Code    | `.claude/skills/<name>/`   | `.claude/agents/`   |
+| OpenCode       | `.opencode/skills/<name>/` | `.opencode/agents/` |
 
 ### What to commit in your project
 

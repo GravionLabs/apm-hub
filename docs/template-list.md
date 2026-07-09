@@ -17,17 +17,16 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name          | Description | File                                                                        |
-| :------------ | :---------- | :-------------------------------------------------------------------------- |
-| agent-audit   | >           | [agent-audit](../packages/apm-tooling/.apm/skills/agent-audit/SKILL.md)     |
-| agent-create  | >           | [agent-create](../packages/apm-tooling/.apm/skills/agent-create/SKILL.md)   |
-| agent-update  | >           | [agent-update](../packages/apm-tooling/.apm/skills/agent-update/SKILL.md)   |
-| agent-write   | >           | [agent-write](../packages/apm-tooling/.apm/skills/agent-write/SKILL.md)     |
-| skill-audit   | >           | [skill-audit](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)     |
-| skill-create  | >           | [skill-create](../packages/apm-tooling/.apm/skills/skill-create/SKILL.md)   |
-| skill-update  | >           | [skill-update](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md)   |
-| skill-write   | >           | [skill-write](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)     |
-| sync-opencode | >           | [sync-opencode](../packages/apm-tooling/.apm/skills/sync-opencode/SKILL.md) |
+| Name         | Description | File                                                                      |
+| :----------- | :---------- | :------------------------------------------------------------------------ |
+| agent-audit  | >           | [agent-audit](../packages/apm-tooling/.apm/skills/agent-audit/SKILL.md)   |
+| agent-create | >           | [agent-create](../packages/apm-tooling/.apm/skills/agent-create/SKILL.md) |
+| agent-update | >           | [agent-update](../packages/apm-tooling/.apm/skills/agent-update/SKILL.md) |
+| agent-write  | >           | [agent-write](../packages/apm-tooling/.apm/skills/agent-write/SKILL.md)   |
+| skill-audit  | >           | [skill-audit](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)   |
+| skill-create | >           | [skill-create](../packages/apm-tooling/.apm/skills/skill-create/SKILL.md) |
+| skill-update | >           | [skill-update](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md) |
+| skill-write  | >           | [skill-write](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)   |
 
 ## Development-workflow
 
@@ -88,7 +87,6 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 | ng-implementation    | >                                                                                                                                                                               | [ng-implementation](../packages/ng/.apm/skills/ng-implementation/SKILL.md)       |
 | ng-migration         | Migrate an Angular application to a newer version. Covers ng update, standalone component migration, new @if/@for/@switch control flow syntax, and signals-first patterns.      | [ng-migration](../packages/ng/.apm/skills/ng-migration/SKILL.md)                 |
 | ng-test              | >                                                                                                                                                                               | [ng-test](../packages/ng/.apm/skills/ng-test/SKILL.md)                           |
-| ng-testing           | Write Angular 21 unit tests using Vitest and TestBed. Covers standalone component testing, signal testing, service mocking, and async patterns.                                 | [ng-testing](../packages/ng/.apm/skills/ng-testing/SKILL.md)                     |
 
 ## Py
 
