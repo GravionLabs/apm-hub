@@ -19,6 +19,10 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/extensions.json
 
+# Claude Code - local session state; deployed agents are committed
+.claude/*
+!.claude/agents/
+
 # JetBrains IDEs - share run configurations
 .idea/*
 !.idea/runConfigurations/

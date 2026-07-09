@@ -1,27 +1,4 @@
 ---
-# OpenCode fields
-mode: subagent
-steps: 15
-color: info
-permission:
-  read: allow
-  edit: deny
-  glob: allow
-  grep: allow
-  bash:
-    "*": deny
-    "gh issue*": allow
-    "gh pr*": allow
-    "git log*": allow
-    "git diff*": allow
-    "git remote*": allow
-    "git symbolic-ref*": allow
-  task: deny
-  skill: allow
-  webfetch: allow
-  websearch: deny
-  question: allow
-# Copilot/APM fields
 name: planning
 description: "Analyze a GitHub issue, explore codebase, break into sub-tasks, create GH issues. Outputs structured plan JSON consumable by implement/verify agents."
 model: deepseek-v4-flash-free

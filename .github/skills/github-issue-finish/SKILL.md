@@ -28,10 +28,9 @@ Review the implementation and open a pull request for a GitHub issue.
 
 4. Create the pull request (choose one):
 
-   *Preferred — agent:*
+   *Preferred — skill:*
    ```powershell
-   # Use @github-pull-request agent to auto-generate
-   @github-pull-request {issue-number}
+   # Load the github-pull-request skill to auto-generate title/body and create the PR
    ```
 
    *Alternative — MCP:*

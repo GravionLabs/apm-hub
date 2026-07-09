@@ -1,5 +1,7 @@
 ---
-# OpenCode fields
+name: verify
+description: "Run build, tests, lint on project. Loads <lang>-test skills for language-specific test commands. Uses detected package manager for build. Reports pass/fail with first error."
+model: deepseek-v4-flash-free
 mode: subagent
 steps: 5
 color: warning
@@ -22,10 +24,6 @@ permission:
   webfetch: deny
   websearch: deny
   question: deny
-# Copilot/APM fields
-name: verify
-description: "Run build, tests, lint on project. Loads <lang>-test skills for language-specific test commands. Uses detected package manager for build. Reports pass/fail with first error."
-model: deepseek-v4-flash-free
 ---
 
 Phase: verify. Run checks on project.

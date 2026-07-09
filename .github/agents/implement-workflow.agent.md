@@ -1,5 +1,4 @@
 ---
-# Copilot/APM fields
 name: implement-workflow
 description: "Tool-agnostic implement-from-issue workflow: setup → implement → verify. Reads an existing GH issue, implements, verifies. Works in Copilot CLI, Claude Code, OpenCode, any AI coding tool."
 model: deepseek-v4-flash-free

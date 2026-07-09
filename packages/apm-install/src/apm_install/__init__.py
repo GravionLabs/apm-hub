@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import platform as _platform
 import re
@@ -16,16 +17,32 @@ TARGET_DIRS = {
     "codex": ".codex",
 }
 
-TARGET_STRIP_FIELDS = {
-    "opencode": ["tools", "user-invocable", "agents"],
-    "copilot": ["mode", "steps", "color", "permission", "task"],
-    # Claude Code accepts only name/description/tools/model; source `tools`
-    # arrays use Copilot names and `model` values are rarely valid Anthropic
-    # ids, so both are stripped — Claude then inherits the session model.
-    "claude": ["mode", "steps", "color", "tools", "permission", "user-invocable", "agents", "model"],
-    "cursor": ["mode", "steps", "color", "permission"],
-    "codex": ["mode", "steps", "color", "permission"],
-}
+# Shared with src/generators/agent-target-generator.ts via
+# config/agent-strip-fields.json — the single source of truth for which
+# frontmatter fields to drop per target platform. Update the JSON file, not
+# a hardcoded dict here.
+#
+# Note on "claude": Claude Code accepts only name/description/tools/model;
+# source `tools` arrays use Copilot names and `model` values are rarely
+# valid Anthropic ids, so both are stripped — Claude then inherits the
+# session model.
+_STRIP_FIELDS_PATH = Path(__file__).resolve().parents[4] / "config" / "agent-strip-fields.json"
+
+
+def _load_target_strip_fields() -> dict[str, list[str]]:
+    if _STRIP_FIELDS_PATH.is_file():
+        return json.loads(_STRIP_FIELDS_PATH.read_text())
+    # Fallback for installs where config/ isn't vendored alongside this package.
+    return {
+        "opencode": ["tools", "user-invocable", "agents"],
+        "copilot": ["mode", "steps", "color", "permission", "task"],
+        "claude": ["mode", "steps", "color", "tools", "permission", "user-invocable", "agents", "model"],
+        "cursor": ["mode", "steps", "color", "permission"],
+        "codex": ["mode", "steps", "color", "permission"],
+    }
+
+
+TARGET_STRIP_FIELDS = _load_target_strip_fields()
 
 GLOBAL_PATHS: dict[str, dict[str, list[str]]] = {
     "opencode": {

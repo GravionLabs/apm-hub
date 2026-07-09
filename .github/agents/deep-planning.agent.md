@@ -1,5 +1,4 @@
 ---
-# Copilot/APM fields
 name: deep-planning
 description: "Deep-planning mode. Thoroughly analyze a GitHub issue, explore codebase in depth, break into well-scoped sub-tasks, create GH issues. Outputs structured plan JSON consumable by implement/verify agents."
 model: claude-sonnet-4.6

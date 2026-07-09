@@ -1,28 +1,4 @@
 ---
-# OpenCode fields
-mode: subagent
-steps: 5
-color: warning
-permission:
-  read: allow
-  glob: allow
-  grep: allow
-  edit: deny
-  bash:
-    "*": deny
-    "pnpm *": allow
-    "uv *": allow
-    "dotnet *": allow
-    "npm *": allow
-    "git status": allow
-    "git diff*": allow
-    "git log*": allow
-  task: deny
-  skill: allow
-  webfetch: deny
-  websearch: deny
-  question: deny
-# Copilot/APM fields
 name: verify
 description: "Run build, tests, lint on project. Loads <lang>-test skills for language-specific test commands. Uses detected package manager for build. Reports pass/fail with first error."
 model: deepseek-v4-flash-free
