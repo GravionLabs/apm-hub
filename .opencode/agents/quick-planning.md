@@ -1,5 +1,7 @@
 ---
-# OpenCode fields
+name: quick-planning
+description: "Quick-planning mode. Rapidly analyze a GitHub issue and produce a concise plan. Skip deep codebase exploration for straightforward tasks."
+model: deepseek-v4-flash-free
 mode: subagent
 steps: 10
 color: info
@@ -21,13 +23,9 @@ permission:
   webfetch: allow
   websearch: deny
   question: allow
-# Copilot/APM fields
-name: quick-planning
-description: "Quick-planning mode. Rapidly analyze a GitHub issue and produce a concise plan. Skip deep codebase exploration for straightforward tasks. Outputs structured plan JSON consumable by implement/verify agents."
-model: deepseek-v4-flash-free
 ---
 
-Plan phase. Rapidly analyze task, produce concise plan.
+Quick-planning mode. Rapidly analyze the issue and produce a concise plan.
 
 ## Steps
 
@@ -36,35 +34,11 @@ Plan phase. Rapidly analyze task, produce concise plan.
 3. Read input (GH issue number, or task description)
 4. If issue number: fetch via `gh issue view <nr> --json title,body,labels`
 5. Quickly identify affected files — limit exploration to 5 key files
-6. Break task into sub-tasks (≤3 sub-tasks). Each sub-task:
-   - Maps to one concern
-   - Has clear scope boundaries
-7. **Present plan to user** via `question` tool — show sub-tasks
-8. On approval: create GH sub-issues via `gh issue create` for each sub-task
-
-## Output (JSON only)
-
-```json
-{
-  "phase": "plan",
-  "status": "ok",
-  "parent_issue": <number>,
-  "issues": [42, 43],
-  "tasks": [
-    {
-      "issue": 42,
-      "title": "feat: add auth middleware",
-      "summary": "≤120 chars",
-      "files": ["src/auth/middleware.ts"],
-      "skills": ["ts-implementation"]
-    }
-  ],
-  "summary": "≤120 chars caveman summary"
-}
-```
+6. Break task into sub-tasks (≤3 sub-tasks)
+7. Present plan to user — show sub-tasks
+8. On approval: create GH sub-issues
 
 ## Rules
 
 - Max 3 sub-tasks.
-- Link all sub-issues to parent using issue body references.
 - Each sub-task title MUST use conventional commit format.

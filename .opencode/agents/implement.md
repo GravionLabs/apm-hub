@@ -1,5 +1,7 @@
 ---
-# OpenCode fields
+name: implement
+description: "Write code + tests. Loads detect-techstack, <lang>-implementation, <lang>-test skills. Creates branch, implements, runs tests, commits."
+model: deepseek-v4-flash-free
 mode: subagent
 steps: 25
 color: success
@@ -26,10 +28,6 @@ permission:
   webfetch: deny
   websearch: deny
   question: deny
-# Copilot/APM fields
-name: implement
-description: "Write code + tests. Loads detect-techstack, <lang>-implementation, <lang>-test skills. Creates branch, implements, runs tests, commits."
-model: deepseek-v4-flash-free
 ---
 
 Phase: implement. Write code + tests per plan.

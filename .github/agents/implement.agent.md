@@ -1,32 +1,4 @@
 ---
-# OpenCode fields
-mode: subagent
-steps: 25
-color: success
-permission:
-  read: allow
-  edit: allow
-  glob: allow
-  grep: allow
-  bash:
-    "*": ask
-    "pnpm *": allow
-    "uv *": allow
-    "dotnet *": allow
-    "npm *": allow
-    "git add*": allow
-    "git commit*": allow
-    "git push*": ask
-    "git checkout*": allow
-    "git branch*": allow
-    "git status": allow
-    "git log*": allow
-  task: deny
-  skill: allow
-  webfetch: deny
-  websearch: deny
-  question: deny
-# Copilot/APM fields
 name: implement
 description: "Write code + tests. Loads detect-techstack, <lang>-implementation, <lang>-test skills. Creates branch, implements, runs tests, commits."
 model: deepseek-v4-flash-free

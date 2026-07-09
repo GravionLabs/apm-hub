@@ -121,6 +121,9 @@ jobs:
       - name: Check manifest skills lists
         run: node scripts/check-manifests.mjs
 
+      - name: Check agent target files are in sync
+        run: node scripts/check-agent-targets.mjs
+
       - name: Install APM
         uses: microsoft/apm-action@v1
 

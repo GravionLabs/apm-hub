@@ -1,5 +1,4 @@
 ---
-# Copilot/APM fields
 name: quick-planning
 description: "Quick-planning mode. Rapidly analyze a GitHub issue and produce a concise plan. Skip deep codebase exploration for straightforward tasks."
 model: deepseek-v4-flash-free

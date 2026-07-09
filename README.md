@@ -98,7 +98,7 @@ See [`packages/apm-install`](packages/apm-install/) for details.
 | :------------------------------------------------------------ | :---------------------------------- |
 | `apm.yml`                                                     | ✅ Commit                            |
 | `apm.lock.yaml`                                               | ✅ Commit                            |
-| `.github/skills/`, `.claude/skills/`, `.opencode/`            | ✅ Commit (instant context on clone) |
+| `.github/`, `.claude/skills/`, `.claude/agents/`, `.opencode/`| ✅ Commit (instant context on clone) |
 | `apm_modules/`                                                | ❌ Add to `.gitignore`               |
 
 ## 📦 APM Packages

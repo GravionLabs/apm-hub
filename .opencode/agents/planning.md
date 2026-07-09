@@ -1,5 +1,7 @@
 ---
-# OpenCode fields
+name: planning
+description: "Analyze a GitHub issue, explore codebase, break into sub-tasks, create GH issues. Outputs structured plan JSON consumable by implement/verify agents."
+model: deepseek-v4-flash-free
 mode: subagent
 steps: 15
 color: info
@@ -21,10 +23,6 @@ permission:
   webfetch: allow
   websearch: deny
   question: allow
-# Copilot/APM fields
-name: planning
-description: "Analyze a GitHub issue, explore codebase, break into sub-tasks, create GH issues. Outputs structured plan JSON consumable by implement/verify agents."
-model: deepseek-v4-flash-free
 ---
 
 Plan phase. Analyze task, explore codebase, produce structured plan.

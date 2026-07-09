@@ -8,8 +8,7 @@ This document describes the agents and skills available through apm-hub APM pack
 
 #### `github-pull-request`
 
-**Location:** `packages/github/.apm/agents/github-pull-request.agent.md`
-(also committed to `.github/agents/github-pull-request.agent.md` for immediate availability)
+**Location:** `packages/github/.apm/skills/github-pull-request/SKILL.md`
 
 **Purpose:** Creates a GitHub Pull Request for the current branch, generates a proper title (derived from commit types and the issue number), builds a structured markdown description, and auto-links the GitHub issue.
 
@@ -19,12 +18,7 @@ This document describes the agents and skills available through apm-hub APM pack
 - For standardized PR workflows with proper issue linking
 
 **Tools required:**
-- `github_create_pull_request`, `github_get_issue` (GH MCP — primary)
-- `shell` (gh CLI fallback)
-
-**Model:** GPT-5.4 mini
-
-**User-invocable:** No (called by workflows that need PR creation)
+- `shell` (gh CLI)
 
 **Key features:**
 - Gathers context in parallel: current branch, git log, diff stat, and issue details
@@ -94,13 +88,13 @@ This document describes the agents and skills available through apm-hub APM pack
 
 **Purpose:** Reviews the implementation and opens a pull request. Run after `github-issue-start` when implementation is complete.
 
-**When to use:** After `github-issue-start` completes — verifies build/tests pass, creates PR via `@github-pull-request` agent or MCP, confirms CI is running.
+**When to use:** After `github-issue-start` completes — verifies build/tests pass, creates PR via the `github-pull-request` skill or MCP, confirms CI is running.
 
 **Model:** claude-sonnet-4.6
 
 **Key features:**
 - Runs full build and test suite before creating PR
-- Delegates PR creation to `@github-pull-request` agent (preferred) or MCP
+- Delegates PR creation to the `github-pull-request` skill (preferred) or MCP
 - PR title format: `<type>: <description> (#<issue-number>)` with parentheses
 - Verifies CI checks are running after PR is created
 
