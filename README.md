@@ -94,12 +94,12 @@ See [`packages/apm-install`](packages/apm-install/) for details.
 
 ### What to commit in your project
 
-| Path                                                          | Action                              |
-| :------------------------------------------------------------ | :---------------------------------- |
-| `apm.yml`                                                     | ✅ Commit                            |
-| `apm.lock.yaml`                                               | ✅ Commit                            |
-| `.github/`, `.claude/skills/`, `.claude/agents/`, `.opencode/`| ✅ Commit (instant context on clone) |
-| `apm_modules/`                                                | ❌ Add to `.gitignore`               |
+| Path                                                           | Action                              |
+| :------------------------------------------------------------- | :---------------------------------- |
+| `apm.yml`                                                      | ✅ Commit                            |
+| `apm.lock.yaml`                                                | ✅ Commit                            |
+| `.github/`, `.claude/skills/`, `.claude/agents/`, `.opencode/` | ✅ Commit (instant context on clone) |
+| `apm_modules/`                                                 | ❌ Add to `.gitignore`               |
 
 ## 📦 APM Packages
 
