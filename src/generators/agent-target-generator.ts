@@ -6,9 +6,10 @@ import { collectDomains } from './list-generator';
  * Compiles each packages/<domain>/.apm/agents/<name>.agent.md source into the
  * per-platform copies this repo deploys (.github/agents, .opencode/agents,
  * .claude/agents), stripping the fields each platform doesn't understand.
- * The strip rules are shared with packages/apm-install/src/apm_install/__init__.py
- * via config/agent-strip-fields.json — update that file, not this one, to
- * change which fields are dropped per platform.
+ * The strip rules mirror the ones vendored in GravionLabs/apmw
+ * (https://github.com/GravionLabs/apmw) via config/agent-strip-fields.json —
+ * update that file, not this one, to change which fields are dropped per
+ * platform, and keep apmw's vendored copy in sync manually.
  */
 
 interface DeployTarget {
@@ -42,8 +43,8 @@ function findFrontmatter(lines: string[]): [number, number] | null {
 /**
  * Removes top-level frontmatter keys in `fields` (and their indented nested
  * lines) from `fmLines`. Mirrors the Python `strip_fields` implementation in
- * packages/apm-install/src/apm_install/__init__.py line-for-line so both
- * stay behaviorally identical.
+ * GravionLabs/apmw's src/apmw/__init__.py line-for-line so both stay
+ * behaviorally identical.
  */
 function stripFields(fmLines: string[], fields: string[]): string[] {
   const patterns = fields.map((f) => new RegExp(`^${f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*:`));

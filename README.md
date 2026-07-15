@@ -72,17 +72,17 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    ```
    Then run `apm install` to deploy to `.github/`, `.claude/`, `.cursor/` etc.
 
-### Recommended: `apm-install` wrapper
+### Recommended: `apmw` wrapper
 
-Skills are platform-neutral and install cleanly everywhere. Agent files, however, carry platform-specific frontmatter (permissions, modes) that must be sanitized per target. The **apm-install** package wraps `apm install` and does this automatically:
+Skills are platform-neutral and install cleanly everywhere. Agent files, however, carry platform-specific frontmatter (permissions, modes) that must be sanitized per target. [**apmw**](https://github.com/GravionLabs/apmw) wraps `apm install`/`apm update` and does this automatically:
 
 ```bash
-apm-install -p claude      # install + sanitize for Claude Code
-apm-install -p opencode    # install + sanitize for OpenCode
-apm-install -p copilot     # install + sanitize for GitHub Copilot
+apmw install -p claude      # install + sanitize for Claude Code
+apmw install -p opencode    # install + sanitize for OpenCode
+apmw install -p copilot     # install + sanitize for GitHub Copilot
 ```
 
-See [`packages/apm-install`](packages/apm-install/) for details.
+See [GravionLabs/apmw](https://github.com/GravionLabs/apmw) for details.
 
 ### Where things land
 
