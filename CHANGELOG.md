@@ -11,6 +11,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Rebuild dist before agent-target drift check in CI
 
 
+### Documentation
+- Update CHANGELOG.md for v1.0.18 [skip ci]
+
+
 ## [1.0.17] — 2026-07-07
 
 ### Documentation
