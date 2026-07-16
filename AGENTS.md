@@ -230,8 +230,59 @@ To add a new agent to a package:
 
 1. Use skill `agent-create` to scaffold the agent file in `packages/<domain>/.apm/agents/<name>.agent.md`
 2. Update `packages/<domain>/apm.yml` to reference the new agent if needed
-3. Document the agent in this file under the appropriate section
-4. Commit and push — consumers run `apm install` to pick up the update
+3. Add platform-specific frontmatter in a `metadata:` block (see below)
+4. Run `node scripts/check-agent-targets.mjs --fix` to regenerate the compiled targets
+5. Document the agent in this file under the appropriate section
+6. Commit and push — consumers run `apm install` to pick up the update
+
+### Multi-target agent frontmatter
+
+Source files are written in **GitHub Copilot style** (primary format). Platform-specific fields go in a `metadata:` block. `apmw` and the apm-hub generator extract each platform's block and inject it into the compiled output; `metadata:` itself is always stripped from all outputs.
+
+```yaml
+---
+name: my-agent
+description: "What this agent does."
+# Copilot-native fields (kept in .github/agents output)
+mode: all
+steps: 40
+color: primary
+tools: ['agent', 'read', 'search']
+user-invocable: true
+# Platform-specific overrides
+metadata:
+  opencode:
+    permission:
+      read: allow
+      edit: deny
+      glob: allow
+      grep: allow
+      bash:
+        "*": deny
+      task: allow
+      skill: allow
+      webfetch: allow
+      question: allow
+  claude:
+    tools:
+      - Bash
+      - Read
+      - Glob
+      - Grep
+      - WebFetch
+      - Task
+---
+
+Agent body — identical on all platforms.
+```
+
+**Rules:**
+- Top-level fields are Copilot defaults; only add what Copilot understands at the top level.
+- `permission:` (OpenCode) and Claude-native `tools:` belong under `metadata.<platform>`.
+- `metadata` wins on conflict — if both the top level and `metadata.opencode` define `permission:`, the metadata version is used in the OpenCode output.
+- After editing source agents, always run `node scripts/check-agent-targets.mjs --fix` then commit the regenerated files in `.github/agents/`, `.opencode/agents/`, and `.claude/agents/`.
+
+See [docs/concepts/agents.md — Multi-target Agents](docs/concepts/agents.md#9-multi-target-agents--writing-for-multiple-platforms) for the full field compatibility table, platform-specific field references, and compilation pipeline details.
 
 ---
 
