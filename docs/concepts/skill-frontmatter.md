@@ -7,12 +7,12 @@ without per-platform rewriting. The convention follows the
 
 ## Legal top-level keys
 
-| Key           | Required | Rules                                                                                     |
-| :------------ | :------- | :---------------------------------------------------------------------------------------- |
-| `name`        | yes      | kebab-case, matches the skill directory name                                              |
-| `description` | yes      | Trigger-oriented: what the skill does **and** when to use it, including trigger phrases   |
-| `license`     | no       | SPDX identifier (e.g. `MIT`)                                                              |
-| `metadata`    | no       | Map for everything non-standard (see below)                                               |
+| Key           | Required | Rules                                                                                   |
+| :------------ | :------- | :-------------------------------------------------------------------------------------- |
+| `name`        | yes      | kebab-case, matches the skill directory name                                            |
+| `description` | yes      | Trigger-oriented: what the skill does **and** when to use it, including trigger phrases |
+| `license`     | no       | SPDX identifier (e.g. `MIT`)                                                            |
+| `metadata`    | no       | Map for everything non-standard (see below)                                             |
 
 **No other top-level keys are allowed.** In particular:
 

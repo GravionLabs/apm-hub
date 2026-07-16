@@ -63,12 +63,12 @@ Skills can be stored in two scopes:
 
 This repository distributes skills as **APM packages**. Package skills follow the same `SKILL.md` format but are bundled per domain and installed via the APM CLI:
 
-| Aspect           | Native Agent Skill                                 | Package Skill (apm-hub)                             |
-| :--------------- | :------------------------------------------------- | :-------------------------------------------------- |
-| **Location**     | `.github/skills/` or `~/.copilot/skills/`          | `packages/<domain>/.apm/skills/<name>/SKILL.md`     |
-| **Distribution** | Manual copy or sync                                | `apm install <package>@apm-hub`                     |
-| **Trigger**      | Automatic (context-based) + explicit `/skill-name` | Automatic (context-based) + explicit `/skill-name`  |
-| **Versioning**   | Repository-level                                   | Package version (`apm.yml`)                         |
+| Aspect           | Native Agent Skill                                 | Package Skill (apm-hub)                            |
+| :--------------- | :------------------------------------------------- | :------------------------------------------------- |
+| **Location**     | `.github/skills/` or `~/.copilot/skills/`          | `packages/<domain>/.apm/skills/<name>/SKILL.md`    |
+| **Distribution** | Manual copy or sync                                | `apm install <package>@apm-hub`                    |
+| **Trigger**      | Automatic (context-based) + explicit `/skill-name` | Automatic (context-based) + explicit `/skill-name` |
+| **Versioning**   | Repository-level                                   | Package version (`apm.yml`)                        |
 
 ### Skills in This Repository
 
@@ -78,14 +78,14 @@ Skills are authored directly as `SKILL.md` files under `packages/<domain>/.apm/s
 
 ## Skills vs. Prompts
 
-| Aspect              | Prompt (`.prompt.md`)          | Skill (`SKILL.md`)                                   |
-| :------------------ | :----------------------------- | :--------------------------------------------------- |
-| **Location**        | `.github/prompts/` (per repo)  | `.github/skills/`, `~/.copilot/skills/`, or package  |
+| Aspect              | Prompt (`.prompt.md`)          | Skill (`SKILL.md`)                                    |
+| :------------------ | :----------------------------- | :---------------------------------------------------- |
+| **Location**        | `.github/prompts/` (per repo)  | `.github/skills/`, `~/.copilot/skills/`, or package   |
 | **Scope**           | Single repository              | Project, personal, or any repo with package installed |
-| **Distribution**    | Manual copy or sync script     | `apm install` (package) or manual                    |
-| **Source of truth** | Template file in `templates/`  | `packages/<domain>/.apm/skills/<name>/SKILL.md`      |
-| **Trigger**         | `/prompt-name` (slash command) | Automatic (context-based) or explicit `/skill-name`  |
-| **Versioning**      | Repository-level               | Package version (`apm.yml`) or repository-level      |
+| **Distribution**    | Manual copy or sync script     | `apm install` (package) or manual                     |
+| **Source of truth** | Template file in `templates/`  | `packages/<domain>/.apm/skills/<name>/SKILL.md`       |
+| **Trigger**         | `/prompt-name` (slash command) | Automatic (context-based) or explicit `/skill-name`   |
+| **Versioning**      | Repository-level               | Package version (`apm.yml`) or repository-level       |
 
 **Key insight:** skills are the portable, cross-platform artifact; prompts remain repo-local slash commands.
 
