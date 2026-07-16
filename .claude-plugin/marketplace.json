@@ -8,13 +8,13 @@
     {
       "name": "all",
       "description": "Meta-package that installs all GravionLabs apm-hub packages in one go. Suitable for workspaces that use multiple tech stacks and want the full skill set available.",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "source": "./packages/all"
     },
     {
       "name": "ng",
       "description": "Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, AG Grid integration, and testing with Vitest.",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "source": "./packages/ng"
     },
     {
@@ -25,7 +25,7 @@
     {
       "name": "apm-tooling",
       "description": "APM contributor tooling for managing skill lifecycle, agent creation, and sync/transform utilities. Includes sync-opencode for sanitizing Copilot agent frontmatter into OpenCode-compatible format.",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "source": "./packages/apm-tooling"
     },
     {
@@ -36,13 +36,13 @@
     {
       "name": "dotnet",
       "description": "C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "source": "./packages/dotnet"
     },
     {
       "name": "development-workflow",
       "description": "GitHub-based development workflow automation. Orchestrates the full GitHub issue-to-PR lifecycle with multi-repo support, tech-stack detection, and PR review automation across Angular, TypeScript, Python, Go, and .NET stacks.",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "source": "./packages/development-workflow"
     },
     {
@@ -58,7 +58,7 @@
     {
       "name": "github",
       "description": "GitHub workflow primitives for issue management, branch workflows, and pull request automation. Provides agents and skills for the full GitHub issue-to-PR lifecycle using GitHub MCP and gh CLI.",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "source": "./packages/github"
     },
     {
@@ -84,7 +84,7 @@
     {
       "name": "py",
       "description": "Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "source": "./packages/py"
     },
     {
@@ -95,7 +95,7 @@
     {
       "name": "shared",
       "description": "Shared agents, instructions and skills used across all GravionLabs apm-hub packages. Includes general-purpose SE agents, code review and markdown instructions, and reusable skills for test writing and skill creation.",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "source": "./packages/shared"
     },
     {
@@ -106,7 +106,7 @@
     {
       "name": "ts",
       "description": "TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, debugging, Playwright TypeScript testing, and containerization.",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "source": "./packages/ts"
     }
   ]
