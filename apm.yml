@@ -1,5 +1,5 @@
 name: apm-hub
-version: 1.0.17
+version: 1.0.19
 description: 'Marketplace for GravionLabs apm-hub packages. Use individual packages
   (e.g. gravion/apm-hub/packages/angular) in your projects.
 
