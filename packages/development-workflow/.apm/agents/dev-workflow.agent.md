@@ -4,19 +4,21 @@ description: "Dev workflow orchestrator. Modes: plan <issue> (quick planning), d
 mode: all
 steps: 40
 color: primary
-permission:
-  read: allow
-  edit: deny
-  glob: allow
-  grep: allow
-  bash:
-    "*": deny
-  task: allow
-  skill: allow
-  webfetch: allow
-  question: allow
 tools: ['agent', 'read', 'search']
 user-invocable: true
+metadata:
+  opencode:
+    permission:
+      read: allow
+      edit: deny
+      glob: allow
+      grep: allow
+      bash:
+        "*": deny
+      task: allow
+      skill: allow
+      webfetch: allow
+      question: allow
 ---
 
 Dev workflow orchestrator. Mode is determined from your first message:
