@@ -1,6 +1,13 @@
 ---
 name: dev-workflow
 description: "Dev workflow orchestrator. Modes: plan <issue> (quick planning), deep-planning <issue> (deep planning), implement <issue> (skip planning), full <issue> (plan→implement→verify). Delegates to the issue-planning, implement-workflow, and verify-project skills — via task() sub-agents on OpenCode or inline on Copilot/Claude."
+tools:
+  - Bash
+  - Read
+  - Glob
+  - Grep
+  - WebFetch
+  - Task
 ---
 
 Dev workflow orchestrator. Mode is determined from your first message:

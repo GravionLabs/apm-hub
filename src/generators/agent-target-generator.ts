@@ -82,7 +82,65 @@ function stripFields(fmLines: string[], fields: string[]): string[] {
   return newLines;
 }
 
-function compileAgentFile(sourcePath: string, fields: string[]): string {
+/**
+ * Mirrors the Python `extract_platform_metadata` in GravionLabs/apmw
+ * src/apmw/__init__.py. Locates `metadata:` → `<platform>:` in fmLines,
+ * extracts and de-indents the nested content lines.
+ */
+function extractPlatformMetadata(fmLines: string[], platform: string): string[] {
+  const metadataRe = /^metadata\s*:/;
+  const platformRe = new RegExp(`^(\\s+)${platform.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*:`);
+
+  let inMetadata = false;
+  let platformIndent: number | null = null;
+  let contentBaseIndent: number | null = null;
+  const result: string[] = [];
+
+  for (const line of fmLines) {
+    if (!inMetadata) {
+      if (metadataRe.test(line)) inMetadata = true;
+      continue;
+    }
+
+    if (platformIndent === null) {
+      if (!line || !/^\s/.test(line[0])) break;
+      const m = platformRe.exec(line);
+      if (m) platformIndent = m[1].length;
+      continue;
+    }
+
+    if (!line || !/^\s/.test(line[0])) break;
+    const currentIndent = line.length - line.trimStart().length;
+    if (currentIndent <= platformIndent) break;
+
+    if (contentBaseIndent === null) contentBaseIndent = currentIndent;
+    result.push(line.slice(contentBaseIndent));
+  }
+
+  return result;
+}
+
+/**
+ * Mirrors the Python `inject_metadata_fields` in GravionLabs/apmw
+ * src/apmw/__init__.py. Strips top-level fields present in metaLines from
+ * fmLines (metadata wins), then appends metaLines.
+ */
+function injectMetadataFields(fmLines: string[], metaLines: string[]): string[] {
+  if (metaLines.length === 0) return fmLines;
+
+  const metaFields: string[] = [];
+  for (const line of metaLines) {
+    if (line && !/^\s/.test(line[0])) {
+      const m = /^(\S+)\s*:/.exec(line);
+      if (m) metaFields.push(m[1]);
+    }
+  }
+
+  const base = metaFields.length > 0 ? stripFields(fmLines, metaFields) : [...fmLines];
+  return [...base, ...metaLines];
+}
+
+function compileAgentFile(sourcePath: string, fields: string[], platform: string): string {
   const text = fs.readFileSync(sourcePath, 'utf8');
   const lines = text.split('\n');
   const fm = findFrontmatter(lines);
@@ -93,7 +151,9 @@ function compileAgentFile(sourcePath: string, fields: string[]): string {
   const body = lines.slice(fmEnd + 1);
 
   const newFm = stripFields(fmLines, fields);
-  const result = ['---', ...newFm, '---', ...body];
+  const platformMeta = extractPlatformMetadata(fmLines, platform);
+  const finalFm = platformMeta.length > 0 ? injectMetadataFields(newFm, platformMeta) : newFm;
+  const result = ['---', ...finalFm, '---', ...body];
   return result.join('\n');
 }
 
@@ -121,7 +181,7 @@ export function generateAgentTargets(
 
       for (const target of DEPLOY_TARGETS) {
         const fields = stripFieldsConfig[target.platform] ?? [];
-        const compiled = compileAgentFile(sourcePath, fields);
+        const compiled = compileAgentFile(sourcePath, fields, target.platform);
 
         const outDir = path.join(outputBaseDir, target.dir);
         if (!fs.existsSync(outDir)) {
