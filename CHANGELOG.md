@@ -5,6 +5,25 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.21] — 2026-07-16
+
+### Documentation
+- Document multi-target agent authoring with metadata: blocks
+
+
+### Features
+- Add metadata to agent-strip-fields.json for all platforms
+- **dev-workflow**: Move permission block into metadata.opencode
+- **dev-workflow**: Add metadata.claude with Claude Code tool names
+- **generator**: Implement metadata injection in agent-target-generator
+
+
+## [1.0.20] — 2026-07-16
+
+### Documentation
+- Update CHANGELOG.md for v1.0.20 [skip ci]
+
+
 ## [1.0.19] — 2026-07-15
 
 ### Documentation
