@@ -19,6 +19,14 @@ metadata:
       skill: allow
       webfetch: allow
       question: allow
+  claude:
+    tools:
+      - Bash
+      - Read
+      - Glob
+      - Grep
+      - WebFetch
+      - Task
 ---
 
 Dev workflow orchestrator. Mode is determined from your first message:
