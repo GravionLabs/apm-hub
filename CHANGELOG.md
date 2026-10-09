@@ -5,10 +5,46 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.22] — 2026-10-09
+
+### Bug Fixes
+- Resolve contradictions and broken references across skills
+- **github**: Resolve default branch dynamically, review before PR, sync issue templates
+- **development-workflow**: Align verify-project with the detect-techstack schema
+- **py**: Resolve mocking, asyncio and naming contradictions
+
+
+### Documentation
+- Describe the skills-only repo and align package manifests
+
+
+### Features
+- **development-workflow**: Add orch-pipeline and review-fanout skills with /orch prompt
+- **github**: Use native sub-issues instead of markdown checklists
+- **apm-tooling**: Add skill-slim skill with skill report script
+
+
+### Refactoring
+- Drop generic-knowledge skills, keep repo rules in <lang>-implementation
+- Replace 4 language code-review skills with shared code-review
+- **ng**: Split ng-developer, replace vendored references with Angular MCP pointers
+- **ng**: Condense ng-ag-grid-developer references
+- **github**: Merge batch workflows into one parameterized reference
+- Strip boilerplate and trim remaining skills
+- **github**: Name branches by conventional-commit type, slim batch-workflow
+- ⚠️ **Breaking**: Remove agent infrastructure, keep skills as the only artifact
+- **apm-tooling**: Single rules source, slimmer audit and write skills
+- **shared**: Slim detect-techstack and check-prerequisites
+- **ts**: Script-first create-project, coverage config, prettier/eslint skill moved here
+- **dotnet**: Script-first create-solution, remove dotnet-upgrade
+- **ng**: Merge ng-developer, ng-library and ag-grid MCP setup into their owners
+
+
 ## [1.0.21] — 2026-07-16
 
 ### Documentation
 - Document multi-target agent authoring with metadata: blocks
+- Update CHANGELOG.md for v1.0.21 [skip ci]
 
 
 ### Features
@@ -40,17 +76,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Update CHANGELOG.md for v1.0.18 [skip ci]
 
 
-## [1.0.17] — 2026-07-07
-
-### Documentation
-- Update CHANGELOG.md for v1.0.17 [skip ci]
-
-
 ### Features
 - Give agents a real source of truth and drift-check the deployed copies
 
 
-## [1.0.16] — 2026-07-07
+## [1.0.17] — 2026-07-07
 
 ### Bug Fixes
 - Align shared package manifest with actual contents (#56)
@@ -58,22 +88,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - Reposition README and docs for skills-first publishing (#57)
-- Update CHANGELOG.md for v1.0.16 [skip ci]
+- Update CHANGELOG.md for v1.0.17 [skip ci]
 
 
 ### Refactoring
 - Merge ng-testing into ng-test (#54)
 
 
-## [1.0.15] — 2026-07-07
+## [1.0.16] — 2026-07-07
 
 ### Bug Fixes
 - Complete apm-install claude target sanitization (#52)
 
 
 ### Documentation
-- Define spec-compliant skill frontmatter convention (#43)
-- Update CHANGELOG.md for v1.0.15 [skip ci]
+- Update CHANGELOG.md for v1.0.16 [skip ci]
 
 
 ### Features
@@ -83,9 +112,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 
 ### Refactoring
-- Normalize SKILL.md frontmatter to the spec convention (#44)
 - Convert github-pull-request agent to a skill (#50)
 - Slim dev-workflow to the sole skill-orchestrating agent (#51)
+
+
+## [1.0.15] — 2026-07-07
+
+### Documentation
+- Define spec-compliant skill frontmatter convention (#43)
+- Update CHANGELOG.md for v1.0.15 [skip ci]
+
+
+### Refactoring
+- Normalize SKILL.md frontmatter to the spec convention (#44)
 
 
 ## [1.0.14] — 2026-07-07
@@ -104,12 +143,25 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [1.0.13] — 2026-06-18
 
+### Bug Fixes
+- Add packageManager field to package.json for pnpm/action-setup auto-detection
+- Pass explicit pnpm version 11.6.0 to GravionLabs/ci/node actions
+
+
 ### Documentation
 - Update CHANGELOG.md for v1.0.13 [skip ci]
 
 
 ### Features
+- Add apm-install package — cross-platform uv-managed Python wrapper for apm install with agent frontmatter sanitization
+- Per-target strip fields, -p/--platform flag, -g/--global support, apm flag passthrough via parse_known_args
+- Add apm-update command, refactor shared run_apm, remove obsolete __main__.py and .cmd
+- Add epic and sub-issue support to implement-workflow, implement, github-pull-request agents
 - Add sync-opencode skill to apm-tooling for OpenCode frontmatter compat
+
+
+### Refactoring
+- Unify agent frontmatter order, remove comments, shell→execute, add OpenCode fields to implement-workflow
 
 
 ## [1.0.12] — 2026-06-10
@@ -128,24 +180,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [1.0.11] — 2026-06-09
 
 ### Bug Fixes
-- Add packageManager field to package.json for pnpm/action-setup auto-detection
-- Pass explicit pnpm version 11.6.0 to GravionLabs/ci/node actions
 - Remove invalid agents frontmatter, add mode to implement-workflow
 
 
 ### Documentation
 - Update CHANGELOG.md for v1.0.11 [skip ci]
-
-
-### Features
-- Add apm-install package — cross-platform uv-managed Python wrapper for apm install with agent frontmatter sanitization
-- Per-target strip fields, -p/--platform flag, -g/--global support, apm flag passthrough via parse_known_args
-- Add apm-update command, refactor shared run_apm, remove obsolete __main__.py and .cmd
-- Add epic and sub-issue support to implement-workflow, implement, github-pull-request agents
-
-
-### Refactoring
-- Unify agent frontmatter order, remove comments, shell→execute, add OpenCode fields to implement-workflow
 
 
 ## [1.0.10] — 2026-06-09
@@ -230,6 +269,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [1.0.2] — 2026-06-08
 
 ### Bug Fixes
+- Rename plan agent to planning avoid OpenCode built-in collision (#8)
 - Skip puppeteer Chrome download in CI build-test job (#15)
 - Update CI to use pnpm with GravionLabs/ci/node composites (#15)
 - Remove --if-present from build commands (pnpm doesn't support it)
@@ -243,11 +283,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 
 ### Features
+- Create apm-tooling package with skill lifecycle skills
 - Add pnpm-workflow and cliff-setup skills (#15)
 - Add detect-techstack, <lang>-build, and <lang>-test skills (#15)
 
 
 ### Refactoring
+- Restructure packages — rename csharp→dotnet, merge ag-grid→angular, strip unused domains (#8)
+- Remove common package + git-workflow skill (#8)
+- Merge duplicate/thin skills, extract inline code blocks (#8)
 - Extract planning agent, strip dev-workflow, add modes to opencode-workflow
 - Rename dev-workflow → implement-workflow, opencode-workflow → dev-workflow
 
@@ -256,6 +300,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - Update CHANGELOG.md for v1.0.1 [skip ci]
+
+
+### Refactoring
+- Simplify audit output templates and enhance prerequisite checks
 
 
 ## [1.0.0] — 2026-05-04
@@ -288,7 +336,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Add Copilot CLI permission kinds to allowed-tools in 3 skills
 - Remove devDependencies, commit .github/ directly, fix apm audit
 - Use github.token fallback in CI when GH_PAT is not set
-- Rename plan agent to planning avoid OpenCode built-in collision (#8)
 
 
 ### Documentation
@@ -425,7 +472,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Add PR body template and update README with skill instructions
 - Add agent-write, agent-create, agent-audit, agent-update skills
 - Add integration tests and configuration for Copilot SDK
-- Create apm-tooling package with skill lifecycle skills
 
 
 ### Refactoring
@@ -436,10 +482,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Rename csharp to dotnet, merge ag-grid into angular, rename apm-workspace skills
 - Replace docs/model-overview.md refs with local model-selection.md in agent-write and agent-audit
 - Update code block syntax to use PowerShell in documentation files
-- Simplify audit output templates and enhance prerequisite checks
-- Restructure packages — rename csharp→dotnet, merge ag-grid→angular, strip unused domains (#8)
-- Remove common package + git-workflow skill (#8)
-- Merge duplicate/thin skills, extract inline code blocks (#8)
 
 
 
