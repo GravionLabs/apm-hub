@@ -1,72 +1,59 @@
 # Skill Companion Directories
 
-Skills can ship with companion files (code templates, reference docs, scripts, assets) that the plugin generator automatically copies alongside the skill's `SKILL.md`.
+A skill can ship files next to its `SKILL.md`. `apm install` copies the whole skill directory, so these files arrive in the consuming project together with the skill.
 
-## Directory Convention
-
-Each skill lives in its own directory under the domain's `skills/` subdirectory, following the [agentskills.io](https://agentskills.io) directory layout:
+## Directory convention
 
 ```
-templates/<domain>/skills/
-  <skill-name>/
-    SKILL.md                         ← the skill itself
-    templates/                       ← files to copy into user projects
-    scripts/                         ← executable utility scripts
-    references/                      ← reference docs, cheat sheets, error catalogs
-    assets/                          ← images, diagrams, binary files
+packages/<domain>/.apm/skills/<skill-name>/
+  SKILL.md          ← the skill (≤ 100 lines)
+  scripts/          ← PowerShell 7+ procedures, run as `pwsh scripts/<Name>.ps1`
+  references/       ← long material the skill loads conditionally
+  templates/        ← starter files copied into the user's project
+  assets/           ← binary or static files (images, sample data)
 ```
 
-Only create subdirs that are actually needed. An empty `assets/` directory adds no value.
+Only create the directories you need. Paths inside `SKILL.md` are relative to the skill directory; the skill states that once near the top.
 
-> **Legacy flat layout (backward compatible):** `<skill-name>.skill.md` alongside a `<skill-name>/` companion directory is still supported but deprecated. Prefer the directory layout for new skills.
+| Directory | Content | Examples |
+| :-- | :-- | :-- |
+| `scripts/` | Repeatable procedures with parameters | `New-Solution.ps1`, `Get-SkillReport.ps1` |
+| `references/` | Specs, rule tables, workflow variants | `review-rules.md`, `sub-issues.md`, `skill-writing-rules.md` |
+| `templates/` | Files to copy or adapt | `Directory.Packages.props`, `eslint.config.mjs`, `vitest.setup.ts` |
+| `assets/` | Static files | `skill-template-optimized.md` |
 
-## Subdir Semantics
+## Loading references conditionally
 
-| Subdir        | Content                                | Examples                                                 |
-| :------------ | :------------------------------------- | :------------------------------------------------------- |
-| `templates/`  | Files to copy/adapt into user projects | `.editorconfig`, `pyproject.toml`, `Program.cs`, CI YAML |
-| `scripts/`    | Executable utility scripts             | `setup.sh`, `run-migrations.ps1`                         |
-| `references/` | Reference docs for the agent to read   | `common-errors.md`, `cheatsheet.md`                      |
-| `assets/`     | Images, diagrams, binary files         | `architecture.svg`, `logo.png`                           |
-
-## How the Generator Processes Them
-
-When `npm run generate` runs, after writing `SKILL.md` the generator copies companion files:
-
-1. Reads all entries in `templates/<domain>/skills/<skill-name>/` (excluding `SKILL.md`)
-2. Recursively copies them to `plugins/<plugin-name>/skills/<skill-name>/`
-3. Each copied file is logged: `✓ Skill asset: skills/<skill-name>/templates/...`
-4. The skill install process (via Copilot CLI) delivers the companion files alongside `SKILL.md` to the user's `.github/` directory
-
-## Example: `create-dotnet-solution`
-
-```
-templates/csharp/skills/
-  create-dotnet-solution/
-    SKILL.md
-    templates/
-      Directory.Build.props        ← shared MSBuild properties
-      Directory.Packages.props     ← Central Package Management stub
-      .editorconfig                ← opinionated C# style rules
-    scripts/
-      New-Solution.ps1
-```
-
-The skill references these in its `## Templates` section so the agent knows to copy them to the solution root.
-
-## Referencing Companion Files in the Skill
-
-Document companion files in a `## Templates` or `## References` section:
+A reference is read only when needed. The skill says when:
 
 ```markdown
-## Templates
-Starter files are available in `templates/` alongside this skill:
-- **`Directory.Build.props`** — shared MSBuild properties (Nullable, TreatWarningsAsErrors)
-- **`Directory.Packages.props`** — Central Package Management stub with test packages
+For batch work (several issues at once) read `references/batch-workflow.md`.
 ```
 
-## Adding Companion Files to an Existing Skill
+Keep the decision in `SKILL.md` and the detail in the reference. This is how skills stay under the size limit without losing information.
 
-1. Place files in the appropriate subdir inside the skill directory: `templates/<domain>/skills/<skill-name>/templates/`, `scripts/`, etc.
-2. Add a `## Templates` / `## References` section to the skill's `SKILL.md`
-3. Run `npm run generate` to verify the files are copied correctly
+## Example: `dotnet-create-solution`
+
+```
+packages/dotnet/.apm/skills/dotnet-create-solution/
+  SKILL.md
+  scripts/New-Solution.ps1
+  templates/
+    Directory.Build.props
+    Directory.Packages.props
+    .editorconfig
+```
+
+`SKILL.md` asks the two questions the script needs, calls `pwsh scripts/New-Solution.ps1`, and lists the templates the script copies to the solution root.
+
+## Adding companion files to an existing skill
+
+1. Put the file in the matching directory inside the skill.
+2. Reference it from `SKILL.md` with a relative path and say when it is used.
+3. Run the repo checks: `pnpm test` (size limit) and the skill report for dangling references:
+
+   ```powershell
+   pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .
+   ```
+
+The `skill-write` skill in `packages/apm-tooling` walks through this.

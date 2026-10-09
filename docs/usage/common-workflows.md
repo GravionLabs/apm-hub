@@ -1,181 +1,121 @@
 # Common Workflows
 
-This guide walks through concrete, end-to-end scenarios that combine plugins, agents, skills, and
-instructions to solve real development tasks. Each workflow starts from a fresh repository.
+End-to-end scenarios with apm-hub skills. Each one starts from a repository where the APM CLI is installed and the marketplace is registered (see the [README](../../README.md#-quick-start)). Prompts are shown as you would type them in Copilot, Claude Code or OpenCode; the agent selects the skills by their descriptions, so naming them is optional.
 
 ---
 
-## Workflow 1: Setting Up C# Development
-
-**Goal:** Equip a .NET repository with expert agents, C# scaffolding commands, and coding standards.
-
-### Step 1 — Install the plugin
+## Workflow 1: Set up a .NET repository
 
 ```bash
-gh copilot plugin install csharp-development@copilot-hub
+apm install dotnet@apm-hub
+apm install shared@apm-hub
 ```
 
-This single command copies the following into your repository:
+1. **Scaffold the solution**
 
-| What                            | Where it lands                                      | What it does                                             |
-| :------------------------------ | :-------------------------------------------------- | :------------------------------------------------------- |
-| `@csharp-expert` agent          | `.github/agents/csharp-expert.agent.md`             | Expert C# persona for all Copilot chats                  |
-| `/create-dotnet-solution` skill | Registered as slash command                         | Scaffolds a new .NET solution with `src/`+`test/` layout |
-| `/csharp-code-review` skill     | Registered as slash command                         | Priority-tagged (🔴/🟡/🟢) code review                   |
-| `csharp.instructions.md`        | `.github/instructions/csharp.instructions.md`       | C# coding standards, auto-applied to `**/*.cs`           |
-| `csharp-nunit.instructions.md`  | `.github/instructions/csharp-nunit.instructions.md` | NUnit 4 test conventions, scoped to `test/**/*.cs`       |
+   ```text
+   Use dotnet-create-solution to create a NuGet library called Gravion.Payments.
+   ```
 
-### Step 2 — Scaffold a new solution
+   The skill asks for library vs. application and the project template, then runs its script. You get `src/`, `test/`, `Directory.Build.props`, `Directory.Packages.props` (Central Package Management) and `.editorconfig`.
 
-In Copilot Chat:
+2. **Implement with tests**
 
-```
-/create-dotnet-solution
-```
+   ```text
+   Implement a PaymentProcessor that validates IBANs.
+   ```
 
-Copilot asks for the solution name, then generates:
+   `implementation` loads `dotnet-implementation` and `dotnet-test`: every change comes with NUnit tests using NSubstitute and Shouldly.
 
-```
-Gravion.Payments.sln
-src/Gravion.Payments/
-test/Gravion.Payments.Tests/
-Directory.Build.props
-.editorconfig
-```
+3. **Review before committing**
 
-### Step 3 — Work with expert guidance
+   ```text
+   Review the current diff.
+   ```
 
-Ask questions or give tasks to `@csharp-expert` directly:
+   `code-review` applies the `## Review rules` of `dotnet-implementation` and reports 🔴 / 🟡 / 🟢 findings. It never edits.
 
-```
-@csharp-expert Implement a repository pattern for the Order entity using EF Core.
-```
-
-The agent applies the installed instructions automatically — no need to restate conventions.
+The same pattern works with `ts`, `py` and `ng`: `<lang>-create-project` or `ng-create-project` to scaffold, `implementation` to build, `code-review` to check.
 
 ---
 
-## Workflow 2: Adding CI/CD to a .NET Project
-
-**Goal:** Add a GitHub Actions NuGet packaging workflow to an existing C# project.
-
-### Step 1 — Install the devops plugin
+## Workflow 2: Work a GitHub issue end to end
 
 ```bash
-gh copilot plugin install devops@copilot-hub
+apm install development-workflow@apm-hub   # pulls in github, shared and the language packages
 ```
 
-This registers the `/create-nuget-workflow` skill and copies DevOps-related instruction files
-(`shell.instructions.md`, `docker.instructions.md`, etc.) into `.github/instructions/`.
+1. **Plan a large issue into sub-issues** (optional)
 
-### Step 2 — Generate the workflow
+   ```text
+   Plan issue #42.
+   ```
 
-In Copilot Chat:
+   `issue-planning` explores the codebase, splits the work into scoped tasks and creates native GitHub sub-issues.
 
-```
-/create-nuget-workflow
-```
+2. **Run the orchestrated pipeline**
 
-Copilot generates a GitHub Actions workflow file that calls the `GravionLabs/ci` reusable NuGet
-Package CI/CD workflow. The generated YAML is ready to commit at
-`.github/workflows/nuget-package.yml`.
+   ```text
+   /orch feature 42
+   ```
 
-### Step 3 — Create a PR
+   `orch-pipeline` creates the branch per the conventional-commit type, writes up to five testable tasks and stops at **gate 1** for approval. Each task then goes through red → green → refactor and `verify-project`. `review-fanout` reviews the diff in parallel dimensions; blocking findings are fixed and re-reviewed. **Gate 2** shows the verdict and `git diff --stat` before committing.
 
-After reviewing and committing the workflow file:
+   Modes: `feature` (default), `fix` (first task is a failing reproduction test), `review` (only run the review fan-out).
 
-```
-/create-pr
-```
+3. **Open the pull request**
 
-The `/create-pr` skill analyses your `git log` and staged diff, writes a structured PR description,
-and opens the pull request — or hands you the `gh pr create` command with a pre-filled body.
+   ```text
+   Create a PR for this branch.
+   ```
+
+   `github-pull-request` generates a conventional title and a structured body from the commits and the linked issue, then creates it with `gh`.
+
+Without the pipeline, `github-issue` alone implements a single issue or a batch: it reads the labels (`epic`, `feature`, `pbi`, `task`, `bug`), checks for sub-issues and follows the matching reference workflow.
 
 ---
 
-## Workflow 3: Security Review
+## Workflow 3: Verify a change
 
-**Goal:** Perform a STRIDE-aligned security and resilience review of a feature before merging.
+```text
+Verify the project.
+```
 
-### Step 1 — Install the security plugin
+`verify-project` loads `detect-techstack`, runs the build with the detected package manager, runs the tests through each detected `<lang>-test` skill and lints. It returns a JSON result with `ok` or `fail` and the first error line, which is also what `orch-pipeline` reads.
+
+---
+
+## Workflow 4: Set up tooling in a TypeScript or Angular project
 
 ```bash
-gh copilot plugin install security@copilot-hub
+apm install ts@apm-hub
+apm install ng@apm-hub   # Angular only
 ```
 
-This registers two agents — `@security-reviewer` (general security and STRIDE threat modelling) and
-`@se-security-reviewer` (software engineering security review) — and copies
-`security.instructions.md` into `.github/instructions/`.
-
-### Step 2 — Review a feature branch
-
-Switch to Copilot Chat and mention the agent:
-
-```
-@security-reviewer Review the changes in src/Gravion.Payments/PaymentProcessor.cs for security
-issues. Focus on input validation, secrets handling, and injection risks.
-```
-
-The agent has `@workspace` access and will traverse the file, cross-reference related code, and
-return a structured finding list with severity ratings.
-
-### Step 3 — Threat model a new component
-
-```
-@security-reviewer Perform a STRIDE threat model for the new Webhook receiver in
-src/Gravion.Payments/Webhooks/.
-```
-
-The agent walks through Spoofing, Tampering, Repudiation, Information Disclosure, Denial of
-Service, and Elevation of Privilege for your specific component.
+| Goal | Prompt | Skill |
+| :-- | :-- | :-- |
+| Migrate from npm to pnpm | "Switch this project to pnpm." | `ts-pnpm-workflow` |
+| ESLint, Prettier and Husky pre-commit | "Set up linting and formatting with pre-commit hooks." | `setup-prettier-eslint-husky` |
+| New Angular workspace | "Create an Angular app named shop with Vitest." | `ng-create-project` |
+| Standalone component | "Add a product-list component under features/catalog." | `ng-component` |
+| NgRx Signal Store | "Create a signal store for the cart." | `ng-signal-store` |
+| AG Grid Enterprise | "Add a grid with row grouping and Excel export." | `ng-ag-grid-developer` |
+| MCP server | "Generate an MCP server with a search tool." | `ts-mcp-server-generator` |
 
 ---
 
-## Workflow 4: Copying Templates Manually (Without Plugins)
+## Workflow 5: Changelog from conventional commits
 
-**Goal:** Adopt individual templates without installing a plugin — useful when you only need one or
-two files.
-
-### Step 1 — Browse the template list
-
-Open [`docs/template-list.md`](../template-list.md) to find the template you need. Templates are
-organised by domain (angular, csharp, devops, …) and include agents, skills, prompts, and instructions.
-
-For type-specific views, use:
-- [`docs/agent-list.md`](../agent-list.md) — all agents by domain
-- [`docs/skill-list.md`](../skill-list.md) — all skills by domain
-- [`docs/instruction-list.md`](../instruction-list.md) — all instructions by domain
-
-### Step 2 — Copy the file
-
-Copy the desired file from `templates/` to the correct location in your repository:
-
-| Template type | Source path                                         | Destination                                        |
-| :------------ | :-------------------------------------------------- | :------------------------------------------------- |
-| Instruction   | `templates/csharp/csharp.instructions.md`           | `.github/instructions/csharp.instructions.md`      |
-| Prompt        | `templates/csharp/create-dotnet-solution.prompt.md` | `.github/prompts/create-dotnet-solution.prompt.md` |
-| Agent         | `templates/security/security-reviewer.agent.md`     | `.github/agents/security-reviewer.agent.md`        |
-
-You can also use `curl` or copy-paste directly from GitHub:
-
-```bash
-# Example: copy the C# instructions template
-curl -o .github/instructions/csharp.instructions.md   https://raw.githubusercontent.com/GravionLabs/copilot-hub/main/templates/csharp/csharp.instructions.md
+```text
+Set up git-cliff for this repo.
 ```
 
-### Step 3 — Customise
-
-Edit the copied file to match your project's specific standards. The templates are intentionally
-general — localise them to your tech stack and team preferences.
+`cliff-setup` installs git-cliff, creates or validates `cliff.toml`, generates `CHANGELOG.md` and adds a `changelog` script. Commit titles produced by `orch-pipeline` and `github-pull-request` already follow the conventional-commit format it expects.
 
 ---
 
-## Cross-References
+## Cross-references
 
-- [Quick Start](../../README.md#-quick-start)
-- [What are Plugins?](../concepts/plugins.md)
-- [Plugin List](../plugin-list.md)
-- [Template List](../template-list.md)
-- [Agent List](../agent-list.md)
-- [Skill List](../skill-list.md)
-- [Instruction List](../instruction-list.md)
+- [Skills](../concepts/skills.md)
+- [All skills](../skill-list.md) (generated)
+- [Prerequisites](../prerequisites.md)

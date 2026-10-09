@@ -69,7 +69,7 @@ This configuration defines LSP servers for the following languages:
 When you start a Copilot CLI session, servers are loaded with this priority:
 
 1. **Project Config** (`.github/lsp.json`) — highest priority
-2. **Plugin Configs** — from installed APM plugins
+2. **Package Configs** — from installed APM packages
 3. **User Config** (`~/.copilot/lsp-config.json`) — lowest priority
 
 This repository's `.github/lsp.json` takes precedence, ensuring all contributors use the same configuration.
