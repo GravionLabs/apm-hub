@@ -8,7 +8,7 @@ description: >
 
 ## Framework
 
-- **Test runner**: pytest + pytest-asyncio
+- **Test runner**: pytest + pytest-asyncio (`asyncio_mode = "auto"`)
 - **Config**: `[tool.pytest.ini_options]` in `pyproject.toml`
 - **Format/Lint**: ruff
 - **Type checker**: mypy (optional, in `pyproject.toml`)
@@ -24,48 +24,18 @@ description: >
 - Naming: `snake_case` for functions/variables, `PascalCase` for classes
 - Types: always annotate public function signatures
 - Async: `async def` + `await`, use `asyncio` or `anyio`
-- Mocking: `pytest.monkeypatch` for simple overrides, `unittest.mock.AsyncMock` for async
+- Mocking: `pytest-mock` (`mocker.create_autospec`); `monkeypatch` only for env vars and attributes — see `py-test`
 - File naming: `snake_case.py`, test files: `test_snake_case.py`
 
-## Test Examples
+## Tests
 
-### Sync test with fixture
+Runner config, marks, naming, mocking and coverage live in `py-test` (pytest, `test_<condition>_<expected>`, `pytest-mock`).
 
-```python
-import pytest
+## Review rules
 
-
-@pytest.fixture
-def service():
-    return MyService()
-
-
-def test_create_item(service):
-    result = service.create("test")
-    assert result.name == "test"
-```
-
-### Async test
-
-```python
-import pytest
-
-
-@pytest.mark.asyncio
-async def test_fetch_data():
-    result = await fetch_data("key")
-    assert result is not None
-```
-
-### Mocking external calls
-
-```python
-def test_get_user_with_mock(monkeypatch):
-    monkeypatch.setattr("module.http.get", lambda url: {"id": 1})
-    result = get_user(1)
-    assert result["id"] == 1
-```
-
-## Related Skills
-
-- **Test**: Load `py-test` for test runner config, coverage, and async test rules
+- Type annotations on public function parameters and return values
+- No mutable default arguments; no bare `except:`
+- Context managers (`with`) for files, connections, locks
+- No `eval()`/`exec()` on untrusted input; parameterized SQL; no hardcoded secrets
+- `pathlib.Path` over `os.path`; `dataclass`/`NamedTuple` for structured data
+- Tests use `pytest.raises` and `@pytest.mark.parametrize`

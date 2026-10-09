@@ -1,174 +1,72 @@
 ## Skill Writing Rules
 
-Use this reference when drafting or updating a skill.
+Single source of truth for how a skill is shaped. `skill-audit`, `skill-update` and `skill-slim` check against this file; do not restate these rules elsewhere.
 
 ### Load it when
 
-- A skill file is being created or edited.
-- A skill needs structure, frontmatter, reference, asset, or script guidance.
-- A skill includes CLI examples, command output, or output-format decisions.
+- A skill is being created, edited, audited or slimmed
+- A skill includes CLI examples, command output, or output-format decisions
 
-Do not load it when the change is only unrelated prose outside skill authoring.
+### Placement and naming
 
-### Rules to apply
+- Domain workflows: `packages/<domain>/.apm/skills/<name>/`; repo-level contributor tooling only: `.github/skills/<name>/`. If no package fits, create one with `apm.yml`.
+- `name`: kebab-case, 1-64 chars, matches the directory exactly, no leading, trailing or consecutive hyphens.
 
-- Keep `SKILL.md` compact and focused on workflow, not long specs.
-- Use `.github/skills/<name>/` for repo-level skill tooling and
-  `packages/<domain>/.apm/skills/<name>/` for domain workflows.
-- Validate `name` carefully: kebab-case, 1-64 chars, and matching the folder.
-- Frontmatter must stay specific and imperative.
-- Frontmatter carries only `name`, `description`, optional `license`, optional
-  `metadata` (see `docs/concepts/skill-frontmatter.md`). `model`,
-  `allowed-tools`, and `compatibility` are forbidden top-level keys.
-- Use `references/` for stable specs and long tables.
-- Use `assets/` for templates or output examples longer than a short snippet.
-- Use `scripts/` only for repeatable, flag-based procedures with `--help`,
-  structured stdout, diagnostics on stderr, and non-zero failure codes.
-- Use conditional loads and keep reference chains to one level.
-- Write conditional behavior as `If X → do Y; otherwise do Z`.
-- Use ` ```powershell ` for shell blocks in skill docs.
+### Frontmatter
 
-### Model guidance
+Skills must load unchanged on GitHub Copilot, Claude Code and OpenCode, so only agentskills.io-legal keys are allowed at the top level.
 
-- Prefer a short body-level "Model hint" when users may need to switch models
-  manually and the recommendation should be visible in the skill body.
-- If frontmatter `model` is used, do not imply that it is officially required
-  by GitHub skill docs.
-- Keep any frontmatter `model` and body-level "Model hint" consistent with each
-  other and with `docs/model-overview.md`.
-- Avoid vague phrasing like "use a better model"; explain the task shape instead
-  (for example, "mechanical task" vs "complex multi-step reasoning").
+| Field | Rule |
+|---|---|
+| `name` | Required. See naming above. |
+| `description` | Required. Imperative, 1-1,024 chars, says what the skill does and when to use it, includes specific trigger keywords, not so broad it fires for unrelated tasks. |
+| `license` | Optional. SPDX identifier (e.g. `MIT`). |
+| `metadata` | Optional. Map of free-form string annotations (authorship, version). Hosts ignore them; no nested platform configuration. |
 
-### Output-efficiency rules
+**Forbidden top-level keys (🔴):** `allowed-tools` (matches no platform's tool vocabulary), `model` (platform-specific, goes stale), `compatibility` (a uniform claim carries no information), anything else (breaks strict loaders). Custom annotations go under `metadata:`.
 
-- Prefer the smallest useful CLI output.
-- Use JSON only when the next step parses, compares, or persists the data.
-- Trim sample output to the signal the workflow needs.
-- Avoid wrapping plain text in JSON just because the output should look
-  structured.
-
-### Token-efficiency principles
-
-Every token in a skill file is loaded into the model context on every invocation.
-Unnecessary tokens increase cost and reduce precision.
-
-**Content placement — what goes where:**
-
-| Content type                           | Location                            |
-|----------------------------------------|-------------------------------------|
-| Workflow steps the agent follows       | `SKILL.md` body                     |
-| Stable specs, error codes, long tables | `references/` (conditional load)    |
-| Output templates > ~20 lines           | `assets/` (conditional load)        |
-| Repeatable multi-step commands         | `scripts/` (flag-based, not inline) |
-
-**Composition over duplication:**
-
-- If two skills share a workflow, let one delegate to the other — do not copy steps.
-- A composite skill body should be a short list of sub-skill invocations, not a clone
-  of their content.
-- Example: `github-issue-workflow` delegates to `github-issue-start` then
-  `github-issue-finish` rather than inlining their phases.
-
-**Conditional loading:**
-
-- Load a reference only when the current task requires it:
-  `"If X, read references/Y.md — otherwise skip it."`
-- Never auto-load all references at the top of every run.
-- Keep reference chains one level deep (A → B, never A → B → C).
-
-**Inline code blocks:**
-
-- Include a code block only when the agent will copy it verbatim in the next step.
-- Fallback commands (e.g. CLI alternative to MCP) belong inline only if they are
-  short (≤ 5 lines); move longer fallbacks to `references/`.
-- Do not list both primary and fallback in the body when the fallback is rarely
-  needed — document the primary path and add the fallback as a Gotcha or reference.
-
-**Anti-patterns and their token cost:**
-
-| Anti-pattern                                  | Effect                                           |
-|-----------------------------------------------|--------------------------------------------------|
-| Duplicate content across skills               | Double the tokens for the same info              |
-| Reference file auto-loaded on every run       | Tokens spent even when irrelevant                |
-| Long inline fallback blocks                   | Token cost on every invocation even if MCP works |
-| Non-standard frontmatter keys                 | Break strict loaders; move under `metadata:`     |
-| Composite skill that clones sub-skill content | Triples token cost; drifts out of sync           |
-
-### Agent tool-call efficiency
-
-These rules apply when a skill involves tool use, CLI commands, or shell pipelines.
-Include them as guidance in skills that direct agents to use tools.
-
-**Two-question test — ask before every tool call:**
-1. Can I avoid this call entirely? (information already in context → use it)
-2. If I must call: how do I minimize bytes returned? (filter/project/truncate at source)
-
-**Structured query tools — never dump a whole file to read one field:**
-
-| Format            | Primary tool                  | PowerShell alternative                                          |
-|-------------------|-------------------------------|-----------------------------------------------------------------|
-| JSON              | `jq -c '.field'`              | `ConvertFrom-Json \| Select-Object id, status`                  |
-| YAML / TOML / XML | `yq '.key'` (cross-platform)  | `yq` (no native PS equivalent)                                  |
-| CSV / TSV         | `Import-Csv \| Select-Object` | same                                                            |
-| Text / lines      | —                             | `Get-Content -First N`, `Select-String`, `Measure-Object -Line` |
-
-**Precision search — limit before reading:**
-- `ast-grep` (cross-platform) for code patterns; replaces multiple grep+read rounds.
-- `rg -l` (files only) or `rg -c` (counts only) before fetching file content.
-
-**Git — summarize before diffing:**
-- `git diff --stat` or `--name-only` first; then narrow to specific files.
-- Never run `git diff` without a path on a large change.
-
-**Suppress output noise:**
-- Quiet flags: `-q` (pip/pytest), `--silent` (npm), `--oneline` (git log).
-- Strip ANSI codes: `$Env:NO_COLOR = '1'` (PowerShell) or `NO_COLOR=1` (bash/cmd).
-- Batch independent commands: `;` (PowerShell) or `&&` (bash/cmd) — one round-trip instead of N.
-
-**Prefer short PowerShell pipelines over Python for simple transforms:**
-- `(Get-Content f | Measure-Object -Line).Lines` vs `python -c "print(len(...))"`
-- `Get-Content f | Select-String 'pattern'` vs a Python regex script.
-- Reach for Python only when multi-step logic or libraries are needed.
-
-### Copilot CLI Session Management
-
-**Chronicle Optimization:**
-
-Copilot CLI records every session and can summarize them at ~80% context full. Skills that output in phases with clear checkpoints compress better.
-
-Recommended output structure:
-```markdown
-## Summary
-[One-line outcome]
-
-## What Changed
-- File paths and changes (bullet list)
-
-## Verify
-[Command to verify]
-
-## Next Steps
-1. [Actionable step]
+```yaml
+---
+name: my-skill
+description: >
+  Does X. Use this skill when the user needs Y or Z, even if they do not
+  mention X explicitly.
+---
 ```
 
-**Context Management:**
+### Body
 
-- Ask all required questions upfront; avoid back-and-forth (adds messages)
-- Return structured output (lists, tables) not prose
-- For large file reads: use `head`, `grep`, or `tail` instead of reading entire files
-- Redirect verbose command output to files: `cmd > /tmp/log.txt 2>&1`
-- Use phases with checkpoints so long sessions can compress earlier work
+- ≤ 100 lines (enforced by `src/generators/skill-size-validator.ts`); workflow, not long specs
+- Order: one-sentence overview, prerequisites, numbered instructions, gotchas, one-line report format
+- Write conditional behavior as `If X → do Y; otherwise do Z`; no equal alternatives without a default
+- Shell blocks use ` ```powershell `
+- Include a code block only when the agent will copy it verbatim; inline fallbacks ≤ 5 lines, longer ones go in `references/`
+- Don't explain what the model already knows (tool basics, generic best practice, flag tables); state repo conventions, contracts and non-obvious gotchas
+- No vague advice ("handle errors appropriately"); not tied to one concrete task (hardcoded names, URLs, ids)
+- Paths to `scripts/`, `references/` and `assets/` are relative to the skill directory; state that once in the skill. Never rely on `$env:SKILL_DIR`.
 
-See: [`docs/chronicle-optimization.md`](../../chronicle-optimization.md) and [`docs/context-management.md`](../../context-management.md)
+### Companion directories
 
-### Validation rules
+| Content | Location |
+|---|---|
+| Workflow steps the agent follows | `SKILL.md` body |
+| Stable specs, error codes, long tables | `references/` (conditional load: "If X, read references/Y.md") |
+| Templates and output formats > ~20 lines | `assets/` or `templates/` (conditional load) |
+| Repeatable multi-step commands | `scripts/` (`.ps1` preferred) |
 
-- Directory name matches `name`.
-- Any frontmatter `model` is optional, repo-local, and consistent with
-  `docs/model-overview.md`.
-- Body stays focused and does not repeat what a reference already says.
-- References are loaded conditionally, not automatically.
-- Output follows Chronicle-optimized structure (Summary → What Changed → Verify → Next Steps)
-- Token efficiency: avoid prose, use structured lists and checkpoints
-- The final skill should be easy to reuse from `skill-write` and
-  `skill-update`.
+- Scripts: flag-based, `--help`, no interactive prompts, data on stdout, diagnostics on stderr, non-zero exit on failure, dependencies declared and pinned
+- Load references conditionally, never all of them; keep chains one level deep (A → B, never A → B → C); paths relative from the skill root
+- Compose, don't duplicate: if two skills share a workflow, one delegates to the other (`orch-pipeline` calls `review-fanout` and `verify-project` instead of inlining them)
+- No content duplicated between body and references, or between two skills
+
+### CLI output
+
+- Prefer the smallest useful output (`--quiet`, `--nologo` and the like when they hide no useful failures)
+- Use JSON only when the next step parses, compares or persists it; never wrap plain text in JSON to look structured
+- Keep sample output short and focused on the signal the next step needs
+
+### Validation
+
+- Directory name matches `name`; no forbidden frontmatter keys
+- Description says when to use it; references are conditional; nothing duplicated across body and references
+- All shell fences are ` ```powershell `

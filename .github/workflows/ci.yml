@@ -27,7 +27,6 @@ jobs:
           GENERATED_FILES=(
             "docs/skill-list.md"
             "docs/template-list.md"
-            "docs/agent-list.md"
             "docs/instruction-list.md"
           )
 
@@ -121,14 +120,6 @@ jobs:
       - name: Check manifest skills lists
         run: node scripts/check-manifests.mjs
 
-      - name: Rebuild dist
-        # The Test action above re-checks out the repo with `clean: true`,
-        # which wipes the dist/ produced by the earlier Build step.
-        run: pnpm run build
-
-      - name: Check agent target files are in sync
-        run: node scripts/check-agent-targets.mjs
-
       - name: Install APM
         uses: microsoft/apm-action@v1
 
@@ -216,11 +207,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add README.md docs/overview.md
           # Force-add gitignored aggregate docs
-          git add -f docs/agent-list.md docs/instruction-list.md docs/skill-list.md docs/template-list.md
+          git add -f docs/instruction-list.md docs/skill-list.md docs/template-list.md
           # Commit generated diagrams
           git add docs/diagrams/*.svg
           # Commit APM packages output (packages/ is gitignored for apm_modules/ and .github/ only)
-          git add packages/*/apm.yml packages/*/apm.lock.yaml packages/all/
+          git add packages/*/apm.yml packages/all/
           # Add .apm directories (use find to handle glob expansion reliably)
           find packages -maxdepth 2 -name '.apm' -type d -exec git add {} + 2>/dev/null || true
           # Commit marketplace definition

@@ -36,11 +36,7 @@ What happens instead.
 
 <!-- Optional. -->
 
-## Sub-Issues
-
-<!-- Optional: only if the fix is split into Tasks; also add each as a native GitHub sub-issue. -->
-
-- [ ] #NNN — chore: …
+<!-- Optional: if the fix is split into Tasks, add them via GitHub's native sub-issues panel. -->
 
 ## Definition of Done
 

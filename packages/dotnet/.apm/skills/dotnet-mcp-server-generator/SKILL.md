@@ -3,43 +3,29 @@ name: dotnet-mcp-server-generator
 description: 'Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.'
 ---
 
-Generate complete Model Context Protocol (MCP) server in C#.
-
-## Stack
-- **CLI:** `dotnet` SDK (key commands: `dotnet new console`, `dotnet add package`, `dotnet build`, `dotnet run`)
-- **Package manager:** NuGet — `ModelContextProtocol` (prerelease), `Microsoft.Extensions.Hosting`
-Creates C# console application implementing MCP server using `ModelContextProtocol` (prerelease) with `Microsoft.Extensions.Hosting`, exposes tools/prompts, uses stdio transport.
+Generate a Model Context Protocol (MCP) server in C#: a console application using the `ModelContextProtocol` package (prerelease) with `Microsoft.Extensions.Hosting`, stdio transport, tools and prompts. Paths to `templates/` are relative to this skill's directory.
 
 ## Steps
+
 1. Ask: project name, tools to expose (names, descriptions, input schemas), prompts to include
-2. Create project:
-   ```bash
+2. Create the project:
+   ```powershell
    dotnet new console -n <ProjectName>
    cd <ProjectName>
    dotnet add package ModelContextProtocol --prerelease
    dotnet add package Microsoft.Extensions.Hosting
    ```
-3. Configure `Program.cs`:
-   ```csharp
-   var builder = Host.CreateApplicationBuilder(args);
-   builder.Logging.AddConsole(o => o.LogToStandardErrorThreshold = LogLevel.Trace);
-   builder.Services.AddMcpServer()
-       .WithStdioServerTransport()
-       .WithTools<MyTools>()
-       .WithPrompts<MyPrompts>();
-   await builder.Build().RunAsync();
-   ```
-4. Create tool classes with `[McpServerToolType]` and `[McpServerTool]` attributes
-5. Create prompt classes with `[McpServerPromptType]` and `[McpServerPrompt]` attributes
-6. Add `appsettings.json` with `Logging` config routing all logs to stderr
-7. Build and verify: `dotnet build`
+3. Copy `templates/Program.cs`, `templates/Tools.cs`, `templates/Prompts.cs` and adapt them to the requested tools and prompts
+4. Add `appsettings.json` with a `Logging` section routing all logs to stderr
+5. Build and verify: `dotnet build`
 
 ## Templates
-Starter files available in `templates/` alongside this skill:
-- **`Program.cs`** — host setup with `AddMcpServer()`, stdio transport, tool and prompt registration
+
+- **`Program.cs`** — host setup with `AddMcpServer()`, stdio transport, console logging to stderr, tool and prompt registration
 - **`Tools.cs`** — `[McpServerToolType]` class with two example tools (sync + async with `CancellationToken`)
 - **`Prompts.cs`** — `[McpServerPromptType]` class with an example `PromptMessage` return
 
 ## Constraints
-- All logs must go to stderr — never stdout (stdio transport uses stdout for MCP protocol)
+
+- All logs must go to stderr — never stdout (stdio transport uses stdout for the MCP protocol)
 - Tool methods should be `async Task<string>` or `async Task<CallToolResponse>`

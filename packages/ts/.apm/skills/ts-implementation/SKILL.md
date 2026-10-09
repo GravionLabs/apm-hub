@@ -10,7 +10,8 @@ description: >
 
 - **Test runner**: Vitest (`globals: true`, `environment: node`)
 - **Config**: `vitest.config.ts` at project root
-- **Format/Lint**: Biome
+- **Format/Lint**: ESLint (flat config) + Prettier — see `setup-prettier-eslint-husky`
+- **Runtime**: Node.js 22 LTS
 
 ## Imports
 
@@ -24,31 +25,15 @@ description: >
 - Mocking: function-level via `vi.fn()`. Module-level mocks only when unavoidable.
 - File naming: `kebab-case.ts`, test files: `kebab-case.test.ts`.
 
-## Test Examples
+## Tests
 
-### Service test
+Runner config, naming, mocking and coverage live in `ts-test` (Vitest, `describe`/`it`, `vi.fn()`).
 
-```ts
-import { describe, it, expect } from "vitest";
+## Review rules
 
-describe("source-service", () => {
-  it("creates a source and returns it", async () => { ... });
-  it("rejects duplicate URL", async () => { ... });
-  it("returns null for non-existent id", async () => { ... });
-});
-```
-
-### Route test
-
-```ts
-import { describe, it, expect } from "vitest";
-
-describe("GET /api/sources/:id", () => {
-  it("returns 200 for existing source", async () => { ... });
-  it("returns 404 for non-existing source", async () => { ... });
-});
-```
-
-## Related Skills
-
-- **Test**: Load `ts-test` for test runner config, naming, and coverage details
+- No `any` — use `unknown` and narrow; `strict: true` in `tsconfig.json`
+- No floating promises; async functions propagate or handle errors
+- ESM `import` only; `path.join`/`path.resolve` for file paths
+- No `eval()`/`new Function()`; validate input before queries, paths, shell commands
+- Tests isolated; mocks reset in `beforeEach` (`vi.clearAllMocks()`)
+- Assertions specific — not just `toBeTruthy()`

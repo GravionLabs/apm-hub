@@ -4,91 +4,34 @@ description: >
   Provide a curated reference of uv CLI flags for Python development workflows.
   Use this skill when you need the correct uv command flags for running commands,
   managing dependencies, syncing environments, or configuring CI pipelines — even
-  if the user only mentions "uv", "venv", or "dependencies" without naming specific flags.
+  if the user only mentions "uv", "venv", or "dependencies" without naming
+  specific flags.
 ---
 
-## Overview
+## `uv run` — which flag?
 
-Curated reference for uv CLI. Load when choosing uv flags for any
-Python development task.
-
-## `uv run` — Run command in project environment
-
-```powershell
-uv run [OPTIONS] <COMMAND> [ARGS]
+```
+Freshly provisioned environment (CI)?
+├─ Yes → --locked   (fail if uv.lock would change)
+└─ No  → env definitely up to date?
+         ├─ Yes → --no-sync  (skip sync; implies --frozen)
+         └─ No  → --frozen   (skip lockfile update, sync if needed)
 ```
 
-| Flag             | Effect                                           | When to use                        |
-|------------------|--------------------------------------------------|------------------------------------|
-| *(none)*         | Sync env + update lockfile check before running  | First run / unknown env state      |
-| `--frozen`       | Skip lockfile update; use `uv.lock` as-is        | Repeated dev runs (faster)         |
-| `--no-sync`      | Skip env sync entirely (implies `--frozen`)      | Fastest; env is already up-to-date |
-| `--locked`       | Assert `uv.lock` is unchanged; fail if not       | CI pipelines — catch drift early   |
-| `-q` / `--quiet` | Suppress uv progress output (not the subprocess) | Scripted runs, clean task output   |
-| `--no-progress`  | Hide spinners/progress bars                      | Non-interactive environments       |
+`uv sync` takes the same `--frozen` / `--locked`, plus `--no-dev` (production install), `--group <name>`, `--no-install-project`.
 
-**Decision: dev vs. CI**
-```
-Is the environment freshly provisioned (CI)?
-├─ Yes → use --locked  (asserts lockfile is correct)
-└─ No  → Is the env definitely up-to-date?
-         ├─ Yes → use --no-sync  (skip sync entirely)
-         └─ No  → use --frozen  (skip lockfile update, sync if needed)
-```
+## Dependencies
 
-## `uv add` — Add dependencies
+- `uv add --dev <pkg>` → `[dependency-groups] dev` (use for dev tools)
+- `uv add --optional <name> <pkg>` → `[project.optional-dependencies]` (published extras only)
+- `uv lock --upgrade` / `--upgrade-package <pkg>` re-resolve; `uv lock --check` exits non-zero if the lockfile is stale (CI-safe, no writes)
 
-```powershell
-uv add [OPTIONS] <PACKAGE>
-```
+## Environment variables
 
-| Flag                | Effect                                                                       |
-|---------------------|------------------------------------------------------------------------------|
-| `--dev`             | Add to `[dependency-groups] dev` (preferred over `--optional` for dev tools) |
-| `--group <name>`    | Add to a named dependency group                                              |
-| `--optional <name>` | Add to `[project.optional-dependencies]` (use for published extras)          |
-| `--frozen`          | Do not update `uv.lock` (add to `pyproject.toml` only)                       |
-
-## `uv sync` — Install dependencies from lockfile
-
-```powershell
-uv sync [OPTIONS]
-```
-
-| Flag                   | Effect                                                  |
-|------------------------|---------------------------------------------------------|
-| *(none)*               | Sync all groups including dev                           |
-| `--frozen`             | Use `uv.lock` as-is, do not check for updates           |
-| `--locked`             | Assert `uv.lock` unchanged; fail if drift detected (CI) |
-| `--no-dev`             | Exclude dev dependencies (production install)           |
-| `--group <name>`       | Include a specific dependency group                     |
-| `--no-install-project` | Skip installing the project itself (install deps only)  |
-
-## `uv lock` — Manage lockfile
-
-```powershell
-uv lock [OPTIONS]
-```
-
-| Flag                      | Effect                                                        |
-|---------------------------|---------------------------------------------------------------|
-| *(none)*                  | Resolve and write `uv.lock`                                   |
-| `--upgrade`               | Re-resolve all packages to latest compatible versions         |
-| `--upgrade-package <pkg>` | Upgrade only a specific package                               |
-| `--check`                 | Exit non-zero if lockfile is out of date (CI-safe, no writes) |
-
-## Key environment variables
-
-| Variable           | Equivalent flag | Notes                                                       |
-|--------------------|-----------------|-------------------------------------------------------------|
-| `UV_FROZEN=1`      | `--frozen`      | Apply globally to all uv commands in a shell session        |
-| `UV_NO_SYNC=1`     | `--no-sync`     | Skip env sync globally                                      |
-| `UV_LOCKED=1`      | `--locked`      | Assert lockfile integrity globally (good for CI env blocks) |
-| `UV_NO_PROGRESS=1` | `--no-progress` | Suppress all spinners and bars                              |
-| `UV_NO_CACHE=1`    | `--no-cache`    | Disable cache (use in isolated CI if caching causes issues) |
+`UV_FROZEN=1`, `UV_NO_SYNC=1`, `UV_LOCKED=1` (good for CI env blocks), `UV_NO_PROGRESS=1`, `UV_NO_CACHE=1` — equivalent to the flags, applied to every uv command.
 
 ## Gotchas
-- `--no-sync` implies `--frozen` — do not combine both flags.
-- `--locked` exits with error if `uv.lock` would change — use for assertion only, not for normal dev runs.
-- `--frozen` silently uses potentially stale versions — ensure `uv.lock` is committed and correct before using in CI.
-- `uv add --dev` writes to `[dependency-groups]` (uv-native); `--optional` writes to `[project.optional-dependencies]` (PEP 508, for published packages).
+
+- `--no-sync` implies `--frozen` — don't combine them
+- `--locked` is an assertion for CI, not for normal dev runs
+- `--frozen` silently uses stale versions — make sure `uv.lock` is committed and correct before relying on it in CI

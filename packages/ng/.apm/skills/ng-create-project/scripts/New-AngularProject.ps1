@@ -11,18 +11,21 @@
 .PARAMETER ProjectType
   Project type: 'app' (standard application) or 'workspace' (multi-project workspace).
 
-.PARAMETER UseVitest
-  Replace Karma/Jest test runner with Vitest. Recommended.
+.PARAMETER SkipVitest
+  Do not set up Vitest (Vitest with the template config is installed by default).
 
-.PARAMETER UseEslint
-  Set up ESLint + Prettier + Husky via Setup-CodeQuality.ps1. Default: true.
+.PARAMETER SkipEslint
+  Do not set up ESLint + Prettier + Husky via Setup-CodeQuality.ps1 (set up by default).
+
+.PARAMETER OutputDirectory
+  Directory in which the project folder is created. Default: current directory.
 #>
 param(
   [Parameter(Mandatory)][string]$ProjectName,
   [string]$SelectorPrefix = 'app',
   [ValidateSet('app', 'workspace')][string]$ProjectType = 'app',
-  [switch]$UseVitest,
-  [switch]$UseEslint = $true,
+  [switch]$SkipVitest,
+  [switch]$SkipEslint,
   [string]$OutputDirectory = '.'
 )
 
@@ -42,7 +45,6 @@ $ngArgs = @(
   'new', $ProjectName,
   '--style', 'scss',
   '--ssr', 'false',
-  '--standalone',
   '--skip-tests'  # we'll set up Vitest separately
 )
 if ($SelectorPrefix -ne 'app') { $ngArgs += @('--prefix', $SelectorPrefix) }
@@ -62,7 +64,7 @@ try {
   Copy-Item (Join-Path $TemplatesDir 'tsconfig.json') 'tsconfig.json' -Force
 
   # Set up Vitest
-  if ($UseVitest) {
+  if (-not $SkipVitest) {
     Write-Host "Setting up Vitest..." -ForegroundColor Cyan
     npm install --save-dev vitest jsdom
 
@@ -79,10 +81,15 @@ try {
   }
 
   # Set up ESLint + Prettier + Husky
-  if ($UseEslint) {
+  if (-not $SkipEslint) {
     Write-Host "Setting up ESLint + Prettier + Husky..." -ForegroundColor Cyan
-    $setupScript = Join-Path $ScriptDir '../../typescript/skills/setup-prettier-eslint-husky/scripts/Setup-CodeQuality.ps1'
-    if (Test-Path $setupScript) {
+    # setup-prettier-eslint-husky may be installed next to this skill or ship in the ts package
+    $candidates = @(
+      (Join-Path $ScriptDir '../../setup-prettier-eslint-husky/scripts/Setup-CodeQuality.ps1'),
+      (Join-Path $ScriptDir '../../../../ts/.apm/skills/setup-prettier-eslint-husky/scripts/Setup-CodeQuality.ps1')
+    )
+    $setupScript = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if ($setupScript) {
       & pwsh $setupScript -ProjectType angular -SelectorPrefix $SelectorPrefix
     } else {
       Write-Warning "Setup-CodeQuality.ps1 not found at '$setupScript' — run the setup-prettier-eslint-husky skill manually."

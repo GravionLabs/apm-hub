@@ -54,6 +54,6 @@ metadata:
 
 ## Enforcement
 
-- `skill-create` / `skill-write` (apm-tooling) scaffold this template.
+- `skill-write` (apm-tooling) scaffolds this template.
 - `skill-audit` flags any non-standard top-level key (`allowed-tools`, `model`, `compatibility`,
   `chronicle-hints`, …) as a violation.

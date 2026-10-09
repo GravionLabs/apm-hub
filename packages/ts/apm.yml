@@ -1,19 +1,17 @@
-name: ts-development
+name: ts
 version: 1.0.21
-description: TypeScript and Node.js development plugin. Covers strict typing, ESM modules, async/await patterns, error handling, code review, debugging, Playwright TypeScript testing, and containerization.
+description: TypeScript and Node.js skills. Implementation conventions and review rules, Vitest testing, project scaffolding with strict tsconfig and ESM, ESLint/Prettier/Husky setup, pnpm migration, and MCP server generation.
 author:
   name: Gravion
 license: MIT
 keywords:
   - ts
   - nodejs
-  - playwright
   - vitest
   - eslint
 skills:
-  - ts-code-review
+  - setup-prettier-eslint-husky
   - ts-create-project
-  - ts-debug
   - ts-implementation
   - ts-mcp-server-generator
   - ts-pnpm-workflow

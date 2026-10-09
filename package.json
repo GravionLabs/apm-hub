@@ -2,7 +2,7 @@
   "name": "apm-hub-tools",
   "version": "1.0.0",
   "packageManager": "pnpm@11.6.0",
-  "description": "Tools for managing GitHub Copilot templates",
+  "description": "Generators and checks for the apm-hub skill packages",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -16,8 +16,7 @@
     "test:ci": "vitest run --coverage",
     "test:integration": "cd test/integration && npm install --silent && vitest run",
     "test:watch": "vitest",
-    "check:manifests": "node scripts/check-manifests.mjs",
-    "check:agent-targets": "node scripts/check-agent-targets.mjs"
+    "check:manifests": "node scripts/check-manifests.mjs"
   },
   "dependencies": {
     "yaml": "^2.8.3"

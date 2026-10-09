@@ -7,14 +7,9 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 ## Phase 1 — Read + Branch
 
 1. Read issue: `gh issue view <nr> --json title,body,labels`
-2. Derive branch name from the issue type and label:
-   - `feature` label → `feature/<nr>-<slug>`
-   - `pbi` label → `feature/<nr>-<slug>`
-   - `bug` label → `bugfix/<nr>-<slug>`
-   - `task` label (chore/maintenance) → `chore/<nr>-<slug>`
-   - `task` label (feat/fix) → `feature/<nr>-<slug>` or `bugfix/<nr>-<slug>` as appropriate
-3. Create branch: `git fetch origin main && git checkout -b <branch> origin/main`
-4. Note the `Part of #NNN` parent reference (if present) — you'll update the parent's checklist after closing.
+2. Derive the branch name `<type>/<nr>-<slug>` per `conventional-commits.md` (type from the issue title)
+3. Resolve the default branch once: `git symbolic-ref refs/remotes/origin/HEAD --short` minus `origin/` (fallback `main`) — `<default>` below. Create branch: `git fetch origin <default>; git checkout -b <branch> origin/<default>`
+4. Note the parent from the body's first line (`Parent Epic: #N` / `Parent Feature: #N` / `Parent PBI: #N`), if present. Closing this issue updates the parent's progress automatically via its native sub-issue link — there is nothing to tick afterwards.
 
 ## Phase 2 — Implement
 
@@ -30,25 +25,13 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 ## Phase 3 — Verify + PR
 
 9. Run full build + test suite (load `detect-techstack` if commands are unknown). Fix failures.
-10. Review diff: `git diff main...HEAD` — no debug code, TODOs, missing tests
+10. Run `review-fanout` on `git diff origin/<default>...HEAD`; fix blocking findings before committing. `CHANGES_REQUESTED` with `incomplete: true` is not approval.
 11. Push: `git push -u origin HEAD`
-12. Create PR:
-    ```bash
-    gh pr create --title "<type>: <desc> (#<nr>)" --body "$(cat <<-BODY
-    ## Summary
-
-    ## Changes
-
-    ## Testing
-    - [ ] Unit tests pass
-
-    Closes #<nr>
-    BODY
-    )"
-    ```
-13. Confirm: `gh pr view --json number,url`
-14. If the issue has a `Part of #NNN` parent: after the PR merges, update the parent's `## Sub-Issues` checklist
-    (`- [ ] #<nr>` → `- [x] #<nr>`) and verify via `gh issue view <parent-nr>`.
+12. Create the PR with the `github-pull-request` skill (title `<type>: <desc> (#<nr>)`, body ends with `Closes #<nr>`)
+13. If the issue has a parent: confirm it is actually linked as a native sub-issue —
+    `gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq '.[].number'` should include `<nr>`.
+    If it is missing, link it per `sub-issues.md`. An unlinked child looks normal in `gh issue list`,
+    so this check is the only thing that catches it.
 
 ## Constraints
 

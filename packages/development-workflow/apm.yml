@@ -1,6 +1,6 @@
 name: development-workflow
 version: 1.0.21
-description: "GitHub development workflow orchestration: issue-driven implementation, tech-stack detection, multi-repo support, and PR review."
+description: "Issue-driven development workflow: orchestrated plan → TDD → review → commit pipeline (/orch), parallel review fan-out, project verification, issue planning with native sub-issues, and git-cliff changelog setup. Pulls in github, shared and all language packages."
 registry: https://github.com/GravionLabs/apm-hub
 dependencies:
   apm:
@@ -12,6 +12,7 @@ dependencies:
     - GravionLabs/apm-hub/packages/dotnet
 skills:
   - cliff-setup
-  - implement-workflow
   - issue-planning
+  - orch-pipeline
+  - review-fanout
   - verify-project

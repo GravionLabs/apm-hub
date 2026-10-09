@@ -8,28 +8,29 @@ description: >
 
 ## Prerequisites
 
-- Project root with `angular.json` and `vitest.config.ts`
-- Angular 21+ with standalone components
+- Project root with `angular.json`; Angular 21+ with standalone components
+- Vitest, either via `vitest.config.ts` at the root (as set up by `ng-create-project`) or via the Angular CLI's built-in Vitest builder
 
 ## Test Runner
 
-- **Framework**: Vitest (replaces Karma/Jasmine)
-- **Config**: `vitest.config.ts` at project root
-- **Run all**: `pnpm test`
-- **Run single**: `npx vitest run <path>`
+- **Framework**: Vitest (replaces Karma/Jasmine); Jest only on Angular ≤ 20
+- **Run all**: `<pm> test` (package manager from `detect-techstack`); projects using the CLI builder without a config file run `ng test`
+- **Run single**: `npx vitest run <path>`, or `ng test --include <path>` with the CLI builder
 
 ## Component Testing
 
 ```typescript
-import { render, screen } from '@testing-library/angular';
+import { TestBed } from '@angular/core/testing';
 import { MyComponent } from './my.component';
 
 describe('MyComponent', () => {
-  it('renders with input', async () => {
-    const { container } = await render(MyComponent, {
-      componentInputs: { value: 'test' }
-    });
-    expect(container).toContain('test');
+  beforeEach(() => TestBed.configureTestingModule({ imports: [MyComponent] }));
+
+  it('renders with input', () => {
+    const fixture = TestBed.createComponent(MyComponent);
+    fixture.componentRef.setInput('value', 'test');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('test');
   });
 });
 ```
@@ -37,7 +38,7 @@ describe('MyComponent', () => {
 ## Signal Testing
 
 ```typescript
-import { ComponentRef } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { MyService } from './my.service';
 
 it('updates signal on action', () => {
@@ -61,13 +62,11 @@ TestBed.configureTestingModule({
 
 - `TestBed.configureTestingModule()` for component/service wiring; one `describe` per component/service
 - Use `fixture.debugElement.query(By.css(...))` for DOM queries
-- Call `fixture.detectChanges()` after state changes; `TestBed.flushEffects()` when testing signal effects
-
-See [test-examples.md](references/test-examples.md) for full TestBed examples.
+- Call `fixture.detectChanges()` after state changes; `TestBed.flushEffects()` when testing signal effects; code that calls `inject()` needs `TestBed.runInInjectionContext`
 
 ## Gotchas
 
 - Angular standalone components don't need `NgModule` wrapping
 - Use `provideHttpClient(withFetch())` for HTTP testing
 - Async operations: use `fakeAsync` + `tick()` or `waitForAsync`
-- Component inputs use `componentInputs` (not `inputs`)
+- Set signal inputs with `fixture.componentRef.setInput('name', value)`

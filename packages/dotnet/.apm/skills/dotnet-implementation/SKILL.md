@@ -28,44 +28,47 @@ description: >
 - Nullable: enable, annotate with `?` where null is valid
 - Immutability: `record` types for DTOs, `init` setters for models
 - File naming: `{ClassName}.cs`, test files: `{ClassName}Tests.cs`
-- Solution: `src/` and `tests/` directories, Central Package Management via `Directory.Packages.props`
+- Solution: `src/` and `test/<Project>.Tests` directories, Central Package Management via `Directory.Packages.props`
+- Library code: `ConfigureAwait(false)` on every `await`; app code: optional
+- I/O methods accept `CancellationToken cancellationToken = default` and pass it through
+- Logging: `ILogger<T>` with structured templates (`"User {UserId} created"`), never `Console.WriteLine`
+- XML docs on public API (`GenerateDocumentationFile` is on); `<summary>` is one sentence starting with a third-person verb
+- Upgrades: bump `TargetFramework` and package versions centrally in `Directory.Build.props` / `Directory.Packages.props` (`dotnet outdated` lists candidates); no prerelease versions unless explicitly requested; build and test after each step
 
-## Test Examples
+## EF Core
 
-### Service test
+- Fluent API in `IEntityTypeConfiguration<T>`, not data annotations
+- Always configure string max length
+- Never edit a generated migration; add a new one
+
+## Tests
+
+Structure, naming and mocking live in `dotnet-test` (NUnit + NSubstitute + Shouldly, `Should_<expected>_when_<condition>`).
+
+## Review rules
+
+- No `.Result`, `.Wait()`, or `async void` (except event handlers)
+- `CancellationToken` propagated through async call chains
+- Nullable reference types respected; no swallowed exceptions
+- `record` for DTOs; dependencies injected via interfaces
+- Tests named `Should_<expected>_when_<condition>`, AAA structure
+- No shared mutable state between tests; assertions are specific (not just `ShouldNotBeNull`)
+
+## Minimal APIs
+
+House convention: endpoints are organized with Carter modules, not scattered `app.MapGet` calls in `Program.cs`:
 
 ```csharp
-using NUnit.Framework;
-using NSubstitute;
-using Shouldly;
-
-[TestFixture]
-public class MyServiceTests
+public class <Feature>Module : ICarterModule
 {
-    private IMyService _service;
-    private IDependency _dependency;
-
-    [SetUp]
-    public void SetUp()
+    public void AddRoutes(IEndpointRouteBuilder app)
     {
-        _dependency = Substitute.For<IDependency>();
-        _service = new MyService(_dependency);
-    }
-
-    [Test]
-    public void ProcessData_ValidInput_ReturnsResult()
-    {
-        _dependency.Get().Returns(new[] { "a", "b" });
-
-        var result = _service.ProcessData();
-
-        result.ShouldNotBeNull();
-        result.Count.ShouldBe(2);
+        var group = app.MapGroup("/api/<feature>").WithTags("<Feature>");
+        group.MapGet("/", Handle).WithName("<Name>").WithOpenApi();
     }
 }
 ```
 
-## Related Skills
-
-- **Test**: Load `dotnet-test` for NUnit, NSubstitute, and Shouldly details
-- **EF Core**: Load `dotnet-ef-core` for database access patterns
+- Register with `builder.Services.AddCarter()` and `app.MapCarter()`
+- Typed request/response records; OpenAPI metadata (`.WithSummary()`, `.Produces<T>()`, `.ProducesProblem()`)
+- Return `TypedResults`, not `Results.Ok(...)`; validate input (FluentValidation or Data Annotations)

@@ -12,7 +12,7 @@ The concrete technical step.
 
 ## Parent
 
-Part of #NNN
+Parent PBI or Bug: #NNN
 
 ## Implementation Notes
 

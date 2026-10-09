@@ -11,9 +11,9 @@ Phase: verify. Run checks on project.
 
 ## Steps
 
-1. Load `detect-techstack` skill — parse JSON report for `build` and `test` skill lists
-2. Run build using detected package manager
-3. For each test skill in `$stack.test`, load it and run the test command
+1. Load `detect-techstack`; use `packageManager` for the build command and `test` for the test skills
+2. Run the build with the detected package manager
+3. For each skill in `test`, load it and run its test command
 4. Run lint/format per project conventions
 
 ## Output (JSON only)

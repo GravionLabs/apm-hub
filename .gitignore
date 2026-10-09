@@ -19,9 +19,8 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/extensions.json
 
-# Claude Code - local session state; deployed agents are committed
-.claude/*
-!.claude/agents/
+# Claude Code / OpenCode - local session state
+.claude/
 
 # JetBrains IDEs - share run configurations
 .idea/*
@@ -45,9 +44,8 @@ apm_modules/
 packages/*/.github/
 
 # Generated aggregate docs — managed by CI (regenerate-and-commit job)
-# These are auto-generated from templates/ after merge to main.
+# They are regenerated from packages/ after merge to main.
 # Edit generators in src/generators/, not these files.
-docs/agent-list.md
 docs/instruction-list.md
 docs/skill-list.md
 docs/template-list.md

@@ -14,7 +14,7 @@ Always use conventional commit format.
 |------------|------------------------------------------|
 | `feat`     | New feature or capability                |
 | `fix`      | Bug fix                                  |
-| `doc`      | Documentation only                       |
+| `docs`     | Documentation only                       |
 | `perf`     | Performance improvement                  |
 | `refactor` | Code restructure without behavior change |
 | `revert`   | Reverts a previous commit                |
@@ -34,9 +34,6 @@ Always use conventional commit format.
 
 ## Branch Naming
 
-| Branch type | Pattern                     | Example                      |
-|-------------|-----------------------------|------------------------------|
-| Feature     | `feature/<issue-nr>-<slug>` | `feature/42-github-workflow` |
-| Bug fix     | `bugfix/<issue-nr>-<slug>`  | `bugfix/43-fix-pr-title`     |
-| Hotfix      | `hotfix/<issue-nr>-<slug>`  | `hotfix/44-critical-fix`     |
-| Chore       | `chore/<slug>`              | `chore/update-deps`          |
+`<type>/<issue-nr>-<slug>` — `<type>` is the conventional-commit type of the issue title (`feat`, `fix`, `docs`, `refactor`, `chore`, …). Epics and Features have no commit type in their title: use `feat`. A batch over several epics: `feat/epics-<nrs>-<slug>`.
+
+Examples: `feat/42-add-pr-skill`, `fix/43-pr-title`, `chore/44-update-deps`.

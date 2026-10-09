@@ -16,7 +16,7 @@ Why it's needed; links to design/discussion.
 
 ## Parent
 
-Part of #NNN
+Parent Epic: #NNN
 
 ## Scope
 
@@ -28,11 +28,8 @@ Part of #NNN
 
 - 
 
-## Sub-Issues
-
-<!-- One PBI per line; also add each as a native GitHub sub-issue. -->
-
-- [ ] #NNN — feat: …
+<!-- Add PBI children via GitHub's native sub-issues panel — not a checklist.
+     It keeps progress and completion % in sync automatically. -->
 
 ## Definition of Done
 

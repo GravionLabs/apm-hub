@@ -16,7 +16,7 @@ Context, constraints, prior art.
 
 ## Parent
 
-Part of #NNN
+Parent Feature: #NNN
 
 ## Acceptance Criteria
 
@@ -26,11 +26,7 @@ Part of #NNN
 
 <!-- Optional: implementation hints, affected files/packages. -->
 
-## Sub-Issues
-
-<!-- Optional: one Task per line; also add each as a native GitHub sub-issue. -->
-
-- [ ] #NNN — chore: …
+<!-- Optional: add Task children via GitHub's native sub-issues panel — not a checklist. -->
 
 ## Definition of Done
 

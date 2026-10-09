@@ -24,7 +24,7 @@ Chronicle is a session history system that:
 **Good:**
 - `angular-component` — Create one Angular component
 - `skill-write` — Create one skill file
-- `github-issue-start` — Start work on one issue
+- `github-pull-request` — Create one pull request
 
 **Avoid:**
 - `omniscient-fixer` — Fix bugs, refactor code, write tests, AND generate docs in one skill
