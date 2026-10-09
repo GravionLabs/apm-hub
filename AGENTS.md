@@ -125,6 +125,7 @@ pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1 -Full -A
 |:------|:------------|
 | `skill-audit` | Audits a SKILL.md for correctness; emits a JSON report; optionally calls `skill-update`. |
 | `skill-update` | Applies targeted fixes to an existing SKILL.md. |
+| `skill-slim` | Measures and slims skills across a package: classifies content (keep / delete / move / deduplicate), reports findings, applies approved changes. |
 | `skill-write` | Drafts and validates SKILL.md content; enforces PowerShell syntax for all shell code. |
 
 ---

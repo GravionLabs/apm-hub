@@ -24,6 +24,7 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 | agent-update | >           | [agent-update](../packages/apm-tooling/.apm/skills/agent-update/SKILL.md) |
 | agent-write  | >           | [agent-write](../packages/apm-tooling/.apm/skills/agent-write/SKILL.md)   |
 | skill-audit  | >           | [skill-audit](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)   |
+| skill-slim   | >           | [skill-slim](../packages/apm-tooling/.apm/skills/skill-slim/SKILL.md)     |
 | skill-update | >           | [skill-update](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md) |
 | skill-write  | >           | [skill-write](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)   |
 

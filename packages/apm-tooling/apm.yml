@@ -15,5 +15,6 @@ skills:
   - agent-update
   - agent-write
   - skill-audit
+  - skill-slim
   - skill-update
   - skill-write
