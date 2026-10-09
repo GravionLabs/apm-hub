@@ -6,8 +6,8 @@ description: >
   system readiness, even if the user does not explicitly mention prerequisites or
   check-prerequisites. Optionally auto-installs missing tools. Run with -Full flag to
   check optional tools like jq, yq, ast-grep.
-allowed-tools: execute shell runCommands
-compatibility: Requires PowerShell 7+ on Windows, macOS, or Linux.
+metadata:
+  requires: PowerShell 7+ on Windows, macOS, or Linux
 ---
 
 ## Overview

@@ -99,4 +99,4 @@ members = ["libs/*", "apps/*"]
 Write-Host "Done!" -ForegroundColor Green
 Write-Host "  uv run ruff check .   -- lint" -ForegroundColor DarkGray
 Write-Host "  uv run pytest         -- test" -ForegroundColor DarkGray
-Write-Host "Next: add dependencies with 'uv add <package>', add CI with 'py-create-workflow'" -ForegroundColor DarkGray
+Write-Host "Next: add dependencies with 'uv add <package>', then add CI (see the py-create-project skill, CI Workflow)" -ForegroundColor DarkGray

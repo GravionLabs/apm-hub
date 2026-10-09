@@ -7,14 +7,14 @@ description: >
 
 ## Prerequisites
 
-- Node.js v18+, pnpm installed
+- Node.js v18+
 - Project root with `vitest.config.ts`
 
 ## Workflow A — Test Runner
 
 - **Framework**: Vitest (`globals: true`, `environment: node`)
 - **Config**: `vitest.config.ts` at project root
-- **Run all**: `pnpm test`
+- **Run all**: `<pm> test` (package manager from `detect-techstack`)
 - **Run single file**: `npx vitest run <path>`
 
 ### File Naming
@@ -25,7 +25,7 @@ description: >
 ### Coverage
 
 ```powershell
-pnpm test:ci
+<pm> run test:ci
 ```
 
 - Uses `@vitest/coverage-v8`

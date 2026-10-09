@@ -24,7 +24,7 @@ Scaffold TypeScript/Node.js project with production-ready baseline.
    Script creates directory, copies templates, patches `package.json`, runs `npm install`, initializes git repository.
 
 3. **Alternatively — manual steps:**
-   ```bash
+   ```powershell
    mkdir <Name> && cd <Name>
    # Copy template files from templates/
    npm install
@@ -32,7 +32,7 @@ Scaffold TypeScript/Node.js project with production-ready baseline.
    ```
 
 4. **Verify:**
-   ```bash
+   ```powershell
    npm run build   # tsc — should complete with no errors
    npm test        # vitest run — all tests pass
    ```

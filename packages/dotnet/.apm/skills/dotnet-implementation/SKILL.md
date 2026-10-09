@@ -28,7 +28,7 @@ description: >
 - Nullable: enable, annotate with `?` where null is valid
 - Immutability: `record` types for DTOs, `init` setters for models
 - File naming: `{ClassName}.cs`, test files: `{ClassName}Tests.cs`
-- Solution: `src/` and `tests/` directories, Central Package Management via `Directory.Packages.props`
+- Solution: `src/` and `test/<Project>.Tests` directories, Central Package Management via `Directory.Packages.props`
 - Library code: `ConfigureAwait(false)` on every `await`; app code: optional
 - I/O methods accept `CancellationToken cancellationToken = default` and pass it through
 - Logging: `ILogger<T>` with structured templates (`"User {UserId} created"`), never `Console.WriteLine`

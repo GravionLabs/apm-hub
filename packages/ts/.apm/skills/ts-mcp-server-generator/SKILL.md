@@ -43,7 +43,7 @@ See `templates/examples/transport-config.ts` for transport + env validation.
 
 Test with MCP Inspector:
 ```powershell
-npx @modelcontextformal/inspector node dist/index.js
+npx @modelcontextprotocol/inspector node dist/index.js
 ```
 
 ## Conventions

@@ -26,7 +26,7 @@ Scaffold new Angular 21+ project with production-ready baseline.
    Script runs `ng new`, replaces tsconfig with strict settings, sets up Vitest and ESLint.
 
 3. **Alternatively — manual steps:**
-   ```bash
+   ```powershell
    ng new <Name> --style scss --ssr false --standalone
    cd <Name>
    # Replace tsconfig.json with templates/tsconfig.json
@@ -34,7 +34,7 @@ Scaffold new Angular 21+ project with production-ready baseline.
    ```
 
 4. **Verify:**
-   ```bash
+   ```powershell
    ng build      # should complete with no errors
    npm test      # vitest run — all tests pass
    ng serve      # dev server starts at http://localhost:4200

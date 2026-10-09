@@ -19,9 +19,9 @@ Set up code quality pipeline: ESLint flat config, Prettier, Husky.
    ```
    Script installs packages, copies templates, inits Husky, patches `package.json`.
 3. **Alternatively — manual steps:**
-   ```bash
-   npm install --save-dev eslint prettier prettier-plugin-organize-imports \
-     husky lint-staged eslint-config-prettier \
+   ```powershell
+   npm install --save-dev eslint prettier prettier-plugin-organize-imports `
+     husky lint-staged eslint-config-prettier `
      @typescript-eslint/eslint-plugin @typescript-eslint/parser
    # Angular: also add @angular-eslint/eslint-plugin @angular-eslint/eslint-plugin-template @angular-eslint/template-parser
    npx husky init

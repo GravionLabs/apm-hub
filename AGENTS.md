@@ -53,6 +53,21 @@ This document describes the agents and skills available through apm-hub APM pack
 ---
 
 
+## Shared & Language Packages
+
+| Package | Skill | Description |
+|:--------|:------|:------------|
+| `shared` | `code-review` | Severity-rated review; loads each detected language's `## Review rules` from its `<lang>-implementation` skill. |
+| `shared` | `implementation` | Language-agnostic rules: every change includes tests; dispatches to `<lang>-implementation`. |
+| `shared` | `detect-techstack` | Detects languages, package manager, and the matching `<lang>-test` / `<lang>-implementation` skills. |
+| `ng` | `ng-signal-store` | Scaffolds an NgRx Signal Store (`@ngrx/signals`) for feature state. |
+| `ng` | `ng-library` | Scaffolds an Angular library with `public-api.ts` as the single export surface. |
+| `ng` | `ng-component` | Scaffolds a standalone OnPush component (3-file structure; Sakai UI variant). |
+
+Each language package (`dotnet`, `py`, `ts`, `ng`) provides `<lang>-implementation` (conventions + review rules) and `<lang>-test`.
+
+---
+
 ## Repo Tooling Skills (`.github/skills/`)
 
 These skills support development workflows within apm-hub itself and are committed directly to `.github/skills/`.

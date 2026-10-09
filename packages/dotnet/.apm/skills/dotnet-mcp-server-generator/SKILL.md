@@ -13,7 +13,7 @@ Creates C# console application implementing MCP server using `ModelContextProtoc
 ## Steps
 1. Ask: project name, tools to expose (names, descriptions, input schemas), prompts to include
 2. Create project:
-   ```bash
+   ```powershell
    dotnet new console -n <ProjectName>
    cd <ProjectName>
    dotnet add package ModelContextProtocol --prerelease

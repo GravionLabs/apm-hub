@@ -10,7 +10,7 @@ description: >
 
 - **Test runner**: Vitest (`globals: true`, `environment: node`)
 - **Config**: `vitest.config.ts` at project root
-- **Format/Lint**: Biome
+- **Format/Lint**: ESLint (flat config) + Prettier — see `setup-prettier-eslint-husky`
 
 ## Imports
 

@@ -36,24 +36,26 @@ description: >
 ### Component test
 
 ```typescript
-import { render, screen } from "@testing-library/angular";
+import { TestBed } from "@angular/core/testing";
 import { MyComponent } from "./my.component";
 
 describe("MyComponent", () => {
-  it("renders with input", async () => {
-    const { container } = await render(MyComponent, {
-      componentInputs: { value: "hello" },
-    });
-    expect(container.textContent).toContain("hello");
+  beforeEach(() => TestBed.configureTestingModule({ imports: [MyComponent] }));
+
+  it("renders with input", () => {
+    const fixture = TestBed.createComponent(MyComponent);
+    fixture.componentRef.setInput("value", "hello");
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain("hello");
   });
 
-  it("emits event on click", async () => {
-    const emitted = vi.fn();
-    await render(MyComponent, {
-      componentOutputs: { save: emitted },
-    });
-    screen.getByText("Save").click();
-    expect(emitted).toHaveBeenCalled();
+  it("emits event on click", () => {
+    const fixture = TestBed.createComponent(MyComponent);
+    const saved = vi.fn();
+    fixture.componentInstance.save.subscribe(saved);
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector("button").click();
+    expect(saved).toHaveBeenCalled();
   });
 });
 ```

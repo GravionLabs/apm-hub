@@ -41,7 +41,7 @@ public class MyServiceTests
 
 ### Conventions
 
-- File naming: `{ClassName}Tests.cs` in `tests/` project
+- File naming: `{ClassName}Tests.cs` in the `test/<Project>.Tests` project
 - Namespace matches the source project with `.Tests` suffix
 - Test method naming: `Should_<expected>_when_<condition>`
 - Categories: `[Category("UnitTest")]` for unit, `[Category("IntegrationTest")]` for integration, `[Category("ManualTest")]` + `[Explicit]` for manual

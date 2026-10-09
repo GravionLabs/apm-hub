@@ -32,10 +32,10 @@ Creates solution with `src/` and `test/` directories, Central Package Management
    - Runs `dotnet build` to verify
 
 3. **Alternatively — manual steps:**
-   ```bash
+   ```powershell
    mkdir <SolutionName> && cd <SolutionName>
    dotnet new sln --format slnx -n <SolutionName>
-   mkdir -p src test
+   New-Item -ItemType Directory src, test | Out-Null
    dotnet new <template> -n <SolutionName> -o src/<SolutionName>
    dotnet new nunit -n <SolutionName>.Tests -o test/<SolutionName>.Tests
    dotnet sln add src/<SolutionName> test/<SolutionName>.Tests
@@ -58,7 +58,7 @@ Creates solution with `src/` and `test/` directories, Central Package Management
    - Application → `.github/workflows/ci-app.yml` → rename to `ci.yml`
 
 8. **Update packages** to latest versions:
-   ```bash
+   ```powershell
    # Show outdated packages (no tool required)
    dotnet list package --outdated
    # Or auto-update Directory.Packages.props (requires dotnet-outdated-tool)

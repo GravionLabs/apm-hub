@@ -15,21 +15,23 @@ description: >
 
 - **Framework**: Vitest (replaces Karma/Jasmine)
 - **Config**: `vitest.config.ts` at project root
-- **Run all**: `pnpm test`
+- **Run all**: `<pm> test` (package manager from `detect-techstack`)
 - **Run single**: `npx vitest run <path>`
 
 ## Component Testing
 
 ```typescript
-import { render, screen } from '@testing-library/angular';
+import { TestBed } from '@angular/core/testing';
 import { MyComponent } from './my.component';
 
 describe('MyComponent', () => {
-  it('renders with input', async () => {
-    const { container } = await render(MyComponent, {
-      componentInputs: { value: 'test' }
-    });
-    expect(container).toContain('test');
+  beforeEach(() => TestBed.configureTestingModule({ imports: [MyComponent] }));
+
+  it('renders with input', () => {
+    const fixture = TestBed.createComponent(MyComponent);
+    fixture.componentRef.setInput('value', 'test');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('test');
   });
 });
 ```
@@ -37,7 +39,7 @@ describe('MyComponent', () => {
 ## Signal Testing
 
 ```typescript
-import { ComponentRef } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { MyService } from './my.service';
 
 it('updates signal on action', () => {
@@ -70,4 +72,4 @@ See [test-examples.md](references/test-examples.md) for full TestBed examples.
 - Angular standalone components don't need `NgModule` wrapping
 - Use `provideHttpClient(withFetch())` for HTTP testing
 - Async operations: use `fakeAsync` + `tick()` or `waitForAsync`
-- Component inputs use `componentInputs` (not `inputs`)
+- Set signal inputs with `fixture.componentRef.setInput('name', value)`

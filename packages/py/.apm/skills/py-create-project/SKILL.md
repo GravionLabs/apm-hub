@@ -23,7 +23,7 @@ Scaffold Python project with production-ready baseline using `uv`.
    Script runs `uv init`, applies template `pyproject.toml` (ruff + pytest config), creates `src/<package>/__init__.py` and `tests/conftest.py`, then runs `uv sync`.
 
 3. **Alternatively — manual steps:**
-   ```bash
+   ```powershell
    uv init <Name> && cd <Name>
    # Copy templates/pyproject.toml (replace generated one)
    # Copy templates/src/__init__.py → src/<package>/__init__.py
@@ -33,7 +33,7 @@ Scaffold Python project with production-ready baseline using `uv`.
    ```
 
 4. **Verify:**
-   ```bash
+   ```powershell
    uv run ruff check .   # no lint errors
    uv run pytest         # tests pass
    ```
