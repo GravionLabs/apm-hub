@@ -5,6 +5,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.23] — 2026-10-09
+
+### Documentation
+- Align documentation with the skills-only repository
+
+
 ## [1.0.22] — 2026-10-09
 
 ### Bug Fixes
@@ -16,6 +22,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - Describe the skills-only repo and align package manifests
+- Update CHANGELOG.md for v1.0.22 [skip ci]
 
 
 ### Features
