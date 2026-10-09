@@ -22,11 +22,8 @@ Current state / pain points motivating the epic.
 
 - 
 
-## Sub-Issues
-
-<!-- One Feature per line; also add each as a native GitHub sub-issue. -->
-
-- [ ] #NNN — Feature: …
+<!-- Add Feature children via GitHub's native sub-issues panel — not a checklist.
+     It keeps progress and completion % in sync automatically. -->
 
 ## Definition of Done
 

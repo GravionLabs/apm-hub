@@ -8,7 +8,7 @@ Sequential workflow — do not parallelize Task implementation.
 ## Phase 1 — Discover scope
 
 1. Read the Bug: `gh issue view <bug-nr> --json title,body,labels`
-2. Extract Task numbers from the `## Sub-Issues` checklist (`- [ ] #N`)
+2. List the Bug's Task children: `gh api repos/{owner}/{repo}/issues/<bug-nr>/sub_issues --jq '.[] | "\(.number) \(.title)"'` (see `sub-issues.md`)
 3. Fetch every Task: `gh issue view <nr> --json title,body`
 4. Note the Bug's **Expected Behavior** — every Task must move the system closer to that state
 5. Determine implementation order (ascending issue number unless the Bug body specifies otherwise)
@@ -36,7 +36,7 @@ For each Task `#N`:
     ```bash
     gh issue close <N> --comment "Implemented on <branch-name> at $(git rev-parse --short HEAD)."
     ```
-14. Mark `#N`'s line in the Bug's `## Sub-Issues` checklist (`- [ ] #N` → `- [x] #N`)
+14. Nothing to tick — the native sub-issue link updates the Bug's progress automatically
 
 ## Phase 4 — Bug wrap-up
 

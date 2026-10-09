@@ -10,8 +10,8 @@ assume earlier ones already landed) and do not skip ahead if any suite fails.
 ## Phase 1 — Discover scope
 
 1. Read each Epic: `gh issue view <epic-nr> --json title,body,labels`
-2. Extract Feature numbers from the `## Sub-Issues` checklist (`- [ ] #N`)
-3. For each Feature, read its body and extract its PBI sub-issues; for each PBI, check for Task sub-issues
+2. List the Epic's Feature children: `gh api repos/{owner}/{repo}/issues/<epic-nr>/sub_issues --jq '.[] | "\(.number) \(.title)"'` (see `sub-issues.md`)
+3. For each Feature, list its PBI children the same way; for each PBI, check whether it has Task children
 4. Determine implementation order:
    - Respect explicit ordering notes in the Epic body (e.g. "do #13 first")
    - Put Features/PBIs that unblock others or fix the test suite first
@@ -37,7 +37,7 @@ For each Feature `#F`:
    ```bash
    gh issue close <F> --comment "All PBIs implemented on <branch-name>."
    ```
-10. Mark `#F`'s line in the Epic's `## Sub-Issues` checklist (`- [ ] #F` → `- [x] #F`)
+10. Nothing to tick — the native sub-issue link updates the Epic's progress automatically
 
 ## Phase 4 — Epic wrap-up
 

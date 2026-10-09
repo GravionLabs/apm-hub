@@ -8,9 +8,9 @@ Sequential workflow — do not parallelize PBI implementation and do not skip ah
 ## Phase 1 — Discover scope
 
 1. Read the Feature: `gh issue view <feature-nr> --json title,body,labels`
-2. Extract PBI numbers from the `## Sub-Issues` checklist (`- [ ] #N`)
+2. List the Feature's PBI children: `gh api repos/{owner}/{repo}/issues/<feature-nr>/sub_issues --jq '.[] | "\(.number) \(.title)"'` (see `sub-issues.md`)
 3. Fetch every PBI: `gh issue view <nr> --json title,body,labels`
-4. For each PBI, check if it has its own `## Sub-Issues` checklist (Task sub-issues) — note which ones do
+4. For each PBI, check whether it has Task children of its own — note which ones do
 5. Determine implementation order:
    - Respect explicit ordering notes in the Feature body
    - PBIs that unblock others go first; otherwise ascending issue number order
@@ -39,7 +39,7 @@ For each PBI `#N`:
     ```bash
     gh issue close <N> --comment "Implemented on <branch-name> at $(git rev-parse --short HEAD)."
     ```
-14. Mark `#N`'s line in the Feature's `## Sub-Issues` checklist (`- [ ] #N` → `- [x] #N`)
+14. Nothing to tick — the native sub-issue link updates the Feature's progress automatically
 
 ## Phase 4 — Feature wrap-up
 

@@ -32,8 +32,19 @@ Pick from the request ("quick plan", "deep planning") or default to **standard**
    - Has clear scope boundaries
    - Can be implemented independently
 7. **Present plan to user** — show sub-tasks and file list, wait for approval
-8. On approval: create GH sub-issues via `gh issue create` for each sub-task
-9. Link sub-issues to parent using issue body references (e.g. `Parent: #<parent-nr>`)
+8. On approval: create GH sub-issues via `gh issue create` for each sub-task. Make the **first body line** the human-readable parent reference matching the parent's type — `Parent Epic: #<nr>`, `Parent Feature: #<nr>`, or `Parent PBI: #<nr>`
+9. Link each new issue to its parent as a **native GitHub sub-issue**. The body line is documentation; this is the actual link:
+   ```bash
+   parent_id=$(gh issue view <parent-nr> --json id --jq .id)
+   child_id=$(gh issue view <child-nr> --json id --jq .id)
+   gh api graphql -f query='
+     mutation($parentId: ID!, $childId: ID!) {
+       addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) { issue { number } }
+     }' -f parentId="$parent_id" -f childId="$child_id"
+   ```
+10. Verify before reporting success: `gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq '.[].number'`
+    must list every number in `issues`. A created-but-unlinked issue looks completely normal in
+    `gh issue list`, so this check is the only thing that catches it.
 
 ## Output (JSON only)
 
@@ -61,6 +72,7 @@ This schema is the contract consumed by the `implement-workflow` skill and the `
 ## Rules
 
 - If the work needs more sub-tasks than the depth allows, group into phases.
-- Link all sub-issues to parent using issue body references.
+- Link all sub-issues to their parent as native GitHub sub-issues, and verify the links landed. Never use a markdown checklist for this — it is a second source of truth that silently drifts.
 - Each sub-task title MUST use conventional commit format.
+- Sub-task bodies must be implementable without re-exploring the codebase: name the exact files and symbols to touch, where the tests go, and what is explicitly out of scope. These issues are often handed to a cheaper model than the one planning.
 - Report the first sub-task to implement next in `summary`.

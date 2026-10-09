@@ -14,7 +14,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
    - `task` label (chore/maintenance) → `chore/<nr>-<slug>`
    - `task` label (feat/fix) → `feature/<nr>-<slug>` or `bugfix/<nr>-<slug>` as appropriate
 3. Create branch: `git fetch origin main && git checkout -b <branch> origin/main`
-4. Note the `Part of #NNN` parent reference (if present) — you'll update the parent's checklist after closing.
+4. Note the parent from the body's first line (`Parent Epic: #N` / `Parent Feature: #N` / `Parent PBI: #N`), if present. Closing this issue updates the parent's progress automatically via its native sub-issue link — there is nothing to tick afterwards.
 
 ## Phase 2 — Implement
 
@@ -47,8 +47,10 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
     )"
     ```
 13. Confirm: `gh pr view --json number,url`
-14. If the issue has a `Part of #NNN` parent: after the PR merges, update the parent's `## Sub-Issues` checklist
-    (`- [ ] #<nr>` → `- [x] #<nr>`) and verify via `gh issue view <parent-nr>`.
+14. If the issue has a parent: confirm it is actually linked as a native sub-issue —
+    `gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq '.[].number'` should include `<nr>`.
+    If it is missing, link it per `sub-issues.md`. An unlinked child looks normal in `gh issue list`,
+    so this check is the only thing that catches it.
 
 ## Constraints
 

@@ -8,7 +8,7 @@ Sequential workflow — do not parallelize Task implementation.
 ## Phase 1 — Discover scope
 
 1. Read the PBI: `gh issue view <pbi-nr> --json title,body,labels`
-2. Extract Task numbers from the `## Sub-Issues` checklist (`- [ ] #N`)
+2. List the PBI's Task children: `gh api repos/{owner}/{repo}/issues/<pbi-nr>/sub_issues --jq '.[] | "\(.number) \(.title)"'` (see `sub-issues.md`)
 3. Fetch every Task: `gh issue view <nr> --json title,body`
 4. Determine implementation order (ascending issue number unless the PBI body specifies otherwise)
 5. Record the ordered list before writing any code
@@ -35,7 +35,7 @@ For each Task `#N`:
     ```bash
     gh issue close <N> --comment "Implemented on <branch-name> at $(git rev-parse --short HEAD)."
     ```
-12. Mark `#N`'s line in the PBI's `## Sub-Issues` checklist (`- [ ] #N` → `- [x] #N`)
+12. Nothing to tick — the native sub-issue link updates the PBI's progress automatically
 
 ## Phase 4 — PBI wrap-up
 
