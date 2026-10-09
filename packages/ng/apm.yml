@@ -19,4 +19,6 @@ skills:
   - ng-create-project
   - ng-developer
   - ng-implementation
+  - ng-library
+  - ng-signal-store
   - ng-test

@@ -21,6 +21,7 @@ Generate 3-file component structure:
    - `@Component` decorator
    - `selector: '<prefix>-<name>'`
    - `standalone: true`
+   - `changeDetection: ChangeDetectionStrategy.OnPush`
    - Proper imports ordered: Angular core → Angular common → PrimeNG → local
    - Empty component class
 2. Create `<name>.component.html` with minimal placeholder template
@@ -38,7 +39,7 @@ Validate generated component:
 
 ## Constraints
 
-- Always `standalone: true` — no NgModules
+- Always `standalone: true` and `OnPush` — no NgModules
 - Use `styleUrl` (singular, Angular 17+), not `styleUrls`
 - Class name: PascalCase + `Component` suffix
 - Import ordering: Angular core → Angular common → PrimeNG → local
@@ -80,3 +81,25 @@ ng test --include="**/{name}.component.spec.ts"
 - **Selector prefix consistency:** Use same prefix across all components (e.g., `app-*`, `gv-*`)
 - **Barrel exports:** Verify nearest `index.ts` or `public-api.ts` updated, or component won't be easily importable
 - **Import ordering matters:** Tools may reformat if order wrong — follow project convention
+
+## Sakai UI variant
+
+For components in the `@gravion/sakai-ui` library:
+
+1. Ask: component name (kebab-case), folder under `sakai-ui/src/lib/`, PrimeNG components needed
+2. Create `<name>.ts`, `<name>.html`, `<name>.scss` (no `.component` infix):
+   ```typescript
+   @Component({
+     selector: 'gv-<name>',
+     standalone: true,
+     changeDetection: ChangeDetectionStrategy.OnPush,
+     imports: [/* PrimeNG modules */],
+     templateUrl: './<name>.html',
+     styleUrl: './<name>.scss',
+   })
+   export class Gv<Name>Component { }
+   ```
+3. Export the component in `public-api.ts`
+4. Verify: `ng build sakai-ui`
+
+Constraints: selector prefix is `gv-`; PrimeNG components go in the component's `imports`; do not modify existing components unless fixing an export.
