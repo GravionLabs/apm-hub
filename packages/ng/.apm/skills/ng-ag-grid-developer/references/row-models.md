@@ -1,105 +1,38 @@
 # AG Grid — Row Models
 
-## Decision Tree
+| Model | Use when | Module |
+|---|---|---|
+| Client-side (default) | Data fits in browser (< ~100k rows); full sort/filter/group/pivot/tree | `ClientSideRowModelModule` |
+| Server-side (Enterprise) | Large data, server-side grouping/pivoting, lazy loading | `ServerSideRowModelModule` |
+| Viewport (Enterprise) | Real-time views of visible rows only; implement `IViewportDatasource` | `ViewportRowModelModule` |
 
-```
-How many rows?
-├─ < 100 000 rows (all in memory) → Client-Side Row Model (default)
-└─ > 100 000 rows / server-side data → Server-Side Row Model (Enterprise)
-      └─ Need scrolling without full load? → still SSRM with lazy loading
-         (Infinite Row Model is deprecated for Enterprise — prefer SSRM)
-```
+For large or server-backed data prefer SSRM over the Infinite Row Model.
 
----
-
-## Client-Side Row Model (default)
-
-- All row data loaded into the browser at once
-- Supports: sorting, filtering, grouping, pivoting, tree data, full CRUD
-- Register: `ClientSideRowModelModule`
+## Client-side updates
 
 ```typescript
-rowData: Product[] = [...]; // provide directly
-
-gridOptions: GridOptions<Product> = {
-  rowModelType: 'clientSide', // default — can be omitted
-};
+api.setGridOption('rowData', newRows);                       // replace all
+api.applyTransaction({ add: [], update: [], remove: [] });   // partial (needs getRowId)
 ```
 
-Refresh row data:
+## SSRM
+
+`rowModelType` is an `[Initial]` option — changing it requires destroying and re-creating the grid.
 
 ```typescript
-api.setGridOption('rowData', newRowData);        // replace all
-api.applyTransaction({ add: [], update: [], remove: [] }); // partial update
-```
-
----
-
-## Server-Side Row Model (Enterprise)
-
-- Data fetched from the server on demand (lazy loading)
-- Required for: SSRM grouping, server-side pivoting, millions of rows
-- Register: `ServerSideRowModelModule`
-
-### Minimal Datasource
-
-```typescript
-import type { IServerSideDatasource, IServerSideGetRowsParams } from 'ag-grid-community';
+gridOptions: GridOptions = { rowModelType: 'serverSide', serverSideInitialRowCount: 100 };
 
 class MyDatasource implements IServerSideDatasource {
   getRows(params: IServerSideGetRowsParams): void {
     const { startRow, endRow, sortModel, filterModel } = params.request;
-
-    myApiService.getRows({ startRow, endRow, sortModel, filterModel })
-      .subscribe({
-        next: result => params.success({ rowData: result.rows, rowCount: result.total }),
-        error: () => params.fail(),
-      });
+    api.getRows({ startRow, endRow, sortModel, filterModel }).subscribe({
+      next: r => params.success({ rowData: r.rows, rowCount: r.total }),
+      error: () => params.fail(),
+    });
   }
 }
-```
-
-### Registering the Datasource
-
-```typescript
-gridOptions: GridOptions = {
-  rowModelType: 'serverSide', // [Initial] — cannot change after creation
-  serverSideInitialRowCount: 100,
-};
-
-// After gridReady:
+// after gridReady:
 api.setGridOption('serverSideDatasource', new MyDatasource());
 ```
 
-> `rowModelType` is an **Initial** option — the grid must be destroyed and re-created to change it.
-
-### SSRM with Server-Side Grouping
-
-```typescript
-gridOptions: GridOptions = {
-  rowModelType: 'serverSide',
-  serverSideEnableClientSideSort: false, // let server handle sort
-};
-
-columnDefs: ColDef[] = [
-  { field: 'country', rowGroup: true, hide: true },
-  { field: 'sales', aggFunc: 'sum' },
-];
-```
-
-The datasource `getRows` receives `rowGroupCols`, `groupKeys`, and `pivotCols` in `params.request`
-so the server can apply grouping and pivoting.
-
----
-
-## Infinite Row Model (Legacy)
-
-Deprecated for new Enterprise projects. Use SSRM instead — it provides a superset of Infinite's
-capabilities including server-side grouping, pivoting, and better row refresh support.
-
----
-
-## Viewport Row Model (Enterprise)
-
-For real-time data grids displaying only the visible rows (e.g., trading screens).
-Register: `ViewportRowModelModule`. Requires implementing `IViewportDatasource`.
+Server-side grouping/pivoting: `params.request` also carries `rowGroupCols`, `groupKeys`, `pivotCols`; the server applies them. Set `serverSideEnableClientSideSort: false` to let the server sort.
