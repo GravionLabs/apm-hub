@@ -7,10 +7,10 @@ description: >
 
 ## Prerequisites
 
-- Node.js v18+
+- Node.js 22 LTS
 - Project root with `vitest.config.ts`
 
-## Workflow A — Test Runner
+## Test Runner
 
 - **Framework**: Vitest (`globals: true`, `environment: node`)
 - **Config**: `vitest.config.ts` at project root
@@ -25,52 +25,42 @@ description: >
 ### Coverage
 
 ```powershell
-<pm> run test:ci
+npx vitest run --coverage
 ```
 
-- Uses `@vitest/coverage-v8`
-- Output: `coverage/` directory
-- CI publishes `cobertura-coverage.xml`
+- Requires `@vitest/coverage-v8` as a devDependency (`ts-create-project` adds it and the `test:ci` script)
+- Output: `coverage/` directory; CI publishes `cobertura-coverage.xml`
 
 ### Mocking
 
 - Function-level: `vi.fn()`
-- Module-level: `vi.mock("module-path")`
-- Avoid module-level mocks when inline mocking suffices
+- Module-level: `vi.mock("module-path")` — avoid when inline mocking suffices
 
-## Workflow B — Writing Tests
+## Writing Tests
 
-1. Read target code — understand structure, dependencies, existing test patterns
+1. Read target code — structure, dependencies, existing test patterns
 2. Identify test cases — happy path, boundary values, error handling, null/empty inputs
-3. Write tests using Vitest with `describe`/`it` blocks in BDD style
-4. Use mocking frameworks already in project (`vi.fn()`, `vi.mock()`)
-5. Follow project naming conventions
+3. Write `describe`/`it` blocks in BDD style: one top-level `describe` per service/module, nested `describe` for unit vs integration
+4. Use the mocking already in the project (`vi.fn()`, `vi.mock()`); no new test libraries
+5. Cover at minimum: happy path, one error path, one boundary case per method
 
-### describe/it convention
-
-```typescript
-describe('getUser', () => {
-  it('returns user when valid id', () => { ... });
-  it('throws when null id', () => { ... });
-});
-```
-
-Use a top-level `describe` per service/module. Nest `describe` blocks for unit vs integration:
 ```typescript
 describe('UserService', () => {
-  describe('unit', () => { ... });
-  describe('integration', () => { ... });
+  describe('unit', () => {
+    it('returns user when valid id', () => { ... });
+    it('throws when null id', () => { ... });
+  });
+  describe('integration', () => {
+    it('persists user to database', () => { ... });
+  });
 });
 ```
-
-### Reference files
-- Load `references/test-cases.md` for test case identification patterns and conventions
 
 ## Gotchas
 
 - Tests must be hermetic — no network calls, no shared state
 - Use `vi.useFakeTimers()` for timer-dependent code
 - Coverage threshold may be enforced in CI
-- One test file per source module
-- Keep tests independent and deterministic
+- One test file per source module, mirroring the source structure
+- Assert directly in test methods, no test logic in helpers; prefer specific assertions
 - No debug code or `console.log` in committed tests

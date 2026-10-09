@@ -1,92 +1,52 @@
 ---
 name: ts-create-project
-description: 'Scaffold a new TypeScript/Node.js project (library, CLI, or application) with strict tsconfig, Vitest, and ESM support.'
+description: 'Scaffold a new TypeScript/Node.js project (library, CLI, or application) with strict tsconfig, Vitest, ESM support, and a GitHub Actions CI workflow.'
 ---
 
-Scaffold TypeScript/Node.js project with production-ready baseline.
+Scaffold a TypeScript/Node.js project with a production-ready baseline. Paths to `scripts/` and `templates/` are relative to this skill's directory.
 
 ## Stack
+
 - **TypeScript** — NodeNext modules, strict mode, `tsc` for builds
 - **`tsx`** — run TypeScript directly during development
-- **Vitest** — fast unit testing with globals
-- **Package manager:** npm (or pnpm)
+- **Vitest** — unit tests with globals, v8 coverage
+- **Node.js 22 LTS**; package manager npm or pnpm
 
 ## Steps
-1. **Ask first:**
-   - Project name
-   - Project type: **app** (general application), **library** (publishable package), or **cli** (command-line tool)?
-   - Package manager: npm or pnpm?
 
-2. **Run the scaffold script** (recommended):
+1. **Ask first:** project name; project type **app** / **library** / **cli**; package manager npm or pnpm
+2. **Run the scaffold script:**
    ```powershell
    pwsh scripts/New-NodeProject.ps1 -ProjectName <Name> -ProjectType <app|library|cli> [-PackageManager npm]
    ```
-   Script creates directory, copies templates, patches `package.json`, runs `npm install`, initializes git repository.
-
-3. **Alternatively — manual steps:**
-   ```powershell
-   mkdir <Name> && cd <Name>
-   # Copy template files from templates/
-   npm install
-   git init
-   ```
-
+   It creates the directory, copies the templates, patches `package.json`, installs dependencies and initializes git.
+3. **CI:** copy `templates/.github/workflows/ci.yml` into the project. It calls the `GravionLabs/ci` reusable Node workflow, which runs the `build` and `test` scripts; if the project publishes, confirm the `NPM_TOKEN` secret is configured.
 4. **Verify:**
    ```powershell
-   npm run build   # tsc — should complete with no errors
+   npm run build   # tsc — no errors
    npm test        # vitest run — all tests pass
    ```
+5. **Next steps:** set up linting and formatting with `setup-prettier-eslint-husky`; migrate to pnpm with `ts-pnpm-workflow`
 
-5. **Next steps:** set up code quality with `setup-prettier-eslint-husky`
+Parameters: `-ProjectName` (required), `-ProjectType` (app/library/cli), `-PackageManager` (npm/pnpm), `-OutputDirectory`
 
-## CI Workflow
+## Templates
 
-Create GitHub Actions CI workflow for project.
-
-1. Ask: Node.js version, package manager (npm / pnpm / yarn), whether publish (npm registry / GitHub Packages / none)
-2. Create `.github/workflows/ci.yml`:
-   ```yaml
-   name: CI
-
-   on:
-     push:
-       branches: [main]
-     pull_request:
-
-   jobs:
-     build:
-       uses: GravionLabs/ci/.github/workflows/node.yml@main
-       with:
-         node-version: '22'
-       secrets: inherit
-   ```
-3. Confirm `package.json` has `test`, `build`, and `lint` scripts
-4. If publishing: confirm `NPM_TOKEN` secret configured
-
-**Constraints:**
-- Use `secrets: inherit` to pass secrets
-- `package.json` must define `test` and `build` scripts — reusable workflow calls them
-- Do not hardcode Node.js version if project uses `.nvmrc`
-
-## Template Files
 | File | Purpose |
 |---|---|
-| `templates/package.json` | ESM baseline: `build`, `dev` (tsx watch), `start`, `test` scripts |
-| `templates/tsconfig.json` | NodeNext module resolution, strict mode, sourceMap, declaration |
-| `templates/src/index.ts` | Minimal entry point placeholder |
-| `templates/vitest.config.ts` | Vitest with `globals: true` |
-| `templates/.gitignore` | Node.js standard ignores (dist/, node_modules/, .env) |
-
-## Scripts
-- **`scripts/New-NodeProject.ps1`** — Full scaffold automation.
-  ```powershell
-  pwsh scripts/New-NodeProject.ps1 -ProjectName "my-tool" -ProjectType cli
-  pwsh scripts/New-NodeProject.ps1 -ProjectName "my-lib" -ProjectType library -PackageManager pnpm
-  ```
-  Parameters: `-ProjectName` (required), `-ProjectType` (app/library/cli), `-PackageManager` (npm/pnpm), `-OutputDirectory`
+| `package.json` | ESM baseline: `build`, `dev` (tsx watch), `start`, `test`, `test:ci` (coverage) scripts |
+| `tsconfig.json` | NodeNext module resolution, strict mode, sourceMap, declaration |
+| `src/index.ts` | Minimal entry point placeholder |
+| `vitest.config.ts` | Vitest with `globals: true`, v8 coverage with text + cobertura reporters |
+| `.github/workflows/ci.yml` | GitHub Actions CI via `GravionLabs/ci/.github/workflows/node.yml` |
+| `.gitignore` | Node.js standard ignores (dist/, node_modules/, .env) |
 
 ## Constraints
-- Use `"type": "module"` (ESM) — avoid CJS `require()`
-- Library projects: include `exports`, `types`, `files` fields in `package.json`
-- CLI projects: include `bin` field and `#!/usr/bin/env node` shebang
-- Solution must build and test cleanly before task complete
+
+- `"type": "module"` (ESM) — no CJS `require()`
+- Library projects: `exports`, `types`, `files` fields in `package.json`
+- CLI projects: `bin` field and `#!/usr/bin/env node` shebang
+- CI: `package.json` must define `test` and `build` scripts; do not hardcode the Node version if the project uses `.nvmrc`
+- Build and tests must pass before the task is complete
+
+Report: summary, files created, verify commands.

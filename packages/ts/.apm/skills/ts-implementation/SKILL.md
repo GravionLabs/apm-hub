@@ -11,6 +11,7 @@ description: >
 - **Test runner**: Vitest (`globals: true`, `environment: node`)
 - **Config**: `vitest.config.ts` at project root
 - **Format/Lint**: ESLint (flat config) + Prettier — see `setup-prettier-eslint-husky`
+- **Runtime**: Node.js 22 LTS
 
 ## Imports
 
@@ -24,30 +25,9 @@ description: >
 - Mocking: function-level via `vi.fn()`. Module-level mocks only when unavoidable.
 - File naming: `kebab-case.ts`, test files: `kebab-case.test.ts`.
 
-## Test Examples
+## Tests
 
-### Service test
-
-```ts
-import { describe, it, expect } from "vitest";
-
-describe("source-service", () => {
-  it("creates a source and returns it", async () => { ... });
-  it("rejects duplicate URL", async () => { ... });
-  it("returns null for non-existent id", async () => { ... });
-});
-```
-
-### Route test
-
-```ts
-import { describe, it, expect } from "vitest";
-
-describe("GET /api/sources/:id", () => {
-  it("returns 200 for existing source", async () => { ... });
-  it("returns 404 for non-existing source", async () => { ... });
-});
-```
+Runner config, naming, mocking and coverage live in `ts-test` (Vitest, `describe`/`it`, `vi.fn()`).
 
 ## Review rules
 
@@ -57,7 +37,3 @@ describe("GET /api/sources/:id", () => {
 - No `eval()`/`new Function()`; validate input before queries, paths, shell commands
 - Tests isolated; mocks reset in `beforeEach` (`vi.clearAllMocks()`)
 - Assertions specific — not just `toBeTruthy()`
-
-## Related Skills
-
-- **Test**: Load `ts-test` for test runner config, naming, and coverage details
