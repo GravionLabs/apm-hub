@@ -15,7 +15,7 @@ tests/
     └── test_<module>.py
 ```
 
-Mirror `src/` layout.
+Mirror the `src/` layout.
 
 ## Marks
 
@@ -23,7 +23,7 @@ Every test gets exactly one type mark:
 
 ```python
 @pytest.mark.unit
-def test_parse_order_returns_total(): ...
+def test_valid_order_returns_total(): ...
 
 @pytest.mark.integration
 def test_order_service_saves_to_db(): ...
@@ -32,29 +32,20 @@ def test_order_service_saves_to_db(): ...
 def test_payment_gateway_live(): ...
 ```
 
-Register in `pyproject.toml`:
-
-```toml
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-markers = [
-    "unit: Fast tests with no external dependencies",
-    "integration: Tests requiring external services, databases, or network",
-    "manual: Must be run explicitly; never run in CI",
-]
-addopts = "--strict-markers -m 'not manual'"
-```
+The `unit`, `integration` and `manual` markers are registered in `pyproject.toml` by the `py-create-project` template (`--strict-markers`, `manual` skipped by default). In a project that was not scaffolded with it, register them under `[tool.pytest.ini_options] markers` before use.
 
 ## Naming
 
-Pytest-style — scenario directly as `<condition>_<expected>`:
+Scenario directly as `test_<condition>_<expected>`:
+
 ```python
 def test_valid_id_returns_user(): ...
 def test_null_id_raises_exception(): ...
 def test_empty_input_returns_empty_list(): ...
 ```
 
-**Parametrize** — meaningful IDs:
+**Parametrize** with meaningful IDs:
+
 ```python
 @pytest.mark.parametrize("raw,expected", [
     ("{}", ValueError),
