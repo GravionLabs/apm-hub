@@ -7,66 +7,41 @@ description: >
   to the correct sub-skills for each language/framework detected.
 ---
 
-## Overview
+Run the detection script from the project root and hand the JSON to the caller; load `<lang>-test` and `<lang>-implementation` from its `test` and `implementation` lists.
 
-Run the `Detect-TechStack.ps1` script at project root to identify which languages, frameworks, and package manager the project uses. The script returns a JSON object with detected technologies and the correct `<lang>-test` and `<lang>-implementation` skill names for dispatch.
+Paths to `scripts/` are relative to this skill's directory.
 
-Avoid verbose reasoning.
+```powershell
+pwsh scripts/Detect-TechStack.ps1 -ProjectRoot .
+```
 
-## Instructions
+## Output (stdout, exit 0)
 
-1. Run the detection script:
-   ```powershell
-   $report = & "$env:SKILL_DIR/scripts/Detect-TechStack.ps1" -ProjectRoot (Resolve-Path .)
-   ```
-
-2. The script returns JSON. Parse it:
-   ```powershell
-   $stack = $report | ConvertFrom-Json
-   ```
-
-3. Load the appropriate skills based on the detected languages:
-   - For each language in `$stack.languages`, load `${lang}-test`, `${lang}-implementation`
-   - For each framework in `$stack.frameworks`, load the framework-specific skills
-
-4. Use `$stack.packageManager` to inform install commands.
-
-5. Report the detection to the user.
-
-## Output Format
-
-The script returns JSON conforming to the schema below. If detection fails, it exits with non-zero code and writes the error to stderr.
-
-### Success (exit 0)
 ```json
 {
   "languages": ["ts", "py", "dotnet"],
-  "frameworks": ["angular", "dotnet"],
+  "frameworks": ["angular"],
   "packageManager": ["pnpm", "dotnet"],
   "test": ["ts-test", "py-test", "dotnet-test"],
   "implementation": ["ts-implementation", "py-implementation", "dotnet-implementation"]
 }
 ```
 
-### Failure (exit non-zero)
-Error message written to stderr.
+On failure the script exits non-zero with the error on stderr. No stack detected → all arrays empty.
 
-## Detection Rules
+## Fallback without PowerShell
 
-| File/Folder | Detects |
+If `pwsh` is not available → infer the stack from this table (search recursively, depth 5) and build the same JSON by hand:
+
+| Marker | Result |
 |---|---|
-| `angular.json` (recursive, depth 5) | Angular framework |
-| `package.json` + `tsconfig.json` pair (recursive, depth 5) | TypeScript |
-| `pyproject.toml`, `requirements.txt`, or `setup.py` (recursive, depth 5) | Python |
-| `*.csproj`, `*.sln`, or `*.slnx` (recursive, depth 5) | .NET / C# |
-| `package.json` alone, no `tsconfig.json` (recursive, depth 5) | JavaScript (Node.js) |
-| `packageManager` field in `package.json` (highest priority) | Package manager |
-| Lockfiles `pnpm-lock.yaml`, `bun.lockb`, `yarn.lock`, `package-lock.json`, `uv.lock` (recursive, depth 5) | Package manager |
-| `*.csproj` | Package manager (dotnet) |
-| `Cargo.toml` | Package manager (cargo) |
-| Language mapping | `typescript`→`ts`, `python`→`py`, `csharp`→`dotnet`, `javascript`→`js` |
+| `angular.json` | framework `angular`, language `ts` |
+| `package.json` + `tsconfig.json` | language `ts`; `package.json` alone → `js` |
+| `pyproject.toml`, `requirements.txt`, `setup.py` | language `py` |
+| `*.csproj`, `*.sln`, `*.slnx` | language `dotnet`, package manager `dotnet` |
+| `packageManager` field in `package.json`, else lockfile (`pnpm-lock.yaml`, `yarn.lock`, `bun.lockb`, `package-lock.json`, `uv.lock`) | package manager |
 
 ## Gotchas
 
-- A project may have multiple languages (e.g. Angular frontend + .NET backend in a monorepo).
-- If no tech stack is detected, the script returns `{"languages": [], "frameworks": [], "packageManager": [], "test": [], "implementation": []}`.
+- Monorepos report several languages (e.g. Angular frontend + .NET backend); load every listed skill.
+- `js` has no `js-test`/`js-implementation` skill in this hub; treat it like `ts` without type rules.
