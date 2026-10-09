@@ -1,9 +1,7 @@
 import { generateTemplateList } from './generators/template-list-generator';
-import { updateReadme, updateFileBlock } from './generators/readme-generator';
+import { updateFileBlock } from './generators/readme-generator';
 import { formatAllDocs } from './generators/format-docs-generator';
 import { generateSkillList } from './generators/skill-list-generator';
-import { generateAgentList } from './generators/agent-list-generator';
-import { generateAgentTargets } from './generators/agent-target-generator';
 import { generateInstructionList } from './generators/instruction-list-generator';
 import { updatePackageVersions } from './generators/version-updater';
 import { generateRootApm } from './generators/root-apm-generator';
@@ -14,12 +12,9 @@ function generateAggregateDocs(version?: string) {
   }
   generateTemplateList();
   generateSkillList();
-  generateAgentList();
-  generateAgentTargets();
   generateInstructionList();
-  updateReadme();
   if (version) {
-    updateFileBlock('docs/overview.md', 'version', `Welcome to **copilot-hub** v${version} 👋`);
+    updateFileBlock('docs/overview.md', 'version', `Welcome to **apm-hub** v${version} 👋`);
   }
   formatAllDocs();
 }
@@ -35,8 +30,8 @@ function main() {
     args.splice(versionFlagIndex, 2);
   }
 
-  // Default (no args): regenerate aggregate docs
-  if (args.length === 0) {
+  // Default (no args) and --aggregate: regenerate aggregate docs
+  if (args.length === 0 || args[0] === '--aggregate') {
     console.log('Regenerating aggregate docs...');
     generateAggregateDocs(version);
     return;
@@ -44,25 +39,8 @@ function main() {
 
   const inputPath = args[0];
 
-  // --aggregate: regenerate all aggregate docs (CI use)
-  if (inputPath === '--aggregate') {
-    console.log('Regenerating all aggregate docs...');
-    generateAggregateDocs(version);
-    return;
-  }
-
   if (inputPath === '--skill-list') {
     generateSkillList();
-    return;
-  }
-
-  if (inputPath === '--agent-list') {
-    generateAgentList();
-    return;
-  }
-
-  if (inputPath === '--agent-targets') {
-    generateAgentTargets();
     return;
   }
 

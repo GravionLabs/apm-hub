@@ -1,7 +1,0 @@
-{
-  "opencode": ["tools", "user-invocable", "agents", "metadata"],
-  "copilot": ["mode", "steps", "color", "permission", "task", "metadata"],
-  "claude": ["mode", "steps", "color", "tools", "permission", "user-invocable", "agents", "model", "metadata"],
-  "cursor": ["mode", "steps", "color", "permission", "metadata"],
-  "codex": ["mode", "steps", "color", "permission", "metadata"]
-}

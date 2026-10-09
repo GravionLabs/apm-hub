@@ -1,15 +1,8 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import { parse } from 'yaml';
 
 // Marker pattern: <!-- AUTO:start <id> --> ... <!-- AUTO:end <id> -->
 const MARKER_START = (id: string) => `<!-- AUTO:start ${id} -->`;
 const MARKER_END = (id: string) => `<!-- AUTO:end ${id} -->`;
-
-interface PluginMeta {
-  name: string;
-  description?: string;
-}
 
 /**
  * Replace an AUTO-marked block in content with new generated content.
@@ -28,89 +21,6 @@ export function injectBlock(content: string, id: string, generated: string): str
   const before = content.slice(0, startIdx + start.length);
   const after = content.slice(endIdx);
   return `${before}\n${generated}\n${after}`;
-}
-
-/**
- * Build the template-stats table from the templates/ directory.
- * Traverses the new domain-based structure: templates/<domain>/<type>/
- */
-export function buildTemplateStatsBlock(templatesDir: string): string {
-  let agents = 0;
-  let prompts = 0;
-  let instructions = 0;
-  let skills = 0;
-
-  if (fs.existsSync(templatesDir)) {
-    for (const entry of fs.readdirSync(templatesDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      const domainDir = path.join(templatesDir, entry.name);
-
-      const agentsDir = path.join(domainDir, 'agents');
-      if (fs.existsSync(agentsDir)) {
-        agents += fs.readdirSync(agentsDir).filter((f) => f.endsWith('.agent.md')).length;
-      }
-
-      const promptsDir = path.join(domainDir, 'prompts');
-      if (fs.existsSync(promptsDir)) {
-        prompts += fs.readdirSync(promptsDir).filter((f) => f.endsWith('.prompt.md')).length;
-      }
-
-      const instructionsDir = path.join(domainDir, 'instructions');
-      if (fs.existsSync(instructionsDir)) {
-        instructions += fs
-          .readdirSync(instructionsDir)
-          .filter((f) => f.endsWith('.instructions.md')).length;
-      }
-
-      const skillsDir = path.join(domainDir, 'skills');
-      if (fs.existsSync(skillsDir)) {
-        skills += fs
-          .readdirSync(skillsDir, { withFileTypes: true })
-          .filter((d) => d.isDirectory() && fs.existsSync(path.join(skillsDir, d.name, 'SKILL.md')))
-          .length;
-      }
-    }
-  }
-
-  return [
-    '| Category | Count | Location | Purpose |',
-    '| :--- | :---: | :--- | :--- |',
-    `| **Agents** | ${agents} | \`templates/<domain>/agents/\` | Specialized expert roles (@-mentions) |`,
-    `| **Skills** | ${skills} | \`templates/<domain>/skills/<name>/\` | Reusable task-specific workflows |`,
-    `| **Prompts** | ${prompts} | \`templates/<domain>/prompts/\` | Task-specific workflows (slash commands) |`,
-    `| **Instructions** | ${instructions} | \`templates/<domain>/instructions/\` | Persistent project rules and standards |`,
-  ].join('\n');
-}
-
-/**
- * Build the plugin-table from plugins/<name>/plugin.config.yml files.
- */
-export function buildPluginTableBlock(pluginsDir: string): string {
-  const rows: string[] = ['| Plugin | Description |', '| :--- | :--- |'];
-
-  if (!fs.existsSync(pluginsDir)) {
-    return rows.join('\n');
-  }
-
-  const dirs = fs
-    .readdirSync(pluginsDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name)
-    .sort();
-
-  for (const dirName of dirs) {
-    const configPath = path.join(pluginsDir, dirName, 'plugin.config.yml');
-    if (!fs.existsSync(configPath)) continue;
-
-    const raw = fs.readFileSync(configPath, 'utf8');
-    const config = parse(raw) as PluginMeta;
-    const name = config.name ?? dirName;
-    const desc = (config.description ?? '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-
-    rows.push(`| [\`${name}\`](plugins/${dirName}) | ${desc} |`);
-  }
-
-  return rows.join('\n');
 }
 
 /**
@@ -140,35 +50,5 @@ export function updateFileBlock(filePath: string, blockId: string, content: stri
 
   fs.writeFileSync(filePath, updated, 'utf8');
   console.log(`Successfully updated ${filePath}`);
-  return true;
-}
-
-/**
- * Update README.md by injecting all AUTO blocks.
- * Returns true if the file was changed.
- */
-export function updateReadme(
-  readmePath = 'README.md',
-  templatesDir = 'templates',
-  pluginsDir = 'plugins'
-): boolean {
-  if (!fs.existsSync(readmePath)) {
-    console.warn(`README.md not found at ${readmePath}, skipping.`);
-    return false;
-  }
-
-  let content = fs.readFileSync(readmePath, 'utf8');
-  const original = content;
-
-  content = injectBlock(content, 'template-stats', buildTemplateStatsBlock(templatesDir));
-  content = injectBlock(content, 'plugin-table', buildPluginTableBlock(pluginsDir));
-
-  if (content === original) {
-    console.log('README.md is already up to date.');
-    return false;
-  }
-
-  fs.writeFileSync(readmePath, content, 'utf8');
-  console.log('Successfully updated README.md');
   return true;
 }
