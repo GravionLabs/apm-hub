@@ -61,7 +61,3 @@ Scaffold new Angular 21+ project with production-ready baseline.
 - Standalone components by default — don't use `NgModule` for new code
 - Always use SCSS for styles
 - SSR disabled by default (`--ssr false`) unless explicitly requested
-
-## Tips
-> **Use `task` tool** for scaffolding — it's mechanical.
-> Example: `#task pwsh scripts/New-AngularProject.ps1 -ProjectName "my-app" -UseVitest -UseEslint`

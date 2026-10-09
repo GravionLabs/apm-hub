@@ -2,7 +2,7 @@
 
 Use this file when a skill needs the shared frontmatter rules.
 
-> **Source of truth:** `docs/concepts/skill-frontmatter.md`. Skills must load
+> Skills must load
 > on GitHub Copilot, Claude Code, and OpenCode from one source file, so only
 > agentskills.io-legal keys are allowed at the top level.
 

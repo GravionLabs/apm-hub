@@ -41,7 +41,7 @@ Avoid verbose reasoning.
 
 ### Phase 2 — Create & Structure
 
-5. Build frontmatter using minimum cross-platform fields: `name`, `description`, `tools`, `model`, optional `compatibility`.
+5. Build frontmatter using the minimum cross-platform fields: `name`, `description`, `tools`; `model` and `compatibility` are optional.
    - If target is `claude` or `all` → check `references/agent-writing-rules.md` Platform-Specific section before adding platform-specific fields.
    - Keep `tools` minimal — grant only what the agent requires.
    - If `model` choice is unclear → load `references/model-selection.md`.
@@ -73,36 +73,9 @@ Avoid verbose reasoning.
 ## Gotchas
 
 - Filename must match `name` exactly.
-- `model` is an official optional field in Claude Code; in GitHub Copilot and opencode it's a repo-local convention silently ignored by official loaders.
+- `model` is optional; if present it must be a value the target platform accepts (see `references/model-selection.md`).
 - Claude Code ignores `user-invocable`; Copilot CLI ignores `permissionMode`. For `all` targets, use cross-platform fields only.
 - Do not duplicate content from `.github/copilot-instructions.md`.
 - Keep reference chains one level deep.
 
-## Output Format
-
-### ✅ Summary
-Agent `{name}` created/updated at `{path}/{name}.agent.md`.
-
-### 📝 What Changed
-- Created/Updated: `{path}/{name}.agent.md` ({lines} lines)
-- Created/Updated: `{path}/references/*.md` (if needed)
-
-### ✔️ Verify
-```powershell
-$content = Get-Content "{path}/{name}.agent.md" -Raw
-if ($content -match "^---") { Write-Host "✓ Has frontmatter" }
-if ($content -match "name:") { Write-Host "✓ name field present" }
-if ($content -match "description:") { Write-Host "✓ description present" }
-if ($content -match "tools:") { Write-Host "✓ tools field present" }
-```
-
-### 🚀 Next Steps
-1. Test: `opencode @{name}` or `copilot @{name}` (CLI) or `@{name}` in VS Code Chat
-2. Audit with `agent-audit` to validate conventions
-3. Commit and reference from plugin config if distributing
-
-## See Also
-
-- [Agent Writing Rules](references/agent-writing-rules.md)
-- [Model Selection](references/model-selection.md)
-- [Designing Agents](../../../../../../docs/best-practices/designing-agents.md)
+Report: summary, files created or changed, and the `agent-audit` command to verify.

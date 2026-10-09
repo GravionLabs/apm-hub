@@ -90,7 +90,3 @@ Create GitHub Actions CI workflow for project.
 - Library projects: include `exports`, `types`, `files` fields in `package.json`
 - CLI projects: include `bin` field and `#!/usr/bin/env node` shebang
 - Solution must build and test cleanly before task complete
-
-## Tips
-> **Use `task` tool** for scaffolding — mechanical.
-> Example: `#task pwsh scripts/New-NodeProject.ps1 -ProjectName "my-cli" -ProjectType cli`

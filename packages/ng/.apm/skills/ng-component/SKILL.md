@@ -45,34 +45,7 @@ Validate generated component:
 - Import ordering: Angular core → Angular common → PrimeNG → local
 - Selector prefix matches project convention
 
-## Output Format
-
-### ✅ Summary
-Angular component `{name}` created as standalone with selector `{prefix}-{name}`.
-
-### 📝 What Changed
-- Created: `{path}/{name}.component.ts` (52 lines)
-- Created: `{path}/{name}.component.html`
-- Created: `{path}/{name}.component.scss`
-- Updated: `{path}/index.ts` (added export)
-
-### ✔️ Verify
-```powershell
-# Check component syntax
-ng lint
-
-# Build to verify compilation
-ng build
-
-# Run tests (when tests are added)
-ng test --include="**/{name}.component.spec.ts"
-```
-
-### 🚀 Next Steps
-1. Write unit tests in `{path}/{name}.component.spec.ts`
-2. Add component logic and imports as needed
-3. Integrate into parent component or route
-4. Test in dev server: `ng serve`
+Report: summary, files created/updated, verify commands (`ng lint`, `ng build`).
 
 ## Gotchas
 

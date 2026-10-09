@@ -16,9 +16,9 @@ Avoid verbose reasoning.
 ## Prerequisites
 
 - Agent path (`.agent.md` file or containing directory)
-- Read `references/frontmatter-schema.md`
+- Read `../agent-write/references/agent-writing-rules.md` (frontmatter rules, tools aliases, platform fields)
 - Read `references/audit-checklist.md`
-- If the agent uses `model:` or a body-level "Model hint" → read `references/model-selection.md`
+- If the agent uses `model:` or a body-level "Model hint" → read `../agent-write/references/model-selection.md`
 - If you are preparing the final audit response → read `assets/audit-output-template.md`
 
 ## Instructions
@@ -28,7 +28,7 @@ Avoid verbose reasoning.
 ✓ Checkpoint: Agent file loaded and structure understood
 
 1. Read the `.agent.md` file and list any sibling `references/` and `assets/` items.
-2. **Check for model guidance:** If the agent has `model:` or body "Model hint" → **read `references/model-selection.md`**. `model` is an official optional field in Claude Code; repo-local convention in GitHub Copilot.
+2. **Check for model guidance:** If the agent has `model:` or body "Model hint" → **read `../agent-write/references/model-selection.md`**. `model` is optional.
 3. **Shell enforcement:** Check all code blocks. Flag any ` ```bash ` or ` ```sh `. All shell must use ` ```powershell ` — report 🔴 critical if any non-PowerShell shells are found.
 
 ### Phase 2 — Audit & Report
@@ -56,7 +56,7 @@ Avoid verbose reasoning.
 
 - A zero-finding report is valid — don't force fixes if nothing's broken.
 - Filename must match `name` in frontmatter exactly.
-- `model` is an official optional field in Claude Code; repo-local convention in GitHub Copilot — audit severity 🟡 if unrecognized value, not because it's missing.
+- `model` is optional — audit severity 🟡 only for an unrecognized value, never because it's missing.
 - Do not proceed with `agent-update` if user cancels.
 - Critical findings (shell enforcement) should always be fixed.
 

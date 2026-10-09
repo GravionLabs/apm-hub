@@ -1,6 +1,8 @@
 ## Agent Audit Checklist
 
-Use this checklist when auditing an `.agent.md` file. Apply all checks and report findings by severity.
+Use this checklist when auditing an `.agent.md` file. Frontmatter rules, tools aliases and platform fields are in `../agent-write/references/agent-writing-rules.md`. Report findings by severity.
+
+Anti-patterns to flag (🟡 unless noted): two unrelated responsibilities (description needs "and" > twice); generic agent with no project context; platform-specific fields on an `all` target (🔴); shell tools granted but no commands in the body; prose paragraphs instead of bullets; content duplicated from project instructions.
 
 ### Severity levels
 
@@ -50,10 +52,9 @@ Use this checklist when auditing an `.agent.md` file. Apply all checks and repor
 
 **`model` field (🟢 if omitted, 🟡 if misleading):**
 
-- [ ] `model` is an official optional field in Claude Code; repo-local convention in GitHub Copilot (ignored by official loaders). It is always valid to set it.
-- [ ] If present, value matches a model listed in `docs/model-overview.md` — 🟡 if unrecognized
-- [ ] If present, fits the agent's dominant task (mechanical → `gpt-4.1`; complex → `claude-sonnet-4.6`) — 🟡 if unjustified
-- [ ] If a body-level "Model hint" exists, it is consistent with frontmatter `model` — 🟡 if they conflict
+- [ ] Optional — never require it
+- [ ] If present, value is valid for the target platform and fits the agent's dominant task (see `../agent-write/references/model-selection.md`) — 🟡 if unrecognized or unjustified
+- [ ] If a body-level "Model hint" exists, it is consistent with `model` — 🟡 if they conflict
 
 **Platform-specific field safety (🔴 if misused):**
 
@@ -102,36 +103,3 @@ Use this checklist when auditing an `.agent.md` file. Apply all checks and repor
 
 - [ ] Assets are referenced conditionally, not auto-loaded — 🟡
 - [ ] Assets contain templates or data, not prose documentation — 🟢
-
----
-
-### Anti-pattern checks
-
-| Anti-pattern                                    | Severity | Detection                                             |
-|:------------------------------------------------|:---------|:------------------------------------------------------|
-| Two unrelated responsibilities in one agent     | 🟡       | Description needs "and" more than twice               |
-| Generic agent with no project context           | 🟡       | Body applies to any project without changes           |
-| Platform-specific fields used with `all` target | 🔴       | `user-invocable` or `permissionMode` + multi-platform |
-| Over-granted tools (shell when only reading)    | 🟡       | `execute`/`shell` present; no commands in body        |
-| Prose paragraphs instead of bullets             | 🟡       | Capabilities/constraints written as sentences         |
-| Duplicating project-level instructions          | 🟡       | Content mirrors `.github/copilot-instructions.md`     |
-
----
-
-### Quick-reference summary
-
-```
-[ ] location: .github/agents/ (CLI/VS Code) OR .claude/agents/ (Claude) OR packages/<domain>/.apm/agents/ (plugin)
-[ ] name: present, kebab-case, 1-64 chars, matches filename, no leading/trailing/consecutive hyphens
-[ ] description: present, one sentence, imperative, answers "when to use"
-[ ] tools: minimal, cross-platform aliases present if needed
-[ ] model: optional; official in Claude Code, repo-local convention in Copilot; align with docs/model-overview.md
-[ ] target: do NOT set unless explicitly targeting a single platform (vscode or github-copilot)
-[ ] infer: do NOT use — retired; use disable-model-invocation instead
-[ ] body: Persona → Capabilities → Constraints (→ Behavior)
-[ ] body: no prose paragraphs, no duplicated project instructions
-[ ] shell code fences: ```powershell only (not ```bash or ```sh)
-[ ] platform-specific fields: only when targeting that specific platform
-[ ] references: conditional load instructions, relative paths, one level deep
-[ ] assets: referenced conditionally, not auto-loaded
-```

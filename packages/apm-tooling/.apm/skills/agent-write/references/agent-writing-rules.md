@@ -30,10 +30,10 @@ Managed settings > `--agents` CLI flag > project > global > plugin
 
 ### Frontmatter rules
 
-- **Required cross-platform minimum:** `name`, `description`, `tools`, `model`
+- **Required cross-platform minimum:** `name`, `description`, `tools` (`model` is optional)
 - `description`: one sentence, imperative, answers "when to use this agent" — this is shown in the @-picker
 - `tools`: list format, minimal — grant only what the agent requires
-- `model`: official optional field in Claude Code; repo-local advisory convention in GitHub Copilot (ignored by official loaders). Claude Code values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`.
+- `model`: optional. Claude Code values: `sonnet`, `opus`, `haiku`, full model ID, or `inherit`; unset inherits the default model.
 - `target`: **do not set** unless explicitly targeting one environment (`vscode` or `github-copilot`); omitting makes the agent available everywhere
 - `infer`: **retired** — use `disable-model-invocation` instead
 
@@ -57,15 +57,19 @@ Omit `tools` (or use `["*"]`) to grant all tools. Use `[]` to disable all tools.
 | Platform     | Field              | Description                                                          |
 |:-------------|:-------------------|:---------------------------------------------------------------------|
 | Copilot CLI  | `user-invocable`   | `false` for sub-agents called by other agents, not users             |
-| Copilot CLI  | `infer`            | `false` to disable auto-delegation                                   |
+| Copilot      | `disable-model-invocation` | `true` to prevent auto-invocation (replaces retired `infer`)  |
+| Copilot Cloud| `mcp-servers`, `metadata` | Additional MCP servers / annotations; not used in VS Code or IDE agents |
 | VS Code      | `target`           | `vscode` \| `jetbrains` \| `all`                                    |
 | VS Code      | `argument-hint`    | Placeholder text shown in chat input                                 |
 | Claude Code  | `permissionMode`   | `default` \| `acceptEdits` \| `bypassPermissions` \| `plan`         |
 | Claude Code  | `maxTurns`         | Max agentic turns before stopping                                    |
 | Claude Code  | `isolation`        | `shared` (default) or `isolated`                                     |
 | Claude Code  | `disallowedTools`  | Tools the agent may NOT use (overrides `tools`)                      |
+| Claude Code  | `color`            | Terminal color (`red`, `green`, `blue`, …)                           |
 
 > For `all` platform targets: use cross-platform fields only. Platform-specific fields cause runtime failures on incompatible runtimes.
+>
+> **In this repo** agents are authored in Copilot style and platform-specific fields go under `metadata.<platform>` (`opencode`, `claude`); the generator injects them per target. See `AGENTS.md` → "Multi-target agent frontmatter".
 
 ---
 
@@ -96,11 +100,7 @@ You are a [role] specializing in [domain]. [Communication style sentence].
 
 ### Model guidance
 
-- `model` frontmatter and any body-level "Model hint" must be consistent.
-- Choose model by *dominant task*, not worst case.
-- If model choice is unclear → load `references/model-selection.md` from SKILL.md (decision tree + quick reference by agent role).
-
-Avoid vague phrasing like "use a better model" — explain the task shape instead.
+Choose by *dominant task*, not worst case, and keep any body-level "Model hint" consistent with `model`. If unclear → load `references/model-selection.md`.
 
 ---
 
@@ -148,7 +148,7 @@ Every token in an agent file is loaded into model context on every invocation.
 - Filename matches `name` exactly.
 - `description` is one sentence, imperative, answers "when to use".
 - `tools` is minimal.
-- `model` present and consistent with `docs/model-overview.md`.
+- `model` (if present) consistent with `references/model-selection.md`.
 - Body follows Persona → Capabilities → Constraints (→ Behavior).
 - No content duplicated from project-level instructions.
 - All shell blocks use ` ```powershell `.

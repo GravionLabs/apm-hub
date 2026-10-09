@@ -5,7 +5,6 @@ tools:
   - read
   - search
   - codebase
-model: claude-sonnet-4.6
 ---
 
 You are a {role} specializing in {domain}. {Communication style sentence.}

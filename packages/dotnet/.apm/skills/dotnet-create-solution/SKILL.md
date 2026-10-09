@@ -91,39 +91,9 @@ Starter files available in `templates/` alongside this skill, copied automatical
   ```
   Parameters: `-SolutionName` (required), `-ProjectType` (classlib/console/webapi/worker/grpc), `-OutputType` (library/app), `-UpdatePackages` (switch), `-OutputDirectory`
 
-## Adding Minimal API Endpoints
-
-After scaffolding the solution, create ASP.NET Core Minimal API endpoints using Carter with OpenAPI.
-
-1. Ask: route path, HTTP methods, request/response shape, auth requirements
-2. Create Carter module implementing `ICarterModule`:
-   ```csharp
-   public class <Feature>Module : ICarterModule
-   {
-       public void AddRoutes(IEndpointRouteBuilder app)
-       {
-           var group = app.MapGroup("/api/<feature>").WithTags("<Feature>");
-           group.MapGet("/", Handle).WithName("<Name>").WithOpenApi();
-       }
-   }
-   ```
-3. Add typed request and response record types
-4. Add OpenAPI metadata: `.WithSummary()`, `.WithDescription()`, `.Produces<T>()`, `.ProducesProblem()`
-5. Register Carter in `Program.cs`: `builder.Services.AddCarter()` + `app.MapCarter()`
-6. Add input validation (FluentValidation or Data Annotations)
-
-**Constraints:**
-- Use Carter for organization — not `app.MapGet` scattered in `Program.cs`
-- All endpoints must have OpenAPI metadata and typed response types
-- Use `TypedResults` (not `Results.Ok(...)`) for compile-time safety
-
 ## Constraints
 - Use `.slnx` format (XML-based solution, `--format slnx`); avoid legacy `.sln`
 - All package versions in `Directory.Packages.props` — never in individual `.csproj` files
 - Generated `.csproj` files must not repeat properties already in `Directory.Build.props`
 - Solution must build cleanly before task is complete
 - Library projects should multi-target; application projects use single target framework
-
-## Tips
-> **Use `task` tool** for scaffolding steps — mechanical, don't require reasoning. Example: `#task pwsh scripts/New-Solution.ps1 -SolutionName "Acme.Core" -OutputType library -UpdatePackages`
-> Allows routing scaffold work to cheaper, faster model.

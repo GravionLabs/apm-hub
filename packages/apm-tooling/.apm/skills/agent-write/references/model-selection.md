@@ -1,6 +1,6 @@
 ## Model Selection for Agents
 
-Agent-focused extract from `docs/model-overview.md`.
+Model guidance for agents.
 
 ### Load this reference when
 

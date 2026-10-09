@@ -21,11 +21,7 @@ Avoid verbose reasoning.
 
 ## Instructions
 
-1. Pick placement:
-   - CLI / VS Code → `.github/agents/` (project) or `~/.copilot/agents/` (global)
-   - Claude Code → `.claude/agents/` (project) or `~/.claude/agents/` (global)
-   - opencode → `.opencode/agents/` (project) or `~/.config/opencode/agents/` (global)
-   - Plugin → `packages/<domain>/.apm/agents/`
+1. Pick placement per `agent-write` (Copilot/VS Code `.github/agents/`, Claude Code `.claude/agents/`, opencode `.opencode/agents/`, APM package `packages/<domain>/.apm/agents/`).
 2. Validate the name: kebab-case, 1-64 chars, matches filename.
 3. Use skill `agent-write` to draft and validate the agent content. `agent-write` enforces PowerShell syntax and cross-platform conventions.
 4. Final validation: filename matches `name`, description is specific, tools list is minimal.

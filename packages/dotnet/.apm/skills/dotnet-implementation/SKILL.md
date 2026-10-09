@@ -40,40 +40,9 @@ description: >
 - Always configure string max length
 - Never edit a generated migration; add a new one
 
-## Test Examples
+## Tests
 
-### Service test
-
-```csharp
-using NUnit.Framework;
-using NSubstitute;
-using Shouldly;
-
-[TestFixture]
-public class MyServiceTests
-{
-    private IMyService _service;
-    private IDependency _dependency;
-
-    [SetUp]
-    public void SetUp()
-    {
-        _dependency = Substitute.For<IDependency>();
-        _service = new MyService(_dependency);
-    }
-
-    [Test]
-    public void ProcessData_ValidInput_ReturnsResult()
-    {
-        _dependency.Get().Returns(new[] { "a", "b" });
-
-        var result = _service.ProcessData();
-
-        result.ShouldNotBeNull();
-        result.Count.ShouldBe(2);
-    }
-}
-```
+Structure, naming and mocking live in `dotnet-test` (NUnit + NSubstitute + Shouldly, `Should_<expected>_when_<condition>`).
 
 ## Review rules
 
@@ -83,6 +52,25 @@ public class MyServiceTests
 - `record` for DTOs; dependencies injected via interfaces
 - Tests named `Should_<expected>_when_<condition>`, AAA structure
 - No shared mutable state between tests; assertions are specific (not just `ShouldNotBeNull`)
+
+## Minimal APIs
+
+Organize endpoints with Carter, not scattered `app.MapGet` in `Program.cs`:
+
+```csharp
+public class <Feature>Module : ICarterModule
+{
+    public void AddRoutes(IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/<feature>").WithTags("<Feature>");
+        group.MapGet("/", Handle).WithName("<Name>").WithOpenApi();
+    }
+}
+```
+
+- Register with `builder.Services.AddCarter()` and `app.MapCarter()`
+- Typed request/response records; OpenAPI metadata (`.WithSummary()`, `.Produces<T>()`, `.ProducesProblem()`)
+- Return `TypedResults`, not `Results.Ok(...)`; validate input (FluentValidation or Data Annotations)
 
 ## Related Skills
 

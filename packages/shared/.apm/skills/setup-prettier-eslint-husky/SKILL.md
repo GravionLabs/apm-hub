@@ -52,7 +52,3 @@ Set up code quality pipeline: ESLint flat config, Prettier, Husky.
 - Use flat config (`eslint.config.mjs`) — not legacy `.eslintrc`
 - For Angular: update `SelectorPrefix` to match project's component/directive prefix
 - Don't override existing configs without confirmation
-
-## Tips
-> **Use `task` tool** for setup script — it's mechanical. Example:
-> `#task pwsh scripts/Setup-CodeQuality.ps1 -ProjectType angular -SelectorPrefix app`

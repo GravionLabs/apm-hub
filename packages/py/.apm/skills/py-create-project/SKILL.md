@@ -38,7 +38,7 @@ Scaffold Python project with production-ready baseline using `uv`.
    uv run pytest         # tests pass
    ```
 
-5. **Next steps:** add dependencies with `uv add <package>`, add CI with `py-create-workflow`
+5. **Next steps:** add dependencies with `uv add <package>`, add CI (see `## CI Workflow` below)
 
 ## Template Files
 | File | Purpose |
@@ -90,7 +90,3 @@ Create GitHub Actions CI/CD workflow for Python package using GravionLabs/ci reu
 **Constraints:**
 - Use `secrets: inherit`
 - `pyproject.toml` must define test and build commands
-
-## Tips
-> **Use `task` tool** for scaffolding — mechanical.
-> Example: `#task pwsh scripts/New-PythonProject.ps1 -ProjectName "my-pkg"`
