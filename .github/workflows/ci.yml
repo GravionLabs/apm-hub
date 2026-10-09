@@ -66,7 +66,7 @@ jobs:
               done
               echo '```'
               echo ""
-              echo "> **Tip:** Use \`npm run generate\` (not \`generate:ci\`) locally — it only generates plugin-specific files and never touches aggregate docs."
+              echo "> **Tip:** Use \`npm run generate\` (not \`generate:ci\`) locally — it never touches the aggregate docs."
             } >> "$GITHUB_STEP_SUMMARY"
 
             exit 1
@@ -175,24 +175,7 @@ jobs:
           package-manager-version: '11.6.0'
           build-command: pnpm run build
 
-      - name: Install puppeteer system deps
-        shell: bash
-        run: |
-          sudo apt-get update && sudo apt-get install -y \
-            chromium-browser \
-            libgbm1 libnspr4 libnss3 libatk-bridge2.0-0 \
-            libcups2 libdrm2 libxkbcommon0 libxcomposite1 \
-            libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 \
-            libcairo2 libasound2t64
-
-      - name: Render Mermaid diagrams
-        shell: bash
-        env:
-          PUPPETEER_CHROMIUM_REVISION: chromium
-          PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
-        run: pnpm run generate:diagrams
-
-      - name: Regenerate plugins & documentation
+      - name: Regenerate packages & documentation
         run: pnpm run generate:ci -- --version ${{ needs.determine-version.outputs.semver }}
 
       - name: Install APM CLI
@@ -208,8 +191,6 @@ jobs:
           git add README.md docs/overview.md
           # Force-add gitignored aggregate docs
           git add -f docs/instruction-list.md docs/skill-list.md docs/template-list.md
-          # Commit generated diagrams
-          git add docs/diagrams/*.svg
           # Commit APM packages output (packages/ is gitignored for apm_modules/ and .github/ only)
           git add packages/*/apm.yml packages/all/
           # Add .apm directories (use find to handle glob expansion reliably)

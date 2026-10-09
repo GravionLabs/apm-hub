@@ -18,11 +18,9 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Skills](docs/concepts/skills.md)**: What skills are and how they work across platforms.
 - **[Skill Frontmatter Convention](docs/concepts/skill-frontmatter.md)**: The spec-compliant frontmatter every skill follows.
 - **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
+- **[Common Workflows](docs/usage/common-workflows.md)**: End-to-end examples with the installed skills.
+- **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
 - **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
-- **[Chronicle Optimization](docs/chronicle-optimization.md)**: Design skills for better session tracking and summarization.
-- **[Context Management](docs/context-management.md)**: Optimize skills for long sessions and token efficiency.
-- **[Context Audit Template](docs/context-audit-template.md)**: Audit and optimize existing large skills.
-- **[JetBrains AI Support](docs/jetbrains-ai.md)**: How to use these templates with JetBrains Junie.
 
 ## 🚀 Quick Start
 

@@ -6,13 +6,14 @@ version: 1
 review:
   # Automatically request Copilot review on all pull requests
   instructions: |
-    You are reviewing changes to the copilot-hub repository — a shared library of GitHub Copilot
-    templates (instructions, prompts, agents), and CLI plugins
+    You are reviewing changes to the apm-hub repository — a library of agentskills.io skills
+    distributed as APM packages (packages/<domain>/.apm/skills/<name>/SKILL.md).
 
     When reviewing:
-    - **Template files** (.instructions.md, .prompt.md, .agent.md): Check that the frontmatter is correct,
-      the content is clear and reusable, and follows the guidelines in docs/best-practices/
-    - **Plugin configs** (plugin.config.yml): Ensure agent/instructions/skill references are valid
+    - **Skills** (SKILL.md and companion dirs): Frontmatter has only name, description and optional
+      license/metadata; SKILL.md is at most 100 lines; shell blocks are ```powershell; referenced
+      scripts/, references/ and templates/ files exist; no rules duplicated from another skill
+    - **Package manifests** (apm.yml): The skills list matches the directories on disk
     - **TypeScript src/**: Check for type safety, test coverage, and correctness of generators
     - **Documentation**: Verify accuracy, clarity, and that links are valid
 
