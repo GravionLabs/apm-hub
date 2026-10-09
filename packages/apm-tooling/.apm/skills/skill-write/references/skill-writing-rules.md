@@ -1,46 +1,72 @@
 ## Skill Writing Rules
 
-Use this reference when drafting or updating a skill.
+Single source of truth for how a skill is shaped. `skill-audit`, `skill-update` and `skill-slim` check against this file; do not restate these rules elsewhere.
 
 ### Load it when
 
-- A skill file is being created or edited
-- A skill needs structure, frontmatter, reference, asset, or script guidance
+- A skill is being created, edited, audited or slimmed
 - A skill includes CLI examples, command output, or output-format decisions
 
-Do not load it when the change is unrelated to skill authoring.
+### Placement and naming
 
-### Rules
+- Domain workflows: `packages/<domain>/.apm/skills/<name>/`; repo-level contributor tooling only: `.github/skills/<name>/`. If no package fits, create one with `apm.yml`.
+- `name`: kebab-case, 1-64 chars, matches the directory exactly, no leading, trailing or consecutive hyphens.
 
-- Keep `SKILL.md` ≤ 100 lines (enforced by `src/generators/skill-size-validator.ts`) and focused on workflow, not long specs
-- Placement: `packages/<domain>/.apm/skills/<name>/` for domain workflows; `.github/skills/<name>/` only for repo-level contributor tooling
-- `name`: kebab-case, 1-64 chars, matches the folder, no leading, trailing or consecutive hyphens
-- Frontmatter carries only `name`, `description`, optional `license`, optional `metadata`. **Forbidden top-level keys:** `allowed-tools`, `model`, `compatibility`, anything else — skills must load unchanged on GitHub Copilot, Claude Code and OpenCode. Custom annotations go under `metadata:`
-- `description`: imperative, specific, answers "when should I use this?", ≤ 1,024 chars
-- Use `references/` for stable specs and long tables, `assets/` for templates longer than a short snippet, `scripts/` only for repeatable flag-based procedures (`--help`, data on stdout, diagnostics on stderr, non-zero exit on failure; `.ps1` preferred)
-- Write conditional behavior as `If X → do Y; otherwise do Z`
+### Frontmatter
+
+Skills must load unchanged on GitHub Copilot, Claude Code and OpenCode, so only agentskills.io-legal keys are allowed at the top level.
+
+| Field | Rule |
+|---|---|
+| `name` | Required. See naming above. |
+| `description` | Required. Imperative, 1-1,024 chars, says what the skill does and when to use it, includes specific trigger keywords, not so broad it fires for unrelated tasks. |
+| `license` | Optional. SPDX identifier (e.g. `MIT`). |
+| `metadata` | Optional. Map of free-form string annotations (authorship, version). Hosts ignore them; no nested platform configuration. |
+
+**Forbidden top-level keys (🔴):** `allowed-tools` (matches no platform's tool vocabulary), `model` (platform-specific, goes stale), `compatibility` (a uniform claim carries no information), anything else (breaks strict loaders). Custom annotations go under `metadata:`.
+
+```yaml
+---
+name: my-skill
+description: >
+  Does X. Use this skill when the user needs Y or Z, even if they do not
+  mention X explicitly.
+---
+```
+
+### Body
+
+- ≤ 100 lines (enforced by `src/generators/skill-size-validator.ts`); workflow, not long specs
+- Order: one-sentence overview, prerequisites, numbered instructions, gotchas, one-line report format
+- Write conditional behavior as `If X → do Y; otherwise do Z`; no equal alternatives without a default
 - Shell blocks use ` ```powershell `
-- Prefer the smallest useful CLI output; use JSON only when the next step parses it
+- Include a code block only when the agent will copy it verbatim; inline fallbacks ≤ 5 lines, longer ones go in `references/`
+- Don't explain what the model already knows (tool basics, generic best practice, flag tables); state repo conventions, contracts and non-obvious gotchas
+- No vague advice ("handle errors appropriately"); not tied to one concrete task (hardcoded names, URLs, ids)
+- Paths to `scripts/`, `references/` and `assets/` are relative to the skill directory; state that once in the skill. Never rely on `$env:SKILL_DIR`.
 
-### Token efficiency
-
-Every token in a skill body is loaded on every invocation.
+### Companion directories
 
 | Content | Location |
 |---|---|
 | Workflow steps the agent follows | `SKILL.md` body |
-| Stable specs, error codes, long tables | `references/` (conditional load) |
-| Output templates > ~20 lines | `assets/` (conditional load) |
-| Repeatable multi-step commands | `scripts/` |
+| Stable specs, error codes, long tables | `references/` (conditional load: "If X, read references/Y.md") |
+| Templates and output formats > ~20 lines | `assets/` or `templates/` (conditional load) |
+| Repeatable multi-step commands | `scripts/` (`.ps1` preferred) |
 
+- Scripts: flag-based, `--help`, no interactive prompts, data on stdout, diagnostics on stderr, non-zero exit on failure, dependencies declared and pinned
+- Load references conditionally, never all of them; keep chains one level deep (A → B, never A → B → C); paths relative from the skill root
 - Compose, don't duplicate: if two skills share a workflow, one delegates to the other (`orch-pipeline` calls `review-fanout` and `verify-project` instead of inlining them)
-- Load references conditionally (`If X, read references/Y.md`); never auto-load all of them; keep chains one level deep
-- Include a code block only when the agent will copy it verbatim; keep inline fallbacks ≤ 5 lines, longer ones go in `references/`
-- Don't explain what the model already knows; state repo conventions, contracts and non-obvious gotchas
+- No content duplicated between body and references, or between two skills
+
+### CLI output
+
+- Prefer the smallest useful output (`--quiet`, `--nologo` and the like when they hide no useful failures)
+- Use JSON only when the next step parses, compares or persists it; never wrap plain text in JSON to look structured
+- Keep sample output short and focused on the signal the next step needs
 
 ### Validation
 
-- Directory name matches `name`
-- No forbidden frontmatter keys
-- No content duplicated between body and references
-- References are loaded conditionally
+- Directory name matches `name`; no forbidden frontmatter keys
+- Description says when to use it; references are conditional; nothing duplicated across body and references
+- All shell fences are ` ```powershell `

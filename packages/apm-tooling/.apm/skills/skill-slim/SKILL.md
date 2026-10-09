@@ -10,14 +10,16 @@ description: >
 ## Prerequisites
 
 - Repo root; run read-only analysis first — **no edits before the user approves the findings**
-- Follow `skill-write`'s `references/skill-writing-rules.md` for the target shape
+- Follow `../skill-write/references/skill-writing-rules.md` for the target shape
+
+Paths to `scripts/`, `references/` and `assets/` are relative to this skill's directory.
 
 ## Instructions
 
 ### 1. Measure
 
 ```powershell
-& "$env:SKILL_DIR/scripts/Get-SkillReport.ps1" -Root (Resolve-Path .)
+pwsh scripts/Get-SkillReport.ps1 -Root .
 ```
 
 JSON on stdout: sizes, skills over the 100-line limit, `danglingCandidates` (some are false positives, e.g. tool names that share a skill prefix — verify each), `duplicatedLines` across skills.
@@ -41,7 +43,7 @@ Show a findings table (skill, bucket, what, estimated bytes saved), the decision
 
 ### 4. Apply
 
-One commit per phase. After each: `pnpm run build; pnpm test`, `node scripts/check-manifests.mjs --fix`, re-run the report (no new dangling references, no skill over the limit), grep for removed skill names.
+One commit per phase. After each: `pnpm run build; pnpm test`, `node scripts/check-manifests.mjs --fix` (repo root), re-run the report (no new dangling references, no skill over the limit), grep for removed skill names.
 
 ## Gotchas
 
