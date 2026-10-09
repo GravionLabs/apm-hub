@@ -1,5 +1,5 @@
 name: github
-version: 1.0.19
+version: 1.0.21
 description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation workflows, and pull request creation."
 author:
   name: Gravion
