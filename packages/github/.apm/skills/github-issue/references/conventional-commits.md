@@ -36,7 +36,7 @@ Always use conventional commit format.
 
 | Branch type | Pattern                     | Example                      |
 |-------------|-----------------------------|------------------------------|
-| Feature     | `feature/<issue-nr>-<slug>` | `feature/42-github-workflow` |
+| Feature     | `feature/<issue-nr>-<slug>` | `feature/42-add-pr-skill` |
 | Bug fix     | `bugfix/<issue-nr>-<slug>`  | `bugfix/43-fix-pr-title`     |
 | Hotfix      | `hotfix/<issue-nr>-<slug>`  | `hotfix/44-critical-fix`     |
 | Chore       | `chore/<slug>`              | `chore/update-deps`          |

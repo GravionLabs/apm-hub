@@ -66,8 +66,8 @@ Unnecessary tokens increase cost and reduce precision.
 - If two skills share a workflow, let one delegate to the other — do not copy steps.
 - A composite skill body should be a short list of sub-skill invocations, not a clone
   of their content.
-- Example: `github-issue-workflow` delegates to `github-issue-start` then
-  `github-issue-finish` rather than inlining their phases.
+- Example: `orch-pipeline` delegates to `review-fanout` and `verify-project`
+  rather than inlining their phases.
 
 **Conditional loading:**
 

@@ -46,7 +46,7 @@
 
 **Variations by skill type:**
 - **Component generation** (angular-component): Scaffold → Enhance → Validate
-- **GitHub workflow** (github-issue-start): Prepare → Plan → Implement → Verify
+- **GitHub workflow** (github-issue): Prepare → Plan → Implement → Verify
 - **Generator** (typescript-mcp-server-generator): Scaffold → Implement → Configure
 - **Domain expert** (angular-developer): Analyze → Generate → Validate
 
@@ -140,7 +140,7 @@ Every skill should end with:
 - Next steps enable chaining (this skill → next skill)
 - Structured output compresses ~3x better (Context Management)
 
-**Example (github-issue-finish):**
+**Example (github-pull-request):**
 ```markdown
 ### ✅ Summary
 PR #42 created for issue #42 on branch `feature/foo-bar`.
@@ -173,7 +173,7 @@ gh pr checks
 - 3-5 Gotchas (specific to domain)
 
 **Examples that work:**
-- "Always use MCP (or GH CLI) to read issue first — don't guess from issue number" (github-issue-start)
+- "Always use MCP (or GH CLI) to read issue first — don't guess from issue number" (github-issue)
 - "Don't throw errors from tool handlers — always return `isError: true`" (typescript-mcp-server-generator)
 - "`ng build` must always be run after code generation to catch compilation errors early. Do not skip this step." (angular-developer)
 
@@ -259,7 +259,7 @@ allowed-tools: execute shell runCommands read write edit editFiles search codeba
 - **Gotchas:** Name matching, folder structure, prefix consistency
 - **Lesson:** Generator skills benefit most from structured output
 
-### Pattern 2: Workflow Skills (github-issue-start, github-issue-finish)
+### Pattern 2: Workflow Skills (github-issue, github-pull-request)
 - **Structure:** Prepare → Execute → Verify
 - **Output:** Branch, PR, CI status
 - **Time:** 18-20 min optimization

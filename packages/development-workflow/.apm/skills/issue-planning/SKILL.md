@@ -67,7 +67,7 @@ Pick from the request ("quick plan", "deep planning") or default to **standard**
 }
 ```
 
-This schema is the contract consumed by the `implement-workflow` skill and the `dev-workflow` orchestrator.
+This schema is the contract consumed by the `orch-pipeline` and `github-issue` skills.
 
 ## Rules
 

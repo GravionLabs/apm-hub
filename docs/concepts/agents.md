@@ -176,16 +176,16 @@ APM packages install agents to multiple AI platforms simultaneously: GitHub Copi
 
 ### The problem
 
-| Field         | Copilot | OpenCode | Claude Code |
-| :------------ | :-----: | :------: | :---------: |
-| `name`        |    ✅    |    ✅     |      ✅      |
-| `description` |    ✅    |    ✅     |      ✅      |
-| `tools`       |    ✅    |    ❌     |      ✅*     |
-| `mode`        |    ✅    |    ❌     |      ❌      |
-| `steps`       |    ✅    |    ❌     |      ❌      |
-| `color`       |    ✅    |    ❌     |      ❌      |
-| `permission`  |    ❌    |    ✅     |      ❌      |
-| `user-invocable` |    ✅ |    ❌     |      ❌      |
+| Field            | Copilot | OpenCode | Claude Code |
+| :--------------- | :-----: | :------: | :---------: |
+| `name`           |    ✅    |    ✅     |      ✅      |
+| `description`    |    ✅    |    ✅     |      ✅      |
+| `tools`          |    ✅    |    ❌     |     ✅*      |
+| `mode`           |    ✅    |    ❌     |      ❌      |
+| `steps`          |    ✅    |    ❌     |      ❌      |
+| `color`          |    ✅    |    ❌     |      ❌      |
+| `permission`     |    ❌    |    ✅     |      ❌      |
+| `user-invocable` |    ✅    |    ❌     |      ❌      |
 
 *Claude Code uses different tool identifiers than Copilot (e.g. `Bash` vs `run_in_terminal`).
 
@@ -195,8 +195,8 @@ Source agent files are written in **GitHub Copilot style** (primary format). For
 
 ```yaml
 ---
-name: dev-workflow
-description: "Dev workflow orchestrator."
+name: example-agent
+description: "Example orchestrator agent."
 # Copilot-native fields (stay in output for copilot; stripped by others)
 mode: all
 steps: 40
@@ -232,11 +232,11 @@ Agent body — identical on all platforms.
 
 ### What each platform receives after compilation
 
-**`.github/agents/dev-workflow.agent.md`** (Copilot — unchanged, `metadata:` stripped):
+**`.github/agents/example-agent.agent.md`** (Copilot — unchanged, `metadata:` stripped):
 ```yaml
 ---
-name: dev-workflow
-description: "Dev workflow orchestrator."
+name: example-agent
+description: "Example orchestrator agent."
 mode: all
 steps: 40
 color: primary
@@ -245,11 +245,11 @@ user-invocable: true
 ---
 ```
 
-**`.opencode/agents/dev-workflow.md`** (`permission:` injected from `metadata.opencode`; Copilot fields stripped):
+**`.opencode/agents/example-agent.md`** (`permission:` injected from `metadata.opencode`; Copilot fields stripped):
 ```yaml
 ---
-name: dev-workflow
-description: "Dev workflow orchestrator."
+name: example-agent
+description: "Example orchestrator agent."
 mode: all
 steps: 40
 color: primary
@@ -267,11 +267,11 @@ permission:
 ---
 ```
 
-**`.claude/agents/dev-workflow.md`** (Claude-native `tools:` injected from `metadata.claude`; incompatible fields stripped):
+**`.claude/agents/example-agent.md`** (Claude-native `tools:` injected from `metadata.claude`; incompatible fields stripped):
 ```yaml
 ---
-name: dev-workflow
-description: "Dev workflow orchestrator."
+name: example-agent
+description: "Example orchestrator agent."
 tools:
   - Bash
   - Read
@@ -292,33 +292,33 @@ tools:
 
 ### OpenCode — `permission:` reference
 
-| Key        | Values                                          | Notes                                       |
-| :--------- | :---------------------------------------------- | :------------------------------------------ |
-| `read`     | `allow` / `deny`                                | File read access                            |
-| `edit`     | `allow` / `deny`                                | File write/edit access                      |
-| `glob`     | `allow` / `deny`                                | File glob search                            |
-| `grep`     | `allow` / `deny`                                | Content search                              |
-| `bash`     | map of glob patterns → `allow`/`deny`           | Shell command access per pattern            |
-| `task`     | `allow` / `deny`                                | Sub-agent spawning                          |
-| `skill`    | `allow` / `deny`                                | Skill loading                               |
-| `webfetch` | `allow` / `deny`                                | HTTP fetch                                  |
-| `question` | `allow` / `deny`                                | Interactive question prompts                |
+| Key        | Values                                | Notes                            |
+| :--------- | :------------------------------------ | :------------------------------- |
+| `read`     | `allow` / `deny`                      | File read access                 |
+| `edit`     | `allow` / `deny`                      | File write/edit access           |
+| `glob`     | `allow` / `deny`                      | File glob search                 |
+| `grep`     | `allow` / `deny`                      | Content search                   |
+| `bash`     | map of glob patterns → `allow`/`deny` | Shell command access per pattern |
+| `task`     | `allow` / `deny`                      | Sub-agent spawning               |
+| `skill`    | `allow` / `deny`                      | Skill loading                    |
+| `webfetch` | `allow` / `deny`                      | HTTP fetch                       |
+| `question` | `allow` / `deny`                      | Interactive question prompts     |
 
 ### Claude Code — `tools:` reference
 
 Claude Code uses a distinct set of tool identifiers. Common ones for orchestrator agents:
 
-| Tool name   | Purpose                         |
-| :---------- | :------------------------------ |
-| `Bash`      | Shell command execution         |
-| `Read`      | Read files                      |
-| `Write`     | Create / overwrite files        |
-| `Edit`      | Patch existing files            |
-| `Glob`      | File pattern search             |
-| `Grep`      | Content search                  |
-| `WebFetch`  | HTTP fetch                      |
-| `Task`      | Spawn sub-agents                |
-| `TodoWrite` | Task list management            |
+| Tool name   | Purpose                  |
+| :---------- | :----------------------- |
+| `Bash`      | Shell command execution  |
+| `Read`      | Read files               |
+| `Write`     | Create / overwrite files |
+| `Edit`      | Patch existing files     |
+| `Glob`      | File pattern search      |
+| `Grep`      | Content search           |
+| `WebFetch`  | HTTP fetch               |
+| `Task`      | Spawn sub-agents         |
+| `TodoWrite` | Task list management     |
 
 ### How compilation works
 

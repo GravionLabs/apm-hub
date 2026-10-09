@@ -14,7 +14,7 @@ Use this checklist when auditing a skill. Apply all checks and report findings b
 
 **Skill placement (🟢 if misplaced):**
 
-- [ ] The skill is located in `packages/<domain>/.apm/skills/<skill-name>/` **or** in `packages/apm-tooling/.apm/skills/<skill-name>/` (meta/tooling skills only — i.e. skills that manage other skills, such as skill-create, skill-audit, skill-update)
+- [ ] The skill is located in `packages/<domain>/.apm/skills/<skill-name>/` **or** in `packages/apm-tooling/.apm/skills/<skill-name>/` (meta/tooling skills only — i.e. skills that manage other skills, such as skill-write, skill-audit, skill-update)
 - [ ] If placed under `.github/skills/`: confirm the skill's purpose is repo-level tooling, not a domain-specific workflow — 🟢 if it belongs in a domain package instead
 
 ---
