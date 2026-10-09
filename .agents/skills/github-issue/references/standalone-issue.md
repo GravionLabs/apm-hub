@@ -7,12 +7,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 ## Phase 1 — Read + Branch
 
 1. Read issue: `gh issue view <nr> --json title,body,labels`
-2. Derive branch name from the issue type and label:
-   - `feature` label → `feature/<nr>-<slug>`
-   - `pbi` label → `feature/<nr>-<slug>`
-   - `bug` label → `bugfix/<nr>-<slug>`
-   - `task` label (chore/maintenance) → `chore/<nr>-<slug>`
-   - `task` label (feat/fix) → `feature/<nr>-<slug>` or `bugfix/<nr>-<slug>` as appropriate
+2. Derive the branch name `<type>/<nr>-<slug>` per `conventional-commits.md` (type from the issue title)
 3. Create branch: `git fetch origin main && git checkout -b <branch> origin/main`
 4. Note the parent from the body's first line (`Parent Epic: #N` / `Parent Feature: #N` / `Parent PBI: #N`), if present. Closing this issue updates the parent's progress automatically via its native sub-issue link — there is nothing to tick afterwards.
 

@@ -51,7 +51,7 @@ read, create, move and verify them. Markdown checklists are not used.
 
 ## Shared constraints (all workflows)
 
-- Branch names include the issue number; derive `<slug>` from the issue title (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
+- Branch name `<type>/<nr>-<slug>` per `references/conventional-commits.md`; `<slug>` from the issue title (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
 - One logical change per commit; commit format per `references/conventional-commits.md`.
 - Commit and PR titles reference the issue: `<type>: <description> (#<nr>)`; the PR body contains `Closes #<nr>` for every issue it completes.
 - Verify before every commit: run build + full test suite (load the `detect-techstack` skill if the project's commands are unknown). Never commit or move on with a red suite.
