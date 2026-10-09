@@ -29,6 +29,7 @@ description: >
 - `effect()` for side effects, `computed()` for derived values
 - File naming: `kebab-case.component.ts`, `kebab-case.service.ts`
 - Templates: `@if`/`@for`/`@switch` control flow (not `*ngIf`/`*ngFor`)
+- Upgrades: one major at a time with `ng update`; run `ng generate @angular/core:control-flow` to migrate legacy templates
 
 ## Test Examples
 

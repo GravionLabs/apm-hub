@@ -29,6 +29,16 @@ description: >
 - Immutability: `record` types for DTOs, `init` setters for models
 - File naming: `{ClassName}.cs`, test files: `{ClassName}Tests.cs`
 - Solution: `src/` and `tests/` directories, Central Package Management via `Directory.Packages.props`
+- Library code: `ConfigureAwait(false)` on every `await`; app code: optional
+- I/O methods accept `CancellationToken cancellationToken = default` and pass it through
+- Logging: `ILogger<T>` with structured templates (`"User {UserId} created"`), never `Console.WriteLine`
+- XML docs on public API (`GenerateDocumentationFile` is on); `<summary>` is one sentence starting with a third-person verb
+
+## EF Core
+
+- Fluent API in `IEntityTypeConfiguration<T>`, not data annotations
+- Always configure string max length
+- Never edit a generated migration; add a new one
 
 ## Test Examples
 
@@ -68,4 +78,3 @@ public class MyServiceTests
 ## Related Skills
 
 - **Test**: Load `dotnet-test` for NUnit, NSubstitute, and Shouldly details
-- **EF Core**: Load `dotnet-ef-core` for database access patterns

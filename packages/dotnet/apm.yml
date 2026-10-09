@@ -1,6 +1,6 @@
 name: dotnet-development
 version: 1.0.19
-description: C#/.NET full-stack development plugin. Covers project setup, NUnit testing, async/await, code review, XML documentation, design patterns, EF Core, ASP.NET APIs, OpenAPI, MCP servers, .NET upgrades, modernization, Playwright .NET testing, and containerization.
+description: C#/.NET development plugin. Covers solution scaffolding with Central Package Management, NUnit/NSubstitute/Shouldly testing, implementation conventions (async, logging, EF Core), MCP server generation, and .NET upgrades.
 author:
   name: Gravion
 license: MIT
@@ -11,13 +11,8 @@ keywords:
   - aspnet
   - efcore
 skills:
-  - dotnet-async
-  - dotnet-best-practices
   - dotnet-code-review
   - dotnet-create-solution
-  - dotnet-design-pattern-review
-  - dotnet-docs
-  - dotnet-ef-core
   - dotnet-implementation
   - dotnet-mcp-server-generator
   - dotnet-test

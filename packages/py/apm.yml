@@ -1,6 +1,6 @@
 name: py-development
 version: 1.0.19
-description: Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, type hints, code review, Playwright Python testing, and containerization.
+description: Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, implementation conventions, and a curated uv CLI reference.
 author:
   name: Gravion
 license: MIT
@@ -15,8 +15,6 @@ keywords:
 skills:
   - py-code-review
   - py-create-project
-  - py-debug
   - py-implementation
-  - py-packaging
   - py-test
   - py-uv-cli
