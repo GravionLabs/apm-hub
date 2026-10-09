@@ -11,7 +11,6 @@ keywords:
   - aspnet
   - efcore
 skills:
-  - dotnet-code-review
   - dotnet-create-solution
   - dotnet-implementation
   - dotnet-mcp-server-generator

@@ -49,6 +49,15 @@ describe("GET /api/sources/:id", () => {
 });
 ```
 
+## Review rules
+
+- No `any` — use `unknown` and narrow; `strict: true` in `tsconfig.json`
+- No floating promises; async functions propagate or handle errors
+- ESM `import` only; `path.join`/`path.resolve` for file paths
+- No `eval()`/`new Function()`; validate input before queries, paths, shell commands
+- Tests isolated; mocks reset in `beforeEach` (`vi.clearAllMocks()`)
+- Assertions specific — not just `toBeTruthy()`
+
 ## Related Skills
 
 - **Test**: Load `ts-test` for test runner config, naming, and coverage details

@@ -75,6 +75,15 @@ public class MyServiceTests
 }
 ```
 
+## Review rules
+
+- No `.Result`, `.Wait()`, or `async void` (except event handlers)
+- `CancellationToken` propagated through async call chains
+- Nullable reference types respected; no swallowed exceptions
+- `record` for DTOs; dependencies injected via interfaces
+- Tests named `Should_<expected>_when_<condition>`, AAA structure
+- No shared mutable state between tests; assertions are specific (not just `ShouldNotBeNull`)
+
 ## Related Skills
 
 - **Test**: Load `dotnet-test` for NUnit, NSubstitute, and Shouldly details

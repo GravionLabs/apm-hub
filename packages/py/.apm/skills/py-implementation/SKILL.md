@@ -66,6 +66,15 @@ def test_get_user_with_mock(monkeypatch):
     assert result["id"] == 1
 ```
 
+## Review rules
+
+- Type annotations on public function parameters and return values
+- No mutable default arguments; no bare `except:`
+- Context managers (`with`) for files, connections, locks
+- No `eval()`/`exec()` on untrusted input; parameterized SQL; no hardcoded secrets
+- `pathlib.Path` over `os.path`; `dataclass`/`NamedTuple` for structured data
+- Tests use `pytest.raises` and `@pytest.mark.parametrize`
+
 ## Related Skills
 
 - **Test**: Load `py-test` for test runner config, coverage, and async test rules

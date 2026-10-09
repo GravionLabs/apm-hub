@@ -73,20 +73,14 @@ describe("MyService", () => {
 });
 ```
 
-### Route guard test
+## Review rules
 
-```typescript
-import { TestBed } from "@angular/core/testing";
-import { AuthGuard } from "./auth.guard";
-
-describe("AuthGuard", () => {
-  it("allows when authenticated", () => {
-    const guard = TestBed.inject(AuthGuard);
-    const result = guard.canActivate();
-    expect(result).toBe(true);
-  });
-});
-```
+- `ChangeDetectionStrategy.OnPush`; signals for state, `computed()` for derived values
+- `effect()` only for side effects, never for state updates
+- `@if`/`@for` (with `track`)/`@switch` — not `*ngIf`/`*ngFor`
+- `input()`/`output()` — not `@Input`/`@Output`
+- Subscriptions cleaned up via `DestroyRef` / `takeUntilDestroyed`
+- No complex template expressions; ARIA labels and `alt` text on interactive elements and images
 
 ## Related Skills
 

@@ -14,7 +14,7 @@ Read-only: never edit or commit.
 2. **Fan out** — load `detect-techstack`. Spawn one fresh sub-agent per dimension in a single parallel batch, each given only the diff and its brief:
    - `correctness`: bugs, edge cases, error handling, races
    - `security`: injection, authz, secrets, unsafe input (always when auth/crypto/network/SQL files changed)
-   - `conventions`: the language skill (`ts-`/`ng-`/`py-`/`dotnet-code-review`)
+   - `conventions`: the `code-review` skill (it loads each language's `## Review rules`)
    - `tests`: missing or weak tests
 
    Each returns `[{file,line,severity: CRITICAL|HIGH|MEDIUM|LOW,evidence,issue}]`.
