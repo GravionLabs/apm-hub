@@ -33,6 +33,7 @@ description: >
 - I/O methods accept `CancellationToken cancellationToken = default` and pass it through
 - Logging: `ILogger<T>` with structured templates (`"User {UserId} created"`), never `Console.WriteLine`
 - XML docs on public API (`GenerateDocumentationFile` is on); `<summary>` is one sentence starting with a third-person verb
+- Upgrades: bump `TargetFramework` and package versions centrally in `Directory.Build.props` / `Directory.Packages.props` (`dotnet outdated` lists candidates); no prerelease versions unless explicitly requested; build and test after each step
 
 ## EF Core
 
@@ -55,7 +56,7 @@ Structure, naming and mocking live in `dotnet-test` (NUnit + NSubstitute + Shoul
 
 ## Minimal APIs
 
-Organize endpoints with Carter, not scattered `app.MapGet` in `Program.cs`:
+House convention: endpoints are organized with Carter modules, not scattered `app.MapGet` calls in `Program.cs`:
 
 ```csharp
 public class <Feature>Module : ICarterModule
@@ -71,7 +72,3 @@ public class <Feature>Module : ICarterModule
 - Register with `builder.Services.AddCarter()` and `app.MapCarter()`
 - Typed request/response records; OpenAPI metadata (`.WithSummary()`, `.Produces<T>()`, `.ProducesProblem()`)
 - Return `TypedResults`, not `Results.Ok(...)`; validate input (FluentValidation or Data Annotations)
-
-## Related Skills
-
-- **Test**: Load `dotnet-test` for NUnit, NSubstitute, and Shouldly details
