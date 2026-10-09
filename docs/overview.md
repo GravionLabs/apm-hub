@@ -1,7 +1,7 @@
 # Overview
 
 <!-- AUTO:start version -->
-Welcome to **apm-hub** v1.0.22 👋
+Welcome to **apm-hub** v1.0.23 👋
 <!-- AUTO:end version -->
 
 apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. The repo ships no agents, instructions or prompt libraries: workflows are skills, and the `/orch` prompt is the only extra entry point.
@@ -10,17 +10,17 @@ apm-hub is a library of reusable **skills** in the [agentskills.io](https://agen
 
 A package is a domain bundle of skills. Installing it copies the skills into your repository, where the agent picks them up by their `description` or when you name them.
 
-| Package | What it covers |
-| :-- | :-- |
-| `shared` | `implementation` (every change ships with tests), `detect-techstack` (JSON stack report), `code-review` (severity-rated review) |
+| Package                | What it covers                                                                                                                      |
+| :--------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| `shared`               | `implementation` (every change ships with tests), `detect-techstack` (JSON stack report), `code-review` (severity-rated review)     |
 | `development-workflow` | `orch-pipeline` (`/orch`: plan → TDD → review fan-out → commit), `review-fanout`, `verify-project`, `issue-planning`, `cliff-setup` |
-| `github` | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request` |
-| `dotnet` | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator` |
-| `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
-| `py` | `py-implementation`, `py-test`, `py-create-project`, `py-uv-cli` |
-| `ng` | `ng-implementation`, `ng-test`, `ng-component`, `ng-create-project`, `ng-signal-store`, `ng-ag-grid-developer` |
-| `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not in `all`) |
-| `all` | every package above except `apm-tooling` |
+| `github`               | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`                                |
+| `dotnet`               | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                     |
+| `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`   |
+| `py`                   | `py-implementation`, `py-test`, `py-create-project`, `py-uv-cli`                                                                    |
+| `ng`                   | `ng-implementation`, `ng-test`, `ng-component`, `ng-create-project`, `ng-signal-store`, `ng-ag-grid-developer`                      |
+| `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not in `all`)                                      |
+| `all`                  | every package above except `apm-tooling`                                                                                            |
 
 The full list with descriptions is generated into [skill-list.md](skill-list.md).
 
