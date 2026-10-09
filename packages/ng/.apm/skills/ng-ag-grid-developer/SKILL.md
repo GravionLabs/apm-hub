@@ -2,10 +2,10 @@
 name: ng-ag-grid-developer
 description: >
   Use this skill when building or modifying Angular components that integrate AG Grid Enterprise.
-  Covers Enterprise setup, module registration, column definitions, row models (including SSRM),
+  Covers Enterprise setup, the ag-mcp MCP server, module registration, column definitions, row models (including SSRM),
   filtering, cell rendering, cell editing, row grouping, pivoting, master/detail, Excel export,
   theming, and TypeScript generics. Triggers on tasks like "add ag-grid", "configure columns",
-  "enable row grouping", "export to Excel", "set up SSRM", or "customize cell renderer".
+  "enable row grouping", "export to Excel", "set up SSRM", "customize cell renderer", or "set up ag-mcp".
 license: MIT
 ---
 
@@ -19,11 +19,12 @@ license: MIT
 
 ## References
 
-Load the file for the task at hand:
+Load the file for the task at hand. Paths are relative to this skill's directory.
 
 | Topic | File | Load when |
 |---|---|---|
 | Setup, license, modules | `references/setup.md` | First-time setup, registering or cherry-picking modules |
+| AG Grid MCP server | `references/setup.md` § `ag-mcp` | Configuring `ag-mcp` for VS Code, Claude Code or Cursor; looking up version-specific docs |
 | Columns, generics | `references/column-definitions.md` | `ColDef`, `columnTypes`, value getters/formatters, typed events, `getRowId` |
 | Row models | `references/row-models.md` | Client-side vs SSRM, datasource, large datasets |
 | API, events, filtering | `references/api-events-filtering.md` | Grid API access, `setGridOption`, events, column/quick/external/advanced filters |

@@ -1,63 +1,40 @@
 ---
 name: ng-create-project
-description: 'Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier.'
+description: 'Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier. Use when starting a new Angular project.'
 ---
 
-Scaffold new Angular 21+ project with production-ready baseline.
+Scaffold a new Angular 21+ project with a production-ready baseline. Paths to `scripts/` and `templates/` are relative to this skill's directory.
 
 ## Stack
-- **`@angular/cli`** — `ng new` for project generation (standalone by default)
-- **TypeScript** — strict mode with Angular compiler options
-- **Vitest** — unit testing with jsdom (replaces Karma/Jest)
-- **ESLint + Prettier** — via `setup-prettier-eslint-husky` skill
+
+- **`@angular/cli`** ≥ 21 (global or via `npx @angular/cli@latest`), Node 22 LTS
+- **TypeScript** strict mode with Angular compiler options
+- **Vitest** with jsdom (replaces Karma/Jest), on by default
+- **ESLint + Prettier + Husky** via the `setup-prettier-eslint-husky` skill, on by default
 
 ## Steps
-1. **Ask first:**
-   - Project name
-   - Selector prefix (default: `app`)
-   - Project type: **app** (application) or **workspace** (monorepo with library)?
-   - Include Vitest? (default: yes)
-   - Set up ESLint/Prettier? (default: yes)
 
-2. **Run scaffold script** (recommended):
+1. Ask: project name, selector prefix (default `app`), type **app** or **workspace**, whether to skip Vitest or ESLint
+2. Run the scaffold script:
    ```powershell
-   pwsh scripts/New-AngularProject.ps1 -ProjectName <Name> [-SelectorPrefix app] [-UseVitest] [-UseEslint]
+   pwsh scripts/New-AngularProject.ps1 -ProjectName <Name> [-SelectorPrefix app] [-ProjectType app|workspace] [-SkipVitest] [-SkipEslint] [-OutputDirectory .]
    ```
-   Script runs `ng new`, replaces tsconfig with strict settings, sets up Vitest and ESLint.
+   It runs `ng new --style scss --ssr false`, replaces `tsconfig.json` with the strict template, installs Vitest with the template config and patches the `test` scripts, then runs the code-quality setup.
+3. Verify: `ng build`, `npm test`, `ng serve` (http://localhost:4200)
+4. Next steps: components with `ng-component`, state with `ng-signal-store`, conventions in `ng-implementation`
 
-3. **Alternatively — manual steps:**
-   ```powershell
-   ng new <Name> --style scss --ssr false --standalone
-   cd <Name>
-   # Replace tsconfig.json with templates/tsconfig.json
-   # If using Vitest: copy vitest.config.ts + vitest.setup.ts
-   ```
+## Templates
 
-4. **Verify:**
-   ```powershell
-   ng build      # should complete with no errors
-   npm test      # vitest run — all tests pass
-   ng serve      # dev server starts at http://localhost:4200
-   ```
-
-5. **Next steps:** add components with `ng-component`, state with `ng-signal-store`
-
-## Template Files
 | File | Purpose |
 |---|---|
 | `templates/tsconfig.json` | Strict Angular compiler options: `noImplicitOverride`, `strictTemplates`, `module: preserve`, `target: ES2022` |
-| `templates/vitest.config.ts` | Vitest: jsdom environment, globals, setup file, `include: ['**/*.spec.ts']` |
-| `templates/vitest.setup.ts` | Empty Vitest setup file (expand as needed) |
-
-## Scripts
-- **`scripts/New-AngularProject.ps1`** — Full scaffold automation.
-  ```powershell
-  pwsh scripts/New-AngularProject.ps1 -ProjectName "my-app" -SelectorPrefix app -UseVitest -UseEslint
-  ```
-  Parameters: `-ProjectName` (required), `-SelectorPrefix`, `-ProjectType` (app/workspace), `-UseVitest` (switch), `-UseEslint` (switch)
+| `templates/vitest.config.ts` | jsdom environment, globals, setup file, `include: ['**/*.spec.ts']` |
+| `templates/vitest.setup.ts` | Empty setup file, extend as needed |
 
 ## Constraints
-- Angular 21+ only — requires `@angular/cli` ≥ 21 installed globally (`npm install -g @angular/cli`)
-- Standalone components by default — don't use `NgModule` for new code
-- Always use SCSS for styles
-- SSR disabled by default (`--ssr false`) unless explicitly requested
+
+- Standalone components only; `standalone: true` is the default, never add NgModules
+- SCSS for styles; SSR off unless explicitly requested
+- Angular 21+ only
+
+Report: summary, project path, verify commands.

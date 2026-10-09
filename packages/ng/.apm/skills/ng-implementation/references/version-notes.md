@@ -1,5 +1,7 @@
 # Version-sensitive Angular APIs
 
+<!-- Derived from Google's Angular skill. Copyright 2026 Google LLC, MIT License. -->
+
 Non-obvious or experimental APIs. For anything else, use the Angular MCP server or angular.dev.
 
 ## `linkedSignal` vs `computed` vs `effect`

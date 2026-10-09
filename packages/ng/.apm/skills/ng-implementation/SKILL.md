@@ -1,90 +1,67 @@
 ---
 name: ng-implementation
 description: >
-  Angular-specific implementation and test rules. Extends the parent
-  `implementation` skill with Angular 21+ conventions. Auto-loaded when
-  `implementation` skill dispatches to `ng-implementation`.
+  Angular-specific implementation and review rules. Extends the parent
+  `implementation` skill with Angular 20+ conventions: standalone components,
+  signals, DI, forms, libraries, version-sensitive APIs. Auto-loaded when
+  `implementation` dispatches to `ng-implementation`; also use for Angular
+  architecture or best-practice questions.
+license: MIT
 ---
+
+Paths to `references/` are relative to this skill's directory.
+
+## Before writing code
+
+- Run `ng version` first; conventions differ between majors. If it fails, use `npx @angular/cli@latest`.
+- Generate with `ng generate`, then `ng build` immediately and fix errors before continuing.
+- Do not guess APIs: use the Angular CLI MCP server or angular.dev. If the MCP server is not configured → read `references/mcp.md`.
+- If working with Signal Forms, Angular Aria, `linkedSignal`/`resource`, functional route guards or Vitest setup → read `references/version-notes.md`.
 
 ## Framework
 
-- **Test runner**: Vitest (replaces Karma/Jasmine)
-- **Config**: `vitest.config.ts` at project root
-- **Components**: standalone only, no NgModules
+- **Test runner**: Vitest for v21+, Jest for v20 and earlier (details in `ng-test`)
+- **Components**: standalone only, no NgModules; `standalone: true` is the default, do not add it
 - **CLI**: Angular CLI for generators (`ng generate`)
-
-## Imports
-
-- Angular core APIs from `@angular/core`
-- Signals: `import { signal, computed, effect, input, output } from "@angular/core"`
-- Forms: `import { FormControl, FormGroup } from "@angular/forms"`
-- Router: `import { Router, ActivatedRoute } from "@angular/router"`
-- HTTP: `import { HttpClient } from "@angular/common/http"`
 
 ## Conventions
 
-- Components: standalone with `imports` array, `OnPush` change detection
-- Signals over `BehaviorSubject`/`Observable` for state
-- `input()` and `output()` for component props/events (no `@Input`/`@Output`)
-- `effect()` for side effects, `computed()` for derived values
-- File naming: `kebab-case.component.ts`, `kebab-case.service.ts`
-- Templates: `@if`/`@for`/`@switch` control flow (not `*ngIf`/`*ngFor`)
-- Upgrades: one major at a time with `ng update`; run `ng generate @angular/core:control-flow` to migrate legacy templates
+- `ChangeDetectionStrategy.OnPush`; signals for state, `computed()` for derived values, `effect()` only for side effects
+- `input()` / `output()` instead of `@Input` / `@Output`; `model()` for two-way binding
+- DI: `inject()` over constructor injection; services `providedIn: 'root'`
+- Forms: Reactive Forms by default; template-driven for simple template-led forms; Signal Forms (`@angular/forms/signals`) only when requested or already used in the codebase
+- Templates: `@if` / `@for` (with `track`) / `@switch`, not `*ngIf` / `*ngFor`
+- Subscriptions cleaned up via `DestroyRef` / `takeUntilDestroyed`
+- Upgrades: one major at a time with `ng update`; `ng generate @angular/core:control-flow` migrates legacy templates
 
-## Test Examples
+## File naming
 
-### Component test
+Match the project's existing convention. New Angular 20+ projects follow the CLI default: no `.component` / `.service` suffix (`header.ts`, class `Header`); projects that still use `*.component.ts` keep it. Never mix both in one project.
 
-```typescript
-import { TestBed } from "@angular/core/testing";
-import { MyComponent } from "./my.component";
+## Libraries
 
-describe("MyComponent", () => {
-  beforeEach(() => TestBed.configureTestingModule({ imports: [MyComponent] }));
+- `ng generate library <name> --prefix=<prefix>` inside the workspace
+- `public-api.ts` is the single export surface; no deep imports
+- `ng-package.json`: `lib.entryFile` points to `public-api.ts`
+- Verify with `ng build <lib>` before the task is complete
 
-  it("renders with input", () => {
-    const fixture = TestBed.createComponent(MyComponent);
-    fixture.componentRef.setInput("value", "hello");
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain("hello");
-  });
+## Tests
 
-  it("emits event on click", () => {
-    const fixture = TestBed.createComponent(MyComponent);
-    const saved = vi.fn();
-    fixture.componentInstance.save.subscribe(saved);
-    fixture.detectChanges();
-    fixture.nativeElement.querySelector("button").click();
-    expect(saved).toHaveBeenCalled();
-  });
-});
-```
-
-### Service test
-
-```typescript
-import { TestBed } from "@angular/core/testing";
-import { MyService } from "./my.service";
-
-describe("MyService", () => {
-  it("updates signal on action", () => {
-    const service = TestBed.inject(MyService);
-    service.updateValue("new");
-    expect(service.value()).toBe("new");
-  });
-});
-```
+Load `ng-test` for TestBed setup, signal testing, mocking and async patterns.
 
 ## Review rules
 
-- `ChangeDetectionStrategy.OnPush`; signals for state, `computed()` for derived values
-- `effect()` only for side effects, never for state updates
-- `@if`/`@for` (with `track`)/`@switch` — not `*ngIf`/`*ngFor`
-- `input()`/`output()` — not `@Input`/`@Output`
+- `OnPush`; signals for state, `computed()` for derived values
+- `effect()` only for side effects, never for state updates (use `computed` or `linkedSignal`)
+- `@if` / `@for` (with `track`) / `@switch`; `input()` / `output()`
+- `inject()`; no constructor injection in new code
 - Subscriptions cleaned up via `DestroyRef` / `takeUntilDestroyed`
 - No complex template expressions; ARIA labels and `alt` text on interactive elements and images
+- Library code exported only through `public-api.ts`
 
 ## Related Skills
 
-- **Test**: Load `ng-test` for TestBed config and async testing patterns
-- **AG Grid**: Load `ng-ag-grid-developer` for grid-specific implementation
+- `ng-component` — scaffold a component (incl. Sakai UI variant)
+- `ng-signal-store` — NgRx Signal Store for feature state
+- `ng-ag-grid-developer` — AG Grid Enterprise integration
+- `ng-create-project` — new application or workspace
