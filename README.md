@@ -82,12 +82,12 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
 
 ### What to commit in your project
 
-| Path                                                 | Action                              |
-| :--------------------------------------------------- | :---------------------------------- |
-| `apm.yml`                                            | ✅ Commit                            |
-| `apm.lock.yaml`                                      | ✅ Commit                            |
+| Path                                                      | Action                              |
+| :-------------------------------------------------------- | :---------------------------------- |
+| `apm.yml`                                                 | ✅ Commit                            |
+| `apm.lock.yaml`                                           | ✅ Commit                            |
 | `.github/skills/`, `.claude/skills/`, `.opencode/skills/` | ✅ Commit (instant context on clone) |
-| `apm_modules/`                                       | ❌ Add to `.gitignore`               |
+| `apm_modules/`                                            | ❌ Add to `.gitignore`               |
 
 ### Requirements
 
@@ -97,17 +97,17 @@ Skill scripts are PowerShell 7+ (`pwsh`) and run on Windows, macOS and Linux. `d
 
 apm-hub distributes domain packages via APM. Each package is installed with `apm install` and deployed to `.github/`, `.claude/`, `.cursor/`, `.opencode/`, and `.gemini/` automatically.
 
-| Package | Contents |
-| :------ | :------- |
-| `shared` | `implementation`, `detect-techstack`, `code-review` |
-| `development-workflow` | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`, `cliff-setup` |
-| `github` | `github-issue`, `github-pull-request` |
-| `dotnet` | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator` |
-| `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
-| `py` | `py-implementation`, `py-test`, `py-create-project`, `py-uv-cli` |
-| `ng` | `ng-implementation`, `ng-test`, `ng-component`, `ng-create-project`, `ng-signal-store`, `ng-ag-grid-developer` |
-| `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling) |
-| `all` | every package above except `apm-tooling` |
+| Package                | Contents                                                                                                                          |
+| :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
+| `shared`               | `implementation`, `detect-techstack`, `code-review`                                                                               |
+| `development-workflow` | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`, `cliff-setup`                                     |
+| `github`               | `github-issue`, `github-pull-request`                                                                                             |
+| `dotnet`               | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
+| `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
+| `py`                   | `py-implementation`, `py-test`, `py-create-project`, `py-uv-cli`                                                                  |
+| `ng`                   | `ng-implementation`, `ng-test`, `ng-component`, `ng-create-project`, `ng-signal-store`, `ng-ag-grid-developer`                    |
+| `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                  |
+| `all`                  | every package above except `apm-tooling`                                                                                          |
 
 📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
 
