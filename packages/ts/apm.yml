@@ -1,16 +1,16 @@
-name: ts-development
+name: ts
 version: 1.0.19
-description: TypeScript and Node.js development plugin. Covers project scaffolding with strict tsconfig and ESM, Vitest testing, implementation conventions, MCP server generation, and pnpm migration.
+description: TypeScript and Node.js skills. Implementation conventions and review rules, Vitest testing, project scaffolding with strict tsconfig and ESM, ESLint/Prettier/Husky setup, pnpm migration, and MCP server generation.
 author:
   name: Gravion
 license: MIT
 keywords:
   - ts
   - nodejs
-  - playwright
   - vitest
   - eslint
 skills:
+  - setup-prettier-eslint-husky
   - ts-create-project
   - ts-implementation
   - ts-mcp-server-generator

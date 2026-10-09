@@ -6,7 +6,7 @@ A curated hub of cross-platform **agent skills** — distributed as APM packages
 
 ## What is apm-hub?
 
-**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills — plus, where genuinely needed, a thin layer of orchestrator agents — that you can install into any repository with a single command.
+**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. There are no agents: workflows are skills, and the `/orch` prompt is the only extra entry point.
 
 Skills are the primary artifact: one `SKILL.md` source file loads unchanged on GitHub Copilot, Claude Code, and OpenCode. See the [skill frontmatter convention](docs/concepts/skill-frontmatter.md) for how that is guaranteed.
 
@@ -72,76 +72,56 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    ```
    Then run `apm install` to deploy to `.github/`, `.claude/`, `.cursor/` etc.
 
-### Recommended: `apmw` wrapper
-
-Skills are platform-neutral and install cleanly everywhere. Agent files, however, carry platform-specific frontmatter (permissions, modes) that must be sanitized per target. [**apmw**](https://github.com/GravionLabs/apmw) wraps `apm install`/`apm update` and does this automatically:
-
-```bash
-apmw install -p claude      # install + sanitize for Claude Code
-apmw install -p opencode    # install + sanitize for OpenCode
-apmw install -p copilot     # install + sanitize for GitHub Copilot
-```
-
-See [GravionLabs/apmw](https://github.com/GravionLabs/apmw) for details.
-
 ### Where things land
 
-| Platform       | Skills                     | Agents              |
-| :------------- | :------------------------- | :------------------ |
-| GitHub Copilot | `.github/skills/<name>/`   | `.github/agents/`   |
-| Claude Code    | `.claude/skills/<name>/`   | `.claude/agents/`   |
-| OpenCode       | `.opencode/skills/<name>/` | `.opencode/agents/` |
+| Platform       | Skills                     |
+| :------------- | :------------------------- |
+| GitHub Copilot | `.github/skills/<name>/`   |
+| Claude Code    | `.claude/skills/<name>/`   |
+| OpenCode       | `.opencode/skills/<name>/` |
 
 ### What to commit in your project
 
-| Path                                                           | Action                              |
-| :------------------------------------------------------------- | :---------------------------------- |
-| `apm.yml`                                                      | ✅ Commit                            |
-| `apm.lock.yaml`                                                | ✅ Commit                            |
-| `.github/`, `.claude/skills/`, `.claude/agents/`, `.opencode/` | ✅ Commit (instant context on clone) |
-| `apm_modules/`                                                 | ❌ Add to `.gitignore`               |
+| Path                                                 | Action                              |
+| :--------------------------------------------------- | :---------------------------------- |
+| `apm.yml`                                            | ✅ Commit                            |
+| `apm.lock.yaml`                                      | ✅ Commit                            |
+| `.github/skills/`, `.claude/skills/`, `.opencode/skills/` | ✅ Commit (instant context on clone) |
+| `apm_modules/`                                       | ❌ Add to `.gitignore`               |
+
+### Requirements
+
+Skill scripts are PowerShell 7+ (`pwsh`) and run on Windows, macOS and Linux. `detect-techstack`, which most workflow skills call first, has a manual fallback when `pwsh` is missing, but installing it is strongly recommended.
 
 ## 📦 APM Packages
 
 apm-hub distributes domain packages via APM. Each package is installed with `apm install` and deployed to `.github/`, `.claude/`, `.cursor/`, `.opencode/`, and `.gemini/` automatically.
 
-📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)**
+| Package | Contents |
+| :------ | :------- |
+| `shared` | `implementation`, `detect-techstack`, `code-review` |
+| `development-workflow` | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`, `cliff-setup` |
+| `github` | `github-issue`, `github-pull-request` |
+| `dotnet` | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator` |
+| `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
+| `py` | `py-implementation`, `py-test`, `py-create-project`, `py-uv-cli` |
+| `ng` | `ng-implementation`, `ng-test`, `ng-component`, `ng-create-project`, `ng-signal-store`, `ng-ag-grid-developer` |
+| `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling) |
+| `all` | every package above except `apm-tooling` |
 
-<!-- AUTO:start template-stats -->
-| Category         | Count | Location                            | Purpose                                  |
-| :--------------- | :---: | :---------------------------------- | :--------------------------------------- |
-| **Agents**       |   0   | `templates/<domain>/agents/`        | Specialized expert roles (@-mentions)    |
-| **Skills**       |   0   | `templates/<domain>/skills/<name>/` | Reusable task-specific workflows         |
-| **Prompts**      |   0   | `templates/<domain>/prompts/`       | Task-specific workflows (slash commands) |
-| **Instructions** |   0   | `templates/<domain>/instructions/`  | Persistent project rules and standards   |
-<!-- AUTO:end template-stats -->
-
-<!-- AUTO:start plugin-table -->
-| Plugin | Description |
-| :----- | :---------- |
-<!-- AUTO:end plugin-table -->
+📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a skill or package.
 
-### Contributor setup
-
-After cloning, install Node.js dependencies:
-
 ```bash
-npm install
+pnpm install
+pnpm run build && pnpm test            # generators + skill size check
+node scripts/check-manifests.mjs --fix # sync apm.yml skills lists
 ```
 
-New or changed skills must follow the [skill frontmatter convention](docs/concepts/skill-frontmatter.md); `node scripts/check-manifests.mjs` verifies that each package's `apm.yml` skills list matches the skill directories on disk (`--fix` to rewrite).
-
-The `.github/skills/`, `.github/instructions/` and `.github/agents/` directories are committed directly to this repo. When the `shared` package is updated, run:
-
-```bash
-apm install ./packages/shared --force
-```
-
-Then commit the updated `.github/` files.
+New or changed skills must follow the [skill frontmatter convention](docs/concepts/skill-frontmatter.md).
 
 ---
 

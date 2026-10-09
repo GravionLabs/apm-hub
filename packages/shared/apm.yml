@@ -1,6 +1,6 @@
 name: shared
 version: 1.0.19
-description: "Shared skills used across all GravionLabs apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), code review (code-review), and code-quality pipeline setup (setup-prettier-eslint-husky)."
+description: "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), and severity-rated code review (code-review)."
 author:
   name: Gravion
 license: MIT
@@ -14,4 +14,3 @@ skills:
   - code-review
   - detect-techstack
   - implementation
-  - setup-prettier-eslint-husky

@@ -1,6 +1,6 @@
-name: dotnet-development
+name: dotnet
 version: 1.0.19
-description: C#/.NET development plugin. Covers solution scaffolding with Central Package Management, NUnit/NSubstitute/Shouldly testing, implementation conventions (async, logging, EF Core), MCP server generation, and .NET upgrades.
+description: C#/.NET skills. Implementation conventions and review rules (async, DI, logging, EF Core, Carter minimal APIs), NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, and MCP server generation.
 author:
   name: Gravion
 license: MIT
@@ -15,4 +15,3 @@ skills:
   - dotnet-implementation
   - dotnet-mcp-server-generator
   - dotnet-test
-  - dotnet-upgrade

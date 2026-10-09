@@ -1,9 +1,7 @@
 name: apm-hub
 version: 1.0.19
-description: 'Marketplace for GravionLabs apm-hub packages. Use individual packages
-  (e.g. gravion/apm-hub/packages/angular) in your projects.
-
-  '
+description: 'Marketplace for GravionLabs apm-hub skill packages. Use individual packages
+  (e.g. GravionLabs/apm-hub/packages/ng) in your projects, or all@apm-hub for every package.'
 author:
   name: Gravion
 license: MIT
@@ -14,29 +12,29 @@ marketplace:
     url: https://github.com/GravionLabs
   packages:
   - name: all
-    description: "Meta-package that installs all GravionLabs apm-hub packages in one go. Suitable for workspaces that use multiple tech stacks and want the full skill set available."
+    description: "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks."
     source: ./packages/all
   - name: apm-tooling
-    description: "APM contributor tooling — agent and skill lifecycle management. Provides skills for auditing, creating, updating, and writing APM agents and skills."
+    description: "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files."
     source: ./packages/apm-tooling
   - name: development-workflow
-    description: "GitHub development workflow orchestration: issue-driven implementation, tech-stack detection, multi-repo support, and PR review."
+    description: "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues, git-cliff setup. Depends on github, shared and all language packages."
     source: ./packages/development-workflow
   - name: dotnet
-    description: "C#/.NET development plugin. Covers solution scaffolding with Central Package Management, NUnit/NSubstitute/Shouldly testing, implementation conventions (async, logging, EF Core), MCP server generation, and .NET upgrades."
+    description: "C#/.NET skills: implementation conventions and review rules, NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, MCP server generation."
     source: ./packages/dotnet
   - name: github
-    description: "GitHub workflow skills for issue management, pull requests, and repository automation. Provides skills for the full GitHub development lifecycle."
+    description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation, pull request creation."
     source: ./packages/github
   - name: ng
-    description: "Angular 21 full-stack development plugin. Covers standalone components, NgRx Signal Store, Angular libraries, PrimeNG, ESLint/Prettier setup, sakai-ui conventions, AG Grid integration, and testing with Vitest."
+    description: "Angular 21+ skills: implementation conventions and review rules, Vitest/TestBed testing, component and project scaffolding, NgRx Signal Store, AG Grid Enterprise."
     source: ./packages/ng
   - name: py
-    description: "Python development plugin. Covers project setup with uv, pytest testing with fixtures and markers, implementation conventions, and a curated uv CLI reference."
+    description: "Python skills: implementation conventions and review rules, pytest testing with markers and pytest-mock, uv project scaffolding, curated uv CLI reference."
     source: ./packages/py
   - name: shared
-    description: "Shared skills used across all GravionLabs apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), code review (code-review), and code-quality pipeline setup (setup-prettier-eslint-husky)."
+    description: "Shared skills used by all packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), severity-rated code review (code-review)."
     source: ./packages/shared
   - name: ts
-    description: "TypeScript and Node.js development plugin. Covers project scaffolding with strict tsconfig and ESM, Vitest testing, implementation conventions, MCP server generation, and pnpm migration."
+    description: "TypeScript and Node.js skills: implementation conventions and review rules, Vitest testing, project scaffolding, ESLint/Prettier/Husky setup, pnpm migration, MCP server generation."
     source: ./packages/ts

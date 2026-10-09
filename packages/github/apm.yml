@@ -1,6 +1,6 @@
 name: github
 version: 1.0.19
-description: GitHub workflow skills for issue management, pull requests, and repository automation. Provides skills for the full GitHub development lifecycle.
+description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation workflows, and pull request creation."
 author:
   name: Gravion
 license: MIT
@@ -9,7 +9,6 @@ keywords:
   - pull-request
   - issue
   - workflow
-  - agents-md
   - git
 skills:
   - github-issue
