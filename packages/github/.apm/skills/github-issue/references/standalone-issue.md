@@ -8,7 +8,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 
 1. Read issue: `gh issue view <nr> --json title,body,labels`
 2. Derive the branch name `<type>/<nr>-<slug>` per `conventional-commits.md` (type from the issue title)
-3. Create branch: `git fetch origin main && git checkout -b <branch> origin/main`
+3. Resolve the default branch once: `git symbolic-ref refs/remotes/origin/HEAD --short` minus `origin/` (fallback `main`) — `<default>` below. Create branch: `git fetch origin <default>; git checkout -b <branch> origin/<default>`
 4. Note the parent from the body's first line (`Parent Epic: #N` / `Parent Feature: #N` / `Parent PBI: #N`), if present. Closing this issue updates the parent's progress automatically via its native sub-issue link — there is nothing to tick afterwards.
 
 ## Phase 2 — Implement
@@ -25,7 +25,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 ## Phase 3 — Verify + PR
 
 9. Run full build + test suite (load `detect-techstack` if commands are unknown). Fix failures.
-10. Review diff: `git diff main...HEAD` — no debug code, TODOs, missing tests
+10. Run `review-fanout` on `git diff origin/<default>...HEAD`; fix blocking findings before committing. `CHANGES_REQUESTED` with `incomplete: true` is not approval.
 11. Push: `git push -u origin HEAD`
 12. Create the PR with the `github-pull-request` skill (title `<type>: <desc> (#<nr>)`, body ends with `Closes #<nr>`)
 13. If the issue has a parent: confirm it is actually linked as a native sub-issue —
