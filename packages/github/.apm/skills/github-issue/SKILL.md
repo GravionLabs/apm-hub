@@ -40,14 +40,12 @@ read, create, move and verify them. Markdown checklists are not used.
    `gh api repos/{owner}/{repo}/issues/<nr>/sub_issues --jq 'length'`
 4. Pick the workflow:
 
-   | Issue type | Has sub-issues | Workflow reference               |
-   | ---------- | -------------- | -------------------------------- |
-   | `epic`     | yes (always)   | `references/epic-batch.md`       |
-   | `feature`  | yes            | `references/feature-batch.md`    |
-   | `pbi`      | yes            | `references/pbi-batch.md`        |
-   | `bug`      | yes            | `references/bug-batch.md`        |
-   | any        | no             | `references/standalone-issue.md` |
-   | `task`     | —              | `references/standalone-issue.md` |
+   | Issue type              | Has sub-issues | Workflow reference                                  |
+   | ----------------------- | -------------- | --------------------------------------------------- |
+   | `epic`                  | yes (always)   | `references/batch-workflow.md` (use the `epic` row)    |
+   | `feature`, `pbi`, `bug` | yes            | `references/batch-workflow.md` (row for the type)      |
+   | any                     | no             | `references/standalone-issue.md`                       |
+   | `task`                  | —              | `references/standalone-issue.md`                       |
 
    **Batch user requests** ("implement all PBIs in feature #12", "work through these issues"): collect the target issues, then process each one sequentially with the appropriate workflow above.
 

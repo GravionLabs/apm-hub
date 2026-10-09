@@ -32,22 +32,8 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 9. Run full build + test suite (load `detect-techstack` if commands are unknown). Fix failures.
 10. Review diff: `git diff main...HEAD` — no debug code, TODOs, missing tests
 11. Push: `git push -u origin HEAD`
-12. Create PR:
-    ```bash
-    gh pr create --title "<type>: <desc> (#<nr>)" --body "$(cat <<-BODY
-    ## Summary
-
-    ## Changes
-
-    ## Testing
-    - [ ] Unit tests pass
-
-    Closes #<nr>
-    BODY
-    )"
-    ```
-13. Confirm: `gh pr view --json number,url`
-14. If the issue has a parent: confirm it is actually linked as a native sub-issue —
+12. Create the PR with the `github-pull-request` skill (title `<type>: <desc> (#<nr>)`, body ends with `Closes #<nr>`)
+13. If the issue has a parent: confirm it is actually linked as a native sub-issue —
     `gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq '.[].number'` should include `<nr>`.
     If it is missing, link it per `sub-issues.md`. An unlinked child looks normal in `gh issue list`,
     so this check is the only thing that catches it.

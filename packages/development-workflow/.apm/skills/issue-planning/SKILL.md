@@ -34,13 +34,11 @@ Pick from the request ("quick plan", "deep planning") or default to **standard**
 7. **Present plan to user** — show sub-tasks and file list, wait for approval
 8. On approval: create GH sub-issues via `gh issue create` for each sub-task. Make the **first body line** the human-readable parent reference matching the parent's type — `Parent Epic: #<nr>`, `Parent Feature: #<nr>`, or `Parent PBI: #<nr>`
 9. Link each new issue to its parent as a **native GitHub sub-issue**. The body line is documentation; this is the actual link:
-   ```bash
-   parent_id=$(gh issue view <parent-nr> --json id --jq .id)
-   child_id=$(gh issue view <child-nr> --json id --jq .id)
-   gh api graphql -f query='
-     mutation($parentId: ID!, $childId: ID!) {
-       addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) { issue { number } }
-     }' -f parentId="$parent_id" -f childId="$child_id"
+   ```powershell
+   $parentId = gh issue view <parent-nr> --json id --jq .id
+   $childId  = gh issue view <child-nr> --json id --jq .id
+   $query = 'mutation($parentId: ID!, $childId: ID!) { addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) { issue { number } } }'
+   gh api graphql -f query=$query -f parentId=$parentId -f childId=$childId
    ```
 10. Verify before reporting success: `gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq '.[].number'`
     must list every number in `issues`. A created-but-unlinked issue looks completely normal in

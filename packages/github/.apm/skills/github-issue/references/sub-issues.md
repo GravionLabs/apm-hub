@@ -13,9 +13,8 @@ search. That line is documentation; the native link is the mechanism. Both must 
 
 ## Read the children of an issue
 
-```bash
-gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues \
-  --jq '.[] | "\(.number) \(.state) \(.title)"'
+```powershell
+gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq '.[] | "\(.number) \(.state) \(.title)"'
 ```
 
 Returns children in display order. Use this wherever a workflow needs the list of Features under an
@@ -25,16 +24,12 @@ Epic, PBIs under a Feature, or Tasks under a PBI. An issue with no children retu
 
 Linking is a GraphQL mutation over **node IDs**, not issue numbers:
 
-```bash
-parent_id=$(gh issue view <parent-nr> --json id --jq .id)
-child_id=$(gh issue view <child-nr> --json id --jq .id)
+```powershell
+$parentId = gh issue view <parent-nr> --json id --jq .id
+$childId  = gh issue view <child-nr> --json id --jq .id
 
-gh api graphql -f query='
-  mutation($parentId: ID!, $childId: ID!) {
-    addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) {
-      issue { number }
-    }
-  }' -f parentId="$parent_id" -f childId="$child_id"
+$query = 'mutation($parentId: ID!, $childId: ID!) { addSubIssue(input: { issueId: $parentId, subIssueId: $childId }) { issue { number } } }'
+gh api graphql -f query=$query -f parentId=$parentId -f childId=$childId
 ```
 
 Re-running on an already-linked pair is harmless, which makes batch scripts safe to resume.
@@ -43,13 +38,9 @@ Re-running on an already-linked pair is harmless, which makes batch scripts safe
 
 A child has at most one parent — unlink before re-linking:
 
-```bash
-gh api graphql -f query='
-  mutation($parentId: ID!, $childId: ID!) {
-    removeSubIssue(input: { issueId: $parentId, subIssueId: $childId }) {
-      issue { number }
-    }
-  }' -f parentId="$old_parent_id" -f childId="$child_id"
+```powershell
+$query = 'mutation($parentId: ID!, $childId: ID!) { removeSubIssue(input: { issueId: $parentId, subIssueId: $childId }) { issue { number } } }'
+gh api graphql -f query=$query -f parentId=$oldParentId -f childId=$childId
 ```
 
 Then `addSubIssue` against the new parent, and update the child's `Parent …: #N` body line to match.
@@ -59,7 +50,7 @@ Then `addSubIssue` against the new parent, and update the child's `Parent …: #
 After any batch that creates or moves issues, confirm the two sources agree — the native link and
 the body line — and that every non-Epic issue has exactly one parent:
 
-```bash
+```powershell
 gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq 'length'
 gh issue view <child-nr> --json body --jq '.body | split("\n")[0]'
 ```

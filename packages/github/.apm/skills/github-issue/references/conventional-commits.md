@@ -14,7 +14,7 @@ Always use conventional commit format.
 |------------|------------------------------------------|
 | `feat`     | New feature or capability                |
 | `fix`      | Bug fix                                  |
-| `doc`      | Documentation only                       |
+| `docs`     | Documentation only                       |
 | `perf`     | Performance improvement                  |
 | `refactor` | Code restructure without behavior change |
 | `revert`   | Reverts a previous commit                |
