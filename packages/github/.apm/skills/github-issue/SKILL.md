@@ -51,6 +51,7 @@ read, create, move and verify them. Markdown checklists are not used.
 
 ## Shared constraints (all workflows)
 
+- Work branches are cut from and merged into a `release/*` branch, never `main` (`references/release-branches.md`); `github-release` cuts and finishes release branches.
 - Branch name `<type>/<nr>-<slug>` per `references/conventional-commits.md`; `<slug>` from the issue title (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
 - One logical change per commit; commit format per `references/conventional-commits.md`.
 - Commit and PR titles reference the issue: `<type>: <description> (#<nr>)`; the PR body contains `Closes #<nr>` for every issue it completes.

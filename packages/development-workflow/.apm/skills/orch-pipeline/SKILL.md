@@ -12,7 +12,7 @@ State lives in `.orch/<slug>/` (add to `.git/info/exclude`): `tasks.json` `[{id,
 
 ## Phases
 
-1. **Plan** — load `detect-techstack`. Issue number → `gh issue view <nr> --json title,body,labels`; if not already on a feature branch, create `<type>/<nr>-<slug>` per the `github-issue` skill's conventional-commits reference. Write ≤5 independently testable tasks to `tasks.json`; larger work → suggest `issue-planning`, stop (then implement the sub-issues with `github-issue`). For `fix`, the first task is a failing reproduction test.
+1. **Plan** — load `detect-techstack`. Issue number → `gh issue view <nr> --json title,body,labels`; if not already on a feature branch, create `<type>/<nr>-<slug>` (naming per the `github-issue` skill's conventional-commits reference) from the integration branch resolved per its release-branches reference, never from `main`. Write ≤5 independently testable tasks to `tasks.json`; larger work → suggest `issue-planning`, stop (then implement the sub-issues with `github-issue`). For `fix`, the first task is a failing reproduction test.
    **GATE 1:** show tasks, wait for approval.
 2. **TDD per task** — load `implementation`, `<lang>-implementation`, `<lang>-test`. RED (failing test for the right reason) → GREEN (minimal code) → refactor → `verify-project`. Red? Fix, max 2 retries, then stop and report.
 3. **Review** — run `review-fanout` on the branch diff. `CHANGES_REQUESTED` → fix blocking findings via TDD, re-review, max 2 rounds. `incomplete: true` is never approval.

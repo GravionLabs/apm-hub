@@ -1,6 +1,6 @@
 name: github
 version: 1.0.23
-description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation workflows, and pull request creation."
+description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation workflows, pull request creation, and release branches (cut, finish)."
 author:
   name: Gravion
 license: MIT
@@ -13,3 +13,4 @@ keywords:
 skills:
   - github-issue
   - github-pull-request
+  - github-release
