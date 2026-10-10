@@ -21,8 +21,8 @@ first hit:
 2. A `Release branch: release/<x.y>` line in the issue body, else in the body of its parent (follow
    `Parent Feature: #N` / `Parent Epic: #N` lines, one level at a time).
 3. The current branch, if it is `release/*`.
-4. The highest `release/*` on origin:
-   `git ls-remote --heads origin 'release/*' | sed 's|.*refs/heads/||' | sort -V | tail -1`
+4. The highest `release/<x.y>` on origin (other `release/*` names are legacy branches, ignore them):
+   `git ls-remote --heads origin 'release/*' | sed 's|.*refs/heads/||' | grep -E '^release/[0-9]+\.[0-9]+$' | sort -V | tail -1`
 5. None exists → cut one with `github-release cut` (it records the line from step 2 in the Feature
    issue) and use it. Target `main` only when the user explicitly asks for a hotfix.
 
