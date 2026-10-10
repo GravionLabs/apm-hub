@@ -31,7 +31,7 @@ Owns the lifecycle of `release/<x.y>` branches; the model and the base-branch re
 ### 2. finish
 
 4. Branch: the argument, else the current branch if it is `release/*`, else the highest
-   `release/*` on origin. `git checkout release/<x.y>; git pull --ff-only`.
+   `release/<x.y>` on origin (resolver step 4 in `release-branches.md`). `git checkout release/<x.y>; git pull --ff-only`.
 5. Open work must be merged first: `gh pr list --base release/<x.y> --state open` must be empty;
    otherwise stop and list the PRs.
 6. Changelog: load `cliff-setup` to update `CHANGELOG.md` for `<x.y>.0`; commit
