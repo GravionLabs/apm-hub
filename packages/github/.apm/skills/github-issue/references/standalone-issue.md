@@ -8,7 +8,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 
 1. Read issue: `gh issue view <nr> --json title,body,labels`
 2. Derive the branch name `<type>/<nr>-<slug>` per `conventional-commits.md` (type from the issue title)
-3. Resolve the default branch once: `git symbolic-ref refs/remotes/origin/HEAD --short` minus `origin/` (fallback `main`) — `<default>` below. Create branch: `git fetch origin <default>; git checkout -b <branch> origin/<default>`
+3. Resolve the integration branch `<base>` once per `release-branches.md` (a `release/*` branch; cut one with `github-release` if none exists). Create branch: `git fetch origin <base>; git checkout -b <branch> origin/<base>`
 4. Note the parent from the body's first line (`Parent Epic: #N` / `Parent Feature: #N` / `Parent PBI: #N`), if present. Closing this issue updates the parent's progress automatically via its native sub-issue link — there is nothing to tick afterwards.
 
 ## Phase 2 — Implement
@@ -25,9 +25,9 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 ## Phase 3 — Verify + PR
 
 9. Run full build + test suite (load `detect-techstack` if commands are unknown). Fix failures.
-10. Run `review-fanout` on `git diff origin/<default>...HEAD`; fix blocking findings before committing. `CHANGES_REQUESTED` with `incomplete: true` is not approval.
+10. Run `review-fanout` on `git diff origin/<base>...HEAD`; fix blocking findings before committing. `CHANGES_REQUESTED` with `incomplete: true` is not approval.
 11. Push: `git push -u origin HEAD`
-12. Create the PR with the `github-pull-request` skill (title `<type>: <desc> (#<nr>)`, body ends with `Closes #<nr>`)
+12. Create the PR with the `github-pull-request` skill (`base_branch: <base>`, title `<type>: <desc> (#<nr>)`, body ends with `Closes #<nr>`)
 13. If the issue has a parent: confirm it is actually linked as a native sub-issue —
     `gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq '.[].number'` should include `<nr>`.
     If it is missing, link it per `sub-issues.md`. An unlinked child looks normal in `gh issue list`,
@@ -35,6 +35,6 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 
 ## Constraints
 
-- All CI checks green before review
+- CI does not run on PRs into a release branch: the local build, tests and `review-fanout` are the gate
 - Bug issues require a regression test in the PR — do not close without one
-- If asked to also merge: `gh pr checks <nr> --watch`, then merge with the repo's usual strategy once green
+- If asked to also merge: `gh pr merge <nr> --squash` into `<base>` (`gh pr checks <nr> --watch` first when the base is `main`)
