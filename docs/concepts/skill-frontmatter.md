@@ -14,6 +14,30 @@ without per-platform rewriting. The convention follows the
 | `license`     | no       | SPDX identifier (e.g. `MIT`)                                                            |
 | `metadata`    | no       | Map for everything non-standard (see below)                                             |
 
+## Optional client keys
+
+A few keys change *how* a host loads a skill without changing what the skill says. They are
+extensions in the sense of the agentskills.io spec: hosts that do not know them ignore them.
+These, and only these, may appear in addition to the keys above:
+
+| Key                        | Honored by                                   | Effect                                                                                                            |
+| :------------------------- | :------------------------------------------- | :---------------------------------------------------------------------------------------------------------------- |
+| `disable-model-invocation` | Claude Code, VS Code Copilot                 | `true` removes the description from the model's skill list; the skill runs only when the user types `/<name>`.    |
+| `user-invocable`           | Claude Code, VS Code Copilot                 | `false` hides the skill from the `/` menu; the model may still load it.                                           |
+| `context`                  | Claude Code, VS Code Copilot (experimental)  | `fork` runs the skill in a subagent with its own context; only the result returns to the caller.                  |
+| `agent`                    | Claude Code                                  | With `context: fork`: the agent definition to run in (`explorer`, `reviewer`, or a built-in such as `Explore`).   |
+
+Rules:
+
+- `disable-model-invocation: true` is always paired with `metadata: { opencode/autoinvoke: "false" }`,
+  the OpenCode equivalent. Copilot CLI ignores both (support unverified); the skill still loads via `/<name>`.
+- Gate a skill only when it is always user-initiated (scaffolding, release workflows). Skills that other
+  skills load by name (`<lang>-implementation`, `<lang>-test`, `detect-techstack`) stay model-invocable.
+- A forked skill states its return contract in the body (for example "JSON only, no logs"), because the
+  forked result is all the caller sees. Do not fork skills that spawn subagents themselves or need to ask the user.
+- Why these keys matter: every listed description is sent with every request. In a 30-day sample the
+  descriptions of never-used skills cost more tokens than all loaded skill bodies together.
+
 **No other top-level keys are allowed.** In particular:
 
 - **`allowed-tools` — dropped.** All three platforms run skills fine without it. The old values
@@ -47,6 +71,29 @@ metadata:
 `metadata` values are free-form strings; hosts ignore them. Authorship/attribution
 (e.g. upstream copyright) also lives here.
 
+A user-only skill (see *Optional client keys*):
+
+```yaml
+---
+name: ng-create-project
+description: Scaffold a new Angular workspace. Use when asked to create or start an Angular project.
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
+---
+```
+
+A forked skill:
+
+```yaml
+---
+name: detect-techstack
+description: Detect the project tech stack and return a JSON report. Use before loading language skills.
+context: fork
+agent: explorer
+---
+```
+
 ## Body rules (unchanged)
 
 - Keep `SKILL.md` under ~100 lines; push detail into `references/*.md` (progressive disclosure).
@@ -56,4 +103,5 @@ metadata:
 
 - `skill-write` (apm-tooling) scaffolds this template.
 - `skill-audit` flags any non-standard top-level key (`allowed-tools`, `model`, `compatibility`,
-  `chronicle-hints`, …) as a violation.
+  `chronicle-hints`, …) as a violation; the optional client keys above are not violations, but
+  `disable-model-invocation` without the OpenCode `metadata` pair is.
