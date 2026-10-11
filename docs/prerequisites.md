@@ -30,7 +30,7 @@ brew install powershell/tap/powershell     # macOS
 
 | Package | Tools |
 | :-- | :-- |
-| `github`, `development-workflow` | [GitHub CLI](https://cli.github.com/) `gh` 2.40+, authenticated (`gh auth status`). `cliff-setup` installs [git-cliff](https://git-cliff.org/) itself. |
+| `github`, `development-workflow` | [GitHub CLI](https://cli.github.com/) `gh` 2.40+, authenticated (`gh auth status`). `github-release` installs [git-cliff](https://git-cliff.org/) itself when the changelog is generated. |
 | `ts` | Node.js 22 LTS, npm; pnpm for `ts-pnpm-workflow` (the skill installs it) |
 | `ng` | Node.js 22 LTS, Angular CLI 21+ (`npm i -g @angular/cli`) |
 | `py` | Python 3.14, [uv](https://docs.astral.sh/uv/) |
