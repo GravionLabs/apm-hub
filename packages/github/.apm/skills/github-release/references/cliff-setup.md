@@ -1,16 +1,10 @@
----
-name: cliff-setup
-description: 'Set up git-cliff (cliff.toml, CHANGELOG.md, changelog script) for conventional-commit changelogs. Use when setting up or updating the changelog before a release.'
-disable-model-invocation: true
-metadata:
-  opencode/autoinvoke: 'false'
----
+# git-cliff setup
+
+Loaded by `github-release` only when `cliff.toml` is missing or `git-cliff` is not installed. Paths are relative to the `github-release` skill directory.
 
 ## Prerequisites
 
 - Git repository with conventional commits; `package.json` at the root (for script integration)
-
-Paths to `scripts/`, `references/` and `templates/` are relative to this skill's directory.
 
 ## Steps
 

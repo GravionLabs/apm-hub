@@ -107,10 +107,10 @@ apm install ng@apm-hub   # Angular only
 ## Workflow 5: Changelog from conventional commits
 
 ```text
-Set up git-cliff for this repo.
+Finish the release with an updated changelog.
 ```
 
-`cliff-setup` installs git-cliff, creates or validates `cliff.toml`, generates `CHANGELOG.md` and adds a `changelog` script. Commit titles produced by `orch-pipeline` and `github-pull-request` already follow the conventional-commit format it expects.
+`github-release finish` runs git-cliff for the changelog and, on first use, installs git-cliff, creates `cliff.toml` from its template and adds a `changelog` script (see its `references/cliff-setup.md`). Commit titles produced by `orch-pipeline` and `github-pull-request` already follow the conventional-commit format it expects.
 
 ---
 
