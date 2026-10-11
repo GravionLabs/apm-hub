@@ -1,11 +1,6 @@
 ---
 name: github-pull-request
-description: >
-  Create a GitHub PR from the current branch and its linked issue: gather
-  commit/diff context, generate a conventional title and structured body,
-  create via gh CLI, optionally request review and auto-merge. Use when asked
-  to "create a PR", "open a pull request", or to finish a branch whose issue
-  work is already committed.
+description: 'Create a GitHub PR from the current branch and its linked issue with a conventional title and structured body via gh. Use for "create a PR" or to finish a committed branch.'
 ---
 
 Create a PR from the current branch. No dialogue — tool calls only.

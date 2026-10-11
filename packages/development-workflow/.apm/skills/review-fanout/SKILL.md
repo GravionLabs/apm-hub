@@ -1,9 +1,6 @@
 ---
 name: review-fanout
-description: >
-  Parallel multi-dimension review of a diff with dedupe and adversarial
-  verification of severe findings. Returns APPROVE or CHANGES_REQUESTED. Use
-  for "review my changes", "review PR #N", or as orch-pipeline's review phase.
+description: 'Parallel multi-dimension review of a diff with dedupe and adversarial verification; returns APPROVE or CHANGES_REQUESTED. Use for "review my changes" or "review PR #N".'
 ---
 
 Read-only: never edit or commit.

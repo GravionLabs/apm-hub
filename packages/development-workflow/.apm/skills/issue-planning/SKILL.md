@@ -1,11 +1,6 @@
 ---
 name: issue-planning
-description: >
-  Analyze a GitHub issue or task description, explore the codebase, break the
-  work into well-scoped sub-tasks, and create GitHub sub-issues. Supports
-  quick, standard, and deep planning depth. Outputs a structured plan JSON
-  consumable by implement/verify workflows. Use when asked to "plan issue #N",
-  "break this down", or before implementing a large task.
+description: 'Explore the codebase and break a GitHub issue into scoped sub-issues (quick, standard or deep); outputs a plan JSON. Use for "plan issue #N" or before a large task.'
 ---
 
 Plan phase. Analyze task, explore codebase, produce a structured plan and GH sub-issues.

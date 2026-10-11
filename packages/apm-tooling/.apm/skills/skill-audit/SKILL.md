@@ -1,9 +1,6 @@
 ---
 name: skill-audit
-description: >
-  Use this skill to audit, validate, or review a single skill and emit a compact
-  findings report, even if the user only says to check it or verify it. For a
-  whole package or repo, use skill-slim instead.
+description: 'Audit one skill against the writing rules and emit a findings report. Use to check or verify a single skill; for a package or repo use skill-slim.'
 ---
 
 Audit one skill against the repo's skill-writing rules and report findings by severity.

@@ -1,9 +1,6 @@
 ---
 name: skill-update
-description: >
-  Applies improvements from a skill audit to an existing skill. Use after
-  skill-audit has produced findings, or standalone when asked to fix, update or
-  tighten a specific skill.
+description: 'Apply improvements from a skill audit to an existing skill. Use after skill-audit or when asked to fix or tighten a specific skill.'
 ---
 
 Apply audit findings in severity order and keep the change set focused on them.

@@ -1,6 +1,6 @@
 ---
 name: dotnet-create-solution
-description: 'Scaffold a new .NET solution with src/test layout, Central Package Management (Directory.Packages.props), Directory.Build.props, and .editorconfig. Supports both NuGet libraries (multi-target) and applications (webapi/worker/console).'
+description: 'Scaffold a .NET solution with src/test layout, Central Package Management, Directory.Build.props and .editorconfig for libraries or apps. Use when starting a .NET solution.'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'

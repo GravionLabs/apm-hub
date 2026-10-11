@@ -1,9 +1,6 @@
 ---
 name: skill-write
-description: >
-  Creates and edits skills (SKILL.md) that load unchanged on GitHub Copilot,
-  Claude Code and OpenCode. Use this skill when drafting or refining a skill so
-  the result stays small, valid, reusable and convention-compliant.
+description: 'Create or edit a SKILL.md that loads unchanged on Copilot, Claude Code and OpenCode. Use when drafting or refining a skill so it stays small and convention-compliant.'
 ---
 
 ## Prerequisites

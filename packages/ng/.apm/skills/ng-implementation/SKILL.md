@@ -1,11 +1,6 @@
 ---
 name: ng-implementation
-description: >
-  Angular-specific implementation and review rules. Extends the parent
-  `implementation` skill with Angular 20+ conventions: standalone components,
-  signals, DI, forms, libraries, version-sensitive APIs. Auto-loaded when
-  `implementation` dispatches to `ng-implementation`; also use for Angular
-  architecture or best-practice questions.
+description: 'Angular 20+ implementation and review rules (standalone, signals, DI, forms, libraries) extending `implementation`. Use for Angular code or architecture questions.'
 license: MIT
 ---
 

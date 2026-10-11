@@ -1,10 +1,6 @@
 ---
 name: github-release
-description: >
-  Cut a release branch (release/<x.y>) from main or finish one by opening the
-  release PR into main with an updated changelog. Use when asked to "cut a
-  release", "start release 1.4", "finish the release", "release branch", or
-  when another skill finds no release branch to work on.
+description: 'Cut a release/<x.y> branch from main or finish it with the release PR and changelog. Use for "cut a release", "finish the release" or when no release branch exists.'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'

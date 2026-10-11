@@ -1,10 +1,6 @@
 ---
 name: check-prerequisites
-description: >
-  Checks that the tools apm-hub skills depend on are installed (PowerShell 7+,
-  Git, Node.js, npm; optionally gh, curl, jq, yq, ast-grep, Python 3) and can
-  install missing ones. Use when setting up a new environment, before running
-  skills, or when a skill fails because a tool is missing.
+description: 'Check that the tools apm-hub skills need (pwsh 7+, Git, Node.js, npm; optionally gh, jq, yq, ast-grep, Python 3) are installed, and install missing ones. Use when setting up an environment.'
 ---
 
 Verify the environment for apm-hub skills. Paths to `scripts/` are relative to this skill's directory.

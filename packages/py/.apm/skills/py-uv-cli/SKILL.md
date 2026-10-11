@@ -1,11 +1,6 @@
 ---
 name: py-uv-cli
-description: >
-  Provide a curated reference of uv CLI flags for Python development workflows.
-  Use this skill when you need the correct uv command flags for running commands,
-  managing dependencies, syncing environments, or configuring CI pipelines — even
-  if the user only mentions "uv", "venv", or "dependencies" without naming
-  specific flags.
+description: 'Reference of uv CLI flags for running commands, managing dependencies, syncing environments and CI. Use when a Python task needs the right uv, venv or dependency command.'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'
