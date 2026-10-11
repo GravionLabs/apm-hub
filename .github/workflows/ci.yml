@@ -27,6 +27,7 @@ jobs:
         run: |
           GENERATED_FILES=(
             "docs/skill-list.md"
+            "docs/agent-list.md"
             "docs/template-list.md"
             "docs/instruction-list.md"
           )
