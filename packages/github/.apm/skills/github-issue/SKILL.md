@@ -1,11 +1,11 @@
 ---
 name: github-issue
-description: 'Implement GitHub issues following the project issue hierarchy (Epic→Feature→PBI→Task, Bug→Task). Routing skill: reads the issue type from labels and whether the issue has native sub-issues, then dispatches to the matching workflow reference. Use for any GitHub issue work — single issues or batch.'
+description: 'Implement GitHub issues per the Epic→Feature→PBI→Task hierarchy, routing by type and sub-issues to the matching workflow. Use for any GitHub issue work, single or batch.'
 ---
 
 ## Overview
 
-Single entry point for the GitHub issue lifecycle. Detect the issue type and shape of the input, then strictly follow the matching reference document.
+Single entry point for the GitHub issue lifecycle. Detect the issue type and shape of the input, then strictly follow the matching reference document. One issue per session; the `dev-workflow` agent is the preferred entry point (see the hub's `docs/working-mode.md`).
 
 ## Prerequisites
 

@@ -1,18 +1,10 @@
----
-name: cliff-setup
-description: >
-  Set up git-cliff for conventional-commit changelog generation and integrate it
-  into the project workflow. Installs git-cliff, creates or validates cliff.toml
-  configuration, generates CHANGELOG.md, and adds a changelog script to
-  package.json. Use this skill when setting up changelog generation or updating
-  the changelog before a release.
----
+# git-cliff setup
+
+Loaded by `github-release` only when `cliff.toml` is missing or `git-cliff` is not installed. Paths are relative to the `github-release` skill directory.
 
 ## Prerequisites
 
 - Git repository with conventional commits; `package.json` at the root (for script integration)
-
-Paths to `scripts/`, `references/` and `templates/` are relative to this skill's directory.
 
 ## Steps
 

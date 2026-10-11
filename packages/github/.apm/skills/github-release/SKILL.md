@@ -1,10 +1,9 @@
 ---
 name: github-release
-description: >
-  Cut a release branch (release/<x.y>) from main or finish one by opening the
-  release PR into main with an updated changelog. Use when asked to "cut a
-  release", "start release 1.4", "finish the release", "release branch", or
-  when another skill finds no release branch to work on.
+description: 'Cut a release/<x.y> branch from main or finish it with the release PR and changelog. Use for "cut a release", "finish the release" or when no release branch exists.'
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 Owns the lifecycle of `release/<x.y>` branches; the model and the base-branch resolver are in the
@@ -34,7 +33,9 @@ Owns the lifecycle of `release/<x.y>` branches; the model and the base-branch re
    `release/<x.y>` on origin (resolver step 4 in `release-branches.md`). `git checkout release/<x.y>; git pull --ff-only`.
 5. Open work must be merged first: `gh pr list --base release/<x.y> --state open` must be empty;
    otherwise stop and list the PRs.
-6. Changelog: load `cliff-setup` to update `CHANGELOG.md` for `<x.y>.0`; commit
+6. Changelog: `git-cliff -c cliff.toml -o CHANGELOG.md --unreleased -t v<x.y>.0` (no tags yet:
+   drop `--unreleased`). If `cliff.toml` is missing or `git-cliff` is not installed → follow
+   `references/cliff-setup.md` first (template in `templates/cliff.toml`). Commit
    `docs: update CHANGELOG.md for v<x.y>.0` on the release branch and push.
 7. Open the PR with `github-pull-request` (`base_branch: main`, `auto_merge: false`, title
    `release: <x.y>`, body: the changelog section plus `Closes #<nr>` for the Feature if recorded).

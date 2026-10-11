@@ -1,11 +1,6 @@
 ---
 name: issue-planning
-description: >
-  Analyze a GitHub issue or task description, explore the codebase, break the
-  work into well-scoped sub-tasks, and create GitHub sub-issues. Supports
-  quick, standard, and deep planning depth. Outputs a structured plan JSON
-  consumable by implement/verify workflows. Use when asked to "plan issue #N",
-  "break this down", or before implementing a large task.
+description: 'Explore the codebase and break a GitHub issue into scoped sub-issues (quick, standard or deep); outputs a plan JSON. Use for "plan issue #N" or before a large task.'
 ---
 
 Plan phase. Analyze task, explore codebase, produce a structured plan and GH sub-issues.
@@ -26,7 +21,7 @@ Pick from the request ("quick plan", "deep planning") or default to **standard**
 2. Load `detect-techstack` skill — parse JSON report for language info
 3. Read input (GH issue number, or task description)
 4. If issue number: fetch via `gh issue view <nr> --json title,body,labels`
-5. Explore codebase per the chosen depth
+5. Explore codebase per the chosen depth through the `explorer` agent: one call per affected area, each with the depth's file budget and the question to answer; keep only its ≤ 300-word summaries (Claude Code `Agent` with `subagent_type: explorer`, OpenCode `task`, VS Code Copilot `runSubagent`; inline with the same budget when no agents are installed)
 6. Break task into sub-tasks (respect the depth's max). Each sub-task:
    - Maps to one concern (function, module, component)
    - Has clear scope boundaries

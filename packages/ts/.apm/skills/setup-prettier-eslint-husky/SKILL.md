@@ -1,10 +1,9 @@
 ---
 name: setup-prettier-eslint-husky
-description: >
-  Set up the code quality pipeline for a TypeScript or Angular project: ESLint flat
-  config, Prettier with import organizer, Husky pre-commit hook with lint-staged, and
-  format-on-save for VS Code or WebStorm. Use when asked to add linting, formatting,
-  or pre-commit hooks to a TS/Angular project.
+description: 'Set up ESLint, Prettier, Husky pre-commit with lint-staged and format-on-save for a TS or Angular project. Use when asked to add linting, formatting or pre-commit hooks.'
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 Set up ESLint, Prettier and Husky for a TypeScript or Angular project. Paths to `scripts/` and `templates/` are relative to this skill's directory.

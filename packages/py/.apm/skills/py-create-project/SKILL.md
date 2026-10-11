@@ -1,6 +1,9 @@
 ---
 name: py-create-project
 description: 'Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, asyncio support, and a GitHub Actions CI workflow.'
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 Scaffold a Python project with a production-ready baseline using `uv`. Paths to `scripts/` and `templates/` are relative to this skill's directory.

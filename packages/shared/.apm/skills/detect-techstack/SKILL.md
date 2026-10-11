@@ -1,13 +1,13 @@
 ---
 name: detect-techstack
-description: >
-  Detect the project tech stack and return a JSON report with detected languages,
-  package manager, and the matching <lang>-test and <lang>-implementation skills.
-  Use this skill before loading language-specific skills so agents can dispatch
-  to the correct sub-skills for each language/framework detected.
+description: 'Detect the project tech stack and return a JSON report (languages, package manager, <lang>-test and <lang>-implementation skills). Use before loading language skills.'
+context: fork
+agent: explorer
 ---
 
 Run the detection script from the project root and hand the JSON to the caller; load `<lang>-test` and `<lang>-implementation` from its `test` and `implementation` lists.
+
+Return contract: the JSON object below and nothing else — no file listings, no reasoning. On Claude Code this skill runs in a forked `explorer` context, so the JSON is all the caller receives.
 
 Paths to `scripts/` are relative to this skill's directory.
 

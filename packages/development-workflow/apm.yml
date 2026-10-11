@@ -11,7 +11,6 @@ dependencies:
     - GravionLabs/apm-hub/packages/ng
     - GravionLabs/apm-hub/packages/dotnet
 skills:
-  - cliff-setup
   - issue-planning
   - orch-pipeline
   - review-fanout

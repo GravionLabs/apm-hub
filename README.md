@@ -98,16 +98,39 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | Package                | Contents                                                                                                                          |
 | :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
 | `shared`               | `implementation`, `detect-techstack`, `code-review`                                                                               |
-| `development-workflow` | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`, `cliff-setup`                                     |
+| `development-workflow` | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`                                                    |
 | `github`               | `github-issue`, `github-pull-request`                                                                                             |
 | `dotnet`               | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
 | `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
 | `py`                   | `py-implementation`, `py-test`, `py-create-project`, `py-uv-cli`                                                                  |
 | `ng`                   | `ng-implementation`, `ng-test`, `ng-component`, `ng-create-project`, `ng-signal-store`, `ng-ag-grid-developer`                    |
+| `agents`               | `dev-workflow` (orchestrator), `explorer`, `reviewer`, `implementer` (subagents) — see below                                      |
 | `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                  |
 | `all`                  | every package above except `apm-tooling`                                                                                          |
 
-📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
+📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[Browse All Agents](docs/agent-list.md)** · 📄 **[Working mode](docs/working-mode.md)** (small contexts, one issue per session) · 📄 **[External frameworks](docs/frameworks.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
+
+## 🤖 Agents
+
+Skills are the primary artifact; the `agents` package adds the four agents skills cannot replace.
+`dev-workflow` runs as the **primary agent** and keeps only phase summaries in its context; the
+three subagents each have their own model and tool set:
+
+| Agent          | Role                                                                                   |
+| :------------- | :------------------------------------------------------------------------------------- |
+| `dev-workflow` | `plan\|implement\|full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you |
+| `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                 |
+| `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON             |
+| `implementer`  | one task per run, `implementation` skill preloaded, commits, ≤ 150-word report         |
+
+```powershell
+apm install all@apm-hub -g                 # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents
+apmw sanitize -g -p claude; apmw sanitize -g -p opencode; apmw sanitize -g -p copilot   # per-platform frontmatter (required for OpenCode)
+claude --agent dev-workflow "full 123"     # Copilot: copilot --agent dev-workflow · OpenCode: opencode --agent dev-workflow
+```
+
+Source format and the `metadata` block: [docs/concepts/agent-frontmatter.md](docs/concepts/agent-frontmatter.md).
+[`apmw`](https://github.com/GravionLabs/apmw) does the per-platform rewrite.
 
 ## 🤝 Contributing
 

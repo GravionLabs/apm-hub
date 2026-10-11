@@ -1,9 +1,6 @@
 ---
 name: dotnet-implementation
-description: >
-  C#/.NET-specific implementation and test rules. Extends the parent
-  `implementation` skill with .NET conventions. Auto-loaded when
-  `implementation` skill dispatches to `dotnet-implementation`.
+description: 'C#/.NET implementation and test rules extending `implementation`. Loaded when `implementation` dispatches to dotnet-implementation.'
 ---
 
 ## Framework

@@ -18,7 +18,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
    - **Task**: Definition of Done (+ Implementation Notes)
    - **Bug**: Expected Behavior must be restored; Definition of Done requires a regression test
    - **Feature**: Definition of Done (scope)
-6. Explore codebase, identify affected areas
+6. Explore: delegate to the `explorer` agent with the issue text and the "done" criteria; it returns ≤ 300 words of `path:line` findings. Keep only that summary in context — never read the files it names in full yourself unless you are about to edit them. Claude Code: `Agent` with `subagent_type: explorer` · OpenCode: `task` with agent `explorer` · VS Code Copilot: `runSubagent` with agent `explorer` · Copilot CLI or no agents installed: explore inline with the same word limit.
 7. Write code + tests per project conventions (load the `implementation` skill or its language sub-skill)
 8. Atomic commits per the conventional-commits reference
 

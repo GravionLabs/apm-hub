@@ -1,9 +1,6 @@
 ---
 name: skill-write
-description: >
-  Creates and edits skills (SKILL.md) that load unchanged on GitHub Copilot,
-  Claude Code and OpenCode. Use this skill when drafting or refining a skill so
-  the result stays small, valid, reusable and convention-compliant.
+description: 'Create or edit a SKILL.md that loads unchanged on Copilot, Claude Code and OpenCode. Use when drafting or refining a skill so it stays small and convention-compliant.'
 ---
 
 ## Prerequisites
@@ -24,7 +21,7 @@ Paths to `scripts/`, `references/` and `assets/` are relative to this skill's di
 ### 2. Create and structure
 
 3. Create `SKILL.md` first; add `scripts/`, `references/` or `assets/` only if they reduce repeated context.
-4. Frontmatter: `name` and `description` only, plus optional `license` and `metadata`. Never add any other top-level key.
+4. Frontmatter: `name` and `description` only, plus optional `license` and `metadata`. The only other keys allowed are the client keys in the rules (`disable-model-invocation` paired with `metadata.opencode/autoinvoke: 'false'`, `user-invocable`, `context: fork`, `agent`); add them only when the rules say so.
 5. Body: one-sentence overview, numbered instructions, gotchas, one-line report format. Stay ≤ 100 lines.
 
 ### 3. Validate

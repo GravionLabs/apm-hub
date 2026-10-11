@@ -1,10 +1,9 @@
 ---
 name: ts-pnpm-workflow
-description: >
-  Set up pnpm as the project package manager and migrate from npm. Installs pnpm,
-  converts lockfiles, updates scripts, and configures the project for pnpm-based
-  development. Use this skill when starting a new TypeScript/Node.js project or
-  migrating an existing npm project to pnpm.
+description: 'Adopt pnpm as the package manager or migrate from npm (install, lockfile, scripts). Use when starting a Node project or migrating an npm project to pnpm.'
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 ## Prerequisites

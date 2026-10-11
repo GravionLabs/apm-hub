@@ -12,6 +12,12 @@
       "source": "./packages/all"
     },
     {
+      "name": "agents",
+      "description": "Agents for a lean issue workflow: dev-workflow orchestrator (primary agent, keeps only phase summaries in context) and the explorer, reviewer and implementer subagents it delegates to.",
+      "version": "1.0.23",
+      "source": "./packages/agents"
+    },
+    {
       "name": "apm-tooling",
       "description": "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files.",
       "version": "1.0.23",
@@ -19,7 +25,7 @@
     },
     {
       "name": "development-workflow",
-      "description": "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues, git-cliff setup. Depends on github, shared and all language packages.",
+      "description": "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues. Depends on github, shared and all language packages.",
       "version": "1.0.23",
       "source": "./packages/development-workflow"
     },

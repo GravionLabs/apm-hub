@@ -5,6 +5,25 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.2.0] — 2026-10-11
+
+### Documentation
+- Extend the skill frontmatter convention with model-invocation and fork keys (#89) (#97)
+- Agent frontmatter convention, size validator and generated agent list (#88) (#106)
+- Working mode and frameworks overview (#95) (#104)
+
+
+### Features
+- Run detect-techstack and verify-project with context: fork (#93)
+- **agents**: Add the agents package with explorer, reviewer, implementer and dev-workflow (#86) (#100)
+- Delegate exploration and review to the explorer and reviewer agents (#87) (#102)
+
+
+### Refactoring
+- Shorten skill descriptions to at most 40 tokens (#91) (#99)
+- Merge cliff-setup into github-release (#92) (#105)
+
+
 ## [1.0.23] — 2026-10-09
 
 ### Documentation

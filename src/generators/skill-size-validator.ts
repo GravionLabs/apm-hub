@@ -2,10 +2,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export const SKILL_MD_LINE_LIMIT = 100;
+/** The description is sent with every request; ~40 tokens, hard limit 200 characters. */
+export const SKILL_DESCRIPTION_CHAR_LIMIT = 200;
 
 export interface SizeViolation {
   filePath: string;
   lines: number;
+  limit: number;
+}
+
+export interface DescriptionViolation {
+  filePath: string;
+  chars: number;
   limit: number;
 }
 
@@ -45,6 +53,37 @@ export function findGithubSkillFiles(githubSkillsDir: string): string[] {
     if (fs.existsSync(skillMd)) results.push(skillMd);
   }
   return results;
+}
+
+/**
+ * Extracts the frontmatter `description` as one string: a quoted or plain scalar,
+ * or a folded/literal block (`>` / `|`) whose indented lines are joined with spaces.
+ */
+export function extractDescription(content: string): string {
+  const lines = content.split('\n');
+  if (lines[0] !== '---') return '';
+  const end = lines.indexOf('---', 1);
+  if (end < 0) return '';
+  const start = lines.findIndex((l, i) => i > 0 && i < end && l.startsWith('description:'));
+  if (start < 0) return '';
+  const parts = [lines[start].slice('description:'.length).trim().replace(/^[>|]-?$/, '')];
+  for (let i = start + 1; i < end && !/^[a-z-]+:/.test(lines[i]); i++) parts.push(lines[i].trim());
+  return parts
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^'(.*)'$/s, (_, s) => s.replace(/''/g, "'"))
+    .replace(/^"(.*)"$/s, '$1');
+}
+
+/** Checks all SKILL.md files and returns violations over the description character limit */
+export function checkDescriptionLengths(skillFiles: string[]): DescriptionViolation[] {
+  return skillFiles
+    .map((filePath) => {
+      const chars = extractDescription(fs.readFileSync(filePath, 'utf8')).length;
+      return { filePath, chars, limit: SKILL_DESCRIPTION_CHAR_LIMIT };
+    })
+    .filter((v) => v.chars > v.limit);
 }
 
 /** Checks all SKILL.md files and returns violations over the line limit */

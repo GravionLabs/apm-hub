@@ -37,7 +37,9 @@ export function generateSkillList(
       const content = fs.readFileSync(skillMdPath, 'utf8');
       const fm = parseFrontmatter(content);
       const name = fm.name || skillName;
-      const description = fm.description || '-';
+      // Gated skills leave the model's skill list; the reader must know to type /<name>.
+      const userInvoked = String(fm['disable-model-invocation']).trim() === 'true';
+      const description = (fm.description || '-') + (userInvoked ? ` *(user-invoked: \`/${name}\`)*` : '');
       const relPath = `packages/${domain}/.apm/skills/${skillName}/SKILL.md`;
       const entry: DomainEntry = { domain, name, description, relPath };
       allSkills.push(entry);

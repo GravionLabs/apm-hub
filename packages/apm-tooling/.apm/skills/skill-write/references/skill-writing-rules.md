@@ -21,9 +21,12 @@ Skills must load unchanged on GitHub Copilot, Claude Code and OpenCode, so only 
 | `name` | Required. See naming above. |
 | `description` | Required. Imperative, 1-1,024 chars, says what the skill does and when to use it, includes specific trigger keywords, not so broad it fires for unrelated tasks. |
 | `license` | Optional. SPDX identifier (e.g. `MIT`). |
-| `metadata` | Optional. Map of free-form string annotations (authorship, version). Hosts ignore them; no nested platform configuration. |
+| `metadata` | Optional. Map of free-form string annotations (authorship, version). Hosts ignore them; no nested platform configuration. The one host key is `opencode/autoinvoke: 'false'`, required next to `disable-model-invocation`. |
+| `disable-model-invocation` | Optional. `true` only for skills the user always starts (scaffolding, release workflows): the description leaves the model's skill list, `/<name>` still works (Claude Code, VS Code Copilot). Always paired with `metadata.opencode/autoinvoke: 'false'`. Never on skills other skills load by name. |
+| `user-invocable` | Optional. `false` hides the skill from the `/` menu while the model may still load it. |
+| `context` / `agent` | Optional. `context: fork` runs the skill in a subagent (Claude Code); `agent` names the agent definition. Only for self-contained skills that return a small result and never ask the user or spawn subagents; the body states the return contract. |
 
-**Forbidden top-level keys (🔴):** `allowed-tools` (matches no platform's tool vocabulary), `model` (platform-specific, goes stale), `compatibility` (a uniform claim carries no information), anything else (breaks strict loaders). Custom annotations go under `metadata:`.
+**Forbidden top-level keys (🔴):** `allowed-tools` (matches no platform's tool vocabulary), `model` (platform-specific, goes stale), `compatibility` (a uniform claim carries no information), anything else (breaks strict loaders). Custom annotations go under `metadata:`. See `docs/concepts/skill-frontmatter.md` for the reasoning.
 
 ```yaml
 ---
