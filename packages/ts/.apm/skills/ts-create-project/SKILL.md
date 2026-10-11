@@ -1,6 +1,9 @@
 ---
 name: ts-create-project
 description: 'Scaffold a new TypeScript/Node.js project (library, CLI, or application) with strict tsconfig, Vitest, ESM support, and a GitHub Actions CI workflow.'
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 Scaffold a TypeScript/Node.js project with a production-ready baseline. Paths to `scripts/` and `templates/` are relative to this skill's directory.

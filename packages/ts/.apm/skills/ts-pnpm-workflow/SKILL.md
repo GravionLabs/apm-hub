@@ -5,6 +5,9 @@ description: >
   converts lockfiles, updates scripts, and configures the project for pnpm-based
   development. Use this skill when starting a new TypeScript/Node.js project or
   migrating an existing npm project to pnpm.
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 ## Prerequisites

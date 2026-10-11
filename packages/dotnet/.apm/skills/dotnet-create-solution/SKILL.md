@@ -1,6 +1,9 @@
 ---
 name: dotnet-create-solution
 description: 'Scaffold a new .NET solution with src/test layout, Central Package Management (Directory.Packages.props), Directory.Build.props, and .editorconfig. Supports both NuGet libraries (multi-target) and applications (webapi/worker/console).'
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 Scaffold a new .NET solution with the standard project structure. Paths to `scripts/` and `templates/` are relative to this skill's directory.

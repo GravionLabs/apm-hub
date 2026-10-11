@@ -40,6 +40,12 @@ describe('generateSkillList', () => {
       path.join(sharedSkillsDir, 'ts-write-tests', 'SKILL.md'),
       '---\nname: ts-write-tests\ndescription: Write unit tests.\n---\nContent'
     );
+    // shared/.apm/skills/ts-create-project/SKILL.md — gated from model invocation
+    fs.mkdirSync(path.join(sharedSkillsDir, 'ts-create-project'), { recursive: true });
+    fs.writeFileSync(
+      path.join(sharedSkillsDir, 'ts-create-project', 'SKILL.md'),
+      "---\nname: ts-create-project\ndescription: Scaffold a project.\ndisable-model-invocation: true\nmetadata:\n  opencode/autoinvoke: 'false'\n---\nContent"
+    );
   });
 
   afterEach(() => {
@@ -70,6 +76,13 @@ describe('generateSkillList', () => {
     expect(content).toContain('## Overview');
     expect(content).toContain('[Csharp](#csharp)');
     expect(content).toContain('[Shared](#shared)');
+  });
+
+  it('should mark skills with disable-model-invocation as user-invoked', () => {
+    generateSkillList(packagesDir, outputFile);
+    const content = fs.readFileSync(outputFile, 'utf8');
+    expect(content).toContain('Scaffold a project. *(user-invoked: `/ts-create-project`)*');
+    expect(content).toContain('| [`ts-write-tests`](../packages/shared/.apm/skills/ts-write-tests/SKILL.md) | Write unit tests. |');
   });
 
   it('should link to skill directory layout package files', () => {

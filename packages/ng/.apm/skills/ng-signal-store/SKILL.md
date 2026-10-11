@@ -1,6 +1,9 @@
 ---
 name: ng-signal-store
 description: Scaffold an NgRx Signal Store (`@ngrx/signals`) for Angular feature state. Use when adding feature state management with signals.
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 Scaffold NgRx Signal Store for Angular feature state.

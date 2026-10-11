@@ -1,6 +1,9 @@
 ---
 name: dotnet-mcp-server-generator
 description: 'Generate a complete MCP server project in C# with tools, prompts, resources, stdio transport, and proper logging configuration.'
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 Generate a Model Context Protocol (MCP) server in C#: a console application using the `ModelContextProtocol` package (prerelease) with `Microsoft.Extensions.Hosting`, stdio transport, tools and prompts. Paths to `templates/` are relative to this skill's directory.
