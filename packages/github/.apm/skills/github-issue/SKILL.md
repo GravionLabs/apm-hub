@@ -5,7 +5,7 @@ description: 'Implement GitHub issues following the project issue hierarchy (Epi
 
 ## Overview
 
-Single entry point for the GitHub issue lifecycle. Detect the issue type and shape of the input, then strictly follow the matching reference document.
+Single entry point for the GitHub issue lifecycle. Detect the issue type and shape of the input, then strictly follow the matching reference document. One issue per session; the `dev-workflow` agent is the preferred entry point (see the hub's `docs/working-mode.md`).
 
 ## Prerequisites
 
