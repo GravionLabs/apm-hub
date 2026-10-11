@@ -38,7 +38,7 @@ Every language package provides `<lang>-implementation` (conventions + `## Revie
 
 ## Skill conventions
 
-- Frontmatter: `name`, `description`, optional `license`, optional `metadata`. Nothing else (no `allowed-tools`, `model`, `compatibility`).
+- Frontmatter: `name`, `description`, optional `license`, optional `metadata`, plus the optional client keys `disable-model-invocation` (paired with `metadata.opencode/autoinvoke: 'false'`), `user-invocable`, `context: fork`, `agent` — see [docs/concepts/skill-frontmatter.md](docs/concepts/skill-frontmatter.md). Nothing else (no `allowed-tools`, `model`, `compatibility`).
 - `SKILL.md` ≤ 100 lines (enforced by `src/generators/skill-size-validator.test.ts`). Long material goes to `references/` (loaded conditionally), templates to `templates/` or `assets/`, repeatable procedures to `scripts/*.ps1`.
 - Shell blocks use ` ```powershell `. Scripts are PowerShell 7+ and are invoked as `pwsh scripts/<Name>.ps1`; paths inside a skill are relative to the skill directory.
 - Compose, don't duplicate: one skill owns a workflow, others delegate by name.
