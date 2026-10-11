@@ -5,6 +5,9 @@ description: >
   config, Prettier with import organizer, Husky pre-commit hook with lint-staged, and
   format-on-save for VS Code or WebStorm. Use when asked to add linting, formatting,
   or pre-commit hooks to a TS/Angular project.
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 Set up ESLint, Prettier and Husky for a TypeScript or Angular project. Paths to `scripts/` and `templates/` are relative to this skill's directory.

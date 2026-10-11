@@ -1,6 +1,9 @@
 ---
 name: ts-mcp-server-generator
 description: 'Generate MCP server in TypeScript with tools, resources, prompts. @modelcontextprotocol/sdk + zod.'
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 Generate an MCP server in TypeScript. Paths to `scripts/` and `templates/` are relative to this skill's directory.

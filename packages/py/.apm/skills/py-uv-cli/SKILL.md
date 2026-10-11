@@ -6,6 +6,9 @@ description: >
   managing dependencies, syncing environments, or configuring CI pipelines — even
   if the user only mentions "uv", "venv", or "dependencies" without naming
   specific flags.
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 ## `uv run` — which flag?

@@ -6,6 +6,9 @@ description: >
   configuration, generates CHANGELOG.md, and adds a changelog script to
   package.json. Use this skill when setting up changelog generation or updating
   the changelog before a release.
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 ## Prerequisites

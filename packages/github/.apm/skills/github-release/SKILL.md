@@ -5,6 +5,9 @@ description: >
   release PR into main with an updated changelog. Use when asked to "cut a
   release", "start release 1.4", "finish the release", "release branch", or
   when another skill finds no release branch to work on.
+disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: 'false'
 ---
 
 Owns the lifecycle of `release/<x.y>` branches; the model and the base-branch resolver are in the
