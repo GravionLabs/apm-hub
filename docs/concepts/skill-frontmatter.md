@@ -31,7 +31,11 @@ Rules:
 
 - `disable-model-invocation: true` is always paired with `metadata: { opencode/autoinvoke: "false" }`,
   the OpenCode equivalent. Copilot CLI ignores both (support unverified); the skill still loads via `/<name>`.
-- Gate a skill only when it is always user-initiated (scaffolding, release workflows). Skills that other
+- Gate a skill only when it creates a project or sets up tooling once (`*-create-project`, the MCP
+  server generators, `setup-prettier-eslint-husky`, `ts-pnpm-workflow`, `orch-pipeline`). Never gate
+  what is used during an implementation or at the end of a feature: `github-release` is part of the
+  issue chain (`cut` before the first PBI, `finish` after the last), and a reference the model needs
+  mid-task belongs in `references/` of its parent skill instead of a gated skill. Skills that other
   skills load by name (`<lang>-implementation`, `<lang>-test`, `detect-techstack`) stay model-invocable.
 - A forked skill states its return contract in the body (for example "JSON only, no logs"), because the
   forked result is all the caller sees. Do not fork skills that spawn subagents themselves or need to ask the user.

@@ -30,7 +30,7 @@ Scaffold a Python project with a production-ready baseline using `uv`. Paths to 
    uv run pytest         # tests pass
    uv build              # package builds (library/app)
    ```
-5. **Next steps:** add dependencies with `uv add <package>`; uv flag reference in `py-uv-cli`
+5. **Next steps:** add dependencies with `uv add <package>`; uv flag reference in `py-implementation/references/uv-cli.md`
 
 Parameters: `-ProjectName` (required), `-ProjectType` (library/app/workspace), `-OutputDirectory`, `-Upgrade` (resolve latest compatible versions)
 

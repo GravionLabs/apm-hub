@@ -97,8 +97,8 @@ apm install ng@apm-hub   # Angular only
 | Migrate from npm to pnpm | "Switch this project to pnpm." | `ts-pnpm-workflow` |
 | ESLint, Prettier and Husky pre-commit | "Set up linting and formatting with pre-commit hooks." | `setup-prettier-eslint-husky` |
 | New Angular workspace | "Create an Angular app named shop with Vitest." | `ng-create-project` |
-| Standalone component | "Add a product-list component under features/catalog." | `ng-component` |
-| NgRx Signal Store | "Create a signal store for the cart." | `ng-signal-store` |
+| Standalone component | "Add a product-list component under features/catalog." | `ng-implementation` (`references/component.md`) |
+| NgRx Signal Store | "Create a signal store for the cart." | `ng-implementation` (`references/signal-store.md`) |
 | AG Grid Enterprise | "Add a grid with row grouping and Excel export." | `ng-ag-grid-developer` |
 | MCP server | "Generate an MCP server with a search tool." | `ts-mcp-server-generator` |
 

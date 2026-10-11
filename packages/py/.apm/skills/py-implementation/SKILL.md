@@ -9,6 +9,7 @@ description: 'Python implementation and test rules (pytest) extending `implement
 - **Config**: `[tool.pytest.ini_options]` in `pyproject.toml`
 - **Format/Lint**: ruff
 - **Type checker**: mypy (optional, in `pyproject.toml`)
+- **uv flags** (`--frozen` / `--locked` / `--no-sync`, dependency groups, CI env vars): read `references/uv-cli.md` (relative to this skill's directory)
 
 ## Imports
 

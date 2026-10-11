@@ -30,8 +30,8 @@ apm.yml                               # marketplace: lists all packages
 | `github` | `github-issue` (routing skill for the Epic→Feature→PBI→Task hierarchy; references for standalone, batch, sub-issues, conventional commits, release branches), `github-pull-request` (targets the release branch, not `main`), `github-release` (cut `release/<x.y>`, finish with the release PR into `main`; owns the git-cliff changelog, `references/cliff-setup.md`) |
 | `dotnet` | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator` |
 | `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
-| `py` | `py-implementation`, `py-test`, `py-create-project`, `py-uv-cli` |
-| `ng` | `ng-implementation`, `ng-test`, `ng-component`, `ng-create-project`, `ng-signal-store`, `ng-ag-grid-developer` |
+| `py` | `py-implementation` (incl. `references/uv-cli.md`), `py-test`, `py-create-project` |
+| `ng` | `ng-implementation` (incl. `references/component.md`, `references/signal-store.md`), `ng-test`, `ng-create-project`, `ng-ag-grid-developer` |
 | `agents` | `dev-workflow` (orchestrator, primary agent: plan → explore → implement per task → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (one task, `implementation` preloaded, ≤ 150-word report) |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not part of `all`) |
 | `all` | meta-package: every package above except `apm-tooling` |

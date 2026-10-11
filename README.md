@@ -102,8 +102,8 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `github`               | `github-issue`, `github-pull-request`                                                                                             |
 | `dotnet`               | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
 | `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
-| `py`                   | `py-implementation`, `py-test`, `py-create-project`, `py-uv-cli`                                                                  |
-| `ng`                   | `ng-implementation`, `ng-test`, `ng-component`, `ng-create-project`, `ng-signal-store`, `ng-ag-grid-developer`                    |
+| `py`                   | `py-implementation`, `py-test`, `py-create-project`                                                                             |
+| `ng`                   | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                          |
 | `agents`               | `dev-workflow` (orchestrator), `explorer`, `reviewer`, `implementer` (subagents) — see below                                      |
 | `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                  |
 | `all`                  | every package above except `apm-tooling`                                                                                          |
