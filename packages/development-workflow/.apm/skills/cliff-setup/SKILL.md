@@ -1,11 +1,6 @@
 ---
 name: cliff-setup
-description: >
-  Set up git-cliff for conventional-commit changelog generation and integrate it
-  into the project workflow. Installs git-cliff, creates or validates cliff.toml
-  configuration, generates CHANGELOG.md, and adds a changelog script to
-  package.json. Use this skill when setting up changelog generation or updating
-  the changelog before a release.
+description: 'Set up git-cliff (cliff.toml, CHANGELOG.md, changelog script) for conventional-commit changelogs. Use when setting up or updating the changelog before a release.'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'

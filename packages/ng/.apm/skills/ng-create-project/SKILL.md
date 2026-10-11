@@ -1,6 +1,6 @@
 ---
 name: ng-create-project
-description: 'Scaffold a new Angular 21+ application or workspace using the Angular CLI with strict TypeScript, Vitest, and ESLint/Prettier. Use when starting a new Angular project.'
+description: 'Scaffold an Angular 21+ app or workspace with strict TypeScript, Vitest and ESLint/Prettier. Use when starting a new Angular project.'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'

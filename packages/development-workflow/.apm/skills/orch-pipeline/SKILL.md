@@ -1,9 +1,6 @@
 ---
 name: orch-pipeline
-description: >
-  Orchestrated pipeline for a feature, fix, or review: plan → TDD per task →
-  review fan-out → commit, with two approval gates. Use for "orchestrate",
-  "add feature end to end", "fix defect with review".
+description: 'Orchestrated pipeline: plan → TDD per task → review fan-out → commit, with two approval gates. Use for "orchestrate" or "add feature end to end".'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'

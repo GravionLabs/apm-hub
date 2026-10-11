@@ -1,11 +1,6 @@
 ---
 name: ng-ag-grid-developer
-description: >
-  Use this skill when building or modifying Angular components that integrate AG Grid Enterprise.
-  Covers Enterprise setup, the ag-mcp MCP server, module registration, column definitions, row models (including SSRM),
-  filtering, cell rendering, cell editing, row grouping, pivoting, master/detail, Excel export,
-  theming, and TypeScript generics. Triggers on tasks like "add ag-grid", "configure columns",
-  "enable row grouping", "export to Excel", "set up SSRM", "customize cell renderer", or "set up ag-mcp".
+description: 'Build or modify Angular components with AG Grid Enterprise (setup, ag-mcp, columns, row models, editing, grouping, export, theming). Use when a task mentions ag-grid.'
 license: MIT
 ---
 

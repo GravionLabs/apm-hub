@@ -1,10 +1,6 @@
 ---
 name: detect-techstack
-description: >
-  Detect the project tech stack and return a JSON report with detected languages,
-  package manager, and the matching <lang>-test and <lang>-implementation skills.
-  Use this skill before loading language-specific skills so agents can dispatch
-  to the correct sub-skills for each language/framework detected.
+description: 'Detect the project tech stack and return a JSON report (languages, package manager, <lang>-test and <lang>-implementation skills). Use before loading language skills.'
 ---
 
 Run the detection script from the project root and hand the JSON to the caller; load `<lang>-test` and `<lang>-implementation` from its `test` and `implementation` lists.

@@ -1,9 +1,6 @@
 ---
 name: implementation
-description: >
-  Language-agnostic implementation rules. Every code change MUST include tests.
-  Triggers on "implement", "write code", "add feature", "create function",
-  "test", "test function". Automatically loads <lang>-implementation sub-skill.
+description: 'Language-agnostic implementation rules: every code change ships with tests; loads the <lang>-implementation sub-skill. Use for implement, write code, add feature or test requests.'
 ---
 
 ## Golden rule

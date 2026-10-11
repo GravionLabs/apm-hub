@@ -1,10 +1,6 @@
 ---
 name: skill-slim
-description: >
-  Reduce the size of skills across a package or repo: measure, classify content as keep, move,
-  delete or deduplicate, report findings, and apply approved changes. Use this skill when asked
-  to slim, shrink, or trim skills, cut token cost, or audit a whole package of skills — not for
-  checking a single skill (use skill-audit).
+description: 'Measure skills across a package or repo, classify content as keep, move, delete or deduplicate, then apply approved changes. Use to slim or trim skills or cut token cost.'
 ---
 
 ## Prerequisites

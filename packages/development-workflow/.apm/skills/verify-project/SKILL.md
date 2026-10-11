@@ -1,10 +1,6 @@
 ---
 name: verify-project
-description: >
-  Run build, tests, and lint on the project and report pass/fail with the
-  first error. Loads detect-techstack and <lang>-test skills for the correct
-  commands per detected package manager. Use to verify a change, check the
-  build, or as the verify phase of an implement workflow.
+description: 'Run build, tests and lint and report pass/fail with the first error, using detect-techstack and <lang>-test for the commands. Use to verify a change or as the verify phase.'
 ---
 
 Phase: verify. Run checks on project.

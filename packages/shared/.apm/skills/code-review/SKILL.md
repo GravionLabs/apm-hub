@@ -1,9 +1,6 @@
 ---
 name: code-review
-description: >
-  Review a diff or files with priority ratings (🔴 critical, 🟡 important, 🟢 suggestion).
-  Loads the "Review rules" section of each detected <lang>-implementation skill. Use for
-  "review this code", "code review", or as review-fanout's conventions dimension.
+description: 'Review a diff or files with 🔴/🟡/🟢 ratings using each detected <lang>-implementation review rules. Use for "review this code" or as review-fanout''s conventions dimension.'
 ---
 
 Read-only: report findings, never edit.

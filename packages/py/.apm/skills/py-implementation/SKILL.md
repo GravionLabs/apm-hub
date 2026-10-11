@@ -1,9 +1,6 @@
 ---
 name: py-implementation
-description: >
-  Python-specific implementation and test rules. Extends the parent
-  `implementation` skill with Python/pytest conventions. Auto-loaded when
-  `implementation` skill dispatches to `py-implementation`.
+description: 'Python implementation and test rules (pytest) extending `implementation`. Loaded when `implementation` dispatches to py-implementation.'
 ---
 
 ## Framework
