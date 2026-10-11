@@ -1,9 +1,11 @@
 ---
 name: verify-project
 description: 'Run build, tests and lint and report pass/fail with the first error, using detect-techstack and <lang>-test for the commands. Use to verify a change or as the verify phase.'
+context: fork
+agent: reviewer
 ---
 
-Phase: verify. Run checks on project.
+Phase: verify. Run checks on project. On Claude Code this skill runs in a forked `reviewer` context (read-only plus test commands): build and test output stays there, the caller receives only the JSON below.
 
 ## Steps
 
