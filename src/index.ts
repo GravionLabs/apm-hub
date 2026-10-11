@@ -2,6 +2,7 @@ import { generateTemplateList } from './generators/template-list-generator';
 import { updateFileBlock } from './generators/readme-generator';
 import { formatAllDocs } from './generators/format-docs-generator';
 import { generateSkillList } from './generators/skill-list-generator';
+import { generateAgentList } from './generators/agent-list-generator';
 import { generateInstructionList } from './generators/instruction-list-generator';
 import { updatePackageVersions } from './generators/version-updater';
 import { generateRootApm } from './generators/root-apm-generator';
@@ -12,6 +13,7 @@ function generateAggregateDocs(version?: string) {
   }
   generateTemplateList();
   generateSkillList();
+  generateAgentList();
   generateInstructionList();
   if (version) {
     updateFileBlock('docs/overview.md', 'version', `Welcome to **apm-hub** v${version} 👋`);
@@ -41,6 +43,11 @@ function main() {
 
   if (inputPath === '--skill-list') {
     generateSkillList();
+    return;
+  }
+
+  if (inputPath === '--agent-list') {
+    generateAgentList();
     return;
   }
 

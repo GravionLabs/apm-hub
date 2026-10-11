@@ -48,5 +48,6 @@ packages/*/.github/
 # Edit generators in src/generators/, not these files.
 docs/instruction-list.md
 docs/skill-list.md
+docs/agent-list.md
 docs/template-list.md
 /apm.lock.yaml
