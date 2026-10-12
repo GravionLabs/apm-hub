@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "core",
-      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills and the dev-workflow agents. Stack packages are installed per project.",
+      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the dev-workflow agents and the Claude Code hooks. Stack packages are installed per project.",
       "version": "1.0.24",
       "source": "./packages/core"
     },
@@ -22,6 +22,12 @@
       "description": "Agents for a lean issue workflow: dev-workflow orchestrator (primary agent, keeps only phase summaries in context) and the explorer, reviewer and implementer subagents it delegates to.",
       "version": "1.0.24",
       "source": "./packages/agents"
+    },
+    {
+      "name": "claude-hooks",
+      "description": "Claude Code hooks for the dev-workflow agents: a SubagentStop hook appends one line per finished subagent to the issue ledger. Claude only; other harnesses skip it.",
+      "version": "1.0.24",
+      "source": "./packages/claude-hooks"
     },
     {
       "name": "apm-tooling",
