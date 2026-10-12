@@ -9,6 +9,7 @@ The official `dotnet` plugin skills (dependency `dotnet/skills`) cover general C
 
 - Test stack: NUnit, NSubstitute, Shouldly; `dotnet build` with Central Package Management; nullable enabled
 - Naming: `_camelCase` fields; files `{ClassName}.cs`, tests `{ClassName}Tests.cs`
+- File-scoped namespaces; global usings for `System.*` in one file
 - DI: constructor injection only, prefer primary constructors
 - `record` types for DTOs, `init` setters for models
 - Solution: `src/` and `test/<Project>.Tests`, versions in `Directory.Packages.props`

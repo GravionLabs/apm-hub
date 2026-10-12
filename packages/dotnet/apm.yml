@@ -12,7 +12,8 @@ keywords:
   - efcore
 dependencies:
   apm:
-    - dotnet/skills/plugins/dotnet#v1.0.0
+    # tag v1.0.0
+    - dotnet/skills/plugins/dotnet#cb7c10bd32b250459632df9e6fa1350cdaf00b18
 skills:
   - dotnet-create-solution
   - dotnet-implementation

@@ -9,27 +9,41 @@ import {
   type DomainEntry,
 } from './list-generator';
 
+const INTERNAL_OWNER = 'gravionlabs';
+
+/** True when the reference (shorthand, https/ssh URL or scp-style) belongs to the GravionLabs owner. */
+function isInternal(ref: string): boolean {
+  const rest = ref
+    .replace(/^[a-z][a-z0-9+.-]*:\/\/([^/@]*@)?[^/]+\//i, '')
+    .replace(/^[^@/]+@[^:/]+:/, '');
+  return rest.split('/')[0].toLowerCase() === INTERNAL_OWNER;
+}
+
 /** External (non-GravionLabs) `dependencies.apm` entries of a package's apm.yml. */
 export function readExternalDependencies(packageDir: string): string[] {
   const manifest = path.join(packageDir, 'apm.yml');
   if (!fs.existsSync(manifest)) return [];
-  let doc: any;
+  let doc: unknown;
   try {
     doc = parse(fs.readFileSync(manifest, 'utf8'));
   } catch {
     return [];
   }
-  const entries: unknown = doc?.dependencies?.apm;
+  const deps = (doc as { dependencies?: { apm?: unknown } } | null | undefined)?.dependencies;
+  const entries = deps?.apm;
   if (!Array.isArray(entries)) return [];
   const result: string[] = [];
-  for (const e of entries) {
+  for (const e of entries as unknown[]) {
     let ref: string | undefined;
     if (typeof e === 'string') ref = e;
-    else if (e && typeof e === 'object' && typeof (e as any).git === 'string') {
-      const o = e as { git: string; path?: string; ref?: string };
-      ref = o.git + (o.path ? `/${o.path}` : '') + (o.ref ? `#${o.ref}` : '');
+    else if (e && typeof e === 'object' && typeof (e as { git?: unknown }).git === 'string') {
+      const o = e as { git: string; path?: unknown; ref?: unknown };
+      ref =
+        o.git +
+        (typeof o.path === 'string' && o.path ? `/${o.path}` : '') +
+        (typeof o.ref === 'string' && o.ref ? `#${o.ref}` : '');
     }
-    if (ref && !ref.startsWith('GravionLabs/')) result.push(ref);
+    if (ref && !isInternal(ref)) result.push(ref);
   }
   return result;
 }
@@ -88,7 +102,7 @@ export function generateSkillList(
     const heading = `\n## ${label}\n\n`;
     output = output.replace(
       heading,
-      `${heading}External dependencies: ${deps.map((d) => `\`${d}\``).join(', ')}\n\n`
+      () => `${heading}External dependencies: ${deps.map((d) => `\`${d}\``).join(', ')}\n\n`
     );
   }
 

@@ -118,5 +118,61 @@ describe('generateSkillList', () => {
   it('should ignore a malformed apm.yml', () => {
     fs.writeFileSync(path.join(packagesDir, 'csharp', 'apm.yml'), ': : [');
     expect(() => generateSkillList(packagesDir, outputFile)).not.toThrow();
+    expect(fs.readFileSync(outputFile, 'utf8')).not.toContain('External dependencies');
+  });
+
+  it('should treat GravionLabs entries in every form as internal', () => {
+    fs.writeFileSync(
+      path.join(packagesDir, 'csharp', 'apm.yml'),
+      [
+        'name: csharp',
+        'dependencies:',
+        '  apm:',
+        '    - git: https://github.com/GravionLabs/apm-hub',
+        '      path: packages/shared',
+        '    - https://github.com/gravionlabs/apm-hub/packages/github',
+        '    - git@github.com:GravionLabs/apm-hub.git',
+        '    - gravionlabs/apm-hub/packages/core',
+        ''
+      ].join('\n')
+    );
+    generateSkillList(packagesDir, outputFile);
+    expect(fs.readFileSync(outputFile, 'utf8')).not.toContain('External dependencies');
+  });
+
+  it('should omit the line for packages without apm.yml or without dependencies', () => {
+    fs.writeFileSync(path.join(packagesDir, 'shared', 'apm.yml'), 'name: shared\n');
+    generateSkillList(packagesDir, outputFile);
+    expect(fs.readFileSync(outputFile, 'utf8')).not.toContain('External dependencies');
+  });
+
+  it('should join multiple external dependencies with a comma', () => {
+    fs.writeFileSync(
+      path.join(packagesDir, 'csharp', 'apm.yml'),
+      'name: csharp\ndependencies:\n  apm:\n    - a/b/c#v1\n    - d/e\n'
+    );
+    generateSkillList(packagesDir, outputFile);
+    expect(fs.readFileSync(outputFile, 'utf8')).toContain('External dependencies: `a/b/c#v1`, `d/e`');
+  });
+
+  it('should render object form without path or ref', () => {
+    fs.writeFileSync(
+      path.join(packagesDir, 'csharp', 'apm.yml'),
+      'name: csharp\ndependencies:\n  apm:\n    - git: https://github.com/o/r\n    - git: https://github.com/o/s\n      ref: v2\n    - git: https://github.com/o/t\n      path: sub\n'
+    );
+    generateSkillList(packagesDir, outputFile);
+    const content = fs.readFileSync(outputFile, 'utf8');
+    expect(content).toContain(
+      'External dependencies: `https://github.com/o/r`, `https://github.com/o/s#v2`, `https://github.com/o/t/sub`'
+    );
+  });
+
+  it('should keep dollar sequences in refs literal', () => {
+    fs.writeFileSync(
+      path.join(packagesDir, 'csharp', 'apm.yml'),
+      "name: csharp\ndependencies:\n  apm:\n    - 'o/r#a$&b'\n"
+    );
+    generateSkillList(packagesDir, outputFile);
+    expect(fs.readFileSync(outputFile, 'utf8')).toContain('`o/r#a$&b`');
   });
 });
