@@ -65,6 +65,27 @@ resumes from the ledger.
   every finished subagent (`SubagentStop` hook, no-op without a ledger).
 - OpenCode: `compaction: { auto: true, prune: true }` in `opencode.json` drops old tool output.
 
+### Subagent context by harness
+
+| | Claude Code | Copilot (VS Code) | Copilot CLI | OpenCode |
+| :-- | :-- | :-- | :-- | :-- |
+| Does a subagent inherit the conversation? | only the `fork` type; every typed agent starts fresh (about 6k tokens, measured) | no, fresh and stateless | unverified | unverified |
+| Resume a finished subagent | `SendMessage` to its agent id | no | unverified | unverified |
+| `lead` cannot be dispatched as a subagent by | the rule in its body | `disable-model-invocation: true` | unverified | `mode: primary` |
+
+`fork` is the expensive one: it starts with the whole session, so in a 700k-token session every fork
+re-reads 700k tokens. In four days of the owner's usage 22 model-started `fork` calls made up 23 % of
+usage. Rule: no `fork` above ~100k context; start a typed agent (`explorer`, `general-purpose`) with a
+self-contained prompt instead. Put the rule into the global instruction file of each client
+(Claude `~/.claude/CLAUDE.md`, Copilot `.github/copilot-instructions.md` or the VS Code user instructions,
+OpenCode `~/.config/opencode/AGENTS.md`):
+
+```text
+Subagents: write a self-contained prompt (goal, context, expected result).
+Never use the `fork` subagent type once the session is above ~100k tokens; use `explorer`, `general-purpose` or another typed agent.
+Run `lead` only as the primary agent (`claude --agent lead`), never as a subagent.
+```
+
 ### Parallel and long sessions
 
 - All sessions share one limit. `/usage` shows what drove it: the share of usage above 150k context,
