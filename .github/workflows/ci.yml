@@ -225,6 +225,7 @@ jobs:
       - name: Create GitHub Release
         uses: GravionLabs/ci/versioning/gh-release@main
         with:
+          token: ${{ secrets.GH_PAT || github.token }}
           version: ${{ needs.determine-version.outputs.semver }}
           changelog-file: CHANGELOG.md
           cliff-config: cliff.toml
