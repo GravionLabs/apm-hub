@@ -17,7 +17,7 @@ description: >
 - **Run all**: `uv run pytest`
 - **Run single file**: `uv run pytest tests/test_file.py`
 - **Coverage**: `uv run pytest --cov=src --cov-report=term-missing` (needs `pytest-cov` as a dev dependency)
-- uv flags for CI vs. local runs: see `py-uv-cli`
+- uv flags for CI vs. local runs: see `py-implementation/references/uv-cli.md`
 
 ### File Naming
 

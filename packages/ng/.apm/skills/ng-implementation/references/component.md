@@ -1,10 +1,4 @@
----
-name: ng-component
-description: 'Scaffold an Angular standalone component (ts/html/scss) following project conventions for prefix, imports and placement. Use when asked to create an Angular component.'
-disable-model-invocation: true
-metadata:
-  opencode/autoinvoke: 'false'
----
+# Scaffold a standalone component
 
 Scaffold one standalone Angular component.
 
