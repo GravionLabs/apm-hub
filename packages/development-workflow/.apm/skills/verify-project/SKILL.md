@@ -1,6 +1,6 @@
 ---
 name: verify-project
-description: 'Run build, tests and lint and report pass/fail with the first error, using detect-techstack and <lang>-test for the commands. Use to verify a change or as the verify phase.'
+description: 'Run build, tests and lint; report pass/fail with the first error. Use to verify a change.'
 context: fork
 agent: reviewer
 ---

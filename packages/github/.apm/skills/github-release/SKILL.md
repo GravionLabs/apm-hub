@@ -1,6 +1,6 @@
 ---
 name: github-release
-description: 'Cut a release/<x.y> branch from main or finish it with the release PR and changelog. Use for "cut a release", "finish the release" or when no release branch exists.'
+description: 'Cut a release/<x.y> branch or finish it with the release PR and changelog. Use for "cut a release", "finish the release".'
 context: fork
 ---
 

@@ -7,6 +7,8 @@ import {
   checkSkillSizes,
   checkDescriptionLengths,
   extractDescription,
+  checkDescriptionBudget,
+  SKILL_DESCRIPTION_TOTAL_CHAR_BUDGET,
   SKILL_MD_LINE_LIMIT,
   SKILL_DESCRIPTION_CHAR_LIMIT,
 } from './skill-size-validator';
@@ -164,6 +166,47 @@ describe('checkDescriptionLengths', () => {
   });
 });
 
+describe('checkDescriptionBudget', () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-budget-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  const write = (name: string, chars: number, extra = '') => {
+    const file = path.join(tmpDir, `${name}-SKILL.md`);
+    fs.writeFileSync(file, `---\nname: ${name}\ndescription: ${'a'.repeat(chars)}\n${extra}---\n`);
+    return file;
+  };
+
+  it('stays within the budget at exactly the limit', () => {
+    const files = [write('a', SKILL_DESCRIPTION_TOTAL_CHAR_BUDGET - 100), write('b', 100)];
+    const r = checkDescriptionBudget(files);
+    expect(r.total).toBe(SKILL_DESCRIPTION_TOTAL_CHAR_BUDGET);
+    expect(r.total).toBeLessThanOrEqual(r.budget);
+  });
+
+  it('exceeds the budget when the sum is over the limit', () => {
+    const files = [write('a', SKILL_DESCRIPTION_TOTAL_CHAR_BUDGET - 100), write('b', 101)];
+    const r = checkDescriptionBudget(files);
+    expect(r.total).toBe(SKILL_DESCRIPTION_TOTAL_CHAR_BUDGET + 1);
+    expect(r.total).toBeGreaterThan(r.budget);
+  });
+
+  it('ignores skills with disable-model-invocation: true', () => {
+    const files = [write('a', 50), write('b', 5000, 'disable-model-invocation: true\n')];
+    expect(checkDescriptionBudget(files).total).toBe(50);
+  });
+
+  it('returns zero for no skills', () => {
+    expect(checkDescriptionBudget([]).total).toBe(0);
+  });
+});
+
 describe('live repo size check', () => {
   const repoPackagesDir = path.resolve(__dirname, '../../packages');
   const repoGithubSkillsDir = path.resolve(__dirname, '../../.github/skills');
@@ -186,5 +229,15 @@ describe('live repo size check', () => {
       .map((v) => `${v.filePath} (${v.chars} chars, limit ${v.limit})`)
       .join('\n');
     expect(violations, message).toEqual([]);
+  });
+
+  it('model-invocable descriptions of the shipped packages stay within the total character budget', () => {
+    // .github/skills holds contributor tooling that is never installed in consumer projects
+    const r = checkDescriptionBudget(findSkillFiles(repoPackagesDir));
+    const message = r.skills
+      .sort((a, b) => b.chars - a.chars)
+      .map((s) => `${s.chars} ${s.filePath}`)
+      .join('\n');
+    expect(r.total, `total ${r.total}, budget ${r.budget}\n${message}`).toBeLessThanOrEqual(r.budget);
   });
 });

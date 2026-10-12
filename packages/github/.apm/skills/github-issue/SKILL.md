@@ -1,6 +1,6 @@
 ---
 name: github-issue
-description: 'Implement GitHub issues per the Epic→Feature→PBI→Task hierarchy, routing by type and sub-issues to the matching workflow. Use for any GitHub issue work, single or batch.'
+description: 'Implement GitHub issues by type (Epic, Feature, PBI, Task), single or batch. Use for any GitHub issue work.'
 ---
 
 ## Overview

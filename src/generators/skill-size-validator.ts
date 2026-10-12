@@ -4,6 +4,8 @@ import * as path from 'path';
 export const SKILL_MD_LINE_LIMIT = 100;
 /** The description is sent with every request; ~40 tokens, hard limit 200 characters. */
 export const SKILL_DESCRIPTION_CHAR_LIMIT = 200;
+/** Sum of the descriptions of all model-invocable skills (~650 tokens at chars/4). */
+export const SKILL_DESCRIPTION_TOTAL_CHAR_BUDGET = 2600;
 
 export interface SizeViolation {
   filePath: string;
@@ -95,4 +97,24 @@ export function checkSkillSizes(skillFiles: string[]): SizeViolation[] {
       return { filePath, lines, limit: SKILL_MD_LINE_LIMIT };
     })
     .filter((v) => v.lines > v.limit);
+}
+
+export interface DescriptionBudget {
+  total: number;
+  budget: number;
+  skills: { filePath: string; chars: number }[];
+}
+
+/** Sums the description lengths of skills without `disable-model-invocation: true` */
+export function checkDescriptionBudget(skillFiles: string[]): DescriptionBudget {
+  const skills = skillFiles
+    .map((filePath) => ({ filePath, content: fs.readFileSync(filePath, 'utf8') }))
+    .filter(({ content }) => {
+      const end = content.split('\n').indexOf('---', 1);
+      const fm = content.split('\n').slice(0, end < 0 ? 0 : end);
+      return !fm.some((l) => /^disable-model-invocation:\s*true\s*$/.test(l));
+    })
+    .map(({ filePath, content }) => ({ filePath, chars: extractDescription(content).length }));
+  const total = skills.reduce((n, s) => n + s.chars, 0);
+  return { total, budget: SKILL_DESCRIPTION_TOTAL_CHAR_BUDGET, skills };
 }
