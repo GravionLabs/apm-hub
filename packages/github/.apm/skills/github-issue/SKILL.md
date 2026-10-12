@@ -5,7 +5,7 @@ description: 'Implement GitHub issues per the Epic→Feature→PBI→Task hierar
 
 ## Overview
 
-Single entry point for the GitHub issue lifecycle. Detect the issue type and shape of the input, then strictly follow the matching reference document. One issue per session; the `lead` agent is the preferred entry point (see the hub's `docs/working-mode.md`).
+Single entry point for the GitHub issue lifecycle. Detect the issue type and shape of the input, then strictly follow the matching reference document. One issue per session; the `orchestrator` agent is the preferred entry point (see the hub's `docs/working-mode.md`).
 
 ## Prerequisites
 
