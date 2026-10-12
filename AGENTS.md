@@ -34,8 +34,8 @@ apm.yml                               # marketplace: lists all packages
 | `ng` | `ng-implementation` (incl. `references/component.md`, `references/signal-store.md`), `ng-test`, `ng-create-project`, `ng-ag-grid-developer`. Depends on `angular/skills` (`angular-developer`) |
 | `agents` | `orchestrator` (primary agent: plan → explore → implement per task → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (sonnet by default, one task, `implementation` preloaded, report file + ≤ 15-line status reply) |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not part of `all`) |
-| `claude-hooks` | Claude Code hooks (`target: claude`, other harnesses skip them): `SubagentStop` appends a line per finished subagent to `.agents/<issue>/progress.md`, `UserPromptSubmit` warns above 150k context tokens |
-| `core` | meta-package for the global install: `github`, `development-workflow`, `shared`, `agents`, `claude-hooks` (no stack skills) |
+| `hooks` | Hooks for Claude Code and Copilot CLI: `SubagentStop`/`subagentStop` appends a line per finished subagent to `.agents/<issue>/progress.md` (both payload formats); `UserPromptSubmit` warns above 150k context tokens (Claude Code only) |
+| `core` | meta-package for the global install: `github`, `development-workflow`, `shared`, `agents`, `hooks` (no stack skills) |
 | `all` | meta-package: every package above except `apm-tooling` |
 
 Every language package provides `<lang>-implementation` (conventions + `## Review rules`) and `<lang>-test`. `detect-techstack` returns their names so `implementation`, `code-review` and `verify-project` can dispatch.

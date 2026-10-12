@@ -91,7 +91,7 @@ resumes from the ledger.
 
 ## 3. During a session
 
-- On Claude Code the `claude-hooks` package warns on the next prompt once the context passes 150k tokens
+- On Claude Code the `hooks` package warns on the next prompt once the context passes 150k tokens
   (`CONTEXT_WARN_TOKENS`, repeated after another `CONTEXT_WARN_STEP`, default 100k): finish the step,
   note the hand-off in the ledger, `/clear`.
 - `/context` before a long step shows what fills the window; the skill list and large tool outputs
@@ -102,7 +102,7 @@ resumes from the ledger.
 - `/compact <focus>` is a brake, not a habit: it loses detail you may need. Prefer `/clear` plus a
   short hand-off note in the issue. A `orchestrator` run keeps its own hand-off note: the ledger
   `.agents/<issue>/progress.md` (phases done, fix rounds, rulings); a new session resumes from it.
-  On Claude Code the `claude-hooks` package adds a `Subagent <name>: stopped — <first line>` line for
+  The `hooks` package (Claude Code and Copilot CLI) adds a `Subagent <name>: stopped — <first line>` line for
   every finished subagent (`SubagentStop` hook, no-op without a ledger).
 - OpenCode: `compaction: { auto: true, prune: true }` in `opencode.json` drops old tool output.
 

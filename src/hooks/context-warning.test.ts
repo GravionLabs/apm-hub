@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-const SCRIPT = path.resolve(__dirname, '../../packages/claude-hooks/.apm/hooks/context-warning.sh');
+const SCRIPT = path.resolve(__dirname, '../../packages/hooks/.apm/hooks/context-warning.sh');
 
 describe('context-warning hook', () => {
   let dir: string;
