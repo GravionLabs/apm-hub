@@ -126,7 +126,7 @@ three subagents each have their own model and tool set:
 | `dev-workflow` | `plan\                                                                         | implement\ | full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you |
 | `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references         |            |                                                                                                |
 | `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON     |            |                                                                                                |
-| `implementer`  | one task per run, `implementation` skill preloaded, commits, ≤ 150-word report |            |                                                                                                |
+| `implementer`  | one task per run, `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |            |                                                                                                |
 
 ```powershell
 apm install GravionLabs/apm-hub/packages/core -g   # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents

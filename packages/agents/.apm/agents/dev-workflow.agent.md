@@ -30,10 +30,10 @@ Mode from the first message: contains `plan` → **plan**; contains `implement` 
 ## Pipeline
 
 0. `detect-techstack` skill → keep the JSON.
-1. `gh issue view <issue> --json title,body,labels` and `gh api repos/{owner}/{repo}/issues/<issue>/sub_issues --jq length`. Resolve the integration branch per the `github-issue` skill (`references/release-branches.md`).
+1. `gh issue view <issue> --json title,body,labels` and `gh api repos/{owner}/{repo}/issues/<issue>/sub_issues --jq length`. Resolve the integration branch per the `github-issue` skill (`references/release-branches.md`). Create `.agents/<issue>/` for reports (add `.agents/` to `.git/info/exclude` when it is not ignored).
 2. **Explore**: `explorer` with the issue text → summary of the affected code (≤ 300 words).
 3. **Plan** (plan mode, or full mode when the issue has no sub-issues): `issue-planning` skill with the exploration summary. Approval gate: present the sub-issues, ask the user which to implement (plan mode stops here).
-4. **Implement** per task: `implementer` with issue, branch, tech-stack JSON and exploration summary. Keep its ≤ 150-word report; discard everything else. On a failed test suite, re-run once with the error line; then stop and ask.
+4. **Implement** per task: `implementer` with issue, branch, tech-stack JSON, exploration summary and the report path `.agents/<issue>/task-<n>-report.md`. Keep only its ≤ 15-line reply and act on `Status`: `DONE` → review; `DONE_WITH_CONCERNS` → concerns about correctness or scope go back to the implementer first; `NEEDS_CONTEXT` → re-dispatch with the missing context; `BLOCKED` → re-dispatch on a stronger model or split the task. Never retry unchanged; a red suite twice → stop and ask.
 5. **Review**: `review-fanout` skill (it fans out to `reviewer`). `CHANGES_REQUESTED` → one more `implementer` round with the blocking findings; still blocked → ask the user.
 6. **Pull request**: `github-pull-request` skill into the integration branch; never merge.
 

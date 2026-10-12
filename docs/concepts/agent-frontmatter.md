@@ -53,6 +53,9 @@ metadata:
 - ≤ 40 lines (enforced by `src/generators/agent-size-validator.test.ts`). Agents are contracts,
   not manuals: who calls it, what comes in, what goes out, and the rules that keep the output small.
 - State the **return contract** explicitly (word limit, JSON shape). The caller keeps only that.
+  The `implementer` writes its full report to `.agents/<issue>/task-<n>-report.md` and replies in
+  ≤ 15 lines: `Status: DONE|DONE_WITH_CONCERNS|BLOCKED|NEEDS_CONTEXT`, commits, one test line,
+  concerns, report path. Detail lives in the file, not in the caller's context.
 - Name the client mechanisms where they differ (Claude `Agent`, OpenCode `task`, Copilot
   `runSubagent`) and the inline fallback for clients without subagents.
 - Delegate by agent name; never duplicate a skill's body in an agent.
