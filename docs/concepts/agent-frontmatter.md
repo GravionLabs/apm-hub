@@ -53,6 +53,19 @@ metadata:
       task: deny
 ```
 
+## Current model ids
+
+Copy ids from this table, not from another agent. The single allowed list lives in
+`src/generators/agent-models.ts` and `src/generators/agent-model-validator.test.ts` fails on any other id.
+
+| Tier | `metadata.claude.model` | `metadata.opencode.model` |
+|:--|:--|:--|
+| haiku | `haiku` | `anthropic/claude-haiku-5-5` |
+| sonnet | `sonnet` | `anthropic/claude-sonnet-5-5` |
+| opus | `opus` | not listed yet: add the id to the table and to `agent-models.ts` when an agent uses it |
+
+`inherit` is also valid for Claude.
+
 ## Model: frontmatter versus dispatch
 
 `metadata.claude.model` / `metadata.opencode.model` is the default for the role. An `Agent` call
