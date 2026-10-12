@@ -91,10 +91,9 @@ A forked skill:
 
 ```yaml
 ---
-name: detect-techstack
-description: Detect the project tech stack and return a JSON report. Use before loading language skills.
+name: github-pull-request
+description: Create a GitHub PR from the current branch and linked issue via gh.
 context: fork
-agent: explorer
 ---
 ```
 

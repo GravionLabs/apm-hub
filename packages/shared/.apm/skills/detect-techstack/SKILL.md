@@ -1,13 +1,11 @@
 ---
 name: detect-techstack
 description: 'Detect the project tech stack and return a JSON report with its language skills. Use before loading language skills.'
-context: fork
-agent: reviewer
 ---
 
 Run the detection script from the project root and hand the JSON to the caller; load `<lang>-test` and `<lang>-implementation` from its `test` and `implementation` lists.
 
-Return contract: the JSON object below and nothing else — no file listings, no reasoning. On Claude Code this skill runs in a forked `reviewer` context (it has the shell the script needs; `explorer` has none), so the JSON is all the caller receives.
+Return contract: the JSON object below and nothing else — no file listings, no reasoning. The skill runs in the caller's context (the script needs a shell, which forked `explorer`/`reviewer` agents do not reliably have).
 
 Paths to `scripts/` are relative to this skill's directory.
 
