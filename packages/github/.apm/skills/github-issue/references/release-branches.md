@@ -12,8 +12,10 @@ builds rare, day-to-day work never targets `main` directly.
 The release PR to `main` is created and refreshed by the `release-pr` workflow on every push to the
 release branch (GravionLabs/ci `versioning/release-pr`); the owner only merges it.
 
-One release branch per Feature (or milestone). Its name is the version it releases: GitVersion reads
-`release/1.4` as `1.4.0`, so after the merge `main` is `1.4.0`.
+One release branch per Feature (or milestone), named `release/<x.y>` after the version it releases.
+GitVersion ignores branch names: the first commit on the branch carries `+semver: minor` (or `major`),
+which makes the merge into `main` tag `v<x.y>.0`; without the keyword a merge only bumps the patch
+(verified with GitVersion 6.8.2). Patch releases are hotfixes from `main`.
 
 ## Resolve the integration branch `<base>`
 

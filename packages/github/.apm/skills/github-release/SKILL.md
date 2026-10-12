@@ -15,11 +15,15 @@ Owns the lifecycle of `release/<x.y>` branches; the model and the base-branch re
 
 ### 1. cut
 
-1. `git fetch origin --tags`. Version: the argument if given; otherwise the next minor after the
-   highest `v<x.y.z>` tag (`git tag --list 'v*' | sort -V | tail -1`), `0.1` when there is no tag.
-   If `release/<x.y>` already exists on origin → stop and report it.
+1. `git fetch origin --tags`. Mode `cut [minor|major|<x.y>] [--feature <nr>]`, default `minor`. Base =
+   highest `v<X.Y.Z>` tag on origin (`git ls-remote --tags origin 'v*' | sed 's|.*refs/tags/v||' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1`, `0.0.0` when none).
+   `minor` → `<X>.<Y+1>`, `major` → `<X+1>.0`; an explicit `<x.y>` must be greater than `<X>.<Y>`.
+   `release/<x.y>` on origin or tag `v<x.y>.0` already exists → stop and report it.
 2. `<default>` = `git symbolic-ref refs/remotes/origin/HEAD --short` minus `origin/`, fallback `main`.
-   `git checkout -b release/<x.y> origin/<default>; git push -u origin release/<x.y>`
+   `git checkout -b release/<x.y> origin/<default>`, then the first commit
+   `git commit --allow-empty -m "chore: start release <x.y>" -m "+semver: minor"` (`+semver: major` for a
+   major bump), `git push -u origin release/<x.y>`. GitVersion ignores branch names: this keyword makes the
+   merge into `<default>` tag `v<x.y>.0`; without it the merge only bumps the patch.
 3. If `--feature <nr>` → insert `Release branch: release/<x.y>` as the second line of that issue's
    body (`gh issue view <nr> --json body`, `gh issue edit <nr> --body-file -`); keep the `Parent …`
    line first. Child issues inherit it through the resolver.
