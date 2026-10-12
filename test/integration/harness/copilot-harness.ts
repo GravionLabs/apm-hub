@@ -39,6 +39,7 @@ export async function createTestSession(options?: {
   const client = await createTestClient({ skillsDir: options?.skillsDir });
   const session = await client.createSession({
     onPermissionRequest: approveAll,
+    // Deliberately pinned cheap test model; bump by hand when it is retired.
     model: options?.model ?? 'gpt-4.1-nano',
     ...(options?.agentPrompt
       ? {

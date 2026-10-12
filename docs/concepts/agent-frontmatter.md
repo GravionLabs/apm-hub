@@ -45,7 +45,7 @@ metadata:
     skills: [implementation]           # optional: skills preloaded into the agent
   opencode:
     mode: subagent                     # subagent | primary
-    model: anthropic/claude-haiku-4-5  # provider/model id
+    model: anthropic/claude-haiku-5-5  # provider/model id
     permission:                        # OpenCode permission map; bash accepts glob rules
       read: allow
       edit: deny
@@ -57,7 +57,8 @@ metadata:
 
 `metadata.claude.model` / `metadata.opencode.model` is the default for the role. An `Agent` call
 without `model` inherits the caller's model, usually the most expensive one, so the orchestrator
-names the model on every dispatch (see its "Model per dispatch" rule) and escalates one tier in
+names the model on every dispatch (see its "Model per dispatch" rule; the `implementer` defaults to
+`sonnet`, and the orchestrator passes `inherit` or stronger for integration and design tasks) and escalates one tier in
 the fix loop instead of retrying the same model.
 
 ## Body rules
