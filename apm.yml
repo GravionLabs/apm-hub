@@ -1,7 +1,7 @@
 name: apm-hub
 version: 1.0.24
 description: 'Marketplace for GravionLabs apm-hub skill packages. Use individual packages
-  (e.g. GravionLabs/apm-hub/packages/ng) in your projects, or all@apm-hub for every package.'
+  (e.g. GravionLabs/apm-hub/packages/ng) in your projects, or core@apm-hub globally and all@apm-hub for every package.'
 author:
   name: Gravion
 license: MIT
@@ -11,6 +11,9 @@ marketplace:
     name: Gravion
     url: https://github.com/GravionLabs
   packages:
+  - name: core
+    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills and the dev-workflow agents. Stack packages are installed per project."
+    source: ./packages/core
   - name: all
     description: "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks."
     source: ./packages/all
@@ -21,7 +24,7 @@ marketplace:
     description: "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files."
     source: ./packages/apm-tooling
   - name: development-workflow
-    description: "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues. Depends on github, shared and all language packages."
+    description: "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project."
     source: ./packages/development-workflow
   - name: dotnet
     description: "C#/.NET skills: implementation conventions and review rules, NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, MCP server generation."

@@ -26,7 +26,7 @@ apm.yml                               # marketplace: lists all packages
 | Package | Skills |
 |:--|:--|
 | `shared` | `implementation` (every change has tests; dispatches to `<lang>-implementation`), `detect-techstack` (JSON stack report), `code-review` (severity-rated review using each language's `## Review rules`) |
-| `development-workflow` | `orch-pipeline` (plan → TDD → review fan-out → commit, `/orch`), `review-fanout`, `verify-project`, `issue-planning`. Depends on `github`, `shared` and all language packages. |
+| `development-workflow` | `orch-pipeline` (plan → TDD → review fan-out → commit, `/orch`), `review-fanout`, `verify-project`, `issue-planning`. Depends on `github` and `shared`; stack packages are installed per project. |
 | `github` | `github-issue` (routing skill for the Epic→Feature→PBI→Task hierarchy; references for standalone, batch, sub-issues, conventional commits, release branches), `github-pull-request` (targets the release branch, not `main`), `github-release` (cut `release/<x.y>`, finish with the release PR into `main`; owns the git-cliff changelog, `references/cliff-setup.md`) |
 | `dotnet` | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator` |
 | `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
@@ -34,6 +34,7 @@ apm.yml                               # marketplace: lists all packages
 | `ng` | `ng-implementation` (incl. `references/component.md`, `references/signal-store.md`), `ng-test`, `ng-create-project`, `ng-ag-grid-developer` |
 | `agents` | `dev-workflow` (orchestrator, primary agent: plan → explore → implement per task → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (one task, `implementation` preloaded, report file + ≤ 15-line status reply) |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not part of `all`) |
+| `core` | meta-package for the global install: `github`, `development-workflow`, `shared`, `agents` (no stack skills) |
 | `all` | meta-package: every package above except `apm-tooling` |
 
 Every language package provides `<lang>-implementation` (conventions + `## Review rules`) and `<lang>-test`. `detect-techstack` returns their names so `implementation`, `code-review` and `verify-project` can dispatch.

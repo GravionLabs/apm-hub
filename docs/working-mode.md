@@ -55,8 +55,11 @@ skills read everything they need from `git` and `gh`; they never depend on the s
 - Gating is the smallest lever: the whole list of 34 descriptions costs ≈ 1,480 tokens after the
   200-character limit, gating removes ≈ 550 of them, and the system prompt is prompt-cached.
   Per-project package installs remove more (≈ 10 skills in a single-stack repository).
-- Install only the stack packages a project uses (`apm.yml` per project, `all@apm-hub` only on
-  machines that mix stacks).
+- Two-level install: globally `apm install GravionLabs/apm-hub/packages/core -g` (workflow skills
+  and agents, no stack skills); per project an `apm.yml` with the stack package (`ng`, `ts`, `py`,
+  `dotnet`). `all@apm-hub` only on machines that mix stacks. Deployed skill folders are git-ignored,
+  so a fresh clone runs `apm install` first. A workflow skill that needs a stack skill which is not
+  installed says so once ("install `<stack>@apm-hub`") and continues with the language-agnostic rules.
 - Weekly: `/skill-doctor` in Claude Code and `agentlens skills --since <date>`; a skill unused for
   a month is a candidate for gating or removal.
 

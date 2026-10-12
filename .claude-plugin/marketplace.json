@@ -6,6 +6,12 @@
   },
   "plugins": [
     {
+      "name": "core",
+      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills and the dev-workflow agents. Stack packages are installed per project.",
+      "version": "1.0.24",
+      "source": "./packages/core"
+    },
+    {
       "name": "all",
       "description": "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks.",
       "version": "1.0.24",
@@ -25,7 +31,7 @@
     },
     {
       "name": "development-workflow",
-      "description": "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues. Depends on github, shared and all language packages.",
+      "description": "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project.",
       "version": "1.0.24",
       "source": "./packages/development-workflow"
     },
