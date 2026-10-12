@@ -11,7 +11,7 @@ read different frontmatter, so one source file carries a platform-neutral top le
 Skills are the primary artifact ([skill-frontmatter.md](skill-frontmatter.md)). An agent is only
 justified when a skill cannot express it: a **model** per role (haiku for exploration), a **tool
 set** the host enforces (read-only reviewer), an **output contract** that keeps a caller's context
-small, or a **primary-agent entry point** (`claude --agent dev-workflow`). Procedural workflows
+small, or a **primary-agent entry point** (`claude --agent lead`). Procedural workflows
 stay skills.
 
 ## Top level (Copilot style, the primary format)

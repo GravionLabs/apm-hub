@@ -8,17 +8,17 @@ this hub assume it.
 
 ## 1. Default: the orchestrator
 
-Start issue work as the `dev-workflow` agent. It runs as the primary agent, keeps at most 300 words
+Start issue work as the `lead` agent. It runs as the primary agent, keeps at most 300 words
 per phase in its own context and hands the rest to `explorer`, `implementer` and `reviewer`.
 
 ```powershell
-claude --agent dev-workflow "full 123"        # plan → implement → review → PR
-claude --agent dev-workflow "plan 123"        # sub-issues only, stops at the approval gate
-copilot --agent dev-workflow                  # GitHub Copilot CLI, then type: full 123
-opencode --agent dev-workflow                 # OpenCode
+claude --agent lead "full 123"        # plan → implement → review → PR
+claude --agent lead "plan 123"        # sub-issues only, stops at the approval gate
+copilot --agent lead                  # GitHub Copilot CLI, then type: full 123
+opencode --agent lead                 # OpenCode
 ```
 
-Shell aliases save typing: `alias dw='claude --agent dev-workflow'`, `alias dwp='claude --agent dev-workflow plan'`.
+Shell aliases save typing: `alias lead='claude --agent lead'`, `alias leadp='claude --agent lead plan'`.
 
 ## 2. Without the orchestrator: one session per issue
 
@@ -36,7 +36,7 @@ Shell aliases save typing: `alias dw='claude --agent dev-workflow'`, `alias dwp=
 - Reviews read a package file (`.agents/<issue>/review-<n>.diff`: commit list, stat, diff with context)
   written by `review-fanout`; the diff is never pasted into a prompt, so it does not repeat per dimension.
 - `/compact <focus>` is a brake, not a habit: it loses detail you may need. Prefer `/clear` plus a
-  short hand-off note in the issue. A `dev-workflow` run keeps its own hand-off note: the ledger
+  short hand-off note in the issue. A `lead` run keeps its own hand-off note: the ledger
   `.agents/<issue>/progress.md` (phases done, fix rounds, rulings); a new session resumes from it.
   On Claude Code the `claude-hooks` package adds a `Subagent <name>: stopped — <first line>` line for
   every finished subagent (`SubagentStop` hook, no-op without a ledger).

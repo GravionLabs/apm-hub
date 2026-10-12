@@ -12,16 +12,16 @@ marketplace:
     url: https://github.com/GravionLabs
   packages:
   - name: core
-    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the dev-workflow agents and the Claude Code hooks. Stack packages are installed per project."
+    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the lead agent and its subagents and the Claude Code hooks. Stack packages are installed per project."
     source: ./packages/core
   - name: all
     description: "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks."
     source: ./packages/all
   - name: agents
-    description: "Agents for a lean issue workflow: dev-workflow orchestrator (primary agent, keeps only phase summaries in context) and the explorer, reviewer and implementer subagents it delegates to."
+    description: "Agents for a lean issue workflow: lead orchestrator (primary agent, keeps only phase summaries in context) and the explorer, reviewer and implementer subagents it delegates to."
     source: ./packages/agents
   - name: claude-hooks
-    description: "Claude Code hooks for the dev-workflow agents: a SubagentStop hook appends one line per finished subagent to the issue ledger. Claude only; other harnesses skip it."
+    description: "Claude Code hooks for the lead agent and its subagents: a SubagentStop hook appends one line per finished subagent to the issue ledger. Claude only; other harnesses skip it."
     source: ./packages/claude-hooks
   - name: apm-tooling
     description: "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files."
