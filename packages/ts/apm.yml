@@ -1,5 +1,5 @@
 name: ts
-version: 1.0.23
+version: 1.0.24
 description: TypeScript and Node.js skills. Implementation conventions and review rules, Vitest testing, project scaffolding with strict tsconfig and ESM, ESLint/Prettier/Husky setup, pnpm migration, and MCP server generation.
 author:
   name: Gravion
