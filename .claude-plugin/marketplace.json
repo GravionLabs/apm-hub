@@ -25,7 +25,7 @@
     },
     {
       "name": "claude-hooks",
-      "description": "Claude Code hooks for the lead agent and its subagents: a SubagentStop hook appends one line per finished subagent to the issue ledger. Claude only; other harnesses skip it.",
+      "description": "Claude Code hooks: SubagentStop appends a ledger line per finished subagent; UserPromptSubmit warns when the session context is large. Claude only; other harnesses skip them.",
       "version": "1.0.24",
       "source": "./packages/claude-hooks"
     },
