@@ -18,7 +18,6 @@ The official `angular-developer` skill (dependency `angular/skills`) covers the 
 ## Conventions
 
 - Standalone components only, no NgModules; do not add `standalone: true` (it is the default)
-- **Test runner**: Vitest for v21+, Jest for v20 and earlier (details in `ng-test`)
 - Forms: Reactive Forms by default; Signal Forms (`@angular/forms/signals`) only when requested or already used in the codebase
 - Subscriptions cleaned up via `DestroyRef` / `takeUntilDestroyed`
 - Upgrades: one major at a time with `ng update`; `ng generate @angular/core:control-flow` migrates legacy templates
@@ -47,6 +46,7 @@ Load `ng-test` for TestBed setup, signal testing, mocking and async patterns.
 - Subscriptions cleaned up via `DestroyRef` / `takeUntilDestroyed`
 - No complex template expressions; ARIA labels and `alt` text on interactive elements and images
 - Library code exported only through `public-api.ts`
+- New or changed behavior has tests per `ng-test`
 
 ## Scaffolding
 
