@@ -11,7 +11,7 @@ read different frontmatter, so one source file carries a platform-neutral top le
 Skills are the primary artifact ([skill-frontmatter.md](skill-frontmatter.md)). An agent is only
 justified when a skill cannot express it: a **model** per role (haiku for exploration), a **tool
 set** the host enforces (read-only reviewer), an **output contract** that keeps a caller's context
-small, or a **primary-agent entry point** (`claude --agent lead`). Procedural workflows
+small, or a **primary-agent entry point** (`claude --agent orchestrator`). Procedural workflows
 stay skills.
 
 ## Top level (Copilot style, the primary format)
@@ -25,7 +25,7 @@ stay skills.
 | `disable-model-invocation` | no | `true` keeps other agents from dispatching this agent as a subagent (Copilot/VS Code); `apmw` strips it for the other platforms |
 | `metadata`       | yes      | `claude:` and `opencode:` blocks, see below                                            |
 
-A primary agent (`lead`) must never be dispatched as a subagent: a subagent has no question tool, so its
+A primary agent (`orchestrator`) must never be dispatched as a subagent: a subagent has no question tool, so its
 approval gates cannot hold. Copilot is protected by `disable-model-invocation`, OpenCode by `mode: primary`,
 Claude Code by the rule in the agent body.
 

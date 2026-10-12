@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SubagentStop hook: append one line per finished subagent to the issue ledger
-# (.agents/<issue>/progress.md written by the lead agent). Claude Code only.
+# (.agents/<issue>/progress.md written by the orchestrator agent). Claude Code only.
 # Never blocks: every path exits 0. Writes nothing when no ledger exists.
 
 payload="$(cat 2>/dev/null || true)"

@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "core",
-      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the lead agent and its subagents and the Claude Code hooks. Stack packages are installed per project.",
+      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the orchestrator agent and its subagents and the Claude Code hooks. Stack packages are installed per project.",
       "version": "1.0.24",
       "source": "./packages/core"
     },
@@ -19,7 +19,7 @@
     },
     {
       "name": "agents",
-      "description": "Agents for a lean issue workflow: lead orchestrator (primary agent, keeps only phase summaries in context) and the explorer, reviewer and implementer subagents it delegates to.",
+      "description": "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the explorer, reviewer and implementer subagents it delegates to.",
       "version": "1.0.24",
       "source": "./packages/agents"
     },

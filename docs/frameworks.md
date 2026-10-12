@@ -27,10 +27,10 @@ approximate.
 
 - No GitHub issue, sub-issue or release-branch model. Its unit of work is a spec file plus a plan
   file under `docs/superpowers/`; this hub's unit is the Epic → Feature → PBI → Task issue and a PR
-  per PBI into `release/<x.y>`. Adopting it means rebuilding `lead` on top of it.
+  per PBI into `release/<x.y>`. Adopting it means rebuilding `orchestrator` on top of it.
 - No stack skills. TDD is generic; `<lang>-implementation` and `<lang>-test` stay necessary.
 - A SessionStart hook injects `using-superpowers` into every session and demands a skill check
-  before any action, including clarifying questions. That collides with `lead` step 0 and
+  before any action, including clarifying questions. That collides with `orchestrator` step 0 and
   with gated skills, and two mandatory process layers produce two review seats and two planning
   artifacts per change.
 - Cost: its own strict-cost spec reports ~13 USD and ~150 controller turns per plan run on Opus and
@@ -44,8 +44,8 @@ approximate.
 | :-- | :-- | :-- |
 | Report file plus a status contract (`DONE`, `DONE_WITH_CONCERNS`, `BLOCKED`, `NEEDS_CONTEXT`) | `implementer`, #114 | `implementer-prompt.md` |
 | Review package as a file, `BASE` recorded before the dispatch | `review-fanout`, `reviewer`, #115 | `scripts/review-package`, `SKILL.md` |
-| Per-issue ledger with `Ruling:` lines, resume after compaction | `lead`, #116, hook #121 | `scripts/sdd-workspace`, `SKILL.md` |
-| Explicit model per dispatch, fix loop that escalates one tier | `lead`, #117 | `SKILL.md` "Model Selection" |
+| Per-issue ledger with `Ruling:` lines, resume after compaction | `orchestrator`, #116, hook #121 | `scripts/sdd-workspace`, `SKILL.md` |
+| Explicit model per dispatch, fix loop that escalates one tier | `orchestrator`, #117 | `SKILL.md` "Model Selection" |
 
 `brainstorming` and `systematic-debugging` have no counterpart here. They could be imported as
 standalone skills without the hook; that is an open owner decision, not yet an issue.
