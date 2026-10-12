@@ -16,8 +16,8 @@ describe('generateAgentList', () => {
     const agentsDir = path.join(packagesDir, 'agents', '.apm', 'agents');
     fs.mkdirSync(agentsDir, { recursive: true });
     fs.writeFileSync(
-      path.join(agentsDir, 'dev-workflow.agent.md'),
-      '---\nname: dev-workflow\ndescription: Issue orchestrator.\nuser-invocable: true\n---\nBody'
+      path.join(agentsDir, 'lead.agent.md'),
+      '---\nname: lead\ndescription: Issue orchestrator.\nuser-invocable: true\n---\nBody'
     );
     fs.writeFileSync(
       path.join(agentsDir, 'explorer.agent.md'),
@@ -40,7 +40,7 @@ describe('generateAgentList', () => {
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('# Agent List');
     expect(content).toContain('## Agents');
-    expect(content).toContain('| [`dev-workflow`](../packages/agents/.apm/agents/dev-workflow.agent.md) | Issue orchestrator. |');
+    expect(content).toContain('| [`lead`](../packages/agents/.apm/agents/lead.agent.md) | Issue orchestrator. |');
     expect(content).toContain('Read-only exploration. *(subagent)*');
     expect(content).not.toContain('## Ts');
     expect(content).not.toContain('notes');

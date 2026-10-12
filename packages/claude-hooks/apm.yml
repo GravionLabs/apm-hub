@@ -1,6 +1,6 @@
 name: claude-hooks
 version: 1.0.24
-description: "Claude Code hooks for the dev-workflow agents: a SubagentStop hook appends one line per finished subagent to the issue ledger. Claude only; other harnesses skip it."
+description: "Claude Code hooks for the lead agent and its subagents: a SubagentStop hook appends one line per finished subagent to the issue ledger. Claude only; other harnesses skip it."
 author:
   name: Gravion
 license: MIT
