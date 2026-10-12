@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ./subagent-ledger.sh", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}
