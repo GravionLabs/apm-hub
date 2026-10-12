@@ -30,6 +30,9 @@ Shell aliases save typing: `alias lead='claude --agent lead'`, `alias leadp='cla
 
 ## 3. During a session
 
+- On Claude Code the `claude-hooks` package warns on the next prompt once the context passes 150k tokens
+  (`CONTEXT_WARN_TOKENS`, repeated after another `CONTEXT_WARN_STEP`, default 100k): finish the step,
+  note the hand-off in the ledger, `/clear`.
 - `/context` before a long step shows what fills the window; the skill list and large tool outputs
   are the usual culprits.
 - Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
