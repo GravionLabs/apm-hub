@@ -5,6 +5,23 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.0.0] — 2026-10-12
+
+### Documentation
+- One session per issue and headless implement runs (#137)
+
+
+### Features
+- **github**: Cut names the release branch after the real version (#140)
+- **ci**: Keep the release PR open and current (#141) (#145)
+- **claude-hooks**: Context-size warning hook (#134)
+- **agents**: Subagent context rules for all harnesses, lead never as a subagent (#135)
+
+
+### Refactoring
+- **agents**: Rename lead to orchestrator (#150)
+
+
 ## [1.0.24] — 2026-10-12
 
 ### Bug Fixes
@@ -21,6 +38,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Superpowers decision, borrow not adopt (#119)
 - Rename remaining dev-workflow mentions in frameworks.md (#118)
 - Update CHANGELOG.md for v1.4.0
+- Update CHANGELOG.md for v1.0.24 [skip ci]
 
 
 ### Features
