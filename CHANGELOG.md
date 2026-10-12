@@ -9,6 +9,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - One session per issue and headless implement runs (#137)
+- Update CHANGELOG.md for v2.0.0 [skip ci]
 
 
 ### Features
