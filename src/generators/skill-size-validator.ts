@@ -58,7 +58,7 @@ export function findGithubSkillFiles(githubSkillsDir: string): string[] {
 }
 
 /** Frontmatter lines (between the first two `---` fences, CRLF-tolerant); empty when there is none. */
-function frontmatterLines(content: string): string[] {
+export function frontmatterLines(content: string): string[] {
   const lines = content.split(/\r?\n/);
   if (lines[0].trimEnd() !== '---') return [];
   const end = lines.findIndex((l, i) => i > 0 && l.trimEnd() === '---');
