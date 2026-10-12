@@ -33,6 +33,8 @@ Shell aliases save typing: `alias dw='claude --agent dev-workflow'`, `alias dwp=
 - `/context` before a long step shows what fills the window; the skill list and large tool outputs
   are the usual culprits.
 - Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
+- Reviews read a package file (`.agents/<issue>/review-<n>.diff`: commit list, stat, diff with context)
+  written by `review-fanout`; the diff is never pasted into a prompt, so it does not repeat per dimension.
 - `/compact <focus>` is a brake, not a habit: it loses detail you may need. Prefer `/clear` plus a
   short hand-off note in the issue.
 - OpenCode: `compaction: { auto: true, prune: true }` in `opencode.json` drops old tool output.
