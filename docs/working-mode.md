@@ -20,6 +20,26 @@ opencode --agent lead                 # OpenCode
 
 Shell aliases save typing: `alias lead='claude --agent lead'`, `alias leadp='claude --agent lead plan'`.
 
+### One session per issue, implement headless
+
+The plan gate needs you, so plan interactively; an already planned issue runs headless, each issue in
+its own session with a fresh context. `lead` ends every run with its ledger, so the next issue never
+inherits the previous one.
+
+```powershell
+claude --agent lead "plan 123"                  # interactive: sub-issues, approval gate
+claude --agent lead -p "implement 123"          # headless: explore → implement → review → PR
+copilot --agent lead -p "implement 123"         # GitHub Copilot CLI
+opencode run --agent lead "implement 123"       # OpenCode
+for n in 101 102 103; do claude --agent lead -p "implement $n"; done
+```
+
+A headless run cannot answer permission prompts: allow `git`, `gh`, the build and test commands and
+edits for the project beforehand (Claude: `permissions.allow` in the project settings). It cannot answer a
+gate either: at a blocked review or a twice-red suite it appends `Gate: <question>` to
+`.agents/<issue>/progress.md`, reports it and stops. Answer in an interactive `lead` session, which
+resumes from the ledger.
+
 ## 2. Without the orchestrator: one session per issue
 
 - `claude "/github-issue 123"` — a fresh session per issue; `/clear` before the next one.
@@ -41,6 +61,15 @@ Shell aliases save typing: `alias lead='claude --agent lead'`, `alias leadp='cla
   On Claude Code the `claude-hooks` package adds a `Subagent <name>: stopped — <first line>` line for
   every finished subagent (`SubagentStop` hook, no-op without a ledger).
 - OpenCode: `compaction: { auto: true, prune: true }` in `opencode.json` drops old tool output.
+
+### Parallel and long sessions
+
+- All sessions share one limit. `/usage` shows what drove it: the share of usage above 150k context,
+  subagent-heavy sessions, 4+ sessions in parallel and sessions older than 8 hours.
+- Queue instead of running four or more sessions at once; one issue per session, one session at a time,
+  unless the issues are independent and each is small.
+- A session older than 8 hours needs a reason (a watch, a loop). Otherwise write the hand-off into the
+  ledger or a memory note and start a new session.
 
 ## 4. PR and release in a fresh session
 
