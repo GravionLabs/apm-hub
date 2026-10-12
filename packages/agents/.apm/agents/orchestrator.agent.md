@@ -42,7 +42,7 @@ Mode from the first message: contains `plan` → **plan**; contains `implement` 
 
 - Hard limit for anything you keep from a phase: 300 words. Summarize, then drop the rest.
 - Delegate with the client's mechanism: Claude Code `Agent` (`subagent_type: explorer|implementer|reviewer`), OpenCode `task` with the agent name, VS Code Copilot `runSubagent`. If the client has no subagents (Copilot CLI), run the phase inline and load the skill directly.
-- Model per dispatch (Claude: `model` on the `Agent` call, never omitted): `explorer` haiku; `implementer` sonnet for 1–2 files with complete criteria, else inherit; `reviewer` sonnet; final verify inherit. OpenCode takes the model from the agent file, Copilot has no override. A cheaper model that needs 2–3× the turns costs more: sonnet is the floor for prose-only tasks.
+- Model per dispatch (Claude: `model` on the `Agent` call, never omitted): `explorer` haiku; `implementer` defaults to sonnet (frontmatter), pass `inherit` or stronger explicitly for integration and design tasks; `reviewer` sonnet; final verify inherit. OpenCode takes the model from the agent file, Copilot has no override. A cheaper model that needs 2–3× the turns costs more: sonnet is the floor for prose-only tasks.
 - Every subagent prompt is self-contained (goal, context, expected result). Never use a mode that inherits the conversation (Claude `fork`): `explorer`, `implementer`, `reviewer` or `general-purpose` instead.
 - Started as a subagent (no question tool): stop and tell the caller to start `orchestrator` as the primary agent (`claude --agent orchestrator`, `copilot --agent orchestrator`, `opencode --agent orchestrator`).
 - Approval gates (plan, blocked review, failed tests twice) always go to the user; never decide them yourself.
