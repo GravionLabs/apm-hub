@@ -30,13 +30,14 @@ Owns the lifecycle of `release/<x.y>` branches; the model and the base-branch re
    `release/<x.y>` on origin (resolver step 4 in `release-branches.md`). `git checkout release/<x.y>; git pull --ff-only`.
 5. Open work must be merged first: `gh pr list --base release/<x.y> --state open` must be empty;
    otherwise stop and list the PRs.
-6. Open the PR with `github-pull-request` (`base_branch: main`, `auto_merge: false`, title
-   `release: <x.y>`, body: the PRs merged into the release branch
-   (`gh pr list --base release/<x.y> --state merged --json number,title`) plus `Closes #<nr>` for the
-   Feature if recorded). Do not touch `CHANGELOG.md`: the release job on `main` regenerates it with
-   git-cliff, tags, publishes the GitHub Release and closes every issue the release's PRs reference
-   with `Closes #n` (GravionLabs/ci `gh-release`).
-7. Report the PR URL; the owner merges it with a merge commit (`gh pr merge --merge`), never squash.
+6. The release PR is created and kept current by CI (`release-pr.yml`, GravionLabs/ci
+   `versioning/release-pr`): `gh pr list --base main --head release/<x.y> --state open --json number,url`.
+   None found (no workflow in this repo, or it has not run) → open it with `github-pull-request`
+   (`base_branch: main`, `auto_merge: false`, title `release: <x.y>`, body: the PRs merged into the
+   release branch plus `Closes #<nr>` for the Feature if recorded). Do not touch `CHANGELOG.md`: the
+   release job on `main` regenerates it with git-cliff, tags, publishes the GitHub Release and closes
+   every issue the release's PRs reference with `Closes #n` (GravionLabs/ci `gh-release`).
+7. Report the PR URL and `gh pr merge <nr> --merge`; the owner merges with a merge commit, never squash.
 
 ## Gotchas
 

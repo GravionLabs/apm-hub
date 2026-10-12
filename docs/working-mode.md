@@ -46,7 +46,7 @@ Shell aliases save typing: `alias lead='claude --agent lead'`, `alias leadp='cla
 
 Commit and push, then `/clear`, then `/github-pull-request`. `/github-release finish` likewise. Both
 skills read everything they need from `git` and `gh`; they never depend on the session history.
-After the release PR is merged, CI writes the changelog, tags, publishes the release and closes the
+The release PR itself is opened and refreshed by CI on every push to `release/<x.y>`. After it is merged, CI writes the changelog, tags, publishes the release and closes the
 issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
 
 ## 5. Keep the skill list short
