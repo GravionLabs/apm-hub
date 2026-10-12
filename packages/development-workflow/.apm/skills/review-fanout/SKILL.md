@@ -1,6 +1,6 @@
 ---
 name: review-fanout
-description: 'Parallel multi-dimension review of a diff with dedupe and adversarial verification; returns APPROVE or CHANGES_REQUESTED. Use for "review my changes" or "review PR #N".'
+description: 'Parallel multi-dimension review of a diff; returns APPROVE or CHANGES_REQUESTED. Use for "review my changes" or "review PR #N".'
 ---
 
 Read-only: never edit or commit.

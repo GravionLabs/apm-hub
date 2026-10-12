@@ -1,6 +1,6 @@
 ---
 name: ng-implementation
-description: 'Angular 20+ implementation and review rules (standalone, signals, DI, forms, libraries) extending `implementation`. Use for Angular code or architecture questions.'
+description: 'Angular 20+ implementation and review rules (standalone, signals, DI, forms). Use for Angular code questions.'
 license: MIT
 ---
 

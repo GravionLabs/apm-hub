@@ -1,6 +1,6 @@
 ---
 name: github-pull-request
-description: 'Create a GitHub PR from the current branch and its linked issue with a conventional title and structured body via gh. Use for "create a PR" or to finish a committed branch.'
+description: 'Create a GitHub PR from the current branch and linked issue via gh. Use for "create a PR" or to finish a branch.'
 context: fork
 ---
 

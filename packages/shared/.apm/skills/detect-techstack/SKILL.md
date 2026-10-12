@@ -1,6 +1,6 @@
 ---
 name: detect-techstack
-description: 'Detect the project tech stack and return a JSON report (languages, package manager, <lang>-test and <lang>-implementation skills). Use before loading language skills.'
+description: 'Detect the project tech stack and return a JSON report with its language skills. Use before loading language skills.'
 context: fork
 agent: reviewer
 ---

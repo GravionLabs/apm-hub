@@ -1,6 +1,6 @@
 ---
 name: ng-ag-grid-developer
-description: 'Build or modify Angular components with AG Grid Enterprise (setup, ag-mcp, columns, row models, editing, grouping, export, theming). Use when a task mentions ag-grid.'
+description: 'Build or modify Angular components with AG Grid Enterprise. Use when a task mentions ag-grid.'
 license: MIT
 ---
 
