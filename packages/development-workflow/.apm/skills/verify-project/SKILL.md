@@ -11,7 +11,7 @@ Phase: verify. Run checks on project. On Claude Code this skill runs in a forked
 
 1. Load `detect-techstack`; use `packageManager` for the build command and `test` for the test skills
 2. Run the build with the detected package manager
-3. For each skill in `test`, load it and run its test command
+3. For each skill in `test`, load it and run its test command; skill not installed → use the package manager's `test` script and put "install `<stack>@apm-hub`" in `summary`
 4. Run lint/format per project conventions
 
 ## Output (JSON only)

@@ -194,7 +194,7 @@ jobs:
           # Force-add gitignored aggregate docs
           git add -f docs/instruction-list.md docs/skill-list.md docs/template-list.md
           # Commit APM packages output (packages/ is gitignored for apm_modules/ and .github/ only)
-          git add packages/*/apm.yml packages/all/
+          git add packages/*/apm.yml packages/all/ packages/core/
           # Add .apm directories (use find to handle glob expansion reliably)
           find packages -maxdepth 2 -name '.apm' -type d -exec git add {} + 2>/dev/null || true
           # Commit marketplace definition

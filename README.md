@@ -54,7 +54,12 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    apm install dotnet@apm-hub
    ```
 
-   Or install **all packages** at once:
+   Globally, install the workflow skills and agents without any stack skills:
+   ```bash
+   apm install GravionLabs/apm-hub/packages/core -g
+   ```
+
+   Or install **all packages** at once (machines that mix stacks):
    ```bash
    apm install all@apm-hub
    ```
@@ -124,7 +129,7 @@ three subagents each have their own model and tool set:
 | `implementer`  | one task per run, `implementation` skill preloaded, commits, ≤ 150-word report |            |                                                                                                |
 
 ```powershell
-apm install all@apm-hub -g                 # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents
+apm install GravionLabs/apm-hub/packages/core -g   # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents
 apmw sanitize -g -p claude; apmw sanitize -g -p opencode; apmw sanitize -g -p copilot   # per-platform frontmatter (required for OpenCode)
 claude --agent dev-workflow "full 123"     # Copilot: copilot --agent dev-workflow · OpenCode: opencode --agent dev-workflow
 ```
