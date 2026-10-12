@@ -53,6 +53,20 @@ metadata:
       task: deny
 ```
 
+### Allowed model ids
+
+Copy the OpenCode id from this table, never from another agent file. The single source in code is
+`src/generators/agent-model-validator.ts`; `pnpm test` fails when an agent uses an id that is not listed there.
+
+| Tier | `metadata.claude.model` | `metadata.opencode.model` |
+|:--|:--|:--|
+| haiku | `haiku` | `anthropic/claude-haiku-5-5` |
+| sonnet | `sonnet` | `anthropic/claude-sonnet-5-5` |
+| opus | `opus` | `anthropic/claude-opus-5-5` |
+| caller's model | `inherit` | (omit) |
+
+To bump a model, edit `OPENCODE_MODEL_BY_TIER`, this table and the agent files.
+
 ## Model: frontmatter versus dispatch
 
 `metadata.claude.model` / `metadata.opencode.model` is the default for the role. An `Agent` call

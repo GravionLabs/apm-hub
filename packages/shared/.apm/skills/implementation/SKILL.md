@@ -1,6 +1,6 @@
 ---
 name: implementation
-description: 'Language-agnostic implementation rules: every code change ships with tests; loads the <lang>-implementation sub-skill. Use for implement, write code, add feature or test requests.'
+description: 'Rules for code changes: every change ships with tests, dispatches to <lang>-implementation. Use for implement, write code, add feature, test requests.'
 ---
 
 ## Golden rule

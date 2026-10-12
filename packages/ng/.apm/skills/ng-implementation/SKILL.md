@@ -1,6 +1,6 @@
 ---
 name: ng-implementation
-description: 'Angular 20+ implementation and review rules (standalone, signals, DI, forms, libraries) extending `implementation`. Use for Angular code or architecture questions.'
+description: 'Angular 20+ implementation and review rules (standalone, signals, DI, forms). Use for Angular code questions.'
 license: MIT
 ---
 
@@ -13,19 +13,12 @@ Paths to `references/` are relative to this skill's directory.
 - Do not guess APIs: use the Angular CLI MCP server or angular.dev. If the MCP server is not configured → read `references/mcp.md`.
 - If working with Signal Forms, Angular Aria, `linkedSignal`/`resource`, functional route guards or Vitest setup → read `references/version-notes.md`.
 
-## Framework
-
-- **Test runner**: Vitest for v21+, Jest for v20 and earlier (details in `ng-test`)
-- **Components**: standalone only, no NgModules; `standalone: true` is the default, do not add it
-- **CLI**: Angular CLI for generators (`ng generate`)
+The official `angular-developer` skill (dependency `angular/skills`) covers the basics: standalone components, signals, OnPush, control flow, DI, forms. Only project conventions follow.
 
 ## Conventions
 
-- `ChangeDetectionStrategy.OnPush`; signals for state, `computed()` for derived values, `effect()` only for side effects
-- `input()` / `output()` instead of `@Input` / `@Output`; `model()` for two-way binding
-- DI: `inject()` over constructor injection; services `providedIn: 'root'`
-- Forms: Reactive Forms by default; template-driven for simple template-led forms; Signal Forms (`@angular/forms/signals`) only when requested or already used in the codebase
-- Templates: `@if` / `@for` (with `track`) / `@switch`, not `*ngIf` / `*ngFor`
+- Standalone components only, no NgModules; do not add `standalone: true` (it is the default)
+- Forms: Reactive Forms by default; Signal Forms (`@angular/forms/signals`) only when requested or already used in the codebase
 - Subscriptions cleaned up via `DestroyRef` / `takeUntilDestroyed`
 - Upgrades: one major at a time with `ng update`; `ng generate @angular/core:control-flow` migrates legacy templates
 
@@ -53,6 +46,7 @@ Load `ng-test` for TestBed setup, signal testing, mocking and async patterns.
 - Subscriptions cleaned up via `DestroyRef` / `takeUntilDestroyed`
 - No complex template expressions; ARIA labels and `alt` text on interactive elements and images
 - Library code exported only through `public-api.ts`
+- New or changed behavior has tests per `ng-test`
 
 ## Scaffolding
 

@@ -34,7 +34,8 @@ npx vitest run --coverage
 ### Mocking
 
 - Function-level: `vi.fn()`
-- Module-level: `vi.mock("module-path")` — avoid when inline mocking suffices
+- Module-level: `vi.mock("module-path")` — only when unavoidable; avoid when inline mocking suffices
+- Reset mocks in `beforeEach` (`vi.clearAllMocks()`) so tests stay isolated
 
 ## Writing Tests
 

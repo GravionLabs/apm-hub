@@ -1,6 +1,6 @@
 ---
 name: ng-test
-description: 'Angular test rules with Vitest and TestBed: component, signal, service mocking and async patterns. Use when writing or running tests in an Angular project.'
+description: 'Angular test rules with Vitest and TestBed (components, signals, mocking, async). Use when writing or running tests in Angular.'
 ---
 
 ## Prerequisites
@@ -10,7 +10,7 @@ description: 'Angular test rules with Vitest and TestBed: component, signal, ser
 
 ## Test Runner
 
-- **Framework**: Vitest (replaces Karma/Jasmine); Jest only on Angular ≤ 20
+- **Framework**: Vitest for Angular v21+ (replaces Karma/Jasmine); Jest for Angular v20 and earlier
 - **Run all**: `<pm> test` (package manager from `detect-techstack`); projects using the CLI builder without a config file run `ng test`
 - **Run single**: `npx vitest run <path>`, or `ng test --include <path>` with the CLI builder
 

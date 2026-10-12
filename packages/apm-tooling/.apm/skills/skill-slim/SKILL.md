@@ -1,6 +1,6 @@
 ---
 name: skill-slim
-description: 'Measure skills across a package or repo, classify content as keep, move, delete or deduplicate, then apply approved changes. Use to slim or trim skills or cut token cost.'
+description: 'Measure skills across a package or repo, classify content as keep, move, delete or dedupe, then apply approved changes. Use to slim or trim skills or cut token cost.'
 ---
 
 ## Prerequisites
