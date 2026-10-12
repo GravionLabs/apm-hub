@@ -7,12 +7,12 @@ The official `dotnet` plugin skills (dependency `dotnet/skills`) cover general C
 
 ## Conventions
 
-- Test stack: NUnit, NSubstitute, Shouldly; `dotnet build` with Central Package Management; nullable enabled
-- Naming: `_camelCase` fields; files `{ClassName}.cs`, tests `{ClassName}Tests.cs`
+- `dotnet build` with Central Package Management; nullable enabled
+- Naming: `_camelCase` fields; files `{ClassName}.cs`
 - File-scoped namespaces; global usings for `System.*` in one file
 - DI: constructor injection only, prefer primary constructors
 - `record` types for DTOs, `init` setters for models
-- Solution: `src/` and `test/<Project>.Tests`, versions in `Directory.Packages.props`
+- Solution: code in `src/`, versions in `Directory.Packages.props`
 - Library code: `ConfigureAwait(false)` on every `await`; app code: optional
 - I/O methods accept `CancellationToken cancellationToken = default` and pass it through
 - Logging: `ILogger<T>` with structured templates, never `Console.WriteLine`
@@ -27,7 +27,7 @@ The official `dotnet` plugin skills (dependency `dotnet/skills`) cover general C
 
 ## Tests
 
-Structure, naming and mocking live in `dotnet-test` (NUnit + NSubstitute + Shouldly, `Should_<expected>_when_<condition>`).
+Runner, layout, naming, structure and mocking live in `dotnet-test`.
 
 ## Review rules
 
@@ -35,8 +35,7 @@ Structure, naming and mocking live in `dotnet-test` (NUnit + NSubstitute + Shoul
 - `CancellationToken` propagated through async call chains
 - Nullable reference types respected; no swallowed exceptions
 - `record` for DTOs; dependencies injected via interfaces
-- Tests named `Should_<expected>_when_<condition>`, AAA structure
-- No shared mutable state between tests; assertions are specific (not just `ShouldNotBeNull`)
+- Tests follow `dotnet-test` conventions
 
 ## Minimal APIs
 
