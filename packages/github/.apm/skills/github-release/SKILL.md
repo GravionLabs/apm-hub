@@ -1,10 +1,11 @@
 ---
 name: github-release
 description: 'Cut a release/<x.y> branch from main or finish it with the release PR and changelog. Use for "cut a release", "finish the release" or when no release branch exists.'
+context: fork
 ---
 
 Owns the lifecycle of `release/<x.y>` branches; the model and the base-branch resolver are in the
-`github-issue` skill's `references/release-branches.md`. No dialogue — tool calls only.
+`github-issue` skill's `references/release-branches.md`. No dialogue — tool calls only. On Claude Code it runs in a forked context without the session history.
 
 ## Prerequisites
 

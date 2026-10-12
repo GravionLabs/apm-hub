@@ -45,7 +45,9 @@ Shell aliases save typing: `alias lead='claude --agent lead'`, `alias leadp='cla
 ## 4. PR and release in a fresh session
 
 Commit and push, then `/clear`, then `/github-pull-request`. `/github-release finish` likewise. Both
-skills read everything they need from `git` and `gh`; they never depend on the session history.
+skills read everything they need from `git` and `gh`; they never depend on the session history,
+and on Claude Code they run with `context: fork`, so even at the end of a long session they start
+with a fresh context.
 The release PR itself is opened and refreshed by CI on every push to `release/<x.y>`. After it is merged, CI writes the changelog, tags, publishes the release and closes the
 issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
 

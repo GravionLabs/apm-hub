@@ -98,6 +98,19 @@ agent: explorer
 ---
 ```
 
+## Verified behavior of `context: fork` (Claude Code, measured 2026-10-12)
+
+- `agent:` is honored: `/detect-techstack` with `agent: explorer` ran as a subagent of type `explorer`
+  (model haiku); with `agent: reviewer` as type `reviewer`.
+- The fork starts with a fresh context (about 6k tokens for the agent prompt plus the skill text),
+  not with the session history; only its final message returns to the caller.
+- The fork has the tool set of the agent: `explorer` has no shell, so it could not run
+  `Detect-TechStack.ps1` and fell back to eight glob calls through `node_modules`; `reviewer` ran the
+  script in four turns. A forked skill that must run commands needs an agent with Bash.
+- Without `agent:` the fork uses the general-purpose agent with the caller's model.
+- Skills that run at the end of a long session and read everything from `git` and `gh`
+  (`github-pull-request`, `github-release`) are forked so they do not pay for the session history.
+
 ## Body rules (unchanged)
 
 - Keep `SKILL.md` under ~100 lines; push detail into `references/*.md` (progressive disclosure).
