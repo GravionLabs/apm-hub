@@ -3,34 +3,21 @@ name: dotnet-implementation
 description: 'C#/.NET implementation and test rules extending `implementation`. Loaded when `implementation` dispatches to dotnet-implementation.'
 ---
 
-## Framework
-
-- **Test runner**: NUnit
-- **Mocking**: NSubstitute
-- **Assertions**: Shouldly
-- **Build**: `dotnet build` with Central Package Management
-- **Nullable**: enabled (`<Nullable>enable</Nullable>`)
-
-## Imports
-
-- System namespaces first, then NuGet packages, then project namespaces
-- Global usings in `Usings.cs` or `.csproj` `<Using>` items
-- Prefer file-scoped namespaces: `namespace MyApp.Services;`
+The official `dotnet` plugin skills (dependency `dotnet/skills`) cover general C#/.NET style. Only project conventions follow.
 
 ## Conventions
 
-- Naming: `PascalCase` for types, methods, properties; `_camelCase` for fields
-- Async: `async Task` / `async Task<T>`, never `async void`
+- Test stack: NUnit, NSubstitute, Shouldly; `dotnet build` with Central Package Management; nullable enabled
+- Naming: `_camelCase` fields; files `{ClassName}.cs`, tests `{ClassName}Tests.cs`
+- File-scoped namespaces; global usings for `System.*` in one file
 - DI: constructor injection only, prefer primary constructors
-- Nullable: enable, annotate with `?` where null is valid
-- Immutability: `record` types for DTOs, `init` setters for models
-- File naming: `{ClassName}.cs`, test files: `{ClassName}Tests.cs`
-- Solution: `src/` and `test/<Project>.Tests` directories, Central Package Management via `Directory.Packages.props`
+- `record` types for DTOs, `init` setters for models
+- Solution: `src/` and `test/<Project>.Tests`, versions in `Directory.Packages.props`
 - Library code: `ConfigureAwait(false)` on every `await`; app code: optional
 - I/O methods accept `CancellationToken cancellationToken = default` and pass it through
-- Logging: `ILogger<T>` with structured templates (`"User {UserId} created"`), never `Console.WriteLine`
-- XML docs on public API (`GenerateDocumentationFile` is on); `<summary>` is one sentence starting with a third-person verb
-- Upgrades: bump `TargetFramework` and package versions centrally in `Directory.Build.props` / `Directory.Packages.props` (`dotnet outdated` lists candidates); no prerelease versions unless explicitly requested; build and test after each step
+- Logging: `ILogger<T>` with structured templates, never `Console.WriteLine`
+- XML docs on public API; `<summary>` is one sentence starting with a third-person verb
+- Upgrades: bump versions centrally in `Directory.Build.props` / `Directory.Packages.props`; no prerelease unless requested; build and test after each step
 
 ## EF Core
 
