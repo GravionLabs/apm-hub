@@ -152,10 +152,12 @@ issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
   Nothing used during an implementation or at the end of a feature is gated: `github-release` stays
   model-invocable, and mid-task references (uv flags, component or signal-store scaffolding) live in
   `references/` of `py-implementation` and `ng-implementation`.
-- Gating is the smallest lever: the 22 model-invocable descriptions are held to a budget of 2,600
-  characters in total (≈ 650 tokens at chars/4, currently 2,595; enforced by
-  `src/generators/skill-size-validator.test.ts`), down from ≈ 3,460 characters (≈ 865 tokens). These
-  are estimates until re-measured in AgentLens. The system prompt is prompt-cached. Per-project
+- Gating is the smallest lever: the 18 consumer-visible model-invocable descriptions are held to a
+  budget of 2,600 characters in total (≈ 650 tokens at chars/4, currently 1,864 ≈ 466 tokens),
+  enforced by `src/generators/skill-size-validator.test.ts`. `packages/apm-tooling` (contributor
+  tooling, not in `all`, never loaded by consumers) is excluded from the budget and keeps only the
+  200-character per-skill limit. All figures are estimates until re-measured in AgentLens. The
+  system prompt is prompt-cached. Per-project
   package installs remove more (≈ 10 skills in a single-stack repository).
 - Two-level install: globally `apm install GravionLabs/apm-hub/packages/core -g` (workflow skills
   and agents, no stack skills); per project an `apm.yml` with the stack package (`ng`, `ts`, `py`,
@@ -169,7 +171,7 @@ issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
 
 | Item                                   | Tokens per request | Lever                                   |
 | :------------------------------------- | -----------------: | :-------------------------------------- |
-| 22 model-invocable skill descriptions  |       ≈650 (est.) | shorter descriptions (done: 2,600-character budget, was ≈ 865), per-project installs |
+| 18 model-invocable skill descriptions  |       ≈470 (est.) | shorter descriptions (done: 2,600-character budget, ≈ 1,860 characters used), per-project installs |
 | CLAUDE.md / AGENTS.md of the project   |         500–3,000 | keep under 200 lines, move rules to skills |
 | one full file read (300 lines)         |          3,000–5,000 | `explorer` summary instead (≤ 400)     |
 | one build or test log                  |         2,000–20,000 | `verify-project` runs forked           |

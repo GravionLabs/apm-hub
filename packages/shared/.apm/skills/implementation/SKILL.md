@@ -1,6 +1,6 @@
 ---
 name: implementation
-description: 'Rules for code changes: every change ships with tests, dispatches to <lang>-implementation. Use for implement, add feature.'
+description: 'Rules for code changes: every change ships with tests, dispatches to <lang>-implementation. Use for implement, write code, add feature, test requests.'
 ---
 
 ## Golden rule

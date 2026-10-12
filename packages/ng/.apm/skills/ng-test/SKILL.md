@@ -1,6 +1,6 @@
 ---
 name: ng-test
-description: 'Angular test rules with Vitest and TestBed (components, signals, mocking, async). Use when testing Angular code.'
+description: 'Angular test rules with Vitest and TestBed (components, signals, mocking, async). Use when writing or running tests in Angular.'
 ---
 
 ## Prerequisites

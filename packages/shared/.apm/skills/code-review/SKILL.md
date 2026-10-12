@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: 'Severity-rated (🔴/🟡/🟢) review of a diff or files per language rules. Use for "review this code".'
+description: 'Severity-rated (🔴/🟡/🟢) review of a diff or files per language rules. Use for "review this code" or as review-fanout''s conventions dimension.'
 ---
 
 Read-only: report findings, never edit.
