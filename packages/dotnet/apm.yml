@@ -10,6 +10,9 @@ keywords:
   - nunit
   - aspnet
   - efcore
+dependencies:
+  apm:
+    - dotnet/skills/plugins/dotnet#v1.0.0
 skills:
   - dotnet-create-solution
   - dotnet-implementation

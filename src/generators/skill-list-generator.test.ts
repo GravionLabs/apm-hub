@@ -91,4 +91,32 @@ describe('generateSkillList', () => {
     expect(content).toContain('packages/csharp/.apm/skills/csharp-async/SKILL.md');
     expect(content).toContain('packages/shared/.apm/skills/ts-write-tests/SKILL.md');
   });
+
+  it('should list external dependencies per package and skip internal ones', () => {
+    fs.writeFileSync(
+      path.join(packagesDir, 'csharp', 'apm.yml'),
+      'name: csharp\ndependencies:\n  apm:\n    - dotnet/skills/plugins/dotnet#v1.0.0\n    - GravionLabs/apm-hub/packages/shared\n'
+    );
+    generateSkillList(packagesDir, outputFile);
+    const content = fs.readFileSync(outputFile, 'utf8');
+    expect(content).toContain('External dependencies: `dotnet/skills/plugins/dotnet#v1.0.0`');
+    expect(content).not.toContain('`GravionLabs/apm-hub/packages/shared`');
+  });
+
+  it('should list object-form dependencies and omit the line without external ones', () => {
+    fs.writeFileSync(
+      path.join(packagesDir, 'csharp', 'apm.yml'),
+      'name: csharp\ndependencies:\n  apm:\n    - git: https://github.com/o/r\n      path: p\n      ref: v1\n'
+    );
+    fs.writeFileSync(path.join(packagesDir, 'shared', 'apm.yml'), 'name: shared\n');
+    generateSkillList(packagesDir, outputFile);
+    const content = fs.readFileSync(outputFile, 'utf8');
+    expect(content).toContain('External dependencies: `https://github.com/o/r/p#v1`');
+    expect(content.match(/External dependencies/g)).toHaveLength(1);
+  });
+
+  it('should ignore a malformed apm.yml', () => {
+    fs.writeFileSync(path.join(packagesDir, 'csharp', 'apm.yml'), ': : [');
+    expect(() => generateSkillList(packagesDir, outputFile)).not.toThrow();
+  });
 });
