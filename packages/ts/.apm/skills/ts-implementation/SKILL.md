@@ -5,8 +5,7 @@ description: 'TypeScript implementation and test rules (Vitest) extending `imple
 
 ## Framework
 
-- **Test runner**: Vitest (`globals: true`, `environment: node`)
-- **Config**: `vitest.config.ts` at project root
+- **Tests**: Vitest — see `ts-test`
 - **Format/Lint**: ESLint (flat config) + Prettier — see `setup-prettier-eslint-husky`
 - **Runtime**: Node.js 22 LTS
 
@@ -19,12 +18,11 @@ description: 'TypeScript implementation and test rules (Vitest) extending `imple
 
 - Types: never `any`. Use explicit interfaces or type aliases.
 - Async: `async/await` only, no raw `.then()`.
-- Mocking: function-level via `vi.fn()`. Module-level mocks only when unavoidable.
-- File naming: `kebab-case.ts`, test files: `kebab-case.test.ts`.
+- File naming: `kebab-case.ts`.
 
 ## Tests
 
-Runner config, naming, mocking and coverage live in `ts-test` (Vitest, `describe`/`it`, `vi.fn()`).
+Runner config, test file naming, mocking and coverage live in `ts-test`.
 
 ## Review rules
 
@@ -32,5 +30,4 @@ Runner config, naming, mocking and coverage live in `ts-test` (Vitest, `describe
 - No floating promises; async functions propagate or handle errors
 - ESM `import` only; `path.join`/`path.resolve` for file paths
 - No `eval()`/`new Function()`; validate input before queries, paths, shell commands
-- Tests isolated; mocks reset in `beforeEach` (`vi.clearAllMocks()`)
-- Assertions specific — not just `toBeTruthy()`
+- Tests isolated with specific assertions (not just `toBeTruthy()`) — rules in `ts-test`
