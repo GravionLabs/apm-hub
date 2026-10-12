@@ -39,7 +39,9 @@ export async function createTestSession(options?: {
   const client = await createTestClient({ skillsDir: options?.skillsDir });
   const session = await client.createSession({
     onPermissionRequest: approveAll,
-    // Deliberately pinned cheap test model; bump by hand when it is retired.
+    // Deliberately pinned cheap test model (not an Anthropic id, so not covered by the
+    // claude-api id list). Re-checked for #155: kept as is; bump by hand when it is retired
+    // or override per test via options.model.
     model: options?.model ?? 'gpt-4.1-nano',
     ...(options?.agentPrompt
       ? {
