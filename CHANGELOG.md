@@ -5,6 +5,29 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.4.0] — 2026-10-12
+
+### Bug Fixes
+- **ci**: Push the release changelog with GH_PAT (#123)
+
+
+### Documentation
+- Superpowers decision, borrow not adopt (#119)
+- Rename remaining dev-workflow mentions in frameworks.md (#118)
+
+
+### Features
+- **agents**: Implementer report file and status contract (#114)
+- **agents**: Review package file for reviewer and review-fanout (#115)
+- **agents**: Per-issue ledger for compaction recovery (#116)
+- **agents**: Explicit model per dispatch and fix-loop escalation (#117)
+- **claude-hooks**: SubagentStop ledger hook as an apm hook primitive (#121)
+
+
+### Refactoring
+- **agents**: Rename dev-workflow to lead (#118)
+
+
 ## [1.3.0] — 2026-10-12
 
 ### Features

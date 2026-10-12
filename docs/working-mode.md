@@ -8,17 +8,17 @@ this hub assume it.
 
 ## 1. Default: the orchestrator
 
-Start issue work as the `dev-workflow` agent. It runs as the primary agent, keeps at most 300 words
+Start issue work as the `lead` agent. It runs as the primary agent, keeps at most 300 words
 per phase in its own context and hands the rest to `explorer`, `implementer` and `reviewer`.
 
 ```powershell
-claude --agent dev-workflow "full 123"        # plan → implement → review → PR
-claude --agent dev-workflow "plan 123"        # sub-issues only, stops at the approval gate
-copilot --agent dev-workflow                  # GitHub Copilot CLI, then type: full 123
-opencode --agent dev-workflow                 # OpenCode
+claude --agent lead "full 123"        # plan → implement → review → PR
+claude --agent lead "plan 123"        # sub-issues only, stops at the approval gate
+copilot --agent lead                  # GitHub Copilot CLI, then type: full 123
+opencode --agent lead                 # OpenCode
 ```
 
-Shell aliases save typing: `alias dw='claude --agent dev-workflow'`, `alias dwp='claude --agent dev-workflow plan'`.
+Shell aliases save typing: `alias lead='claude --agent lead'`, `alias leadp='claude --agent lead plan'`.
 
 ## 2. Without the orchestrator: one session per issue
 
@@ -33,8 +33,13 @@ Shell aliases save typing: `alias dw='claude --agent dev-workflow'`, `alias dwp=
 - `/context` before a long step shows what fills the window; the skill list and large tool outputs
   are the usual culprits.
 - Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
+- Reviews read a package file (`.agents/<issue>/review-<n>.diff`: commit list, stat, diff with context)
+  written by `review-fanout`; the diff is never pasted into a prompt, so it does not repeat per dimension.
 - `/compact <focus>` is a brake, not a habit: it loses detail you may need. Prefer `/clear` plus a
-  short hand-off note in the issue.
+  short hand-off note in the issue. A `lead` run keeps its own hand-off note: the ledger
+  `.agents/<issue>/progress.md` (phases done, fix rounds, rulings); a new session resumes from it.
+  On Claude Code the `claude-hooks` package adds a `Subagent <name>: stopped — <first line>` line for
+  every finished subagent (`SubagentStop` hook, no-op without a ledger).
 - OpenCode: `compaction: { auto: true, prune: true }` in `opencode.json` drops old tool output.
 
 ## 4. PR and release in a fresh session
@@ -52,8 +57,11 @@ skills read everything they need from `git` and `gh`; they never depend on the s
 - Gating is the smallest lever: the whole list of 34 descriptions costs ≈ 1,480 tokens after the
   200-character limit, gating removes ≈ 550 of them, and the system prompt is prompt-cached.
   Per-project package installs remove more (≈ 10 skills in a single-stack repository).
-- Install only the stack packages a project uses (`apm.yml` per project, `all@apm-hub` only on
-  machines that mix stacks).
+- Two-level install: globally `apm install GravionLabs/apm-hub/packages/core -g` (workflow skills
+  and agents, no stack skills); per project an `apm.yml` with the stack package (`ng`, `ts`, `py`,
+  `dotnet`). `all@apm-hub` only on machines that mix stacks. Deployed skill folders are git-ignored,
+  so a fresh clone runs `apm install` first. A workflow skill that needs a stack skill which is not
+  installed says so once ("install `<stack>@apm-hub`") and continues with the language-agnostic rules.
 - Weekly: `/skill-doctor` in Claude Code and `agentlens skills --since <date>`; a skill unused for
   a month is a candidate for gating or removal.
 

@@ -1,6 +1,6 @@
 # apm-hub — Working in this repository
 
-apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships four **agents** that skills cannot replace: the `dev-workflow` orchestrator (primary agent, keeps only phase summaries in context) and the `explorer`, `reviewer` and `implementer` subagents it delegates to, each with its own model and tool set. Entry points beyond skill names: `/orch` (prompt) and `dev-workflow` (agent).
+apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships four **agents** that skills cannot replace: the `lead` orchestrator (primary agent, keeps only phase summaries in context) and the `explorer`, `reviewer` and `implementer` subagents it delegates to, each with its own model and tool set. Entry points beyond skill names: `/orch` (prompt) and `lead` (agent).
 
 ## Layout
 
@@ -26,14 +26,16 @@ apm.yml                               # marketplace: lists all packages
 | Package | Skills |
 |:--|:--|
 | `shared` | `implementation` (every change has tests; dispatches to `<lang>-implementation`), `detect-techstack` (JSON stack report), `code-review` (severity-rated review using each language's `## Review rules`) |
-| `development-workflow` | `orch-pipeline` (plan → TDD → review fan-out → commit, `/orch`), `review-fanout`, `verify-project`, `issue-planning`. Depends on `github`, `shared` and all language packages. |
+| `development-workflow` | `orch-pipeline` (plan → TDD → review fan-out → commit, `/orch`), `review-fanout`, `verify-project`, `issue-planning`. Depends on `github` and `shared`; stack packages are installed per project. |
 | `github` | `github-issue` (routing skill for the Epic→Feature→PBI→Task hierarchy; references for standalone, batch, sub-issues, conventional commits, release branches), `github-pull-request` (targets the release branch, not `main`), `github-release` (cut `release/<x.y>`, finish with the release PR into `main`; owns the git-cliff changelog, `references/cliff-setup.md`) |
 | `dotnet` | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator` |
 | `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
 | `py` | `py-implementation` (incl. `references/uv-cli.md`), `py-test`, `py-create-project` |
 | `ng` | `ng-implementation` (incl. `references/component.md`, `references/signal-store.md`), `ng-test`, `ng-create-project`, `ng-ag-grid-developer` |
-| `agents` | `dev-workflow` (orchestrator, primary agent: plan → explore → implement per task → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (one task, `implementation` preloaded, ≤ 150-word report) |
+| `agents` | `lead` (orchestrator, primary agent: plan → explore → implement per task → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (one task, `implementation` preloaded, report file + ≤ 15-line status reply) |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not part of `all`) |
+| `claude-hooks` | Claude Code hooks (`target: claude`, other harnesses skip them): `SubagentStop` appends a line per finished subagent to `.agents/<issue>/progress.md` |
+| `core` | meta-package for the global install: `github`, `development-workflow`, `shared`, `agents`, `claude-hooks` (no stack skills) |
 | `all` | meta-package: every package above except `apm-tooling` |
 
 Every language package provides `<lang>-implementation` (conventions + `## Review rules`) and `<lang>-test`. `detect-techstack` returns their names so `implementation`, `code-review` and `verify-project` can dispatch.
