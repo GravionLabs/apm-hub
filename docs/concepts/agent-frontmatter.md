@@ -45,7 +45,7 @@ metadata:
     skills: [implementation]           # optional: skills preloaded into the agent
   opencode:
     mode: subagent                     # subagent | primary
-    model: anthropic/claude-haiku-4-5  # provider/model id
+    model: anthropic/claude-haiku-5-5  # provider/model id
     permission:                        # OpenCode permission map; bash accepts glob rules
       read: allow
       edit: deny
