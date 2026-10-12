@@ -56,6 +56,7 @@ public class UserServiceTests
 1. Read target code to understand dependencies and behaviour
 2. Identify test cases: happy path, boundary values, null inputs, error paths
 3. Keep tests independent and deterministic — no shared mutable state
+4. Make assertions specific, not just `ShouldNotBeNull`
 
 ## Gotchas
 
