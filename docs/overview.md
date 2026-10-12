@@ -1,7 +1,7 @@
 # Overview
 
 <!-- AUTO:start version -->
-Welcome to **apm-hub** v2.0.0 👋
+Welcome to **apm-hub** v2.1.0 👋
 <!-- AUTO:end version -->
 
 apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. The repo ships no agents, instructions or prompt libraries: workflows are skills, and the `/orch` prompt is the only extra entry point.
