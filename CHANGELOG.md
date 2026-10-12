@@ -5,18 +5,29 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.4.0] — 2026-10-12
+## [1.0.24] — 2026-10-12
 
 ### Bug Fixes
+- **github**: Ignore non-numeric release/* branches in the release-branch resolver (#78) (#79)
 - **ci**: Push the release changelog with GH_PAT (#123)
 
 
 ### Documentation
+- Extend the skill frontmatter convention with model-invocation and fork keys (#89) (#97)
+- Agent frontmatter convention, size validator and generated agent list (#88) (#106)
+- Working mode and frameworks overview (#95) (#104)
+- Update CHANGELOG.md for v1.2.0
+- Update CHANGELOG.md for v1.3.0
 - Superpowers decision, borrow not adopt (#119)
 - Rename remaining dev-workflow mentions in frameworks.md (#118)
+- Update CHANGELOG.md for v1.4.0
 
 
 ### Features
+- **github**: Work on release branches by default in the issue, PR and orch skills (#74) (#77)
+- Run detect-techstack and verify-project with context: fork (#93)
+- **agents**: Add the agents package with explorer, reviewer, implementer and dev-workflow (#86) (#100)
+- Delegate exploration and review to the explorer and reviewer agents (#87) (#102)
 - **agents**: Implementer report file and status contract (#114)
 - **agents**: Review package file for reviewer and review-fanout (#115)
 - **agents**: Per-issue ledger for compaction recovery (#116)
@@ -25,38 +36,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 
 ### Refactoring
-- **agents**: Rename dev-workflow to lead (#118)
-
-
-## [1.3.0] — 2026-10-12
-
-### Features
-- Un-gate github-release and fold uv-cli, ng-component and ng-signal-store into their parent skills (#108) (#109)
-
-
-## [1.2.0] — 2026-10-11
-
-### Documentation
-- Extend the skill frontmatter convention with model-invocation and fork keys (#89) (#97)
-- Agent frontmatter convention, size validator and generated agent list (#88) (#106)
-- Working mode and frameworks overview (#95) (#104)
-
-
-### Features
-- Run detect-techstack and verify-project with context: fork (#93)
-- **agents**: Add the agents package with explorer, reviewer, implementer and dev-workflow (#86) (#100)
-- Delegate exploration and review to the explorer and reviewer agents (#87) (#102)
-
-
-### Refactoring
+- Shorten skill descriptions to at most 40 tokens (#91)
 - Shorten skill descriptions to at most 40 tokens (#91) (#99)
 - Merge cliff-setup into github-release (#92) (#105)
+- **agents**: Rename dev-workflow to lead (#118)
 
 
 ## [1.0.23] — 2026-10-09
 
 ### Documentation
 - Align documentation with the skills-only repository
+- Update CHANGELOG.md for v1.0.23 [skip ci]
 
 
 ## [1.0.22] — 2026-10-09
