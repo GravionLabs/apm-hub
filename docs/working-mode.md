@@ -44,8 +44,14 @@ skills read everything they need from `git` and `gh`; they never depend on the s
 
 ## 5. Keep the skill list short
 
-- Skills the user always starts carry `disable-model-invocation: true` (see
+- Skills that create a project or set up tooling once carry `disable-model-invocation: true` (see
   [skill-frontmatter.md](concepts/skill-frontmatter.md)); their descriptions leave the model's list.
+  Nothing used during an implementation or at the end of a feature is gated: `github-release` stays
+  model-invocable, and mid-task references (uv flags, component or signal-store scaffolding) live in
+  `references/` of `py-implementation` and `ng-implementation`.
+- Gating is the smallest lever: the whole list of 34 descriptions costs ≈ 1,480 tokens after the
+  200-character limit, gating removes ≈ 550 of them, and the system prompt is prompt-cached.
+  Per-project package installs remove more (≈ 10 skills in a single-stack repository).
 - Install only the stack packages a project uses (`apm.yml` per project, `all@apm-hub` only on
   machines that mix stacks).
 - Weekly: `/skill-doctor` in Claude Code and `agentlens skills --since <date>`; a skill unused for
@@ -55,7 +61,7 @@ skills read everything they need from `git` and `gh`; they never depend on the s
 
 | Item                                   | Tokens per request | Lever                                   |
 | :------------------------------------- | -----------------: | :-------------------------------------- |
-| 31 skill descriptions in the list      |             ≈1,970 | gating, shorter descriptions (→ < 700) |
+| 31 skill descriptions in the list      |             ≈1,970 | shorter descriptions (done: 34 skills ≈ 1,480, ≈ 930 visible after gating), per-project installs |
 | CLAUDE.md / AGENTS.md of the project   |         500–3,000 | keep under 200 lines, move rules to skills |
 | one full file read (300 lines)         |          3,000–5,000 | `explorer` summary instead (≤ 400)     |
 | one build or test log                  |         2,000–20,000 | `verify-project` runs forked           |

@@ -1,9 +1,6 @@
 ---
 name: github-release
 description: 'Cut a release/<x.y> branch from main or finish it with the release PR and changelog. Use for "cut a release", "finish the release" or when no release branch exists.'
-disable-model-invocation: true
-metadata:
-  opencode/autoinvoke: 'false'
 ---
 
 Owns the lifecycle of `release/<x.y>` branches; the model and the base-branch resolver are in the

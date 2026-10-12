@@ -54,9 +54,12 @@ Load `ng-test` for TestBed setup, signal testing, mocking and async patterns.
 - No complex template expressions; ARIA labels and `alt` text on interactive elements and images
 - Library code exported only through `public-api.ts`
 
+## Scaffolding
+
+- New standalone component (incl. the Sakai UI variant) → read `references/component.md`
+- New NgRx Signal Store for feature state → read `references/signal-store.md`
+
 ## Related Skills
 
-- `ng-component` — scaffold a component (incl. Sakai UI variant)
-- `ng-signal-store` — NgRx Signal Store for feature state
 - `ng-ag-grid-developer` — AG Grid Enterprise integration
 - `ng-create-project` — new application or workspace
