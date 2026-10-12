@@ -47,6 +47,7 @@ Reference files (load when needed):
 
 - `asyncio_mode = "auto"` is set by `py-create-project`, so `async def test_*` needs no marker; add `@pytest.mark.asyncio` only in projects without auto mode
 - Fixtures in `conftest.py` are auto-discovered
+- Mock with `pytest-mock` (`mocker.create_autospec`); `monkeypatch` only for env vars and attributes
 - Never mock internal implementation details — test the public interface only
 - Never write tests that pass trivially without exercising logic
 - `# pragma: no cover` only for platform-specific branches, with a comment
