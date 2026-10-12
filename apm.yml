@@ -21,7 +21,7 @@ marketplace:
     description: "Agents for a lean issue workflow: lead orchestrator (primary agent, keeps only phase summaries in context) and the explorer, reviewer and implementer subagents it delegates to."
     source: ./packages/agents
   - name: claude-hooks
-    description: "Claude Code hooks for the lead agent and its subagents: a SubagentStop hook appends one line per finished subagent to the issue ledger. Claude only; other harnesses skip it."
+    description: "Claude Code hooks: SubagentStop appends a ledger line per finished subagent; UserPromptSubmit warns when the session context is large. Claude only; other harnesses skip them."
     source: ./packages/claude-hooks
   - name: apm-tooling
     description: "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files."
