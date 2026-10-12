@@ -30,7 +30,7 @@ Mode from the first message: contains `plan` → **plan**; contains `implement` 
 ## Pipeline
 
 0. `detect-techstack` skill → keep the JSON.
-1. `gh issue view <issue> --json title,body,labels` and `gh api repos/{owner}/{repo}/issues/<issue>/sub_issues --jq length`. Resolve the integration branch per the `github-issue` skill (`references/release-branches.md`). Create `.agents/<issue>/` for reports (add `.agents/` to `.git/info/exclude` when it is not ignored).
+1. `gh issue view <issue> --json title,body,labels` and `gh api repos/{owner}/{repo}/issues/<issue>/sub_issues --jq length`. Resolve the integration branch per the `github-issue` skill (`references/release-branches.md`). Create `.agents/<issue>/` for reports and the ledger (add `.agents/` to `.git/info/exclude` when it is not ignored).
 2. **Explore**: `explorer` with the issue text → summary of the affected code (≤ 300 words).
 3. **Plan** (plan mode, or full mode when the issue has no sub-issues): `issue-planning` skill with the exploration summary. Approval gate: present the sub-issues, ask the user which to implement (plan mode stops here).
 4. **Implement** per task: `implementer` with issue, branch, tech-stack JSON, exploration summary and the report path `.agents/<issue>/task-<n>-report.md`. Keep only its ≤ 15-line reply and act on `Status`: `DONE` → review; `DONE_WITH_CONCERNS` → concerns about correctness or scope go back to the implementer first; `NEEDS_CONTEXT` → re-dispatch with the missing context; `BLOCKED` → re-dispatch on a stronger model or split the task. Never retry unchanged; a red suite twice → stop and ask. Record `BASE=$(git rev-parse HEAD)` before each dispatch, never `HEAD~1`.
@@ -42,4 +42,6 @@ Mode from the first message: contains `plan` → **plan**; contains `implement` 
 - Hard limit for anything you keep from a phase: 300 words. Summarize, then drop the rest.
 - Delegate with the client's mechanism: Claude Code `Agent` (`subagent_type: explorer|implementer|reviewer`), OpenCode `task` with the agent name, VS Code Copilot `runSubagent`. If the client has no subagents (Copilot CLI), run the phase inline and load the skill directly.
 - Approval gates (plan, blocked review, failed tests twice) always go to the user; never decide them yourself.
-- Report at the end: one line per phase, the PR URL, and the first error line on failure.
+- Ledger `.agents/<issue>/progress.md`, first line `# dev-workflow ledger — issue #<issue> — branch <branch>`. Append `Phase <name>: complete — <SHAs|PR URL|n/a>` after each phase, `Fix round <r>: <result>` after a fix, `Ruling: <decision> — <why> — <cost if wrong>` for every call you make yourself; gates still go to the user, a ruling never replaces one.
+- Same-issue ledger exists → resume at the first phase without `complete` and say so in one line; another issue's ledger stays untouched. After compaction trust the ledger and `git log` over memory.
+- Report at the end: one line per phase, the PR URL, the rulings verbatim, and the first error line on failure.
