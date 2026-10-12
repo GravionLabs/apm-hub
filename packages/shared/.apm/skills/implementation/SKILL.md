@@ -15,4 +15,4 @@ Every implementation change MUST include tests. No test = no commit. Cover three
 
 ## Language dispatch
 
-Run `detect-techstack`, then load each `<lang>-implementation` and `<lang>-test` skill from the report.
+Run `detect-techstack`, then load each `<lang>-implementation` and `<lang>-test` skill from the report. A listed skill that is not installed: say "install `<stack>@apm-hub` in this project's `apm.yml`" once and continue with these rules.
