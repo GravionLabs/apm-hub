@@ -5,6 +5,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.3.0] — 2026-10-12
+
+### Features
+- Un-gate github-release and fold uv-cli, ng-component and ng-signal-store into their parent skills (#108) (#109)
+
+
 ## [1.2.0] — 2026-10-11
 
 ### Documentation
