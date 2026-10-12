@@ -9,6 +9,9 @@ builds rare, day-to-day work never targets `main` directly.
 | `<type>/<nr>-<slug>` | the integration branch | the integration branch | squash | none: `verify-project` and `review-fanout` before the PR are the gate |
 | `fix/<nr>-<slug>` hotfix | `main` | `main` | squash | Linux checks on the PR |
 
+The release PR to `main` is created and refreshed by the `release-pr` workflow on every push to the
+release branch (GravionLabs/ci `versioning/release-pr`); the owner only merges it.
+
 One release branch per Feature (or milestone), named `release/<x.y>` after the version it releases.
 GitVersion ignores branch names: the first commit on the branch carries `+semver: minor` (or `major`),
 which makes the merge into `main` tag `v<x.y>.0`; without the keyword a merge only bumps the patch
