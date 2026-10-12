@@ -30,17 +30,18 @@ Owns the lifecycle of `release/<x.y>` branches; the model and the base-branch re
    `release/<x.y>` on origin (resolver step 4 in `release-branches.md`). `git checkout release/<x.y>; git pull --ff-only`.
 5. Open work must be merged first: `gh pr list --base release/<x.y> --state open` must be empty;
    otherwise stop and list the PRs.
-6. Changelog: `git-cliff -c cliff.toml -o CHANGELOG.md --unreleased -t v<x.y>.0` (no tags yet:
-   drop `--unreleased`). If `cliff.toml` is missing or `git-cliff` is not installed → follow
-   `references/cliff-setup.md` first (template in `templates/cliff.toml`). Commit
-   `docs: update CHANGELOG.md for v<x.y>.0` on the release branch and push.
-7. Open the PR with `github-pull-request` (`base_branch: main`, `auto_merge: false`, title
-   `release: <x.y>`, body: the changelog section plus `Closes #<nr>` for the Feature if recorded).
-   Report the PR URL; the owner merges it with a merge commit (`gh pr merge --merge`), never squash.
+6. Open the PR with `github-pull-request` (`base_branch: main`, `auto_merge: false`, title
+   `release: <x.y>`, body: the PRs merged into the release branch
+   (`gh pr list --base release/<x.y> --state merged --json number,title`) plus `Closes #<nr>` for the
+   Feature if recorded). Do not touch `CHANGELOG.md`: the release job on `main` regenerates it with
+   git-cliff, tags, publishes the GitHub Release and closes every issue the release's PRs reference
+   with `Closes #n` (GravionLabs/ci `gh-release`).
+7. Report the PR URL; the owner merges it with a merge commit (`gh pr merge --merge`), never squash.
 
 ## Gotchas
 
-- Never merge the release PR yourself; the push to `main` builds and publishes the platform matrix.
+- Never merge the release PR yourself; the push to `main` builds and publishes the platform matrix, regenerates the changelog and closes the delivered issues.
+- A repo without `cliff.toml` gets no changelog from CI: follow `references/cliff-setup.md` once.
 - Hotfixes bypass this skill (`fix/<nr>-<slug>` from `main`); afterwards merge `main` into the open
   release branch so the fix is not lost.
 - A release branch is deleted after its PR merged; GitVersion keeps the version from the tag.
