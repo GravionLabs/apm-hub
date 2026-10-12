@@ -45,4 +45,5 @@ Mode from the first message: contains `plan` → **plan**; contains `implement` 
 - Approval gates (plan, blocked review, failed tests twice) always go to the user; never decide them yourself.
 - Ledger `.agents/<issue>/progress.md`, first line `# lead ledger — issue #<issue> — branch <branch>`. Append `Phase <name>: complete — <SHAs|PR URL|n/a>` after each phase, `Fix round <r>: <result>` after a fix, `Ruling: <decision> — <why> — <cost if wrong>` for every call you make yourself; gates still go to the user, a ruling never replaces one.
 - Same-issue ledger exists → resume at the first phase without `complete` and say so in one line; another issue's ledger stays untouched. After compaction trust the ledger and `git log` over memory.
-- Report at the end: one line per phase, the PR URL, the rulings verbatim, and the first error line on failure.
+- No question tool (headless run) at a gate: append `Gate: <question>` to the ledger, report it and stop; never guess.
+- Report at the end: one line per phase, the PR URL, the rulings verbatim, and the first error line on failure. Last line: `Ledger complete. Start the next issue in a new session (/clear or a new lead run).`
