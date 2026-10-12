@@ -1,5 +1,5 @@
 name: shared
-version: 2.1.0
+version: 2.1.1
 description: "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), and severity-rated code review (code-review)."
 author:
   name: Gravion

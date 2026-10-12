@@ -1,5 +1,5 @@
 name: apm-tooling
-version: 2.1.0
+version: 2.1.1
 description: apm-hub contributor tooling for the skill lifecycle. Write, audit, update and slim SKILL.md files and their companion directories.
 author:
   name: Gravion

@@ -100,18 +100,18 @@ Skill scripts are PowerShell 7+ (`pwsh`) and run on Windows, macOS and Linux. `d
 
 apm-hub distributes domain packages via APM. Each package is installed with `apm install` and deployed to `.github/`, `.claude/`, `.cursor/`, `.opencode/`, and `.gemini/` automatically.
 
-| Package                | Contents                                                                                                                          |
-| :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
-| `shared`               | `implementation`, `detect-techstack`, `code-review`                                                                               |
-| `development-workflow` | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`                                                    |
-| `github`               | `github-issue`, `github-pull-request`                                                                                             |
+| Package                | Contents                                                                                                                                       |
+| :--------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shared`               | `implementation`, `detect-techstack`, `code-review`                                                                                            |
+| `development-workflow` | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`                                                                 |
+| `github`               | `github-issue`, `github-pull-request`                                                                                                          |
 | `dotnet`               | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`) |
-| `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
-| `py`                   | `py-implementation`, `py-test`, `py-create-project`                                                                               |
-| `ng`                   | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)    |
-| `agents`               | `orchestrator`, `explorer`, `reviewer`, `implementer` (subagents) — see below                                                     |
-| `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                  |
-| `all`                  | every package above except `apm-tooling`                                                                                          |
+| `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`              |
+| `py`                   | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
+| `ng`                   | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
+| `agents`               | `orchestrator`, `explorer`, `reviewer`, `implementer` (subagents) — see below                                                                  |
+| `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                               |
+| `all`                  | every package above except `apm-tooling`                                                                                                       |
 
 📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[Browse All Agents](docs/agent-list.md)** · 📄 **[Working mode](docs/working-mode.md)** (small contexts, one issue per session) · 📄 **[External frameworks](docs/frameworks.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
 
