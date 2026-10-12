@@ -34,5 +34,8 @@ agent="$(first agent_type agentType agentName subagent_type)"
 [ -n "$agent" ] || agent="subagent"
 summary="$(first last_assistant_message response | head -n 1 | cut -c1-120)"
 
-printf 'Subagent %s: stopped — %s\n' "$agent" "${summary:-no message}" >> "$ledger" 2>/dev/null || true
+line="$(printf 'Subagent %s: stopped — %s' "$agent" "${summary:-no message}")"
+# idempotent: Copilot CLI may fire both event casings; skip when the last line is identical
+[ "$(tail -n 1 "$ledger" 2>/dev/null)" = "$line" ] && exit 0
+printf '%s\n' "$line" >> "$ledger" 2>/dev/null || true
 exit 0

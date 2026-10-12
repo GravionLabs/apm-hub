@@ -41,6 +41,23 @@ describe('subagent-ledger hook', () => {
     expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — APPROVE\n');
   });
 
+  it('writes one line when the same payload fires twice', () => {
+    withLedger();
+    const payload = { cwd: dir, agent_type: 'implementer', last_assistant_message: 'Status: DONE' };
+    run(payload);
+    run(payload);
+    expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent implementer: stopped — Status: DONE\n');
+  });
+
+  it('writes two lines for two different payloads', () => {
+    withLedger();
+    run({ cwd: dir, agent_type: 'implementer', last_assistant_message: 'one' });
+    run({ cwd: dir, agent_type: 'implementer', last_assistant_message: 'two' });
+    expect(fs.readFileSync(ledger, 'utf8')).toBe(
+      '# ledger\nSubagent implementer: stopped — one\nSubagent implementer: stopped — two\n',
+    );
+  });
+
   it('accepts agentName and subagent_type as agent name', () => {
     withLedger();
     run({ cwd: dir, agentName: 'explorer', response: 'x' });
