@@ -11,7 +11,7 @@ read different frontmatter, so one source file carries a platform-neutral top le
 Skills are the primary artifact ([skill-frontmatter.md](skill-frontmatter.md)). An agent is only
 justified when a skill cannot express it: a **model** per role (haiku for exploration), a **tool
 set** the host enforces (read-only reviewer), an **output contract** that keeps a caller's context
-small, or a **primary-agent entry point** (`claude --agent lead`). Procedural workflows
+small, or a **primary-agent entry point** (`claude --agent orchestrator`). Procedural workflows
 stay skills.
 
 ## Top level (Copilot style, the primary format)
@@ -22,7 +22,12 @@ stay skills.
 | `description`    | yes      | One sentence on what the agent returns and one on when a caller should use it; ≤ 200 characters |
 | `tools`          | no       | Copilot aliases as a YAML list: `read`, `search`, `edit`, `execute`, `agent`           |
 | `user-invocable` | no       | `false` for subagents the user never starts directly                                   |
+| `disable-model-invocation` | no | `true` keeps other agents from dispatching this agent as a subagent (Copilot/VS Code); `apmw` strips it for the other platforms |
 | `metadata`       | yes      | `claude:` and `opencode:` blocks, see below                                            |
+
+A primary agent (`orchestrator`) must never be dispatched as a subagent: a subagent has no question tool, so its
+approval gates cannot hold. Copilot is protected by `disable-model-invocation`, OpenCode by `mode: primary`,
+Claude Code by the rule in the agent body.
 
 Never at top level: `model`, `mode`, `permission`, `color`, `steps`, `agents`. OpenCode rejects a
 list-form `tools` and a non-hex `color` at load time; Claude Code needs its own tool names.

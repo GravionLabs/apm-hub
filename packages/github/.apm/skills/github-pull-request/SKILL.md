@@ -1,13 +1,14 @@
 ---
 name: github-pull-request
 description: 'Create a GitHub PR from the current branch and its linked issue with a conventional title and structured body via gh. Use for "create a PR" or to finish a committed branch.'
+context: fork
 ---
 
-Create a PR from the current branch. No dialogue — tool calls only.
+Create a PR from the current branch. No dialogue — tool calls only. On Claude Code the skill runs in a forked context without the session history, so everything comes from the arguments, `git` and `gh`.
 
 ## Input
 
-- `issue_number` (required)
+- `issue_number` (default: the number in the branch name `<type>/<nr>-<slug>`; stop when neither exists)
 - `branch` (default: `git branch --show-current`)
 - `base_branch` (default: the integration branch per the `github-issue` skill's `references/release-branches.md`: a `release/*` branch, or `main` only when the head is `release/*` or the user asked for a hotfix; `<base>` below)
 - `auto_merge` (default: false)

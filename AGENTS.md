@@ -1,6 +1,6 @@
 # apm-hub — Working in this repository
 
-apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships four **agents** that skills cannot replace: the `lead` orchestrator (primary agent, keeps only phase summaries in context) and the `explorer`, `reviewer` and `implementer` subagents it delegates to, each with its own model and tool set. Entry points beyond skill names: `/orch` (prompt) and `lead` (agent).
+apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships four **agents** that skills cannot replace: the `orchestrator` orchestrator (primary agent, keeps only phase summaries in context) and the `explorer`, `reviewer` and `implementer` subagents it delegates to, each with its own model and tool set. Entry points beyond skill names: `/orch` (prompt) and `orchestrator` (agent).
 
 ## Layout
 
@@ -32,9 +32,9 @@ apm.yml                               # marketplace: lists all packages
 | `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
 | `py` | `py-implementation` (incl. `references/uv-cli.md`), `py-test`, `py-create-project` |
 | `ng` | `ng-implementation` (incl. `references/component.md`, `references/signal-store.md`), `ng-test`, `ng-create-project`, `ng-ag-grid-developer` |
-| `agents` | `lead` (orchestrator, primary agent: plan → explore → implement per task → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (one task, `implementation` preloaded, report file + ≤ 15-line status reply) |
+| `agents` | `orchestrator` (primary agent: plan → explore → implement per task → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (one task, `implementation` preloaded, report file + ≤ 15-line status reply) |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not part of `all`) |
-| `claude-hooks` | Claude Code hooks (`target: claude`, other harnesses skip them): `SubagentStop` appends a line per finished subagent to `.agents/<issue>/progress.md` |
+| `claude-hooks` | Claude Code hooks (`target: claude`, other harnesses skip them): `SubagentStop` appends a line per finished subagent to `.agents/<issue>/progress.md`, `UserPromptSubmit` warns above 150k context tokens |
 | `core` | meta-package for the global install: `github`, `development-workflow`, `shared`, `agents`, `claude-hooks` (no stack skills) |
 | `all` | meta-package: every package above except `apm-tooling` |
 
