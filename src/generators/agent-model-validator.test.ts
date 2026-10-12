@@ -1,7 +1,11 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { ALLOWED_CLAUDE_MODELS, ALLOWED_OPENCODE_MODELS, checkAgentModels } from './agent-model-validator';
+import {
+  ALLOWED_CLAUDE_MODELS,
+  ALLOWED_OPENCODE_MODELS,
+  checkAgentModels,
+} from './agent-model-validator';
 import { findAgentFiles } from './agent-size-validator';
 
 const agent = (claude?: string, opencode?: string) => {
@@ -55,11 +59,63 @@ describe('checkAgentModels', () => {
     expect(v).toHaveLength(1);
     expect(v[0]).toMatchObject({ field: 'metadata.claude.model', value: 'gpt' });
   });
+
+  it('reports both fields when both are invalid', () => {
+    const f = write('both.agent.md', agent('gpt', 'nope'));
+    const v = checkAgentModels([f]);
+    expect(v.map((x) => x.field)).toEqual(['metadata.claude.model', 'metadata.opencode.model']);
+  });
+
+  it('reports malformed YAML as a violation naming the file', () => {
+    const f = write('broken.agent.md', '---\nname: [unclosed\nmetadata: {\n---\nbody\n');
+    const v = checkAgentModels([f]);
+    expect(v).toHaveLength(1);
+    expect(v[0]).toMatchObject({ filePath: f, field: 'frontmatter' });
+    expect(v[0].value).not.toBe('');
+  });
+
+  it.each([
+    ['a string', 'metadata: nope'],
+    ['a list', 'metadata:\n  - a'],
+    ['null', 'metadata:'],
+  ])('flags metadata that is %s', (_label, yaml) => {
+    const f = write('meta.agent.md', `---\nname: x\n${yaml}\n---\nbody\n`);
+    const v = checkAgentModels([f]);
+    expect(v).toHaveLength(1);
+    expect(v[0]).toMatchObject({ filePath: f, field: 'metadata' });
+  });
+
+  it('flags a null claude section and a null opencode section', () => {
+    const f = write('nulls.agent.md', '---\nname: x\nmetadata:\n  claude:\n  opencode:\n---\nbody\n');
+    const v = checkAgentModels([f]);
+    expect(v.map((x) => x.field)).toEqual(['metadata.claude', 'metadata.opencode']);
+  });
+
+  it('flags a null model value', () => {
+    const f = write('nullmodel.agent.md', '---\nname: x\nmetadata:\n  claude:\n    model:\n---\nbody\n');
+    const v = checkAgentModels([f]);
+    expect(v).toHaveLength(1);
+    expect(v[0]).toMatchObject({ field: 'metadata.claude.model', value: 'null' });
+  });
 });
 
 describe('live repo agent model check', () => {
+  const files = findAgentFiles(path.resolve(__dirname, '../../packages'));
+
+  it('finds the known agents and validates at least one model', () => {
+    const names = files.map((f) => path.basename(f));
+    expect(names).toEqual(expect.arrayContaining(['orchestrator.agent.md', 'explorer.agent.md']));
+    const withModel = files.filter((f) => /^\s+model:/m.test(fs.readFileSync(f, 'utf8')));
+    expect(withModel.length).toBeGreaterThan(0);
+  });
+
+  it('documents every allowed id in agent-frontmatter.md', () => {
+    const doc = fs.readFileSync(path.resolve(__dirname, '../../docs/concepts/agent-frontmatter.md'), 'utf8');
+    for (const id of [...ALLOWED_CLAUDE_MODELS, ...ALLOWED_OPENCODE_MODELS]) expect(doc).toContain(id);
+  });
+
   it('every agent uses allowed model ids', () => {
-    const violations = checkAgentModels(findAgentFiles(path.resolve(__dirname, '../../packages')));
+    const violations = checkAgentModels(files);
     const message = violations.map((v) => `${v.filePath}: ${v.field}=${v.value}`).join('\n');
     expect(violations, message).toEqual([]);
   });
