@@ -109,7 +109,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
 | `py`                   | `py-implementation`, `py-test`, `py-create-project`                                                                               |
 | `ng`                   | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                       |
-| `agents`               | `lead` (orchestrator), `explorer`, `reviewer`, `implementer` (subagents) — see below                                      |
+| `agents`               | `lead` (orchestrator), `explorer`, `reviewer`, `implementer` (subagents) — see below                                              |
 | `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                  |
 | `all`                  | every package above except `apm-tooling`                                                                                          |
 
@@ -121,12 +121,12 @@ Skills are the primary artifact; the `agents` package adds the four agents skill
 `lead` runs as the **primary agent** and keeps only phase summaries in its context; the
 three subagents each have their own model and tool set:
 
-| Agent          | Role                                                                           |            |                                                                                                |
-| :------------- | :----------------------------------------------------------------------------- | :--------- | :--------------------------------------------------------------------------------------------- |
-| `lead` | `plan\                                                                         | implement\ | full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you |
-| `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references         |            |                                                                                                |
-| `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON     |            |                                                                                                |
-| `implementer`  | one task per run, `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |            |                                                                                                |
+| Agent         | Role                                                                                              |            |                                                                                                |
+| :------------ | :------------------------------------------------------------------------------------------------ | :--------- | :--------------------------------------------------------------------------------------------- |
+| `lead`        | `plan\                                                                                            | implement\ | full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you |
+| `explorer`    | read-only, small model, ≤ 300-word answers with `path:line` references                            |            |                                                                                                |
+| `reviewer`    | read-only plus the test command, returns the `review-fanout` findings JSON                        |            |                                                                                                |
+| `implementer` | one task per run, `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |            |                                                                                                |
 
 ```powershell
 apm install GravionLabs/apm-hub/packages/core -g   # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents
