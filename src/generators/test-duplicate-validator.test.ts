@@ -51,36 +51,124 @@ describe('checkTestDuplicates', () => {
   });
 
   const families: [string, string][] = [
-    ['runner command', '```\nnpx vitest run\n```'],
-    ['runner command (pytest)', 'Run `pytest -q` to check.'],
-    ['runner command (dotnet test)', '`dotnet test --no-build`'],
+    ['runner name', '```\nnpx vitest run\n```'],
+    ['runner name', 'Run `pytest -q` to check.'],
+    ['runner name', 'Use xUnit for tests.'],
+    ['runner name', 'Use NUnit for tests.'],
+    ['runner name', 'Use MSTest for tests.'],
+    ['runner name', 'Use jest for unit tests.'],
+    ['runner name', 'E2E with Playwright.'],
+    ['runner name', 'E2E with Cypress.'],
+    ['runner name', 'Use mocha here.'],
+    ['runner name', 'Use Jasmine here.'],
+    ['runner name', 'Run karma in CI.'],
+    ['dotnet test', '`dotnet test --no-build`'],
+    ['package test command', 'Run `npm test` before commit.'],
+    ['package test command', 'Run `pnpm test`.'],
+    ['package test command', 'Run `yarn test`.'],
+    ['package test command', 'Run `ng test`.'],
     ['runner config', 'Add a vitest.config.ts with globals.'],
-    ['runner config (jest)', 'See jest.config.js for setup.'],
-    ['framework (xUnit)', 'Use xUnit for tests.'],
-    ['framework (NUnit)', 'Use NUnit for tests.'],
-    ['naming (ts)', 'Name files user.test.ts next to the source.'],
-    ['naming (py)', 'Name files test_user.py in tests/.'],
-    ['naming (cs)', 'Name classes OrderServiceTests.cs.'],
-    ['mocking (vi.fn)', 'Stub with vi.fn() and vi.mock.'],
-    ['mocking (pytest-mock)', 'Install pytest-mock for the mocker fixture.'],
-    ['mocking (NSubstitute)', 'Use NSubstitute for fakes.'],
-    ['assertions (Shouldly)', 'Assert with Shouldly.'],
+    ['runner config', 'See jest.config.js for setup.'],
+    ['runner config', 'Edit karma.config.js.'],
+    ['runner config', 'Edit pytest.ini for markers.'],
+    ['runner config', 'Fixtures go into conftest.py.'],
+    ['test file naming', 'Name files user.test.ts next to the source.'],
+    ['test file naming', 'Name files user.spec.ts next to the source.'],
+    ['test file naming', 'Name files test_user.py in tests/.'],
+    ['test file naming', 'Name files user_test.py in tests/.'],
+    ['test file naming', 'Name files user_test.go next to the source.'],
+    ['test file naming', 'Name classes OrderServiceTests.cs.'],
+    ['mocking api', 'Stub with vi.fn() and vi.mock.'],
+    ['mocking api', 'Stub with jest.fn().'],
+    ['mocking api', 'Install pytest-mock for fixtures.'],
+    ['mocking api', 'Use the mocker fixture.'],
+    ['mocking api', 'Use mock.patch for clients.'],
+    ['mocking api', 'Use monkeypatch for env vars.'],
+    ['mocking api', 'Import from unittest.mock.'],
+    ['mocking api', 'Use NSubstitute for fakes.'],
+    ['mocking api', 'Use Moq for fakes.'],
+    ['mocking api', 'Use FakeItEasy for fakes.'],
+    ['mocking api', 'Use AutoFixture for data.'],
+    ['assertion library', 'Assert with Shouldly.'],
+    ['assertion library', 'Assert with FluentAssertions.'],
+    ['assertion library', 'Query with @testing-library/angular.'],
+    ['test api name', 'Configure TestBed once.'],
   ];
 
-  it.each(families)('flags %s', (_family, line) => {
+  it.each(families)('flags %s: %s', (pattern, line) => {
+    expect(TEST_DUPLICATE_PATTERNS.map((p) => p.name)).toContain(pattern);
     const f = skill(`# X\n\n${line}\n`);
     const v = checkTestDuplicates([f]);
-    expect(v.length).toBeGreaterThan(0);
+    expect(v.some((x) => x.pattern === pattern)).toBe(true);
     expect(v[0].filePath).toBe(f);
   });
 
-  it('reports the 1-based line number in the file', () => {
-    const f = skill('# X\n\nUse NSubstitute.\n');
-    expect(checkTestDuplicates([f])[0].line).toBe(7);
+  it('has a fixture for every pattern', () => {
+    const covered = new Set(families.map(([p]) => p));
+    for (const p of TEST_DUPLICATE_PATTERNS) expect(covered).toContain(p.name);
   });
 
-  it('flags bare runner names without a pointer', () => {
-    expect(checkTestDuplicates([skill('# X\n\nWe use Vitest here.\n')])).toHaveLength(1);
+  describe('pointer handling', () => {
+    const flagged = (line: string, pattern?: string) => {
+      const v = checkTestDuplicates([skill(`# X\n\n${line}\n`)]);
+      return pattern ? v.some((x) => x.pattern === pattern) : v.length > 0;
+    };
+
+    it('allows a bare runner name on a backticked <lang>-test pointer', () => {
+      expect(flagged('Vitest, see `ts-test`')).toBe(false);
+      expect(flagged('pytest conventions: `py-test`')).toBe(false);
+    });
+
+    it('allows a bare runner name on a backticked references/ pointer', () => {
+      expect(flagged('Vitest setup: `references/setup.md`')).toBe(false);
+    });
+
+    it('allows TestBed on a pointer line but not in a how-to', () => {
+      expect(flagged('Load `ng-test` for TestBed setup.')).toBe(false);
+      expect(flagged('Configure TestBed once.', 'test api name')).toBe(true);
+    });
+
+    it('does not accept an unbackticked or non-lang -test mention', () => {
+      expect(flagged('Vitest, see ts-test', 'runner name')).toBe(true);
+      expect(flagged('Vitest, see `other-test`', 'runner name')).toBe(true);
+      expect(flagged('Vitest, see references/ somewhere', 'runner name')).toBe(true);
+    });
+
+    it('does not excuse a runner command with flags, npx, pnpm or run', () => {
+      expect(flagged('Run npx vitest run --coverage, see `ts-test`', 'runner name')).toBe(true);
+      expect(flagged('pytest -q, see `py-test`', 'runner name')).toBe(true);
+      expect(flagged('pnpm vitest, see `ts-test`', 'runner name')).toBe(true);
+      expect(flagged('uv run pytest, see `py-test`', 'runner name')).toBe(true);
+      expect(flagged('Run jest, see `references/a.md`', 'runner name')).toBe(true);
+    });
+
+    it('does not excuse dotnet test, package commands, config, naming or mocking', () => {
+      expect(flagged('`dotnet test`, see `dotnet-test`', 'dotnet test')).toBe(true);
+      expect(flagged('`npm test`, see `ts-test`', 'package test command')).toBe(true);
+      expect(flagged('vitest.config.ts, see `ts-test`', 'runner config')).toBe(true);
+      expect(flagged('conftest.py, see `py-test`', 'runner config')).toBe(true);
+      expect(flagged('user.test.ts, see `ts-test`', 'test file naming')).toBe(true);
+      expect(flagged('vi.fn(), see `ts-test`', 'mocking api')).toBe(true);
+      expect(flagged('Moq, see `dotnet-test`', 'mocking api')).toBe(true);
+      expect(flagged('Shouldly, see `dotnet-test`', 'assertion library')).toBe(true);
+    });
+  });
+
+  it('handles CRLF files with the right line number', () => {
+    const f = path.join(tmpDir, 'crlf-SKILL.md');
+    fs.writeFileSync(f, '---\r\nname: x-implementation\r\ndescription: d\r\n---\r\n# X\r\n\r\nUse Moq.\r\n');
+    const v = checkTestDuplicates([f]);
+    expect(v).toHaveLength(1);
+    expect(v[0].line).toBe(7);
+    expect(v[0].text).toBe('Use Moq.');
+  });
+
+  it('scans a file without frontmatter from line 1', () => {
+    const f = path.join(tmpDir, 'plain-SKILL.md');
+    fs.writeFileSync(f, 'Use Moq.\nclean\n');
+    const v = checkTestDuplicates([f]);
+    expect(v).toHaveLength(1);
+    expect(v[0].line).toBe(1);
   });
 
   it('exports an explicit pattern list', () => {
