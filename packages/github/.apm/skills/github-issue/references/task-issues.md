@@ -24,7 +24,7 @@ Blocked by #<task>, or none (also set as native blocked-by link)
 - <path>
 
 ## Done when
-- <observable result, tests included>
+- <observable result, tests included; names the interface(s) under test>
 <!-- agent-ready:end -->
 ```
 
