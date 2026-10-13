@@ -49,7 +49,7 @@ $manifestEntries = foreach ($f in $manifestFilters) {
   }
 }
 $schemaVersion = 'techstack-v2'
-$manifestList = $schemaVersion + "`n" + (@($manifestEntries) | Sort-Object -Unique -CaseSensitive) -join "`n"
+$manifestList = $schemaVersion + "`n" + ((@($manifestEntries) | Sort-Object -Unique -CaseSensitive) -join "`n")
 $sha = [System.Security.Cryptography.SHA256]::Create()
 $manifestHash = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestList))) -replace '-', '').ToLowerInvariant()
 
@@ -200,7 +200,9 @@ try {
   if ($LASTEXITCODE -eq 0) {
     git -C $rootFull check-ignore -q .agents/techstack.json 2>$null
     if ($LASTEXITCODE -ne 0) {
-      $exclude = git -C $rootFull rev-parse --path-format=absolute --git-path info/exclude 2>$null
+      # --git-path resolves a symlinked exclude file to its target; build the path from the git dir so the link check sees it
+      $commonDir = git -C $rootFull rev-parse --path-format=absolute --git-common-dir 2>$null
+      $exclude = if ($commonDir) { Join-Path $commonDir 'info/exclude' } else { $null }
       if ($exclude) {
         New-Item -ItemType Directory -Path (Split-Path $exclude) -Force | Out-Null
         $item = Get-Item -LiteralPath $exclude -Force -ErrorAction SilentlyContinue

@@ -198,6 +198,17 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
     expect(fs.readFileSync(excludeFile(), 'utf-8')).toBe('/.agents\n');
   });
 
+  it.skipIf(process.platform === 'win32')('does not write through a symlinked exclude file and leaves no *.tmp', { timeout: T }, () => {
+    const target = path.join(dir, 'target-exclude');
+    fs.writeFileSync(target, '*.log\n');
+    fs.mkdirSync(path.dirname(excludeFile()), { recursive: true });
+    fs.rmSync(excludeFile(), { force: true });
+    fs.symlinkSync(target, excludeFile());
+    run();
+    expect(fs.readFileSync(target, 'utf-8')).toBe('*.log\n');
+    expect(fs.readdirSync(path.join(dir, '.agents')).filter((f) => f.endsWith('.tmp'))).toEqual([]);
+  });
+
   it('recovers from a corrupt cache and reports an empty stack as arrays', { timeout: T }, () => {
     fs.rmSync(path.join(dir, 'package.json'));
     fs.rmSync(path.join(dir, 'tsconfig.json'));
