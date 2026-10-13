@@ -2,21 +2,21 @@
 
 Run by the primary agent (it can ask and write) after the user approved `plan.md` and every `questions[]` entry is answered or dropped. The planning step never runs this. Level `task`: nothing to publish.
 
-Resolve `{owner}/{repo}`. Create items in dependency order (an item after everything in its `blocked_by`), so each blocker has an issue number first.
+Resolve `{owner}/{repo}`. The run is idempotent: skip items whose `issue` is already non-null, and repeat only what is missing. Create items in dependency order (an item after everything in its `blocked_by`), so each blocker has an issue number first.
 
 ## 1. Create
 
 For each item: write `body` to a file and run
 
 ```powershell
-gh issue create --title "<title>" --body-file <file> --label <epic|feature|pbi|bug>
+gh issue create --title "<title>" --body-file <file> --label <label>
 ```
 
-The first body line is the parent reference (`Parent Epic: #N` or `Parent Feature: #N`). Take the number from the last URL segment and store it in `items[].issue`.
+Label by item level: `feature` for `Feature:` items, `pbi` for `feat:` / `chore:` items, `pbi` plus `bug` for `fix:` items. The first body line is the parent reference (`Parent Epic: #N` or `Parent Feature: #N`). Take the number from the last URL segment, store it in `items[].issue` and write `plan.json` back to disk after every create, so the number mapping survives a crash.
 
 ## 2. Native sub-issue links
 
-Link each new issue to `parent_issue` with the `addSubIssue` mutation over node IDs, exactly as in `packages/github/.apm/skills/github-issue/references/sub-issues.md`. The body line is documentation; the native link is the mechanism.
+Link each new issue to `parent_issue` with the `addSubIssue` mutation over node IDs, as described in the `github-issue` skill (`references/sub-issues.md`). Re-adding an existing link is safe. The body line is documentation; the native link is the mechanism.
 
 ## 3. Native blocked-by links
 
@@ -27,7 +27,7 @@ $blockerId = gh api repos/{owner}/{repo}/issues/<blocker-nr> --jq .id
 gh api -X POST repos/{owner}/{repo}/issues/<item-nr>/dependencies/blocked_by -F issue_id=$blockerId
 ```
 
-`issue_id` is the numeric REST id, not the issue number and not the GraphQL node id.
+Integer `blocked_by` entries (existing issues) are linked the same way, even when the item is new. Repeating a link that exists is safe. `issue_id` is the numeric REST id, not the issue number and not the GraphQL node id.
 
 ## 4. Verify
 
@@ -39,3 +39,5 @@ gh api repos/{owner}/{repo}/issues/<item-nr>/dependencies/blocked_by --jq '[.[].
 ```
 
 The first must list every created number; the second must list every expected blocker of that item. Fix missing links and re-check; report any that still fail.
+
+Set `status` to `published` when both checks pass, else `partial` with the failing step in `summary`, and write the file back.

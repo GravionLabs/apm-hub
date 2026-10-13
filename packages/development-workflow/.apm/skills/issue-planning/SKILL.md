@@ -3,7 +3,7 @@ name: issue-planning
 description: 'Plan an issue one level down with blockers and sizes; writes plan.json. Use for "plan issue #N".'
 ---
 
-Planning only: read-only, no questions to the user, no issue creation. A read-only planner subagent can run it. Creating issues is `references/publish.md`, run by the primary agent after approval.
+Planning only: no source edits, no issue creation, no questions to the user. The executing agent needs write access to `.agents/<issue>/` only. Creating issues is `references/publish.md`, run by the primary agent after approval.
 
 ## Depth (exploration budget)
 
@@ -33,7 +33,7 @@ The input type decides it (`labels`, else title prefix):
 1. Resolve owner/repo from `git remote get-url origin` (SSH or HTTPS). Never ask the user.
 2. Load `detect-techstack`; keep the JSON.
 3. Read the input: `gh issue view <nr> --json title,body,labels`, or the description. Read existing children with `gh api repos/{owner}/{repo}/issues/<nr>/sub_issues` and plan only what is missing.
-4. Explore per the depth through the `explorer` agent: one call per affected area with the file budget and the question; keep only its ≤ 300-word summaries (Claude Code `Agent` with `subagent_type: explorer`, OpenCode `task`, VS Code Copilot `runSubagent`; inline with the same budget without agents).
+4. Explore per the depth through the `explorer` agent: one call per affected area with the file budget and the question; keep only its ≤ 300-word summaries (Claude Code `Agent` with `subagent_type: explorer`, OpenCode `task`, VS Code Copilot `runSubagent`). A runner that cannot spawn agents (a subagent) explores inline with Read/Grep/Glob under the same budget; dispatching `explorer` is then the caller's job.
 5. Slice per `references/slicing.md`. Per item set `blocked_by`, `size` (S/M/L), `model` (haiku/sonnet/inherit, rule below) and `files`.
 6. Collect open decisions as `questions[]`. Resolve anything the repo can answer yourself; keep only real choices (product, scope, risk) with options, a `recommended` option and the item ids it `blocks`.
 7. Write `.agents/<issue>/plan.json` (schema: `references/plan-schema.md`) and `plan.md` (human view: table of items, blocker order, questions). Create the directory; use `.agents/adhoc/` without an issue number.
@@ -51,4 +51,4 @@ Only the plan path and a summary of ≤ 10 lines: input type and level, item cou
 - Titles are conventional per the github-issue convention (`Feature: `, `feat: `, `chore: `, `fix: `); bodies are implementable without re-exploring: exact files and symbols, where tests go, what is out of scope.
 - `blocked_by` forms a DAG over plan ids and existing issue numbers; no cycles, no self-reference.
 - Never use markdown checklists for hierarchy; publish uses native sub-issue and blocked-by links.
-- `plan.json` is the contract read by `orch-pipeline`, `github-issue` and the orchestrator.
+- `plan.json` is the contract between planning and the primary agent; `orch-pipeline` points here for larger work, `github-issue` references it for publishing.

@@ -1,6 +1,6 @@
 # plan.json schema
 
-Written to `.agents/<issue>/plan.json` by the planning step, read by the primary agent, `orch-pipeline` and `github-issue`. `plan.md` is the human view of the same data.
+Written to `.agents/<issue>/plan.json` by the planning step, read by the primary agent and by `orch-pipeline` when it is told to plan larger work. Publishing follows `publish.md`. `plan.md` is the human view of the same data. Machine-checkable form: `plan.schema.json` (structure); graph invariants are listed under Validity.
 
 ```json
 {
@@ -29,7 +29,7 @@ Written to `.agents/<issue>/plan.json` by the planning step, read by the primary
       "question": "Drop the legacy flag now or keep it one release?",
       "options": ["drop now", "keep one release"],
       "recommended": "keep one release",
-      "blocks": ["p2"]
+      "blocks": ["p1"]
     }
   ],
   "summary": "≤120 chars; names the first unblocked item"
@@ -40,14 +40,14 @@ Written to `.agents/<issue>/plan.json` by the planning step, read by the primary
 
 | Field | Rule |
 |:--|:--|
-| `phase`, `status` | `"plan"`; `ok` or `fail` |
+| `phase`, `status` | `"plan"`; planning sets `ok` or `fail`; publish sets `published` or `partial` (the failing step goes in `summary`) |
 | `parent_issue` | Number of the planned issue, `null` for a description |
 | `input_type` | `epic`, `feature`, `pbi`, `bug`, `description` |
 | `level` | `feature` (from epic), `pbi` (from feature), `task` (from pbi, bug, description) |
 | `depth` | `quick`, `standard`, `deep` (exploration budget only) |
 | `items[].id` | Unique plan id (`p1`, `p2`, …) |
 | `items[].title` | Conventional per level: `Feature: …`, `feat: …` / `fix: …`, `chore: …` |
-| `items[].body` | Issue body; for levels `feature` and `pbi` the first line is `Parent Epic: #N` / `Parent Feature: #N` (the parent number, as in `parent_issue`) followed by the sections of the matching template in `packages/github/.apm/issue-templates/`. For `task`, a short self-contained brief |
+| `items[].body` | Issue body; for levels `feature` and `pbi` the first line is `Parent Epic: #N` / `Parent Feature: #N` (the parent number, as in `parent_issue`) followed by the sections of the matching issue template (see the `github-issue` skill). For `task`, a short self-contained brief |
 | `items[].size` | `S`, `M`, `L` (see `slicing.md`) |
 | `items[].model` | `haiku`, `sonnet`, `inherit` |
 | `items[].blocked_by` | Plan ids or existing issue numbers (integers); acyclic; `[]` when free |
@@ -58,6 +58,9 @@ Written to `.agents/<issue>/plan.json` by the planning step, read by the primary
 ## Validity
 
 - Level `task` creates no GitHub issues: `issue` stays `null` and publish is a no-op.
-- Every id in `blocked_by` (string) and `blocks` resolves to an item; integers are existing issues.
-- Items blocked by an open question wait until the primary agent has the answer and updates the plan.
-- Publish writes created numbers into `items[].issue` and sets `status` accordingly; readers use `issue` as the key to the created issue.
+- Ids are unique. Every string in `blocked_by` and every id in `blocks` resolves to an item; integers are existing issues (publish links them via the blocked_by endpoint even when the item is new). `blocked_by` has no cycles and no self-reference.
+- `recommended` is one of `options`; `options` has at least 2 distinct entries.
+- Publish runs only after every `questions[]` entry is answered or dropped.
+  - Answered: the primary agent sets `recommended` to the chosen option, edits the items listed in `blocks` (title, body, `blocked_by`, size) to reflect it, then removes the question.
+  - Dropped: the question is removed, items unchanged.
+- Publish writes created numbers into `items[].issue` after every create; readers use `issue` as the key to the created issue.
