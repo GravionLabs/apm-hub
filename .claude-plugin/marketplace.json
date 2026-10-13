@@ -36,10 +36,10 @@
       "source": "./packages/apm-tooling"
     },
     {
-      "name": "development-workflow",
+      "name": "delivery",
       "description": "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project.",
       "version": "2.0.0",
-      "source": "./packages/development-workflow"
+      "source": "./packages/delivery"
     },
     {
       "name": "dotnet",
@@ -67,7 +67,7 @@
     },
     {
       "name": "shared",
-      "description": "Shared skills used by all packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), severity-rated code review (code-review).",
+      "description": "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), severity-rated code review (code-review), bug diagnosis (diagnose).",
       "version": "2.0.0",
       "source": "./packages/shared"
     },

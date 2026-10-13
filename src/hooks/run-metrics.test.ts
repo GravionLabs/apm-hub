@@ -5,7 +5,7 @@ import * as path from 'path';
 
 const SCRIPT = path.resolve(
   __dirname,
-  '../../packages/development-workflow/.apm/skills/retro/scripts/Get-RunMetrics.ps1',
+  '../../packages/delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1',
 );
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 

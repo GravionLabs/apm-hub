@@ -26,9 +26,9 @@ marketplace:
   - name: apm-tooling
     description: "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files."
     source: ./packages/apm-tooling
-  - name: development-workflow
+  - name: delivery
     description: "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project."
-    source: ./packages/development-workflow
+    source: ./packages/delivery
   - name: dotnet
     description: "C#/.NET skills: implementation conventions and review rules, NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, MCP server generation."
     source: ./packages/dotnet

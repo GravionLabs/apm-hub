@@ -42,7 +42,7 @@ The same pattern works with `ts`, `py` and `ng`: `<lang>-create-project` or `ng-
 ## Workflow 2: Work a GitHub issue end to end
 
 ```bash
-apm install development-workflow@apm-hub   # pulls in github, shared and the language packages
+apm install delivery@apm-hub   # pulls in github, shared and the language packages
 ```
 
 1. **Plan a large issue into sub-issues** (optional)
