@@ -21,7 +21,7 @@ marketplace:
     description: "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the explorer, planner, reviewer and implementer subagents it delegates to."
     source: ./packages/agents
   - name: hooks
-    description: "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit) works on Claude Code only here; the git guardrails (PreToolUse) deny destructive git commands. OpenCode gets a plugin (ledger and context warning) shipped at .apm/opencode/plugins/apm-hub-hooks.ts; it needs apm install plus apmw sanitize -p opencode (apmw#38)."
+    description: "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit) works on Claude Code only here; the git guardrails (PreToolUse) deny destructive git commands. OpenCode gets a plugin (ledger and context warning) shipped at .apm/opencode/plugins/apm-hub-hooks.ts; after apm install, copy it to .opencode/plugins/ or ~/.config/opencode/plugins/ by hand until an apmw release with GravionLabs/apmw#38 (open) does it via apmw sanitize -p opencode."
     source: ./packages/hooks
   - name: apm-tooling
     description: "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files."
