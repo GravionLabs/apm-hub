@@ -39,6 +39,17 @@ Exactly one PBI per run. After a PBI of a Feature the end line is `Next: #<nr> <
 | "plan #123" / "plane Feature #123" | `plan 123` |
 | "do #123" / "implement #123" | `full 123` / `implement 123` |
 
+### Flags: overview and review summary
+
+Two defaults, each switched off by a flag in the first message (also for `/orchestrator` and `/orch`):
+
+| Flag | Default without it |
+| :-- | :-- |
+| `--no-overview` | Started without an issue number, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged, merged ones per the "Task merged" rule) and you pick one |
+| `--no-review-summary` | After `review-fanout` it shows one line per finding (`severity file:line issue`, blocking first, MEDIUM/LOW included) and asks which advisories to fix; the rest go to the PR body. With the flag only blocking findings trigger fix rounds |
+
+Headless runs write `Gate: <question>` to the ledger and stop. Details: `github-issue` `references/orchestrator-gates.md`.
+
 ### Setup
 
 Start the orchestrator as the primary agent of a new session:
@@ -60,10 +71,10 @@ Create `~/.claude/commands/orchestrator.md` (it is not part of the package):
 
 ```markdown
 ---
-description: Run the orchestrator inline: /orchestrator plan|implement|full|next <issue>
+description: Run the orchestrator inline: /orchestrator [--no-overview] [--no-review-summary] plan|implement|full|next <issue>
 ---
 Read ~/.claude/agents/orchestrator.md and follow its body as your instructions for this session.
-Mode and issue: $ARGUMENTS
+Flags, mode and issue: $ARGUMENTS
 ```
 
 The command runs the agent **inline**: the agent's tool restrictions and model are not enforced and the

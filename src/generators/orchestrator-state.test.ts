@@ -288,3 +288,42 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
     expect(res.status).not.toBe(0);
   });
 });
+
+describe('orchestrator flags: overview and review summary', () => {
+  const gates = read('github/.apm/skills/github-issue/references/orchestrator-gates.md');
+  const orch = read('delivery/.apm/skills/orch-pipeline/SKILL.md');
+  const prompt = read('delivery/.apm/prompts/orch.prompt.md');
+  const working = fs.readFileSync(path.resolve(__dirname, '../../docs/working-mode.md'), 'utf-8');
+  const body = orchestrator.split(/^---$/m).slice(2).join('---').trim().split('\n');
+
+  it.each([
+    ['agent', orchestrator],
+    ['orch-pipeline', orch],
+    ['orch prompt', prompt],
+    ['working-mode', working],
+    ['gates reference', gates],
+  ])('%s documents both flags', (_n, md) => {
+    expect(md).toContain('--no-overview');
+    expect(md).toContain('--no-review-summary');
+  });
+
+  it('agent states the defaults and delegates to the reference', () => {
+    expect(orchestrator).toContain('when no issue number is given');
+    expect(orchestrator).toContain('review summary');
+    expect(orchestrator).toContain('orchestrator-gates.md');
+    expect(fs.existsSync(path.join(pk, 'github/.apm/skills/github-issue/references/orchestrator-gates.md'))).toBe(true);
+  });
+
+  it('reference reuses the merged-task rule and the headless gate', () => {
+    expect(gates).toContain('"Task merged"');
+    expect(gates).toContain('task-issues.md');
+    expect(gates).toContain('Gate: <question>');
+    expect(gates).toContain('severity file:line issue');
+    expect(gates).toContain('blocking first');
+    expect(gates).toContain('MEDIUM');
+  });
+
+  it('agent body stays within 40 lines', () => {
+    expect(body.length).toBeLessThanOrEqual(40);
+  });
+});
