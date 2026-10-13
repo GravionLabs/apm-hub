@@ -32,5 +32,7 @@ The concrete technical step.
 
 ## Done when
 
+<!-- Name the interface(s) under test (function, endpoint, command), then observable results. -->
+
 - 
 <!-- agent-ready:end -->
