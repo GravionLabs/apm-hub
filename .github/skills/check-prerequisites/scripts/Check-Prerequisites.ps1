@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     Verifies that required tools are installed: PowerShell, Git, Node.js, npm.
-    Optionally checks for optional tools (gh, curl, jq, yq, ast-grep, python).
+    Optionally checks for optional tools (gh, curl, jq, yq, ast-grep, python, apmw).
     Can auto-install missing tools using platform-specific package managers.
 
 .PARAMETER Full
@@ -164,7 +164,8 @@ if ($Full) {
         'jq',
         'yq',
         'ast-grep',
-        'python'
+        'python',
+        'apmw'
     )
     
     foreach ($tool in $optionalTools) {
@@ -175,6 +176,9 @@ if ($Full) {
         } else {
             $results.optional[$tool] = "✗ NOT FOUND"
             Write-Host "  ✗ $tool : NOT FOUND" -ForegroundColor Gray
+            if ($tool -eq 'apmw') {
+                Write-Host "    only for the agents package (agents, core, all); required for OpenCode, recommended for Claude Code and Copilot: pipx install apmw  or  uv tool install apmw" -ForegroundColor Gray
+            }
         }
     }
 }
