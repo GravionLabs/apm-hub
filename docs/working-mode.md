@@ -178,7 +178,10 @@ resumes from the ledger.
 | Git guardrails | `PreToolUse` | `preToolUse` | not available yet |
 
 The OpenCode plugin is a single file that exports only its plugin function (OpenCode calls every function export as a
-plugin and fails to load the file on other exports). Delivery to `.opencode/plugins/` is tracked in #183/#184.
+plugin and fails to load the file on other exports). `apm install` copies the whole package verbatim, so the file lands at
+`apm_modules/<owner>/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`; it is active in OpenCode only after
+`apmw sanitize -p opencode` places it in `.opencode/plugins/`. Support in apmw is tracked in GravionLabs/apmw#38; until
+it is released, copy the file there by hand.
 
 ### Subagent context by harness
 

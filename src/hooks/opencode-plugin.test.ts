@@ -11,6 +11,20 @@ type Hooks = {
   'chat.message': (i: any, o: any) => Promise<void>;
 };
 
+describe('opencode plugin shipping', () => {
+  it('lives at the shipped path inside the hooks package', () => {
+    expect(fs.existsSync(PLUGIN)).toBe(true);
+    expect(path.relative(path.resolve(__dirname, '../../packages/hooks'), PLUGIN)).toBe(
+      path.join('.apm', 'opencode', 'plugins', 'apm-hub-hooks.ts'),
+    );
+  });
+
+  it('is not excluded by a files list in the hooks manifest', () => {
+    const manifest = fs.readFileSync(path.resolve(__dirname, '../../packages/hooks/apm.yml'), 'utf8');
+    expect(manifest).not.toMatch(/^files:/m);
+  });
+});
+
 describe('opencode plugin apm-hub-hooks', () => {
   let dir: string;
   let ledger: string;
