@@ -6,7 +6,7 @@ A curated hub of cross-platform **agent skills** — distributed as APM packages
 
 ## What is apm-hub?
 
-**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. There are no agents: workflows are skills, and the `/orch` prompt is the only extra entry point.
+**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the `agents` package adds the `orchestrator` primary agent and its `explorer`, `planner`, `reviewer` and `implementer` subagents. Entry points beyond skill names are the `/orch` prompt and the `orchestrator` agent.
 
 Skills are the primary artifact: one `SKILL.md` source file loads unchanged on GitHub Copilot, Claude Code, and OpenCode. See the [skill frontmatter convention](docs/concepts/skill-frontmatter.md) for how that is guaranteed.
 
@@ -110,6 +110,8 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `py`                   | `py-implementation`, `py-test`, `py-create-project`                                                                               |
 | `ng`                   | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)    |
 | `agents`               | `orchestrator`, `explorer`, `planner`, `reviewer`, `implementer` (subagents) — see below                                                     |
+| `hooks`                | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails); OpenCode plugin                             |
+| `core`                 | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                         |
 | `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                  |
 | `all`                  | every package above except `apm-tooling`                                                                                          |
 
