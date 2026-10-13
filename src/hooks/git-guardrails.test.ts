@@ -127,6 +127,44 @@ describe('git-guardrails hook', () => {
     'g""it reset --hard',
     'g\\it reset --hard',
     "'git' reset --hard",
+    // pipes into a shell, process substitution read by a shell
+    "echo 'git reset --hard' | sh",
+    'echo git reset --hard | bash -s',
+    "printf 'git reset --hard\\n' | bash",
+    "echo 'git reset --hard' | sh -",
+    "echo 'git reset --hard' |& sh",
+    "echo 'git reset --hard' |\n sh",
+    'cat <<EOF | bash\ngit reset --hard\nEOF',
+    "cat <<'EOF' | sh\ngit clean -fd\nEOF",
+    "source <(echo 'git reset --hard')",
+    '. <(echo git reset --hard)',
+    'bash <(echo git reset --hard)',
+    // wrappers
+    'stdbuf -oL git reset --hard',
+    'stdbuf -o L git reset --hard',
+    'flock /tmp/l git reset --hard',
+    'flock -w 5 /tmp/l git reset --hard',
+    "flock /tmp/l -c 'git reset --hard'",
+    "su -c 'git reset --hard' bob",
+    "su bob -c 'git reset --hard'",
+    "su - bob -lc 'git clean -fd'",
+    "script -qc 'git reset --hard' /dev/null",
+    "script --command='git reset --hard'",
+    'chronic git reset --hard',
+    'unbuffer -p git reset --hard',
+    // git -c alias.*
+    "git -c alias.x='reset --hard' x",
+    "git -c alias.x='!git reset --hard' x",
+    "git -c alias.nuke='push -f origin' nuke main",
+    "git -c Alias.y='clean -fd' status",
+    // options end at --
+    'git clean -f -- -n',
+    // another repository is never inspected with git: counts as dirty
+    'git --git-dir=/tmp/x/.git checkout .',
+    'git --work-tree=/tmp restore -- .',
+    'GIT_DIR=/tmp/x git restore .',
+    'env GIT_WORK_TREE=/tmp git checkout .',
+    'git --git-dir=/tmp/x push -f origin HEAD',
   ];
   const allowed = [
     'git push --force origin feature',
@@ -166,6 +204,25 @@ describe('git-guardrails hook', () => {
     'git push -f origin feature>/dev/null',
     'git status 2>&1',
     'cat <<EOF >out.txt\ngit reset --hard\nEOF',
+    "cat <<'EOF' > f\ngit reset --hard\nEOF",
+    'git log | head',
+    "git log --oneline | sh -c 'cat'",
+    "echo 'git reset --hard' | cat",
+    "echo 'git reset --hard' | bash script.sh",
+    "echo 'git reset --hard' || sh",
+    "echo 'git push' | sh",
+    'cat <<EOF | bash\ngit status\nEOF',
+    'source <(echo git status)',
+    'stdbuf -oL git status',
+    'flock /tmp/l git status',
+    "su -c 'git status'",
+    'git -c alias.x=status x',
+    'git -c alias.co=checkout co feature',
+    'git -c core.pager=cat status',
+    'git clean -n -- -f',
+    'git restore ./',
+    'git -C . checkout .',
+    'git -C . push -f',
   ];
 
   describe.each([
@@ -196,7 +253,17 @@ describe('git-guardrails hook', () => {
     expect(run(claude('git push --force')).out).toBe('');
   });
 
-  it.each(['git checkout -- .', 'git checkout .', 'git restore .', 'git restore --worktree .'])(
+  it.each([
+    'git checkout -- .',
+    'git checkout .',
+    'git restore .',
+    'git restore --worktree .',
+    'git checkout ./',
+    'git restore -- ./',
+    'git restore ..',
+    'git checkout -- ./.',
+    'git -c alias.co=checkout co -- ./',
+  ])(
     'denies %s only with uncommitted changes',
     (c) => {
       expect(run(claude(c)).out).toBe('');
@@ -239,24 +306,53 @@ describe('git-guardrails hook', () => {
     expect(run(claude('git push origin HEAD')).out).toBe('');
     expect(run(claude('git push -f origin HEAD:feature')).out).toBe('');
   });
-  it('tracks git -C for the dirty check', () => {
-    const other = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-other-'));
-    try {
+  describe('git -C targets', () => {
+    let other: string;
+    const initRepo = (dir: string, branch = 'feature') => {
       const env = hermetic(home);
-      spawnSync('git', ['init', '-q', other], { env });
-      fs.writeFileSync(path.join(other, 'b.txt'), 'x');
-      spawnSync('git', ['-C', other, 'add', 'b.txt'], { env });
-      spawnSync('git', ['-C', other, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'i'], { env });
-      fs.writeFileSync(path.join(other, 'b.txt'), 'y');
-      expect(run(claude(`git -C ${other} checkout .`)).out).not.toBe('');
-      dirty();
+      spawnSync('git', ['init', '-q', '-b', branch, dir], { env });
+      fs.writeFileSync(path.join(dir, 'b.txt'), 'x');
+      spawnSync('git', ['-C', dir, 'add', 'b.txt'], { env });
+      spawnSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'i'], { env });
+    };
+    beforeEach(() => {
+      other = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-other-'));
+    });
+    afterEach(() => fs.rmSync(other, { recursive: true, force: true }));
+
+    it('counts checkout . in another repository as dirty, even when it is clean', () => {
+      initRepo(other);
+      const r = run(claude(`git -C ${other} checkout .`));
+      expect(denied(r)).toBe(true);
+      expect(JSON.parse(r.out).permissionDecisionReason).toContain('not inspected');
       expect(run(claude(`git -C ${other} status`)).out).toBe('');
-      fs.writeFileSync(path.join(other, 'b.txt'), 'x');
-      expect(run(claude(`git -C ${other} checkout .`)).out).toBe('');
-      expect(denied(run(claude('git checkout .')))).toBe(true);
-    } finally {
-      fs.rmSync(other, { recursive: true, force: true });
-    }
+    });
+    it('checks the session repository itself for -C . and -C <subdir>', () => {
+      fs.mkdirSync(path.join(repo, 'sub'));
+      expect(run(claude('git -C . checkout .')).out).toBe('');
+      expect(run(claude(`git -C ${repo} checkout .`)).out).toBe('');
+      expect(run(claude('git -C sub checkout .')).out).toBe('');
+      dirty();
+      expect(denied(run(claude('git -C sub checkout .')))).toBe(true);
+    });
+    it('treats a nested repository inside the session repo as another repository', () => {
+      const nested = path.join(repo, 'nested');
+      fs.mkdirSync(nested);
+      initRepo(nested);
+      expect(denied(run(claude('git -C nested checkout .')))).toBe(true);
+    });
+    it('reads the branch of another repository from its HEAD file for a bare force push', () => {
+      initRepo(other, 'main');
+      expect(denied(run(claude(`git -C ${other} push -f`)))).toBe(true);
+      expect(denied(runNoJq(claude(`git -C ${other} push -f origin HEAD`)))).toBe(true);
+      const feat = path.join(other, 'feat');
+      initRepo(feat, 'topic');
+      expect(run(claude(`git -C ${feat} push -f`)).out).toBe('');
+    });
+    it('blocks a bare force push when the branch cannot be read', () => {
+      const r = run(claude(`git -C ${other} push -f`));
+      expect(JSON.parse(r.out).permissionDecisionReason).toContain('unknown branch');
+    });
   });
   it('explains the reason and escapes quotes in the deny JSON', () => {
     expect(JSON.parse(run(claude('git reset --hard')).out).permissionDecisionReason).toContain('git reset --hard');
@@ -341,20 +437,22 @@ describe('git-guardrails hook', () => {
   });
 
   describe('performance and limits', () => {
-    const msg = Array.from({ length: 560 }, (_, i) => `line ${i} of a long commit message with some words`).join('\n');
+    const CAP = 24576;
+    const msg = Array.from({ length: 440 }, (_, i) => `line ${i} of a long commit message with some words`).join('\n');
     const timed = (fn: () => { out: string }) => {
       const t = Date.now();
       const r = fn();
       return { r, ms: Date.now() - t };
     };
     const big = [`git commit -m "$(cat <<'EOF'\n${msg}\nEOF\n)"`, `git commit -m '${msg}'`, `git commit -F - <<EOF\n${msg}\nEOF`];
-    it.each(big)('scans a ~30 KB commit quickly with jq', (c) => {
-      expect(c.length).toBeGreaterThan(25000);
+    it.each(big)('scans a ~22 KB commit quickly with jq', (c) => {
+      expect(c.length).toBeGreaterThan(21000);
+      expect(c.length).toBeLessThan(CAP);
       const { r, ms } = timed(() => run(claude(c)));
       expect(r.out).toBe('');
       expect(ms).toBeLessThan(3000);
     });
-    it.each(big)('scans a ~30 KB commit quickly without jq', (c) => {
+    it.each(big)('scans a ~22 KB commit quickly without jq', (c) => {
       const { r, ms } = timed(() => runNoJq(claude(c)));
       expect(r.out).toBe('');
       expect(ms).toBeLessThan(3000);
@@ -364,9 +462,49 @@ describe('git-guardrails hook', () => {
       expect(denied(run(claude(c)))).toBe(true);
       expect(denied(runNoJq(claude(c)))).toBe(true);
     });
-    it('fails open above 64 KB', () => {
-      const c = `git reset --hard # ${'x'.repeat(66000)}`;
-      expect(run(claude(c)).out).toBe('');
+
+    // worst-case shapes just below the cap: every one ends in a destructive command that must still be found
+    const tail = '\ngit reset --hard';
+    const fill = (unit: string, head = '') => head + unit.repeat(Math.floor((CAP - 200 - head.length) / unit.length)) + tail;
+    const shapes: [string, string][] = [
+      ['many words', fill('a ', 'echo ')],
+      ['many single quotes', fill("'a' ", 'echo ')],
+      ['many double quotes', fill('"a" ', 'echo ')],
+      ['many escaped quotes', fill('\\" ', 'echo ')],
+      ['many lines', fill('a\n')],
+      ['many comments', fill('#\n')],
+      ['many pipes', fill('a | ')],
+      ['many separators', fill(';', 'a')],
+      ['repeated ((', fill('((x)) ')],
+      ['repeated $((', fill('$((1)) ', 'echo ')],
+      ['many substitutions', fill('$(git status) ', 'echo ')],
+      ['many backticks', fill('`a` ', 'echo ')],
+      ['many heredocs', fill('cat <<E\nE\n')],
+      ['an 11000-line heredoc', `cat <<EOF\n${'x\n'.repeat(11000)}EOF${tail}`],
+      ['an 8000-line <<- heredoc', `cat <<-EOF\n${'\tx\n'.repeat(8000)}\tEOF${tail}`],
+      ['many echo | sh', fill("echo 'a' | sh\n")],
+    ];
+    it.each(shapes)('denies after %s within the time bound, with and without jq', (_n, c) => {
+      expect(c.length).toBeLessThanOrEqual(CAP);
+      for (const fn of [run, runNoJq]) {
+        const { r, ms } = timed(() => fn(claude(c)));
+        expect(denied(r)).toBe(true);
+        expect(ms).toBeLessThan(3000);
+      }
+    });
+    it('fails open above 24 KB, quickly, also for a 30000-line heredoc', () => {
+      expect(run(claude(`git reset --hard # ${'x'.repeat(CAP)}`)).out).toBe('');
+      const c = `cat <<EOF\n${'x\n'.repeat(30000)}EOF${tail}`;
+      const { r, ms } = timed(() => runNoJq(claude(c)));
+      expect(r.out).toBe('');
+      expect(ms).toBeLessThan(3000);
+    });
+    it('denies nesting deeper than 24 levels with a reason', () => {
+      const deep = (k: number) => `echo ${'$(echo '.repeat(k)}x${')'.repeat(k)}; git status`;
+      expect(run(claude(deep(20))).out).toBe('');
+      const r = run(claude(deep(30)));
+      expect(denied(r)).toBe(true);
+      expect(JSON.parse(r.out).permissionDecisionReason).toContain('deeper than 24 levels');
     });
   });
 
@@ -384,6 +522,61 @@ describe('git-guardrails hook', () => {
         fs.rmSync(evil, { recursive: true, force: true });
       }
     });
+    it('does not run a .gitattributes clean filter of a repo given via git -C', () => {
+      const evil = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-filter-'));
+      const marker = path.join(evil, 'PWNED');
+      const env = hermetic(home);
+      try {
+        spawnSync('git', ['init', '-q', '-b', 'feature', evil], { env });
+        fs.writeFileSync(path.join(evil, '.gitattributes'), 'f filter=x\n');
+        fs.writeFileSync(path.join(evil, 'f'), 'a\n');
+        spawnSync('git', ['-C', evil, 'add', '.'], { env });
+        spawnSync('git', ['-C', evil, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'i'], { env });
+        spawnSync('git', ['-C', evil, 'config', 'filter.x.clean', `touch ${marker}; cat`], { env });
+        fs.writeFileSync(path.join(evil, 'f'), 'b\n'); // same size, old mtime: git status would hash it through the filter
+        fs.utimesSync(path.join(evil, 'f'), new Date('2000-01-01'), new Date('2000-01-01'));
+        // control: a plain git status in that repo does run the filter
+        spawnSync('git', ['-C', evil, 'status', '--porcelain'], { env });
+        expect(fs.existsSync(marker)).toBe(true);
+        fs.rmSync(marker);
+        fs.utimesSync(path.join(evil, 'f'), new Date('2000-01-01'), new Date('2000-01-01'));
+        for (const fn of [run, runNoJq]) {
+          expect(denied(fn(claude(`git -C ${evil} checkout .`)))).toBe(true);
+          expect(fn(claude(`git -C ${evil} push -f`)).out).toBe(''); // branch read from the HEAD file
+        }
+        expect(fs.existsSync(marker)).toBe(false);
+      } finally {
+        fs.rmSync(evil, { recursive: true, force: true });
+      }
+    });
+    it('runs its own git hardened and never inside another repository', () => {
+      const shim = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-shim-'));
+      const other = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-foreign-'));
+      const log = path.join(shim, 'log');
+      try {
+        fs.writeFileSync(
+          path.join(shim, 'git'),
+          `#!/bin/sh\nprintf '%s|%s\\n' "$GIT_OPTIONAL_LOCKS" "$*" >> ${log}\nexec ${fs.realpathSync(which('git')!)} "$@"\n`,
+          { mode: 0o755 },
+        );
+        const shimmed = { ...process.env, PATH: `${shim}${path.delimiter}${process.env.PATH}` };
+        dirty();
+        expect(denied(runRaw(JSON.stringify(claude('git checkout .')), {}, shimmed))).toBe(true);
+        expect(denied(runRaw(JSON.stringify(claude(`git -C ${other} checkout . && git -C ${other} push -f`)), {}, shimmed))).toBe(true);
+        const lines = fs.readFileSync(log, 'utf8').trim().split('\n');
+        expect(lines.some((l) => l.includes('status'))).toBe(true);
+        for (const l of lines) {
+          expect(l.startsWith('0|')).toBe(true);
+          expect(l).toContain('--no-optional-locks');
+          expect(l).toContain('core.hooksPath=/dev/null');
+          expect(l).toContain('core.fsmonitor=false');
+          expect(l).not.toContain(other);
+        }
+      } finally {
+        fs.rmSync(shim, { recursive: true, force: true });
+        fs.rmSync(other, { recursive: true, force: true });
+      }
+    });
     it('ignores untracked files for the checkout . dirty check', () => {
       untracked();
       expect(run(claude('git checkout .')).out).toBe('');
@@ -394,8 +587,10 @@ describe('git-guardrails hook', () => {
     it('GIT_GUARDRAILS_OFF=0 does not disable the hook', () => {
       expect(denied(run(claude('git reset --hard'), { GIT_GUARDRAILS_OFF: '0' }))).toBe(true);
     });
-    it('GIT_GUARDRAILS_OFF=1 disables the hook for Copilot payloads and without jq', () => {
+    it('GIT_GUARDRAILS_OFF=1 disables the hook for Copilot payloads, with and without jq', () => {
       expect(run(copilot('git reset --hard'), { GIT_GUARDRAILS_OFF: '1' }).out).toBe('');
+      expect(runRaw(JSON.stringify(copilot('git reset --hard')), { GIT_GUARDRAILS_OFF: '1' }, { ...process.env, PATH: nojq }).out).toBe('');
+      expect(denied(runNoJq(copilot('git reset --hard')))).toBe(true);
     });
     it('an inline GIT_GUARDRAILS_OFF=1 in the command does not disable the hook', () => {
       expect(denied(run(claude('GIT_GUARDRAILS_OFF=1 git reset --hard')))).toBe(true);
