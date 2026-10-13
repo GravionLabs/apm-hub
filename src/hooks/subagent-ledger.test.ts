@@ -95,6 +95,57 @@ describe('subagent-ledger hook', () => {
     );
   });
 
+  it('does not use transcript_path (parent session transcript)', () => {
+    withLedger();
+    const tp = path.join(dir, 'parent.jsonl');
+    fs.writeFileSync(tp, JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: 'parent line' } }) + '\n');
+    run({ cwd: dir, agent_type: 'reviewer', transcript_path: tp });
+    expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped\n');
+  });
+
+  it('keeps the last good transcript line when the final line is truncated', () => {
+    withLedger();
+    const tp = path.join(dir, 't.jsonl');
+    const good = JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: 'Status: DONE' }, 'str'] } });
+    fs.writeFileSync(tp, ['"junk"', good, '{"type":"assistant","message":{"role":"assi'].join('\n'));
+    run({ cwd: dir, agent_type: 'implementer', agent_transcript_path: tp });
+    expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent implementer: stopped — Status: DONE\n');
+  });
+
+  it('does not use a report path for non-implementer agents', () => {
+    withLedger();
+    fs.writeFileSync(path.join(dir, '.agents', '7', 'task-1-report.md'), 'x');
+    run({ cwd: dir, agent_type: 'reviewer' });
+    expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped\n');
+  });
+
+  it('ignores a stale implementer report', () => {
+    withLedger();
+    const rp = path.join(dir, '.agents', '7', 'task-1-report.md');
+    fs.writeFileSync(rp, 'x');
+    const old = new Date(Date.now() - 3600_000);
+    fs.utimesSync(rp, old, old);
+    run({ cwd: dir, agent_type: 'implementer' });
+    expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent implementer: stopped\n');
+  });
+
+  it('falls through without jq', () => {
+    withLedger();
+    const bin = path.join(dir, 'bin');
+    fs.mkdirSync(bin);
+    for (const c of ['cat', 'sed', 'head', 'tail', 'cut', 'ls', 'dirname', 'tr', 'grep', 'find', 'sort', 'bash']) {
+      const src = ['/usr/bin', '/bin'].map((d) => path.join(d, c)).find((f) => fs.existsSync(f));
+      if (src) fs.symlinkSync(src, path.join(bin, c));
+    }
+    const r = spawnSync('bash', [SCRIPT], {
+      input: JSON.stringify({ cwd: dir, agent_type: 'reviewer', agent_transcript_path: path.join(dir, 'x.jsonl') }),
+      encoding: 'utf8',
+      env: { ...process.env, AGENTS_LEDGER: '', PATH: bin },
+    });
+    expect(r.status).toBe(0);
+    expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped\n');
+  });
+
   it('never writes "no message"', () => {
     withLedger();
     run({ cwd: dir, agent_type: 'reviewer' });
@@ -105,6 +156,15 @@ describe('subagent-ledger hook', () => {
     withLedger();
     const r = run({ cwd: dir, agent_type: 'orchestrator', last_assistant_message: 'done' });
     expect(r.status).toBe(0);
+    expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\n');
+  });
+
+  it('drops namespaced and case-variant orchestrator entries', () => {
+    withLedger();
+    run({ cwd: dir, agent_type: 'agents:orchestrator', last_assistant_message: 'a' });
+    run({ cwd: dir, agentType: 'Orchestrator', response: 'b' });
+    run({ cwd: dir, agentName: 'ORCHESTRATOR', response: 'c' });
+    run({ cwd: dir, subagent_type: 'orchestrator', response: 'd' });
     expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\n');
   });
 

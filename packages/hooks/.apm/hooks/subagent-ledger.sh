@@ -32,26 +32,27 @@ first() { # first non-empty value among the given field names
 }
 agent="$(first agent_type agentType agentName subagent_type)"
 [ -n "$agent" ] || agent="subagent"
-# the orchestrator writes its own ledger entries; its stop events are noise
-[ "$agent" = "orchestrator" ] && exit 0
+# the orchestrator writes its own ledger entries; its stop events are noise (any case or namespace)
+agent_lc="$(printf '%s' "$agent" | tr '[:upper:]' '[:lower:]')"
+case "$agent_lc" in orchestrator|*[:/.]orchestrator) exit 0 ;; esac
 summary="$(first last_assistant_message response | head -n 1 | cut -c1-120)"
 
-last_text_line() { # last non-empty assistant text line of a JSONL transcript (needs jq)
+last_text_line() { # last non-empty assistant text line of a JSONL transcript (needs jq; skips invalid lines)
   [ -n "$1" ] && [ -f "$1" ] && command -v jq >/dev/null 2>&1 || return 0
-  jq -rs '[.[] | select(.type == "assistant" or .role == "assistant" or .message.role == "assistant")
-    | (.message.content // .content)
-    | if type == "string" then . elif type == "array" then ([.[] | select(.type == "text") | .text] | join("\n")) else empty end
+  jq -rRn '[inputs | fromjson? | objects
+    | select(.type == "assistant" or .role == "assistant" or ((.message | objects | .role) == "assistant"))
+    | ((.message | objects | .content) // .content)
+    | if type == "string" then . elif type == "array" then ([.[] | objects | select(.type == "text") | .text | strings] | join("\n")) else empty end
     | select(length > 0)] | last // empty' "$1" 2>/dev/null \
     | grep -v '^[[:space:]]*$' | tail -n 1 | cut -c1-120
 }
 if [ -z "$summary" ]; then
-  for k in agent_transcript_path transcript_path; do
-    summary="$(last_text_line "$(field $k)")"
-    [ -n "$summary" ] && break
-  done
+  # only the subagent's own transcript; transcript_path is the parent session and must not be used
+  summary="$(last_text_line "$(field agent_transcript_path)")"
 fi
-if [ -z "$summary" ]; then
-  report="$(ls -t "$(dirname "$ledger")"/task-*-report.md 2>/dev/null | head -n 1)"
+if [ -z "$summary" ] && [ "$agent" = "implementer" ]; then
+  # only the implementer writes task reports; accept a report touched in the last 10 minutes
+  report="$(find "$(dirname "$ledger")" -maxdepth 1 -name 'task-*-report.md' -mmin -10 -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -n 1 | cut -d' ' -f2-)"
   [ -n "$report" ] && summary="report: ${report#"$cwd"/}"
 fi
 
