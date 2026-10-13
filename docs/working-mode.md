@@ -128,6 +128,12 @@ resumes from the ledger.
   note the hand-off in the ledger, `/clear`. The hook parses the payload with `jq` when installed and with a
   bash fallback otherwise (escapes, pretty-printed JSON and any field order work either way). It never blocks and
   stays silent when parsing fails; set `CONTEXT_WARN_DEBUG=1` to get a one-line note on stderr instead.
+- On Copilot CLI the same script runs as `postToolUse` (`userPromptSubmitted` cannot inject context), so the warning
+  arrives after the next tool call, not on the next prompt. `postToolUse` has no `transcriptPath`; the hook reads
+  `~/.copilot/session-state/<sessionId>/events.jsonl` (`COPILOT_HOME` overrides the directory) and takes `inputTokens`
+  of the last `session.usage_record` event (it already contains cache reads and writes). Same thresholds, throttle
+  and exit-0 behavior. Copilot versions that do not write `session.usage_record` stay silent: check `/context`
+  or `/usage` yourself before a long step.
 - The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code, `preToolUse` on
   Copilot CLI): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them,
   `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
@@ -168,6 +174,22 @@ resumes from the ledger.
   unless the issues are independent and each is small.
 - A session older than 8 hours needs a reason (a watch, a loop). Otherwise write the hand-off into the
   ledger or a memory note and start a new session.
+
+### Hooks by harness
+
+| Hook | Claude Code | Copilot CLI | OpenCode |
+| :-- | :-- | :-- | :-- |
+| Subagent ledger line | `SubagentStop` | `subagentStop` | plugin `tool.execute.after` for `task` (`packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`) |
+| Context warning | `UserPromptSubmit` | not available | same plugin: `message.updated` token usage, warning added as a synthetic part by `chat.message`; unknown until the first assistant reply after a restart |
+| Git guardrails | `PreToolUse` | `preToolUse` | not available yet |
+
+The OpenCode plugin is a single file that exports only its plugin function (OpenCode calls every function export as a
+plugin and fails to load the file on other exports). `apm install` copies the whole package verbatim under `apm_modules`; the source path is
+`packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts` (a local-path install gives
+`apm_modules/_local/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`; a marketplace install gives
+`apm_modules/<owner>/apm-hub/packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`). OpenCode loads it only from a plugins directory: `apmw sanitize -p opencode` is meant to place it there, but
+that needs an apmw release with GravionLabs/apmw#38 (open). Until then copy the file by hand to `.opencode/plugins/`
+(project) or `~/.config/opencode/plugins/` (global).
 
 ### Subagent context by harness
 
