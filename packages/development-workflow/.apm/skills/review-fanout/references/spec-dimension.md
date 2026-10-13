@@ -6,18 +6,19 @@ Compares the diff with the originating issue. Input is the issue section of the 
 
 First hit wins:
 
-1. The issue number passed as argument.
+1. The integer issue argument (distinct from the PR `<nr>` in PR mode).
 2. The branch name `<type>/<nr>-<slug>` (`git branch --show-current`; PR: `headRefName`).
-3. `Closes #n` in the commit messages of the range.
+3. `Closes #n` in the commit messages of the range; in PR mode in the PR body or its commits, first hit wins.
 
-Append to the package file under `## Issue #<nr>`:
+Append the issue to the package file; the `## Issue #<nr>` heading and readable text are written, not raw JSON:
 
 ```powershell
-gh issue view <nr> --json title,body >> <package>
-gh api repos/{owner}/{repo}/issues/<nr>/sub_issues --jq '.[] | "### Task #\(.number) \(.title)\n\(.body)"' >> <package>
+"## Issue #<nr>" >> <package>
+gh issue view <nr> --json title,body --jq '"# \(.title)\n\(.body)"' >> <package>
+gh api --paginate repos/{owner}/{repo}/issues/<nr>/sub_issues --jq '.[] | select(any(.labels[]; .name == "task")) | "\n---\n### Task #\(.number) \(.title)\n\(.body // "")"' >> <package>
 ```
 
-`<nr>` must be an integer. No issue found or `gh` fails → write no issue section; `spec` returns one advisory finding "no spec available" and never fails.
+`<nr>` must be an integer. No issue found or `gh` fails → write no issue section; `spec` returns one finding "no spec available" with severity LOW, which review-fanout routes straight into `advisory` (never blocking).
 
 ## Brief
 
@@ -31,4 +32,4 @@ Severity: unmet criterion HIGH, scope creep MEDIUM. `evidence` quotes the criter
 
 ## Dedupe
 
-`spec` and `conventions` findings are never merged with each other (different axes), even on the same file and evidence.
+`spec` findings only merge with other `spec` findings; they are never merged with `conventions` or any other dimension (different axes), even on the same file and evidence.
