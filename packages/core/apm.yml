@@ -13,4 +13,4 @@ dependencies:
     - GravionLabs/apm-hub/packages/development-workflow
     - GravionLabs/apm-hub/packages/shared
     - GravionLabs/apm-hub/packages/agents
-    - GravionLabs/apm-hub/packages/claude-hooks
+    - GravionLabs/apm-hub/packages/hooks

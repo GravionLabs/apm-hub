@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SubagentStop hook: append one line per finished subagent to the issue ledger
-# (.agents/<issue>/progress.md written by the orchestrator agent). Claude Code only.
+# (.agents/<issue>/progress.md written by the orchestrator agent). Claude Code and Copilot CLI payloads.
 # Never blocks: every path exits 0. Writes nothing when no ledger exists.
 
 payload="$(cat 2>/dev/null || true)"
@@ -26,10 +26,16 @@ if [ -z "$ledger" ]; then
 fi
 [ -n "$ledger" ] && [ -f "$ledger" ] || exit 0
 
-agent="$(field agent_type)"
-[ -n "$agent" ] || agent="$(field subagent_type)"
+first() { # first non-empty value among the given field names
+  local k v
+  for k in "$@"; do v="$(field "$k")"; [ -n "$v" ] && { printf '%s' "$v"; return; }; done
+}
+agent="$(first agent_type agentType agentName subagent_type)"
 [ -n "$agent" ] || agent="subagent"
-summary="$(field last_assistant_message | head -n 1 | cut -c1-120)"
+summary="$(first last_assistant_message response | head -n 1 | cut -c1-120)"
 
-printf 'Subagent %s: stopped — %s\n' "$agent" "${summary:-no message}" >> "$ledger" 2>/dev/null || true
+line="$(printf 'Subagent %s: stopped — %s' "$agent" "${summary:-no message}")"
+# idempotent: Copilot CLI may fire both event casings; skip when the last line is identical
+[ "$(tail -n 1 "$ledger" 2>/dev/null)" = "$line" ] && exit 0
+printf '%s\n' "$line" >> "$ledger" 2>/dev/null || true
 exit 0
