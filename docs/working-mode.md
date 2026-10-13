@@ -18,6 +18,27 @@ copilot --agent orchestrator                  # GitHub Copilot CLI, then type: f
 opencode --agent orchestrator                 # OpenCode
 ```
 
+### Modes and natural requests
+
+The first word of the message is the mode; the issue type (Epic, Feature, PBI) comes from its label or title prefix. The first word must be the mode word (the table below is what to type, or what the `/orchestrator` command should translate your request to); a plain sentence without it runs `full`, which is for a PBI only.
+
+| Mode | On | Does |
+| :-- | :-- | :-- |
+| `plan <nr>` | Epic / Feature / PBI | Epic → Features, Feature → PBIs (on request in the same run), PBI → tasks; one grilling cycle per level |
+| `implement <nr>` | PBI | explore → implement → review → PR for a planned PBI |
+| `full <nr>` | PBI | plan if needed, then implement |
+| `next <nr>` | Feature / Epic | picks the first open PBI without open blocker or `needs-decision` (sub-issue order, recursive for an Epic), runs it like `full` |
+
+Exactly one PBI per run. After a PBI of a Feature the end line is `Next: #<nr> <title> — orchestrator next <feature> after /clear`, or lists what blocks the rest, or says the Feature is done. Selection: `github-issue` `references/next-selection.md`.
+
+| You say | Mode |
+| :-- | :-- |
+| "implementiere das nächste Feature" / "implement the next PBI of #81" | `next <feature>` |
+| "work on the next PBI under epic #81" | `next <epic>` |
+| "plan all open features under #81" | `plan 81`, then one `plan <feature>` per open Feature, each in its own session |
+| "plan #123" / "plane Feature #123" | `plan 123` |
+| "do #123" / "implement #123" | `full 123` / `implement 123` |
+
 ### Setup
 
 Start the orchestrator as the primary agent of a new session:
@@ -39,7 +60,7 @@ Create `~/.claude/commands/orchestrator.md` (it is not part of the package):
 
 ```markdown
 ---
-description: Run the orchestrator inline: /orchestrator plan|implement|full <issue>
+description: Run the orchestrator inline: /orchestrator plan|implement|full|next <issue>
 ---
 Read ~/.claude/agents/orchestrator.md and follow its body as your instructions for this session.
 Mode and issue: $ARGUMENTS

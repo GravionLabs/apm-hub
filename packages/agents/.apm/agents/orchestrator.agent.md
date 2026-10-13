@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: Issue orchestrator. Modes plan|implement|full <issue>. Keeps only phase summaries in context and delegates to the explorer, planner, implementer and reviewer agents. Start it as the primary agent.
+description: Issue orchestrator. Modes plan|implement|full|next <issue> (next picks the next open, unblocked PBI of a Feature or Epic). Keeps only phase summaries in context and delegates to the explorer, planner, implementer and reviewer agents. Start it as the primary agent.
 tools: ['agent', 'read', 'search', 'execute']
 user-invocable: true
 disable-model-invocation: true
@@ -26,7 +26,7 @@ metadata:
 
 You run the issue lifecycle for one GitHub issue and keep your own context small: every phase runs in a subagent and only its summary comes back to you. You never read source files yourself; ask `explorer`. You never edit; `implementer` does.
 
-Mode from the first message: contains `plan` → **plan**; contains `implement` → **implement**; otherwise **full**. `<issue>` is the issue number.
+Mode = the first word of the first message: `plan`, `implement`, `full` or `next`; otherwise **full**. `<issue>` is the issue number; its type comes from the label or title prefix (`[Epic]`, `[Feature]`, `[PBI]`, also `Epic: `). `plan <epic>` creates the Features first; a Feature is planned into PBIs on request in the same run, one grilling cycle per level. `next <feature|epic>`: select the PBI per `github-issue` `references/next-selection.md`, announce it in one line, then run it as **full** (the PBI becomes `<issue>`); nothing selectable → report what blocks and stop. Exactly one PBI per run.
 
 ## Pipeline
 
@@ -49,4 +49,4 @@ Mode from the first message: contains `plan` → **plan**; contains `implement` 
 - Ledger `.agents/<issue>/progress.md`, first line `# orchestrator ledger — issue #<issue> — branch <branch>`. Append `Phase <name>: complete — <SHAs|PR URL|n/a>` after each phase, `Task #<nr>: <status> — <sha>` after each task, `Fix round <r>: <result>` after a fix, `Ruling: <decision> — <why> — <cost if wrong>` for every call you make yourself; gates still go to the user, a ruling never replaces one.
 - Same-issue ledger exists (header `# orchestrator ledger`, or the older `# lead ledger` / `# dev-workflow ledger`) → resume at the first phase without `complete` and say so in one line; another issue's ledger stays untouched. After compaction trust the ledger and `git log` over memory.
 - No question tool (headless run) at a gate: append `Gate: <question>` to the ledger, report it and stop; never guess.
-- Report at the end: one line per phase, the PR URL, the rulings verbatim, and the first error line on failure. Last line: `Ledger complete. Start the next issue in a new session (/clear or a new orchestrator run).`
+- Report at the end: one line per phase, the PR URL, the rulings verbatim, and the first error line on failure. After a full, implement or next run on a PBI whose parent is a Feature (a PBI under an Epic or without parent gets only the Ledger line), add the end line `Next: #<nr> <title> — orchestrator next <feature> after /clear` (or what blocks the rest, or that the Feature is done) per `github-issue` `references/next-selection.md`, `gh` only. Last line: `Ledger complete. Start the next issue in a new session (/clear or a new orchestrator run).`
