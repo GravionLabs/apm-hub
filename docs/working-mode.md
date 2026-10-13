@@ -13,7 +13,7 @@ per phase in its own context and hands the rest to `explorer`, `implementer` and
 
 ```powershell
 claude --agent orchestrator "full 123"        # plan → implement → review → PR
-claude --agent orchestrator "plan 123"        # sub-issues only, stops at the approval gate
+claude --agent orchestrator "plan 123"        # plan file (plan.json) and next-level sub-issues after approval
 copilot --agent orchestrator                  # GitHub Copilot CLI, then type: full 123
 opencode --agent orchestrator                 # OpenCode
 ```
@@ -55,7 +55,7 @@ The names look alike but the tools differ on purpose; this table explains the cl
 | | `/orch` (skill `orch-pipeline`) | `orchestrator` (agent) |
 | :-- | :-- | :-- |
 | Runs | inline in the current session | as the primary agent; every phase in a subagent |
-| Work | one issue or description, up to 5 tasks | any issue, including Epics and Features (plans sub-issues) |
+| Work | one issue or description, up to 5 tasks (larger: plan first) | any issue, including Epics and Features (plans the next level down with blockers) |
 | Context | grows in the current session | keeps at most 300 words per phase |
 | Gates | plan and commit | plan, blocked review, red suite |
 | Start | `/orch feature\|fix\|review <issue or text>` | `claude --agent orchestrator "full 123"` |
