@@ -4,7 +4,7 @@
 Welcome to **apm-hub** v2.0.0 👋
 <!-- AUTO:end version -->
 
-apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. The repo ships no agents, instructions or prompt libraries: workflows are skills, and the `/orch` prompt is the only extra entry point.
+apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The one `agents` package adds the `orchestrator` primary agent and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to. Entry points beyond skill names are the `/orch` prompt and the `orchestrator` agent.
 
 ## What a package gives you
 
@@ -19,8 +19,11 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
 | `py`                   | `py-implementation`, `py-test`, `py-create-project`                                                                               |
 | `ng`                   | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                       |
+| `agents`               | `orchestrator` (primary agent) plus the `explorer`, `planner`, `reviewer` and `implementer` subagents                              |
+| `hooks`                | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails); OpenCode plugin                              |
+| `core`                 | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                          |
 | `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not in `all`)                                    |
-| `all`                  | every package above except `apm-tooling`                                                                                          |
+| `all`                  | every package except `apm-tooling`                                                                                          |
 
 The full list with descriptions is generated into [skill-list.md](skill-list.md).
 

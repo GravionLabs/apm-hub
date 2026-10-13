@@ -8,15 +8,8 @@ this hub assume it.
 
 ## 1. Default: the orchestrator
 
-Start issue work as the `orchestrator` agent. It runs as the primary agent, keeps at most 300 words
+Start issue work as the `orchestrator` agent ([Setup](#setup) has the start commands). It runs as the primary agent, keeps at most 300 words
 per phase in its own context and hands the rest to `explorer`, `planner`, `implementer` and `reviewer`.
-
-```powershell
-claude --agent orchestrator "full 123"        # plan → implement → review → PR
-claude --agent orchestrator "plan 123"        # plan file (plan.json) and next-level sub-issues after approval
-copilot --agent orchestrator                  # GitHub Copilot CLI, then type: full 123
-opencode --agent orchestrator                 # OpenCode
-```
 
 ### Modes and natural requests
 
@@ -55,9 +48,10 @@ Headless runs write `Gate: <question>` to the ledger and stop. Details: `github-
 Start the orchestrator as the primary agent of a new session:
 
 ```powershell
-claude --agent orchestrator "full 123"
-copilot --agent orchestrator
-opencode --agent orchestrator
+claude --agent orchestrator "full 123"        # plan → implement → review → PR
+claude --agent orchestrator "plan 123"        # plan file (plan.json) and next-level sub-issues after approval
+copilot --agent orchestrator                  # GitHub Copilot CLI, then type: full 123
+opencode --agent orchestrator                 # OpenCode
 ```
 
 A shell alias saves typing (`~/.zshrc` or the PowerShell profile):
@@ -90,7 +84,7 @@ The names look alike but the tools differ on purpose; this table explains the cl
 | Work | one issue or description, up to 5 tasks (larger: plan first) | any issue, including Epics and Features (plans the next level down with blockers) |
 | Context | grows in the current session | keeps at most 300 words per phase |
 | Gates | plan and commit | plan, blocked review, red suite |
-| Start | `/orch feature\|fix\|review <issue or text>` | `claude --agent orchestrator "full 123"` |
+| Start | `/orch feature\|fix\|review <issue or text>` | see [Setup](#setup) |
 | Use for | a small change in a session that is already warm | a planned issue, larger work, cost control |
 
 ### One session per plan, one per PBI
@@ -105,12 +99,11 @@ when the context is above 100k tokens.
 
 ### One session per issue, implement headless
 
-The plan gate needs you, so plan interactively; an already planned issue runs headless, each issue in
+The plan gate needs you, so plan interactively (`plan 123`, see [Setup](#setup)); an already planned issue runs headless, each issue in
 its own session with a fresh context. `orchestrator` ends every run with its ledger, so the next issue never
 inherits the previous one.
 
 ```powershell
-claude --agent orchestrator "plan 123"                  # interactive: sub-issues, approval gate
 claude --agent orchestrator -p "implement 123"          # headless: explore → implement → review → PR
 copilot --agent orchestrator -p "implement 123"         # GitHub Copilot CLI
 opencode run --agent orchestrator "implement 123"       # OpenCode
@@ -222,7 +215,7 @@ OpenCode `~/.config/opencode/AGENTS.md`):
 ```text
 Subagents: write a self-contained prompt (goal, context, expected result).
 Never use the `fork` subagent type once the session is above ~100k tokens; use `explorer`, `general-purpose` or another typed agent.
-Run `orchestrator` only as the primary agent (`claude --agent orchestrator`), never as a subagent.
+Run `orchestrator` only as the primary agent, never as a subagent.
 ```
 
 ## 4. PR and release in a fresh session
