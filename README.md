@@ -109,7 +109,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
 | `py`                   | `py-implementation`, `py-test`, `py-create-project`                                                                               |
 | `ng`                   | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)    |
-| `agents`               | `orchestrator`, `explorer`, `reviewer`, `implementer` (subagents) — see below                                                     |
+| `agents`               | `orchestrator`, `explorer`, `planner`, `reviewer`, `implementer` (subagents) — see below                                                     |
 | `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                  |
 | `all`                  | every package above except `apm-tooling`                                                                                          |
 
@@ -117,14 +117,15 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 
 ## 🤖 Agents
 
-Skills are the primary artifact; the `agents` package adds the four agents skills cannot replace.
+Skills are the primary artifact; the `agents` package adds the five agents skills cannot replace.
 `orchestrator` runs as the **primary agent** and keeps only phase summaries in its context; the
-three subagents each have their own model and tool set:
+four subagents each have their own model and tool set:
 
 | Agent          | Role                                                                                              |            |                                                                                                |
 | :------------- | :------------------------------------------------------------------------------------------------ | :--------- | :--------------------------------------------------------------------------------------------- |
 | `orchestrator` | `plan\                                                                                            | implement\ | full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you |
 | `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                            |            |                                                                                                |
+| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary |            |                                                                                                |
 | `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                        |            |                                                                                                |
 | `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |            |                                                                                                |
 

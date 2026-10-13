@@ -19,7 +19,7 @@
     },
     {
       "name": "agents",
-      "description": "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the explorer, reviewer and implementer subagents it delegates to.",
+      "description": "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the explorer, planner, reviewer and implementer subagents it delegates to.",
       "version": "2.0.0",
       "source": "./packages/agents"
     },
