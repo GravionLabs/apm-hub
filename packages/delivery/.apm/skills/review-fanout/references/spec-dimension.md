@@ -18,7 +18,7 @@ gh issue view <nr> --json title,body --jq '"# \(.title)\n\(.body)"' >> <package>
 gh api --paginate repos/{owner}/{repo}/issues/<nr>/sub_issues --jq '.[] | select(any(.labels[]; .name == "task")) | "\n---\n### Task #\(.number) \(.title)\n\(.body // "")"' >> <package>
 ```
 
-`<nr>` must be an integer. No issue found or `gh` fails → write no issue section; `spec` returns one finding "no spec available" with severity LOW, which review-fanout routes straight into `advisory` (never blocking).
+`<nr>` must be an integer. No issue found or `gh` fails → write no issue section; `spec` returns one finding "no spec available" with severity LOW, placeholder location `file` = the package path, `line` = 1, which review-fanout routes straight into `advisory` (never blocking).
 
 ## Brief
 
