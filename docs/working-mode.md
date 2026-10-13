@@ -20,7 +20,7 @@ opencode --agent orchestrator                 # OpenCode
 
 ### Modes and natural requests
 
-The first word of the message is the mode; the issue type (Epic, Feature, PBI) comes from its label or title prefix.
+The first word of the message is the mode; the issue type (Epic, Feature, PBI) comes from its label or title prefix. The first word must be the mode word (the table below is what to type, or what the `/orchestrator` command should translate your request to); a plain sentence without it runs `full`, which is for a PBI only.
 
 | Mode | On | Does |
 | :-- | :-- | :-- |

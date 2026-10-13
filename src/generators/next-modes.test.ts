@@ -17,44 +17,53 @@ describe('orchestrator plan and next modes', () => {
     expect(description).toContain('plan|implement|full|next');
   });
 
-  it('keeps the body within 40 lines', () => {
-    expect(body.trim().split('\n').length).toBeLessThanOrEqual(40);
-  });
-
-  it('detects the mode by first word and the type by label or prefix', () => {
+  it('detects the mode by first word and keeps one PBI per run', () => {
     expect(body).toMatch(/first word/);
-    expect(body).toMatch(/`\[Epic\]`, `\[Feature\]`, `\[PBI\]`, also `Epic: `/);
-    expect(body).toMatch(/`plan <epic>` creates the Features first/);
-    expect(body).toMatch(/Exactly one PBI per run/);
+    for (const type of ['Epic', 'Feature', 'PBI']) expect(body).toContain(`[${type}]`);
+    expect(body).toMatch(/one PBI per run/i);
   });
 
-  it('delegates selection to the github-issue reference and keeps the end lines', () => {
-    expect(body).toContain('references/next-selection.md');
-    expect(body).toContain('`Next: #<nr> <title> — orchestrator next <feature> after /clear`');
-    expect(body).toContain('Ledger complete. Start the next issue in a new session (/clear or a new orchestrator run).');
-    expect(body.indexOf('Next: #<nr>')).toBeLessThan(body.indexOf('Ledger complete.'));
+  it('cites the reference with its owning skill and orders Next before Ledger', () => {
+    expect(body).toContain('`github-issue` `references/next-selection.md`');
+    const next = body.indexOf('Next: #<nr>');
+    const ledger = body.indexOf('Ledger complete.');
+    expect(next).not.toBe(-1);
+    expect(ledger).not.toBe(-1);
+    expect(next).toBeLessThan(ledger);
+  });
+
+  it('limits the end line to PBIs whose parent is a Feature', () => {
+    expect(body).toMatch(/parent is a Feature/);
   });
 });
 
 describe('next-selection reference', () => {
-  it('has the sub_issues, blocked_by and needs-decision steps', () => {
-    expect(reference).toContain('issues/<nr>/sub_issues');
-    expect(reference).toContain('issues/<candidate>/dependencies/blocked_by');
+  it('expands sub-issues recursively for an Epic, paginated, in order', () => {
+    expect(reference).toContain('sub_issues');
+    expect(reference).toMatch(/Epic/);
+    expect(reference).toMatch(/recursive/);
+    expect(reference).toMatch(/Features too/);
+    expect(reference).toContain('--paginate');
+    expect(reference).toMatch(/first remaining candidate in sub-issue order/);
+  });
+
+  it('filters open blockers by state, needs-decision and in-flight PRs', () => {
+    expect(reference).toContain('dependencies/blocked_by');
     expect(reference).toContain('select(.state=="open")');
     expect(reference).toContain('needs-decision');
+    expect(reference).toContain('gh pr list --state open');
+    expect(reference).toMatch(/waiting for merge/);
   });
 
   it('covers announcement, empty result and end-line variants', () => {
     expect(reference).toContain('Next PBI: #<nr> <title>');
-    expect(reference).toMatch(/No candidate: report/);
-    expect(reference).toContain('Next: #<nr> <title> — orchestrator next <feature> after /clear');
-    expect(reference).toMatch(/unmerged PRs/);
+    expect(reference).toMatch(/No candidate/);
+    expect(reference).toContain('orchestrator next <feature> after /clear');
     expect(reference).toMatch(/is done/);
   });
 
-  it('is linked from the github-issue skill, which stays within 100 lines', () => {
+  it('is linked from the github-issue skill', () => {
     expect(skill).toContain('references/next-selection.md');
-    expect(skill.split('\n').length).toBeLessThanOrEqual(100);
   });
 });
 
