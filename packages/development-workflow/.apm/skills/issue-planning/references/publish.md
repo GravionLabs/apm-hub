@@ -6,6 +6,12 @@ Resolve `{owner}/{repo}`. The run is idempotent: skip items whose `issue` is alr
 
 ## 1. Create
 
+If any question has `deferred: true`, first ensure the label exists (idempotent):
+
+```powershell
+gh label create needs-decision --force --description "Blocked on an owner decision"
+```
+
 For each item: write `body` to a file and run
 
 ```powershell

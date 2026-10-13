@@ -15,7 +15,7 @@ describe('grilling reference', () => {
 
   it('attributes mattpocock/skills under MIT', () => {
     expect(grilling).toContain('mattpocock/skills');
-    expect(grilling).toContain('MIT');
+    expect(grilling).toMatch(/MIT License, Copyright \(c\) Matt Pocock/);
   });
 
   it.each(['AskUserQuestion', 'Gate:', 'Ruling:', 'publish.md', '.agents/<issue>/progress.md'])(
@@ -30,13 +30,13 @@ describe('grilling reference', () => {
 
   it('never asks facts of the user', () => {
     expect(grilling).toMatch(/Facts are never asked/);
-    expect(grilling).toMatch(/explorer/);
+    expect(grilling).toMatch(/repo can answer goes to `explorer` or `planner`/);
   });
 
   it('runs a final approval round before publish, also with zero questions', () => {
     expect(grilling).toMatch(/final round[^\n]*approves `plan\.md`/);
     expect(grilling).toMatch(/zero questions[^\n]*still runs/);
-    expect(grilling.indexOf('final round')).toBeLessThan(grilling.indexOf('Only then run `publish.md`'));
+    expect(grilling).toMatch(/final round[\s\S]*Only then run `publish\.md`/);
   });
 
   it('defines who edits plan.json and when planner is re-dispatched', () => {
@@ -55,8 +55,17 @@ describe('grilling reference', () => {
     expect(publish).toContain('Owner decision required');
   });
 
+  it('hardens deferral: non-empty blocks, label creation, independent questions', () => {
+    expect(schema).toMatch(/`blocks` must be non-empty/);
+    expect(grilling).toMatch(/Offer "defer" only for a question with non-empty `blocks`/);
+    expect(grilling).toMatch(/no question-to-question dependency/);
+    expect(grilling).toMatch(/deferred questions back in the prompt[^\n]*keep `deferred: true`/);
+    expect(publish).toMatch(/gh label create needs-decision --force/);
+    expect(publish.indexOf('gh label create')).toBeLessThan(publish.indexOf('gh issue create'));
+  });
+
   it('is referenced by issue-planning and the orchestrator', () => {
     expect(skill).toContain('references/grilling.md');
-    expect(orchestrator).toContain('references/grilling.md');
+    expect(orchestrator).toMatch(/\*\*Plan\*\*[^\n]*references\/grilling\.md[^\n]*references\/publish\.md/);
   });
 });

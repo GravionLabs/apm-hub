@@ -6,7 +6,7 @@ Adapted from the `grilling` skill of [mattpocock/skills](https://github.com/matt
 
 ## Loop
 
-1. Read `questions[]`. A round is all unanswered questions at once. Questions that only appear after a `planner` re-dispatch form the next round.
+1. Read `questions[]`. A round is all unanswered questions at once. Questions are independent in the schema (no question-to-question dependency), so the frontier is all open questions; dependent ones only appear after a `planner` re-dispatch and form the next round.
 2. Facts are never asked. Anything the repo can answer goes to `explorer` or `planner`; only product, scope and risk choices reach the user.
 3. Ask the round as numbered questions: question, options, the `recommended` option first, worded so "yes" accepts it.
 4. Per answer, append `Ruling: <question> — user — <answer, cost if wrong>` to the ledger `.agents/<issue>/progress.md`. The orchestrator then edits `plan.json` per `plan-schema.md` (answered, dropped or deferred; it edits the items listed in `blocks`).
@@ -21,4 +21,4 @@ Adapted from the `grilling` skill of [mattpocock/skills](https://github.com/matt
 
 ## Deferred decisions
 
-The owner may defer a question. Mark it `deferred: true` per `plan-schema.md`; `publish.md` then creates the affected items with the label `needs-decision` and an "Owner decision required" block.
+The owner may defer a question. Offer "defer" only for a question with non-empty `blocks`. Mark it `deferred: true` per `plan-schema.md`; `publish.md` then creates the affected items with the label `needs-decision` and an "Owner decision required" block. Pass deferred questions back in the prompt of any re-dispatch; they keep `deferred: true`.
