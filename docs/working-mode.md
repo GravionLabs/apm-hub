@@ -118,7 +118,7 @@ resumes from the ledger.
 - The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code, `preToolUse` on
   Copilot CLI): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them,
   `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
-  uncommitted changes. The reason is one line; every other command passes. Opt out per repo with
+  uncommitted changes, also inside `env`, `sudo`, `bash -c`, `xargs` and similar wrappers. Every other command passes. Opt out per repo with
   `GIT_GUARDRAILS_OFF=1` in the environment or an (empty) file `.agents/guardrails.off`. OpenCode is not covered
   (it needs a plugin, see #182/#183).
 - `/context` before a long step shows what fills the window; the skill list and large tool outputs
