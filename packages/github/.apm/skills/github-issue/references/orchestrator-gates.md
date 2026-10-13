@@ -13,7 +13,7 @@ Runs only when the first message has no issue number and no description (empty, 
 
 ## Review summary (default after `review-fanout`; `--no-review-summary` skips it)
 
-Show one line per finding of `blocking` and `advisory`, `severity file:line issue`, grouped by severity (CRITICAL, HIGH, then MEDIUM, LOW), blocking first, MEDIUM and LOW included. Then ask which advisory findings to fix. Selected advisories join the blocking ones in the fix round; the rest go into the PR body. No advisory findings: no question. Verdict `APPROVE` with advisories still shows the summary and asks; selected advisories go through a fix round followed by a re-review, unselected ones to the PR body. `incomplete: true` stays blocking and is not an advisory choice.
+First line: `Review mode: <mode> (<dimensions>)` from the `mode` and `dimensions` of the `review-fanout` output; the user can ask to re-run with `full`. Then show one line per finding of `blocking` and `advisory`, `severity file:line issue`, grouped by severity (CRITICAL, HIGH, then MEDIUM, LOW), blocking first, MEDIUM and LOW included. Then ask which advisory findings to fix. Selected advisories join the blocking ones in the fix round; the rest go into the PR body. No advisory findings: no question. Verdict `APPROVE` with advisories still shows the summary and asks; selected advisories go through a fix round followed by a re-review, unselected ones to the PR body. `incomplete: true` stays blocking and is not an advisory choice.
 
 With `--no-review-summary` only blocking findings trigger fix rounds and all advisories go to the PR body.
 
