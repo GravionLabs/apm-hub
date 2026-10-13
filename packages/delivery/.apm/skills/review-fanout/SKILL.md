@@ -15,7 +15,7 @@ Read-only: never edit or commit.
    - `tests`: missing or weak tests; tests coupled to internals, tautological assertions (expected value recomputed like the code), missing behavior tests (rules: `implementation` skill, `references/test-quality.md`)
    - `spec`: issue criteria missing, partial or wrong, and scope creep; brief and severities in `references/spec-dimension.md`
 
-   Each returns `[{file,line,severity: CRITICAL|HIGH|MEDIUM|LOW,evidence,issue}]`. A finding with empty or missing `file` or a `line` below 1 is invalid, never advisory: drop it and mark its dimension failed. A reply `[]` plus a `NO_PACKAGE:` line also marks the dimension failed.
+   Each returns `[{file,line,severity: CRITICAL|HIGH|MEDIUM|LOW,evidence,issue}]`. A finding with empty or missing `file` or a `line` below 1 is invalid, never advisory: drop it and mark its dimension failed. Advisories without a natural location (`spec` "no spec available", `conventions` "install `<stack>@apm-hub`") use the placeholder `file` = the package path, `line` = 1. A reply `[]` plus a `NO_PACKAGE:` line also marks the dimension failed.
    Claude: `Agent` calls with `subagent_type: reviewer` in one message · OpenCode: parallel `task()` with agent `reviewer` · VS Code Copilot: `#runSubagent` with agent `reviewer` · otherwise run inline sequentially.
 3. **Dedupe** by file + normalized evidence; keep highest severity. Never merge `spec` with `conventions` findings.
 4. **Verify** — a sub-agent (given the package path, not the diff) tries to disprove each CRITICAL/HIGH finding: `confirmed`, `refuted` (→ advisory), `unverifiable` (stays blocking).
