@@ -19,4 +19,4 @@ Goal: improve the agent **environment**, not the code under review. Rank candida
 
 - Fix rounds above 1 per PBI: review rules or task briefs were too thin (categories 2, 3).
 - Many rulings, few gates: category 10.
-- `costEstimated` uses a price table in the script; treat it as +-30 %. `costMeasured` is present only when the transcript records `costUSD`.
+- `costEstimated` uses a price table in the script; treat it as +-30 % (Opus 4.5+ $5/$25, Sonnet $3/$15, Haiku $1/$5 per MTok; unknown models count 0). `costMeasured` is present only when the transcript records `costUSD`.
