@@ -128,6 +128,12 @@ resumes from the ledger.
   note the hand-off in the ledger, `/clear`. The hook parses the payload with `jq` when installed and with a
   bash fallback otherwise (escapes, pretty-printed JSON and any field order work either way). It never blocks and
   stays silent when parsing fails; set `CONTEXT_WARN_DEBUG=1` to get a one-line note on stderr instead.
+- On Copilot CLI the same script runs as `postToolUse` (`userPromptSubmitted` cannot inject context), so the warning
+  arrives after the next tool call, not on the next prompt. `postToolUse` has no `transcriptPath`; the hook reads
+  `~/.copilot/session-state/<sessionId>/events.jsonl` (`COPILOT_HOME` overrides the directory) and takes `inputTokens`
+  of the last `session.usage_record` event (it already contains cache reads and writes). Same thresholds, throttle
+  and exit-0 behavior. Copilot versions that do not write `session.usage_record` stay silent: check `/context`
+  or `/usage` yourself before a long step.
 - The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code, `preToolUse` on
   Copilot CLI): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them,
   `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
