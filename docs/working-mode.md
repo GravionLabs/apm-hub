@@ -9,7 +9,7 @@ this hub assume it.
 ## 1. Default: the orchestrator
 
 Start issue work as the `orchestrator` agent. It runs as the primary agent, keeps at most 300 words
-per phase in its own context and hands the rest to `explorer`, `implementer` and `reviewer`.
+per phase in its own context and hands the rest to `explorer`, `planner`, `implementer` and `reviewer`.
 
 ```powershell
 claude --agent orchestrator "full 123"        # plan → implement → review → PR

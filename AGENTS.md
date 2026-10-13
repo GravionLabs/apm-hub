@@ -1,6 +1,6 @@
 # apm-hub — Working in this repository
 
-apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships four **agents** that skills cannot replace: the `orchestrator` orchestrator (primary agent, keeps only phase summaries in context) and the `explorer`, `reviewer` and `implementer` subagents it delegates to, each with its own model and tool set. Entry points beyond skill names: `/orch` (prompt) and `orchestrator` (agent).
+apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships five **agents** that skills cannot replace: the `orchestrator` orchestrator (primary agent, keeps only phase summaries in context) and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to, each with its own model and tool set. Entry points beyond skill names: `/orch` (prompt) and `orchestrator` (agent).
 
 ## Layout
 
@@ -32,7 +32,7 @@ apm.yml                               # marketplace: lists all packages
 | `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
 | `py` | `py-implementation` (incl. `references/uv-cli.md`), `py-test`, `py-create-project` |
 | `ng` | `ng-implementation` (incl. `references/component.md`, `references/signal-store.md`), `ng-test`, `ng-create-project`, `ng-ag-grid-developer`. Depends on `angular/skills` (`angular-developer`) |
-| `agents` | `orchestrator` (primary agent: plan → explore → implement per task → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (sonnet by default, one task, `implementation` preloaded, report file + ≤ 15-line status reply) |
+| `agents` | `orchestrator` (primary agent: plan → explore → implement per task → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `planner` (read-only + `gh`, inherit model, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (sonnet by default, one task, `implementation` preloaded, report file + ≤ 15-line status reply) |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not part of `all`) |
 | `hooks` | Hooks for Claude Code and Copilot CLI: `SubagentStop`/`subagentStop` appends a line per finished subagent to `.agents/<issue>/progress.md` (both payload formats); `UserPromptSubmit` warns above 150k context tokens (Claude Code only) |
 | `core` | meta-package for the global install: `github`, `development-workflow`, `shared`, `agents`, `hooks` (no stack skills) |
