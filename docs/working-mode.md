@@ -184,7 +184,12 @@ resumes from the ledger.
 | Git guardrails | `PreToolUse` | `preToolUse` | not available yet |
 
 The OpenCode plugin is a single file that exports only its plugin function (OpenCode calls every function export as a
-plugin and fails to load the file on other exports). Delivery to `.opencode/plugins/` is tracked in #183/#184.
+plugin and fails to load the file on other exports). `apm install` copies the whole package verbatim under `apm_modules`; the source path is
+`packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts` (a local-path install gives
+`apm_modules/_local/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`; a marketplace install gives
+`apm_modules/<owner>/apm-hub/packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`). OpenCode loads it only from a plugins directory: `apmw sanitize -p opencode` is meant to place it there, but
+that needs an apmw release with GravionLabs/apmw#38 (open). Until then copy the file by hand to `.opencode/plugins/`
+(project) or `~/.config/opencode/plugins/` (global).
 
 ### Subagent context by harness
 
