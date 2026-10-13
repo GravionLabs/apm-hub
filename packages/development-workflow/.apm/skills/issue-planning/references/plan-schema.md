@@ -57,7 +57,7 @@ Written to `.agents/<issue>/plan.json` by the planning step, read by the primary
 
 ## Validity
 
-- Level `task` from a PBI or bug with ≥ 2 items creates `[Task]` sub-issues (`task-issues.md` in `github-issue`); `issue` caches their numbers and the issues stay the source of truth. A single task or a description creates none: `issue` stays `null`, publish is a no-op. Never a mix of null and numbers after publish.
+- Level `task` from a PBI or bug with ≥ 2 items creates `[Task]` sub-issues (`task-issues.md` in `github-issue`); `issue` caches their numbers and the issues stay the source of truth. A single task or a description creates none: `issue` stays `null`, publish is a no-op. Never a mix of null and numbers after publish (`issue-plan-schema.test.ts` checks both rules). A plan from a `description` never has issue numbers.
 - Ids are unique. Every string in `blocked_by` and every id in `blocks` resolves to an item; integers are existing issues (publish links them via the blocked_by endpoint even when the item is new). `blocked_by` has no cycles and no self-reference.
 - `recommended` is one of `options`; `options` has at least 2 distinct entries.
 - Publish runs only after every `questions[]` entry is answered or dropped.

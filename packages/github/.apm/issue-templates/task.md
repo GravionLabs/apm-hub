@@ -6,13 +6,11 @@ labels: task
 assignees: ''
 ---
 
+Parent PBI: #NNN
+
 ## Overview
 
 The concrete technical step.
-
-## Parent
-
-Parent PBI or Bug: #NNN
 
 ## Implementation Notes
 
@@ -35,7 +33,3 @@ Parent PBI or Bug: #NNN
 
 - 
 <!-- agent-ready:end -->
-
-## Definition of Done
-
-- 

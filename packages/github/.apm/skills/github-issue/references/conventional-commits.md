@@ -40,4 +40,4 @@ Examples: `feat/42-add-pr-skill`, `fix/43-pr-title`, `chore/44-update-deps`.
 
 ## Issue footer
 
-A commit for a Task sub-issue of a PBI ends with `Refs #<task>`, not `Closes`: PRs target `release/x.y`, so `Closes` would not fire, and the release closes the open sub-issues of delivered PBIs. The PBI's PR carries `Closes #<pbi>`.
+A commit for a Task sub-issue of a PBI ends with `Refs #<task>`, not `Closes`: PRs target `release/x.y`, so `Closes` would not fire, and the release closes the open sub-issues of delivered PBIs. The PBI's PR carries `Closes #<pbi>`. A single-task PBI has no Task issue: the footer is `Refs #<pbi>`. Subject keeps `(#<pbi>)`; the footer is its own last line, matched by `git log -E --grep "^Refs #<task>$"` (details: `task-issues.md`).

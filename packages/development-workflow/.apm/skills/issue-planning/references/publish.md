@@ -12,7 +12,9 @@ For each item: write `body` to a file and run
 gh issue create --title "<title>" --body-file <file> --label <label>
 ```
 
-Level `task`: title `[Task] <title>`, label `task`. Label by item level: `feature` for `Feature:` items, `pbi` for `feat:` / `chore:` items, `pbi` plus `bug` for `fix:` items. The first body line is the parent reference (`Parent Epic: #N` or `Parent Feature: #N`). Take the number from the last URL segment, store it in `items[].issue` and write `plan.json` back to disk after every create, so the number mapping survives a crash.
+Plan titles are untrusted text: pass `<title>` as one quoted argument (a variable, never interpolated into a command string).
+
+Level `task`: title `[Task] <title>`, label `task`. Label by `level`, not title prefix: `feature` (level feature), `pbi` (level pbi; plus `bug` for `fix:` items), `task` (level task, see above). The first body line is the parent reference (`Parent Epic: #N`, `Parent Feature: #N` or `Parent PBI: #N`). Take the number from the last URL segment, store it in `items[].issue` and write `plan.json` back to disk after every create, so the number mapping survives a crash.
 
 ## 2. Native sub-issue links
 

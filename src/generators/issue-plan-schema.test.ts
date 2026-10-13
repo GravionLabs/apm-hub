@@ -38,6 +38,9 @@ function graphErrors(plan: any): string[] {
   if (plan.level === 'task' && plan.items.length > 1 && real.length > 0 && real.length < plan.items.length) {
     errors.push('task issues must be all or none');
   }
+  if (plan.input_type === 'description' && real.length > 0) {
+    errors.push('description plan must not have issue numbers');
+  }
   const state = new Map<string, number>();
   const visit = (id: string): boolean => {
     if (state.get(id) === 1) return true;
@@ -135,6 +138,23 @@ describe('plan.json schema', () => {
 
     it('accepts two tasks before publish (all null)', () => {
       expect(check(tasks([null, null]))).toEqual([]);
+    });
+
+    it('rejects a half-published list of three tasks', () => {
+      expect(check(tasks([301, 302, null]))).toContain('task issues must be all or none');
+      expect(check(tasks([null, 302, 303]))).toContain('task issues must be all or none');
+    });
+
+    it('rejects issue numbers on a description plan', () => {
+      const p = tasks([301, 302]);
+      p.input_type = 'description';
+      p.parent_issue = null;
+      expect(check(p)).toContain('description plan must not have issue numbers');
+    });
+
+    it('plan-schema.md states the rules the helper enforces', () => {
+      expect(doc).toMatch(/single task or a description creates none/);
+      expect(doc).toMatch(/Never a mix of null and numbers after publish/);
     });
 
     it('rejects a half-published task list', () => {
