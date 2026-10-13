@@ -12,7 +12,7 @@ Read-only: never edit or commit.
    - `correctness`: bugs, edge cases, error handling, races
    - `security`: injection, authz, secrets, unsafe input (always when auth/crypto/network/SQL files changed)
    - `conventions`: the `code-review` skill (it loads each language's `## Review rules`; stack skill not installed → one advisory finding "install `<stack>@apm-hub`")
-   - `tests`: missing or weak tests
+   - `tests`: missing or weak tests; tests coupled to internals, tautological assertions (expected value recomputed like the code), missing behavior tests (rules: `implementation` skill, `references/test-quality.md`)
    - `spec`: issue criteria missing, partial or wrong, and scope creep; brief and severities in `references/spec-dimension.md`
 
    Each returns `[{file,line,severity: CRITICAL|HIGH|MEDIUM|LOW,evidence,issue}]`.
