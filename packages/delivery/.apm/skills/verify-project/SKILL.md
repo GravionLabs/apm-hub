@@ -2,10 +2,9 @@
 name: verify-project
 description: 'Run build, tests and lint; report pass/fail with the first error. Use to verify a change or as the verify phase.'
 context: fork
-agent: reviewer
 ---
 
-Phase: verify. Run checks on project. On Claude Code this skill runs in a forked `reviewer` context (read-only plus test commands): build and test output stays there, the caller receives only the JSON below.
+Phase: verify. Run checks on project. On Claude Code this skill runs in a forked general-purpose context (never the `reviewer` agent, which answers with a findings array and expects a review package): build and test output stays there, the caller receives only the JSON below.
 
 ## Steps
 
