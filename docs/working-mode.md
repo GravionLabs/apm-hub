@@ -115,6 +115,16 @@ resumes from the ledger.
 - On Claude Code the `hooks` package warns on the next prompt once the context passes 150k tokens
   (`CONTEXT_WARN_TOKENS`, repeated after another `CONTEXT_WARN_STEP`, default 100k): finish the step,
   note the hand-off in the ledger, `/clear`.
+- The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code, `preToolUse` on
+  Copilot CLI): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them,
+  `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
+  uncommitted changes, also inside `env`, `sudo`, `bash -c`, `xargs` and similar wrappers, `git -c alias.*` values
+  and `echo …`/heredocs piped into a shell. Every other command passes. Opt out per repo with
+  `GIT_GUARDRAILS_OFF=1` in the environment or an (empty) file `.agents/guardrails.off`. OpenCode is not covered
+  (it needs a plugin, see #182/#183). It is a guardrail against accidents, not a security boundary: it runs git
+  only in the session's own repository (`git -C <other repo> checkout .` counts as dirty without looking, also for a
+  nested or bare repo inside it), fails open on malformed payloads and on commands above 24 KB, and does not
+  resolve variables (`$cmd`, `g${x}it`).
 - `/context` before a long step shows what fills the window; the skill list and large tool outputs
   are the usual culprits.
 - Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
