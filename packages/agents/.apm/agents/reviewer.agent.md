@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Read-only review of a diff for one dimension (correctness, security, conventions, tests); may run the test suite. Returns findings as JSON. Used by review-fanout.
+description: Read-only review of a diff for one dimension (correctness, security, conventions, tests, spec); may run the test suite. Returns findings as JSON. Used by review-fanout.
 tools: ['read', 'search', 'execute']
 user-invocable: false
 metadata:
