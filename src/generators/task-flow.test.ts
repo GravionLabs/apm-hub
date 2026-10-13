@@ -1,5 +1,7 @@
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import { execFileSync } from 'child_process';
 
 const pk = path.resolve(__dirname, '../../packages');
 const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
@@ -46,6 +48,7 @@ describe('task flow consistency', () => {
     expect(orchestrator).toMatch(/Existing Task sub-issues are used as they are/);
     expect(orchestrator).toMatch(/model` sonnet, no `size: L` review/);
     expect(orchestrator).toContain('`model` hint');
+    expect(pipeline).toMatch(/Task sub-issues never get their own branch or PR/);
     expect(pipeline).not.toMatch(/Approved → `<type>: <desc> \(#<nr>\)` \(`feat`\/`fix`\)/);
     expect(pipeline).toMatch(/Task commits already exist/);
   });
@@ -109,5 +112,40 @@ describe('task flow consistency', () => {
     const b = fs.readFileSync(path.resolve(pk, '../.github/ISSUE_TEMPLATE/task.md'), 'utf-8');
     expect(a).toBe(b);
     expect(a).toContain('agent-ready:start');
+  });
+
+  it('resume uses the ledger DONE line cross-checked with git, and bugs are PBI-like', () => {
+    for (const t of [orchestrator, pipeline]) {
+      expect(t).toContain('`Task #<nr>: DONE`');
+      expect(t).toMatch(/no duplicate task commits/);
+    }
+    expect(pipeline).toContain('Parent Bug: #<bug>');
+    expect(pipeline).toMatch(/Load `implementation`/);
+    expect(pipeline).not.toMatch(/\. load `implementation`/);
+  });
+
+  it('Parent Bug variant is consistent across publish, plan-schema, task-issues and template', () => {
+    const tpl = read('github/.apm/issue-templates/task.md');
+    for (const t of [publish, planSchemaDoc, taskIssues, tpl]) expect(t).toContain('Parent Bug: #');
+    expect(taskIssues).toMatch(/LAST commit sha/);
+  });
+
+  it('the documented resume grep matches multi-line footers and not #123 for #12', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'task-grep-'));
+    try {
+      const git = (...a: string[]) =>
+        execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: dir, encoding: 'utf-8' });
+      git('init', '-q');
+      git('commit', '-q', '--allow-empty', '-m', 'chore: base');
+      git('commit', '-q', '--allow-empty', '-m', 'feat: a (#1)\n\nbody text\n\nRefs #123');
+      git('commit', '-q', '--allow-empty', '-m', 'feat: b (#1)\n\nbody text\n\nRefs #12');
+      const find = (n: string) =>
+        git('log', '-E', '--grep', `^Refs #${n}$`, '--format=%s', 'HEAD~2..HEAD').trim().split('\n').filter(Boolean);
+      expect(find('12')).toEqual(['feat: b (#1)']);
+      expect(find('123')).toEqual(['feat: a (#1)']);
+      expect(find('1')).toEqual([]);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

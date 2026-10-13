@@ -140,7 +140,8 @@ describe('plan.json schema', () => {
       expect(check(tasks([null, null]))).toEqual([]);
     });
 
-    it('rejects a half-published list of three tasks', () => {
+    it('rejects a half-published task list', () => {
+      expect(check(tasks([301, null]))).toContain('task issues must be all or none');
       expect(check(tasks([301, 302, null]))).toContain('task issues must be all or none');
       expect(check(tasks([null, 302, 303]))).toContain('task issues must be all or none');
     });
@@ -155,10 +156,6 @@ describe('plan.json schema', () => {
     it('plan-schema.md states the rules the helper enforces', () => {
       expect(doc).toMatch(/single task or a description creates none/);
       expect(doc).toMatch(/Never a mix of null and numbers after publish/);
-    });
-
-    it('rejects a half-published task list', () => {
-      expect(check(tasks([301, null]))).toContain('task issues must be all or none');
     });
   });
 });

@@ -1,6 +1,6 @@
 # Publish a plan
 
-Run by the primary agent (it can ask and write) after the user approved `plan.md` and every `questions[]` entry is answered or dropped. The planning step never runs this. Level `task`: nothing to publish unless there are ≥ 2 items; then publish them as `[Task]` sub-issues of the PBI (body format: `github-issue` `references/task-issues.md`, title `[Task] <title>`, label `task`, first body line `Parent PBI: #N`) together with the approval gate, in plan order with blocked-by links. A single task or a description is never published.
+Run by the primary agent (it can ask and write) after the user approved `plan.md` and every `questions[]` entry is answered or dropped. The planning step never runs this. Level `task`: nothing to publish unless there are ≥ 2 items; then publish them as `[Task]` sub-issues of the PBI (body format: `github-issue` `references/task-issues.md`, title `[Task] <title>`, label `task`, first body line `Parent PBI: #N`, or `Parent Bug: #<bug>` for a Bug parent) together with the approval gate, in plan order with blocked-by links. A single task or a description is never published.
 
 Resolve `{owner}/{repo}`. The run is idempotent: skip items whose `issue` is already non-null, and repeat only what is missing. Create items in dependency order (an item after everything in its `blocked_by`), so each blocker has an issue number first.
 

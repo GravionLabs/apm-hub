@@ -7,6 +7,7 @@ assignees: ''
 ---
 
 Parent PBI: #NNN
+<!-- Bug parent: use `Parent Bug: #NNN` instead. -->
 
 ## Overview
 
