@@ -1,6 +1,6 @@
 name: development-workflow
 version: 2.0.0
-description: "Issue-driven development workflow: orchestrated plan → TDD → review → commit pipeline (/orch), parallel review fan-out, project verification, issue planning with native sub-issues, and git-cliff changelog setup. Pulls in github and shared; stack packages are installed per project."
+description: "Issue-driven development workflow: orchestrated plan → TDD → review → commit pipeline (/orch), parallel review fan-out, run retrospective (retro), project verification, issue planning with native sub-issues, and git-cliff changelog setup. Pulls in github and shared; stack packages are installed per project."
 registry: https://github.com/GravionLabs/apm-hub
 dependencies:
   apm:
@@ -9,5 +9,6 @@ dependencies:
 skills:
   - issue-planning
   - orch-pipeline
+  - retro
   - review-fanout
   - verify-project
