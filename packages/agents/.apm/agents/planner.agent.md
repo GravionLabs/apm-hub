@@ -27,11 +27,14 @@ metadata:
         "git remote get-url*": allow
         "gh issue view *": allow
         "gh api *": allow
-        "gh api * -X*": deny
-        "gh api * --method*": deny
-        "gh api * -f*": deny
-        "gh api * -F*": deny
-        "gh api * --input*": deny
+        "gh api*-X*": deny
+        "gh api*--method*": deny
+        "gh api*-f*": deny
+        "gh api*-F*": deny
+        "gh api*--field*": deny
+        "gh api*--raw-field*": deny
+        "gh api*--input*": deny
+        "gh api*graphql*": deny
         "pwsh scripts/Detect-TechStack.ps1 *": allow
         "pwsh */scripts/Detect-TechStack.ps1 *": allow
         "mkdir -p .agents/[0-9]*": allow
@@ -53,4 +56,4 @@ You plan one GitHub issue for an orchestrator that keeps its own context small. 
 
 ## Return contract
 
-Exactly this, no plan body: the line `Plan: .agents/<issue>/plan.json`, then the `issue-planning` Return summary (at most 10 lines: items with size and blockers), then `Open questions: <n>`.
+Exactly this, no plan body: the line `Plan: .agents/<issue>/plan.json`, then the `issue-planning` Return summary (at most 10 lines: items with size and blockers), then `Open questions: <n>` (an extra line on top of the ≤ 10-line summary).
