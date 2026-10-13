@@ -31,7 +31,7 @@ Link each new issue to `parent_issue` with the `addSubIssue` mutation over node 
 Per item and each entry in `blocked_by` (plan id mapped to its `issue`, or the existing number):
 
 ```powershell
-$blockerId = gh api repos/{owner}/{repo}/issues/<blocker-nr> --jq .id
+$blockerId = gh api --paginate repos/{owner}/{repo}/issues/<blocker-nr> --jq .id
 gh api -X POST repos/{owner}/{repo}/issues/<item-nr>/dependencies/blocked_by -F issue_id=$blockerId
 ```
 

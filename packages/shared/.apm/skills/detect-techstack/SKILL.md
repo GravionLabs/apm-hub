@@ -10,8 +10,15 @@ Return contract: the JSON object below and nothing else — no file listings, no
 Paths to `scripts/` are relative to this skill's directory.
 
 ```powershell
-pwsh scripts/Detect-TechStack.ps1 -ProjectRoot .
+pwsh scripts/Detect-TechStack.ps1 -ProjectRoot .            # cached
+pwsh scripts/Detect-TechStack.ps1 -ProjectRoot . -NoCache   # force a fresh scan
 ```
+
+## Cache
+
+The report is stored in `.agents/techstack.json` together with `manifest_hash`: a SHA256 over the sorted relative paths and content hashes of the manifests the script reads (`package.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lockb`, `package-lock.json`, `tsconfig.json`, `angular.json`, `pyproject.toml`, `requirements.txt`, `setup.py`, `uv.lock`, `Cargo.toml`, `*.csproj`, `*.sln`, `*.slnx`) plus a script version, so rule changes invalidate old caches. Same hash → the file is printed as is; any manifest added, removed or edited → recomputed and rewritten. A cache without `languages`, `test` or `implementation` is ignored; the write is atomic. The script adds `.agents/` to `.git/info/exclude` once when it is not ignored (never through a symlink). Delete the file or pass `-NoCache` to force a rescan.
+
+Run it with a shell in the caller's context. Output not a JSON object with a `languages` array (empty output, `[]`, prose) → rerun once with `-NoCache`; still invalid → say so and ask before guessing the stack.
 
 ## Output (stdout, exit 0)
 
@@ -21,7 +28,8 @@ pwsh scripts/Detect-TechStack.ps1 -ProjectRoot .
   "frameworks": ["angular"],
   "packageManager": ["pnpm", "dotnet"],
   "test": ["ts-test", "py-test", "dotnet-test"],
-  "implementation": ["ts-implementation", "py-implementation", "dotnet-implementation"]
+  "implementation": ["ts-implementation", "py-implementation", "dotnet-implementation"],
+  "manifest_hash": "<sha256>"
 }
 ```
 
