@@ -169,6 +169,7 @@ describe('context-warning hook', () => {
       );
     });
   });
+
   describe('Copilot CLI (postToolUse / agentStop)', () => {
     const fixtures = path.resolve(__dirname, 'fixtures');
     const readFixture = (name: string) => fs.readFileSync(path.join(fixtures, name), 'utf8');
@@ -241,12 +242,24 @@ describe('context-warning hook', () => {
     it('never blocks: missing events file, no usage record, unsafe session id', () => {
       expect(runRaw(post, lowEnv(path.join(dir, 'nowhere')))).toEqual({ code: 0, out: '', err: '' });
       const empty = copilotHome(id, '{"type":"session.start","data":{}}\n');
-      expect(runRaw(post, lowEnv(empty), ).out).toBe('');
+      expect(runRaw(post, lowEnv(empty)).out).toBe('');
       const evil = JSON.stringify({ sessionId: '../../etc', toolName: 'bash' });
       const dbg = runRaw(evil, { ...lowEnv(empty), CONTEXT_WARN_DEBUG: '1' });
       expect(dbg.code).toBe(0);
       expect(dbg.out).toBe('');
       expect(dbg.err).toBe('context-warning: no transcript_path in payload');
+    });
+
+    it('does not follow an unsafe session id to a real events file outside session-state', () => {
+      const home = copilotHome(id);
+      // session-state/../../x resolves to <dir>/x, outside COPILOT_HOME
+      fs.mkdirSync(path.join(dir, 'x'), { recursive: true });
+      fs.writeFileSync(
+        path.join(dir, 'x', 'events.jsonl'),
+        JSON.stringify({ type: 'session.usage_record', data: { usage: { inputTokens: 900000 } } }) + '\n',
+      );
+      const evil = JSON.stringify({ sessionId: '../../x', toolName: 'bash' });
+      expect(runRaw(evil, lowEnv(home))).toEqual({ code: 0, out: '', err: '' });
     });
   });
 });
