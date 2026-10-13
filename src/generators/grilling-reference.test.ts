@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const root = path.resolve(__dirname, '../../packages');
-const skillDir = path.join(root, 'development-workflow/.apm/skills/issue-planning');
+const skillDir = path.join(root, 'delivery/.apm/skills/issue-planning');
 const read = (p: string) => fs.readFileSync(p, 'utf-8');
 
 describe('grilling reference', () => {

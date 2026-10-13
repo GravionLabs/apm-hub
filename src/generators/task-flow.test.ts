@@ -7,14 +7,14 @@ const pk = path.resolve(__dirname, '../../packages');
 const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
 
 const orchestrator = read('agents/.apm/agents/orchestrator.agent.md');
-const pipeline = read('development-workflow/.apm/skills/orch-pipeline/SKILL.md');
+const pipeline = read('delivery/.apm/skills/orch-pipeline/SKILL.md');
 const conventional = read('github/.apm/skills/github-issue/references/conventional-commits.md');
 const subIssues = read('github/.apm/skills/github-issue/references/sub-issues.md');
 const taskIssues = read('github/.apm/skills/github-issue/references/task-issues.md');
 const githubIssue = read('github/.apm/skills/github-issue/SKILL.md');
-const publish = read('development-workflow/.apm/skills/issue-planning/references/publish.md');
+const publish = read('delivery/.apm/skills/issue-planning/references/publish.md');
 
-const planSchemaDoc = read('development-workflow/.apm/skills/issue-planning/references/plan-schema.md');
+const planSchemaDoc = read('delivery/.apm/skills/issue-planning/references/plan-schema.md');
 const batch = read('github/.apm/skills/github-issue/references/batch-workflow.md');
 
 describe('task flow consistency', () => {

@@ -10,7 +10,7 @@ packages/<domain>/
 └── .apm/
     ├── skills/<name>/         # SKILL.md (+ scripts/ references/ templates/ assets/)
     ├── agents/<name>.agent.md # agents package only; one source per agent, see docs/concepts/agent-frontmatter.md
-    ├── prompts/               # *.prompt.md (development-workflow only)
+    ├── prompts/               # *.prompt.md (delivery only)
     └── issue-templates/       # GitHub issue templates (github package only)
 .github/skills/check-prerequisites/   # the only repo-local skill (contributor tooling)
 .github/ISSUE_TEMPLATE/               # copy of packages/github/.apm/issue-templates/
@@ -26,7 +26,7 @@ apm.yml                               # marketplace: lists all packages
 | Package | Skills |
 |:--|:--|
 | `shared` | `implementation` (every change has tests; dispatches to `<lang>-implementation`), `detect-techstack` (JSON stack report), `diagnose` (bug fixes: red-capable feedback loop → minimal repro → ranked hypotheses → fix + regression test), `code-review` (severity-rated review using each language's `## Review rules`) |
-| `development-workflow` | `orch-pipeline` (plan → TDD → review fan-out → commit, `/orch`), `review-fanout`, `verify-project`, `issue-planning`, `retro` (user-invoked run retrospective, `scripts/Get-RunMetrics.ps1`), `handoff` (user-invoked hand-off document for the next session, `.agents/handoff-<date>.md`). Depends on `github` and `shared`; stack packages are installed per project. |
+| `delivery` | `orch-pipeline` (plan → TDD → review fan-out → commit, `/orch`), `review-fanout`, `verify-project`, `issue-planning`, `retro` (user-invoked run retrospective, `scripts/Get-RunMetrics.ps1`), `handoff` (user-invoked hand-off document for the next session, `.agents/handoff-<date>.md`). Depends on `github` and `shared`; stack packages are installed per project. |
 | `github` | `github-issue` (routing skill for the Epic→Feature→PBI→Task hierarchy; references for standalone, batch, sub-issues, task issues, conventional commits, release branches), `github-pull-request` (targets the release branch, not `main`), `github-release` (cut `release/<x.y>`, finish with the release PR into `main`; owns the git-cliff changelog, `references/cliff-setup.md`) |
 | `dotnet` | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`. Depends on `dotnet/skills` (`dotnet` plugin) |
 | `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
@@ -35,7 +35,7 @@ apm.yml                               # marketplace: lists all packages
 | `agents` | `orchestrator` (primary agent: plan → explore → implement per task (Task issues, `Refs #<task>` commits) → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `planner` (read-only + `gh`, inherit model, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (sonnet by default, one task, `implementation` preloaded, report file + ≤ 15-line status reply) |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not part of `all`) |
 | `hooks` | Hooks for Claude Code and Copilot CLI: `SubagentStop`/`subagentStop` appends a line per finished subagent to `.agents/<issue>/progress.md` (both payload formats); `UserPromptSubmit` warns above 150k context tokens (Claude Code only) |
-| `core` | meta-package for the global install: `github`, `development-workflow`, `shared`, `agents`, `hooks` (no stack skills) |
+| `core` | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills) |
 | `all` | meta-package: every package above except `apm-tooling` |
 
 Every language package provides `<lang>-implementation` (conventions + `## Review rules`) and `<lang>-test`. `detect-techstack` returns their names so `implementation`, `code-review` and `verify-project` can dispatch.

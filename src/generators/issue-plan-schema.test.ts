@@ -4,7 +4,7 @@ import Ajv from 'ajv/dist/2020';
 
 const refs = path.resolve(
   __dirname,
-  '../../packages/development-workflow/.apm/skills/issue-planning/references',
+  '../../packages/delivery/.apm/skills/issue-planning/references',
 );
 const schema = JSON.parse(fs.readFileSync(path.join(refs, 'plan.schema.json'), 'utf-8'));
 const doc = fs.readFileSync(path.join(refs, 'plan-schema.md'), 'utf-8');

@@ -73,7 +73,7 @@ The complete rule set is in `packages/apm-tooling/.apm/skills/skill-write/refere
 
 ## Skills vs. prompts
 
-The only prompt in the repo is `/orch` in `packages/development-workflow/.apm/prompts/`. It just loads `orch-pipeline`. Prompts are slash-command entry points; the behaviour always lives in a skill so it works the same on every platform.
+The only prompt in the repo is `/orch` in `packages/delivery/.apm/prompts/`. It just loads `orch-pipeline`. Prompts are slash-command entry points; the behaviour always lives in a skill so it works the same on every platform.
 
 ## Related
 
