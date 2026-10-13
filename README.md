@@ -121,13 +121,13 @@ Skills are the primary artifact; the `agents` package adds the five agents skill
 `orchestrator` runs as the **primary agent** and keeps only phase summaries in its context; the
 four subagents each have their own model and tool set:
 
-| Agent          | Role                                                                                              |            |                                                                                                |
-| :------------- | :------------------------------------------------------------------------------------------------ | :--------- | :--------------------------------------------------------------------------------------------- |
-| `orchestrator` | `plan\                                                                                            | implement\ | full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you |
-| `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                            |            |                                                                                                |
-| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary |            |                                                                                                |
-| `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                        |            |                                                                                                |
-| `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |            |                                                                                                |
+| Agent          | Role                                                                                                                  |
+| :------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| `orchestrator` | `plan\|implement\|full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you      |
+| `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                                                |
+| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary      |
+| `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                                            |
+| `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |
 
 ```powershell
 apm install GravionLabs/apm-hub/packages/core -g   # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents
