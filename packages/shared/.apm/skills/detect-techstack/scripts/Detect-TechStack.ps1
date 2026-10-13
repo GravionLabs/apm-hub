@@ -48,14 +48,17 @@ $manifestEntries = foreach ($f in $manifestFilters) {
     "${rel}:$((Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash)"
   }
 }
-$manifestList = (@($manifestEntries) | Sort-Object -Unique -CaseSensitive) -join "`n"
+$schemaVersion = 'techstack-v2'
+$manifestList = $schemaVersion + "`n" + (@($manifestEntries) | Sort-Object -Unique -CaseSensitive) -join "`n"
 $sha = [System.Security.Cryptography.SHA256]::Create()
 $manifestHash = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestList))) -replace '-', '').ToLowerInvariant()
 
 if (-not $NoCache -and (Test-Path $cacheFile -PathType Leaf)) {
   try {
     $cached = Get-Content $cacheFile -Raw | ConvertFrom-Json -ErrorAction Stop
-    if ($cached.manifest_hash -eq $manifestHash -and $null -ne $cached.languages) {
+    $names = @($cached.PSObject.Properties.Name)
+    $shapeOk = ($names -contains 'languages') -and ($names -contains 'test') -and ($names -contains 'implementation')
+    if ($shapeOk -and $cached.manifest_hash -eq $manifestHash) {
       (Get-Content $cacheFile -Raw).Trim()
       exit 0
     }
@@ -68,7 +71,7 @@ $frameworks = [System.Collections.Generic.List[string]]::new()
 # --- packageManager detection ---
 $packageManagers = [System.Collections.Generic.List[string]]::new()
 
-$pkgJsonFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "package.json" -Depth 5
+$pkgJsonFiles = Get-IndicatorFile -Path $rootFull -Filter "package.json" -Depth 5
 foreach ($pkg in $pkgJsonFiles) {
   try {
     $content = Get-Content $pkg.FullName -Raw | ConvertFrom-Json -ErrorAction Stop
@@ -93,19 +96,19 @@ $lockfileChecks = @(
 )
 
 foreach ($entry in $lockfileChecks) {
-  $found = Get-IndicatorFile -Path $ProjectRoot -Filter $entry.Name -Depth 5
+  $found = Get-IndicatorFile -Path $rootFull -Filter $entry.Name -Depth 5
   if ($found -and -not $packageManagers.Contains($entry.Value)) {
     $packageManagers.Add($entry.Value)
   }
 }
 
-$csprojForPkg = Get-IndicatorFile -Path $ProjectRoot -Filter "*.csproj" -Depth 5
+$csprojForPkg = Get-IndicatorFile -Path $rootFull -Filter "*.csproj" -Depth 5
 if ($csprojForPkg -and -not $packageManagers.Contains("dotnet")) {
   $packageManagers.Add("dotnet")
 }
 
 # --- Angular ---
-$angularJson = Get-IndicatorFile -Path $ProjectRoot -Filter "angular.json" -Depth 5
+$angularJson = Get-IndicatorFile -Path $rootFull -Filter "angular.json" -Depth 5
 if ($angularJson) {
   $frameworks.Add("angular")
   if (-not $languages.Contains("typescript")) {
@@ -114,7 +117,7 @@ if ($angularJson) {
 }
 
 # --- TypeScript (package.json + tsconfig.json pair in same directory) ---
-$allPkgJson = Get-IndicatorFile -Path $ProjectRoot -Filter "package.json" -Depth 5
+$allPkgJson = Get-IndicatorFile -Path $rootFull -Filter "package.json" -Depth 5
 $hasTypescript = $false
 foreach ($pkg in $allPkgJson) {
   $tsConfig = Join-Path $pkg.Directory.FullName "tsconfig.json"
@@ -130,7 +133,7 @@ if ($hasTypescript) {
 }
 
 # --- JavaScript (package.json exists but no tsconfig.json anywhere) ---
-$hasAnyTsConfig = Get-IndicatorFile -Path $ProjectRoot -Filter "tsconfig.json" -Depth 5
+$hasAnyTsConfig = Get-IndicatorFile -Path $rootFull -Filter "tsconfig.json" -Depth 5
 if ($allPkgJson -and -not $hasAnyTsConfig) {
   if (-not $languages.Contains("javascript")) {
     $languages.Add("javascript")
@@ -141,7 +144,7 @@ if ($allPkgJson -and -not $hasAnyTsConfig) {
 $pyIndicators = @("pyproject.toml", "requirements.txt", "setup.py")
 $hasPython = $false
 foreach ($indicator in $pyIndicators) {
-  $found = Get-IndicatorFile -Path $ProjectRoot -Filter $indicator -Depth 5
+  $found = Get-IndicatorFile -Path $rootFull -Filter $indicator -Depth 5
   if ($found) {
     $hasPython = $true
     break
@@ -152,9 +155,9 @@ if ($hasPython) {
 }
 
 # --- .NET / C# ---
-$csprojFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.csproj" -Depth 5
-$slnFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.sln" -Depth 5
-$slnxFiles = Get-IndicatorFile -Path $ProjectRoot -Filter "*.slnx" -Depth 5
+$csprojFiles = Get-IndicatorFile -Path $rootFull -Filter "*.csproj" -Depth 5
+$slnFiles = Get-IndicatorFile -Path $rootFull -Filter "*.sln" -Depth 5
+$slnxFiles = Get-IndicatorFile -Path $rootFull -Filter "*.slnx" -Depth 5
 if ($csprojFiles -or $slnFiles -or $slnxFiles) {
   $languages.Add("csharp")
   $frameworks.Add("dotnet")
@@ -189,7 +192,9 @@ $json = $report | ConvertTo-Json -Compress
 
 try {
   New-Item -ItemType Directory -Path (Split-Path $cacheFile) -Force | Out-Null
-  Set-Content -Path $cacheFile -Value $json -Encoding utf8NoBOM
+  $tmp = "$cacheFile.$PID.tmp"
+  Set-Content -Path $tmp -Value $json -Encoding utf8NoBOM
+  Move-Item -Path $tmp -Destination $cacheFile -Force
   # keep .agents/ out of git when it is not already ignored
   $null = git -C $rootFull rev-parse --is-inside-work-tree 2>$null
   if ($LASTEXITCODE -eq 0) {
@@ -198,11 +203,20 @@ try {
       $exclude = git -C $rootFull rev-parse --path-format=absolute --git-path info/exclude 2>$null
       if ($exclude) {
         New-Item -ItemType Directory -Path (Split-Path $exclude) -Force | Out-Null
-        Add-Content -Path $exclude -Value '.agents/'
+        $item = Get-Item -LiteralPath $exclude -Force -ErrorAction SilentlyContinue
+        $isLink = $item -and $item.LinkType
+        $lines = if ($item) { @(Get-Content -LiteralPath $exclude) } else { @() }
+        $listed = @($lines | Where-Object { $_.Trim() -in @('.agents/', '.agents', '/.agents/', '/.agents') }).Count -gt 0
+        if (-not $isLink -and -not $listed) {
+          $raw = if ($item) { Get-Content -LiteralPath $exclude -Raw } else { '' }
+          $prefix = if ($raw -and -not $raw.EndsWith("`n")) { "`n" } else { '' }
+          [System.IO.File]::AppendAllText($exclude, "$prefix.agents/`n")
+        }
       }
     }
   }
 } catch {
+  Remove-Item -Path "$cacheFile.$PID.tmp" -Force -ErrorAction SilentlyContinue
   # the cache is an optimisation; never fail detection because of it
 }
 
