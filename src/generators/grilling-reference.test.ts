@@ -7,19 +7,56 @@ const read = (p: string) => fs.readFileSync(p, 'utf-8');
 
 describe('grilling reference', () => {
   const grilling = read(path.join(skillDir, 'references/grilling.md'));
+  const schema = read(path.join(skillDir, 'references/plan-schema.md'));
+  const publish = read(path.join(skillDir, 'references/publish.md'));
+  const json = read(path.join(skillDir, 'references/plan.schema.json'));
+  const skill = read(path.join(skillDir, 'SKILL.md'));
+  const orchestrator = read(path.join(root, 'agents/.apm/agents/orchestrator.agent.md'));
 
   it('attributes mattpocock/skills under MIT', () => {
     expect(grilling).toContain('mattpocock/skills');
     expect(grilling).toContain('MIT');
   });
 
-  it.each(['AskUserQuestion', 'Gate:', 'Ruling:', 'needs-decision', 'Owner decision required', 'publish.md'])(
+  it.each(['AskUserQuestion', 'Gate:', 'Ruling:', 'publish.md', '.agents/<issue>/progress.md'])(
     'covers %s',
     (term) => expect(grilling).toContain(term),
   );
 
+  it('asks one round of all unanswered questions, at most 4 per AskUserQuestion call', () => {
+    expect(grilling).toMatch(/round is all unanswered questions/);
+    expect(grilling).toMatch(/at most 4 questions per call/);
+  });
+
+  it('never asks facts of the user', () => {
+    expect(grilling).toMatch(/Facts are never asked/);
+    expect(grilling).toMatch(/explorer/);
+  });
+
+  it('runs a final approval round before publish, also with zero questions', () => {
+    expect(grilling).toMatch(/final round[^\n]*approves `plan\.md`/);
+    expect(grilling).toMatch(/zero questions[^\n]*still runs/);
+    expect(grilling.indexOf('final round')).toBeLessThan(grilling.indexOf('Only then run `publish.md`'));
+  });
+
+  it('defines who edits plan.json and when planner is re-dispatched', () => {
+    expect(grilling).toMatch(/orchestrator then edits `plan\.json`/);
+    expect(grilling).toMatch(/Re-dispatch `planner` only when an answer changes item structure/);
+    expect(skill).toMatch(/Answers given in the prompt are final/);
+  });
+
+  it('wires the deferred state through grilling, plan-schema, json schema and publish', () => {
+    expect(grilling).toContain('deferred: true');
+    expect(schema).toContain('deferred: true');
+    expect(schema).toMatch(/answered, dropped or deferred/);
+    expect(json).toContain('"deferred"');
+    expect(publish).toMatch(/answered, dropped or deferred/);
+    expect(publish).toContain('needs-decision');
+    expect(publish).toContain('Owner decision required');
+  });
+
   it('is referenced by issue-planning and the orchestrator', () => {
-    expect(read(path.join(skillDir, 'SKILL.md'))).toContain('references/grilling.md');
-    expect(read(path.join(root, 'agents/.apm/agents/orchestrator.agent.md'))).toContain('references/grilling.md');
+    expect(skill).toContain('references/grilling.md');
+    expect(orchestrator).toContain('references/grilling.md');
   });
 });

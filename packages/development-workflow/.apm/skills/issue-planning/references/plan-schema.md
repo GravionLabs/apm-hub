@@ -53,14 +53,15 @@ Written to `.agents/<issue>/plan.json` by the planning step, read by the primary
 | `items[].blocked_by` | Plan ids or existing issue numbers (integers); acyclic; `[]` when free |
 | `items[].files`, `skills` | Files to touch; `<lang>-implementation` names from detect-techstack |
 | `items[].issue` | `null` until publish writes the created issue number back |
-| `questions[]` | `id`, `question`, `options` (≥ 2), `recommended` (one of `options`), `blocks` (item ids, may be empty); only decisions the repo cannot answer |
+| `questions[]` | `id`, `question`, `options` (≥ 2), `recommended` (one of `options`), `blocks` (item ids, may be empty), optional `deferred` (boolean, see Validity); only decisions the repo cannot answer |
 
 ## Validity
 
 - Level `task` creates no GitHub issues: `issue` stays `null` and publish is a no-op.
 - Ids are unique. Every string in `blocked_by` and every id in `blocks` resolves to an item; integers are existing issues (publish links them via the blocked_by endpoint even when the item is new). `blocked_by` has no cycles and no self-reference.
 - `recommended` is one of `options`; `options` has at least 2 distinct entries.
-- Publish runs only after every `questions[]` entry is answered or dropped.
+- Publish runs only after every `questions[]` entry is answered, dropped or deferred.
   - Answered: the primary agent sets `recommended` to the chosen option, edits the items listed in `blocks` (title, body, `blocked_by`, size) to reflect it, then removes the question.
   - Dropped: the question is removed, items unchanged.
+  - Deferred: the owner postpones the choice; the primary agent sets `deferred: true` and keeps the question. It counts as resolved for publish, which creates the items in `blocks` with the label `needs-decision` and an "Owner decision required" block (`publish.md`).
 - Publish writes created numbers into `items[].issue` after every create; readers use `issue` as the key to the created issue.

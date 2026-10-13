@@ -6,19 +6,19 @@ Adapted from the `grilling` skill of [mattpocock/skills](https://github.com/matt
 
 ## Loop
 
-1. Read `questions[]`. The frontier is every question whose prerequisites are settled (no unanswered question it depends on, per `blocks` and the plan order).
+1. Read `questions[]`. A round is all unanswered questions at once. Questions that only appear after a `planner` re-dispatch form the next round.
 2. Facts are never asked. Anything the repo can answer goes to `explorer` or `planner`; only product, scope and risk choices reach the user.
-3. Ask the whole frontier in one numbered round: question, options, the `recommended` option first, worded so "yes" accepts it.
-4. Record each answer as `Ruling: <question> — user — <answer, cost if wrong>` in the ledger and apply it per `plan-schema.md` (answer sets `recommended`, edits `blocks`, removes the question).
-5. A decision that changes items: re-dispatch `planner` with the answers, then start the next round from the updated `questions[]`.
-6. Repeat until the frontier is empty. The last round is the final approval of the breakdown (granularity, blocking edges, merge or split). Only then run `publish.md`.
+3. Ask the round as numbered questions: question, options, the `recommended` option first, worded so "yes" accepts it.
+4. Per answer, append `Ruling: <question> — user — <answer, cost if wrong>` to the ledger `.agents/<issue>/progress.md`. The orchestrator then edits `plan.json` per `plan-schema.md` (answered, dropped or deferred; it edits the items listed in `blocks`).
+5. Re-dispatch `planner` only when an answer changes item structure (split, merge, new item). Pass the answers in its prompt as final input; it keeps answered questions removed and may add new ones. Then start the next round.
+6. Repeat until no unanswered question is left. Then the final round: the user approves `plan.md` (granularity, blocking edges, merge or split, which items to publish). With zero questions this final approval still runs. Only then run `publish.md`.
 
 ## Clients
 
 - Claude Code: `AskUserQuestion`, at most 4 questions per call; split a larger round into several calls of the same round.
 - No question tool: ask the same numbered round in plain text.
-- Headless: append one `Gate: <question>` line per open question to the ledger and stop.
+- Headless: append one `Gate: <question>` line per open question to `.agents/<issue>/progress.md` and stop.
 
 ## Deferred decisions
 
-A `needs-decision` item the user defers is still created: label `needs-decision` and an "Owner decision required" block with the question and options in the issue body.
+The owner may defer a question. Mark it `deferred: true` per `plan-schema.md`; `publish.md` then creates the affected items with the label `needs-decision` and an "Owner decision required" block.
