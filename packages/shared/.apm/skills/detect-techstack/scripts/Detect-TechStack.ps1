@@ -8,13 +8,17 @@
   and <lang>-implementation skills.
 
 .PARAMETER ProjectRoot
-  Path to the project root directory. Defaults to the current directory.
+  Path to the project root directory.
+
+.PARAMETER NoCache
+  Ignore `.agents/techstack.json`: recompute the report and rewrite the cache.
 
 .OUTPUTS
   JSON string to stdout. Non-zero exit code on failure.
 #>
 param(
-  [Parameter(Mandatory)][string]$ProjectRoot
+  [Parameter(Mandatory)][string]$ProjectRoot,
+  [switch]$NoCache
 )
 
 $ErrorActionPreference = 'Stop'
@@ -28,6 +32,34 @@ function Get-IndicatorFile {
   param([string]$Path, [string]$Filter, [int]$Depth)
   Get-ChildItem -Path $Path -Recurse -Depth $Depth -Filter $Filter -ErrorAction SilentlyContinue |
     Where-Object { $_.FullName -notmatch '[\\/]node_modules[\\/]' -and $_.FullName -notmatch '[\\/]\.git[\\/]' -and $_.FullName -notmatch '[\\/]\.opencode[\\/]' }
+}
+
+# --- cache: .agents/techstack.json = report + manifest_hash ---
+$rootFull = (Resolve-Path $ProjectRoot).Path
+$cacheFile = Join-Path $rootFull '.agents/techstack.json'
+$manifestFilters = @(
+  'package.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lockb', 'package-lock.json', 'tsconfig.json',
+  'angular.json', 'pyproject.toml', 'requirements.txt', 'setup.py', 'uv.lock', 'Cargo.toml',
+  '*.csproj', '*.sln', '*.slnx'
+)
+$manifestEntries = foreach ($f in $manifestFilters) {
+  foreach ($file in (Get-IndicatorFile -Path $rootFull -Filter $f -Depth 5)) {
+    $rel = [System.IO.Path]::GetRelativePath($rootFull, $file.FullName) -replace '\\', '/'
+    "${rel}:$((Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash)"
+  }
+}
+$manifestList = (@($manifestEntries) | Sort-Object -Unique -CaseSensitive) -join "`n"
+$sha = [System.Security.Cryptography.SHA256]::Create()
+$manifestHash = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestList))) -replace '-', '').ToLowerInvariant()
+
+if (-not $NoCache -and (Test-Path $cacheFile -PathType Leaf)) {
+  try {
+    $cached = Get-Content $cacheFile -Raw | ConvertFrom-Json -ErrorAction Stop
+    if ($cached.manifest_hash -eq $manifestHash -and $null -ne $cached.languages) {
+      (Get-Content $cacheFile -Raw).Trim()
+      exit 0
+    }
+  } catch { }
 }
 
 $languages = [System.Collections.Generic.List[string]]::new()
@@ -144,13 +176,35 @@ for ($i = 0; $i -lt $languages.Count; $i++) {
 $test = $languages | ForEach-Object { "${_}-test" }
 $implementation = $languages | ForEach-Object { "${_}-implementation" }
 
-$report = @{
+$report = [ordered]@{
   languages       = @($languages)
   frameworks      = @($frameworks)
   packageManager  = @($packageManagers)
   test            = @($test)
   implementation  = @($implementation)
+  manifest_hash   = $manifestHash
 }
 
-$report | ConvertTo-Json -Compress
+$json = $report | ConvertTo-Json -Compress
+
+try {
+  New-Item -ItemType Directory -Path (Split-Path $cacheFile) -Force | Out-Null
+  Set-Content -Path $cacheFile -Value $json -Encoding utf8NoBOM
+  # keep .agents/ out of git when it is not already ignored
+  $null = git -C $rootFull rev-parse --is-inside-work-tree 2>$null
+  if ($LASTEXITCODE -eq 0) {
+    git -C $rootFull check-ignore -q .agents/techstack.json 2>$null
+    if ($LASTEXITCODE -ne 0) {
+      $exclude = git -C $rootFull rev-parse --path-format=absolute --git-path info/exclude 2>$null
+      if ($exclude) {
+        New-Item -ItemType Directory -Path (Split-Path $exclude) -Force | Out-Null
+        Add-Content -Path $exclude -Value '.agents/'
+      }
+    }
+  }
+} catch {
+  # the cache is an optimisation; never fail detection because of it
+}
+
+$json
 exit 0

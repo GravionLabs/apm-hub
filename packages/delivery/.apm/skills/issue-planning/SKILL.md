@@ -32,7 +32,7 @@ The input type decides it (`labels`, else title prefix):
 
 1. Resolve owner/repo from `git remote get-url origin` (SSH or HTTPS). Never ask the user.
 2. Load `detect-techstack`; keep the JSON.
-3. Read the input: `gh issue view <nr> --json title,body,labels`, or the description. Read existing children with `gh api repos/{owner}/{repo}/issues/<nr>/sub_issues` and plan only what is missing.
+3. Read the input: `gh issue view <nr> --json title,body,labels`, or the description. Read existing open children with `gh api repos/{owner}/{repo}/issues/<nr>/sub_issues --jq '[.[]|select(.state=="open")]'` and plan only what is missing; skip Task issues already merged (a commit with `Refs #<task>` on `origin/<integration-branch>`, see `github-issue` `references/task-issues.md`) and close them.
 4. Explore per the depth through the `explorer` agent: one call per affected area with the file budget and the question; keep only its ≤ 300-word summaries (Claude Code `Agent` with `subagent_type: explorer`, OpenCode `task`, VS Code Copilot `runSubagent`). A runner that cannot spawn agents (a subagent) explores inline with Read/Grep/Glob under the same budget; dispatching `explorer` is then the caller's job.
 5. Slice per `references/slicing.md`. Per item set `blocked_by`, `size` (S/M/L), `model` (haiku/sonnet/inherit, rule below) and `files`.
 6. Collect open decisions as `questions[]`. Answers given in the prompt are final: keep those questions removed and plan accordingly. Resolve anything the repo can answer yourself; keep only real choices (product, scope, risk) with options, a `recommended` option and the item ids it `blocks`.
