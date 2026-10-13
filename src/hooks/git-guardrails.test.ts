@@ -549,6 +549,68 @@ describe('git-guardrails hook', () => {
         fs.rmSync(evil, { recursive: true, force: true });
       }
     });
+    describe('a bare repository or git dir inside the session repo', () => {
+      let wt: string;
+      let marker: string;
+      const bare = () => path.join(repo, 'bare.git');
+      const stale = () => fs.utimesSync(path.join(wt, 'f'), new Date('2000-01-01'), new Date('2000-01-01'));
+      beforeEach(() => {
+        // a git dir (no .git entry) inside the cwd whose config points at a work tree and defines a clean filter
+        wt = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-barewt-'));
+        marker = path.join(wt, 'PWNED');
+        const env = hermetic(home);
+        spawnSync('git', ['init', '-q', '-b', 'main', wt], { env });
+        fs.writeFileSync(path.join(wt, '.git', 'info', 'attributes'), 'f filter=x\n');
+        fs.writeFileSync(path.join(wt, 'f'), 'a\n');
+        spawnSync('git', ['-C', wt, 'add', 'f'], { env });
+        spawnSync('git', ['-C', wt, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'i'], { env });
+        fs.renameSync(path.join(wt, '.git'), bare());
+        spawnSync('git', ['--git-dir', bare(), 'config', 'core.worktree', wt], { env });
+        spawnSync('git', ['--git-dir', bare(), 'config', 'filter.x.clean', `touch ${marker}; cat`], { env });
+        fs.writeFileSync(path.join(wt, 'f'), 'b\n'); // same size, old mtime: git status hashes it through the filter
+        stale();
+        // control: a plain git status there does run the filter
+        spawnSync('git', ['-C', bare(), 'status', '--porcelain'], { env });
+        expect(fs.existsSync(marker)).toBe(true);
+        fs.rmSync(marker);
+        stale();
+        fs.symlinkSync(bare(), path.join(repo, 'link'));
+      });
+      afterEach(() => fs.rmSync(wt, { recursive: true, force: true }));
+
+      it.each([
+        'git -C bare.git checkout .',
+        'git -C bare.git restore .',
+        'git -C ./bare.git/refs checkout .',
+        'git -C link checkout .',
+        'git --git-dir=./bare.git checkout .',
+        'GIT_DIR=bare.git git checkout .',
+        'cd bare.git && git checkout .',
+        'git -C bare.git -c alias.co=checkout co .',
+      ])('denies %s as not inspected and never runs its filter, with and without jq', (c) => {
+        for (const fn of [run, runNoJq]) {
+          const r = fn(claude(c));
+          expect(denied(r)).toBe(true);
+          expect(JSON.parse(r.out).permissionDecisionReason).toContain('not inspected');
+        }
+        expect(fs.existsSync(marker)).toBe(false);
+      });
+      it('reads the branch of a bare repo from its HEAD file for a force push', () => {
+        for (const fn of [run, runNoJq]) {
+          expect(denied(fn(claude('git -C bare.git push -f')))).toBe(true);
+          expect(denied(fn(claude('git -C link push -f origin HEAD')))).toBe(true);
+        }
+        fs.writeFileSync(path.join(bare(), 'HEAD'), 'ref: refs/heads/topic\n');
+        expect(run(claude('git -C bare.git push -f')).out).toBe('');
+        expect(fs.existsSync(marker)).toBe(false);
+      });
+      it('still inspects the session repository itself', () => {
+        expect(run(claude('git -C . checkout .')).out).toBe('');
+        dirty();
+        expect(denied(run(claude('git -C . checkout .')))).toBe(true);
+        expect(fs.existsSync(marker)).toBe(false);
+      });
+    });
     it('runs its own git hardened and never inside another repository', () => {
       const shim = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-shim-'));
       const other = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-foreign-'));

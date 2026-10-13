@@ -26,7 +26,8 @@
 #   24 KB: its worst shapes (many words, quotes, lines, pipes, '((', heredocs) parse in under 1.5 s, well inside
 #   the 5 s hook timeout. A longer command fails open; quoted heredoc bodies (commit messages) are cheap.
 # - git runs only in the payload cwd's own repository (status, symbolic-ref, rev-parse; no fsmonitor, no hooks,
-#   no optional locks). A target given via git -C <other repo>, --git-dir, --work-tree, GIT_DIR or after cd is
+#   no optional locks). A target given via git -C <other repo> (also a nested or bare repo or git dir inside the
+#   cwd repo, found by a file walk, symlinks resolved), --git-dir, --work-tree, GIT_DIR or after cd is
 #   never inspected with git: checkout ./restore . there counts as dirty, and a bare force push reads the
 #   branch from the HEAD file. Filters (.gitattributes) of the cwd repo still run, as for any git status.
 # - Known limits (documented, not fixed): variable forms (g${x}it, $cmd), ANSI-C escapes that build a word
@@ -120,14 +121,18 @@ protected() { # protected <branch>: main, release/* or a branch that could not b
   case "$r" in main | release/* | "$UNKNOWN") return 0 ;; esac
   return 1
 }
-inrepo() { # inrepo <dir>: inside the cwd repo, with no nested repository (.git) on the way up?
+isgitdir() { # isgitdir <dir>: a repository of its own (.git entry, or a git dir such as a bare repo: HEAD + objects/refs/commondir/config)
+  [ -e "$1/.git" ] && return 0
+  [ -e "$1/HEAD" ] && { [ -e "$1/objects" ] || [ -e "$1/refs" ] || [ -e "$1/commondir" ] || [ -e "$1/config" ]; }
+}
+inrepo() { # inrepo <dir>: inside the cwd repo, with no nested repository (.git, bare repo, git dir) on the way up?
   local d
   [ -n "$top" ] || return 1
   [ -n "$PTOP" ] || PTOP="$(cd -P -- "$top" 2>/dev/null && pwd -P)" || return 1
   d="$(cd -P -- "$1" 2>/dev/null && pwd -P)" || return 1
   while :; do
     [ "$d" = "$PTOP" ] && return 0
-    [ -e "$d/.git" ] && return 1
+    isgitdir "$d" && return 1
     case "$d" in "$PTOP"/*) d="${d%/*}" ;; *) return 1 ;; esac
   done
 }
@@ -141,7 +146,7 @@ headfile() { # headfile <dir>: current branch of the repo around <dir>, read fro
       case "$l" in /* | [A-Za-z]:[/\\]*) ;; *) l="$d/$l" ;; esac
       h="$l/HEAD"; break
     fi
-    if [ -f "$d/HEAD" ] && [ -d "$d/objects" ]; then h="$d/HEAD"; break; fi
+    if [ -f "$d/HEAD" ] && isgitdir "$d"; then h="$d/HEAD"; break; fi
     d="${d%/*}"
   done
   l=""
