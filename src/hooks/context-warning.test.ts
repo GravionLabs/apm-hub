@@ -4,6 +4,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 const SCRIPT = path.resolve(__dirname, '../../packages/hooks/.apm/hooks/context-warning.sh');
+const BASH = spawnSync('sh', ['-c', 'command -v bash'], { encoding: 'utf8' }).stdout.trim();
 
 describe('context-warning hook', () => {
   let dir: string;
@@ -29,14 +30,27 @@ describe('context-warning hook', () => {
     return file;
   };
 
-  const run = (transcript: string, env: Record<string, string> = {}) => {
-    const payload = JSON.stringify({ transcript_path: transcript, session_id: session });
-    const r = spawnSync('bash', [SCRIPT], {
+  const runRaw = (payload: string, env: Record<string, string> = {}) => {
+    const r = spawnSync(BASH, [SCRIPT], {
       input: payload,
       encoding: 'utf8',
       env: { ...process.env, TMPDIR: dir, ...env },
     });
-    return { code: r.status, out: r.stdout.trim() };
+    return { code: r.status, out: r.stdout.trim(), err: r.stderr.trim() };
+  };
+
+  const run = (transcript: string, env: Record<string, string> = {}) =>
+    runRaw(JSON.stringify({ transcript_path: transcript, session_id: session }), env);
+
+  // PATH with the tools the hook needs but without jq: forces the bash scanner
+  const noJqEnv = () => {
+    const bin = path.join(dir, 'bin');
+    fs.mkdirSync(bin, { recursive: true });
+    for (const tool of ['cat', 'grep', 'tail', 'head', 'rm', 'tr', 'sed', 'dirname']) {
+      const found = spawnSync('sh', ['-c', `command -v ${tool}`], { encoding: 'utf8' }).stdout.trim();
+      if (found && !fs.existsSync(path.join(bin, tool))) fs.symlinkSync(found, path.join(bin, tool));
+    }
+    return { PATH: bin };
   };
 
   beforeEach(() => {
@@ -50,7 +64,7 @@ describe('context-warning hook', () => {
 
   it('stays silent below the threshold', () => {
     const t = writeTranscript(usageLine(5, 90000, 4000));
-    expect(run(t)).toEqual({ code: 0, out: '' });
+    expect(run(t)).toEqual({ code: 0, out: '', err: '' });
   });
 
   it('warns at the threshold with the size in k tokens', () => {
@@ -90,11 +104,69 @@ describe('context-warning hook', () => {
   });
 
   it('never blocks on bad input', () => {
-    expect(run(path.join(dir, 'missing.jsonl'))).toEqual({ code: 0, out: '' });
-    expect(run(writeTranscript('not json at all'))).toEqual({ code: 0, out: '' });
-    expect(run(writeTranscript('{"message":{"role":"user"}}'))).toEqual({ code: 0, out: '' });
+    expect(run(path.join(dir, 'missing.jsonl'))).toEqual({ code: 0, out: '', err: '' });
+    expect(run(writeTranscript('not json at all'))).toEqual({ code: 0, out: '', err: '' });
+    expect(run(writeTranscript('{"message":{"role":"user"}}'))).toEqual({ code: 0, out: '', err: '' });
     const r = spawnSync('bash', [SCRIPT], { input: 'garbage', encoding: 'utf8' });
     expect(r.status).toBe(0);
     expect(r.stdout).toBe('');
+  });
+
+  describe.each([
+    ['jq', () => ({}) as Record<string, string>],
+    ['bash scanner (no jq)', () => noJqEnv()],
+  ])('payload parsing with %s', (_name, envFor) => {
+    const pretty = (t: string) =>
+      JSON.stringify({ session_id: session, transcript_path: t, hook_event_name: 'UserPromptSubmit' }, null, 2);
+
+    it('handles a pretty-printed multi-line payload with reordered fields', () => {
+      const t = writeTranscript(usageLine(1, 200000, 0));
+      expect(runRaw(pretty(t), envFor()).out).toContain('200k');
+    });
+
+    it('handles spaces around colons', () => {
+      const t = writeTranscript(usageLine(1, 200000, 0));
+      const payload = `{ "session_id" : "${session}" ,\n "transcript_path"\t:\t "${t}" }`;
+      expect(runRaw(payload, envFor()).out).toContain('200k');
+    });
+
+    it('handles escaped quotes and backslashes in the path', () => {
+      const sub = path.join(dir, 'we"ird \\dir');
+      fs.mkdirSync(sub);
+      const file = path.join(sub, 't.jsonl');
+      fs.writeFileSync(file, usageLine(1, 200000, 0) + '\n');
+      const payload = JSON.stringify({ transcript_path: file, session_id: session }, null, 2);
+      expect(payload).toContain('\\"');
+      expect(runRaw(payload, envFor()).out).toContain('200k');
+    });
+
+    it('handles escaped slashes and unicode escapes in the path', () => {
+      const t = writeTranscript(usageLine(1, 200000, 0));
+      const payload = `{"transcript_path":"${t.replace(/\//g, '\\/')}","session_id":"${session}"}`;
+      expect(runRaw(payload, envFor()).out).toContain('200k');
+    });
+
+    it('reads usage counts with spaces after colons', () => {
+      const t = writeTranscript(
+        '{"message": {"usage": {"input_tokens": 1, "cache_read_input_tokens": 200000, "cache_creation_input_tokens": 0}}}',
+      );
+      expect(runRaw(pretty(t), envFor()).out).toContain('200k');
+    });
+
+    it('is silent on failure without the debug variable, and notes it with it', () => {
+      const missing = path.join(dir, 'missing.jsonl');
+      expect(runRaw(pretty(missing), envFor())).toEqual({ code: 0, out: '', err: '' });
+      const dbg = runRaw(pretty(missing), { ...envFor(), CONTEXT_WARN_DEBUG: '1' });
+      expect(dbg.code).toBe(0);
+      expect(dbg.out).toBe('');
+      expect(dbg.err).toMatch(/^context-warning: transcript not readable/);
+      const bad = runRaw('garbage', { ...envFor(), CONTEXT_WARN_DEBUG: '1' });
+      expect(bad.code).toBe(0);
+      expect(bad.err).toBe('context-warning: no transcript_path in payload');
+      const t = writeTranscript('{"message":{"role":"user"}}');
+      expect(runRaw(pretty(t), { ...envFor(), CONTEXT_WARN_DEBUG: '1' }).err).toBe(
+        'context-warning: no usage line in transcript',
+      );
+    });
   });
 });

@@ -125,7 +125,9 @@ resumes from the ledger.
 
 - On Claude Code the `hooks` package warns on the next prompt once the context passes 150k tokens
   (`CONTEXT_WARN_TOKENS`, repeated after another `CONTEXT_WARN_STEP`, default 100k): finish the step,
-  note the hand-off in the ledger, `/clear`.
+  note the hand-off in the ledger, `/clear`. The hook parses the payload with `jq` when installed and with a
+  bash fallback otherwise (escapes, pretty-printed JSON and any field order work either way). It never blocks and
+  stays silent when parsing fails; set `CONTEXT_WARN_DEBUG=1` to get a one-line note on stderr instead.
 - The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code, `preToolUse` on
   Copilot CLI): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them,
   `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
