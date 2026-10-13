@@ -288,3 +288,64 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
     expect(res.status).not.toBe(0);
   });
 });
+
+describe('orchestrator flags: overview and review summary', () => {
+  const gates = read('github/.apm/skills/github-issue/references/orchestrator-gates.md');
+  const orch = read('delivery/.apm/skills/orch-pipeline/SKILL.md');
+  const prompt = read('delivery/.apm/prompts/orch.prompt.md');
+  const working = fs.readFileSync(path.resolve(__dirname, '../../docs/working-mode.md'), 'utf-8');
+
+  it.each([
+    ['agent', orchestrator],
+    ['orch-pipeline', orch],
+    ['orch prompt', prompt],
+    ['working-mode', working],
+    ['gates reference', gates],
+  ])('%s documents both flags', (_n, md) => {
+    expect(md).toContain('--no-overview');
+    expect(md).toContain('--no-review-summary');
+  });
+
+  it('agent states the defaults and delegates to the reference', () => {
+    expect(orchestrator).toContain('neither an issue number nor a description');
+    expect(orchestrator).toContain('orchestrator-gates.md');
+  });
+
+  it('overview runs only without issue number and description', () => {
+    expect(gates).toContain('only when the first message has no issue number and no description');
+    expect(gates).not.toContain('a sentence without');
+    expect(orch).toContain('without a description');
+    expect(working).toContain('neither an issue number nor a description');
+  });
+
+  it('--no-review-summary: only blocking findings trigger fix rounds', () => {
+    expect(gates).toMatch(/With `--no-review-summary` only blocking findings trigger fix rounds/);
+    expect(gates).toContain('`incomplete: true` stays blocking');
+    expect(gates).toContain('followed by a re-review');
+  });
+
+  it('headless Gate rule in overview and review-summary sections', () => {
+    const [, overview, summary] = gates.split(/^## /m);
+    expect(overview).toContain('Headless:');
+    expect(overview).toContain('Gate: Which issue?');
+    expect(summary).toContain('Headless');
+    expect(summary).toContain('Gate: <question>');
+  });
+
+  it('headless overview uses a ledger path without an issue directory', () => {
+    expect(gates).toContain('`.agents/overview.md`');
+    expect(gates).toContain('.git/info/exclude');
+  });
+
+  it('reference reuses the merged-task rule and lists findings by severity', () => {
+    expect(gates).toContain('"Task merged"');
+    expect(gates).toContain('task-issues.md');
+    expect(gates).toContain('severity file:line issue');
+    expect(gates).toContain('blocking first');
+    expect(gates).toContain('MEDIUM');
+  });
+
+  it('github-issue links the gates reference', () => {
+    expect(read('github/.apm/skills/github-issue/SKILL.md')).toContain('references/orchestrator-gates.md');
+  });
+});

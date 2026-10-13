@@ -47,7 +47,7 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
    | any                     | no             | `references/standalone-issue.md`                       |
    | `task`                  | —              | `references/standalone-issue.md`                       |
 
-   **Next open PBI of a Feature or Epic** (orchestrator `next` mode, end-line suggestion): `references/next-selection.md`.
+   **Next open PBI of a Feature or Epic** (orchestrator `next` mode, end-line suggestion): `references/next-selection.md`. Orchestrator issue overview and review summary: `references/orchestrator-gates.md`.
 
    **Batch user requests** ("implement all PBIs in feature #12", "work through these issues"): collect the target issues, then process each one sequentially with the appropriate workflow above.
 
