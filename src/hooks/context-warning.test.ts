@@ -169,4 +169,84 @@ describe('context-warning hook', () => {
       );
     });
   });
+  describe('Copilot CLI (postToolUse / agentStop)', () => {
+    const fixtures = path.resolve(__dirname, 'fixtures');
+    const readFixture = (name: string) => fs.readFileSync(path.join(fixtures, name), 'utf8');
+    // recorded session.usage_record events: inputTokens 19475, 23230, 25963, 26197, 26368, 28156
+    const eventsFixture = path.join(fixtures, 'copilot-events.jsonl');
+
+    // lays out COPILOT_HOME/session-state/<id>/events.jsonl as Copilot does
+    const copilotHome = (id: string, events = fs.readFileSync(eventsFixture, 'utf8')) => {
+      const home = path.join(dir, 'copilot-home');
+      fs.mkdirSync(path.join(home, 'session-state', id), { recursive: true });
+      fs.writeFileSync(path.join(home, 'session-state', id, 'events.jsonl'), events);
+      return home;
+    };
+    const post = readFixture('copilot-posttooluse.json');
+    const id = JSON.parse(post).sessionId as string;
+    const lowEnv = (home: string, extra: Record<string, string> = {}) => ({
+      COPILOT_HOME: home,
+      CONTEXT_WARN_TOKENS: '25000',
+      ...extra,
+    });
+
+    it('warns from postToolUse using events.jsonl of the session, without transcriptPath', () => {
+      const r = runRaw(post, lowEnv(copilotHome(id)));
+      expect(r.code).toBe(0);
+      const out = JSON.parse(r.out);
+      expect(out.additionalContext).toBe(
+        'Context is 28k tokens (limit 25k). Finish the current step, append the hand-off to .agents/<issue>/progress.md, then /clear and resume.',
+      );
+      expect(out.hookSpecificOutput.hookEventName).toBe('PostToolUse');
+      expect(out.hookSpecificOutput.additionalContext).toBe(out.additionalContext);
+    });
+
+    it('counts inputTokens only (cache tokens are already included)', () => {
+      const home = copilotHome(id);
+      expect(runRaw(post, lowEnv(home, { CONTEXT_WARN_TOKENS: '28157' })).out).toBe('');
+      expect(runRaw(post, lowEnv(home, { CONTEXT_WARN_TOKENS: '28156' })).out).toContain('28k tokens');
+    });
+
+    it('stays silent below the threshold and with the default threshold', () => {
+      const home = copilotHome(id);
+      expect(runRaw(post, { COPILOT_HOME: home })).toEqual({ code: 0, out: '', err: '' });
+    });
+
+    it('throttles like the Claude hook and keeps its own state file', () => {
+      const home = copilotHome(id);
+      expect(runRaw(post, lowEnv(home)).out).toContain('28k tokens');
+      expect(runRaw(post, lowEnv(home)).out).toBe('');
+      expect(fs.existsSync(path.join(dir, `copilot-context-warning-${id}`))).toBe(true);
+      expect(runRaw(post, lowEnv(home, { CONTEXT_WARN_STEP: '1000' })).out).toBe('');
+      const grown = fs.readFileSync(eventsFixture, 'utf8') +
+        JSON.stringify({ type: 'session.usage_record', data: { usage: { inputTokens: 30000 } } }) + '\n';
+      copilotHome(id, grown);
+      expect(runRaw(post, lowEnv(home)).out).toBe('');
+      expect(runRaw(post, lowEnv(home, { CONTEXT_WARN_STEP: '1000' })).out).toContain('30k tokens');
+    });
+
+    it('uses transcriptPath of an agentStop payload', () => {
+      const payload = readFixture('copilot-agentstop.json').replace('__TRANSCRIPT__', eventsFixture);
+      const r = runRaw(payload, { CONTEXT_WARN_TOKENS: '25000' });
+      expect(r.code).toBe(0);
+      expect(JSON.parse(r.out).additionalContext).toContain('Context is 28k tokens');
+    });
+
+    it('works without jq', () => {
+      const r = runRaw(post, { ...noJqEnv(), ...lowEnv(copilotHome(id)) });
+      expect(r.code).toBe(0);
+      expect(JSON.parse(r.out).additionalContext).toContain('28k tokens');
+    });
+
+    it('never blocks: missing events file, no usage record, unsafe session id', () => {
+      expect(runRaw(post, lowEnv(path.join(dir, 'nowhere')))).toEqual({ code: 0, out: '', err: '' });
+      const empty = copilotHome(id, '{"type":"session.start","data":{}}\n');
+      expect(runRaw(post, lowEnv(empty), ).out).toBe('');
+      const evil = JSON.stringify({ sessionId: '../../etc', toolName: 'bash' });
+      const dbg = runRaw(evil, { ...lowEnv(empty), CONTEXT_WARN_DEBUG: '1' });
+      expect(dbg.code).toBe(0);
+      expect(dbg.out).toBe('');
+      expect(dbg.err).toBe('context-warning: no transcript_path in payload');
+    });
+  });
 });

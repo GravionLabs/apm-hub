@@ -6,6 +6,13 @@
           { "type": "command", "command": "bash ./context-warning.sh", "timeout": 5 }
         ]
       }
+    ],
+    "postToolUse": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ./context-warning.sh", "timeout": 5 }
+        ]
+      }
     ]
   }
 }
