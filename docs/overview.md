@@ -12,7 +12,7 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 
 | Package                | What it covers                                                                                                                    |
 | :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
-| `shared`               | `implementation` (every change ships with tests), `detect-techstack` (JSON stack report), `code-review` (severity-rated review)   |
+| `shared`               | `implementation` (tests per change), `detect-techstack`, `code-review` (severity-rated), `diagnose` (bug diagnosis)               |
 | `development-workflow` | `orch-pipeline` (`/orch`: plan → TDD → review fan-out → commit), `review-fanout`, `verify-project`, `issue-planning`              |
 | `github`               | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`                              |
 | `dotnet`               | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
