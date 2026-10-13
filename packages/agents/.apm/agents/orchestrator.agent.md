@@ -6,7 +6,7 @@ user-invocable: true
 disable-model-invocation: true
 metadata:
   claude:
-    tools: [Agent, Read, Grep, Glob, Bash, Skill, AskUserQuestion]
+    tools: [Agent, Read, Grep, Glob, Bash, Skill, AskUserQuestion, SendMessage]
     model: inherit
   opencode:
     mode: primary
