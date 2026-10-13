@@ -45,7 +45,7 @@ Two defaults, each switched off by a flag in the first message (also for `/orche
 
 | Flag | Default without it |
 | :-- | :-- |
-| `--no-overview` | Started without an issue number, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged, merged ones per the "Task merged" rule) and you pick one |
+| `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged, merged ones per the "Task merged" rule) and you pick one |
 | `--no-review-summary` | After `review-fanout` it shows one line per finding (`severity file:line issue`, blocking first, MEDIUM/LOW included) and asks which advisories to fix; the rest go to the PR body. With the flag only blocking findings trigger fix rounds |
 
 Headless runs write `Gate: <question>` to the ledger and stop. Details: `github-issue` `references/orchestrator-gates.md`.

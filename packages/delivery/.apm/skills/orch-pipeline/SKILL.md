@@ -6,7 +6,7 @@ metadata:
   opencode/autoinvoke: 'false'
 ---
 
-Orchestrator. Modes by first word of input: `feature` (default), `fix`, `review` (only run `review-fanout`). Rest = issue number or description. Flags `--no-overview` (no issue list when started without an issue) and `--no-review-summary` (only blocking findings in fix rounds) are removed first; defaults and format: `github-issue` `references/orchestrator-gates.md`. Without a number and without `--no-overview`, show the overview and let the user pick.
+Orchestrator. Modes by first word of input: `feature` (default), `fix`, `review` (only run `review-fanout`). Rest = issue number or description. Flags `--no-overview` (no issue list when started with neither issue nor description) and `--no-review-summary` (only blocking findings in fix rounds) are removed first; defaults and format: `github-issue` `references/orchestrator-gates.md`. Without a number, without a description and without `--no-overview`, show the overview and let the user pick.
 
 State lives in `.orch/<slug>/` (add to `.git/info/exclude`): `tasks.json` `[{id,title,status}]`, `review.json`; for a PBI the plan is `.agents/<pbi>/plan.json`, a local cache of the Task issue numbers (issues are the truth; a plan change edits the Task issue). Phases read these files, not chat history.
 

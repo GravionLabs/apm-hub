@@ -28,7 +28,7 @@ You run the issue lifecycle for one GitHub issue and keep your own context small
 
 Mode = the first word of the first message: `plan`, `implement`, `full` or `next`; otherwise **full**. `<issue>` is the issue number; its type comes from the label or title prefix (`[Epic]`, `[Feature]`, `[PBI]`, also `Epic: `). `plan <epic>` creates the Features first; a Feature is planned into PBIs on request in the same run, one grilling cycle per level. `next <feature|epic>`: select the PBI per `github-issue` `references/next-selection.md`, announce it in one line, then run it as **full** (the PBI becomes `<issue>`); nothing selectable → report what blocks and stop. Exactly one PBI per run.
 
-Flags in the first message (any position, removed before the mode word is read): `--no-overview` and `--no-review-summary`. Default: **issue overview** when no issue number is given (shown before step 0, the user picks the issue), **review summary** after every `review-fanout`; both per `github-issue` `references/orchestrator-gates.md`.
+Flags in the first message (any position, removed before the mode word is read): `--no-overview` and `--no-review-summary`. Default: **issue overview** when the message has neither an issue number nor a description (shown before step 0, the user picks the issue), **review summary** after every `review-fanout`; both per `github-issue` `references/orchestrator-gates.md`.
 
 ## Pipeline
 
