@@ -13,9 +13,11 @@
 
 threshold="${CONTEXT_WARN_TOKENS:-150000}"
 step="${CONTEXT_WARN_STEP:-100000}"
-# a non-numeric or empty value falls back to the default instead of breaking the comparison
+# a non-numeric, empty or overlong (> 9 digits) value falls back to the default; leading zeros are read as decimal
 case "$threshold" in ''|*[!0-9]*) threshold=150000 ;; esac
 case "$step" in ''|*[!0-9]*) step=100000 ;; esac
+[ ${#threshold} -le 9 ] && threshold=$((10#$threshold)) || threshold=150000
+[ ${#step} -le 9 ] && step=$((10#$step)) || step=100000
 payload="$(cat 2>/dev/null || true)"
 
 note() { [ -n "${CONTEXT_WARN_DEBUG:-}" ] && printf 'context-warning: %s\n' "$*" >&2; return 0; }

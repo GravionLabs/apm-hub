@@ -133,12 +133,14 @@ resumes from the ledger.
 
 ## 3. During a session
 
-- On Claude Code the `hooks` package warns on the next prompt once the context passes 150k tokens
-  (`CONTEXT_WARN_TOKENS`, default 150000; a non-numeric value falls back to the default; lower it, e.g.
-  `export CONTEXT_WARN_TOKENS=100000`, to be warned earlier; repeated after another `CONTEXT_WARN_STEP`, default 100k): finish the step,
-  note the hand-off in the ledger, `/clear`. The hook parses the payload with `jq` when installed and with a
-  bash fallback otherwise (escapes, pretty-printed JSON and any field order work either way). It never blocks and
-  stays silent when parsing fails; set `CONTEXT_WARN_DEBUG=1` to get a one-line note on stderr instead.
+- On Claude Code the `hooks` package warns on the next prompt once the context passes 150k tokens:
+  - `CONTEXT_WARN_TOKENS`: threshold, default 150000; a non-numeric, empty, negative or overlong value falls back to the default
+  - lower it to be warned earlier, e.g. `export CONTEXT_WARN_TOKENS=100000`
+  - `CONTEXT_WARN_STEP`: growth before the next warning, default 100000; it also falls back to the default on invalid values
+  - then finish the step, note the hand-off in the ledger, `/clear`.
+  - The hook parses the payload with `jq` when installed and with a
+    bash fallback otherwise (escapes, pretty-printed JSON and any field order work either way). It never blocks and
+    stays silent when parsing fails; set `CONTEXT_WARN_DEBUG=1` to get a one-line note on stderr instead.
 - On Copilot CLI the same script runs as `postToolUse` (`userPromptSubmitted` cannot inject context), so the warning
   arrives after the next tool call, not on the next prompt. `postToolUse` has no `transcriptPath`; the hook reads
   `~/.copilot/session-state/<sessionId>/events.jsonl` (`COPILOT_HOME` overrides the directory) and takes `inputTokens`
