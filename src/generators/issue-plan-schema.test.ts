@@ -109,6 +109,32 @@ describe('plan.json schema', () => {
     expect(check(p)).toContain('duplicate id p1');
   });
 
+  it('accepts deferred: true with non-empty blocks', () => {
+    const p = clone();
+    p.questions[0].blocks = ['p1'];
+    p.questions[0].deferred = true;
+    expect(check(p)).toEqual([]);
+  });
+
+  it('rejects a non-boolean deferred', () => {
+    const p = clone();
+    p.questions[0].deferred = 'yes';
+    expect(check(p)).toContain('schema');
+  });
+
+  it('rejects deferred: true with empty blocks', () => {
+    const p = clone();
+    p.questions[0].blocks = [];
+    p.questions[0].deferred = true;
+    expect(check(p)).toContain('schema');
+  });
+
+  it('accepts empty blocks when not deferred', () => {
+    const p = clone();
+    p.questions[0].blocks = [];
+    expect(check(p)).toEqual([]);
+  });
+
   describe('level task', () => {
     const tasks = (issues: (number | null)[]) => {
       const p = clone();

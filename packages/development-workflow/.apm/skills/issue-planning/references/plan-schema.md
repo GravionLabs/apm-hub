@@ -53,14 +53,15 @@ Written to `.agents/<issue>/plan.json` by the planning step, read by the primary
 | `items[].blocked_by` | Plan ids or existing issue numbers (integers); acyclic; `[]` when free |
 | `items[].files`, `skills` | Files to touch; `<lang>-implementation` names from detect-techstack |
 | `items[].issue` | `null` until publish writes the created issue number back |
-| `questions[]` | `id`, `question`, `options` (≥ 2), `recommended` (one of `options`), `blocks` (item ids, may be empty); only decisions the repo cannot answer |
+| `questions[]` | `id`, `question`, `options` (≥ 2), `recommended` (one of `options`), `blocks` (item ids, may be empty unless deferred), optional `deferred` (boolean, see Validity); only decisions the repo cannot answer |
 
 ## Validity
 
 - Level `task` from a PBI or bug with ≥ 2 items creates `[Task]` sub-issues (`task-issues.md` in `github-issue`); `issue` caches their numbers and the issues stay the source of truth. A single task or a description creates none: `issue` stays `null`, publish is a no-op. Never a mix of null and numbers after publish (`issue-plan-schema.test.ts` checks both rules). A plan from a `description` never has issue numbers.
 - Ids are unique. Every string in `blocked_by` and every id in `blocks` resolves to an item; integers are existing issues (publish links them via the blocked_by endpoint even when the item is new). `blocked_by` has no cycles and no self-reference.
 - `recommended` is one of `options`; `options` has at least 2 distinct entries.
-- Publish runs only after every `questions[]` entry is answered or dropped.
+- Publish runs only after every `questions[]` entry is answered, dropped or deferred.
   - Answered: the primary agent sets `recommended` to the chosen option, edits the items listed in `blocks` (title, body, `blocked_by`, size) to reflect it, then removes the question.
   - Dropped: the question is removed, items unchanged.
+  - Deferred: the owner postpones the choice; the primary agent sets `deferred: true` and keeps the question. `blocks` must be non-empty, else no item would carry `needs-decision`; a question without `blocks` can only be answered or dropped. It counts as resolved for publish, which creates the items in `blocks` with the label `needs-decision` and an "Owner decision required" block (`publish.md`).
 - Publish writes created numbers into `items[].issue` after every create; readers use `issue` as the key to the created issue.
