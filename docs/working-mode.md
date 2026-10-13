@@ -175,6 +175,17 @@ resumes from the ledger.
 - A session older than 8 hours needs a reason (a watch, a loop). Otherwise write the hand-off into the
   ledger or a memory note and start a new session.
 
+### Hooks by harness
+
+| Hook | Claude Code | Copilot CLI | OpenCode |
+| :-- | :-- | :-- | :-- |
+| Subagent ledger line | `SubagentStop` | `subagentStop` | plugin `tool.execute.after` for `task` (`packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`) |
+| Context warning | `UserPromptSubmit` | not available | same plugin: `message.updated` token usage, warning added as a synthetic part by `chat.message`; unknown until the first assistant reply after a restart |
+| Git guardrails | `PreToolUse` | `preToolUse` | not available yet |
+
+The OpenCode plugin is a single file that exports only its plugin function (OpenCode calls every function export as a
+plugin and fails to load the file on other exports). Delivery to `.opencode/plugins/` is tracked in #183/#184.
+
 ### Subagent context by harness
 
 | | Claude Code | Copilot (VS Code) | Copilot CLI | OpenCode |
