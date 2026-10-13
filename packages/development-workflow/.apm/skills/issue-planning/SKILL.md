@@ -1,65 +1,54 @@
 ---
 name: issue-planning
-description: 'Explore the codebase and split a GitHub issue into scoped sub-issues (plan JSON). Use for "plan issue #N".'
+description: 'Plan an issue one level down with blockers and sizes; writes plan.json. Use for "plan issue #N".'
 ---
 
-Plan phase. Analyze task, explore codebase, produce a structured plan and GH sub-issues.
+Planning only: no source edits, no issue creation, no questions to the user. The executing agent needs write access to `.agents/<issue>/` only. Creating issues is `references/publish.md`, run by the primary agent after approval.
 
-## Depth
+## Depth (exploration budget)
 
 Pick from the request ("quick plan", "deep planning") or default to **standard**.
 
-| Depth    | Exploration                              | Max sub-tasks |
-|----------|-------------------------------------------|---------------|
-| quick    | Limit to ~5 key files                     | 3             |
-| standard | Grep/glob/read affected and related code  | 5             |
-| deep     | Standard + trace call sites, tests, docs of every affected area | 8 |
+| Depth    | Exploration                                                     |
+|----------|-----------------------------------------------------------------|
+| quick    | ~5 key files                                                    |
+| standard | Grep/glob/read affected and related code                        |
+| deep     | Standard + call sites, tests, docs of every affected area       |
+
+Depth limits exploration, not the number of items. Size items by session: **one item = one fresh session**.
+
+## Output level
+
+The input type decides it (`labels`, else title prefix):
+
+| Input | Plan items | GitHub issues |
+|:--|:--|:--|
+| Epic | Features (`Feature: …`) | yes, at publish |
+| Feature | PBIs (`feat: …`, `fix: …`) | yes, at publish |
+| PBI or bug | internal tasks (`chore: …`) | no, tasks stay in the plan file |
+| Description only | internal tasks | no |
 
 ## Steps
 
-1. Resolve GitHub context — parse `git remote get-url origin` for owner/repo (SSH: `git@github.com:owner/repo.git`, HTTPS: `https://github.com/owner/repo.git`); determine default branch via `git symbolic-ref refs/remotes/origin/HEAD`. Never ask the user.
-2. Load `detect-techstack` skill — parse JSON report for language info
-3. Read input (GH issue number, or task description)
-4. If issue number: fetch via `gh issue view <nr> --json title,body,labels`
-5. Explore codebase per the chosen depth through the `explorer` agent: one call per affected area, each with the depth's file budget and the question to answer; keep only its ≤ 300-word summaries (Claude Code `Agent` with `subagent_type: explorer`, OpenCode `task`, VS Code Copilot `runSubagent`; inline with the same budget when no agents are installed)
-6. Break task into sub-tasks (respect the depth's max). Each sub-task:
-   - Maps to one concern (function, module, component)
-   - Has clear scope boundaries
-   - Can be implemented independently
-7. **Present plan to user** — show sub-tasks and file list, wait for approval
-8. On approval: create GH sub-issues via `gh issue create` for each sub-task. Make the **first body line** the human-readable parent reference matching the parent's type — `Parent Epic: #<nr>`, `Parent Feature: #<nr>`, or `Parent PBI: #<nr>`
-9. Link each new issue to its parent as a **native GitHub sub-issue** per `github-issue/references/sub-issues.md` (`addSubIssue` mutation over node IDs). The body line is documentation; the native link is the mechanism.
-10. Verify before reporting success: `gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq '.[].number'`
-    must list every number in `issues`. A created-but-unlinked issue looks completely normal in
-    `gh issue list`, so this check is the only thing that catches it.
+1. Resolve owner/repo from `git remote get-url origin` (SSH or HTTPS). Never ask the user.
+2. Load `detect-techstack`; keep the JSON.
+3. Read the input: `gh issue view <nr> --json title,body,labels`, or the description. Read existing children with `gh api repos/{owner}/{repo}/issues/<nr>/sub_issues` and plan only what is missing.
+4. Explore per the depth through the `explorer` agent: one call per affected area with the file budget and the question; keep only its ≤ 300-word summaries (Claude Code `Agent` with `subagent_type: explorer`, OpenCode `task`, VS Code Copilot `runSubagent`). A runner that cannot spawn agents (a subagent) explores inline with Read/Grep/Glob under the same budget; dispatching `explorer` is then the caller's job.
+5. Slice per `references/slicing.md`. Per item set `blocked_by`, `size` (S/M/L), `model` (haiku/sonnet/inherit, rule below) and `files`.
+6. Collect open decisions as `questions[]`. Resolve anything the repo can answer yourself; keep only real choices (product, scope, risk) with options, a `recommended` option and the item ids it `blocks`.
+7. Write `.agents/<issue>/plan.json` (schema: `references/plan-schema.md`) and `plan.md` (human view: table of items, blocker order, questions). Create the directory; use `.agents/adhoc/` without an issue number.
 
-## Output (JSON only)
+## Model hint
 
-```json
-{
-  "phase": "plan",
-  "status": "ok",
-  "parent_issue": <number>,
-  "issues": [42, 43, 44],
-  "tasks": [
-    {
-      "issue": 42,
-      "title": "feat: add auth middleware",
-      "summary": "≤120 chars",
-      "files": ["src/auth/middleware.ts"],
-      "skills": ["ts-implementation"]
-    }
-  ],
-  "summary": "≤120 chars caveman summary"
-}
-```
+Same rule as the `orchestrator` agent: `haiku` only for mechanical edits; `sonnet` is the floor for prose-only and routine implementation; `inherit` (or stronger) for integration, design and cross-cutting items. Size L is `inherit` unless split.
 
-This schema is the contract consumed by the `orch-pipeline` and `github-issue` skills.
+## Return
+
+Only the plan path and a summary of ≤ 10 lines: input type and level, item count by size, the first unblocked item, open questions (id and one line each). No JSON or item bodies in the reply.
 
 ## Rules
 
-- If the work needs more sub-tasks than the depth allows, group into phases.
-- Link all sub-issues to their parent as native GitHub sub-issues, and verify the links landed. Never use a markdown checklist for this — it is a second source of truth that silently drifts.
-- Each sub-task title MUST use conventional commit format.
-- Sub-task bodies must be implementable without re-exploring the codebase: name the exact files and symbols to touch, where the tests go, and what is explicitly out of scope. These issues are often handed to a cheaper model than the one planning.
-- Report the first sub-task to implement next in `summary`.
+- Titles are conventional per the github-issue convention (`Feature: `, `feat: `, `chore: `, `fix: `); bodies are implementable without re-exploring: exact files and symbols, where tests go, what is out of scope.
+- `blocked_by` forms a DAG over plan ids and existing issue numbers; no cycles, no self-reference.
+- Never use markdown checklists for hierarchy; publish uses native sub-issue and blocked-by links.
+- `plan.json` is the contract between planning and the primary agent; `orch-pipeline` points here for larger work, `github-issue` references it for publishing.

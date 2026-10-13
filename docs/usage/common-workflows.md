@@ -51,7 +51,7 @@ apm install development-workflow@apm-hub   # pulls in github, shared and the lan
    Plan issue #42.
    ```
 
-   `issue-planning` explores the codebase, splits the work into scoped tasks and creates native GitHub sub-issues.
+   `issue-planning` explores the codebase and plans one level down (Epic to Features, Feature to PBIs, PBI to internal tasks) with `blocked_by`, size and model hints. It only writes `.agents/<issue>/plan.json` and `plan.md`; after you approve, the primary agent creates the issues with native sub-issue and blocked-by links.
 
 2. **Run the orchestrated pipeline**
 
