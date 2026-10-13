@@ -128,13 +128,13 @@ resumes from the ledger.
 - `/compact <focus>` is a brake, not a habit: it loses detail you may need. Prefer `/clear` plus a
   short hand-off note in the issue. A `orchestrator` run keeps its own hand-off note: the ledger
   `.agents/<issue>/progress.md` (phases done, fix rounds, rulings); a new session resumes from it.
+  The `hooks` package (Claude Code and Copilot CLI) adds a `Subagent <name>: stopped — <first line>` line for
+  every finished subagent (`SubagentStop` hook, no-op without a ledger).
 - **`handoff` or the ledger alone.** One issue: the ledger is the hand-off; `/clear` and resume with the orchestrator
   end line (`orchestrator next <feature>`). Work that spans several issues or several repositories, or that has open
   decisions the ledgers do not hold: run `handoff <focus of the next session>` before `/clear`. It writes
-  `.agents/handoff-<date>.md` (git-excluded) with state per issue, gates, ordered commands and suggested skills,
+  `.agents/handoff-<date>.md` (normally git-excluded) with state per issue, gates, ordered commands and suggested skills,
   linking the ledgers instead of copying them. Start the next session with `Read .agents/handoff-<date>.md and continue`.
-  The `hooks` package (Claude Code and Copilot CLI) adds a `Subagent <name>: stopped — <first line>` line for
-  every finished subagent (`SubagentStop` hook, no-op without a ledger).
 - OpenCode: `compaction: { auto: true, prune: true }` in `opencode.json` drops old tool output.
 
 ### Parallel and long sessions

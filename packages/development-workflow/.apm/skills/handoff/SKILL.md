@@ -10,17 +10,17 @@ Write a hand-off document so a fresh session continues the work without this con
 
 ## Input
 
-Arguments describe what the next session will focus on (`handoff finish the API migration in repo B`). Use them to choose which issues, gates and steps to detail and which to reduce to one line. An argument that looks like a file path (ends in `.md` or contains a separator) is the output path instead; the rest is the focus.
+Arguments describe what the next session will focus on (`handoff finish the API migration in repo B`). Use them to choose which issues, gates and steps to detail and which to reduce to one line. An argument is the output path only if it is a single token ending in `.md`; everything else is the focus.
 
 ## Steps
 
 1. **Collect state from sources, not memory.** `git status`, `git log --oneline -10`, open PRs (`gh pr list`), the issues involved (`gh issue view <nr>`), ledgers `.agents/<issue>/progress.md`, memory notes. Per repo for multi-repo work.
-2. **Fill `templates/handoff.md`.** Sections: goal, state per issue, open gates and decisions, next steps, suggested skills and agents, gotchas. Drop an empty section instead of writing "none".
+2. **Fill `templates/handoff.md`** (relative to the skill directory). Sections: goal, state per issue, open gates and decisions, next steps, suggested skills and agents, gotchas. Drop an empty section instead of writing "none".
 3. **Link, do not copy.** Reference issues, PRs, commits, plans, ADRs and ledgers by URL or path. One line of state per issue; never paste issue bodies, diffs or commit messages.
-4. **Make next steps executable.** Ordered, one exact command per step (`claude --agent orchestrator "next 193"`, `git switch feat/198-x`), working directory named when it is not the repo root.
+4. **Make next steps executable.** Ordered, one exact command per step (`claude --agent orchestrator "next <nr>"`, `git switch <branch>`), working directory named when it is not the repo root.
 5. **Name the decider** of every open gate or decision (user, reviewer, an issue owner) and where the question is recorded (`Gate:` line in the ledger, issue comment).
 6. **Redact** API keys, tokens, passwords, connection strings and personal data. Refer to where a secret lives (`.env`, a vault name), never its value.
-7. **Save** to `.agents/handoff-<YYYY-MM-DD>.md` (`.agents/` is excluded from git; a second handoff the same day gets `-2`), or to the path argument. Create the directory if needed.
+7. **Save** to `.agents/handoff-<YYYY-MM-DD>.md` (a second handoff the same day gets `-2`), or to the path argument. Create the directory if needed. If `git check-ignore -q .agents` fails, append `.agents/` to `.git/info/exclude` (or tell the user) and say so in the reply.
 8. **Reply** with the path and at most 3 lines: the focus, the first next step, the open gate count. Remind the user to `/clear` and start the next session with `Read <path> and continue`.
 
 ## Rules
