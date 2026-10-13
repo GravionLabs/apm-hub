@@ -41,6 +41,41 @@ $manifest = '(^|/)(apm\.yml|marketplace\.json|plugin\.json|package\.json)$'
 $tests = '(^|/)(tests?|__tests__)/|\.(test|spec)\.[a-z]+$|(^|/)test_[^/]+$|_test\.[a-z]+$'
 $sensitive = 'auth|crypto|password|secret|token|oauth|login|http|network|socket|\.sql$|sql|query|database'
 
+# Test files count as mechanical only when every changed line pair differs solely by one consistent
+# identifier rename (old token -> new token). Anything unprovable returns $false.
+function Test-RenameOnly([string[]]$pathspec) {
+  $d = @(git -c core.quotepath=off diff -M -U0 --no-color $Range -- @pathspec 2>$null)
+  if ($LASTEXITCODE -ne 0) { return $false }
+  $rem = @(); $add = @(); $inHunk = $false
+  foreach ($l in $d) {
+    if ($l.StartsWith('@@')) { $inHunk = $true; continue }
+    if (-not $inHunk) { continue }
+    if ($l.StartsWith('-')) { $rem += $l.Substring(1) }
+    elseif ($l.StartsWith('+')) { $add += $l.Substring(1) }
+    elseif ($l.StartsWith('\')) { continue }
+    else { return $false }
+  }
+  if ($rem.Count -ne $add.Count) { return $false }
+  $keep = 'true|false|null|undefined|None|True|False|not|and|or|if|else|nil'
+  $map = @{}
+  for ($k = 0; $k -lt $rem.Count; $k++) {
+    $a = @([regex]::Matches($rem[$k], '\w+|\W') | ForEach-Object { $_.Value })
+    $b = @([regex]::Matches($add[$k], '\w+|\W') | ForEach-Object { $_.Value })
+    if ($a.Count -ne $b.Count -or $rem[$k] -ceq $add[$k]) { return $false }
+    for ($t = 0; $t -lt $a.Count; $t++) {
+      if ($a[$t] -ceq $b[$t]) { continue }
+      if ($a[$t] -cnotmatch '^[A-Za-z_]\w*$' -or $b[$t] -cnotmatch '^[A-Za-z_]\w*$') { return $false }
+      if ($a[$t] -cmatch "^($keep)$" -or $b[$t] -cmatch "^($keep)$") { return $false }
+      if ($map.ContainsKey($a[$t]) -and $map[$a[$t]] -cne $b[$t]) { return $false }
+      $map[$a[$t]] = $b[$t]
+    }
+  }
+  foreach ($key in $map.Keys) {
+    if ($map.ContainsKey($map[$key]) -or ($add -cmatch "\b$([regex]::Escape($key))\b")) { return $false }
+  }
+  return ($map.Count -gt 0)
+}
+
 $lines = 0
 $paths = @()
 for ($i = 0; $i -lt $status.Count; $i++) {
@@ -57,10 +92,15 @@ for ($i = 0; $i -lt $status.Count; $i++) {
   if ($path -notmatch $docs -and $path -notmatch $manifest -and $path -notmatch $tests) {
     Full "content change in non-docs/manifest/test file: $path"
   }
+  if ($path -match $tests -and $path -notmatch $docs -and $path -notmatch $manifest) {
+    if ($code -notmatch '^(M|R\d+)$' -or -not (Test-RenameOnly @($s[1..($s.Count - 1)]))) {
+      Full "test file change is not a pure rename of identifiers: $path"
+    }
+  }
   $lines += $changed
 }
 if ($lines -gt $MaxLines) { Full "$lines changed lines exceed threshold $MaxLines" }
 
 $dims = @('correctness', 'spec')
 if ($paths | Where-Object { $_ -imatch $sensitive }) { $dims = @('correctness', 'security', 'spec') }
-Out 'mechanical' $dims "only renames and $lines changed lines (limit $MaxLines) in docs/manifests/tests"
+Out 'mechanical' $dims "only renames and $lines changed lines (limit $MaxLines) in docs/manifests/tests (test files: rename-only)"

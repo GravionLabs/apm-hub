@@ -37,6 +37,7 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', () => {
     write('old/tool.ts', body);
     write('docs/guide.md', body);
     write('src/app.ts', body);
+    write('src/app.test.ts', 'import { oldName } from "./app";\nexpect(oldName(1)).toBe(2);\n');
     git('add', '.');
     git('commit', '-qm', 'base');
   });
@@ -75,6 +76,25 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', () => {
     const r = classify();
     expect(r.mode).toBe('mechanical');
     expect(r.dimensions).toContain('security');
+  });
+
+  it('test file with a rename-only line change is mechanical', () => {
+    write('src/app.test.ts', 'import { newName } from "./app";\nexpect(newName(1)).toBe(2);\n');
+    expect(classify().mode).toBe('mechanical');
+  });
+
+  it('test file with a small logic change is full', () => {
+    write('src/app.test.ts', 'import { oldName } from "./app";\nexpect(oldName(1)).toBe(3);\n');
+    const r = classify();
+    expect(r.mode).toBe('full');
+    expect(r.reason).toMatch(/test file/);
+  });
+
+  it('test file with added assertion or inconsistent rename is full', () => {
+    write('src/app.test.ts', 'import { oldName } from "./app";\nexpect(oldName(1)).toBe(2);\nexpect(1).toBe(1);\n');
+    expect(classify().mode).toBe('full');
+    write('src/app.test.ts', 'import { newName } from "./app";\nexpect(other(1)).toBe(2);\n');
+    expect(classify().mode).toBe('full');
   });
 
   it('-Force full overrides a mechanical diff', () => {
