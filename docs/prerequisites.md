@@ -35,7 +35,7 @@ brew install powershell/tap/powershell     # macOS
 | `ng` | Node.js 22 LTS, Angular CLI 21+ (`npm i -g @angular/cli`) |
 | `py` | Python 3.14, [uv](https://docs.astral.sh/uv/) |
 | `dotnet` | .NET SDK 10 (libraries multi-target `net10.0;net9.0;net8.0`) |
-| `agents` (also `core`, `all`) | [apmw](https://github.com/GravionLabs/apmw) (`pipx install apmw` or `uv tool install apmw`; prebuilt executables on its [releases](https://github.com/GravionLabs/apmw/releases)), optional but needed to rewrite the agent frontmatter per client, see [apmw sanitize](#apmw-sanitize-agents-package) |
+| `agents` (also `core`, `all`) | [apmw](https://github.com/GravionLabs/apmw) (`pipx install apmw` or `uv tool install apmw`; prebuilt executables on its [releases](https://github.com/GravionLabs/apmw/releases)), required for OpenCode, recommended for Claude Code and Copilot (rewrites the agent frontmatter per client), see [apmw sanitize](#apmw-sanitize-agents-package) |
 | `shared`, `apm-tooling` | PowerShell and Git only |
 
 Install the runtimes with your platform's package manager, for example:
@@ -53,7 +53,7 @@ Language servers for Copilot CLI are described in [LSP configuration](lsp-config
 
 ## apmw sanitize (agents package)
 
-`apm install` copies the agent files of the `agents` package verbatim. Each client reads different frontmatter, so [`apmw sanitize`](https://github.com/GravionLabs/apmw) rewrites them per client (`apmw sanitize -g -p claude|opencode|copilot`, or `apmw install ... -p <client>` to install and sanitize in one step). Skills need no such step.
+`apm install` copies the agent files of the `agents` package verbatim. Each client reads different frontmatter, so [`apmw sanitize`](https://github.com/GravionLabs/apmw) rewrites them per client (`apmw sanitize -g -p claude|opencode|copilot`, or `apmw install -p <client>` to install and sanitize in one step; add `-g` for a global install). Skills need no such step.
 
 | Client | Extra step | Why |
 | :-- | :-- | :-- |
@@ -63,17 +63,19 @@ Language servers for Copilot CLI are described in [LSP configuration](lsp-config
 
 ### Can the sanitize run automatically?
 
-Evaluated against APM's [lifecycle scripts](https://microsoft.github.io/apm/enterprise/lifecycle-scripts/): `post-install` and `post-update` events exist, but scripts are read only from the consumer's own `apm.yml` (project), `~/.apm/apm.yml` (user) and the admin policy directory, never from an installed package. apm-hub therefore cannot ship the hook inside a package. A consumer can add it once; project scripts must be trusted with `apm lifecycle trust`:
+Evaluated against APM's [lifecycle scripts](https://microsoft.github.io/apm/enterprise/lifecycle-scripts/): `post-install` and `post-update` events exist, but scripts are read only from the consumer's own `apm.yml` (project), `~/.apm/apm.yml` (user) and the admin policy directory, never from an installed package. apm-hub therefore cannot ship the hook inside a package. A consumer can add it once; project scripts must be trusted with `apm lifecycle trust`. Matching the global install in the README, put the hook in `~/.apm/apm.yml` and sanitize with `-g` for all three platforms:
 
 ```yaml
 lifecycle:
   post-install:
     - type: command
-      command: "apmw sanitize -p claude"
+      command: "apmw sanitize -g -p claude; apmw sanitize -g -p opencode; apmw sanitize -g -p copilot"
   post-update:
     - type: command
-      command: "apmw sanitize -p claude"
+      command: "apmw sanitize -g -p claude; apmw sanitize -g -p opencode; apmw sanitize -g -p copilot"
 ```
+
+For a project install, put the hook in the project `apm.yml` instead and drop `-g` (sanitizes the project agent directories, e.g. `-p claude` only for Claude Code). `-g` targets the user-level agent directories; without it only the project ones are rewritten.
 
 This was read from the APM docs, not run end to end here. The supported alternative is `apmw install` / `apmw update`, which wrap `apm` and sanitize afterwards.
 

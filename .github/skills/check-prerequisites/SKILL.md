@@ -6,7 +6,7 @@ description: 'Check that the tools apm-hub skills need (pwsh 7+, Git, Node.js, n
 Verify the environment for apm-hub skills. Paths to `scripts/` are relative to this skill's directory.
 
 - **Core/runtime** (always): PowerShell 7+, Git, Node.js, npm
-- **Optional** (`-Full`): `gh`, `curl`, `jq`, `yq`, `ast-grep`, Python 3, `apmw` (only for the `agents` package, also in `core`/`all`; `pipx install apmw` or `uv tool install apmw`)
+- **Optional** (`-Full`): `gh`, `curl`, `jq`, `yq`, `ast-grep`, Python 3, `apmw` (only for the `agents` package, also in `core`/`all`; required for OpenCode, recommended for Claude Code and Copilot; `pipx install apmw` or `uv tool install apmw`)
 
 ```powershell
 pwsh scripts/Check-Prerequisites.ps1 [-Full] [-AutoInstall]

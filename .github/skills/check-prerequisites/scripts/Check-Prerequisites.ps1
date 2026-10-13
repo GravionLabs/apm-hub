@@ -177,7 +177,7 @@ if ($Full) {
             $results.optional[$tool] = "✗ NOT FOUND"
             Write-Host "  ✗ $tool : NOT FOUND" -ForegroundColor Gray
             if ($tool -eq 'apmw') {
-                Write-Host "    only needed for the agents package (core, all): pipx install apmw  or  uv tool install apmw" -ForegroundColor Gray
+                Write-Host "    only for the agents package (agents, core, all); required for OpenCode, recommended for Claude Code and Copilot: pipx install apmw  or  uv tool install apmw" -ForegroundColor Gray
             }
         }
     }
