@@ -1,10 +1,16 @@
 # Publish a plan
 
-Run by the primary agent (it can ask and write) after the user approved `plan.md` and every `questions[]` entry is answered or dropped. The planning step never runs this. Level `task`: nothing to publish.
+Run by the primary agent (it can ask and write) after the user approved `plan.md` and every `questions[]` entry is answered, dropped or deferred (`deferred: true`). The planning step never runs this. Level `task`: nothing to publish.
 
 Resolve `{owner}/{repo}`. The run is idempotent: skip items whose `issue` is already non-null, and repeat only what is missing. Create items in dependency order (an item after everything in its `blocked_by`), so each blocker has an issue number first.
 
 ## 1. Create
+
+If any question has `deferred: true`, first ensure the label exists (idempotent):
+
+```powershell
+gh label create needs-decision --force --description "Blocked on an owner decision"
+```
 
 For each item: write `body` to a file and run
 
@@ -12,7 +18,7 @@ For each item: write `body` to a file and run
 gh issue create --title "<title>" --body-file <file> --label <label>
 ```
 
-Label by item level: `feature` for `Feature:` items, `pbi` for `feat:` / `chore:` items, `pbi` plus `bug` for `fix:` items. The first body line is the parent reference (`Parent Epic: #N` or `Parent Feature: #N`). Take the number from the last URL segment, store it in `items[].issue` and write `plan.json` back to disk after every create, so the number mapping survives a crash.
+Label by item level: `feature` for `Feature:` items, `pbi` for `feat:` / `chore:` items, `pbi` plus `bug` for `fix:` items. The first body line is the parent reference (`Parent Epic: #N` or `Parent Feature: #N`). For an item listed in `blocks` of a deferred question, append the label `needs-decision` and add an "Owner decision required" block to the end of its body: the question, its options and the `recommended` one. Take the number from the last URL segment, store it in `items[].issue` and write `plan.json` back to disk after every create, so the number mapping survives a crash.
 
 ## 2. Native sub-issue links
 

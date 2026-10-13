@@ -44,8 +44,11 @@
           "question": { "type": "string", "minLength": 1 },
           "options": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "type": "string" } },
           "recommended": { "type": "string" },
-          "blocks": { "type": "array", "items": { "type": "string", "pattern": "^p[0-9]+$" } }
-        }
+          "blocks": { "type": "array", "items": { "type": "string", "pattern": "^p[0-9]+$" } },
+          "deferred": { "type": "boolean" }
+        },
+        "if": { "required": ["deferred"], "properties": { "deferred": { "const": true } } },
+        "then": { "properties": { "blocks": { "minItems": 1 } } }
       }
     },
     "summary": { "type": "string", "maxLength": 120 }
