@@ -39,6 +39,8 @@ describe('context-warning hook', () => {
     return { code: r.status, out: r.stdout.trim(), err: r.stderr.trim() };
   };
 
+  const resetState = () => fs.rmSync(path.join(dir, `claude-context-warning-${session}`), { force: true });
+
   const run = (transcript: string, env: Record<string, string> = {}) =>
     runRaw(JSON.stringify({ transcript_path: transcript, session_id: session }), env);
 
@@ -101,6 +103,47 @@ describe('context-warning hook', () => {
     const t = writeTranscript(usageLine(1, 60000, 0));
     expect(run(t, { CONTEXT_WARN_TOKENS: '50000' }).out).toContain('limit 50k');
     expect(run(t, { CONTEXT_WARN_TOKENS: '50000', CONTEXT_WARN_STEP: '5000' }).out).toBe('');
+  });
+
+  it('falls back to 150000 for an invalid CONTEXT_WARN_TOKENS', () => {
+    const below = writeTranscript(usageLine(1, 100000, 0));
+    for (const bad of ['abc', '', '-5', '1.5e5', '150k']) {
+      expect(run(below, { CONTEXT_WARN_TOKENS: bad })).toEqual({ code: 0, out: '', err: '' });
+    }
+    const above = writeTranscript(usageLine(1, 160000, 0));
+    const r = run(above, { CONTEXT_WARN_TOKENS: 'abc' });
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('limit 150k');
+  });
+
+  it('falls back to the defaults for overlong values', () => {
+    const t = writeTranscript(usageLine(1, 160000, 0));
+    const long = '9'.repeat(40);
+    expect(run(t, { CONTEXT_WARN_TOKENS: long }).out).toContain('limit 150k');
+    resetState();
+    expect(run(t, { CONTEXT_WARN_STEP: long }).out).toContain('160k');
+  });
+
+  it('normalizes leading-zero CONTEXT_WARN_TOKENS values', () => {
+    const t = writeTranscript(usageLine(1, 160000, 0));
+    // 09 -> 9 and 010 -> 10 (decimal, not octal): both are far below 160k, so the hook warns
+    expect(run(t, { CONTEXT_WARN_TOKENS: '09' }).out).toContain('160k');
+    resetState();
+    expect(run(t, { CONTEXT_WARN_TOKENS: '010' }).out).toContain('160k');
+    resetState();
+    expect(run(t, { CONTEXT_WARN_TOKENS: '09' }).err).toBe('');
+  });
+
+  it('falls back to a 100000 step for an invalid CONTEXT_WARN_STEP', () => {
+    for (const bad of ['x', '', '-5', '1.5e5']) {
+      resetState();
+      const t = writeTranscript(usageLine(1, 160000, 0));
+      expect(run(t, { CONTEXT_WARN_STEP: bad }).out).toContain('160k');
+      writeTranscript(usageLine(1, 180000, 0)); // rewrites the transcript t in place
+      expect(run(t, { CONTEXT_WARN_STEP: bad }).out).toBe('');
+      writeTranscript(usageLine(1, 260000, 0));
+      expect(run(t, { CONTEXT_WARN_STEP: bad }).out).toContain('260k');
+    }
   });
 
   it('never blocks on bad input', () => {
