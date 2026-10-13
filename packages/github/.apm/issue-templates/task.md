@@ -6,18 +6,31 @@ labels: task
 assignees: ''
 ---
 
+Parent PBI: #NNN
+<!-- Bug parent: use `Parent Bug: #NNN` instead. -->
+
 ## Overview
 
 The concrete technical step.
-
-## Parent
-
-Parent PBI or Bug: #NNN
 
 ## Implementation Notes
 
 <!-- Optional: how/where. -->
 
-## Definition of Done
+<!-- agent-ready:start -->
+## Context
+
+<!-- What the implementer must know that the PBI does not say. -->
+
+## Depends on
+
+<!-- Blocked by #NNN, or "none". Also set as native blocked-by link. -->
+
+## Files
 
 - 
+
+## Done when
+
+- 
+<!-- agent-ready:end -->

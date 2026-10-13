@@ -31,6 +31,16 @@ function graphErrors(plan: any): string[] {
     if (!q.options.includes(q.recommended)) errors.push(`${q.id}: recommended not in options`);
     for (const b of q.blocks) if (!ids.has(b)) errors.push(`dangling ${b} in ${q.id}`);
   }
+  const real = plan.items.filter((i: any) => i.issue !== null);
+  if (plan.level === 'task' && plan.items.length === 1 && real.length > 0) {
+    errors.push('single task must not have an issue');
+  }
+  if (plan.level === 'task' && plan.items.length > 1 && real.length > 0 && real.length < plan.items.length) {
+    errors.push('task issues must be all or none');
+  }
+  if (plan.input_type === 'description' && real.length > 0) {
+    errors.push('description plan must not have issue numbers');
+  }
   const state = new Map<string, number>();
   const visit = (id: string): boolean => {
     if (state.get(id) === 1) return true;
@@ -123,5 +133,55 @@ describe('plan.json schema', () => {
     const p = clone();
     p.questions[0].blocks = [];
     expect(check(p)).toEqual([]);
+  });
+
+  describe('level task', () => {
+    const tasks = (issues: (number | null)[]) => {
+      const p = clone();
+      p.level = 'task';
+      p.input_type = 'pbi';
+      p.parent_issue = 189;
+      p.questions = [];
+      p.items = issues.map((issue, i) => ({
+        ...item(`p${i + 1}`, i ? [`p${i}`] : []),
+        title: `chore: step ${i + 1}`,
+        issue,
+      }));
+      return p;
+    };
+
+    it('accepts one task without an issue', () => {
+      expect(check(tasks([null]))).toEqual([]);
+    });
+
+    it('rejects an issue on a single task', () => {
+      expect(check(tasks([301]))).toContain('single task must not have an issue');
+    });
+
+    it('accepts two tasks with cached issue numbers and ordered blockers', () => {
+      expect(check(tasks([301, 302]))).toEqual([]);
+    });
+
+    it('accepts two tasks before publish (all null)', () => {
+      expect(check(tasks([null, null]))).toEqual([]);
+    });
+
+    it('rejects a half-published task list', () => {
+      expect(check(tasks([301, null]))).toContain('task issues must be all or none');
+      expect(check(tasks([301, 302, null]))).toContain('task issues must be all or none');
+      expect(check(tasks([null, 302, 303]))).toContain('task issues must be all or none');
+    });
+
+    it('rejects issue numbers on a description plan', () => {
+      const p = tasks([301, 302]);
+      p.input_type = 'description';
+      p.parent_issue = null;
+      expect(check(p)).toContain('description plan must not have issue numbers');
+    });
+
+    it('plan-schema.md states the rules the helper enforces', () => {
+      expect(doc).toMatch(/single task or a description creates none/);
+      expect(doc).toMatch(/Never a mix of null and numbers after publish/);
+    });
   });
 });
