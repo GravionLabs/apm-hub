@@ -25,7 +25,7 @@
     },
     {
       "name": "hooks",
-      "description": "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit) works on Claude Code only here.",
+      "description": "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit) works on Claude Code only here; the git guardrails (PreToolUse) deny destructive git commands.",
       "version": "2.0.0",
       "source": "./packages/hooks"
     },
