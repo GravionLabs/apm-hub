@@ -1,6 +1,6 @@
 name: hooks
 version: 2.0.0
-description: "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit) works on Claude Code only here; the git guardrails (PreToolUse) deny destructive git commands."
+description: "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit) works on Claude Code only here; the git guardrails (PreToolUse) deny destructive git commands. OpenCode gets a plugin (ledger and context warning); its delivery is pending (#183, #184)."
 author:
   name: Gravion
 license: MIT

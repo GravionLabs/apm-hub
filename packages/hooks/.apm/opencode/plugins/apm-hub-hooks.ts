@@ -5,7 +5,7 @@
 //    150000), again after another CONTEXT_WARN_STEP (default 100000). Same logic as context-warning.sh.
 // Never throws: every hook swallows errors. Keep this file self-contained and export ONLY the plugin function:
 // OpenCode calls every function export as a plugin and fails to load the file on non-function exports.
-import { appendFileSync, existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { appendFileSync, lstatSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const text = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -14,18 +14,31 @@ const int = (v: string | undefined, d: number): number => {
   return v && Number.isFinite(n) && n > 0 ? n : d;
 };
 
+/** True for a regular file that is not a symlink. */
+function isRegular(p: string): boolean {
+  try {
+    const st = lstatSync(p);
+    return st.isFile() && !st.isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
+const CONTROL = /[\x00-\x1f\x7f\x85\u2028\u2029]/g;
+let partSeq = 0;
+
 /** Newest .agents/<issue>/progress.md under dir, or "" (AGENTS_LEDGER overrides). */
 function findLedger(dir: string, override?: string): string {
   try {
-    if (override) return existsSync(override) ? override : "";
+    if (override) return isRegular(override) ? override : "";
     const root = join(dir, ".agents");
     let best = "";
     let bestTime = -1;
     for (const e of readdirSync(root, { withFileTypes: true })) {
-      if (!e.isDirectory()) continue;
+      if (!e.isDirectory() || e.isSymbolicLink()) continue;
       const p = join(root, e.name, "progress.md");
-      if (!existsSync(p)) continue;
-      const t = statSync(p).mtimeMs;
+      if (!isRegular(p)) continue;
+      const t = lstatSync(p).mtimeMs;
       if (t > bestTime) {
         best = p;
         bestTime = t;
@@ -41,14 +54,14 @@ function findLedger(dir: string, override?: string): string {
 function summaryOf(output: string): string {
   const m = /<task_result>([\s\S]*?)(?:<\/task_result>|$)/.exec(output);
   const body = m ? m[1] : output;
-  const line = body.split(/\r?\n/).map((l) => l.trim()).find((l) => l.length > 0 && !l.startsWith("<task")) ?? "";
-  return line.slice(0, 120);
+  const line = body.split(/\r?\n/).map((l) => l.trim()).find((l) => l.length > 0 && !l.startsWith("<task") && (m !== null || !/^task_id:/i.test(l))) ?? "";
+  return line.replace(CONTROL, " ").slice(0, 120);
 }
 
 /** Ledger line for a finished `task` call, or "" when the call is not a ledger-worthy subagent stop. */
 function ledgerLine(input: any, output: any): string {
   if (input?.tool !== "task") return "";
-  const agent = text(input?.args?.subagent_type) || "subagent";
+  const agent = text(input?.args?.subagent_type).replace(CONTROL, " ").replace(/\s+/g, " ").trim().slice(0, 64) || "subagent";
   if (/^(.*[:/.])?orchestrator$/i.test(agent)) return "";
   const summary = summaryOf(text(output?.output));
   return summary ? `Subagent ${agent}: stopped — ${summary}` : `Subagent ${agent}: stopped`;
@@ -59,7 +72,7 @@ function appendLedger(dir: string, line: string, env: Record<string, string | un
   try {
     if (!line) return false;
     const ledger = findLedger(dir, env.AGENTS_LEDGER);
-    if (!ledger) return false;
+    if (!ledger || !isRegular(ledger)) return false;
     const last = readFileSync(ledger, "utf8").trimEnd().split("\n").pop();
     if (last === line) return false;
     appendFileSync(ledger, line + "\n");
@@ -123,7 +136,7 @@ export const ApmHubHooks = async (ctx: any) => {
         if (!msg) return;
         warned.set(sid, n);
         output.parts.push({
-          id: `prt_apmhub_ctx_${Date.now()}`,
+          id: `prt_apmhub_ctx_${Date.now()}_${++partSeq}`,
           sessionID: sid,
           messageID: text(input?.messageID) || text(output?.message?.id),
           type: "text",

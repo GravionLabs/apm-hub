@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -133,6 +134,50 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
     });
 
+    it('sanitizes newlines and control characters in the agent name and caps it at 64', async () => {
+      withLedger();
+      const h = await load();
+      await h['tool.execute.after'](...task('evil\n- forged line\r\tx', result('ok')));
+      await h['tool.execute.after'](...task('a'.repeat(100), result('ok')));
+      const lines = fs.readFileSync(ledger, 'utf8').split('\n');
+      expect(lines).toEqual(['# ledger', 'Subagent evil - forged line x: stopped — ok', `Subagent ${'a'.repeat(64)}: stopped — ok`, '']);
+    });
+
+    it('replaces control characters in the summary', async () => {
+      withLedger();
+      const h = await load();
+      await h['tool.execute.after'](...task('explorer', result('a\x00b\x1bc\x7fd\u2028e')));
+      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent explorer: stopped — a b c d e\n');
+    });
+
+    it('skips task_id header lines when there is no task_result wrapper', async () => {
+      withLedger();
+      const h = await load();
+      await h['tool.execute.after'](...task('explorer', 'task_id: ses_abc\n\nStatus: DONE'));
+      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent explorer: stopped — Status: DONE\n');
+    });
+
+    it('does not write through a symlinked progress.md', async () => {
+      const target = path.join(dir, 'target.md');
+      fs.writeFileSync(target, 'secret\n');
+      fs.mkdirSync(path.join(dir, '.agents', '7'), { recursive: true });
+      fs.symlinkSync(target, path.join(dir, '.agents', '7', 'progress.md'));
+      const h = await load();
+      await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
+      expect(fs.readFileSync(target, 'utf8')).toBe('secret\n');
+    });
+
+    it('does not write through a symlinked AGENTS_LEDGER', async () => {
+      const target = path.join(dir, 'target.md');
+      fs.writeFileSync(target, 'secret\n');
+      const link = path.join(dir, 'link.md');
+      fs.symlinkSync(target, link);
+      process.env.AGENTS_LEDGER = link;
+      const h = await load();
+      await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
+      expect(fs.readFileSync(target, 'utf8')).toBe('secret\n');
+    });
+
     it('never throws on malformed input', async () => {
       withLedger();
       const h = await load();
@@ -195,6 +240,50 @@ describe('opencode plugin apm-hub-hooks', () => {
       await h.event({ type: 'message.updated', properties: { info: { role: 'user', sessionID: 's2', tokens: { input: 999999 } } } });
       expect(await chat(h, 's2')).toEqual([]);
       expect(await chat(h, 's1')).toHaveLength(1);
+    });
+
+    it('gives every warning part a unique id', async () => {
+      vi.spyOn(Date, 'now').mockReturnValue(1234);
+      try {
+        const h = await load();
+        await h.event(assistant('s1', 160000));
+        await h.event(assistant('s2', 160000));
+        const ids = [...(await chat(h, 's1')), ...(await chat(h, 's2'))].map((p) => p.id);
+        expect(ids).toHaveLength(2);
+        expect(new Set(ids).size).toBe(2);
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
+
+    it('honours CONTEXT_WARN_STEP and falls back on invalid values', async () => {
+      process.env.CONTEXT_WARN_STEP = '10000';
+      let h = await load();
+      await h.event(assistant('s1', 160000));
+      expect(await chat(h)).toHaveLength(1);
+      await h.event(assistant('s1', 171000));
+      expect(await chat(h)).toHaveLength(1);
+      for (const bad of ['0', '-5']) {
+        process.env.CONTEXT_WARN_STEP = bad;
+        h = await load();
+        await h.event(assistant('s1', 160000));
+        expect(await chat(h)).toHaveLength(1);
+        await h.event(assistant('s1', 171000));
+        expect(await chat(h)).toEqual([]); // default step 100k, not 0 or negative
+      }
+    });
+
+    it('falls back to 150k for invalid CONTEXT_WARN_TOKENS (0, -5) and warns at 160000', async () => {
+      for (const bad of ['0', '-5']) {
+        process.env.CONTEXT_WARN_TOKENS = bad;
+        const h = await load();
+        await h.event(assistant('s1', 100000));
+        expect(await chat(h)).toEqual([]);
+        await h.event(assistant('s1', 160000));
+        const parts = await chat(h);
+        expect(parts).toHaveLength(1);
+        expect(parts[0].text).toContain('limit 150k');
+      }
     });
 
     it('honours CONTEXT_WARN_TOKENS and falls back on invalid values', async () => {
