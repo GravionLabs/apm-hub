@@ -18,6 +18,24 @@ Parent PBI or Bug: #NNN
 
 <!-- Optional: how/where. -->
 
+<!-- agent-ready:start -->
+## Context
+
+<!-- What the implementer must know that the PBI does not say. -->
+
+## Depends on
+
+<!-- Blocked by #NNN, or "none". Also set as native blocked-by link. -->
+
+## Files
+
+- 
+
+## Done when
+
+- 
+<!-- agent-ready:end -->
+
 ## Definition of Done
 
 - 

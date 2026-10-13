@@ -47,7 +47,7 @@ Written to `.agents/<issue>/plan.json` by the planning step, read by the primary
 | `depth` | `quick`, `standard`, `deep` (exploration budget only) |
 | `items[].id` | Unique plan id (`p1`, `p2`, …) |
 | `items[].title` | Conventional per level: `Feature: …`, `feat: …` / `fix: …`, `chore: …` |
-| `items[].body` | Issue body; for levels `feature` and `pbi` the first line is `Parent Epic: #N` / `Parent Feature: #N` (the parent number, as in `parent_issue`) followed by the sections of the matching issue template (see the `github-issue` skill). For `task`, a short self-contained brief |
+| `items[].body` | Issue body; for levels `feature` and `pbi` the first line is `Parent Epic: #N` / `Parent Feature: #N` (the parent number, as in `parent_issue`) followed by the sections of the matching issue template (see the `github-issue` skill). For `task`, the Task issue body (Parent PBI line, Overview, Implementation Notes, agent-ready block with Context, Depends on, Files, Done when) |
 | `items[].size` | `S`, `M`, `L` (see `slicing.md`) |
 | `items[].model` | `haiku`, `sonnet`, `inherit` |
 | `items[].blocked_by` | Plan ids or existing issue numbers (integers); acyclic; `[]` when free |
@@ -57,7 +57,7 @@ Written to `.agents/<issue>/plan.json` by the planning step, read by the primary
 
 ## Validity
 
-- Level `task` creates no GitHub issues: `issue` stays `null` and publish is a no-op.
+- Level `task` from a PBI or bug with ≥ 2 items creates `[Task]` sub-issues (`task-issues.md` in `github-issue`); `issue` caches their numbers and the issues stay the source of truth. A single task or a description creates none: `issue` stays `null`, publish is a no-op. Never a mix of null and numbers after publish.
 - Ids are unique. Every string in `blocked_by` and every id in `blocks` resolves to an item; integers are existing issues (publish links them via the blocked_by endpoint even when the item is new). `blocked_by` has no cycles and no self-reference.
 - `recommended` is one of `options`; `options` has at least 2 distinct entries.
 - Publish runs only after every `questions[]` entry is answered or dropped.
