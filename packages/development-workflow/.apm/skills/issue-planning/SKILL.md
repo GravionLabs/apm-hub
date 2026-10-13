@@ -3,7 +3,7 @@ name: issue-planning
 description: 'Plan an issue one level down with blockers and sizes; writes plan.json. Use for "plan issue #N".'
 ---
 
-Planning only: no source edits, no issue creation, no questions to the user. The executing agent needs write access to `.agents/<issue>/` only. Creating issues is `references/publish.md`, run by the primary agent after approval.
+Planning only: no source edits, no issue creation, no questions to the user (the primary agent grills them per `references/grilling.md`). The executing agent needs write access to `.agents/<issue>/` only. Creating issues is `references/publish.md`, run by the primary agent after the grilling rounds and approval.
 
 ## Depth (exploration budget)
 
