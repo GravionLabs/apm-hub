@@ -1,6 +1,6 @@
 name: shared
 version: 2.0.0
-description: "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), and severity-rated code review (code-review)."
+description: "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), and severity-rated code review (code-review), and bug diagnosis with a red-capable feedback loop (diagnose)."
 author:
   name: Gravion
 license: MIT
@@ -13,4 +13,5 @@ keywords:
 skills:
   - code-review
   - detect-techstack
+  - diagnose
   - implementation

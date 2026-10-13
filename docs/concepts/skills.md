@@ -66,6 +66,7 @@ The complete rule set is in `packages/apm-tooling/.apm/skills/skill-write/refere
 - `detect-techstack` returns a JSON report naming the `<lang>-implementation` and `<lang>-test` skills for the project.
 - `implementation` enforces "every change has tests" and dispatches to the language skill from that report.
 - `code-review` reads the `## Review rules` section of each detected `<lang>-implementation` skill and rates findings 🔴 / 🟡 / 🟢.
+- `diagnose` is loaded for bug fixes: it builds a red-capable feedback loop (commands from `<lang>-test`) before any hypothesis.
 - `verify-project` runs build, tests and lint with the detected package manager.
 - `orch-pipeline` chains plan, TDD, `review-fanout` and commit; `/orch` is its prompt.
 - `github-issue` routes issue work by label and sub-issue shape; `github-pull-request` opens the PR.
