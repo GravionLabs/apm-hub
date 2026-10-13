@@ -36,7 +36,22 @@ function Get-IndicatorFile {
 
 # --- cache: .agents/techstack.json = report + manifest_hash ---
 $rootFull = (Resolve-Path $ProjectRoot).Path
-$cacheFile = Join-Path $rootFull '.agents/techstack.json'
+$agentsDir = Join-Path $rootFull '.agents'
+$cacheFile = Join-Path $agentsDir 'techstack.json'
+# a symlinked .agents/ is never read from or written through; the report is printed without caching
+$agentsItem = Get-Item -LiteralPath $agentsDir -Force -ErrorAction SilentlyContinue
+$agentsLinked = [bool]($agentsItem -and $agentsItem.LinkType)
+
+function Test-CacheEntry {
+  # every entry must be a lowercase token like the script itself produces (ts, ts-test, pnpm, ...)
+  param($Value)
+  if ($null -eq $Value) { return $false }
+  if ($Value -is [string] -or $Value -isnot [System.Collections.IEnumerable]) { return $false }
+  foreach ($v in $Value) {
+    if ($v -isnot [string] -or $v -cnotmatch '^[a-z0-9-]+$') { return $false }
+  }
+  return $true
+}
 $manifestFilters = @(
   'package.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lockb', 'package-lock.json', 'tsconfig.json',
   'angular.json', 'pyproject.toml', 'requirements.txt', 'setup.py', 'uv.lock', 'Cargo.toml',
@@ -53,11 +68,17 @@ $manifestList = $schemaVersion + "`n" + ((@($manifestEntries) | Sort-Object -Uni
 $sha = [System.Security.Cryptography.SHA256]::Create()
 $manifestHash = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestList))) -replace '-', '').ToLowerInvariant()
 
-if (-not $NoCache -and (Test-Path $cacheFile -PathType Leaf)) {
+if (-not $NoCache -and -not $agentsLinked -and (Test-Path $cacheFile -PathType Leaf)) {
   try {
     $cached = Get-Content $cacheFile -Raw | ConvertFrom-Json -ErrorAction Stop
     $names = @($cached.PSObject.Properties.Name)
-    $shapeOk = ($names -contains 'languages') -and ($names -contains 'test') -and ($names -contains 'implementation')
+    $shapeOk = $true
+    foreach ($key in 'languages', 'test', 'implementation') {
+      if (-not ($names -contains $key) -or -not (Test-CacheEntry $cached.$key)) { $shapeOk = $false }
+    }
+    foreach ($key in 'frameworks', 'packageManager') {
+      if (($names -contains $key) -and -not (Test-CacheEntry $cached.$key)) { $shapeOk = $false }
+    }
     if ($shapeOk -and $cached.manifest_hash -eq $manifestHash) {
       (Get-Content $cacheFile -Raw).Trim()
       exit 0
@@ -190,35 +211,40 @@ $report = [ordered]@{
 
 $json = $report | ConvertTo-Json -Compress
 
+$tmp = $null
 try {
-  New-Item -ItemType Directory -Path (Split-Path $cacheFile) -Force | Out-Null
-  $tmp = "$cacheFile.$PID.tmp"
-  Set-Content -Path $tmp -Value $json -Encoding utf8NoBOM
-  Move-Item -Path $tmp -Destination $cacheFile -Force
-  # keep .agents/ out of git when it is not already ignored
-  $null = git -C $rootFull rev-parse --is-inside-work-tree 2>$null
-  if ($LASTEXITCODE -eq 0) {
-    git -C $rootFull check-ignore -q .agents/techstack.json 2>$null
-    if ($LASTEXITCODE -ne 0) {
-      # --git-path resolves a symlinked exclude file to its target; build the path from the git dir so the link check sees it
-      $commonDir = git -C $rootFull rev-parse --path-format=absolute --git-common-dir 2>$null
-      $exclude = if ($commonDir) { Join-Path $commonDir 'info/exclude' } else { $null }
-      if ($exclude) {
-        New-Item -ItemType Directory -Path (Split-Path $exclude) -Force | Out-Null
-        $item = Get-Item -LiteralPath $exclude -Force -ErrorAction SilentlyContinue
-        $isLink = $item -and $item.LinkType
-        $lines = if ($item) { @(Get-Content -LiteralPath $exclude) } else { @() }
-        $listed = @($lines | Where-Object { $_.Trim() -in @('.agents/', '.agents', '/.agents/', '/.agents') }).Count -gt 0
-        if (-not $isLink -and -not $listed) {
-          $raw = if ($item) { Get-Content -LiteralPath $exclude -Raw } else { '' }
-          $prefix = if ($raw -and -not $raw.EndsWith("`n")) { "`n" } else { '' }
-          [System.IO.File]::AppendAllText($exclude, "$prefix.agents/`n")
+  if (-not $agentsLinked) {
+    New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+    $tmp = Join-Path $agentsDir ("techstack." + [guid]::NewGuid().ToString('N') + ".tmp")
+    Set-Content -Path $tmp -Value $json -Encoding utf8NoBOM
+    Move-Item -Path $tmp -Destination $cacheFile -Force
+    # keep .agents/ out of git when it is not already ignored
+    $null = git -C $rootFull rev-parse --is-inside-work-tree 2>$null
+    if ($LASTEXITCODE -eq 0) {
+      git -C $rootFull check-ignore -q .agents/techstack.json 2>$null
+      if ($LASTEXITCODE -ne 0) {
+        # --git-path resolves a symlinked exclude file to its target; build the path from the git dir so the link check sees it
+        $commonDir = git -C $rootFull rev-parse --path-format=absolute --git-common-dir 2>$null
+        $infoDir = if ($commonDir) { Join-Path $commonDir 'info' } else { $null }
+        $infoItem = if ($infoDir) { Get-Item -LiteralPath $infoDir -Force -ErrorAction SilentlyContinue } else { $null }
+        if ($infoDir -and -not ($infoItem -and $infoItem.LinkType)) {
+          $exclude = Join-Path $infoDir 'exclude'
+          New-Item -ItemType Directory -Path $infoDir -Force | Out-Null
+          $item = Get-Item -LiteralPath $exclude -Force -ErrorAction SilentlyContinue
+          $isLink = $item -and $item.LinkType
+          $lines = if ($item) { @(Get-Content -LiteralPath $exclude) } else { @() }
+          $listed = @($lines | Where-Object { $_.Trim() -in @('.agents/', '.agents', '/.agents/', '/.agents') }).Count -gt 0
+          if (-not $isLink -and -not $listed) {
+            $raw = if ($item) { Get-Content -LiteralPath $exclude -Raw } else { '' }
+            $prefix = if ($raw -and -not $raw.EndsWith("`n")) { "`n" } else { '' }
+            [System.IO.File]::AppendAllText($exclude, "$prefix.agents/`n")
+          }
         }
       }
     }
   }
 } catch {
-  Remove-Item -Path "$cacheFile.$PID.tmp" -Force -ErrorAction SilentlyContinue
+  if ($tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
   # the cache is an optimisation; never fail detection because of it
 }
 

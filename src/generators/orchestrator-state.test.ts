@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { createHash } from 'crypto';
 import { execFileSync, spawnSync } from 'child_process';
 
 const pk = path.resolve(__dirname, '../../packages');
@@ -12,26 +13,29 @@ const taskIssues = read('github/.apm/skills/github-issue/references/task-issues.
 const planning = read('delivery/.apm/skills/issue-planning/SKILL.md');
 const detect = read('shared/.apm/skills/detect-techstack/SKILL.md');
 
-const pwshStatus = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
-if (!pwshStatus && process.env.CI) {
-  throw new Error('pwsh is required in CI for the orchestrator-state tests');
-}
-const hasPwsh = pwshStatus;
+const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 const T = 30000;
 
 /** First `git ...` command line found in a fenced or inline code span of the markdown that matches `needle`. */
 function commandFrom(md: string, needle: string): string {
   const m = md.match(new RegExp('`(git [^`]*' + needle + '[^`]*)`'));
   if (!m) throw new Error('command not found in markdown: ' + needle);
+  expect(m[1]).toContain('<task>');
+  expect(m[1]).toContain('<integration-branch>');
   return m[1];
 }
 
 describe('orchestrator state: contract strings (docs)', () => {
+  it('pwsh is available (required in CI)', () => {
+    if (process.env.CI) expect(hasPwsh).toBe(true);
+  });
+
   it('orchestrator refers to the one merged-task rule and never re-plans when all tasks are merged', () => {
     expect(orchestrator).toContain('"Task merged"');
     expect(orchestrator).toContain('task-issues.md');
-    expect(orchestrator).toMatch(/never re-plan/);
-    expect(orchestrator).toContain('open or closed');
+    expect(orchestrator).toContain('none open (all merged)');
+    expect(orchestrator).toContain('{n:.number,s:.state}');
+    expect(orchestrator).toContain('api --paginate');
     expect(orchestrator.indexOf('Resolve the integration branch')).toBeLessThan(orchestrator.indexOf('Task merged'));
   });
 
@@ -43,7 +47,9 @@ describe('orchestrator state: contract strings (docs)', () => {
 
   it('the merged-task rule lives once in task-issues.md; issue-planning refers to it', () => {
     expect(taskIssues).toContain('gh issue close <task> --comment "Merged into <branch> in <sha>"');
-    expect(taskIssues).toContain('git fetch origin <integration-branch>');
+    const fetchAt = taskIssues.indexOf('git fetch origin <integration-branch>');
+    expect(fetchAt).toBeGreaterThanOrEqual(0);
+    expect(fetchAt).toBeLessThan(taskIssues.indexOf('--grep'));
     expect(taskIssues).toContain('`^[0-9]+$`');
     expect(orchestrator).not.toContain('gh issue close');
     expect(planning).toContain('Task merged');
@@ -69,6 +75,8 @@ describe('merged-task check (command read from task-issues.md)', () => {
     execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: dir, encoding: 'utf-8' });
   const grepArgs = (task: string, range: string) => {
     const cmd = commandFrom(taskIssues, '--grep');
+    expect(cmd).toContain('"^Refs #<task>$"');
+    expect(cmd).toContain('origin/<integration-branch>');
     const words = cmd
       .replace('git ', '')
       .replace('"^Refs #<task>$"', `"^Refs #${task}$"`)
@@ -179,6 +187,62 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
     fs.writeFileSync(cacheFile(), JSON.stringify({ ...noTest, languages: ['cached'] }));
     expect(run().languages).toEqual(['ts']);
     expect(run().manifest_hash).toBe(first.manifest_hash);
+  });
+
+  it('invalidates a cache holding the hash computed without the schema version prefix', { timeout: T }, () => {
+    const first = run();
+    const entries = ['package.json', 'tsconfig.json'].map(
+      (f) => `${f}:${createHash('sha256').update(fs.readFileSync(path.join(dir, f))).digest('hex').toUpperCase()}`,
+    );
+    const legacy = createHash('sha256').update(entries.sort().join('\n')).digest('hex');
+    expect(legacy).not.toBe(first.manifest_hash);
+    poison({ manifest_hash: legacy });
+    const r = run();
+    expect(r.languages).toEqual(['ts']);
+    expect(r.manifest_hash).toBe(first.manifest_hash);
+  });
+
+  it.each([
+    ['uppercase entry', { languages: ['TS'] }],
+    ['entry with a path', { implementation: ['../evil'] }],
+    ['entry with a space', { test: ['ts-test rm'] }],
+    ['non-string entry', { languages: [1] }],
+    ['scalar instead of array', { test: 'ts-test' }],
+    ['bad packageManager', { packageManager: ['pnpm; x'] }],
+  ])('recomputes and rewrites a cache with an invalid value (%s)', { timeout: T }, (_n, bad) => {
+    const first = run();
+    poison(bad);
+    expect(run().languages).toEqual(['ts']);
+    const rewritten = JSON.parse(fs.readFileSync(cacheFile(), 'utf-8'));
+    expect(rewritten.languages).toEqual(['ts']);
+    expect(rewritten.manifest_hash).toBe(first.manifest_hash);
+  });
+
+  it.skipIf(process.platform === 'win32')('does not read or write through a symlinked .agents/ directory', { timeout: T }, () => {
+    const target = fs.mkdtempSync(path.join(os.tmpdir(), 'agents-target-'));
+    try {
+      fs.symlinkSync(target, path.join(dir, '.agents'));
+      expect(run().languages).toEqual(['ts']);
+      expect(fs.readdirSync(target)).toEqual([]);
+      fs.writeFileSync(path.join(target, 'techstack.json'), JSON.stringify({ languages: ['cached'], test: [], implementation: [], manifest_hash: 'x' }));
+      expect(run().languages).toEqual(['ts']);
+      expect(fs.readdirSync(target)).toEqual(['techstack.json']);
+    } finally {
+      fs.rmSync(target, { recursive: true, force: true });
+    }
+  });
+
+  it.skipIf(process.platform === 'win32')('does not write the exclude through a symlinked .git/info directory', { timeout: T }, () => {
+    const target = fs.mkdtempSync(path.join(os.tmpdir(), 'info-target-'));
+    try {
+      fs.rmSync(path.join(dir, '.git/info'), { recursive: true, force: true });
+      fs.symlinkSync(target, path.join(dir, '.git/info'));
+      expect(run().languages).toEqual(['ts']);
+      expect(fs.readdirSync(target)).toEqual([]);
+      expect(fs.existsSync(cacheFile())).toBe(true);
+    } finally {
+      fs.rmSync(target, { recursive: true, force: true });
+    }
   });
 
   it('adds .agents/ to the exclude file once, also after a last line without newline', { timeout: T }, () => {
