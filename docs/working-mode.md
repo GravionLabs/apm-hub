@@ -120,6 +120,11 @@ resumes from the ledger.
 - Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
 - Reviews read a package file (`.agents/<issue>/review-<n>.diff`: commit list, stat, diff with context)
   written by `review-fanout`; the diff is never pasted into a prompt, so it does not repeat per dimension.
+- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec`. `spec` compares
+  the diff with the originating issue: the number comes from the argument, the branch `<type>/<nr>-<slug>` or
+  `Closes #n` in the range, and the issue body plus its Task sub-issue bodies are appended to the same package
+  file. It reports missing, partial or wrong criteria (HIGH) and scope creep (MEDIUM), never merged with
+  `conventions` findings. No issue found: one advisory "no spec available", never a failure.
 - `/compact <focus>` is a brake, not a habit: it loses detail you may need. Prefer `/clear` plus a
   short hand-off note in the issue. A `orchestrator` run keeps its own hand-off note: the ledger
   `.agents/<issue>/progress.md` (phases done, fix rounds, rulings); a new session resumes from it.
