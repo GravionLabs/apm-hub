@@ -12,21 +12,33 @@
 #   hook also works on hosts that only have bash, cat, tr, grep and git (a jq-less Windows/Git Bash setup).
 # - The command is tokenized with shell quoting rules, so ';', '|' or '&' inside quotes or heredoc bodies do not
 #   split it. Command and process substitution, bash/sh -c strings, eval and common wrappers (env, sudo,
-#   timeout, xargs, nice, nohup, ...) are inspected like a plain git call. Variable or obfuscated forms are not.
+#   timeout, xargs, nice, nohup, ...) are inspected like a plain git call. Heredoc bodies are plain text, except
+#   when the consumer is a shell (bash <<EOF, sh <<< "...": inspected as commands) or the delimiter is unquoted
+#   (command substitutions inside the body are inspected). Redirect targets are not arguments.
+# - Limits (documented decisions, not bugs): commands above 64 KB (payload above 256 KB) are not scanned and
+#   fail open, as does nesting deeper than 24 levels. Not detected: abbreviated long options (--har), unwrapped
+#   runners (ssh, watch, find -exec), variable forms (g${x}it, $cmd), ANSI-C escapes that build a word ($'\x67it').
+# - Scanning is near-linear: LC_ALL=C and chunked parameter expansion instead of per-character slicing.
+# - The hook's own git calls are hardened (no fsmonitor, no hooks, no optional locks) so a hostile repo given
+#   via git -C cannot run code through the guard.
 
+export LC_ALL=C
 payload="$(cat 2>/dev/null || true)"
 [ "${GIT_GUARDRAILS_OFF:-}" = "1" ] && exit 0
+[ "${#payload}" -gt 262144 ] && exit 0
 
 J_tool=""; J_cwd=""; J_cmd=""; J_args=""
 
 jsonscan() { # jsonscan <json>: first string value of tool_name|toolName, cwd, command, toolArgs (keys outside strings only)
-  local s="$1" n=${#1} i=0 j c ch nx hex key="" str
+  local s="$1" n=${#1} i=0 j c ch nx hex key="" str win
   while [ "$i" -lt "$n" ]; do
     c="${s:i:1}"
     case "$c" in
       '"')
         i=$((i + 1)); str=""
         while [ "$i" -lt "$n" ]; do
+          win="${s:i:512}"; ch="${win%%[\"\\]*}"
+          if [ -n "$ch" ]; then str+="$ch"; i=$((i + ${#ch})); continue; fi
           ch="${s:i:1}"
           if [ "$ch" = '\' ]; then
             nx="${s:i+1:1}"; i=$((i + 2))
@@ -82,10 +94,13 @@ else
   tool="$J_tool"; cwd="$J_cwd"; cmd="$J_cmd"
 fi
 case "$(printf '%s' "$tool" | tr '[:upper:]' '[:lower:]')" in bash | shell | powershell | run_shell_command | '') ;; *) exit 0 ;; esac
-case "$cmd" in *git*) ;; *) exit 0 ;; esac
+[ "${#cmd}" -gt 65536 ] && exit 0
+plain="${cmd//[\'\"\\]/}"
+case "$plain" in *git*) ;; *) exit 0 ;; esac
 
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
-top="$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)"
+hgit() { GIT_OPTIONAL_LOCKS=0 git -c core.fsmonitor=false -c core.hooksPath=/dev/null "$@"; }
+top="$(hgit -C "$cwd" rev-parse --show-toplevel 2>/dev/null)"
 [ -f "$cwd/.agents/guardrails.off" ] && exit 0
 [ -n "$top" ] && [ -f "$top/.agents/guardrails.off" ] && exit 0
 
@@ -103,7 +118,12 @@ protected() { # protected <branch>: main or release/*
   case "$r" in main | release/*) return 0 ;; esac
   return 1
 }
-dirty() { [ -n "$moved" ] || [ ! -d "$wd" ] || [ -n "$(git -C "$wd" status --porcelain 2>/dev/null)" ]; }
+dirty() { # unknown state (moved, missing dir, failing status) counts as dirty
+  local o
+  { [ -n "$moved" ] || [ ! -d "$wd" ]; } && return 0
+  o="$(hgit -C "$wd" status --porcelain --untracked-files=no 2>/dev/null)" || return 0
+  [ -n "$o" ]
+}
 has_short() { # has_short <letter> <args...>: a short-option cluster containing the letter
   local l="$1" a; shift
   for a in "$@"; do case "$a" in --*) ;; -*"$l"*) return 0 ;; esac; done
@@ -147,7 +167,7 @@ check() { # check <tokens...> of one git invocation (after the word git)
       [ $repo = 1 ] && specs=("${refs[@]}")
       for a in "${specs[@]}"; do case "$a" in +*) force=1 ;; :*) del=1 ;; esac; done
       [ $force = 1 ] || [ $del = 1 ] || return 0
-      cur="$(git -C "$wd" symbolic-ref --short HEAD 2>/dev/null)"
+      cur="$(hgit -C "$wd" symbolic-ref --short HEAD 2>/dev/null)"
       if [ ${#specs[@]} -eq 0 ]; then # pushes the current branch
         [ $force = 1 ] && protected "$cur" && deny "git guardrails: force push of $cur is blocked ($OPTOUT)"
         return 0
@@ -190,11 +210,13 @@ check() { # check <tokens...> of one git invocation (after the word git)
   return 0
 }
 
-S=""; POS=0; moved=""
+S=""; POS=0; moved=""; PD=0
+SP_TOP=$'[ \t\n;|&(){}#<>\'"\\\\$`]'
+SP_DQ='["\\$`]'
 
-analyze() { # analyze <command string>: inspect it as a shell script (S is restored afterwards)
+analyze() { # analyze <string> [dq]: inspect it as a shell script (dq: text of an unquoted heredoc body)
   local save="$S"
-  S="$1"; parse "" 0
+  S="$1"; parse "" 0 "${2:-}"
   S="$save"
 }
 
@@ -265,21 +287,66 @@ handle() { # handle <words...>: one simple command, quotes already removed
   done
 }
 
-_flush() { if [ "$inw" = 1 ]; then toks+=("$w"); w=""; inw=0; fi; }
-_endseg() { _flush; if [ ${#toks[@]} -gt 0 ]; then handle "${toks[@]}"; fi; toks=(); }
+_flush() {
+  if [ "$inw" = 1 ]; then
+    if [ "$herestr" = 1 ]; then herestr=0; analyze "$w"; fi
+    if [ "$redir" = 1 ]; then redir=0; else toks+=("$w"); fi
+    w=""; inw=0
+  fi
+}
+_endseg() { _flush; if [ ${#toks[@]} -gt 0 ]; then handle "${toks[@]}"; fi; toks=(); redir=0; herestr=0; }
+_isshell() { # is the command collected so far a shell (a heredoc / here-string consumer)?
+  local x
+  for x in "${toks[@]}"; do
+    is_assign "$x" && continue
+    case "${x##*/}" in
+      sudo | doas | env | command | exec | nohup | time | nice | setsid | timeout | xargs | -*) ;;
+      bash | sh | zsh | dash | ksh | ash) return 0 ;;
+      *) return 1 ;;
+    esac
+  done
+  return 1
+}
+_arith_end() { # _arith_end <index of the first '(' of '((': sets AE to the index after the matching '))'
+  local j=$1 d=0 c m=${#S}
+  while [ "$j" -lt "$m" ]; do
+    c="${S:j:1}"; j=$((j + 1))
+    case "$c" in '(') d=$((d + 1)) ;; ')') d=$((d - 1)); [ "$d" -le 0 ] && break ;; esac
+  done
+  AE=$j
+}
 
-parse() { # parse <stop-char> <start>: tokenize S, run handle per simple command, leave the end index in POS
-  local stop="$1" i="$2" n=${#S} c nx q="" w="" inw=0 hd="" hdtab=0 j eol rest line cmpl
-  local -a toks=()
+parse() { # parse <stop-char> <start> [dq]: depth-capped wrapper around _parse
+  PD=$((PD + 1))
+  if [ "$PD" -gt 24 ]; then POS=${#S}; else _parse "$@"; fi
+  PD=$((PD - 1))
+}
+
+_parse() { # tokenize S, run handle per simple command, leave the end index in POS
+  local stop="$1" i="$2" mode="${3:-}" n=${#S} c nx q="" w="" inw=0 redir=0 herestr=0 j pos rest line cmpl win chunk k body
+  local -a toks=() hdd=() hdq=() hdt=() hds=()
+  [ "$mode" = dq ] && q='"'
   while [ "$i" -lt "$n" ]; do
+    win="${S:i:512}"
+    case "$q" in
+      "'") chunk="${win%%\'*}" ;;
+      '"') chunk="${win%%$SP_DQ*}" ;;
+      A) chunk="${win%%[\'\\]*}" ;;
+      *) chunk="${win%%$SP_TOP*}" ;;
+    esac
+    if [ -n "$chunk" ]; then w+="$chunk"; [ -z "$q" ] && inw=1; i=$((i + ${#chunk})); continue; fi
     c="${S:i:1}"
     if [ "$q" = "'" ]; then
       if [ "$c" = "'" ]; then q=""; else w+="$c"; fi
       i=$((i + 1)); continue
     fi
+    if [ "$q" = A ]; then # $'...': backslash escapes the next character
+      if [ "$c" = '\' ]; then w+="${S:i+1:1}"; i=$((i + 1)); elif [ "$c" = "'" ]; then q=""; else w+="$c"; fi
+      i=$((i + 1)); continue
+    fi
     if [ "$q" = '"' ]; then
       case "$c" in
-        '"') q="" ;;
+        '"') if [ "$mode" = dq ]; then w+="$c"; else q=""; fi ;;
         '\')
           nx="${S:i+1:1}"
           case "$nx" in
@@ -288,7 +355,10 @@ parse() { # parse <stop-char> <start>: tokenize S, run handle per simple command
             *) w+="$c" ;;
           esac ;;
         '$')
-          if [ "${S:i+1:1}" = "(" ]; then parse ")" $((i + 2)); i=$((POS - 1)); w+="X"; else w+="$c"; fi ;;
+          if [ "${S:i+1:1}" = "(" ]; then
+            if [ "${S:i+1:2}" = "((" ]; then _arith_end $((i + 1)); i=$((AE - 1)); else parse ")" $((i + 2)); i=$((POS - 1)); fi
+            w+="X"
+          else w+="$c"; fi ;;
         '`') parse '`' $((i + 1)); i=$((POS - 1)); w+="X" ;;
         *) w+="$c" ;;
       esac
@@ -303,7 +373,11 @@ parse() { # parse <stop-char> <start>: tokenize S, run handle per simple command
         i=$((i + 1)) ;;
       '$')
         inw=1
-        if [ "${S:i+1:1}" = "(" ]; then parse ")" $((i + 2)); i=$((POS - 1)); w+="X"; else w+="$c"; fi ;;
+        if [ "${S:i+1:1}" = "(" ]; then
+          if [ "${S:i+1:2}" = "((" ]; then _arith_end $((i + 1)); i=$((AE - 1)); else parse ")" $((i + 2)); i=$((POS - 1)); fi
+          w+="X"
+        elif [ "${S:i+1:1}" = "'" ]; then q=A; i=$((i + 1))
+        else w+="$c"; fi ;;
       '`')
         if [ "$stop" = '`' ]; then _endseg; POS=$((i + 1)); return; fi
         inw=1; parse '`' $((i + 1)); i=$((POS - 1)); w+="X" ;;
@@ -313,35 +387,54 @@ parse() { # parse <stop-char> <start>: tokenize S, run handle per simple command
       ' ' | $'\t') _flush ;;
       $'\n')
         _endseg
-        if [ -n "$hd" ]; then # skip the heredoc body up to its delimiter line
-          i=$((i + 1))
-          while [ "$i" -lt "$n" ]; do
-            rest="${S:i}"; line="${rest%%$'\n'*}"
-            eol=$((i + ${#line})); i=$((eol + 1))
-            cmpl="$line"
-            [ "$hdtab" = 1 ] && cmpl="${line#"${line%%[!$'\t']*}"}"
-            [ "$cmpl" = "$hd" ] && break
+        if [ ${#hdd[@]} -gt 0 ]; then # read the bodies of the pending heredocs
+          pos=$((i + 1)); rest="${S:pos}"
+          for k in "${!hdd[@]}"; do
+            body=""
+            while [ -n "$rest" ]; do
+              line="${rest%%$'\n'*}"
+              if [ "$line" = "$rest" ]; then pos=$((pos + ${#rest})); rest=""; else rest="${rest#*$'\n'}"; pos=$((pos + ${#line} + 1)); fi
+              cmpl="$line"
+              [ "${hdt[k]}" = 1 ] && cmpl="${line#"${line%%[!$'\t']*}"}"
+              [ "$cmpl" = "${hdd[k]}" ] && break
+              body+="$line"$'\n'
+            done
+            if [ "${hds[k]}" = 1 ]; then analyze "$body"
+            elif [ "${hdq[k]}" = 0 ]; then analyze "$body" dq; fi
           done
-          hd=""; i=$((i - 1))
+          hdd=(); hdq=(); hdt=(); hds=()
+          i=$pos; continue
         fi ;;
-      \; | \| | \& | '(') _endseg ;;
+      '(')
+        if [ "$inw" = 0 ] && [ "${S:i:2}" = "((" ]; then _arith_end "$i"; i=$((AE - 1)); else _endseg; fi ;;
+      \; | \| | \&) _endseg ;;
       '{' | '}') if [ "$inw" = 0 ]; then _endseg; else w+="$c"; fi ;;
       '#') if [ "$inw" = 0 ]; then while [ "$i" -lt "$n" ] && [ "${S:i+1:1}" != $'\n' ]; do i=$((i + 1)); done; else w+="$c"; fi ;;
-      '<')
-        if [ "${S:i:2}" = "<<" ] && [ "${S:i:3}" != "<<<" ]; then
-          j=$((i + 2)); hdtab=0; hd=""
-          if [ "${S:j:1}" = "-" ]; then hdtab=1; j=$((j + 1)); fi
+      '<' | '>')
+        if [ "${S:i:3}" = "<<<" ]; then
+          _flush; _isshell && herestr=1; redir=1; i=$((i + 2))
+        elif [ "${S:i:2}" = "<<" ]; then
+          _flush
+          j=$((i + 2)); k=0; body=""
+          [ "${S:j:1}" = "-" ] && { k=1; j=$((j + 1)); }
           while [[ "${S:j:1}" == [' '$'\t'] ]]; do j=$((j + 1)); done
+          pos=0
           while [ "$j" -lt "$n" ]; do
             case "${S:j:1}" in
               ' ' | $'\t' | $'\n' | \; | \| | \& | '(' | ')' | '<' | '>') break ;;
-              "'" | '"' | '\') ;;
-              *) hd+="${S:j:1}" ;;
+              "'" | '"' | '\') pos=1 ;;
+              *) body+="${S:j:1}" ;;
             esac
             j=$((j + 1))
           done
-          _flush; i=$((j - 1))
-        else w+="$c"; inw=1; fi ;;
+          hdd+=("$body"); hdq+=("$pos"); hdt+=("$k")
+          if _isshell; then hds+=(1); else hds+=(0); fi
+          i=$((j - 1))
+        else
+          if [ "$inw" = 1 ] && [[ "$w" =~ ^[0-9]+$ ]]; then w=""; inw=0; fi # fd number: 2>file
+          _flush; redir=1
+          [ "${S:i:2}" = ">>" ] && i=$((i + 1))
+        fi ;;
       *) w+="$c"; inw=1 ;;
     esac
     i=$((i + 1))
