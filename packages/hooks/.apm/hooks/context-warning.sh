@@ -13,6 +13,9 @@
 
 threshold="${CONTEXT_WARN_TOKENS:-150000}"
 step="${CONTEXT_WARN_STEP:-100000}"
+# a non-numeric or empty value falls back to the default instead of breaking the comparison
+case "$threshold" in ''|*[!0-9]*) threshold=150000 ;; esac
+case "$step" in ''|*[!0-9]*) step=100000 ;; esac
 payload="$(cat 2>/dev/null || true)"
 
 note() { [ -n "${CONTEXT_WARN_DEBUG:-}" ] && printf 'context-warning: %s\n' "$*" >&2; return 0; }

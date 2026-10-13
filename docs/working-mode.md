@@ -93,6 +93,16 @@ The names look alike but the tools differ on purpose; this table explains the cl
 | Start | `/orch feature\|fix\|review <issue or text>` | `claude --agent orchestrator "full 123"` |
 | Use for | a small change in a session that is already warm | a planned issue, larger work, cost control |
 
+### One session per plan, one per PBI
+
+Start a new session for each plan and for each PBI: `plan <issue>`, `/clear`, then `implement <issue>`.
+The reason is cost: after an idle gap the prompt cache is rewritten, and a rewrite costs more the larger the
+context is (in one measured session four such requests cost 0.17 to 0.39 USD each against 0.01 to 0.03 USD for a
+normal request). Planning fills the context with exploration and answers that the implement run does not need;
+it reads `.agents/<issue>/plan.json` and the Task issues. `plan` mode therefore ends with
+`Next: /clear, then orchestrator implement <issue>`, and `full` mode offers the same stop after an approved plan
+when the context is above 100k tokens.
+
 ### One session per issue, implement headless
 
 The plan gate needs you, so plan interactively; an already planned issue runs headless, each issue in
@@ -124,7 +134,8 @@ resumes from the ledger.
 ## 3. During a session
 
 - On Claude Code the `hooks` package warns on the next prompt once the context passes 150k tokens
-  (`CONTEXT_WARN_TOKENS`, repeated after another `CONTEXT_WARN_STEP`, default 100k): finish the step,
+  (`CONTEXT_WARN_TOKENS`, default 150000; a non-numeric value falls back to the default; lower it, e.g.
+  `export CONTEXT_WARN_TOKENS=100000`, to be warned earlier; repeated after another `CONTEXT_WARN_STEP`, default 100k): finish the step,
   note the hand-off in the ledger, `/clear`. The hook parses the payload with `jq` when installed and with a
   bash fallback otherwise (escapes, pretty-printed JSON and any field order work either way). It never blocks and
   stays silent when parsing fails; set `CONTEXT_WARN_DEBUG=1` to get a one-line note on stderr instead.

@@ -103,6 +103,24 @@ describe('context-warning hook', () => {
     expect(run(t, { CONTEXT_WARN_TOKENS: '50000', CONTEXT_WARN_STEP: '5000' }).out).toBe('');
   });
 
+  it('falls back to 150000 for an invalid CONTEXT_WARN_TOKENS', () => {
+    const below = writeTranscript(usageLine(1, 100000, 0));
+    for (const bad of ['abc', '', '-5', '1.5e5', '150k']) {
+      expect(run(below, { CONTEXT_WARN_TOKENS: bad })).toEqual({ code: 0, out: '', err: '' });
+    }
+    const above = writeTranscript(usageLine(1, 160000, 0));
+    const r = run(above, { CONTEXT_WARN_TOKENS: 'abc' });
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('limit 150k');
+  });
+
+  it('falls back to a 100000 step for an invalid CONTEXT_WARN_STEP', () => {
+    const t = writeTranscript(usageLine(1, 160000, 0));
+    expect(run(t, { CONTEXT_WARN_STEP: 'x' }).out).toContain('160k');
+    writeTranscript(usageLine(1, 180000, 0));
+    expect(run(t, { CONTEXT_WARN_STEP: 'x' }).out).toBe('');
+  });
+
   it('never blocks on bad input', () => {
     expect(run(path.join(dir, 'missing.jsonl'))).toEqual({ code: 0, out: '', err: '' });
     expect(run(writeTranscript('not json at all'))).toEqual({ code: 0, out: '', err: '' });
