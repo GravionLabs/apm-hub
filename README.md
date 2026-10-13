@@ -137,6 +137,8 @@ apmw sanitize -g -p claude; apmw sanitize -g -p opencode; apmw sanitize -g -p co
 claude --agent orchestrator "full 123"     # Copilot: copilot --agent orchestrator · OpenCode: opencode --agent orchestrator
 ```
 
+Skills install with the single `apm install` command. The agents need the extra `apmw sanitize` step (install `apmw` with `pipx install apmw` or `uv tool install apmw`, or use `apmw install` instead of `apm install`): **required for OpenCode**, recommended for Claude Code (applies the per-agent model and tools) and for Copilot (only strips the `metadata` block; loading the unsanitized files is not verified). APM lifecycle scripts can automate it per consumer, see [prerequisites](docs/prerequisites.md#can-the-sanitize-run-automatically).
+
 Source format and the `metadata` block: [docs/concepts/agent-frontmatter.md](docs/concepts/agent-frontmatter.md).
 [`apmw`](https://github.com/GravionLabs/apmw) does the per-platform rewrite.
 

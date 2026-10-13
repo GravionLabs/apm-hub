@@ -35,6 +35,7 @@ brew install powershell/tap/powershell     # macOS
 | `ng` | Node.js 22 LTS, Angular CLI 21+ (`npm i -g @angular/cli`) |
 | `py` | Python 3.14, [uv](https://docs.astral.sh/uv/) |
 | `dotnet` | .NET SDK 10 (libraries multi-target `net10.0;net9.0;net8.0`) |
+| `agents` (also `core`, `all`) | [apmw](https://github.com/GravionLabs/apmw) (`pipx install apmw` or `uv tool install apmw`; prebuilt executables on its [releases](https://github.com/GravionLabs/apmw/releases)), optional but needed to rewrite the agent frontmatter per client, see [apmw sanitize](#apmw-sanitize-agents-package) |
 | `shared`, `apm-tooling` | PowerShell and Git only |
 
 Install the runtimes with your platform's package manager, for example:
@@ -46,9 +47,35 @@ brew install node gh dotnet-sdk python@3.14 uv                                  
 
 ## Optional
 
-`jq`, `yq`, `curl` and `ast-grep` are checked by `-Full`. A few scripts use `jq` and `curl` when present; none of the current skills require `yq` or `ast-grep`.
+`jq`, `yq`, `curl`, `ast-grep` and `apmw` are checked by `-Full`. A few scripts use `jq` and `curl` when present; none of the current skills require `yq` or `ast-grep`.
 
 Language servers for Copilot CLI are described in [LSP configuration](lsp-configuration.md).
+
+## apmw sanitize (agents package)
+
+`apm install` copies the agent files of the `agents` package verbatim. Each client reads different frontmatter, so [`apmw sanitize`](https://github.com/GravionLabs/apmw) rewrites them per client (`apmw sanitize -g -p claude|opencode|copilot`, or `apmw install ... -p <client>` to install and sanitize in one step). Skills need no such step.
+
+| Client | Extra step | Why |
+| :-- | :-- | :-- |
+| OpenCode | required | rejects the list-form `tools` and the unknown top-level keys of the source format |
+| Claude Code | recommended | without it the per-agent `model` and Claude tool names under `metadata.claude` are not applied |
+| GitHub Copilot | recommended | the source is Copilot style; sanitize only strips `metadata` and the OpenCode keys. Whether Copilot loads the unsanitized files without complaint is not verified here |
+
+### Can the sanitize run automatically?
+
+Evaluated against APM's [lifecycle scripts](https://microsoft.github.io/apm/enterprise/lifecycle-scripts/): `post-install` and `post-update` events exist, but scripts are read only from the consumer's own `apm.yml` (project), `~/.apm/apm.yml` (user) and the admin policy directory, never from an installed package. apm-hub therefore cannot ship the hook inside a package. A consumer can add it once; project scripts must be trusted with `apm lifecycle trust`:
+
+```yaml
+lifecycle:
+  post-install:
+    - type: command
+      command: "apmw sanitize -p claude"
+  post-update:
+    - type: command
+      command: "apmw sanitize -p claude"
+```
+
+This was read from the APM docs, not run end to end here. The supported alternative is `apmw install` / `apmw update`, which wrap `apm` and sanitize afterwards.
 
 ## Troubleshooting
 
