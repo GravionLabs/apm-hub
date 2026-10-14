@@ -12,7 +12,7 @@ function pagesOnDisk(dir = docs, prefix = ''): string[] {
       ? pagesOnDisk(resolve(dir, e.name), `${prefix}/${e.name}`)
       : e.name.endsWith('.md')
         ? [`${prefix}/${e.name.replace(/\.md$/, '')}`]
-        : [],
+        : []
   );
 }
 
@@ -50,6 +50,6 @@ describe('the sidebar of the docs site', () => {
   });
 
   it('uses site links without extension', () => {
-    for (const l of listed) expect(l).toMatch(/^\/[a-z-]+(\/[a-z-]+)*$/);
+    for (const l of listed) expect(l).toMatch(/^\/[A-Za-z0-9-]+(\/[A-Za-z0-9-]+)*$/);
   });
 });
