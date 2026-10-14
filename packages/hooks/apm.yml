@@ -1,6 +1,6 @@
 name: hooks
 version: 2.2.0
-description: "Hooks for Claude Code (apm 0.33.0 installs every manifest event into every target, so only Claude events are shipped; Copilot CLI is wired by hand, see docs/usage/copilot-hooks.md): the SubagentStop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit) injects a hand-off hint above 150k tokens; the git guardrails (PreToolUse) deny destructive git commands. OpenCode gets a plugin (ledger and context warning) shipped at .apm/opencode/plugins/apm-hub-hooks.ts; after apm install, copy it to .opencode/plugins/ or ~/.config/opencode/plugins/ by hand until an apmw release with GravionLabs/apmw#38 (open) does it via apmw sanitize -p opencode."
+description: "Claude Code hooks: SubagentStop ledger line per finished subagent, UserPromptSubmit context warning above 150k tokens, PreToolUse git guardrails. Copilot CLI is set up by hand (docs/usage/copilot-hooks.md). OpenCode plugin at .apm/opencode/plugins/apm-hub-hooks.ts, copied by hand until apmw sanitize -p opencode does it (GravionLabs/apmw#38, open)."
 author:
   name: Gravion
 license: MIT
