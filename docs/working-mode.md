@@ -8,24 +8,50 @@ this hub assume it.
 
 ## 1. Default: the orchestrator
 
-Start issue work as the `orchestrator` agent. It runs as the primary agent, keeps at most 300 words
-per phase in its own context and hands the rest to `explorer`, `implementer` and `reviewer`.
+Start issue work as the `orchestrator` agent ([Setup](#setup) has the start commands). It runs as the primary agent, keeps at most 300 words
+per phase in its own context and hands the rest to `explorer`, `planner`, `implementer` and `reviewer`.
 
-```powershell
-claude --agent orchestrator "full 123"        # plan → implement → review → PR
-claude --agent orchestrator "plan 123"        # sub-issues only, stops at the approval gate
-copilot --agent orchestrator                  # GitHub Copilot CLI, then type: full 123
-opencode --agent orchestrator                 # OpenCode
-```
+### Modes and natural requests
+
+The first word of the message is the mode; the issue type (Epic, Feature, PBI) comes from its label or title prefix. The first word must be the mode word (the table below is what to type, or what the `/orchestrator` command should translate your request to); a plain sentence without it runs `full`, which is for a PBI only.
+
+| Mode | On | Does |
+| :-- | :-- | :-- |
+| `plan <nr>` | Epic / Feature / PBI | Epic → Features, Feature → PBIs (on request in the same run), PBI → tasks; one grilling cycle per level |
+| `implement <nr>` | PBI | explore → implement → review → PR for a planned PBI |
+| `full <nr>` | PBI | plan if needed, then implement |
+| `next <nr>` | Feature / Epic | picks the first open PBI without open blocker or `needs-decision` (sub-issue order, recursive for an Epic), runs it like `full` |
+
+Exactly one PBI per run. After a PBI of a Feature the end line is `Next: #<nr> <title> — orchestrator next <feature> after /clear`, or lists what blocks the rest, or says the Feature is done. Selection: `github-issue` `references/next-selection.md`.
+
+| You say | Mode |
+| :-- | :-- |
+| "implementiere das nächste Feature" / "implement the next PBI of #81" | `next <feature>` |
+| "work on the next PBI under epic #81" | `next <epic>` |
+| "plan all open features under #81" | `plan 81`, then one `plan <feature>` per open Feature, each in its own session |
+| "plan #123" / "plane Feature #123" | `plan 123` |
+| "do #123" / "implement #123" | `full 123` / `implement 123` |
+
+### Flags: overview and review summary
+
+Two defaults, each switched off by a flag in the first message (also for `/orchestrator` and `/orch`):
+
+| Flag | Default without it |
+| :-- | :-- |
+| `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged, merged ones per the "Task merged" rule) and you pick one |
+| `--no-review-summary` | After `review-fanout` it shows one line per finding (`severity file:line issue`, blocking first, MEDIUM/LOW included) and asks which advisories to fix; the rest go to the PR body. With the flag only blocking findings trigger fix rounds |
+
+Headless runs write `Gate: <question>` to the ledger and stop. Details: `github-issue` `references/orchestrator-gates.md`.
 
 ### Setup
 
 Start the orchestrator as the primary agent of a new session:
 
 ```powershell
-claude --agent orchestrator "full 123"
-copilot --agent orchestrator
-opencode --agent orchestrator
+claude --agent orchestrator "full 123"        # plan → implement → review → PR
+claude --agent orchestrator "plan 123"        # plan file (plan.json) and next-level sub-issues after approval
+copilot --agent orchestrator                  # GitHub Copilot CLI, then type: full 123
+opencode --agent orchestrator                 # OpenCode
 ```
 
 A shell alias saves typing (`~/.zshrc` or the PowerShell profile):
@@ -39,10 +65,10 @@ Create `~/.claude/commands/orchestrator.md` (it is not part of the package):
 
 ```markdown
 ---
-description: Run the orchestrator inline: /orchestrator plan|implement|full <issue>
+description: Run the orchestrator inline: /orchestrator [--no-overview] [--no-review-summary] plan|implement|full|next <issue>
 ---
 Read ~/.claude/agents/orchestrator.md and follow its body as your instructions for this session.
-Mode and issue: $ARGUMENTS
+Flags, mode and issue: $ARGUMENTS
 ```
 
 The command runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
@@ -55,20 +81,29 @@ The names look alike but the tools differ on purpose; this table explains the cl
 | | `/orch` (skill `orch-pipeline`) | `orchestrator` (agent) |
 | :-- | :-- | :-- |
 | Runs | inline in the current session | as the primary agent; every phase in a subagent |
-| Work | one issue or description, up to 5 tasks | any issue, including Epics and Features (plans sub-issues) |
+| Work | one issue or description, up to 5 tasks (larger: plan first) | any issue, including Epics and Features (plans the next level down with blockers) |
 | Context | grows in the current session | keeps at most 300 words per phase |
 | Gates | plan and commit | plan, blocked review, red suite |
-| Start | `/orch feature\|fix\|review <issue or text>` | `claude --agent orchestrator "full 123"` |
+| Start | `/orch feature\|fix\|review <issue or text>` | see [Setup](#setup) |
 | Use for | a small change in a session that is already warm | a planned issue, larger work, cost control |
+
+### One session per plan, one per PBI
+
+Start a new session for each plan and for each PBI: `plan <issue>`, `/clear`, then `implement <issue>`.
+The reason is cost: after an idle gap the prompt cache is rewritten, and a rewrite costs more the larger the
+context is (in one measured session four such requests cost 0.17 to 0.39 USD each against 0.01 to 0.03 USD for a
+normal request). Planning fills the context with exploration and answers that the implement run does not need;
+it reads `.agents/<issue>/plan.json` and the Task issues. `plan` mode therefore ends with
+`Next: /clear, then orchestrator implement <issue>`, and `full` mode offers the same stop after an approved plan
+when the context is above 100k tokens.
 
 ### One session per issue, implement headless
 
-The plan gate needs you, so plan interactively; an already planned issue runs headless, each issue in
+The plan gate needs you, so plan interactively (`plan 123`, see [Setup](#setup)); an already planned issue runs headless, each issue in
 its own session with a fresh context. `orchestrator` ends every run with its ledger, so the next issue never
 inherits the previous one.
 
 ```powershell
-claude --agent orchestrator "plan 123"                  # interactive: sub-issues, approval gate
 claude --agent orchestrator -p "implement 123"          # headless: explore → implement → review → PR
 copilot --agent orchestrator -p "implement 123"         # GitHub Copilot CLI
 opencode run --agent orchestrator "implement 123"       # OpenCode
@@ -91,19 +126,50 @@ resumes from the ledger.
 
 ## 3. During a session
 
-- On Claude Code the `claude-hooks` package warns on the next prompt once the context passes 150k tokens
-  (`CONTEXT_WARN_TOKENS`, repeated after another `CONTEXT_WARN_STEP`, default 100k): finish the step,
-  note the hand-off in the ledger, `/clear`.
+- On Claude Code the `hooks` package warns on the next prompt once the context passes 150k tokens:
+  - `CONTEXT_WARN_TOKENS`: threshold, default 150000; a non-numeric, empty, negative or overlong value falls back to the default
+  - lower it to be warned earlier, e.g. `export CONTEXT_WARN_TOKENS=100000`
+  - `CONTEXT_WARN_STEP`: growth before the next warning, default 100000; it also falls back to the default on invalid values
+  - then finish the step, note the hand-off in the ledger, `/clear`.
+  - The hook parses the payload with `jq` when installed and with a
+    bash fallback otherwise (escapes, pretty-printed JSON and any field order work either way). It never blocks and
+    stays silent when parsing fails; set `CONTEXT_WARN_DEBUG=1` to get a one-line note on stderr instead.
+- On Copilot CLI the same script runs as `postToolUse` (`userPromptSubmitted` cannot inject context), so the warning
+  arrives after the next tool call, not on the next prompt. `postToolUse` has no `transcriptPath`; the hook reads
+  `~/.copilot/session-state/<sessionId>/events.jsonl` (`COPILOT_HOME` overrides the directory) and takes `inputTokens`
+  of the last `session.usage_record` event (it already contains cache reads and writes). Same thresholds, throttle
+  and exit-0 behavior. Copilot versions that do not write `session.usage_record` stay silent: check `/context`
+  or `/usage` yourself before a long step.
+- The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code, `preToolUse` on
+  Copilot CLI): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them,
+  `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
+  uncommitted changes, also inside `env`, `sudo`, `bash -c`, `xargs` and similar wrappers, `git -c alias.*` values
+  and `echo …`/heredocs piped into a shell. Every other command passes. Opt out per repo with
+  `GIT_GUARDRAILS_OFF=1` in the environment or an (empty) file `.agents/guardrails.off`. OpenCode is not covered
+  (it needs a plugin, see #182/#183). It is a guardrail against accidents, not a security boundary: it runs git
+  only in the session's own repository (`git -C <other repo> checkout .` counts as dirty without looking, also for a
+  nested or bare repo inside it), fails open on malformed payloads and on commands above 24 KB, and does not
+  resolve variables (`$cmd`, `g${x}it`).
 - `/context` before a long step shows what fills the window; the skill list and large tool outputs
   are the usual culprits.
 - Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
 - Reviews read a package file (`.agents/<issue>/review-<n>.diff`: commit list, stat, diff with context)
   written by `review-fanout`; the diff is never pasted into a prompt, so it does not repeat per dimension.
+- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec`. `spec` compares
+  the diff with the originating issue: the number comes from the argument, the branch `<type>/<nr>-<slug>` or
+  `Closes #n` in the range, and the issue body plus its Task sub-issue bodies are appended to the same package
+  file. It reports missing, partial or wrong criteria (HIGH) and scope creep (MEDIUM), never merged with
+  `conventions` findings. No issue found: one advisory "no spec available", never a failure.
 - `/compact <focus>` is a brake, not a habit: it loses detail you may need. Prefer `/clear` plus a
   short hand-off note in the issue. A `orchestrator` run keeps its own hand-off note: the ledger
   `.agents/<issue>/progress.md` (phases done, fix rounds, rulings); a new session resumes from it.
-  On Claude Code the `claude-hooks` package adds a `Subagent <name>: stopped — <first line>` line for
+  The `hooks` package (Claude Code and Copilot CLI) adds a `Subagent <name>: stopped — <first line>` line for
   every finished subagent (`SubagentStop` hook, no-op without a ledger).
+- **`handoff` or the ledger alone.** One issue: the ledger is the hand-off; `/clear` and resume with the orchestrator
+  end line (`orchestrator next <feature>`). Work that spans several issues or several repositories, or that has open
+  decisions the ledgers do not hold: run `handoff <focus of the next session>` before `/clear`. It writes
+  `.agents/handoff-<date>.md` (normally git-excluded) with state per issue, gates, ordered commands and suggested skills,
+  linking the ledgers instead of copying them. Start the next session with `Read .agents/handoff-<date>.md and continue`.
 - OpenCode: `compaction: { auto: true, prune: true }` in `opencode.json` drops old tool output.
 
 ### Parallel and long sessions
@@ -114,6 +180,22 @@ resumes from the ledger.
   unless the issues are independent and each is small.
 - A session older than 8 hours needs a reason (a watch, a loop). Otherwise write the hand-off into the
   ledger or a memory note and start a new session.
+
+### Hooks by harness
+
+| Hook | Claude Code | Copilot CLI | OpenCode |
+| :-- | :-- | :-- | :-- |
+| Subagent ledger line | `SubagentStop` | `subagentStop` | plugin `tool.execute.after` for `task` (`packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`) |
+| Context warning | `UserPromptSubmit` | not available | same plugin: `message.updated` token usage, warning added as a synthetic part by `chat.message`; unknown until the first assistant reply after a restart |
+| Git guardrails | `PreToolUse` | `preToolUse` | not available yet |
+
+The OpenCode plugin is a single file that exports only its plugin function (OpenCode calls every function export as a
+plugin and fails to load the file on other exports). `apm install` copies the whole package verbatim under `apm_modules`; the source path is
+`packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts` (a local-path install gives
+`apm_modules/_local/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`; a marketplace install gives
+`apm_modules/<owner>/apm-hub/packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`). OpenCode loads it only from a plugins directory: `apmw sanitize -p opencode` is meant to place it there, but
+that needs an apmw release with GravionLabs/apmw#38 (open). Until then copy the file by hand to `.opencode/plugins/`
+(project) or `~/.config/opencode/plugins/` (global).
 
 ### Subagent context by harness
 
@@ -133,7 +215,7 @@ OpenCode `~/.config/opencode/AGENTS.md`):
 ```text
 Subagents: write a self-contained prompt (goal, context, expected result).
 Never use the `fork` subagent type once the session is above ~100k tokens; use `explorer`, `general-purpose` or another typed agent.
-Run `orchestrator` only as the primary agent (`claude --agent orchestrator`), never as a subagent.
+Run `orchestrator` only as the primary agent, never as a subagent.
 ```
 
 ## 4. PR and release in a fresh session

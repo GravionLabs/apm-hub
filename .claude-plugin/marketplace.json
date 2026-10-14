@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "core",
-      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the orchestrator agent and its subagents and the Claude Code hooks. Stack packages are installed per project.",
+      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the orchestrator agent and its subagents and the hooks. Stack packages are installed per project.",
       "version": "2.1.1",
       "source": "./packages/core"
     },
@@ -19,15 +19,15 @@
     },
     {
       "name": "agents",
-      "description": "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the explorer, reviewer and implementer subagents it delegates to.",
+      "description": "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the explorer, planner, reviewer and implementer subagents it delegates to.",
       "version": "2.1.1",
       "source": "./packages/agents"
     },
     {
-      "name": "claude-hooks",
-      "description": "Claude Code hooks: SubagentStop appends a ledger line per finished subagent; UserPromptSubmit warns when the session context is large. Claude only; other harnesses skip them.",
+      "name": "hooks",
+      "description": "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit) works on Claude Code only here; the git guardrails (PreToolUse) deny destructive git commands.",
       "version": "2.1.1",
-      "source": "./packages/claude-hooks"
+      "source": "./packages/hooks"
     },
     {
       "name": "apm-tooling",
@@ -36,10 +36,10 @@
       "source": "./packages/apm-tooling"
     },
     {
-      "name": "development-workflow",
+      "name": "delivery",
       "description": "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project.",
       "version": "2.1.1",
-      "source": "./packages/development-workflow"
+      "source": "./packages/delivery"
     },
     {
       "name": "dotnet",
@@ -67,7 +67,7 @@
     },
     {
       "name": "shared",
-      "description": "Shared skills used by all packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), severity-rated code review (code-review).",
+      "description": "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), severity-rated code review (code-review), bug diagnosis (diagnose).",
       "version": "2.1.1",
       "source": "./packages/shared"
     },

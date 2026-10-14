@@ -6,7 +6,7 @@ A curated hub of cross-platform **agent skills** — distributed as APM packages
 
 ## What is apm-hub?
 
-**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. There are no agents: workflows are skills, and the `/orch` prompt is the only extra entry point.
+**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the `agents` package adds the `orchestrator` primary agent and its `explorer`, `planner`, `reviewer` and `implementer` subagents. Entry points beyond skill names are the `/orch` prompt and the `orchestrator` agent.
 
 Skills are the primary artifact: one `SKILL.md` source file loads unchanged on GitHub Copilot, Claude Code, and OpenCode. See the [skill frontmatter convention](docs/concepts/skill-frontmatter.md) for how that is guaranteed.
 
@@ -100,39 +100,44 @@ Skill scripts are PowerShell 7+ (`pwsh`) and run on Windows, macOS and Linux. `d
 
 apm-hub distributes domain packages via APM. Each package is installed with `apm install` and deployed to `.github/`, `.claude/`, `.cursor/`, `.opencode/`, and `.gemini/` automatically.
 
-| Package                | Contents                                                                                                                                       |
-| :--------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| `shared`               | `implementation`, `detect-techstack`, `code-review`                                                                                            |
-| `development-workflow` | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`                                                                 |
-| `github`               | `github-issue`, `github-pull-request`                                                                                                          |
+| Package                | Contents                                                                                                                          |
+| :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
+| `shared`               | `implementation`, `detect-techstack`, `code-review`                                                                               |
+| `delivery`             | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`; formerly `development-workflow`                  |
+| `github`               | `github-issue`, `github-pull-request`                                                                                             |
 | `dotnet`               | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`) |
-| `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`              |
-| `py`                   | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
-| `ng`                   | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
-| `agents`               | `orchestrator`, `explorer`, `reviewer`, `implementer` (subagents) — see below                                                                  |
-| `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                               |
-| `all`                  | every package above except `apm-tooling`                                                                                                       |
+| `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
+| `py`                   | `py-implementation`, `py-test`, `py-create-project`                                                                               |
+| `ng`                   | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)    |
+| `agents`               | `orchestrator`, `explorer`, `planner`, `reviewer`, `implementer` (subagents) — see below                                                     |
+| `hooks`                | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails); OpenCode plugin                             |
+| `core`                 | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                         |
+| `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                  |
+| `all`                  | every package above except `apm-tooling`                                                                                          |
 
 📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[Browse All Agents](docs/agent-list.md)** · 📄 **[Working mode](docs/working-mode.md)** (small contexts, one issue per session) · 📄 **[External frameworks](docs/frameworks.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
 
 ## 🤖 Agents
 
-Skills are the primary artifact; the `agents` package adds the four agents skills cannot replace.
+Skills are the primary artifact; the `agents` package adds the five agents skills cannot replace.
 `orchestrator` runs as the **primary agent** and keeps only phase summaries in its context; the
-three subagents each have their own model and tool set:
+four subagents each have their own model and tool set:
 
-| Agent          | Role                                                                                                                  |            |                                                                                                |
-| :------------- | :-------------------------------------------------------------------------------------------------------------------- | :--------- | :--------------------------------------------------------------------------------------------- |
-| `orchestrator` | `plan\                                                                                                                | implement\ | full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you |
-| `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                                                |            |                                                                                                |
-| `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                                            |            |                                                                                                |
-| `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |            |                                                                                                |
+| Agent          | Role                                                                                                                  |
+| :------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| `orchestrator` | `plan\|implement\|full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you      |
+| `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                                                |
+| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary      |
+| `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                                            |
+| `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |
 
 ```powershell
 apm install GravionLabs/apm-hub/packages/core -g   # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents
 apmw sanitize -g -p claude; apmw sanitize -g -p opencode; apmw sanitize -g -p copilot   # per-platform frontmatter (required for OpenCode)
 claude --agent orchestrator "full 123"     # Copilot: copilot --agent orchestrator · OpenCode: opencode --agent orchestrator
 ```
+
+Skills install with the single `apm install` command. The agents need the extra `apmw sanitize` step (install `apmw` with `pipx install apmw` or `uv tool install apmw`, or use `apmw install -p <client>` instead of `apm install`, with `-g` for a global install): **required for OpenCode**, recommended for Claude Code (applies the per-agent model and tools) and for Copilot (only strips the `metadata` block; loading the unsanitized files is not verified). APM lifecycle scripts can automate it per consumer, see [prerequisites](docs/prerequisites.md#can-the-sanitize-run-automatically).
 
 Source format and the `metadata` block: [docs/concepts/agent-frontmatter.md](docs/concepts/agent-frontmatter.md).
 [`apmw`](https://github.com/GravionLabs/apmw) does the per-platform rewrite.

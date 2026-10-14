@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "issue-planning plan.json",
+  "type": "object",
+  "required": ["phase", "status", "parent_issue", "input_type", "level", "depth", "items", "questions", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "phase": { "const": "plan" },
+    "status": { "enum": ["ok", "fail", "published", "partial"] },
+    "parent_issue": { "type": ["integer", "null"], "minimum": 1 },
+    "input_type": { "enum": ["epic", "feature", "pbi", "bug", "description"] },
+    "level": { "enum": ["feature", "pbi", "task"] },
+    "depth": { "enum": ["quick", "standard", "deep"] },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "body", "size", "model", "blocked_by", "files", "skills", "issue"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^p[0-9]+$" },
+          "title": { "type": "string", "minLength": 1 },
+          "body": { "type": "string", "minLength": 1 },
+          "size": { "enum": ["S", "M", "L"] },
+          "model": { "enum": ["haiku", "sonnet", "inherit"] },
+          "blocked_by": {
+            "type": "array",
+            "items": { "oneOf": [{ "type": "string", "pattern": "^p[0-9]+$" }, { "type": "integer", "minimum": 1 }] }
+          },
+          "files": { "type": "array", "items": { "type": "string" } },
+          "skills": { "type": "array", "items": { "type": "string" } },
+          "issue": { "type": ["integer", "null"], "minimum": 1 }
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "question", "options", "recommended", "blocks"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^q[0-9]+$" },
+          "question": { "type": "string", "minLength": 1 },
+          "options": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "type": "string" } },
+          "recommended": { "type": "string" },
+          "blocks": { "type": "array", "items": { "type": "string", "pattern": "^p[0-9]+$" } },
+          "deferred": { "type": "boolean" }
+        },
+        "if": { "required": ["deferred"], "properties": { "deferred": { "const": true } } },
+        "then": { "properties": { "blocks": { "minItems": 1 } } }
+      }
+    },
+    "summary": { "type": "string", "maxLength": 120 }
+  }
+}

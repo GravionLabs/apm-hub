@@ -12,23 +12,23 @@ marketplace:
     url: https://github.com/GravionLabs
   packages:
   - name: core
-    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the orchestrator agent and its subagents and the Claude Code hooks. Stack packages are installed per project."
+    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the orchestrator agent and its subagents and the hooks. Stack packages are installed per project."
     source: ./packages/core
   - name: all
     description: "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks."
     source: ./packages/all
   - name: agents
-    description: "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the explorer, reviewer and implementer subagents it delegates to."
+    description: "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the explorer, planner, reviewer and implementer subagents it delegates to."
     source: ./packages/agents
-  - name: claude-hooks
-    description: "Claude Code hooks: SubagentStop appends a ledger line per finished subagent; UserPromptSubmit warns when the session context is large. Claude only; other harnesses skip them."
-    source: ./packages/claude-hooks
+  - name: hooks
+    description: "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit on Claude Code, postToolUse on Copilot CLI) injects a hand-off hint above 150k tokens; the git guardrails (PreToolUse) deny destructive git commands. OpenCode gets a plugin (ledger and context warning) shipped at .apm/opencode/plugins/apm-hub-hooks.ts; after apm install, copy it to .opencode/plugins/ or ~/.config/opencode/plugins/ by hand until an apmw release with GravionLabs/apmw#38 (open) does it via apmw sanitize -p opencode."
+    source: ./packages/hooks
   - name: apm-tooling
     description: "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files."
     source: ./packages/apm-tooling
-  - name: development-workflow
+  - name: delivery
     description: "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project."
-    source: ./packages/development-workflow
+    source: ./packages/delivery
   - name: dotnet
     description: "C#/.NET skills: implementation conventions and review rules, NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, MCP server generation."
     source: ./packages/dotnet
@@ -42,7 +42,7 @@ marketplace:
     description: "Python skills: implementation conventions and review rules, pytest testing with markers and pytest-mock, uv project scaffolding, curated uv CLI reference."
     source: ./packages/py
   - name: shared
-    description: "Shared skills used by all packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), severity-rated code review (code-review)."
+    description: "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), severity-rated code review (code-review), bug diagnosis (diagnose)."
     source: ./packages/shared
   - name: ts
     description: "TypeScript and Node.js skills: implementation conventions and review rules, Vitest testing, project scaffolding, ESLint/Prettier/Husky setup, pnpm migration, MCP server generation."

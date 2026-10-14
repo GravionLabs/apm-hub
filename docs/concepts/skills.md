@@ -1,6 +1,6 @@
 # Skills
 
-A **skill** is a directory with a `SKILL.md` file and optional companion files (`scripts/`, `references/`, `templates/`, `assets/`). It packages a procedure, a convention or a tool contract so an AI coding agent can load it on demand. Skills follow the open [Agent Skills specification](https://agentskills.io/specification) and are the only artifact apm-hub ships.
+A **skill** is a directory with a `SKILL.md` file and optional companion files (`scripts/`, `references/`, `templates/`, `assets/`). It packages a procedure, a convention or a tool contract so an AI coding agent can load it on demand. Skills follow the open [Agent Skills specification](https://agentskills.io/specification) and are the main artifact apm-hub ships; the separate `agents` package adds a few agents that skills cannot replace.
 
 ## How a skill is loaded
 
@@ -66,13 +66,14 @@ The complete rule set is in `packages/apm-tooling/.apm/skills/skill-write/refere
 - `detect-techstack` returns a JSON report naming the `<lang>-implementation` and `<lang>-test` skills for the project.
 - `implementation` enforces "every change has tests" and dispatches to the language skill from that report.
 - `code-review` reads the `## Review rules` section of each detected `<lang>-implementation` skill and rates findings 🔴 / 🟡 / 🟢.
+- `diagnose` is loaded for bug fixes: it builds a red-capable feedback loop (commands from `<lang>-test`) before any hypothesis.
 - `verify-project` runs build, tests and lint with the detected package manager.
 - `orch-pipeline` chains plan, TDD, `review-fanout` and commit; `/orch` is its prompt.
 - `github-issue` routes issue work by label and sub-issue shape; `github-pull-request` opens the PR.
 
 ## Skills vs. prompts
 
-The only prompt in the repo is `/orch` in `packages/development-workflow/.apm/prompts/`. It just loads `orch-pipeline`. Prompts are slash-command entry points; the behaviour always lives in a skill so it works the same on every platform.
+The only prompt in the repo is `/orch` in `packages/delivery/.apm/prompts/`. It just loads `orch-pipeline`. Prompts are slash-command entry points; the behaviour always lives in a skill so it works the same on every platform.
 
 ## Related
 

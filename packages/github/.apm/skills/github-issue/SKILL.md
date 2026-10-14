@@ -30,7 +30,7 @@ Read `.github/ISSUE_TEMPLATE/` in the target repo and match what is already ther
 assuming. Never mix two conventions within one repo.
 
 Parent/child links are **native GitHub sub-issues** — see `references/sub-issues.md` for how to
-read, create, move and verify them. Markdown checklists are not used.
+read, create, move and verify them. Markdown checklists are not used. Task sub-issues of a PBI follow `references/task-issues.md` and never become separate branches or PRs.
 
 ## Routing
 
@@ -46,6 +46,8 @@ read, create, move and verify them. Markdown checklists are not used.
    | `feature`, `pbi`, `bug` | yes            | `references/batch-workflow.md` (row for the type)      |
    | any                     | no             | `references/standalone-issue.md`                       |
    | `task`                  | —              | `references/standalone-issue.md`                       |
+
+   **Next open PBI of a Feature or Epic** (orchestrator `next` mode, end-line suggestion): `references/next-selection.md`. Orchestrator issue overview and review summary: `references/orchestrator-gates.md`.
 
    **Batch user requests** ("implement all PBIs in feature #12", "work through these issues"): collect the target issues, then process each one sequentially with the appropriate workflow above.
 

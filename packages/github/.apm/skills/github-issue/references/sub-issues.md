@@ -8,8 +8,12 @@ bar and completion % automatically, so **closing a child is the only action need
 checklist to tick.
 
 Keep a human-readable parent line as the **first line of the child's body** (`Parent Epic: #12`,
-`Parent Feature: #34`, `Parent PBI: #56`) so the relationship is legible in plain text and in
+`Parent Feature: #34`, `Parent PBI: #56` — the same wording a Task uses) so the relationship is legible in plain text and in
 search. That line is documentation; the native link is the mechanism. Both must agree.
+
+## Tasks of a PBI are not separate work units
+
+Task sub-issues of a PBI never become separate branches or PRs: the PBI has one branch and one PR (`Closes #<pbi>`), every task commit carries `Refs #<task>`. This differs from PBI sub-issues of a Feature, which each get their own branch and PR. Format and rules: `task-issues.md`.
 
 ## Read the children of an issue
 
@@ -67,3 +71,5 @@ the create step linked anything.
 - `gh issue view` / `gh issue edit` need `--repo <owner>/<repo>` when run outside a git worktree
   (for example from a scratch directory).
 - `gh issue create` prints the new issue URL; take the number from its last path segment.
+
+Plan files: `issue-planning` writes `.agents/<issue>/plan.json`; its `references/publish.md` creates and links the sub-issues from it.
