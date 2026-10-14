@@ -5,12 +5,89 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.2.0] — 2026-10-14
+
+### Bug Fixes
+- **development-workflow**: Address review of issue-planning rework (#192)
+- **hooks**: Make the ledger hook idempotent against double firing (#180)
+- **agents**: Address review of planner agent (#187)
+- **agents**: Close gh api write bypasses in planner permissions (#187)
+- **agents**: Address review of task breakdown (#189)
+- **agents**: Close resume and bug-parent gaps in task breakdown (#189)
+- **agents**: Address review of grilling gate (#188)
+- **agents**: Harden deferred decisions in grilling gate (#188)
+- **agents**: Skip in-flight PBIs in next selection (#190)
+- **shared**: Tighten the diagnose skill (#195)
+- **agents**: Let the orchestrator resume the implementer with SendMessage
+- **hooks**: Replace 'no message' ledger lines and drop orchestrator entries
+- **hooks**: Harden ledger summary fallbacks
+- **development-workflow**: Tighten the spec dimension reference
+- **development-workflow**: Harden the retro metrics script (#197)
+- **development-workflow**: Address handoff review findings (#198)
+- **hooks**: Close guardrail bypasses found in review (#199)
+- **hooks**: Inspect heredoc bodies and harden the guardrail parser (#199)
+- **hooks**: Stop running git in foreign repos and inspect piped shells (#199)
+- **hooks**: Treat bare repos inside the cwd as foreign (#199)
+- Skip merged tasks and cache the tech stack in the orchestrator (#229)
+- Address review findings for orchestrator state handling (#229)
+- Address round 2 review findings for orchestrator state handling (#229)
+- Validate the tech stack cache and guard symlinked cache dirs (#229)
+- **agents**: Overview only without issue and description, headless ledger, advisory flow (#230)
+- **agents**: Reviewer without package returns [] and fails closed (#233)
+- **agents**: Placeholder location for location-less advisories (#233)
+- **hooks**: Address review of OpenCode plugin (#182)
+- **hooks**: Address review of Copilot context warning (#181)
+- **agents**: Run the orchestrator PR phase inline (#235)
+- **hooks**: Normalize context-warning thresholds, extend tests and docs (#236)
+
+
+### Documentation
+- Describe the spec review dimension
+- **hooks**: Clarify OpenCode plugin install path and apmw status (#184)
+- Remove stale no-agents statements (#219) (#244)
+- Document apmw sanitize as prerequisite (#224) (#245)
+
+
+### Features
+- **development-workflow**: Hierarchy-aware issue-planning with blocking edges and a plan file (#192)
+- **hooks**: Rename claude-hooks to hooks and support Copilot CLI payloads (#180)
+- **agents**: Planner agent that writes the plan to a file (#187)
+- **agents**: Task breakdown inside a PBI as Task issues linked to commits (#189)
+- **agents**: Grill open planning decisions before issues are created (#188)
+- **agents**: Plan and next modes for features and epics (#190)
+- **shared**: Diagnose skill for bug fixes (#195)
+- **agents**: Load diagnose for bug and fix runs (#195)
+- **development-workflow**: Spec dimension in review-fanout
+- **agents**: Pass the issue number to review-fanout and list spec
+- **shared**: Test-quality rules in implementation (#196)
+- **development-workflow**: Check test quality in review-fanout tests brief (#196)
+- **github**: Task done-when names the interface under test (#196)
+- **development-workflow**: Retro skill with run metrics script (#197)
+- **development-workflow**: Handoff skill (#198)
+- **hooks**: Block destructive git commands (#199)
+- **agents**: Orchestrator shows issue overview and review summary (#230)
+- **hooks**: OpenCode plugin for the subagent ledger and the context warning (#182)
+- **hooks**: Document OpenCode plugin delivery via apm install and apmw sanitize (#184)
+- **hooks**: Context warning on Copilot CLI via postToolUse (#181)
+- **hooks**: Recommend /clear after planning and validate context-warning thresholds (#236)
+- Lighter review-fanout for mechanical changes (#234) (#246)
+
+
+### Refactoring
+- Rename the development-workflow package to delivery (#178)
+- **hooks**: Parse context-warning payload with jq or bash scanner, add debug note (#226)
+
+
 ## [2.1.1] — 2026-10-12
 
 ### Bug Fixes
 - **ng,dotnet**: Address review of external dependencies (#94)
 - **skills**: Keep trigger phrases and harden the description budget (#160)
 - **shared**: Run detect-techstack without fork (#175) (#177)
+
+
+### Documentation
+- Update CHANGELOG.md for v2.1.1 [skip ci]
 
 
 ### Features
