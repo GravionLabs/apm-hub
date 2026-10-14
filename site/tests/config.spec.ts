@@ -102,3 +102,17 @@ describe('the home page', () => {
     expect(html).not.toContain('<issue>');
   });
 });
+
+describe('HTML comments', () => {
+  it('are not shown as text, but stay in code', async () => {
+    const config = await loadConfig();
+    const md = await createMarkdownRenderer(resolve(repoRoot, 'docs'), config.markdown, '/');
+    const html = md.render(
+      '<!-- AUTO:start version -->\nWelcome 👋\n<!-- AUTO:end version -->\n\n`<!-- keep -->`',
+      { relativePath: 'overview.md' }
+    );
+    expect(html).toContain('Welcome');
+    expect(html).not.toContain('AUTO:');
+    expect(html).toContain('&lt;!-- keep --&gt;');
+  });
+});
