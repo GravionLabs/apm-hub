@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { findSkillFiles, isModelGated } from './skill-size-validator';
 import { loadEvals, modelInvocableSkills, validateEvals, TriggerEval } from './skill-trigger-evals';
 
 const repoRoot = path.resolve(__dirname, '../..');
@@ -19,7 +20,7 @@ function makePackages(skills: Record<string, { pkg?: string; gated?: boolean }>)
   for (const [name, { pkg = 'shared', gated = false }] of Object.entries(skills)) {
     const dir = path.join(base, pkg, '.apm', 'skills', name);
     fs.mkdirSync(dir, { recursive: true });
-    const gate = gated ? "disable-model-invocation: true\n" : '';
+    const gate = gated ? 'disable-model-invocation: true\n' : '';
     fs.writeFileSync(path.join(dir, 'SKILL.md'), `---\nname: ${name}\ndescription: 'x'\n${gate}---\nbody\n`);
   }
   return base;
@@ -38,9 +39,14 @@ describe('skill trigger evals (repository)', () => {
 
   it('derives the model-invocable skills from disk and excludes gated and apm-tooling skills', () => {
     const skills = modelInvocableSkills(repoPackagesDir);
-    expect(skills).toContain('implementation');
-    expect(skills).not.toContain('orch-pipeline');
-    expect(skills).not.toContain('skill-write');
+    const dirOf = (f: string) => path.basename(path.dirname(f));
+    const all = findSkillFiles(repoPackagesDir);
+    const tooling = all.filter((f) => f.includes(`${path.sep}apm-tooling${path.sep}`)).map(dirOf);
+    const gated = all.filter((f) => isModelGated(fs.readFileSync(f, 'utf8'))).map(dirOf);
+    expect(skills.length).toBeGreaterThan(0);
+    expect(tooling.length).toBeGreaterThan(0);
+    expect(gated.length).toBeGreaterThan(0);
+    for (const n of [...tooling, ...gated]) expect(skills).not.toContain(n);
   });
 });
 
@@ -81,6 +87,31 @@ describe('validateEvals', () => {
     const base = makePackages({ a: {}, b: {} });
     const problems = validateEvals([entry('a', ['same'], ['n1']), entry('b', ['p2'], ['SAME'])], base);
     expect(problems).toEqual(['b: duplicate prompt "SAME" (also in a)']);
+  });
+
+  it('rejects prompts that start with a dash, also after trimming', () => {
+    const base = makePackages({ a: {} });
+    expect(validateEvals([entry('a', ['  --help me'], ['ok'])], base)).toEqual([
+      'a: prompt starts with "-" (read as a CLI flag): "  --help me"',
+    ]);
+  });
+
+  it('reports malformed entries instead of throwing', () => {
+    const base = makePackages({ a: {} });
+    const bad = { skill: 'a', shouldTrigger: 'x', shouldNotTrigger: [1, ' '] } as unknown as TriggerEval;
+    const problems = validateEvals([bad], base);
+    expect(problems).toContain('a: shouldTrigger and shouldNotTrigger must be arrays');
+    expect(validateEvals([{ skill: 'a', shouldTrigger: ['p'], shouldNotTrigger: [1, ' '] } as unknown as TriggerEval], base)).toEqual([
+      'a: prompts must be non-empty strings',
+      'a: prompts must be non-empty strings',
+    ]);
+  });
+
+  it('normalizes whitespace and case when detecting duplicate prompts', () => {
+    const base = makePackages({ a: {}, b: {} });
+    expect(validateEvals([entry('a', ['Same  '], ['n1']), entry('b', ['p2'], ['  same'])], base)).toEqual([
+      'b: duplicate prompt "  same" (also in a)',
+    ]);
   });
 
   it('rejects duplicate skill entries', () => {

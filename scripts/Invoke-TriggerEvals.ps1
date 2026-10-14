@@ -12,6 +12,7 @@
 .PARAMETER Runs     Repeats per prompt (default 3).
 .PARAMETER Out      Results JSON (default evals/results/trigger-results.json).
 .PARAMETER Baseline Earlier results JSON; fail when a rate drops more than 5 points.
+.PARAMETER DryRun   List the prompts and the command, call nothing (also -WhatIf).
 .PARAMETER Skill    Only evaluate these skills.
 .PARAMETER Model    Model alias passed to claude (default sonnet; haiku rarely consults skills); recorded in the results.
 .PARAMETER ThrottleLimit Parallel claude sessions (default 8).
@@ -37,8 +38,9 @@ $skillDirs = @((Join-Path (Get-Location) '.claude/skills'), (Join-Path $HOME '.c
 $isInstalled = { param($n) [bool]($skillDirs | Where-Object { Test-Path (Join-Path $_ $n) }) }
 $notInstalled = @($evals | Where-Object { -not (& $isInstalled $_.skill) } | ForEach-Object { $_.skill })
 $evals = @($evals | Where-Object { $_.skill -notin $notInstalled })
-$claudeArgs = @('-p', '<prompt>', '--output-format', 'stream-json', '--verbose', '--model', $Model, '--max-turns', $MaxTurns,
-  '--disallowedTools', 'Edit', 'Write', 'Bash', 'NotebookEdit')
+# Read-only allow-list plus a deny list as a second fence, so an eval session cannot change the repo.
+$safety = @('--tools', 'Skill,Read,Glob,Grep', '--disallowedTools', 'Edit', 'Write', 'MultiEdit', 'Bash', 'NotebookEdit', 'Task', 'WebFetch', 'WebSearch')
+$claudeArgs = @('-p', '<prompt>', '--output-format', 'stream-json', '--verbose', '--model', $Model, '--max-turns', $MaxTurns) + $safety
 $scorer = Join-Path $root 'dist/generators/skill-trigger-score.js'
 
 $cases = foreach ($e in $evals) {
@@ -57,27 +59,31 @@ if (-not (Test-Path $scorer)) { throw "Missing $scorer; run 'pnpm run build' fir
 $tmp = Join-Path ([IO.Path]::GetTempPath()) "trigger-evals-$([guid]::NewGuid().ToString('N'))"
 New-Item -ItemType Directory $tmp | Out-Null
 try {
-  $jobs = foreach ($c in $cases) { foreach ($i in 1..$Runs) { [pscustomobject]@{ c = $c; n = $_; i = $i } } }
-  $n = 0
-  $jobs = @($jobs | ForEach-Object { $_.n = $n++; $_ })
+  $jobs = @(foreach ($c in $cases) { foreach ($i in 1..$Runs) { [pscustomobject]@{ c = $c; n = 0 } } })
+  for ($k = 0; $k -lt $jobs.Count; $k++) { $jobs[$k].n = $k }
   $records = $jobs | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel {
-    $c = $_.c
-    $t = Join-Path $using:tmp "transcript-$($_.n).jsonl"
-    $null | & claude -p $c.prompt --output-format stream-json --verbose --model $using:Model --max-turns $using:MaxTurns --disallowedTools Edit Write Bash NotebookEdit > $t
-    $invoked = @(node $using:scorer extract $t | ConvertFrom-Json)
-    [pscustomobject]@{ skill = $c.skill; kind = $c.kind; prompt = $c.prompt; invoked = $invoked }
+    $job = $_
+    $c = $job.c
+    $t = Join-Path $using:tmp "transcript-$($job.n).jsonl"
+    $analysis = $null
+    foreach ($attempt in 1..2) {   # a failed session (auth, rate limit, crash) is retried once
+      $null | & claude -p $c.prompt --output-format stream-json --verbose --model $using:Model --max-turns $using:MaxTurns @using:safety > $t 2>$null
+      $json = node $using:scorer extract $t
+      $analysis = if ($LASTEXITCODE -eq 0 -and $json) { $json | ConvertFrom-Json } else { [pscustomobject]@{ invoked = @(); failed = $true } }
+      if (-not $analysis.failed) { break }
+    }
+    [pscustomobject]@{ skill = $c.skill; kind = $c.kind; prompt = $c.prompt; invoked = @($analysis.invoked); failed = [bool]$analysis.failed }
   }
+  $meta = [ordered]@{ date = (Get-Date -Format 'yyyy-MM-dd'); model = $Model; runs = $Runs; maxTurns = $MaxTurns }
   $recFile = Join-Path $tmp 'records.json'
-  ConvertTo-Json -InputObject @($records) -Depth 5 | Set-Content $recFile
+  ConvertTo-Json -InputObject ([ordered]@{ records = @($records); meta = $meta; notInstalled = $notInstalled }) -Depth 6 | Set-Content $recFile
   New-Item -ItemType Directory (Split-Path ([IO.Path]::GetFullPath($Out)) -Parent) -Force | Out-Null
   $scoreArgs = @('score', $recFile, $Out)
   if ($Baseline) { $scoreArgs += $Baseline }
   node $scorer @scoreArgs
   $code = $LASTEXITCODE
-  $res = Get-Content $Out -Raw | ConvertFrom-Json -AsHashtable
-  $res.meta = [ordered]@{ date = (Get-Date -Format 'yyyy-MM-dd'); model = $Model; runs = $Runs; maxTurns = $MaxTurns }
-  $res.notInstalled = $notInstalled
-  $res | ConvertTo-Json -Depth 10 | Set-Content $Out
+  # Exit codes of the scorer: 0 ok, 1 threshold or regression failure, 2 crash / bad input / too many failed sessions.
+  if ($code -ge 2) { Write-Error "Scorer failed (exit $code), see the message above." }
   exit $code
 }
 finally { Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue }
