@@ -5,6 +5,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.2.1] — 2026-10-14
+
+### Bug Fixes
+- **hooks**: Stop installing Copilot events into Claude settings (#254)
+- **hooks**: Address review findings for hook manifests and Copilot docs (#254)
+- **ci**: Authenticate APM installer to avoid GitHub rate limit (#254)
+
+
+### Documentation
+- Document hook events per harness in working-mode (#254)
+
+
 ## [2.2.0] — 2026-10-14
 
 ### Bug Fixes
@@ -46,6 +58,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **hooks**: Clarify OpenCode plugin install path and apmw status (#184)
 - Remove stale no-agents statements (#219) (#244)
 - Document apmw sanitize as prerequisite (#224) (#245)
+- Update CHANGELOG.md for v2.2.0 [skip ci]
 
 
 ### Features
