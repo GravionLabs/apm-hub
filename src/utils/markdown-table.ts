@@ -46,13 +46,37 @@ function padCell(value: string, width: number, alignment: Alignment): string {
   }
 }
 
-/** Parse a Markdown table row into trimmed cell strings (strips outer pipes; `\|` stays inside its cell) */
+/**
+ * Parse a Markdown table row into trimmed cell strings. Outer pipes are stripped; a pipe
+ * preceded by a backslash (`\|`) stays inside its cell, and `\\` is an escaped backslash,
+ * so `\\|` is a backslash followed by a real separator.
+ */
 function parseRow(line: string): string[] {
-  return line
-    .trim()
-    .replace(/^\||\|$/g, '')
-    .split(/(?<!\\)\|/)
-    .map((c) => c.trim());
+  const text = line.trim();
+  const cells: string[] = [];
+  let current = '';
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '\\' && i + 1 < text.length) {
+      current += ch + text[++i];
+    } else if (ch === '|') {
+      cells.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cells.push(current);
+  if (text.startsWith('|')) cells.shift();
+  if (text.endsWith('|') && !endsWithEscapedPipe(text)) cells.pop();
+  return cells.map((c) => c.trim());
+}
+
+/** True when the final `|` of the text is escaped (an odd number of backslashes before it). */
+function endsWithEscapedPipe(text: string): boolean {
+  let n = 0;
+  for (let i = text.length - 2; i >= 0 && text[i] === '\\'; i--) n++;
+  return n % 2 === 1;
 }
 
 /** Returns true if the line looks like a Markdown separator row */
@@ -111,7 +135,7 @@ function formatTableBlock(block: string[]): string[] {
   for (let col = 0; col < colCount; col++) {
     // Minimum width for separator (e.g. ":---" = 4)
     const align = alignments[col] ?? 'left';
-     // "::" is 2, ":--:" is 4, ":-" is 2
+    // "::" is 2, ":--:" is 4, ":-" is 2
     widths[col] = align === 'center' ? 3 : 2;
   }
   for (let row = 0; row < parsedRows.length; row++) {

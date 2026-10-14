@@ -20,7 +20,9 @@ describe('formatTablesInMarkdown', () => {
   });
 
   it('keeps escaped pipes inside their cell', () => {
-    const input = ['| Agent | Role |', '| :--- | :--- |', '| `o` | `plan\\|full` runs |'].join('\n');
+    const input = ['| Agent | Role |', '| :--- | :--- |', '| `o` | `plan\\|full` runs |'].join(
+      '\n'
+    );
 
     const lines = formatTablesInMarkdown(input).split('\n');
 
@@ -133,5 +135,24 @@ describe('formatTablesInMarkdown', () => {
     // Right-aligned numbers should be right-padded (flush right)
     expect(lines[2]).toContain('26 |');
     expect(lines[3]).toContain('100 |');
+  });
+
+  it('keeps an escaped pipe at the end of a row without closing pipe in its cell', () => {
+    const input = ['| A | B |', '| - | - |', '| x | y \\|'].join('\n');
+    const lines = formatTablesInMarkdown(input).split('\n');
+    expect(lines[2]).toBe('| x  | y \\| |');
+  });
+
+  it('treats a pipe after an escaped backslash as a separator', () => {
+    const input = ['| A | B |', '| - | - |', '| a\\\\ | b |'].join('\n');
+    const lines = formatTablesInMarkdown(input).split('\n');
+    expect(lines[2]).toBe('| a\\\\ | b  |');
+  });
+
+  it('keeps an escaped pipe in the header cell', () => {
+    const input = ['| A\\|B | C |', '| - | - |', '| 1 | 2 |'].join('\n');
+    const lines = formatTablesInMarkdown(input).split('\n');
+    expect(lines[0]).toBe('| A\\|B | C  |');
+    expect(lines[2]).toBe('| 1    | 2  |');
   });
 });
