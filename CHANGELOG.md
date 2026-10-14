@@ -5,10 +5,37 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.1.1] — 2026-10-12
+
+### Bug Fixes
+- **ng,dotnet**: Address review of external dependencies (#94)
+- **skills**: Keep trigger phrases and harden the description budget (#160)
+- **shared**: Run detect-techstack without fork (#175) (#177)
+
+
+### Features
+- **ng,dotnet**: Depend on angular/skills and dotnet/skills (#94)
+
+
+### Refactoring
+- **skills**: Cut model-invocable descriptions to 700 tokens total (#160)
+- **dotnet**: Remove test duplicates from dotnet-implementation (#163) (#169)
+- **ts**: Remove test duplicates from ts-implementation (#164) (#170)
+- **py**: Remove test duplicates from py-implementation (#165) (#171)
+- **ng**: Reduce test runner line in ng-implementation to a pointer (#166) (#172)
+
+
+## [2.1.0] — 2026-10-12
+
+### Documentation
+- Update CHANGELOG.md for v2.1.0 [skip ci]
+
+
 ## [2.0.0] — 2026-10-12
 
 ### Documentation
 - One session per issue and headless implement runs (#137)
+- Update CHANGELOG.md for v2.0.0 [skip ci]
 
 
 ### Features

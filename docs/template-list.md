@@ -29,23 +29,23 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name         | Description                                                                                                                                                                | File                                                                      |
-| :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
-| skill-audit  | Audit one skill against the writing rules and emit a findings report. Use to check or verify a single skill; for a package or repo use skill-slim.                         | [skill-audit](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)   |
-| skill-slim   | Measure skills across a package or repo, classify content as keep, move, delete or deduplicate, then apply approved changes. Use to slim or trim skills or cut token cost. | [skill-slim](../packages/apm-tooling/.apm/skills/skill-slim/SKILL.md)     |
-| skill-update | Apply improvements from a skill audit to an existing skill. Use after skill-audit or when asked to fix or tighten a specific skill.                                        | [skill-update](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md) |
-| skill-write  | Create or edit a SKILL.md that loads unchanged on Copilot, Claude Code and OpenCode. Use when drafting or refining a skill so it stays small and convention-compliant.     | [skill-write](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)   |
+| Name         | Description                                                                                                                                                           | File                                                                      |
+| :----------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
+| skill-audit  | Audit one skill against the writing rules and emit a findings report. Use to check or verify a single skill; for a package or repo use skill-slim.                    | [skill-audit](../packages/apm-tooling/.apm/skills/skill-audit/SKILL.md)   |
+| skill-slim   | Measure skills across a package or repo, classify content as keep, move, delete or dedupe, then apply approved changes. Use to slim or trim skills or cut token cost. | [skill-slim](../packages/apm-tooling/.apm/skills/skill-slim/SKILL.md)     |
+| skill-update | Apply improvements from a skill audit to an existing skill. Use after skill-audit or when asked to fix or tighten a specific skill.                                   | [skill-update](../packages/apm-tooling/.apm/skills/skill-update/SKILL.md) |
+| skill-write  | Create or edit a SKILL.md that loads unchanged on Copilot, Claude Code and OpenCode. Use when drafting a skill.                                                       | [skill-write](../packages/apm-tooling/.apm/skills/skill-write/SKILL.md)   |
 
 ## Development-workflow
 
 ### Skills
 
-| Name           | Description                                                                                                                                                                  | File                                                                                   |
-| :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------- |
-| issue-planning | Explore the codebase and break a GitHub issue into scoped sub-issues (quick, standard or deep); outputs a plan JSON. Use for "plan issue #N" or before a large task.         | [issue-planning](../packages/development-workflow/.apm/skills/issue-planning/SKILL.md) |
-| orch-pipeline  | Orchestrated pipeline: plan → TDD per task → review fan-out → commit, with two approval gates. Use for "orchestrate" or "add feature end to end".                            | [orch-pipeline](../packages/development-workflow/.apm/skills/orch-pipeline/SKILL.md)   |
-| review-fanout  | Parallel multi-dimension review of a diff with dedupe and adversarial verification; returns APPROVE or CHANGES_REQUESTED. Use for "review my changes" or "review PR #N".     | [review-fanout](../packages/development-workflow/.apm/skills/review-fanout/SKILL.md)   |
-| verify-project | Run build, tests and lint and report pass/fail with the first error, using detect-techstack and <lang>-test for the commands. Use to verify a change or as the verify phase. | [verify-project](../packages/development-workflow/.apm/skills/verify-project/SKILL.md) |
+| Name           | Description                                                                                                                                       | File                                                                                   |
+| :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------- |
+| issue-planning | Explore the codebase and split a GitHub issue into scoped sub-issues (plan JSON). Use for "plan issue #N".                                        | [issue-planning](../packages/development-workflow/.apm/skills/issue-planning/SKILL.md) |
+| orch-pipeline  | Orchestrated pipeline: plan → TDD per task → review fan-out → commit, with two approval gates. Use for "orchestrate" or "add feature end to end". | [orch-pipeline](../packages/development-workflow/.apm/skills/orch-pipeline/SKILL.md)   |
+| review-fanout  | Parallel multi-dimension review of a diff; returns APPROVE or CHANGES_REQUESTED. Use for "review my changes" or "review PR #N".                   | [review-fanout](../packages/development-workflow/.apm/skills/review-fanout/SKILL.md)   |
+| verify-project | Run build, tests and lint; report pass/fail with the first error. Use to verify a change or as the verify phase.                                  | [verify-project](../packages/development-workflow/.apm/skills/verify-project/SKILL.md) |
 
 ## Dotnet
 
@@ -62,22 +62,22 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name                | Description                                                                                                                                                                  | File                                                                               |
-| :------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
-| github-issue        | Implement GitHub issues per the Epic→Feature→PBI→Task hierarchy, routing by type and sub-issues to the matching workflow. Use for any GitHub issue work, single or batch.    | [github-issue](../packages/github/.apm/skills/github-issue/SKILL.md)               |
-| github-pull-request | Create a GitHub PR from the current branch and its linked issue with a conventional title and structured body via gh. Use for "create a PR" or to finish a committed branch. | [github-pull-request](../packages/github/.apm/skills/github-pull-request/SKILL.md) |
-| github-release      | Cut a release/<x.y> branch from main or finish it with the release PR and changelog. Use for "cut a release", "finish the release" or when no release branch exists.         | [github-release](../packages/github/.apm/skills/github-release/SKILL.md)           |
+| Name                | Description                                                                                                                                                | File                                                                               |
+| :------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| github-issue        | Implement GitHub issues by type (Epic, Feature, PBI, Task), single or batch. Use for any GitHub issue work.                                                | [github-issue](../packages/github/.apm/skills/github-issue/SKILL.md)               |
+| github-pull-request | Create a GitHub PR from the current branch and linked issue via gh. Use for "create a PR" or to finish a branch.                                           | [github-pull-request](../packages/github/.apm/skills/github-pull-request/SKILL.md) |
+| github-release      | Cut a release/<x.y> branch or finish it with the release PR and changelog. Use for "cut a release", "finish the release" or when no release branch exists. | [github-release](../packages/github/.apm/skills/github-release/SKILL.md)           |
 
 ## Ng
 
 ### Skills
 
-| Name                 | Description                                                                                                                                                            | File                                                                             |
-| :------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------- |
-| ng-ag-grid-developer | Build or modify Angular components with AG Grid Enterprise (setup, ag-mcp, columns, row models, editing, grouping, export, theming). Use when a task mentions ag-grid. | [ng-ag-grid-developer](../packages/ng/.apm/skills/ng-ag-grid-developer/SKILL.md) |
-| ng-create-project    | Scaffold an Angular 21+ app or workspace with strict TypeScript, Vitest and ESLint/Prettier. Use when starting a new Angular project.                                  | [ng-create-project](../packages/ng/.apm/skills/ng-create-project/SKILL.md)       |
-| ng-implementation    | Angular 20+ implementation and review rules (standalone, signals, DI, forms, libraries) extending `implementation`. Use for Angular code or architecture questions.    | [ng-implementation](../packages/ng/.apm/skills/ng-implementation/SKILL.md)       |
-| ng-test              | Angular test rules with Vitest and TestBed: component, signal, service mocking and async patterns. Use when writing or running tests in an Angular project.            | [ng-test](../packages/ng/.apm/skills/ng-test/SKILL.md)                           |
+| Name                 | Description                                                                                                                           | File                                                                             |
+| :------------------- | :------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------- |
+| ng-ag-grid-developer | Build or modify Angular components with AG Grid Enterprise. Use when a task mentions ag-grid.                                         | [ng-ag-grid-developer](../packages/ng/.apm/skills/ng-ag-grid-developer/SKILL.md) |
+| ng-create-project    | Scaffold an Angular 21+ app or workspace with strict TypeScript, Vitest and ESLint/Prettier. Use when starting a new Angular project. | [ng-create-project](../packages/ng/.apm/skills/ng-create-project/SKILL.md)       |
+| ng-implementation    | Angular 20+ implementation and review rules (standalone, signals, DI, forms). Use for Angular code questions.                         | [ng-implementation](../packages/ng/.apm/skills/ng-implementation/SKILL.md)       |
+| ng-test              | Angular test rules with Vitest and TestBed (components, signals, mocking, async). Use when writing or running tests in Angular.       | [ng-test](../packages/ng/.apm/skills/ng-test/SKILL.md)                           |
 
 ## Py
 
@@ -93,11 +93,11 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name             | Description                                                                                                                                                                         | File                                                                         |
-| :--------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------- |
-| code-review      | Review a diff or files with 🔴/🟡/🟢 ratings using each detected <lang>-implementation review rules. Use for "review this code" or as review-fanout's conventions dimension.        | [code-review](../packages/shared/.apm/skills/code-review/SKILL.md)           |
-| detect-techstack | Detect the project tech stack and return a JSON report (languages, package manager, <lang>-test and <lang>-implementation skills). Use before loading language skills.              | [detect-techstack](../packages/shared/.apm/skills/detect-techstack/SKILL.md) |
-| implementation   | Language-agnostic implementation rules: every code change ships with tests; loads the <lang>-implementation sub-skill. Use for implement, write code, add feature or test requests. | [implementation](../packages/shared/.apm/skills/implementation/SKILL.md)     |
+| Name             | Description                                                                                                                                            | File                                                                         |
+| :--------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------- |
+| code-review      | Severity-rated (🔴/🟡/🟢) review of a diff or files per language rules. Use for "review this code" or as review-fanout's conventions dimension.        | [code-review](../packages/shared/.apm/skills/code-review/SKILL.md)           |
+| detect-techstack | Detect the project tech stack and return a JSON report with its language skills. Use before loading language skills.                                   | [detect-techstack](../packages/shared/.apm/skills/detect-techstack/SKILL.md) |
+| implementation   | Rules for code changes: every change ships with tests, dispatches to <lang>-implementation. Use for implement, write code, add feature, test requests. | [implementation](../packages/shared/.apm/skills/implementation/SKILL.md)     |
 
 ## Ts
 
