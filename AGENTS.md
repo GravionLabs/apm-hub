@@ -16,6 +16,7 @@ packages/<domain>/
 .github/ISSUE_TEMPLATE/               # copy of packages/github/.apm/issue-templates/
 src/                                  # TypeScript generators for docs/*.md (Vitest tests)
 scripts/check-manifests.mjs           # apm.yml skills list ⇄ directories on disk
+site/                                 # VitePress docs site: renders docs/ in place, README as home via docs/index.md (see site/README.md)
 apm.yml                               # marketplace: lists all packages
 ```
 

@@ -122,6 +122,17 @@ jobs:
       - name: Check manifest skills lists
         run: node scripts/check-manifests.mjs
 
+      # Generated aggregate docs are gitignored/CI-owned; generate them in the
+      # working tree only so the site build resolves its links. Never committed here.
+      - name: Generate docs for site build
+        run: pnpm run generate:ci
+
+      - name: Test docs site
+        run: pnpm --filter site test
+
+      - name: Build docs site
+        run: pnpm --filter site build
+
       - name: Install APM
         uses: microsoft/apm-action@v1
 

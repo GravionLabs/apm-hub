@@ -52,3 +52,7 @@ docs/agent-list.md
 docs/template-list.md
 /apm.lock.yaml
 evals/results/
+
+# VitePress site
+site/.vitepress/cache/
+site/.vitepress/dist/
