@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
 import { repoFilesOnDisk, repoLinksPlugin, REPO_URL } from './repo-links';
 import { sidebar } from './sidebar';
+import { stripHtmlComments } from './strip-comments';
 
 const repoRoot = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const files = repoFilesOnDisk(repoRoot);
@@ -30,6 +31,7 @@ export default withMermaid(
     html: false,
     config: (md) => {
       repoLinksPlugin(md as never, files);
+      stripHtmlComments(md as never);
     },
   },
   themeConfig: {
