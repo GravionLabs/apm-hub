@@ -13,9 +13,9 @@
 .PARAMETER Out      Results JSON (default evals/results/trigger-results.json).
 .PARAMETER Baseline Earlier results JSON; fail when a rate drops more than 5 points.
 .PARAMETER Skill    Only evaluate these skills.
-.PARAMETER Model    Model alias passed to claude (default haiku, the cheapest); recorded in the results.
+.PARAMETER Model    Model alias passed to claude (default sonnet; haiku rarely consults skills); recorded in the results.
 .PARAMETER ThrottleLimit Parallel claude sessions (default 8).
-.PARAMETER MaxTurns Turn cap per session (default 2: enough for the Skill tool_use event).
+.PARAMETER MaxTurns Turn cap per session (default 4: enough for the Skill tool_use event).
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
@@ -23,15 +23,20 @@ param(
   [string]$Out = 'evals/results/trigger-results.json',
   [string]$Baseline,
   [string[]]$Skill,
-  [string]$Model = 'haiku',
+  [string]$Model = 'sonnet',
   [int]$ThrottleLimit = 8,
-  [int]$MaxTurns = 2,
+  [int]$MaxTurns = 4,
   [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $evals = Get-Content (Join-Path $root 'evals/skill-triggers.json') -Raw | ConvertFrom-Json
-if ($Skill) { $evals = $evals | Where-Object { $_.skill -in $Skill } }
+if ($Skill) { $Skill = @($Skill | ForEach-Object { $_ -split ',' }); $evals = $evals | Where-Object { $_.skill -in $Skill } }
+# A skill that is not installed cannot trigger: skip it instead of scoring 0 %.
+$skillDirs = @((Join-Path (Get-Location) '.claude/skills'), (Join-Path $HOME '.claude/skills'))
+$isInstalled = { param($n) [bool]($skillDirs | Where-Object { Test-Path (Join-Path $_ $n) }) }
+$notInstalled = @($evals | Where-Object { -not (& $isInstalled $_.skill) } | ForEach-Object { $_.skill })
+$evals = @($evals | Where-Object { $_.skill -notin $notInstalled })
 $claudeArgs = @('-p', '<prompt>', '--output-format', 'stream-json', '--verbose', '--model', $Model, '--max-turns', $MaxTurns,
   '--disallowedTools', 'Edit', 'Write', 'Bash', 'NotebookEdit')
 $scorer = Join-Path $root 'dist/generators/skill-trigger-score.js'
@@ -42,6 +47,7 @@ $cases = foreach ($e in $evals) {
 }
 
 if ($DryRun -or $WhatIfPreference) {
+  if ($notInstalled) { Write-Host "Not installed (skipped): $($notInstalled -join ', ')" }
   Write-Host "Command: claude $($claudeArgs -join ' ')  (x$Runs per prompt, $(@($cases).Count * $Runs) calls)"
   foreach ($c in $cases) { Write-Host "[$($c.kind)] $($c.skill): $($c.prompt)" }
   return
@@ -70,6 +76,7 @@ try {
   $code = $LASTEXITCODE
   $res = Get-Content $Out -Raw | ConvertFrom-Json -AsHashtable
   $res.meta = [ordered]@{ date = (Get-Date -Format 'yyyy-MM-dd'); model = $Model; runs = $Runs; maxTurns = $MaxTurns }
+  $res.notInstalled = $notInstalled
   $res | ConvertTo-Json -Depth 10 | Set-Content $Out
   exit $code
 }
