@@ -2,7 +2,7 @@
 
 The `orchestrator` runs the lifecycle of one GitHub issue: plan, explore, implement, review and open a pull request. It is a **primary agent** that keeps its own context small. Every phase except tech-stack detection and the PR runs in a subagent, and only a summary of at most 300 words comes back. The orchestrator never reads source files (the `explorer` does) and never edits files (the `implementer` does).
 
-[Working mode](working-mode.md) has the start commands and the flags. This page explains how a run works.
+[Working mode](working-mode.md) has the start commands and the flags. This page explains how a run works. The internals (state files, gates versus rulings, hooks, per-client differences) are in [How the orchestrator works](concepts/orchestrator.md).
 
 ## The team
 

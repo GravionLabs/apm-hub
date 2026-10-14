@@ -19,6 +19,7 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Overview](docs/overview.md)**: Introduction, core concepts, and guiding principles.
 - **[Skills](docs/concepts/skills.md)**: What skills are and how they work across platforms.
 - **[Skill Frontmatter Convention](docs/concepts/skill-frontmatter.md)**: The spec-compliant frontmatter every skill follows.
+- **[How the orchestrator works](docs/concepts/orchestrator.md)**: Agents, pipeline, state, gates, hooks.
 - **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
 - **[Common Workflows](docs/usage/common-workflows.md)**: End-to-end examples with the installed skills.
 - **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
