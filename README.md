@@ -20,6 +20,7 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
 - **[Common Workflows](docs/usage/common-workflows.md)**: End-to-end examples with the installed skills.
 - **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
+- **[Copilot CLI hooks](docs/usage/copilot-hooks.md)**: manual setup, upgrade cleanup.
 - **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
 
 ## 🚀 Quick Start
