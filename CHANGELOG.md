@@ -5,6 +5,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.2.3] — 2026-10-14
+
+### Documentation
+- **site**: Add landing page and orchestrator page with Mermaid diagrams
+
+
 ## [2.2.2] — 2026-10-14
 
 ### Bug Fixes
@@ -33,6 +39,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Present the orchestrator as the only pipeline, /orch deprecated (#223)
 - Add orch-pipeline and /orch to the legacy table, removal in 3.0.0 (#223)
 - Document site/ in AGENTS.md and CONTRIBUTING.md (#271)
+- Update CHANGELOG.md for v2.2.2 [skip ci]
 
 
 ### Features
