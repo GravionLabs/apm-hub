@@ -2,11 +2,13 @@
 
 A curated hub of cross-platform **agent skills** — distributed as APM packages, usable with GitHub Copilot, Claude Code, and OpenCode.
 
+Documentation site: **[gravionlabs.github.io/apm-hub](https://gravionlabs.github.io/apm-hub/)**
+
 ---
 
 ## What is apm-hub?
 
-**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the `agents` package adds the `orchestrator` primary agent and its `explorer`, `planner`, `reviewer` and `implementer` subagents. Entry points beyond skill names are the `/orch` prompt and the `orchestrator` agent.
+**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the `agents` package adds the `orchestrator` primary agent and its `explorer`, `planner`, `reviewer` and `implementer` subagents. The entry point beyond skill names is the `orchestrator` agent (`/orch` is deprecated and removed in 3.0.0).
 
 Skills are the primary artifact: one `SKILL.md` source file loads unchanged on GitHub Copilot, Claude Code, and OpenCode. See the [skill frontmatter convention](docs/concepts/skill-frontmatter.md) for how that is guaranteed.
 
@@ -104,7 +106,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | Package       | Contents                                                                                                                                       |
 | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- |
 | `shared`      | `implementation`, `detect-techstack`, `code-review`                                                                                            |
-| `delivery`    | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`; formerly `development-workflow`                                |
+| `delivery`    | `review-fanout`, `verify-project`, `issue-planning`; formerly `development-workflow`                                                           |
 | `github`      | `github-issue`, `github-pull-request`                                                                                                          |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`) |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`              |
@@ -124,13 +126,13 @@ Skills are the primary artifact; the `agents` package adds the five agents skill
 `orchestrator` runs as the **primary agent** and keeps only phase summaries in its context; the
 four subagents each have their own model and tool set:
 
-| Agent          | Role                                                                                                                  |            |                                                                                                |
-| :------------- | :-------------------------------------------------------------------------------------------------------------------- | :--------- | :--------------------------------------------------------------------------------------------- |
-| `orchestrator` | `plan\                                                                                                                | implement\ | full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you |
-| `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                                                |            |                                                                                                |
-| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary      |            |                                                                                                |
-| `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                                            |            |                                                                                                |
-| `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |            |                                                                                                |
+| Agent          | Role                                                                                                                  |
+| :------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| `orchestrator` | `plan\|implement\|full <issue>`: explore → plan → implement per task → review → PR; approval gates stay with you      |
+| `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                                                |
+| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary      |
+| `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                                            |
+| `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |
 
 ```powershell
 apm install GravionLabs/apm-hub/packages/core -g   # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents

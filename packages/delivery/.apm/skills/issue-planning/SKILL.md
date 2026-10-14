@@ -26,7 +26,7 @@ The input type decides it (`labels`, else title prefix):
 | Epic | Features (`Feature: …`) | yes, at publish |
 | Feature | PBIs (`feat: …`, `fix: …`) | yes, at publish |
 | PBI or bug | tasks (`chore: …`) | only for ≥ 2 tasks: `[Task]` sub-issues at publish; one task stays in the plan file |
-| Description only | internal tasks | no |
+| Description only | internal tasks | no (the orchestrator creates the PBI at the gate, then Task issues as for a PBI) |
 
 ## Steps
 
@@ -51,4 +51,4 @@ Only the plan path and a summary of ≤ 10 lines: input type and level, item cou
 - Titles are conventional per the github-issue convention (`Feature: `, `feat: `, `chore: `, `fix: `); bodies are implementable without re-exploring: exact files and symbols, where tests go, what is out of scope.
 - `blocked_by` forms a DAG over plan ids and existing issue numbers; no cycles, no self-reference.
 - Never use markdown checklists for hierarchy; publish uses native sub-issue and blocked-by links.
-- `plan.json` is the contract between planning and the primary agent; `orch-pipeline` points here for larger work, `github-issue` references it for publishing.
+- `plan.json` is the contract between planning and the primary agent; `github-issue` references it for publishing.

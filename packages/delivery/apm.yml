@@ -1,6 +1,6 @@
 name: delivery
 version: 2.2.1
-description: "Issue-driven development workflow: orchestrated plan → TDD → review → commit pipeline (/orch), parallel review fan-out, run retrospective (retro), session hand-off document (handoff), project verification, issue planning with native sub-issues, and git-cliff changelog setup. Pulls in github and shared; stack packages are installed per project."
+description: "Issue-driven development workflow: parallel review fan-out, run retrospective (retro), session hand-off document (handoff), project verification, issue planning with native sub-issues, and git-cliff changelog setup. Pulls in github and shared; stack packages are installed per project."
 registry: https://github.com/GravionLabs/apm-hub
 dependencies:
   apm:

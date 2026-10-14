@@ -34,7 +34,7 @@ Exactly one PBI per run. After a PBI of a Feature the end line is `Next: #<nr> <
 
 ### Flags: overview and review summary
 
-Two defaults, each switched off by a flag in the first message (also for `/orchestrator` and `/orch`):
+Two defaults, each switched off by a flag in the first message (also for `/orchestrator`):
 
 | Flag | Default without it |
 | :-- | :-- |
@@ -74,18 +74,13 @@ Flags, mode and issue: $ARGUMENTS
 The command runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
 session context keeps growing, so prefer `claude --agent orchestrator` for real work.
 
-### `/orch` or the orchestrator
+### Copilot CLI
 
-The names look alike but the tools differ on purpose; this table explains the clash once.
+`copilot --agent orchestrator` runs the phases inline in the Copilot session (no per-phase subagent isolation), with the same modes, gates and ledger. The `/orch` prompt (skill `orch-pipeline`) is deprecated and removed in 3.0.0; use the orchestrator agent instead.
 
-| | `/orch` (skill `orch-pipeline`) | `orchestrator` (agent) |
-| :-- | :-- | :-- |
-| Runs | inline in the current session | as the primary agent; every phase in a subagent |
-| Work | one issue or description, up to 5 tasks (larger: plan first) | any issue, including Epics and Features (plans the next level down with blockers) |
-| Context | grows in the current session | keeps at most 300 words per phase |
-| Gates | plan and commit | plan, blocked review, red suite |
-| Start | `/orch feature\|fix\|review <issue or text>` | see [Setup](#setup) |
-| Use for | a small change in a session that is already warm | a planned issue, larger work, cost control |
+### Start from a description
+
+Instead of an issue number the orchestrator also accepts `<mode> <description>` (for example `full add a dark mode toggle`). It creates the PBI at the plan gate and then continues as `full`.
 
 ### One session per plan, one per PBI
 
@@ -141,7 +136,7 @@ resumes from the ledger.
   and exit-0 behavior. Copilot versions that do not write `session.usage_record` stay silent: check `/context`
   or `/usage` yourself before a long step.
 - The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code; `preToolUse` on
-  Copilot CLI after the manual setup): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them,
+  Copilot CLI after the manual setup): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them (except the rolling `release/next`, which `github-release cut` deletes and recreates),
   `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
   uncommitted changes, also inside `env`, `sudo`, `bash -c`, `xargs` and similar wrappers, `git -c alias.*` values
   and `echo …`/heredocs piped into a shell. Every other command passes. Opt out per repo with
@@ -226,7 +221,7 @@ Commit and push, then `/clear`, then `/github-pull-request`. `/github-release fi
 skills read everything they need from `git` and `gh`; they never depend on the session history,
 and on Claude Code they run with `context: fork`, so even at the end of a long session they start
 with a fresh context.
-The release PR itself is opened and refreshed by CI on every push to `release/<x.y>`. After it is merged, CI writes the changelog, tags, publishes the release and closes the
+The release PR itself is opened and refreshed by CI on every push to `release/next`. After it is merged, CI writes the changelog, tags, publishes the release and closes the
 issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
 
 ## 5. Keep the skill list short
@@ -236,11 +231,11 @@ issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
   Nothing used during an implementation or at the end of a feature is gated: `github-release` stays
   model-invocable, and mid-task references (uv flags, component or signal-store scaffolding) live in
   `references/` of `py-implementation` and `ng-implementation`.
-- Gating is the smallest lever: the 18 consumer-visible model-invocable descriptions are held to a
-  budget of 2,600 characters in total (≈ 650 tokens at chars/4, currently 1,864 ≈ 466 tokens),
+- Gating is the smallest lever: the 19 consumer-visible model-invocable descriptions are held to a
+  budget of 2,600 characters in total (≈ 650 tokens at chars/4, currently 2,443 ≈ 611 tokens, measured 2026-10-14 with the budget check),
   enforced by `src/generators/skill-size-validator.test.ts`. `packages/apm-tooling` (contributor
   tooling, not in `all`, never loaded by consumers) is excluded from the budget and keeps only the
-  200-character per-skill limit. All figures are estimates until re-measured in AgentLens. The
+  200-character per-skill limit. Token figures not marked as measured are AgentLens estimates from the 30-day, 79-session sample (as of 2026-10-14), not re-measured. The
   system prompt is prompt-cached. Per-project
   package installs remove more (≈ 10 skills in a single-stack repository).
 - Two-level install: globally `apm install GravionLabs/apm-hub/packages/core -g` (workflow skills
@@ -255,8 +250,10 @@ issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
 
 | Item                                   | Tokens per request | Lever                                   |
 | :------------------------------------- | -----------------: | :-------------------------------------- |
-| 18 model-invocable skill descriptions  |       ≈470 (est.) | shorter descriptions (done: 2,600-character budget, ≈ 1,860 characters used), per-project installs |
+| 19 model-invocable skill descriptions  |       ≈611 (computed: 2,443 characters / 4) | shorter descriptions (done: 2,600-character budget, 2,443 characters used, measured 2026-10-14), per-project installs |
 | CLAUDE.md / AGENTS.md of the project   |         500–3,000 | keep under 200 lines, move rules to skills |
 | one full file read (300 lines)         |          3,000–5,000 | `explorer` summary instead (≤ 400)     |
 | one build or test log                  |         2,000–20,000 | `verify-project` runs forked           |
 | conversation history after 2 hours     |      150,000–500,000 | one issue per session                   |
+
+The 19-description row is computed from the characters (chars/4); an earlier AgentLens estimate of ≈470 tokens covered 18 descriptions and was not re-measured. Rows 2 to 5 are AgentLens estimates (ranges) from the 30-day, 79-session sample, as of 2026-10-14; they were not re-measured.

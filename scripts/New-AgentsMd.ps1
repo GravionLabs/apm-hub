@@ -3,7 +3,7 @@
     Scaffold an AGENTS.md file from a project-type template.
 
 .DESCRIPTION
-    Copies a template from GravionLabs/copilot-hub (templates/agents-md/) to the
+    Copies a template from GravionLabs/apm-hub (templates/agents-md/) to the
     specified output path. Supports five project types: generic, dotnet, node,
     python, and github-actions.
 
@@ -11,7 +11,7 @@
     inspecting files in the current directory.
 
     Requires: pwsh (PowerShell Core), gh CLI (authenticated) — or a local
-    copy of the copilot-hub repository.
+    copy of the apm-hub repository.
 
 .PARAMETER Type
     Project type to use as template basis.
@@ -24,10 +24,10 @@
 
 .PARAMETER SourceRepo
     GitHub repository to fetch templates from.
-    Defaults to GravionLabs/copilot-hub.
+    Defaults to GravionLabs/apm-hub.
 
 .PARAMETER LocalSource
-    Path to a local copilot-hub clone. When provided, templates are read
+    Path to a local apm-hub clone. When provided, templates are read
     from disk instead of fetched via the gh CLI.
 
 .PARAMETER Force
@@ -43,7 +43,7 @@
     pwsh scripts/New-AgentsMd.ps1 -Type node -OutputPath ./my-project/AGENTS.md
 
 .EXAMPLE
-    pwsh scripts/New-AgentsMd.ps1 -LocalSource ../copilot-hub -Type python
+    pwsh scripts/New-AgentsMd.ps1 -LocalSource ../apm-hub -Type python
 #>
 [CmdletBinding()]
 param(
@@ -52,7 +52,7 @@ param(
 
     [string] $OutputPath = './AGENTS.md',
 
-    [string] $SourceRepo = 'GravionLabs/copilot-hub',
+    [string] $SourceRepo = 'GravionLabs/apm-hub',
 
     [string] $LocalSource,
 

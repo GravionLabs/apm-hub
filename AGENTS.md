@@ -1,6 +1,6 @@
 # apm-hub — Working in this repository
 
-apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships five **agents** that skills cannot replace: the `orchestrator` orchestrator (primary agent, keeps only phase summaries in context) and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to, each with its own model and tool set. Entry points beyond skill names: `/orch` (prompt) and `orchestrator` (agent).
+apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships five **agents** that skills cannot replace: the `orchestrator` orchestrator (primary agent, keeps only phase summaries in context) and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to, each with its own model and tool set. Entry point beyond skill names: `orchestrator` (agent, takes an issue number or a description). `/orch` is deprecated and removed in 3.0.0.
 
 ## Layout
 
@@ -16,6 +16,7 @@ packages/<domain>/
 .github/ISSUE_TEMPLATE/               # copy of packages/github/.apm/issue-templates/
 src/                                  # TypeScript generators for docs/*.md (Vitest tests)
 scripts/check-manifests.mjs           # apm.yml skills list ⇄ directories on disk
+site/                                 # VitePress docs site: renders docs/ in place, README as home via docs/index.md (see site/README.md)
 apm.yml                               # marketplace: lists all packages
 ```
 
@@ -26,15 +27,15 @@ apm.yml                               # marketplace: lists all packages
 | Package | Skills |
 |:--|:--|
 | `shared` | `implementation` (every change has tests; dispatches to `<lang>-implementation`), `detect-techstack` (JSON stack report), `diagnose` (bug fixes: red-capable feedback loop → minimal repro → ranked hypotheses → fix + regression test), `code-review` (severity-rated review using each language's `## Review rules`) |
-| `delivery` | `orch-pipeline` (plan → TDD → review fan-out → commit, `/orch`), `review-fanout`, `verify-project`, `issue-planning`, `retro` (user-invoked run retrospective, `scripts/Get-RunMetrics.ps1`), `handoff` (user-invoked hand-off document for the next session, `.agents/handoff-<date>.md`). Depends on `github` and `shared`; stack packages are installed per project. |
-| `github` | `github-issue` (routing skill for the Epic→Feature→PBI→Task hierarchy; references for standalone, batch, sub-issues, task issues, conventional commits, release branches), `github-pull-request` (targets the release branch, not `main`), `github-release` (cut `release/<x.y>`, finish with the release PR into `main`; owns the git-cliff changelog, `references/cliff-setup.md`) |
+| `delivery` | `review-fanout`, `verify-project`, `issue-planning`, `retro` (user-invoked run retrospective, `scripts/Get-RunMetrics.ps1`), `handoff` (user-invoked hand-off document for the next session, `.agents/handoff-<date>.md`), `orch-pipeline` (deprecated stub, removed in 3.0.0). Depends on `github` and `shared`; stack packages are installed per project. |
+| `github` | `github-issue` (routing skill for the Epic→Feature→PBI→Task hierarchy; references for standalone, batch, sub-issues, task issues, conventional commits, release branches), `github-pull-request` (targets the release branch, not `main`), `github-release` (cut the rolling `release/next`, finish with the release PR into `main`; owns the git-cliff changelog, `references/cliff-setup.md`) |
 | `dotnet` | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`. Depends on `dotnet/skills` (`dotnet` plugin) |
 | `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
 | `py` | `py-implementation` (incl. `references/uv-cli.md`), `py-test`, `py-create-project` |
 | `ng` | `ng-implementation` (incl. `references/component.md`, `references/signal-store.md`), `ng-test`, `ng-create-project`, `ng-ag-grid-developer`. Depends on `angular/skills` (`angular-developer`) |
 | `agents` | `orchestrator` (primary agent: plan → explore → implement per task (Task issues, `Refs #<task>` commits) → review → PR), `explorer` (read-only, haiku, ≤ 300 words), `planner` (read-only + `gh`, inherit model, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary), `reviewer` (read-only + tests, findings JSON for `review-fanout`), `implementer` (sonnet by default, one task, `implementation` preloaded, report file + ≤ 15-line status reply) |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not part of `all`) |
-| `hooks` | Hooks for Claude Code via apm: `SubagentStop` appends a line per finished subagent to `.agents/<issue>/progress.md`; `UserPromptSubmit` warns above 150k context tokens; `PreToolUse` (matcher `Bash`) denies destructive git commands (force push to `main`/`release/*`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .`/`restore .` on a dirty tree, remote delete of `main`/`release/*`), opt-out `GIT_GUARDRAILS_OFF=1` or `.agents/guardrails.off`. Copilot CLI (`subagentStop`, `postToolUse`, `preToolUse`) is manual setup, see `docs/usage/copilot-hooks.md`; OpenCode gets a plugin (ledger + context warning) at `packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`; after `apm install` it must reach a plugins directory: `apmw sanitize -p opencode` does this only with an apmw release containing GravionLabs/apmw#38 (open); until then copy it by hand to `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (global) |
+| `hooks` | Hooks for Claude Code via apm: `SubagentStop` appends a line per finished subagent to `.agents/<issue>/progress.md`; `UserPromptSubmit` warns above 150k context tokens; `PreToolUse` (matcher `Bash`) denies destructive git commands (force push to `main`/`release/*`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .`/`restore .` on a dirty tree, remote delete of `main`/`release/*`, except exactly `release/next`), opt-out `GIT_GUARDRAILS_OFF=1` or `.agents/guardrails.off`. Copilot CLI (`subagentStop`, `postToolUse`, `preToolUse`) is manual setup, see `docs/usage/copilot-hooks.md`; OpenCode gets a plugin (ledger + context warning) at `packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`; after `apm install` it must reach a plugins directory: `apmw sanitize -p opencode` does this only with an apmw release containing GravionLabs/apmw#38 (open); until then copy it by hand to `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (global) |
 | `core` | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills) |
 | `all` | meta-package: every package above except `apm-tooling` |
 
@@ -76,4 +77,4 @@ pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Ro
 - [README.md](README.md) — installing packages
 - [docs/concepts/skill-frontmatter.md](docs/concepts/skill-frontmatter.md) — why the frontmatter is restricted
 - [docs/concepts/agent-frontmatter.md](docs/concepts/agent-frontmatter.md) — agent source format and the `metadata` block
-- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md) — incl. public surface and rename policy

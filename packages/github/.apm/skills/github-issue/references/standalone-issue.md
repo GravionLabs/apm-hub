@@ -8,7 +8,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 
 1. Read issue: `gh issue view <nr> --json title,body,labels`
 2. Derive the branch name `<type>/<nr>-<slug>` per `conventional-commits.md` (type from the issue title)
-3. Resolve the integration branch `<base>` once per `release-branches.md` (a `release/*` branch; cut one with `github-release` if none exists). Create branch: `git fetch origin <base>; git checkout -b <branch> origin/<base>`
+3. Resolve the integration branch `<base>` once per `release-branches.md` (`release/next`, else a `release/<x.y>`; cut one with `github-release` if none exists). Create branch: `git fetch origin <base>; git checkout -b <branch> origin/<base>`
 4. Note the parent from the body's first line (`Parent Epic: #N` / `Parent Feature: #N` / `Parent PBI: #N`), if present. Closing this issue updates the parent's progress automatically via its native sub-issue link — there is nothing to tick afterwards.
 
 ## Phase 2 — Implement

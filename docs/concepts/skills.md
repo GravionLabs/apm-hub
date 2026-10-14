@@ -68,12 +68,12 @@ The complete rule set is in `packages/apm-tooling/.apm/skills/skill-write/refere
 - `code-review` reads the `## Review rules` section of each detected `<lang>-implementation` skill and rates findings 🔴 / 🟡 / 🟢.
 - `diagnose` is loaded for bug fixes: it builds a red-capable feedback loop (commands from `<lang>-test`) before any hypothesis.
 - `verify-project` runs build, tests and lint with the detected package manager.
-- `orch-pipeline` chains plan, TDD, `review-fanout` and commit; `/orch` is its prompt.
+- The `orchestrator` agent chains plan, TDD, `review-fanout` and PR; `orch-pipeline` is a deprecated stub.
 - `github-issue` routes issue work by label and sub-issue shape; `github-pull-request` opens the PR.
 
 ## Skills vs. prompts
 
-The only prompt in the repo is `/orch` in `packages/delivery/.apm/prompts/`. It just loads `orch-pipeline`. Prompts are slash-command entry points; the behaviour always lives in a skill so it works the same on every platform.
+The only prompt in the repo is the deprecated `/orch` in `packages/delivery/.apm/prompts/`, a one-liner pointing to the orchestrator agent. Prompts are slash-command entry points; the behaviour always lives in a skill so it works the same on every platform.
 
 ## Related
 
