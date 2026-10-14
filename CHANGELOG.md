@@ -5,6 +5,43 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.2.2] — 2026-10-14
+
+### Bug Fixes
+- Address review findings for release/next (#255)
+- Allow release/next reset in git guardrails (#255)
+- Address second review of release/next (#255)
+- Speed up trigger eval runner (#221)
+- Make trigger eval runner measure installed skills only (#221)
+- Address review of trigger evals (#221)
+- Address review of trigger evals (#221)
+- Address review of orchestrator description input and /orch deprecation (#223)
+- Keep escaped pipes inside table cells in the table formatter (#271)
+- Repair the agents table in README (#271)
+- Run the docs site tests in CI (#271)
+- Reject bare .. and cover more link cases in repo-links (#271)
+- Check nav links instead of comparing the sidebar to itself (#271)
+- Accept digits and uppercase in sidebar link test (#271)
+- Parse escaped backslashes and trailing escaped pipes in table rows (#271)
+- **ci**: Rebuild before generating docs in the build-test job
+
+
+### Documentation
+- Add public-surface and rename policy (#220)
+- Address review of public-surface policy (#220)
+- Correct release of the delivery rename (#220)
+- Present the orchestrator as the only pipeline, /orch deprecated (#223)
+- Add orch-pipeline and /orch to the legacy table, removal in 3.0.0 (#223)
+- Document site/ in AGENTS.md and CONTRIBUTING.md (#271)
+
+
+### Features
+- Orchestrator accepts a description and creates the PBI at the plan gate (#223)
+- Repo-link markdown-it plugin for the docs site (#271)
+- Sidebar list with completeness test for the docs site (#271)
+- VitePress config with README as home page (#271)
+
+
 ## [2.2.1] — 2026-10-14
 
 ### Bug Fixes
@@ -15,6 +52,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Documentation
 - Document hook events per harness in working-mode (#254)
+- Update CHANGELOG.md for v2.2.1 [skip ci]
 
 
 ## [2.2.0] — 2026-10-14
