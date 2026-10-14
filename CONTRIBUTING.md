@@ -43,17 +43,17 @@ pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1 -Full
 Public surface is everything a consumer can depend on: package names (install names in `apm.yml` and the marketplace), skill names, agent names, entry points (`/orch`, `orchestrator`), ledger and state paths (`.agents/<issue>/progress.md`, `plan.json`) and ledger headers.
 
 - Announce every rename in the PR body and in the release notes.
-- Keep an alias or compat path for one major line where it is cheap.
-- Batch breaking renames into one major release (empty `+semver: major` commit, see Releases). Never write `+semver:` or `BREAKING` in a commit body.
+- Where an alias or compat path is cheap, add it and announce it as deprecated in the PR body and release notes. It lives at most until the next major, and gets a removal version in the legacy table below at the moment it is added.
+- Batch breaking renames into one major release (empty `+semver: major` commit, see Releases). Only that dedicated empty release commit carries `+semver: major`; no other commit does, and none carries `BREAKING`.
 
 Legacy names kept for compatibility:
 
 | Legacy name | Where | Removed in |
 |:--|:--|:--|
-| `# lead ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | 3.0.0 |
-| `# dev-workflow ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | 3.0.0 |
+| `# lead ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | next major (currently expected as 3.0.0) |
+| `# dev-workflow ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | next major (currently expected as 3.0.0) |
 
-The `development-workflow` package was a clean rename with no alias (#178), so there is nothing to remove; the note in `README.md` stays for searchability.
+The `development-workflow` package was a clean rename with no alias (#178, closed in 2.1), a record of a past decision, so there is nothing to remove; the note in `README.md` stays for searchability.
 
 ## Issues
 
