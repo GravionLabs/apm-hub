@@ -51,4 +51,4 @@ Only the plan path and a summary of ≤ 10 lines: input type and level, item cou
 - Titles are conventional per the github-issue convention (`Feature: `, `feat: `, `chore: `, `fix: `); bodies are implementable without re-exploring: exact files and symbols, where tests go, what is out of scope.
 - `blocked_by` forms a DAG over plan ids and existing issue numbers; no cycles, no self-reference.
 - Never use markdown checklists for hierarchy; publish uses native sub-issue and blocked-by links.
-- `plan.json` is the contract between planning and the primary agent; `orch-pipeline` points here for larger work, `github-issue` references it for publishing.
+- `plan.json` is the contract between planning and the primary agent; `github-issue` references it for publishing.

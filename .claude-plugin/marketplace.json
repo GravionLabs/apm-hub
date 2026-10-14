@@ -37,7 +37,7 @@
     },
     {
       "name": "delivery",
-      "description": "Issue-driven development workflow: /orch pipeline (plan → TDD → review → commit), review fan-out, project verification, issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project.",
+      "description": "Issue-driven development workflow: review fan-out, project verification, issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project.",
       "version": "2.2.1",
       "source": "./packages/delivery"
     },
