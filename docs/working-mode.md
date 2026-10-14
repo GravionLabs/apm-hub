@@ -34,7 +34,7 @@ Exactly one PBI per run. After a PBI of a Feature the end line is `Next: #<nr> <
 
 ### Flags: overview and review summary
 
-Two defaults, each switched off by a flag in the first message (also for `/orchestrator` and `/orch`):
+Two defaults, each switched off by a flag in the first message (also for `/orchestrator`):
 
 | Flag | Default without it |
 | :-- | :-- |
@@ -74,18 +74,13 @@ Flags, mode and issue: $ARGUMENTS
 The command runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
 session context keeps growing, so prefer `claude --agent orchestrator` for real work.
 
-### `/orch` or the orchestrator
+### Copilot CLI
 
-The names look alike but the tools differ on purpose; this table explains the clash once.
+`copilot --agent orchestrator` runs the phases inline in the Copilot session (no per-phase subagent isolation), with the same modes, gates and ledger. The `/orch` prompt (skill `orch-pipeline`) is deprecated and removed in 3.0.0; use the orchestrator agent instead.
 
-| | `/orch` (skill `orch-pipeline`) | `orchestrator` (agent) |
-| :-- | :-- | :-- |
-| Runs | inline in the current session | as the primary agent; every phase in a subagent |
-| Work | one issue or description, up to 5 tasks (larger: plan first) | any issue, including Epics and Features (plans the next level down with blockers) |
-| Context | grows in the current session | keeps at most 300 words per phase |
-| Gates | plan and commit | plan, blocked review, red suite |
-| Start | `/orch feature\|fix\|review <issue or text>` | see [Setup](#setup) |
-| Use for | a small change in a session that is already warm | a planned issue, larger work, cost control |
+### Start from a description
+
+Instead of an issue number the orchestrator also accepts `<mode> <description>` (for example `full add a dark mode toggle`). It creates the PBI at the plan gate and then continues as `full`.
 
 ### One session per plan, one per PBI
 

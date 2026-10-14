@@ -35,7 +35,7 @@ Blocked by #<task>, or none (also set as native blocked-by link)
 - Commits on the PBI branch carry `Refs #<task>`, never `Closes`: the PBI's PR closes `#<pbi>` and the release closes the open sub-issues.
 - Task sub-issues of a PBI never become separate branches or PRs. Existing hand-made Task sub-issues are used as they are, without re-planning.
 
-## Commits, resume and review range (orchestrator, orch-pipeline)
+## Commits, resume and review range (orchestrator)
 
 - Task commits are made in the implement phase, one per task or more. Subject `<type>: <description> (#<pbi>)`, last footer line `Refs #<task>` alone on its line. A PBI with a single task has no Task issue: the footer is `Refs #<pbi>` and the report is `task-<plan id>-report.md` (e.g. `task-p1-report.md`); with Task issues it is `task-<task nr>-report.md`. After GATE 2 only an optional final fix commit is made; no extra commit of the whole diff.
 - Task merged (any run), the one rule everyone refers to: `<task>` is digits only (`^[0-9]+$`). First `git fetch origin <integration-branch>`, then `git log -E --grep "^Refs #<task>$" origin/<integration-branch> --format=%h -1` finds a commit reachable from the remote integration branch (not only `..HEAD`; Task issues stay open because `Closes` fires only on the default branch; the anchors keep `#12` from matching `#123`; the match is per commit message, any line) → `gh issue close <task> --comment "Merged into <branch> in <sha>"`, skip it, never re-propose it. It relies on the `Refs #<task>` footer surviving: a squash merge that drops the footers hides merged tasks. Task done on the current branch (resume, no ledger): same grep on `origin/<integration-branch>..HEAD`. Single task: same grep with `<pbi>`.

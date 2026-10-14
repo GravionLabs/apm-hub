@@ -4,7 +4,7 @@
 Welcome to **apm-hub** v2.2.1 👋
 <!-- AUTO:end version -->
 
-apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The one `agents` package adds the `orchestrator` primary agent and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to. Entry points beyond skill names are the `/orch` prompt and the `orchestrator` agent.
+apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The one `agents` package adds the `orchestrator` primary agent and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to. The entry point beyond skill names is the `orchestrator` agent (`/orch` is deprecated and removed in 3.0.0).
 
 ## What a package gives you
 
@@ -13,7 +13,7 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | Package       | What it covers                                                                                                                    |
 | :------------ | :-------------------------------------------------------------------------------------------------------------------------------- |
 | `shared`      | `implementation` (tests per change), `detect-techstack`, `code-review` (severity-rated), `diagnose` (bug diagnosis)               |
-| `delivery`    | `orch-pipeline` (`/orch`: plan → TDD → review fan-out → commit), `review-fanout`, `verify-project`, `issue-planning`              |
+| `delivery`    | `review-fanout`, `verify-project`, `issue-planning`                                                                               |
 | `github`      | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`                              |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
@@ -31,7 +31,7 @@ The full list with descriptions is generated into [skill-list.md](skill-list.md)
 
 - Every language package has a `<lang>-implementation` skill (conventions plus a `## Review rules` section) and a `<lang>-test` skill.
 - `detect-techstack` inspects the project and returns the names of those skills, so `implementation`, `code-review` and `verify-project` dispatch to the right language without hard-coded lists.
-- `orch-pipeline` composes the rest: it plans tasks, runs test-driven implementation per task, fans out a parallel review and commits after two approval gates.
+- The `orchestrator` agent composes the rest: it plans tasks, runs test-driven implementation per task, fans out a parallel review and opens the PR after approval gates.
 - `github-issue` is the entry point for issue work. It reads the issue labels and sub-issues and routes to the matching reference workflow.
 
 Skills delegate by name instead of repeating each other. One skill owns a workflow; the others call it.
@@ -52,4 +52,4 @@ Skills delegate by name instead of repeating each other. One skill owns a workfl
 - One `SKILL.md` ≤ 100 lines; long material lives in `references/`, procedures in `scripts/`.
 - Rules the model does not already know: repo conventions, tool contracts, repeatable procedures. No generic tutorials.
 - Compose, don't duplicate.
-- The agent proposes, the developer approves. Gates in `orch-pipeline` never auto-approve.
+- The agent proposes, the developer approves. Gates in the `orchestrator` never auto-approve.
