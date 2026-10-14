@@ -7,7 +7,6 @@ const pk = path.resolve(__dirname, '../../packages');
 const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
 
 const orchestrator = read('agents/.apm/agents/orchestrator.agent.md');
-const pipeline = read('delivery/.apm/skills/orch-pipeline/SKILL.md');
 const conventional = read('github/.apm/skills/github-issue/references/conventional-commits.md');
 const subIssues = read('github/.apm/skills/github-issue/references/sub-issues.md');
 const taskIssues = read('github/.apm/skills/github-issue/references/task-issues.md');
@@ -17,10 +16,29 @@ const publish = read('delivery/.apm/skills/issue-planning/references/publish.md'
 const planSchemaDoc = read('delivery/.apm/skills/issue-planning/references/plan-schema.md');
 const batch = read('github/.apm/skills/github-issue/references/batch-workflow.md');
 
+describe('orch-pipeline deprecation stub', () => {
+  const stub = read('delivery/.apm/skills/orch-pipeline/SKILL.md');
+  const body = stub.split(/^---$/m)[2].trim().split('\n');
+
+  it('is deprecated, hidden from model invocation and points to the agent', () => {
+    expect(stub).toMatch(/^description: 'Deprecated, use the orchestrator agent/m);
+    expect(stub).toContain('disable-model-invocation: true');
+    expect(stub).toContain("opencode/autoinvoke: 'false'");
+    expect(body.length).toBeLessThanOrEqual(10);
+    for (const c of ['claude', 'copilot', 'opencode']) expect(stub).toContain(`${c} --agent orchestrator`);
+    expect(stub).toContain('docs/working-mode.md');
+    expect(stub).toContain('3.0.0');
+  });
+
+  it('has no leftover references or scripts', () => {
+    const dir = path.join(pk, 'delivery/.apm/skills/orch-pipeline');
+    expect(fs.readdirSync(dir)).toEqual(['SKILL.md']);
+  });
+});
+
 describe('task flow consistency', () => {
   it.each([
     ['orchestrator', orchestrator],
-    ['orch-pipeline', pipeline],
   ])('%s describes the shared task flow', (_n, text) => {
     expect(text).toContain('task-<nr>-report.md');
     expect(text).toContain('<first BASE>..HEAD');
@@ -41,16 +59,12 @@ describe('task flow consistency', () => {
 
   it('orchestrator ledger line and task-only sub-issue handling', () => {
     expect(orchestrator).toContain('Task #<nr>: <status> — <sha>');
-    expect(pipeline).toContain('Task #<nr>: <status> — <sha>');
     expect(orchestrator).toContain('select(any(.labels[];.name=="task"))');
     expect(orchestrator).toMatch(/implement mode when the issue has no Task sub-issues/);
     expect(orchestrator).toMatch(/Task sub-issues never get their own branch or PR/);
     expect(orchestrator).toMatch(/Existing Task sub-issues are used as they are/);
     expect(orchestrator).toMatch(/model` sonnet, no `size: L` review/);
     expect(orchestrator).toContain('`model` hint');
-    expect(pipeline).toMatch(/Task sub-issues never get their own branch or PR/);
-    expect(pipeline).not.toMatch(/Approved → `<type>: <desc> \(#<nr>\)` \(`feat`\/`fix`\)/);
-    expect(pipeline).toMatch(/Task commits already exist/);
   });
 
   it('task-issues.md owns the commit, resume and single-task rules', () => {
@@ -115,13 +129,10 @@ describe('task flow consistency', () => {
   });
 
   it('resume uses the ledger DONE line cross-checked with git, and bugs are PBI-like', () => {
-    for (const t of [orchestrator, pipeline]) {
+    for (const t of [orchestrator]) {
       expect(t).toContain('`Task #<nr>: DONE`');
       expect(t).toMatch(/no duplicate task commits/);
     }
-    expect(pipeline).toContain('Parent Bug: #<bug>');
-    expect(pipeline).toMatch(/Load `implementation`/);
-    expect(pipeline).not.toMatch(/\. load `implementation`/);
   });
 
   it('Parent Bug variant is consistent across publish, plan-schema, task-issues and template', () => {

@@ -291,19 +291,22 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
 
 describe('orchestrator flags: overview and review summary', () => {
   const gates = read('github/.apm/skills/github-issue/references/orchestrator-gates.md');
-  const orch = read('delivery/.apm/skills/orch-pipeline/SKILL.md');
   const prompt = read('delivery/.apm/prompts/orch.prompt.md');
   const working = fs.readFileSync(path.resolve(__dirname, '../../docs/working-mode.md'), 'utf-8');
 
   it.each([
     ['agent', orchestrator],
-    ['orch-pipeline', orch],
-    ['orch prompt', prompt],
     ['working-mode', working],
     ['gates reference', gates],
   ])('%s documents both flags', (_n, md) => {
     expect(md).toContain('--no-overview');
     expect(md).toContain('--no-review-summary');
+  });
+
+  it('orch prompt is a one-line deprecation pointing to the agent', () => {
+    expect(prompt).toContain('Deprecated');
+    expect(prompt).toContain('--agent orchestrator');
+    expect(prompt.split(/^---$/m)[2].trim().split('\n')).toHaveLength(1);
   });
 
   it('agent states the defaults and delegates to the reference', () => {
@@ -314,7 +317,6 @@ describe('orchestrator flags: overview and review summary', () => {
   it('overview runs only without issue number and description', () => {
     expect(gates).toContain('only when the first message has no issue number and no description');
     expect(gates).not.toContain('a sentence without');
-    expect(orch).toContain('without a description');
     expect(working).toContain('neither an issue number nor a description');
   });
 
