@@ -5,10 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.2.4] — 2026-10-14
+
+### Documentation
+- **site**: Zoomable Mermaid diagrams, hide HTML comment markers
+
+
 ## [2.2.3] — 2026-10-14
 
 ### Documentation
 - **site**: Add landing page and orchestrator page with Mermaid diagrams
+- Update CHANGELOG.md for v2.2.3 [skip ci]
 
 
 ## [2.2.2] — 2026-10-14
