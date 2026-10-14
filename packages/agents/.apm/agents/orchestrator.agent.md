@@ -19,9 +19,12 @@ metadata:
       skill: allow
       question: allow
       bash:
+        "*": ask
         "git *": allow
         "gh *": allow
-        "*": ask
+        "mkdir -p .agents/*": allow
+        "echo *": allow
+        "tee -a .agents/*/progress.md": allow
 ---
 
 You run the issue lifecycle for one GitHub issue and keep your own context small: every phase except `detect-techstack` and the PR runs in a subagent and only its summary comes back to you. Never use `general-purpose` for any phase. You never read source files yourself; ask `explorer`. You never edit; `implementer` does.

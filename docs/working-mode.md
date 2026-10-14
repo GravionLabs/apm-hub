@@ -108,10 +108,35 @@ for n in 101 102 103; do claude --agent orchestrator -p "implement $n"; done
 ```
 
 A headless run cannot answer permission prompts: allow `git`, `gh`, the build and test commands and
-edits for the project beforehand (Claude: `permissions.allow` in the project settings). It cannot answer a
+edits for the project beforehand (Claude: `permissions.allow` in the project settings). OpenCode needs nothing
+for the ledger: the orchestrator's permission map allows `mkdir -p .agents/*`, `echo *` and `tee -a .agents/*/progress.md`
+(and `git`/`gh`), keeps `edit: deny` and asks for every other shell command, which `opencode run` auto-rejects.
+Claude Code has no per-agent bash list: allow `Bash(mkdir -p *)`, `Bash(echo *)` and `Edit(.agents/**)`
+(a shell redirect into `.agents/` counts as an edit). It cannot answer a
 gate either: at a blocked review or a twice-red suite it appends `Gate: <question>` to
 `.agents/<issue>/progress.md`, reports it and stops. Answer in an interactive `orchestrator` session, which
 resumes from the ledger.
+
+#### Headless smoke test and spike result (#222)
+
+`pwsh scripts/Invoke-HeadlessSmoke.ps1 [-Client opencode|claude|both] [-Keep]` creates a throwaway git repo without a
+remote (no GitHub writes), starts `opencode run --agent orchestrator` and `claude -p --agent orchestrator` with a
+ledger-only prompt and asserts that `.agents/999/progress.md` exists and the output holds no permission prompt. A client
+whose CLI is missing is skipped; the exit code is non-zero on failure. It needs the CLIs and a model and is not run in CI.
+The OpenCode run uses the permission map of `orchestrator.agent.md` in a project agent and an empty user config.
+
+Spike (OpenCode 1.18.3, Claude Code, 2026-10-14, ledger-only prompt, no `plan`/`implement` run because those need GitHub):
+
+- OpenCode before the fix (`"git *"`, `"gh *"` allow, `"*"` ask last): `mkdir -p .agents/999` and the ledger append hit `ask`;
+  `opencode run` printed `permission requested: bash (...); auto-rejecting` and no ledger was written.
+  The map was also order-sensitive: OpenCode lets the last matching rule win, so a trailing `"*": ask` overrode `git *`/`gh *`.
+- OpenCode after the fix (`"*": ask` first, then the allow rules): the ledger is created and appended; `rm -rf .agents/999`
+  is still auto-rejected. Two OpenCode facts shaped the rules: `[0-9]` is not a character class in a pattern (use `*`), and a
+  redirect is not part of the matched command (`echo x >> f` is matched as `echo x`), so the append needs `echo *` and the
+  redirect target cannot be restricted by a pattern; `edit: deny` covers the edit tool only.
+- Claude Code: the run stops without writing the ledger (`mkdir`/redirect "needs approval"); with the allow rules above it
+  completes. That setting is project configuration, not part of the agent.
+- A `Gate:` line was not exercised (it needs a blocked review or a red suite on a real issue).
 
 ## 2. Without the orchestrator: one session per issue
 
