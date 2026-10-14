@@ -5,12 +5,12 @@ context: fork
 ---
 
 Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>` only for parallel lines); the model and the base-branch resolver are in the
-`github-issue` skill's `references/release-branches.md`. No dialogue except the one bump question in `finish` — tool calls otherwise. On Claude Code it runs in a forked context without the session history.
+`github-issue` skill's `references/release-branches.md`. No dialogue — tool calls only. On Claude Code it runs in a forked context without the session history.
 
 ## Prerequisites
 
 - `gh` CLI authenticated, run from the repo root, clean `git status`
-- Mode: `cut [--feature <nr>]` or `finish [release/<x.y>]`
+- Mode: `cut [--feature <nr>]` or `finish [major] [release/next|release/<x.y>]`
 
 ## Instructions
 
@@ -19,9 +19,11 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
 1. `git fetch origin --tags`. `<default>` = `git symbolic-ref refs/remotes/origin/HEAD --short` minus
    `origin/`, fallback `main`.
 2. `release/next` absent on origin → `git checkout -b release/next origin/<default>`, `git push -u origin release/next`.
-   Present → reset it to `<default>` by delete and recreate (no force push: the guardrail denies it):
-   stop if open PRs target it (`gh pr list --base release/next --state open`), then
-   `git push origin --delete release/next`, `git branch -D release/next` (if local), and create it as above.
+   Present on origin → decide by `git merge-base --is-ancestor origin/release/next origin/<default>`:
+   - fails (unreleased work): never reset. With `--feature <nr>` only record the line (step 3); without it stop and report.
+   - succeeds (already merged): reset by delete and recreate (no force push). Stop first if open PRs target it
+     (`gh pr list --base release/next --state open`; deleting closes the CI release PR), then
+     `git push origin --delete release/next`, `git branch -D release/next` (if local), create as above.
    No `+semver` commit: the version comes from the GitVersion branch config (`release-branches.md`).
 3. If `--feature <nr>` → insert `Release branch: release/next` as the second line of that issue's
    body (`gh issue view <nr> --json body`, `gh issue edit <nr> --body-file -`); keep the `Parent …`
@@ -30,13 +32,16 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
 ### 2. finish
 
 4. Branch: the argument, else the current branch if it is `release/*`, else the resolver result (step 4 in
-   `release-branches.md`). `git checkout <branch>; git pull --ff-only`.
+   `release-branches.md`). It must match `^release/(next|[0-9]+\.[0-9]+)$`, else stop.
+   `git checkout "$branch" --; git pull --ff-only`.
 5. Refuse (stop and report) when `git merge-base --is-ancestor origin/<default> HEAD` fails (branch behind
    `<default>`: merge it in first) or `git merge-base --is-ancestor HEAD origin/<default>` succeeds (head already
    merged: nothing to release, run `cut`).
 6. Open work must be merged first: `gh pr list --base <branch> --state open` must be empty;
    otherwise stop and list the PRs.
-7. Ask once: bump `minor` (default) or `major`. Minor adds nothing. Major →
+7. Bump: `minor` by default, `major` only when the argument `major` is given (or the user answered major
+   when run in the main context); never ask in a fork. Minor adds nothing. Major, only if no
+   `+semver: major` commit exists yet (`git log origin/<default>..HEAD --grep '^+semver: major' -E`) →
    `git commit --allow-empty -m "chore: release major" -m "+semver: major"`, `git push`.
 8. The release PR is created and kept current by CI (`release-pr.yml`, GravionLabs/ci
    `versioning/release-pr`): `gh pr list --base <default> --head <branch> --state open --json number,url`.

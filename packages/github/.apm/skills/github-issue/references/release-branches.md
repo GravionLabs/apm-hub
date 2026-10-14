@@ -13,11 +13,11 @@ The release PR to `main` is created and refreshed by the `release-pr` workflow o
 release branch (GravionLabs/ci `versioning/release-pr`); the owner only merges it.
 
 One rolling branch, `release/next`, serves every release. `github-release cut` creates it from `main`, or
-deletes and recreates it from `main` when it exists (a force push is denied by the guardrail). After its
+deletes and recreates it from `main` when it exists and is already merged into `main` (no force push). While it holds unreleased work, `cut` never resets it; `cut --feature` only records `Release branch: release/next`. After its
 merge the branch is reset by the next `cut`, never continued, so it can never be released under a stale name.
 
-- **Bump rule:** minor by default, no commit needed. `finish` asks minor or major and adds an empty
-  `+semver: major` commit only for a major. Patch releases are hotfixes.
+- **Bump rule:** minor by default, no commit needed. `finish` defaults to minor; `finish major` adds an empty
+  `+semver: major` commit once (not again on a repeated finish). Patch releases are hotfixes.
 - **Version source:** the GitVersion branch config in `GitVersion.yml`
   (`branches: release: { regex: ^release/next$, increment: Minor }`, `mode: ContinuousDeployment`), not the
   branch name or an empty commit at `cut`.
@@ -35,11 +35,13 @@ Every skill that creates a branch or a PR resolves `<base>` once, in this order,
 first hit:
 
 1. An explicit `base_branch` input.
-2. A `Release branch: release/<x.y>` line in the issue body, else in the body of its parent (follow
+2. A `Release branch: release/next` (or `release/<x.y>`) line in the issue body, else in the body of its parent (follow
    `Parent Feature: #N` / `Parent Epic: #N` lines, one level at a time).
 3. The current branch, if it is `release/*`.
 4. `release/next` on origin if it exists, else the highest `release/<x.y>` (other `release/*` names are legacy, ignore them):
-   `h=$(git ls-remote --heads origin 'release/*' | sed 's|.*refs/heads/||'); echo "$h" | grep -x 'release/next' || echo "$h" | grep -E '^release/[0-9]+\.[0-9]+$' | sort -V | tail -1`
+   `h=$(git ls-remote --heads origin 'release/*' | sed 's|.*refs/heads/||'); printf '%s\n' "$h" | grep -x 'release/next' || printf '%s\n' "$h" | grep -E '^release/[0-9]+\.[0-9]+$' | sort -V | tail -1`
+   A `release/next` that is already an ancestor of `main` (`git merge-base --is-ancestor origin/release/next origin/main`)
+   and not yet reset must not receive new work: run `github-release cut` first.
 5. None exists → cut one with `github-release cut` (it records the line from step 2 in the Feature
    issue) and use it. Target `main` only when the user explicitly asks for a hotfix.
 
