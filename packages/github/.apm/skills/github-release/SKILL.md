@@ -1,55 +1,59 @@
 ---
 name: github-release
-description: 'Cut a release/<x.y> branch or finish it with the release PR and changelog. Use for "cut a release", "finish the release" or when no release branch exists.'
+description: 'Cut the rolling release/next branch or finish it with the release PR and changelog. Use for "cut a release", "finish the release" or when no release branch exists.'
 context: fork
 ---
 
-Owns the lifecycle of `release/<x.y>` branches; the model and the base-branch resolver are in the
-`github-issue` skill's `references/release-branches.md`. No dialogue — tool calls only. On Claude Code it runs in a forked context without the session history.
+Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>` only for parallel lines); the model and the base-branch resolver are in the
+`github-issue` skill's `references/release-branches.md`. No dialogue except the one bump question in `finish` — tool calls otherwise. On Claude Code it runs in a forked context without the session history.
 
 ## Prerequisites
 
 - `gh` CLI authenticated, run from the repo root, clean `git status`
-- Mode: `cut [<x.y>] [--feature <nr>]` or `finish [release/<x.y>]`
+- Mode: `cut [--feature <nr>]` or `finish [release/<x.y>]`
 
 ## Instructions
 
 ### 1. cut
 
-1. `git fetch origin --tags`. Mode `cut [minor|major|<x.y>] [--feature <nr>]`, default `minor`. Base =
-   highest `v<X.Y.Z>` tag on origin (`git ls-remote --tags origin 'v*' | sed 's|.*refs/tags/v||' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1`, `0.0.0` when none).
-   `minor` → `<X>.<Y+1>`, `major` → `<X+1>.0`; an explicit `<x.y>` must be greater than `<X>.<Y>`.
-   `release/<x.y>` on origin or tag `v<x.y>.0` already exists → stop and report it.
-2. `<default>` = `git symbolic-ref refs/remotes/origin/HEAD --short` minus `origin/`, fallback `main`.
-   `git checkout -b release/<x.y> origin/<default>`, then the first commit
-   `git commit --allow-empty -m "chore: start release <x.y>" -m "+semver: minor"` (`+semver: major` for a
-   major bump), `git push -u origin release/<x.y>`. GitVersion ignores branch names: this keyword makes the
-   merge into `<default>` tag `v<x.y>.0`; without it the merge only bumps the patch.
-3. If `--feature <nr>` → insert `Release branch: release/<x.y>` as the second line of that issue's
+1. `git fetch origin --tags`. `<default>` = `git symbolic-ref refs/remotes/origin/HEAD --short` minus
+   `origin/`, fallback `main`.
+2. `release/next` absent on origin → `git checkout -b release/next origin/<default>`, `git push -u origin release/next`.
+   Present → reset it to `<default>` by delete and recreate (no force push: the guardrail denies it):
+   stop if open PRs target it (`gh pr list --base release/next --state open`), then
+   `git push origin --delete release/next`, `git branch -D release/next` (if local), and create it as above.
+   No `+semver` commit: the version comes from the GitVersion branch config (`release-branches.md`).
+3. If `--feature <nr>` → insert `Release branch: release/next` as the second line of that issue's
    body (`gh issue view <nr> --json body`, `gh issue edit <nr> --body-file -`); keep the `Parent …`
    line first. Child issues inherit it through the resolver.
 
 ### 2. finish
 
-4. Branch: the argument, else the current branch if it is `release/*`, else the highest
-   `release/<x.y>` on origin (resolver step 4 in `release-branches.md`). `git checkout release/<x.y>; git pull --ff-only`.
-5. Open work must be merged first: `gh pr list --base release/<x.y> --state open` must be empty;
+4. Branch: the argument, else the current branch if it is `release/*`, else the resolver result (step 4 in
+   `release-branches.md`). `git checkout <branch>; git pull --ff-only`.
+5. Refuse (stop and report) when `git merge-base --is-ancestor origin/<default> HEAD` fails (branch behind
+   `<default>`: merge it in first) or `git merge-base --is-ancestor HEAD origin/<default>` succeeds (head already
+   merged: nothing to release, run `cut`).
+6. Open work must be merged first: `gh pr list --base <branch> --state open` must be empty;
    otherwise stop and list the PRs.
-6. The release PR is created and kept current by CI (`release-pr.yml`, GravionLabs/ci
-   `versioning/release-pr`): `gh pr list --base main --head release/<x.y> --state open --json number,url`.
+7. Ask once: bump `minor` (default) or `major`. Minor adds nothing. Major →
+   `git commit --allow-empty -m "chore: release major" -m "+semver: major"`, `git push`.
+8. The release PR is created and kept current by CI (`release-pr.yml`, GravionLabs/ci
+   `versioning/release-pr`): `gh pr list --base <default> --head <branch> --state open --json number,url`.
    None found (no workflow in this repo, or it has not run) → open it with `github-pull-request`
-   (`base_branch: main`, `auto_merge: false`, title `release: <x.y>`, body: the PRs merged into the
+   (`base_branch: <default>`, `auto_merge: false`, title `release: <branch>`, body: the PRs merged into the
    release branch plus `Closes #<nr>` for the Feature if recorded). Do not touch `CHANGELOG.md`: the
    release job on `main` regenerates it with git-cliff, tags, publishes the GitHub Release and closes
    every issue the release's PRs reference with `Closes #n` (GravionLabs/ci `gh-release`).
-7. Report the PR URL and `gh pr merge <nr> --merge`; the owner merges with a merge commit, never squash.
+9. Report the PR URL and `gh pr merge <nr> --merge`; the owner merges with a merge commit, never squash.
 
 ## Gotchas
 
 - Never merge the release PR yourself; the push to `main` builds and publishes the platform matrix, regenerates the changelog and closes the delivered issues.
 - A repo without `cliff.toml` gets no changelog from CI: follow `references/cliff-setup.md` once.
-- Hotfixes bypass this skill (`fix/<nr>-<slug>` from `main`); afterwards merge `main` into the open
-  release branch so the fix is not lost.
-- A release branch is deleted after its PR merged; GitVersion keeps the version from the tag.
+- Hotfixes bypass this skill (`fix/<nr>-<slug>` from `main`); afterwards merge `main` into
+  `release/next` so the fix is not lost.
+- `release/next` is never continued after its merge: the next `cut` resets it to `main`.
+- The CI release PR title may show the branch name, not the computed version (`release-branches.md`).
 
 Report: mode, branch, PR URL (finish) or the Feature issue updated (cut).
