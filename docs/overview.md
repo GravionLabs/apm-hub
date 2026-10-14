@@ -45,7 +45,7 @@ Skills delegate by name instead of repeating each other. One skill owns a workfl
 - [Skill frontmatter convention](concepts/skill-frontmatter.md): the restricted frontmatter that keeps skills portable
 - [Common workflows](usage/common-workflows.md): end-to-end examples with the installed skills
 - [Skill companion directories](usage/skill-companion-dirs.md): `scripts/`, `references/`, `templates/`, `assets/`
-- [How the orchestrator works](concepts/orchestrator.md): agents, pipeline, state, gates and hooks
+- [The orchestrator](orchestrator.md): agents, pipeline, state, gates and hooks
 - [Prerequisites](prerequisites.md): tools the skill scripts depend on
 - [LSP configuration](lsp-configuration.md): language servers for Copilot CLI
 - [CONTRIBUTING.md](../CONTRIBUTING.md) and [AGENTS.md](../AGENTS.md): adding or changing skills

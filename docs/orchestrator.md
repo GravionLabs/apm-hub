@@ -2,7 +2,7 @@
 
 The `orchestrator` runs the lifecycle of one GitHub issue: plan, explore, implement, review and open a pull request. It is a **primary agent** that keeps its own context small. Every phase except tech-stack detection and the PR runs in a subagent, and only a summary of at most 300 words comes back. The orchestrator never reads source files (the `explorer` does) and never edits files (the `implementer` does).
 
-[Working mode](working-mode.md) has the start commands and the flags. This page explains how a run works. The internals (state files, gates versus rulings, hooks, per-client differences) are in [How the orchestrator works](concepts/orchestrator.md).
+[Working mode](working-mode.md) has the start commands and the flags. This page explains how a run works.
 
 ## The team
 
@@ -23,13 +23,13 @@ flowchart LR
 
 | Agent | Model | Tools | Returns |
 |:--|:--|:--|:--|
-| `orchestrator` | inherit | Agent, Read, Grep, Glob, Bash, Skill, AskUserQuestion, SendMessage | phase summaries, PR URL, rulings |
-| `explorer` | haiku | Read, Grep, Glob | summary with `file:line` references |
-| `planner` | inherit | Read, Grep, Glob, Bash, Skill, Agent | path of `plan.json`, summary, open question count |
-| `implementer` | sonnet (overridable per task) | Read, Edit, Write, Grep, Glob, Bash, Skill | report file and a reply of 15 lines or less |
-| `reviewer` | sonnet | Read, Grep, Glob, Bash | findings JSON for one dimension |
+| [`orchestrator`](../packages/agents/.apm/agents/orchestrator.agent.md) | inherit | Agent, Read, Grep, Glob, Bash, Skill, AskUserQuestion, SendMessage | phase summaries, PR URL, rulings |
+| [`explorer`](../packages/agents/.apm/agents/explorer.agent.md) | haiku | Read, Grep, Glob | summary with `file:line` references |
+| [`planner`](../packages/agents/.apm/agents/planner.agent.md) | inherit | Read, Grep, Glob, Bash, Skill, Agent | path of `plan.json`, summary, open question count |
+| [`implementer`](../packages/agents/.apm/agents/implementer.agent.md) | sonnet (overridable per task) | Read, Edit, Write, Grep, Glob, Bash, Skill | report file and a reply of 15 lines or less |
+| [`reviewer`](../packages/agents/.apm/agents/reviewer.agent.md) | sonnet | Read, Grep, Glob, Bash | findings JSON for one dimension |
 
-An agent exists only for a model per role, a host-enforced tool set, an output contract or a primary-agent entry point. Everything procedural is a skill.
+An agent exists only for a model per role, a host-enforced tool set, an output contract or a primary-agent entry point. Everything procedural is a skill: `issue-planning`, `implementation`, `review-fanout`, `code-review`, `detect-techstack` and `github-pull-request` do the work, the agents only carry the model, tools and return contract. The `orchestrator` runs `detect-techstack` and the pull request step inline; every other phase is a subagent, and the `planner` may start an `explorer` itself when it gets no exploration summary.
 
 ## Modes
 
@@ -71,6 +71,8 @@ flowchart TD
 4. **Implement.** One `implementer` per task, in blocking order, all on the PBI's single branch.
 5. **Review.** One `review-fanout` over everything the run changed.
 6. **Pull request.** The orchestrator opens it itself with `github-pull-request`, into the integration branch, and never merges.
+
+What enters the orchestrator's context: the stack JSON, the issue text and `task` sub-issue numbers, the explorer summary, the plan path and summary, each implementer's reply, the review verdict and finding lines, and the PR URL. What stays outside: files read, `plan.json`, the diff, logs, task reports and the review package. Step wording: [orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md); planning: [issue-planning](../packages/delivery/.apm/skills/issue-planning/SKILL.md); review: [review-fanout](../packages/delivery/.apm/skills/review-fanout/SKILL.md); branch choice: [release-branches.md](../packages/github/.apm/skills/github-issue/references/release-branches.md).
 
 ### Who talks to whom in a full run
 
@@ -173,7 +175,14 @@ These always go to you; the orchestrator never decides them itself.
 | Blocked review | fix round 3 still blocked |
 | Failed tests | the suite is red twice |
 
-A headless run (no question tool) appends `Gate: <question>` to the ledger and stops instead of guessing.
+A gate and a ruling look alike but differ:
+
+- A **gate** is a decision that belongs to you: approving the plan (and grilling its open questions), choosing which review advisories to fix, a review that stays blocked after the fix rounds, and tests that fail twice. The orchestrator always asks; it never decides a gate itself.
+- A **ruling** is a call the orchestrator makes alone inside its remit, for example the stack guess after an invalid `detect-techstack` report or the model for a docs task. It records the decision, the reason and the cost if wrong as a `Ruling:` ledger line and repeats every ruling in the final report ([orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md)). A ruling never replaces a gate.
+
+Without a question tool (a headless run) the orchestrator appends `Gate: <question>` to the ledger, reports it and stops; it never guesses. The issue overview and the review summary are the two default outputs that end in such a question; flags switch them off ([orchestrator-gates.md](../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md)).
+
+Clearing before implementation is a recommendation, not a gate: a `plan` run always ends by recommending `/clear` and then `orchestrator implement <issue>`, and a `full` run asks once after the plan gate when the context is above 100k tokens. The orchestrator never clears for you ([Clear before implement](../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md)).
 
 ## Ledger and resume
 
@@ -189,14 +198,36 @@ Phase Pull request: complete — https://github.com/<owner>/<repo>/pull/210
 
 Started again on the same issue, it resumes at the first phase without `complete`, skips tasks already `DONE` (cross-checked against `git log` for `Refs #<task>`) and says so in one line. After a context compaction it trusts the ledger and git over memory. The `hooks` package appends a line for every finished subagent.
 
+### State on disk
+
+A run keeps its state on disk and on GitHub, never in the model's memory, so a `/clear`, a compaction or a crash loses nothing that matters. Everything lives under `.agents/<issue>/` (added to `.git/info/exclude` when not ignored).
+
+| File | Written by | Purpose |
+|:--|:--|:--|
+| `progress.md` | orchestrator and the `SubagentStop` hook | the ledger: phase, task, fix round and ruling lines, plus one line per finished subagent |
+| `plan.json`, `plan.md` | `planner` | plan items with sizes, blockers and open questions; `plan.md` is the human view |
+| `task-<n>-report.md` | `implementer` | full report per task; `<n>` is the Task issue number, or the plan id (`p1`) for a single task without an issue |
+| `review-<n>.diff`, `review.json` | `review-fanout` | the review package the reviewers read, and the machine-readable verdict |
+
+Two values anchor the review range. `BASE` is `git rev-parse HEAD` before each task (never `HEAD~1`). `<first BASE>` is the `BASE` of the first task and starts the range `<first BASE>..HEAD` that goes to review; without a ledger it is `git merge-base HEAD origin/<integration-branch>`.
+
+The Task issues are the source of truth and `plan.json` is a local cache of their numbers. A plan change edits the Task issue or adds one, then the cache. A task counts as merged when a commit with the footer `Refs #<task>` is reachable from the remote integration branch; the orchestrator then closes the issue and skips it. The exact grep is in [task-issues.md](../packages/github/.apm/skills/github-issue/references/task-issues.md).
+
 ```mermaid
-flowchart LR
-    A["Start on issue"] --> B{"Ledger for this<br/>issue exists?"}
-    B -->|"no"| C["Fresh run"]
-    B -->|"yes"| D["Find first phase<br/>without complete"]
-    D --> E["Skip tasks marked DONE<br/>and found in git log"]
-    E --> F["Continue there"]
+stateDiagram-v2
+    [*] --> NoLedger
+    NoLedger --> Running: create .agents/issue/ and ledger header
+    Running --> Running: append Phase / Task / Fix round / Ruling line
+    Running --> Gated: question tool missing at a gate
+    Gated --> Running: you answer and rerun
+    Running --> Interrupted: /clear, compaction, crash
+    Interrupted --> Resuming: orchestrator run on the same issue
+    Resuming --> Running: skip Task DONE lines confirmed by git log Refs
+    Running --> Complete: Ledger complete.
+    Complete --> [*]
 ```
+
+The diagram shows the life of a ledger, including the resume path described above. A ledger of another issue stays untouched. Description input (`plan "add dark mode"`) keeps its state in `.agents/adhoc/` until the PBI exists, then moves it to `.agents/<issue>/` ([orchestrator-gates.md](../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md)).
 
 ## Starting from a description
 
@@ -231,7 +262,67 @@ flowchart TD
     Z -->|"no"| W(["Report what blocks, stop"])
 ```
 
-After a run on a PBI of a Feature, the last line suggests the next one: `Next: #<nr> <title> — orchestrator next <feature> after /clear`.
+After a run on a PBI of a Feature, the report ends with a `Next:` line built from the same selection; see [End of run](#end-of-run).
+
+## Hooks
+
+The `hooks` package adds three hooks around the orchestrator. They are plain bash scripts that never fail a run: every path exits 0 and a payload they cannot parse is ignored. The orchestrator does not call them and does not depend on them; they make the state on disk more complete and protect against accidents.
+
+| Hook | Event | Reads from the payload | Writes or blocks | Opt-out |
+|:--|:--|:--|:--|:--|
+| [`subagent-ledger.sh`](../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path` | appends `Subagent <name>: stopped — <first line, 120 chars>` to a ledger; only when a ledger exists, which the orchestrator creates | none |
+| [`context-warning.sh`](../packages/hooks/.apm/hooks/context-warning.sh) | `UserPromptSubmit` | `transcript_path`, `session_id` | injects an `additionalContext` warning once the last request has at least 150k tokens (`CONTEXT_WARN_TOKENS`), again after +100k (`CONTEXT_WARN_STEP`) | none; raise `CONTEXT_WARN_TOKENS` to silence it |
+| [`git-guardrails.sh`](../packages/hooks/.apm/hooks/git-guardrails.sh) | `PreToolUse`, matcher `Bash` | `tool_name`, `cwd`, `tool_input.command` | prints a `permissionDecision: deny` JSON with the reason; nothing for allowed commands | `GIT_GUARDRAILS_OFF=1` or `.agents/guardrails.off` |
+
+```mermaid
+sequenceDiagram
+    participant U as You
+    participant O as orchestrator
+    participant H as hooks
+    participant S as subagent
+    U->>O: message
+    H-->>O: UserPromptSubmit: context warning above 150k
+    O->>H: Bash tool call (git ...)
+    H-->>O: PreToolUse: deny or pass
+    O->>S: dispatch implementer
+    S->>H: Bash tool call
+    H-->>S: PreToolUse: deny or pass
+    S-->>O: reply
+    H->>H: SubagentStop: append line to newest ledger
+    O->>O: append own Phase / Task line
+```
+
+The diagram shows where each hook fires: the guard sits in front of every Bash call of the orchestrator and of the subagents, the ledger hook fires when a subagent stops, and the context warning fires when you send a message.
+
+Behaviour you should know about, verified against the scripts:
+
+- **The ledger hook picks the newest ledger, not necessarily the issue's.** It appends to `$AGENTS_LEDGER` when set, otherwise to the most recently modified `.agents/*/progress.md` under `cwd`. It writes nothing when no ledger exists. With two issues in one working tree the line can land in the wrong one; the same limit is noted for description runs in [orchestrator-gates.md](../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md).
+- It skips the orchestrator itself (the agent name `orchestrator`, in any case and with a namespace such as `plugin:orchestrator`), because the orchestrator writes its own lines. It does not append the same line twice in a row. When the payload has no summary it falls back to the last line of the subagent transcript and, for the `implementer`, to the path of a task report touched in the last 10 minutes.
+- **The guardrails deny** force pushes to `main` or `release/*`, remote deletes of protected branches, `git reset --hard`, `git clean -f` (not `-n`), `git branch -D`, and `git checkout .` or `git restore .` when the tree is dirty. The exact rules are in [git-guardrails.sh](../packages/hooks/.apm/hooks/git-guardrails.sh). It is a guard against accidents, not a security boundary: it fails open on an empty or unparseable payload and on commands above 24 KB.
+- **Opt-out** is global, not per command: `GIT_GUARDRAILS_OFF=1` in the environment, or an empty file `.agents/guardrails.off` in the working directory or the repository root. It stays active until the variable is unset or the file is deleted.
+
+Per client:
+
+| Client | Ledger | Context warning | Guardrails | Setup |
+|:--|:--|:--|:--|:--|
+| Claude Code | `SubagentStop` | `UserPromptSubmit` | `PreToolUse` on `Bash` | automatic with `apm install` |
+| Copilot CLI | `subagentStop` | `postToolUse` (reads `session-state/<id>/events.jsonl`) | `preToolUse` | manual, see [Copilot CLI hooks](usage/copilot-hooks.md) |
+| OpenCode | plugin, after a `task` tool call | plugin, on a new user message | none | copy the plugin [apm-hub-hooks.ts](../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts) to `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (global) |
+
+The OpenCode plugin writes the same ledger line format and skips the orchestrator the same way. It has no equivalent of the git guardrails; on OpenCode the `permission` block of the agent files and your own bash rules are the only guard.
+
+## End of run
+
+The final report has a fixed shape (defined in [orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md)):
+
+- one line per phase,
+- the PR URL,
+- the rulings verbatim,
+- on failure, the first error line.
+
+After a `full`, `implement` or `next` run on a PBI whose parent is a Feature, the report adds a `Next:` line naming the next selectable PBI and the command to start it after `/clear`. It comes from the same selection as `next` ([next-selection.md](../packages/github/.apm/skills/github-issue/references/next-selection.md)), which uses `gh` only, with the PBI just finished excluded. If nothing is selectable the line lists what blocks each open PBI (open blockers, `needs-decision`, an open PR waiting for merge), or says the Feature is done. A PBI under an Epic, or without a parent, gets no `Next:` line. After a `plan` run the `Next:` line recommends `/clear` and then `orchestrator implement <issue>`.
+
+The last line is a fixed closing line saying the ledger is complete and that the next issue starts in a new session. It marks the ledger as finished; the cost reasoning is in [Working mode](working-mode.md).
 
 ## Models and cost
 

@@ -8,7 +8,7 @@ this hub assume it.
 
 ## 1. Default: the orchestrator
 
-This page covers usage. For how the orchestrator works internally (agents, state, gates, hooks) see [How the orchestrator works](concepts/orchestrator.md).
+This page covers usage. For how the orchestrator works internally (agents, state, gates, hooks) see [The orchestrator](orchestrator.md).
 
 Start issue work as the `orchestrator` agent ([Setup](#setup) has the start commands). It runs as the primary agent, keeps at most 300 words
 per phase in its own context and hands the rest to `explorer`, `planner`, `implementer` and `reviewer`.

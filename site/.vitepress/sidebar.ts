@@ -32,7 +32,6 @@ export const sidebar: SidebarGroup[] = [
       { text: 'Skills', link: '/concepts/skills' },
       { text: 'Skill frontmatter', link: '/concepts/skill-frontmatter' },
       { text: 'Agent frontmatter', link: '/concepts/agent-frontmatter' },
-      { text: 'How the orchestrator works', link: '/concepts/orchestrator' },
     ],
   },
   {
