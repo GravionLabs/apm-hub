@@ -1,10 +1,10 @@
-# Orchestrator: issue overview and review summary
+# Orchestrator: issue overview, review summary and description input
 
-Two default outputs of the `orchestrator` agent, each switched off by a flag in the first message (`orchestrator --no-overview full`, `/orchestrator --no-review-summary full 123`, `/orch --no-review-summary fix 123`). Flags are removed from the message before the mode word is read.
+Two default outputs of the `orchestrator` agent, each switched off by a flag in the first message (`orchestrator --no-overview full`, `/orchestrator --no-review-summary full 123`, `orchestrator --no-review-summary plan "add a dark mode toggle"`). Flags are removed from the message before the mode word is read. The flags work the same with an issue number or a description.
 
 ## Issue overview (default only without an issue number; `--no-overview` skips it)
 
-Runs only when the first message has no issue number and no description (empty, or a bare mode word). Skipped when a number or a description is given (`/orch feature|fix <description>` goes to `tasks.json` as usual).
+Runs only when the first message has no issue number and no description (empty, or a bare mode word). Skipped when a number or a description is given (a description takes the "Description input" path below).
 
 1. Resolve the integration branch per `release-branches.md`.
 2. List open issues that target it: `gh issue list --state open --limit 100 --json number,title,labels`, keep those whose branch/milestone/parent chain belongs to the integration branch (a release branch: its milestone or the issues referenced by its commits; no release branch: all open issues).
@@ -26,3 +26,13 @@ Why: after an idle gap the prompt cache is rewritten, and that cost grows with t
 - `plan` mode: the closing line of the report is `Next: /clear, then orchestrator implement <issue>`. Always, no threshold.
 - `full` mode: after the plan is approved, when the session context is above 100k tokens (`/context`, or the `hooks` warning already fired), ask once whether to stop here and continue with `/clear` then `orchestrator implement <issue>`; below 100k continue without asking. Headless: continue.
 - Never clear for the user; the recommendation is the whole gate. Not shown for `implement` or `next` runs.
+
+## Description input (`<mode> <description>`)
+
+The argument after the mode word is not a number: there is no issue yet, so the run starts from the text.
+
+1. Step 0 as usual; step 1 resolves only the integration branch (no `gh issue view`, no Task sub-issues). State, reports and the ledger live in `.agents/adhoc/` (ledger header `issue #adhoc`; add `.agents/` to `.git/info/exclude` when it is not ignored).
+2. `explorer` and `planner` get the description; `issue-planning` writes `.agents/adhoc/plan.json` with `input_type: description`, `parent_issue: null`, level `task`.
+3. Plan gate: present the summary and grill as for an issue. After approval and before publish, create the PBI with this skill: label `pbi`, conventional title (`SKILL.md` Issue Types), body per the repo's PBI template in `.github/ISSUE_TEMPLATE/`, filled from the description, the approved scope and the acceptance criteria; `gh issue create` prints the number. Then `mv .agents/adhoc .agents/<issue>`, set `parent_issue` to the new number and `input_type` to `pbi` in `plan.json`, rewrite the ledger header to the new number and continue publishing as for a PBI (≥ 2 tasks: `[Task]` sub-issues per `task-issues.md`).
+4. Continue as `full` on `<issue>`: branch, implement, review, PR. `plan` mode stops after the PBI and its plan, closing with `Next: /clear, then orchestrator implement <issue>`. `next` takes no description.
+5. Headless at the gate: append `Gate: <question>` to `.agents/adhoc/progress.md` and stop; no PBI is created without approval. An existing `.agents/adhoc/` from an earlier run: resume it only when its description matches, otherwise ask.

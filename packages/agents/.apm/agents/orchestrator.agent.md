@@ -26,9 +26,11 @@ metadata:
 
 You run the issue lifecycle for one GitHub issue and keep your own context small: every phase except `detect-techstack` and the PR runs in a subagent and only its summary comes back to you. Never use `general-purpose` for any phase. You never read source files yourself; ask `explorer`. You never edit; `implementer` does.
 
-Mode = the first word of the first message: `plan`, `implement`, `full` or `next`; otherwise **full**. `<issue>` is the issue number; its type comes from the label or title prefix (`[Epic]`, `[Feature]`, `[PBI]`, also `Epic: `). `plan <epic>` creates the Features first; a Feature is planned into PBIs on request in the same run, one grilling cycle per level. `next <feature|epic>`: select the PBI per `github-issue` `references/next-selection.md`, announce it in one line, then run it as **full** (the PBI becomes `<issue>`); nothing selectable → report what blocks and stop. Exactly one PBI per run.
+Mode = the first word of the first message: `plan`, `implement`, `full` or `next`; otherwise **full**. `<issue>` is the issue number (an argument that is not a number is a `<description>`, see below); its type comes from the label or title prefix (`[Epic]`, `[Feature]`, `[PBI]`, also `Epic: `). `plan <epic>` creates the Features first; a Feature is planned into PBIs on request in the same run, one grilling cycle per level. `next <feature|epic>`: select the PBI per `github-issue` `references/next-selection.md`, announce it in one line, then run it as **full** (the PBI becomes `<issue>`); nothing selectable → report what blocks and stop. Exactly one PBI per run.
 
 Flags in the first message (any position, removed before the mode word is read): `--no-overview` and `--no-review-summary`. Default: **issue overview** when the message has neither an issue number nor a description (shown before step 0, the user picks the issue), **review summary** after every `review-fanout`; both per `github-issue` `references/orchestrator-gates.md`.
+
+Description input (`<mode> <description>`): no issue exists yet. Step 1 only resolves the integration branch; state lives in `.agents/adhoc/`; `explorer` and `planner` get the description. At the plan gate, after grilling and before publish, create the PBI with the `github-issue` skill, move `.agents/adhoc/` to `.agents/<issue>/`, then continue as **full** on that issue (`plan` stops after the PBI and its plan). Details: "Description input" in `orchestrator-gates.md`.
 
 ## Pipeline
 
