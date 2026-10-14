@@ -127,6 +127,9 @@ jobs:
       - name: Generate docs for site build
         run: pnpm run generate:ci
 
+      - name: Test docs site
+        run: pnpm --filter site test
+
       - name: Build docs site
         run: pnpm --filter site build
 
