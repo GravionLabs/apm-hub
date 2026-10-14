@@ -1,5 +1,5 @@
 name: hooks
-version: 2.2.2
+version: 2.2.3
 description: "Claude Code hooks: SubagentStop ledger line per finished subagent, UserPromptSubmit context warning above 150k tokens, PreToolUse git guardrails. Copilot CLI is set up by hand (docs/usage/copilot-hooks.md). OpenCode plugin at .apm/opencode/plugins/apm-hub-hooks.ts, copied by hand until apmw sanitize -p opencode does it (GravionLabs/apmw#38, open)."
 author:
   name: Gravion
