@@ -45,17 +45,19 @@ flowchart TD
     F --> S0
     S0 --> S1["1 integration branch,<br/>issue, Task sub-issues"]
     S1 --> S2["2 explorer"]
-    S2 --> S3{"tasks exist<br/>or plan.json?"}
-    S3 -->|"no, mode plan/full/implement"| PL["3 planner, then<br/>approval gate"]
-    S3 -->|"yes"| S4
-    PL -->|"mode plan"| END1(["stop: Next: /clear,<br/>then implement"])
-    PL -->|"full / implement"| S4["4 implementer per task<br/>in blocking order"]
+    S2 --> MD{"mode"}
+    MD -->|"plan"| PL["3 planner,<br/>approval gate"]
+    PL --> END1(["stop: Next: /clear,<br/>then implement"])
+    MD -->|"full / implement"| T{"Task sub-issues<br/>or plan.json?"}
+    T -->|"none"| PL2["3 planner,<br/>approval gate"]
+    T -->|"yes"| S4
+    PL2 --> S4["4 implementer per task<br/>in blocking order"]
     S4 --> S5["5 review-fanout<br/>fix rounds"]
     S5 --> S6["6 pull request<br/>inline"]
-    S6 --> END2(["report, Next: line,<br/>Ledger complete."])
+    S6 --> END2(["report, Next: line,<br/>last ledger line"])
 ```
 
-The flowchart is simplified: with the `plan` mode the run stops after the plan gate. With existing Task sub-issues the planner is skipped; with all tasks already merged step 4 is skipped too ([task-issues.md](../../packages/github/.apm/skills/github-issue/references/task-issues.md)).
+The flowchart shows the six steps and where each mode leaves or joins them: `plan` always runs the planner and stops after its gate; `full` and `implement` run the planner only when the issue has no Task sub-issues (open or closed) and no `plan.json`. When all tasks are already merged step 4 is skipped too ([task-issues.md](../../packages/github/.apm/skills/github-issue/references/task-issues.md)).
 
 What enters and leaves the orchestrator context at each step:
 
@@ -107,7 +109,7 @@ The diagram shows the life of a ledger. On resume the orchestrator reads the sam
 Two things look alike but are not the same.
 
 - A **gate** is a decision that belongs to you: approving the plan (and grilling its open questions), choosing which review advisories to fix, a review that stays blocked after the fix rounds, and tests that fail twice. The orchestrator always asks; it never decides a gate itself.
-- A **ruling** is a call the orchestrator makes alone inside its remit, for example the stack guess after an invalid `detect-techstack` report or the model for a docs task. It writes `Ruling: <decision> — <why> — <cost if wrong>` to the ledger and repeats every ruling verbatim in the final report. A ruling never replaces a gate.
+- A **ruling** is a call the orchestrator makes alone inside its remit, for example the stack guess after an invalid `detect-techstack` report or the model for a docs task. It records the decision, the reason and the cost if wrong as a `Ruling:` ledger line and repeats every ruling in the final report ([orchestrator.agent.md](../../packages/agents/.apm/agents/orchestrator.agent.md)). A ruling never replaces a gate.
 
 Without a question tool (a headless run) the orchestrator appends `Gate: <question>` to the ledger, reports it and stops; it never guesses. The issue overview and the review summary are the two default outputs that end in such a question; flags switch them off ([orchestrator-gates.md](../../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md)).
 
@@ -128,17 +130,19 @@ flowchart LR
     RV3 -->|"clean"| PR
 ```
 
-Rounds 1 and 2 resume the same implementer (Claude Code `SendMessage` to its agent id, OpenCode resumes the task); Copilot subagents are stateless, so there a fresh implementer gets the findings and the report path. After a `plan` run, or a `full` run whose context is above 100k tokens after the plan gate, the orchestrator recommends `/clear` and then `orchestrator implement <issue>`; it never clears for you.
+The diagram shows how a verdict leads to at most three fix rounds, each followed by a re-review, before the question goes to you.
+
+Rounds 1 and 2 resume the same implementer (Claude Code `SendMessage` to its agent id, OpenCode resumes the task); Copilot subagents are stateless, so there a fresh implementer gets the findings and the report path. Clearing before implementation is a recommendation, not a gate: a `plan` run always ends by recommending `/clear` and then `orchestrator implement <issue>`, and a `full` run asks once after the plan gate when the context is above 100k tokens. The orchestrator never clears for you ([Clear before implement](../../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md)).
 
 ## Hooks
 
 The `hooks` package adds three hooks around the orchestrator. They are plain bash scripts that never fail a run: every path exits 0 and a payload they cannot parse is ignored. The orchestrator does not call them and does not depend on them; they make the state on disk more complete and protect against accidents.
 
-| Hook | Event | Reads from the payload | Writes or blocks |
-|:--|:--|:--|:--|
-| [`subagent-ledger.sh`](../../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path` | appends `Subagent <name>: stopped — <first line, 120 chars>` to a ledger |
-| [`context-warning.sh`](../../packages/hooks/.apm/hooks/context-warning.sh) | `UserPromptSubmit` | `transcript_path`, `session_id` | injects an `additionalContext` warning once the last request has at least 150k tokens (`CONTEXT_WARN_TOKENS`), again after +100k (`CONTEXT_WARN_STEP`) |
-| [`git-guardrails.sh`](../../packages/hooks/.apm/hooks/git-guardrails.sh) | `PreToolUse`, matcher `Bash` | `tool_name`, `cwd`, `tool_input.command` | prints a `permissionDecision: deny` JSON with the reason; nothing for allowed commands |
+| Hook | Event | Reads from the payload | Writes or blocks | Opt-out |
+|:--|:--|:--|:--|:--|
+| [`subagent-ledger.sh`](../../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path` | appends `Subagent <name>: stopped — <first line, 120 chars>` to a ledger; only when a ledger exists, which the orchestrator creates | none |
+| [`context-warning.sh`](../../packages/hooks/.apm/hooks/context-warning.sh) | `UserPromptSubmit` | `transcript_path`, `session_id` | injects an `additionalContext` warning once the last request has at least 150k tokens (`CONTEXT_WARN_TOKENS`), again after +100k (`CONTEXT_WARN_STEP`) | none; raise `CONTEXT_WARN_TOKENS` to silence it |
+| [`git-guardrails.sh`](../../packages/hooks/.apm/hooks/git-guardrails.sh) | `PreToolUse`, matcher `Bash` | `tool_name`, `cwd`, `tool_input.command` | prints a `permissionDecision: deny` JSON with the reason; nothing for allowed commands | `GIT_GUARDRAILS_OFF=1` or `.agents/guardrails.off` |
 
 ```mermaid
 sequenceDiagram
@@ -164,10 +168,8 @@ Behaviour you should know about, verified against the scripts:
 
 - **The ledger hook picks the newest ledger, not necessarily the issue's.** It appends to `$AGENTS_LEDGER` when set, otherwise to the most recently modified `.agents/*/progress.md` under `cwd`. It writes nothing when no ledger exists. With two issues in one working tree the line can land in the wrong one; the same limit is noted for description runs in [orchestrator-gates.md](../../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md).
 - It skips the orchestrator itself (the agent name `orchestrator`, in any case and with a namespace such as `plugin:orchestrator`), because the orchestrator writes its own lines. It does not append the same line twice in a row. When the payload has no summary it falls back to the last line of the subagent transcript and, for the `implementer`, to the path of a task report touched in the last 10 minutes.
-- **The guardrails deny** force pushes to `main` or `release/*`, remote deletes of those (see the mismatch below), `git reset --hard`, `git clean -f` (not `-n`), `git branch -D`, and `git checkout .` or `git restore .` when the tree is dirty. It is a guard against accidents, not a security boundary: it fails open on an empty or unparseable payload and on commands above 24 KB.
-- **Opt-out** is `GIT_GUARDRAILS_OFF=1` in the environment, or an empty file `.agents/guardrails.off` in the working directory or the repository root.
-- **`git push origin --delete release/next` in the source script.** The script exempts exactly `release/next`: `git push origin --delete release/next`, `:release/next` and `-d` pass, while the same delete of `release/1.0` is denied (line 243 compares the destination with `release/next`). `git push --force` to `release/next` is still denied by the following line. The exemption exists because `github-release cut` deletes and recreates the rolling branch.
-- **Why you may still see it blocked.** The exemption is in the packaged source only. The hook that runs is the copy `apm install` placed in `.claude/hooks/hooks/` (project) or `~/.claude/hooks/hooks/` (global). A copy installed before the exemption was added has no `release/next` check and denies the delete as it denies any `release/*`. Run `apm update` (or install again) to get the current script, or use the opt-out for that one command.
+- **The guardrails deny** force pushes to `main` or `release/*`, remote deletes of protected branches, `git reset --hard`, `git clean -f` (not `-n`), `git branch -D`, and `git checkout .` or `git restore .` when the tree is dirty. The exact rules are in [git-guardrails.sh](../../packages/hooks/.apm/hooks/git-guardrails.sh). It is a guard against accidents, not a security boundary: it fails open on an empty or unparseable payload and on commands above 24 KB.
+- **Opt-out** is global, not per command: `GIT_GUARDRAILS_OFF=1` in the environment, or an empty file `.agents/guardrails.off` in the working directory or the repository root. It stays active until the variable is unset or the file is deleted.
 
 Per client:
 
@@ -181,13 +183,13 @@ The OpenCode plugin writes the same ledger line format and skips the orchestrato
 
 ## End of run
 
-The final report has a fixed shape:
+The final report has a fixed shape (defined in [orchestrator.agent.md](../../packages/agents/.apm/agents/orchestrator.agent.md)):
 
 - one line per phase,
 - the PR URL,
 - the rulings verbatim,
 - on failure, the first error line.
 
-After a `full`, `implement` or `next` run on a PBI whose parent is a Feature, the report adds the line `Next: #<nr> <title> — orchestrator next <feature> after /clear`. It comes from the same selection as `next` ([next-selection.md](../../packages/github/.apm/skills/github-issue/references/next-selection.md)), which uses `gh` only, with the PBI just finished excluded. If nothing is selectable the line lists what blocks each open PBI (open blockers, `needs-decision`, `waiting for merge: PR #<n>`), or says the Feature is done. A PBI under an Epic, or without a parent, gets no `Next:` line. After a `plan` run the line is `Next: /clear, then orchestrator implement <issue>`.
+After a `full`, `implement` or `next` run on a PBI whose parent is a Feature, the report adds a `Next:` line naming the next selectable PBI and the command to start it after `/clear`. It comes from the same selection as `next` ([next-selection.md](../../packages/github/.apm/skills/github-issue/references/next-selection.md)), which uses `gh` only, with the PBI just finished excluded. If nothing is selectable the line lists what blocks each open PBI (open blockers, `needs-decision`, an open PR waiting for merge), or says the Feature is done. A PBI under an Epic, or without a parent, gets no `Next:` line. After a `plan` run the `Next:` line recommends `/clear` and then `orchestrator implement <issue>`.
 
-The last line is always `Ledger complete. Start the next issue in a new session (/clear or a new orchestrator run).` It marks the ledger as finished and reminds you that a new issue starts in a clean context; the cost reasoning is in [Working mode](../working-mode.md).
+The last line is a fixed closing line saying the ledger is complete and that the next issue starts in a new session. It marks the ledger as finished; the cost reasoning is in [Working mode](../working-mode.md).
