@@ -255,10 +255,10 @@ issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
 
 | Item                                   | Tokens per request | Lever                                   |
 | :------------------------------------- | -----------------: | :-------------------------------------- |
-| 19 model-invocable skill descriptions  |       ≈470 (AgentLens est., 30 days, 79 sessions, 2026-10-14; not re-measured for 19) | shorter descriptions (done: 2,600-character budget, 2,443 characters used, measured 2026-10-14), per-project installs |
+| 19 model-invocable skill descriptions  |       ≈611 (computed: 2,443 characters / 4) | shorter descriptions (done: 2,600-character budget, 2,443 characters used, measured 2026-10-14), per-project installs |
 | CLAUDE.md / AGENTS.md of the project   |         500–3,000 | keep under 200 lines, move rules to skills |
 | one full file read (300 lines)         |          3,000–5,000 | `explorer` summary instead (≤ 400)     |
 | one build or test log                  |         2,000–20,000 | `verify-project` runs forked           |
 | conversation history after 2 hours     |      150,000–500,000 | one issue per session                   |
 
-Rows 2 to 5 are AgentLens estimates (ranges) from the 30-day, 79-session sample, as of 2026-10-14; they were not re-measured.
+The 19-description row is computed from the characters (chars/4); an earlier AgentLens estimate of ≈470 tokens covered 18 descriptions and was not re-measured. Rows 2 to 5 are AgentLens estimates (ranges) from the 30-day, 79-session sample, as of 2026-10-14; they were not re-measured.

@@ -49,7 +49,7 @@ The numbers live in `src/generators/skill-trigger-score.ts`.
 
 ## Baseline
 
-@@BASE@@
+[`evals/baseline/2026-10-14.json`](../../evals/baseline/2026-10-14.json) is a full result file (schema above): model `sonnet`, 3 runs, `--max-turns 4`, 40 prompts (120 runs, 0 failed) for the 10 installed skills; `notInstalled` lists the 9 skipped stack skills. Overall trigger rate 80 %, false-trigger rate 0 %. It records the current state, not a pass. Known below the 80 % threshold: `implementation` (0 %), `github-issue` (50 %) and `verify-project` (50 %); the model usually inspects the working directory first and does not consult the skill. A follow-up issue to improve these descriptions is recommended. `evals/results/` is git-ignored.
 
 Measurement notes: skills that are not installed (only `.claude/skills` of the directory you run from and `~/.claude/skills` are checked) are skipped and listed under `notInstalled`, never scored 0 %; a full baseline needs `all@apm-hub` installed. haiku rarely consults skills (about 25 % trigger on five installed skills versus 57 % for sonnet), so sonnet is the default. Prompts must be substantive tasks: one-line prompts are answered directly.
 

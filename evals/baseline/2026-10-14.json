@@ -1,11 +1,89 @@
 {
-  "date": "2026-10-14",
-  "model": "sonnet",
-  "runs": 3,
-  "maxTurns": 4,
-  "sampleSize": {
-    "prompts": 40,
-    "runs": 120
+  "summary": {
+    "overall": {
+      "positives": 60,
+      "negatives": 60,
+      "triggerRate": 80,
+      "falseTriggerRate": 0
+    },
+    "skills": [
+      {
+        "skill": "code-review",
+        "positives": 6,
+        "negatives": 6,
+        "triggerRate": 100,
+        "falseTriggerRate": 0
+      },
+      {
+        "skill": "detect-techstack",
+        "positives": 6,
+        "negatives": 6,
+        "triggerRate": 100,
+        "falseTriggerRate": 0
+      },
+      {
+        "skill": "diagnose",
+        "positives": 6,
+        "negatives": 6,
+        "triggerRate": 100,
+        "falseTriggerRate": 0
+      },
+      {
+        "skill": "github-issue",
+        "positives": 6,
+        "negatives": 6,
+        "triggerRate": 50,
+        "falseTriggerRate": 0
+      },
+      {
+        "skill": "github-pull-request",
+        "positives": 6,
+        "negatives": 6,
+        "triggerRate": 100,
+        "falseTriggerRate": 0
+      },
+      {
+        "skill": "github-release",
+        "positives": 6,
+        "negatives": 6,
+        "triggerRate": 100,
+        "falseTriggerRate": 0
+      },
+      {
+        "skill": "implementation",
+        "positives": 6,
+        "negatives": 6,
+        "triggerRate": 0,
+        "falseTriggerRate": 0
+      },
+      {
+        "skill": "issue-planning",
+        "positives": 6,
+        "negatives": 6,
+        "triggerRate": 100,
+        "falseTriggerRate": 0
+      },
+      {
+        "skill": "review-fanout",
+        "positives": 6,
+        "negatives": 6,
+        "triggerRate": 100,
+        "falseTriggerRate": 0
+      },
+      {
+        "skill": "verify-project",
+        "positives": 6,
+        "negatives": 6,
+        "triggerRate": 50,
+        "falseTriggerRate": 0
+      }
+    ]
+  },
+  "meta": {
+    "date": "2026-10-14",
+    "model": "sonnet",
+    "runs": 3,
+    "maxTurns": 4
   },
   "notInstalled": [
     "dotnet-test",
@@ -18,89 +96,1047 @@
     "ts-implementation",
     "ts-test"
   ],
-  "overall": {
-    "positives": 60,
-    "negatives": 60,
-    "triggerRate": 75,
-    "falseTriggerRate": 0
+  "sampleSize": {
+    "prompts": 40,
+    "runs": 120,
+    "failed": 0
   },
-  "skills": [
+  "failedRuns": 0,
+  "warnings": [],
+  "records": [
     {
-      "skill": "code-review",
-      "positives": 6,
-      "negatives": 6,
-      "triggerRate": 100,
-      "falseTriggerRate": 0
-    },
-    {
-      "skill": "detect-techstack",
-      "positives": 6,
-      "negatives": 6,
-      "triggerRate": 100,
-      "falseTriggerRate": 0
-    },
-    {
-      "skill": "diagnose",
-      "positives": 6,
-      "negatives": 6,
-      "triggerRate": 83.3,
-      "falseTriggerRate": 0
-    },
-    {
-      "skill": "github-issue",
-      "positives": 6,
-      "negatives": 6,
-      "triggerRate": 50,
-      "falseTriggerRate": 0
-    },
-    {
-      "skill": "github-pull-request",
-      "positives": 6,
-      "negatives": 6,
-      "triggerRate": 100,
-      "falseTriggerRate": 0
-    },
-    {
-      "skill": "github-release",
-      "positives": 6,
-      "negatives": 6,
-      "triggerRate": 100,
-      "falseTriggerRate": 0
-    },
-    {
-      "skill": "implementation",
-      "positives": 6,
-      "negatives": 6,
-      "triggerRate": 0,
-      "falseTriggerRate": 0
+      "skill": "issue-planning",
+      "kind": "negative",
+      "prompt": "Implement issue #42 and open a pull request",
+      "invoked": [
+        "github-issue"
+      ],
+      "failed": false
     },
     {
       "skill": "issue-planning",
-      "positives": 6,
-      "negatives": 6,
-      "triggerRate": 100,
-      "falseTriggerRate": 0
+      "kind": "positive",
+      "prompt": "Plan issue #42 into tasks with blockers and sizes",
+      "invoked": [
+        "issue-planning"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "issue-planning",
+      "kind": "negative",
+      "prompt": "Implement issue #42 and open a pull request",
+      "invoked": [
+        "github-issue"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "issue-planning",
+      "kind": "positive",
+      "prompt": "Break Feature #120 down into PBIs and write the plan.json",
+      "invoked": [
+        "issue-planning",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "issue-planning",
+      "kind": "positive",
+      "prompt": "Plan issue #42 into tasks with blockers and sizes",
+      "invoked": [
+        "issue-planning"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "issue-planning",
+      "kind": "positive",
+      "prompt": "Break Feature #120 down into PBIs and write the plan.json",
+      "invoked": [
+        "issue-planning",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "issue-planning",
+      "kind": "positive",
+      "prompt": "Break Feature #120 down into PBIs and write the plan.json",
+      "invoked": [
+        "issue-planning",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "issue-planning",
+      "kind": "positive",
+      "prompt": "Plan issue #42 into tasks with blockers and sizes",
+      "invoked": [
+        "issue-planning",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "issue-planning",
+      "kind": "negative",
+      "prompt": "Implement issue #42 and open a pull request",
+      "invoked": [
+        "github-issue"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "issue-planning",
+      "kind": "negative",
+      "prompt": "Review my changes before I merge",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "issue-planning",
+      "kind": "negative",
+      "prompt": "Review my changes before I merge",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
     },
     {
       "skill": "review-fanout",
-      "positives": 6,
-      "negatives": 6,
-      "triggerRate": 66.7,
-      "falseTriggerRate": 0
+      "kind": "positive",
+      "prompt": "Review PR #77 and tell me if it is approved",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "positive",
+      "prompt": "Review my changes across all dimensions",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "positive",
+      "prompt": "Review my changes across all dimensions",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "positive",
+      "prompt": "Review my changes across all dimensions",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "issue-planning",
+      "kind": "negative",
+      "prompt": "Review my changes before I merge",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "positive",
+      "prompt": "Review PR #77 and tell me if it is approved",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "negative",
+      "prompt": "Run the build and tests and report the first error",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "negative",
+      "prompt": "Run the build and tests and report the first error",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "negative",
+      "prompt": "Run the build and tests and report the first error",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "positive",
+      "prompt": "Review PR #77 and tell me if it is approved",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "negative",
+      "prompt": "Check this single file for naming convention issues",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "negative",
+      "prompt": "Check this single file for naming convention issues",
+      "invoked": [],
+      "failed": false
     },
     {
       "skill": "verify-project",
-      "positives": 6,
-      "negatives": 6,
-      "triggerRate": 50,
-      "falseTriggerRate": 0
+      "kind": "positive",
+      "prompt": "Verify my change: run build, tests and lint",
+      "invoked": [
+        "verify-project",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "review-fanout",
+      "kind": "negative",
+      "prompt": "Check this single file for naming convention issues",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "positive",
+      "prompt": "Verify my change: run build, tests and lint",
+      "invoked": [
+        "verify-project",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "positive",
+      "prompt": "Does the project still pass build and lint after this edit?",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "positive",
+      "prompt": "Does the project still pass build and lint after this edit?",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "positive",
+      "prompt": "Verify my change: run build, tests and lint",
+      "invoked": [
+        "verify-project",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "positive",
+      "prompt": "Does the project still pass build and lint after this edit?",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "negative",
+      "prompt": "Review my changes in parallel by dimension",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "negative",
+      "prompt": "Review my changes in parallel by dimension",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "negative",
+      "prompt": "Write unit tests for the new parser",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "negative",
+      "prompt": "Write unit tests for the new parser",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "negative",
+      "prompt": "Review my changes in parallel by dimension",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "positive",
+      "prompt": "Review this code and rate findings by severity",
+      "invoked": [
+        "code-review",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "verify-project",
+      "kind": "negative",
+      "prompt": "Write unit tests for the new parser",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "negative",
+      "prompt": "Run a parallel multi-dimension review of PR #77",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "positive",
+      "prompt": "Review this code and rate findings by severity",
+      "invoked": [
+        "code-review",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "positive",
+      "prompt": "Review this code and rate findings by severity",
+      "invoked": [
+        "code-review",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "positive",
+      "prompt": "Do a code review of the files I changed against the language rules",
+      "invoked": [
+        "code-review",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "positive",
+      "prompt": "Do a code review of the files I changed against the language rules",
+      "invoked": [
+        "code-review",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "positive",
+      "prompt": "Do a code review of the files I changed against the language rules",
+      "invoked": [
+        "code-review",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "negative",
+      "prompt": "Run a parallel multi-dimension review of PR #77",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "negative",
+      "prompt": "Fix this failing test, I do not know why it breaks",
+      "invoked": [
+        "diagnose"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "negative",
+      "prompt": "Run a parallel multi-dimension review of PR #77",
+      "invoked": [
+        "review-fanout"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "negative",
+      "prompt": "Fix this failing test, I do not know why it breaks",
+      "invoked": [
+        "diagnose"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "code-review",
+      "kind": "negative",
+      "prompt": "Fix this failing test, I do not know why it breaks",
+      "invoked": [
+        "diagnose"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "positive",
+      "prompt": "Detect the tech stack of this project",
+      "invoked": [
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "positive",
+      "prompt": "Detect the tech stack of this project",
+      "invoked": [
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "positive",
+      "prompt": "Detect the tech stack of this project",
+      "invoked": [
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "negative",
+      "prompt": "Scaffold a new TypeScript project",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "negative",
+      "prompt": "Scaffold a new TypeScript project",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "positive",
+      "prompt": "Which language skills apply to this repository? Give me the JSON report",
+      "invoked": [
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "positive",
+      "prompt": "Which language skills apply to this repository? Give me the JSON report",
+      "invoked": [
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "positive",
+      "prompt": "Which language skills apply to this repository? Give me the JSON report",
+      "invoked": [
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "negative",
+      "prompt": "Scaffold a new TypeScript project",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "negative",
+      "prompt": "Implement a new feature in the existing code",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "negative",
+      "prompt": "Implement a new feature in the existing code",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "detect-techstack",
+      "kind": "negative",
+      "prompt": "Implement a new feature in the existing code",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "positive",
+      "prompt": "The login endpoint started returning HTTP 500 after yesterday's deploy and nobody knows why. Diagnose the bug: build a reproducible feedback loop, find the root cause and fix it with a regression test.",
+      "invoked": [
+        "diagnose"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "negative",
+      "prompt": "Add a new endpoint for listing orders",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "negative",
+      "prompt": "Add a new endpoint for listing orders",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "positive",
+      "prompt": "The login endpoint started returning HTTP 500 after yesterday's deploy and nobody knows why. Diagnose the bug: build a reproducible feedback loop, find the root cause and fix it with a regression test.",
+      "invoked": [
+        "diagnose"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "positive",
+      "prompt": "The login endpoint started returning HTTP 500 after yesterday's deploy and nobody knows why. Diagnose the bug: build a reproducible feedback loop, find the root cause and fix it with a regression test.",
+      "invoked": [
+        "diagnose"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "positive",
+      "prompt": "Our order-sync integration test fails about one run in five, only on CI. Diagnose why it is flaky, work out the cause step by step and fix it with a regression test.",
+      "invoked": [
+        "diagnose"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "positive",
+      "prompt": "Our order-sync integration test fails about one run in five, only on CI. Diagnose why it is flaky, work out the cause step by step and fix it with a regression test.",
+      "invoked": [
+        "diagnose"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "negative",
+      "prompt": "Add a new endpoint for listing orders",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "positive",
+      "prompt": "Our order-sync integration test fails about one run in five, only on CI. Diagnose why it is flaky, work out the cause step by step and fix it with a regression test.",
+      "invoked": [
+        "diagnose"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "positive",
+      "prompt": "Add a feature to export the monthly sales report as CSV in this codebase: write the code with tests for it, check the conventions of the language and run the test suite before you finish.",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "positive",
+      "prompt": "Add a feature to export the monthly sales report as CSV in this codebase: write the code with tests for it, check the conventions of the language and run the test suite before you finish.",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "negative",
+      "prompt": "Review my changes for style issues",
+      "invoked": [
+        "code-review"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "negative",
+      "prompt": "Review my changes for style issues",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "positive",
+      "prompt": "Add a feature to export the monthly sales report as CSV in this codebase: write the code with tests for it, check the conventions of the language and run the test suite before you finish.",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "diagnose",
+      "kind": "negative",
+      "prompt": "Review my changes for style issues",
+      "invoked": [
+        "code-review",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "negative",
+      "prompt": "Plan issue #42 into tasks",
+      "invoked": [
+        "issue-planning"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "negative",
+      "prompt": "Plan issue #42 into tasks",
+      "invoked": [
+        "issue-planning",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "positive",
+      "prompt": "Implement a retry helper with exponential backoff and jitter for our HTTP client, including tests for the happy path, the edge cases and the error cases, then run the build and the tests.",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "negative",
+      "prompt": "Plan issue #42 into tasks",
+      "invoked": [
+        "issue-planning",
+        "detect-techstack"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "negative",
+      "prompt": "Fix the crash when the config file is missing",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "positive",
+      "prompt": "Implement GitHub issue #266 in this repository: read the issue with gh, follow its acceptance criteria, work on the right branch and commit with the issue reference.",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "positive",
+      "prompt": "Implement GitHub issue #266 in this repository: read the issue with gh, follow its acceptance criteria, work on the right branch and commit with the issue reference.",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "positive",
+      "prompt": "Implement GitHub issue #266 in this repository: read the issue with gh, follow its acceptance criteria, work on the right branch and commit with the issue reference.",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "negative",
+      "prompt": "Fix the crash when the config file is missing",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "positive",
+      "prompt": "Implement a retry helper with exponential backoff and jitter for our HTTP client, including tests for the happy path, the edge cases and the error cases, then run the build and the tests.",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "positive",
+      "prompt": "Work through all open PBIs of the epic Skill Quality in batch: read each GitHub issue, implement them one after the other in the issue hierarchy order and report which ones are done.",
+      "invoked": [
+        "github-issue"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "negative",
+      "prompt": "Fix the crash when the config file is missing",
+      "invoked": [
+        "diagnose"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "implementation",
+      "kind": "positive",
+      "prompt": "Implement a retry helper with exponential backoff and jitter for our HTTP client, including tests for the happy path, the edge cases and the error cases, then run the build and the tests.",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "positive",
+      "prompt": "Work through all open PBIs of the epic Skill Quality in batch: read each GitHub issue, implement them one after the other in the issue hierarchy order and report which ones are done.",
+      "invoked": [
+        "github-issue"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "positive",
+      "prompt": "Work through all open PBIs of the epic Skill Quality in batch: read each GitHub issue, implement them one after the other in the issue hierarchy order and report which ones are done.",
+      "invoked": [
+        "github-issue"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "negative",
+      "prompt": "Create a pull request for the current branch",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "negative",
+      "prompt": "Create a pull request for the current branch",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "negative",
+      "prompt": "Cut a release branch",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "negative",
+      "prompt": "Create a pull request for the current branch",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "positive",
+      "prompt": "Create a PR for the current branch",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "negative",
+      "prompt": "Cut a release branch",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "positive",
+      "prompt": "Create a PR for the current branch",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "positive",
+      "prompt": "Create a PR for the current branch",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-issue",
+      "kind": "negative",
+      "prompt": "Cut a release branch",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "positive",
+      "prompt": "Open a pull request linked to issue #266",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "positive",
+      "prompt": "Open a pull request linked to issue #266",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "negative",
+      "prompt": "Implement GitHub issue #301 end to end",
+      "invoked": [
+        "github-issue"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "negative",
+      "prompt": "Implement GitHub issue #301 end to end",
+      "invoked": [
+        "github-issue"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "positive",
+      "prompt": "Open a pull request linked to issue #266",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "negative",
+      "prompt": "Finish the release with the release PR and changelog",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "negative",
+      "prompt": "Implement GitHub issue #301 end to end",
+      "invoked": [
+        "github-issue"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "negative",
+      "prompt": "Finish the release with the release PR and changelog",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-pull-request",
+      "kind": "negative",
+      "prompt": "Finish the release with the release PR and changelog",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "positive",
+      "prompt": "Cut a release from the rolling release branch",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "positive",
+      "prompt": "Cut a release from the rolling release branch",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "positive",
+      "prompt": "Cut a release from the rolling release branch",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "positive",
+      "prompt": "Finish the release and generate the changelog",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "positive",
+      "prompt": "Finish the release and generate the changelog",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "positive",
+      "prompt": "Finish the release and generate the changelog",
+      "invoked": [
+        "github-release"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "negative",
+      "prompt": "Create a PR for my feature branch",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "negative",
+      "prompt": "Create a PR for my feature branch",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "negative",
+      "prompt": "Break the epic into features and size them",
+      "invoked": [],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "negative",
+      "prompt": "Break the epic into features and size them",
+      "invoked": [
+        "issue-planning"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "negative",
+      "prompt": "Create a PR for my feature branch",
+      "invoked": [
+        "github-pull-request"
+      ],
+      "failed": false
+    },
+    {
+      "skill": "github-release",
+      "kind": "negative",
+      "prompt": "Break the epic into features and size them",
+      "invoked": [
+        "issue-planning"
+      ],
+      "failed": false
     }
   ],
   "thresholdFailures": [
-    "overall: trigger rate 75% < 80%",
     "github-issue: trigger rate 50% < 80%",
     "implementation: trigger rate 0% < 80%",
-    "review-fanout: trigger rate 66.7% < 80%",
     "verify-project: trigger rate 50% < 80%"
-  ]
+  ],
+  "regressions": []
 }
