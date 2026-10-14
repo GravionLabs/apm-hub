@@ -23,6 +23,7 @@ export const sidebar: SidebarGroup[] = [
       { text: 'Overview', link: '/overview' },
       { text: 'Prerequisites', link: '/prerequisites' },
       { text: 'Working mode', link: '/working-mode' },
+      { text: 'The orchestrator', link: '/orchestrator' },
     ],
   },
   {

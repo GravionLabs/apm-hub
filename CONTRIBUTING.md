@@ -42,7 +42,7 @@ The repo uses pnpm (`pnpm-lock.yaml`) only. `test/integration` is the exception:
 
 ## Docs site
 
-`site/` is a VitePress site that renders `docs/` in place; the root `README.md` is the home page, pulled in by `docs/index.md`. Preview it with `pnpm --filter site dev`. A local build needs the generated lists first: `pnpm run generate:all`, then `pnpm --filter site build`. A PR touching `site/**`, `docs/**` or `README.md` runs the "Build the site" check (`.github/workflows/pages.yml`). Only `main` deploys, and only while the repository variable `DEPLOY_PAGES` is `true`; the site is at <https://gravionlabs.github.io/apm-hub/>. Do not commit the generated `docs/*-list.md`. Details in `site/README.md`.
+`site/` is a VitePress site that renders `docs/` in place; the home page is the hero and feature landing page `docs/index.md`; the root `README.md` is the GitHub landing page only. Preview it with `pnpm --filter site dev`. A local build needs the generated lists first: `pnpm run generate:all`, then `pnpm --filter site build`. A PR touching `site/**`, `docs/**` or `README.md` runs the "Build the site" check (`.github/workflows/pages.yml`). Only `main` deploys, and only while the repository variable `DEPLOY_PAGES` is `true`; the site is at <https://gravionlabs.github.io/apm-hub/>. Do not commit the generated `docs/*-list.md`. Details in `site/README.md`.
 
 ## Public surface and renames
 

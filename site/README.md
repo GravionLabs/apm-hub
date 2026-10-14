@@ -6,22 +6,11 @@ files out of `site/` (this README is the only one).
 
 ## Home page
 
-The home page (`/`) is the `README.md` at the repository root, without a copy. `docs/index.md` is a
-tiny page that pulls it in with a VitePress markdown include:
-
-```md
-<!--@include: ../README.md-->
-```
-
-VitePress inlines the README before rendering, so the page is rendered as `index.md`. The
-repo-links plugin (`.vitepress/repo-links.ts`) treats `index.md` as the repository root README:
-its `docs/...` links become site links (`docs/usage/x.md` → `usage/x`) and links to files the
-site does not contain (`AGENTS.md`, `packages/**`, ...) go to GitHub. `docs/index.md` sets
-`editLink: false`, because the text to edit is the README, not the include. On GitHub,
-`docs/index.md` shows as an almost empty file; the README stays the one source.
-
-Alternatives not taken: copying the README at build time (two sources, a build step) and
-`rewrites` (VitePress only rewrites files inside `srcDir`).
+The home page (`/`) is `docs/index.md`, a VitePress `layout: home` page: a hero with three actions
+(overview, skills, GitHub) and a row of feature cards, all in its frontmatter. It has no body and
+`editLink: false`. The README at the repository root is the GitHub landing page and is not part of
+the site; the repo-links plugin still treats `README.md` like `index.md` when a page links to files
+outside `docs/`.
 
 ## Commands
 
