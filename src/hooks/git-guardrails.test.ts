@@ -83,6 +83,10 @@ describe('git-guardrails hook', () => {
     'git push --delete origin release/next/x',
     'git push origin :release/next-x',
     'git push --force origin release/next',
+    'git push origin +release/next',
+    'git push origin +refs/heads/release/next',
+    'git push -f --delete origin release/next',
+    'git push origin +:release/next',
     'git push --delete origin main release/next',
     'git reset --hard',
     'git reset --hard HEAD~1',
@@ -180,6 +184,8 @@ describe('git-guardrails hook', () => {
     'git push --delete origin feature',
     'git push --delete origin release/next',
     'git push origin :release/next',
+    'git push origin :refs/heads/release/next',
+    'git push --delete origin refs/heads/release/next',
     'git reset --soft HEAD~1',
     'git reset HEAD file',
     'git clean -n',
@@ -313,6 +319,14 @@ describe('git-guardrails hook', () => {
     expect(denied(run(claude('git push origin HEAD:release/2.0 --force-with-lease')))).toBe(true);
     expect(run(claude('git push origin HEAD')).out).toBe('');
     expect(run(claude('git push -f origin HEAD:feature')).out).toBe('');
+  });
+  it('deleting HEAD on the remote is allowed only on release/next', () => {
+    git('checkout', '-q', '-b', 'release/next');
+    expect(run(claude('git push --delete origin HEAD')).out).toBe('');
+    git('checkout', '-q', '-b', 'release/2.1');
+    expect(denied(run(claude('git push --delete origin HEAD')))).toBe(true);
+    git('checkout', '-q', 'main');
+    expect(denied(run(claude('git push --delete origin HEAD')))).toBe(true);
   });
   describe('git -C targets', () => {
     let other: string;

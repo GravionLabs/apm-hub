@@ -13,7 +13,7 @@ The release PR to `main` is created and refreshed by the `release-pr` workflow o
 release branch (GravionLabs/ci `versioning/release-pr`); the owner only merges it.
 
 One rolling branch, `release/next`, serves every release. `github-release cut` creates it from `main`, or
-deletes and recreates it from `main` when it exists and is already merged into `main` (no force push; the git guardrail allows the remote delete of exactly `release/next`). While it holds unreleased work, `cut` never resets it; `cut --feature` only records `Release branch: release/next`. After its
+deletes and recreates it from `main` when it is released, i.e. its head is an ancestor of `main` and not equal to it (no force push; the git guardrail allows the remote delete of exactly `release/next`). A head equal to `main` is fresh and usable: `cut` is a no-op. While it holds unreleased work (not an ancestor of `main`), `cut` never resets it. `cut --feature` always only records `Release branch: release/next` when the branch is fresh or unreleased. After its
 merge the branch is reset by the next `cut`, never continued, so it can never be released under a stale name.
 
 - **Bump rule:** minor by default, no commit needed. `finish` defaults to minor; `finish major` adds an empty
@@ -23,9 +23,10 @@ merge the branch is reset by the next `cut`, never continued, so it can never be
   branch name or an empty commit at `cut`.
 - **Hotfix path:** `fix/<nr>-<slug>` from `main`, squash into `main`, then merge `main` into `release/next`.
 - **Parallel lines:** the exception; cut an explicit `release/<x.y>` by hand and record it in the issue's
-  `Release branch:` line.
-- **`finish` guards:** refuses when `release/next` is behind `main`, when its head is already an ancestor of
-  `main`, or when open PRs target it.
+  `Release branch:` line. GitVersion's Minor increment applies only to `release/next`, so `finish` on a
+  `release/<x.y>` adds `+semver: minor|major` itself when `origin/<default>..HEAD` has none.
+- **`finish` guards:** refuses when `release/next` is behind `main`, when its head is an ancestor of
+  `main` (equal to it too: a fresh branch has nothing to release), or when open PRs target it.
 - **Known limitation:** GravionLabs/ci `versioning/release-pr` may title the release PR with the branch name
   (`release/next`) rather than the computed version; the tag and GitHub Release carry the real version.
 
@@ -40,8 +41,9 @@ first hit:
 3. The current branch, if it is `release/*`.
 4. `release/next` on origin if it exists, else the highest `release/<x.y>` (other `release/*` names are legacy, ignore them):
    `h=$(git ls-remote --heads origin 'release/*' | sed 's|.*refs/heads/||'); printf '%s\n' "$h" | grep -x 'release/next' || printf '%s\n' "$h" | grep -E '^release/[0-9]+\.[0-9]+$' | sort -V | tail -1`
-   A `release/next` that is already an ancestor of `main` (`git merge-base --is-ancestor origin/release/next origin/main`)
-   and not yet reset must not receive new work: run `github-release cut` first.
+   A `release/next` whose head is an ancestor of `main` but not equal to it (released, not yet reset:
+   `git merge-base --is-ancestor origin/release/next origin/main` succeeds and the two SHAs differ) must not
+   receive new work: run `github-release cut` first. A head equal to `main` is fresh and usable.
 5. None exists → cut one with `github-release cut` (it records the line from step 2 in the Feature
    issue) and use it. Target `main` only when the user explicitly asks for a hotfix.
 

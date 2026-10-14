@@ -19,12 +19,15 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
 1. `git fetch origin --tags`. `<default>` = `git symbolic-ref refs/remotes/origin/HEAD --short` minus
    `origin/`, fallback `main`.
 2. `release/next` absent on origin → `git checkout -b release/next origin/<default>`, `git push -u origin release/next`.
-   Present on origin → decide by `git merge-base --is-ancestor origin/release/next origin/<default>`:
-   - fails (unreleased work): never reset. With `--feature <nr>` only record the line (step 3); without it stop and report.
-   - succeeds (already merged): reset by delete and recreate (no force push). Stop first if open PRs target it
-     (`gh pr list --base release/next --state open`; deleting closes the CI release PR), then
-     `git push origin --delete release/next` (the guardrail allows exactly this), then create it with
-     `git checkout -B release/next origin/<default>` (no local delete needed), `git push -u origin release/next`.
+   Present on origin → compare `git rev-parse origin/release/next origin/<default>` and
+   `git merge-base --is-ancestor origin/release/next origin/<default>`:
+   - head equals `<default>` (fresh) or is not an ancestor (unreleased work): never reset, `cut` is a no-op.
+     With `--feature <nr>` record the line (step 3); without it report the branch.
+   - ancestor but not equal (released): reset by delete and recreate (no force push). Stop first if open PRs
+     target it (`gh pr list --base release/next --state open`; deleting closes the CI release PR) or
+     `git rev-list origin/release/next..release/next` (local, if the branch exists) is not empty. Then
+     `git push origin --delete release/next` (the guardrail allows exactly this), then
+     `git checkout -B release/next origin/<default>` (no local delete), `git push -u origin release/next`.
    No `+semver` commit: the version comes from the GitVersion branch config (`release-branches.md`).
 3. If `--feature <nr>` → insert `Release branch: release/next` as the second line of that issue's
    body (`gh issue view <nr> --json body`, `gh issue edit <nr> --body-file -`); keep the `Parent …`
@@ -36,14 +39,16 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
    `release-branches.md`). It must match `^release/(next|[0-9]+\.[0-9]+)$`, else stop.
    `git checkout "$branch" --; git pull --ff-only`.
 5. Refuse (stop and report) when `git merge-base --is-ancestor origin/<default> HEAD` fails (branch behind
-   `<default>`: merge it in first) or `git merge-base --is-ancestor HEAD origin/<default>` succeeds (head already
-   merged: nothing to release, run `cut`).
+   `<default>`: merge it in first) or `git merge-base --is-ancestor HEAD origin/<default>` succeeds (head equals
+   `<default>` or already merged: nothing to release, no commits ahead; run `cut` if released).
 6. Open work must be merged first: `gh pr list --base <branch> --state open` must be empty;
    otherwise stop and list the PRs.
 7. Bump: `minor` by default, `major` only when the argument `major` is given (or the user answered major
-   when run in the main context); never ask in a fork. Minor adds nothing. Major, only if no
-   `+semver: major` commit exists yet (`git log origin/<default>..HEAD --grep '^+semver: major' -E`) →
-   `git commit --allow-empty -m "chore: release major" -m "+semver: major"`, `git push`.
+   when run in the main context); never ask in a fork. On `release/next` minor adds nothing; major adds
+   `git commit --allow-empty -m "chore: release major" -m "+semver: major"` + `git push`, only if
+   `git log origin/<default>..HEAD -F --grep '+semver: major'` is empty. A `release/<x.y>` branch has no
+   GitVersion Minor config: add `+semver: minor|major` the same way (message `chore: release minor|major`)
+   when `origin/<default>..HEAD` has no `+semver:` commit.
 8. The release PR is created and kept current by CI (`release-pr.yml`, GravionLabs/ci
    `versioning/release-pr`): `gh pr list --base <default> --head <branch> --state open --json number,url`.
    None found (no workflow in this repo, or it has not run) → open it with `github-pull-request`
