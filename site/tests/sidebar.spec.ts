@@ -18,9 +18,18 @@ function pagesOnDisk(dir = docs, prefix = ''): string[] {
 
 const listed = sidebar.flatMap((g) => g.items.map((i) => i.link));
 
+/** `docs/index.md`: the home page (the README), reached by the site title, not the sidebar. */
+const homePage = '/index';
+
 describe('the sidebar of the docs site', () => {
-  it('lists every existing docs page in some group', () => {
-    expect(pagesOnDisk().filter((p) => !listed.includes(p))).toEqual([]);
+  it('lists every existing docs page in some group, except the home page', () => {
+    expect(pagesOnDisk().filter((p) => p !== homePage && !listed.includes(p))).toEqual([]);
+  });
+
+  it('does not list the home page', () => {
+    expect(pagesOnDisk()).toContain(homePage);
+    expect(listed).not.toContain(homePage);
+    expect(listed).not.toContain('/');
   });
 
   it('lists only pages that exist, except the CI-generated ones', () => {
