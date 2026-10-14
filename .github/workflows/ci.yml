@@ -181,6 +181,10 @@ jobs:
         run: pnpm run generate:ci -- --version ${{ needs.determine-version.outputs.semver }}
 
       - name: Install APM CLI
+        env:
+          # Authenticated GitHub API calls avoid the anonymous shared-IP rate limit (HTTP 403)
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || github.token }}
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: curl -sSL https://aka.ms/apm-unix | sh
 
       - name: Pack marketplace
