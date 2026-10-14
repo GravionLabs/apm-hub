@@ -53,7 +53,7 @@ Legacy names kept for compatibility:
 | `# lead ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | next major (currently expected as 3.0.0) |
 | `# dev-workflow ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | next major (currently expected as 3.0.0) |
 
-The `development-workflow` package was a clean rename with no alias (#178, closed in 2.1), a record of a past decision, so there is nothing to remove; the note in `README.md` stays for searchability.
+The `development-workflow` package was a clean rename with no alias (#178, released in 2.2.0), a record of a past decision, so there is nothing to remove; the note in `README.md` stays for searchability.
 
 ## Issues
 
