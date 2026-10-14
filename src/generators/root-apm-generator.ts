@@ -25,11 +25,11 @@ export function generateRootApm(packagesBaseDir = 'packages'): void {
 
   const depLines = domains.map((d) => `    - ./${packagesBaseDir}/${d}`).join('\n');
 
-  const output = `name: copilot-hub
+  const output = `name: apm-hub
 version: ${version}
 description: >
-  Meta-package — installs all copilot-hub packages for repository contributors.
-  Use individual packages (e.g. gravion/copilot-hub/packages/angular) in your projects.
+  Meta-package — installs all apm-hub packages for repository contributors.
+  Use individual packages (e.g. gravion/apm-hub/packages/angular) in your projects.
 author:
   name: Gravion
 license: MIT

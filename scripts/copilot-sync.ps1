@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-    Sync local Copilot configuration files with the latest versions from GravionLabs/copilot-hub.
+    Sync local Copilot configuration files with the latest versions from GravionLabs/apm-hub.
 
 .DESCRIPTION
     Discovers all installed Copilot files (.github/instructions, .github/prompts, .github/agents)
     and their counterparts in the optional global base directory (~/.github by default).
     Fetches remote versions, compares, and applies updates. Also reports new templates
-    available in copilot-hub that are not yet installed anywhere.
+    available in apm-hub that are not yet installed anywhere.
 
     Requires: pwsh (PowerShell Core), gh CLI (authenticated)
 
@@ -57,7 +57,7 @@ $ErrorActionPreference = 'Stop'
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 
-$Repo       = 'GravionLabs/copilot-hub'
+$Repo       = 'GravionLabs/apm-hub'
 $RemoteBase = 'templates'
 
 $Categories = @(
@@ -353,7 +353,7 @@ function Find-NewTemplates {
         return @{}
     }
 
-    Write-Host "`n🆕 New templates available in copilot-hub (not yet installed):"
+    Write-Host "`n🆕 New templates available in apm-hub (not yet installed):"
     foreach ($cat in $Categories) {
         if ($newByCategory.ContainsKey($cat.Name) -and $newByCategory[$cat.Name]) {
             $names = $newByCategory[$cat.Name] -join ', '
@@ -419,7 +419,7 @@ function Write-FinalReport {
     }
 
     if ($missing) {
-        Write-Host "⚠️  Not found in copilot-hub (custom files, skipped) ($($missing.Count)):"
+        Write-Host "⚠️  Not found in apm-hub (custom files, skipped) ($($missing.Count)):"
         foreach ($e in $missing) { Write-Host "  $($e.LocalPath)" }
         Write-Host ""
     }
@@ -427,7 +427,7 @@ function Write-FinalReport {
     if ($updated -and -not $DryRun) {
         Write-Host "Tip: commit changes with:"
         Write-Host "  git add .github/"
-        Write-Host "  git commit -m `"chore: sync Copilot templates from copilot-hub`""
+        Write-Host "  git commit -m `"chore: sync Copilot templates from apm-hub`""
     }
 }
 

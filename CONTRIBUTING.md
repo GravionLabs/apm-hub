@@ -20,6 +20,8 @@ pnpm install
 pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1 -Full
 ```
 
+The repo uses pnpm (`pnpm-lock.yaml`) only. `test/integration` is the exception: it is an isolated Vitest harness with its own `package-lock.json`, installed with `npm` by the `test:integration` script, so keep that lockfile.
+
 ## Adding or changing a skill
 
 1. Put it under `packages/<domain>/.apm/skills/<name>/` (only repo-contributor tooling goes to `.github/skills/`). Use the `skill-write` skill from `packages/apm-tooling` or start from its `assets/skill-template-optimized.md`.
