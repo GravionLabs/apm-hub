@@ -13,7 +13,7 @@ The release PR to `main` is created and refreshed by the `release-pr` workflow o
 release branch (GravionLabs/ci `versioning/release-pr`); the owner only merges it.
 
 One rolling branch, `release/next`, serves every release. `github-release cut` creates it from `main`, or
-deletes and recreates it from `main` when it exists and is already merged into `main` (no force push). While it holds unreleased work, `cut` never resets it; `cut --feature` only records `Release branch: release/next`. After its
+deletes and recreates it from `main` when it exists and is already merged into `main` (no force push; the git guardrail allows the remote delete of exactly `release/next`). While it holds unreleased work, `cut` never resets it; `cut --feature` only records `Release branch: release/next`. After its
 merge the branch is reset by the next `cut`, never continued, so it can never be released under a stale name.
 
 - **Bump rule:** minor by default, no commit needed. `finish` defaults to minor; `finish major` adds an empty

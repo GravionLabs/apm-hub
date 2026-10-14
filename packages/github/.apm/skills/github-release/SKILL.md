@@ -23,7 +23,8 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
    - fails (unreleased work): never reset. With `--feature <nr>` only record the line (step 3); without it stop and report.
    - succeeds (already merged): reset by delete and recreate (no force push). Stop first if open PRs target it
      (`gh pr list --base release/next --state open`; deleting closes the CI release PR), then
-     `git push origin --delete release/next`, `git branch -D release/next` (if local), create as above.
+     `git push origin --delete release/next` (the guardrail allows exactly this), then create it with
+     `git checkout -B release/next origin/<default>` (no local delete needed), `git push -u origin release/next`.
    No `+semver` commit: the version comes from the GitVersion branch config (`release-branches.md`).
 3. If `--feature <nr>` → insert `Release branch: release/next` as the second line of that issue's
    body (`gh issue view <nr> --json body`, `gh issue edit <nr> --body-file -`); keep the `Parent …`

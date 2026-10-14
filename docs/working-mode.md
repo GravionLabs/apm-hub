@@ -141,7 +141,7 @@ resumes from the ledger.
   and exit-0 behavior. Copilot versions that do not write `session.usage_record` stay silent: check `/context`
   or `/usage` yourself before a long step.
 - The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code; `preToolUse` on
-  Copilot CLI after the manual setup): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them,
+  Copilot CLI after the manual setup): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them (except the rolling `release/next`, which `github-release cut` deletes and recreates),
   `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
   uncommitted changes, also inside `env`, `sudo`, `bash -c`, `xargs` and similar wrappers, `git -c alias.*` values
   and `echo …`/heredocs piped into a shell. Every other command passes. Opt out per repo with
