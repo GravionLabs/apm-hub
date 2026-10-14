@@ -438,6 +438,8 @@ describe('git-guardrails hook', () => {
 
   describe('performance and limits', () => {
     const CAP = 24576;
+    // Wall-clock bound per hook run; CI runners are 2-3x slower than a developer machine (#247).
+    const BOUND = process.env.CI ? 9000 : 3000;
     const msg = Array.from({ length: 440 }, (_, i) => `line ${i} of a long commit message with some words`).join('\n');
     const timed = (fn: () => { out: string }) => {
       const t = Date.now();
@@ -450,12 +452,12 @@ describe('git-guardrails hook', () => {
       expect(c.length).toBeLessThan(CAP);
       const { r, ms } = timed(() => run(claude(c)));
       expect(r.out).toBe('');
-      expect(ms).toBeLessThan(3000);
+      expect(ms).toBeLessThan(BOUND);
     });
     it.each(big)('scans a ~22 KB commit quickly without jq', (c) => {
       const { r, ms } = timed(() => runNoJq(claude(c)));
       expect(r.out).toBe('');
-      expect(ms).toBeLessThan(3000);
+      expect(ms).toBeLessThan(BOUND);
     });
     it('still denies a destructive command after a long heredoc', () => {
       const c = `git commit -m "$(cat <<'EOF'\n${msg}\nEOF\n)" && git reset --hard`;
@@ -489,15 +491,15 @@ describe('git-guardrails hook', () => {
       for (const fn of [run, runNoJq]) {
         const { r, ms } = timed(() => fn(claude(c)));
         expect(denied(r)).toBe(true);
-        expect(ms).toBeLessThan(3000);
+        expect(ms).toBeLessThan(BOUND);
       }
-    });
+    }, 3 * BOUND);
     it('fails open above 24 KB, quickly, also for a 30000-line heredoc', () => {
       expect(run(claude(`git reset --hard # ${'x'.repeat(CAP)}`)).out).toBe('');
       const c = `cat <<EOF\n${'x\n'.repeat(30000)}EOF${tail}`;
       const { r, ms } = timed(() => runNoJq(claude(c)));
       expect(r.out).toBe('');
-      expect(ms).toBeLessThan(3000);
+      expect(ms).toBeLessThan(BOUND);
     });
     it('denies nesting deeper than 24 levels with a reason', () => {
       const deep = (k: number) => `echo ${'$(echo '.repeat(k)}x${')'.repeat(k)}; git status`;
