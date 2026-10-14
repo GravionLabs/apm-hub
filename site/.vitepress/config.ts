@@ -1,13 +1,15 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitepress';
+import { withMermaid } from 'vitepress-plugin-mermaid';
 import { repoFilesOnDisk, repoLinksPlugin, REPO_URL } from './repo-links';
 import { sidebar } from './sidebar';
 
 const repoRoot = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const files = repoFilesOnDisk(repoRoot);
 
-export default defineConfig({
+export default withMermaid(
+  defineConfig({
   title: 'apm-hub',
   description:
     'Cross-platform agent skills for GitHub Copilot, Claude Code and OpenCode, distributed as APM packages.',
@@ -46,4 +48,5 @@ export default defineConfig({
     socialLinks: [{ icon: 'github', link: REPO_URL }],
     footer: { message: 'Released under the MIT License.' },
   },
-});
+})
+);

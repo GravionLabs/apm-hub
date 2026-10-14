@@ -70,10 +70,12 @@ describe('the navigation', () => {
 });
 
 describe('the home page', () => {
-  it('includes the README at the repository root and has no edit link', () => {
+  it('is a landing page with a hero and features and has no edit link', () => {
     const index = readFileSync(resolve(repoRoot, 'docs/index.md'), 'utf8');
-    expect(index).toMatch(/<!--\s*@include:\s*\.\.\/README\.md\s*-->/);
-    expect(index).toMatch(/^---\neditLink: false\n---/);
+    expect(index).toMatch(/^---\nlayout: home\n/);
+    expect(index).toMatch(/^hero:$/m);
+    expect(index).toMatch(/^features:$/m);
+    expect(index).toMatch(/^editLink: false$/m);
   });
 
   it('gets README links rewritten against the files of the repository', async () => {
