@@ -6,7 +6,7 @@ A curated hub of cross-platform **agent skills** — distributed as APM packages
 
 ## What is apm-hub?
 
-**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the `agents` package adds the `orchestrator` primary agent and its `explorer`, `planner`, `reviewer` and `implementer` subagents. Entry points beyond skill names are the `/orch` prompt and the `orchestrator` agent.
+**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the `agents` package adds the `orchestrator` primary agent and its `explorer`, `planner`, `reviewer` and `implementer` subagents. The entry point beyond skill names is the `orchestrator` agent (`/orch` is deprecated and removed in 3.0.0).
 
 Skills are the primary artifact: one `SKILL.md` source file loads unchanged on GitHub Copilot, Claude Code, and OpenCode. See the [skill frontmatter convention](docs/concepts/skill-frontmatter.md) for how that is guaranteed.
 
@@ -104,7 +104,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | Package       | Contents                                                                                                                                       |
 | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- |
 | `shared`      | `implementation`, `detect-techstack`, `code-review`                                                                                            |
-| `delivery`    | `orch-pipeline` (`/orch`), `review-fanout`, `verify-project`, `issue-planning`; formerly `development-workflow`                                |
+| `delivery`    | `review-fanout`, `verify-project`, `issue-planning`; formerly `development-workflow`                                |
 | `github`      | `github-issue`, `github-pull-request`                                                                                                          |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`) |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`              |

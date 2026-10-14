@@ -56,12 +56,10 @@ apm install delivery@apm-hub   # pulls in github, shared and the language packag
 2. **Run the orchestrated pipeline**
 
    ```text
-   /orch feature 42
+   claude --agent orchestrator "full 42"
    ```
 
-   `orch-pipeline` creates the branch per the conventional-commit type, writes up to five testable tasks and stops at **gate 1** for approval. Each task then goes through red → green → refactor and `verify-project`. `review-fanout` reviews the diff in parallel dimensions; blocking findings are fixed and re-reviewed. **Gate 2** shows the verdict and `git diff --stat` before committing.
-
-   Modes: `feature` (default), `fix` (first task is a failing reproduction test), `review` (only run the review fan-out).
+   The orchestrator creates the branch per the conventional-commit type, writes testable tasks and stops at the **plan gate** for approval. Each task then goes through red → green → refactor and `verify-project`. `review-fanout` reviews the diff in parallel dimensions; blocking findings are fixed and re-reviewed. Modes: `plan`, `implement`, `full`, `next`; a description instead of an issue number creates the PBI at the plan gate. The old `/orch` prompt is deprecated (removed in 3.0.0).
 
 3. **Open the pull request**
 
@@ -81,7 +79,7 @@ Without the pipeline, `github-issue` alone implements a single issue or a batch:
 Verify the project.
 ```
 
-`verify-project` loads `detect-techstack`, runs the build with the detected package manager, runs the tests through each detected `<lang>-test` skill and lints. It returns a JSON result with `ok` or `fail` and the first error line, which is also what `orch-pipeline` reads.
+`verify-project` loads `detect-techstack`, runs the build with the detected package manager, runs the tests through each detected `<lang>-test` skill and lints. It returns a JSON result with `ok` or `fail` and the first error line, which is also what the orchestrator reads.
 
 ---
 
@@ -110,7 +108,7 @@ apm install ng@apm-hub   # Angular only
 Finish the release with an updated changelog.
 ```
 
-`github-release finish` runs git-cliff for the changelog and, on first use, installs git-cliff, creates `cliff.toml` from its template and adds a `changelog` script (see its `references/cliff-setup.md`). Commit titles produced by `orch-pipeline` and `github-pull-request` already follow the conventional-commit format it expects.
+`github-release finish` runs git-cliff for the changelog and, on first use, installs git-cliff, creates `cliff.toml` from its template and adds a `changelog` script (see its `references/cliff-setup.md`). Commit titles produced by the orchestrator and `github-pull-request` already follow the conventional-commit format it expects.
 
 ---
 

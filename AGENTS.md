@@ -1,6 +1,6 @@
 # apm-hub — Working in this repository
 
-apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships five **agents** that skills cannot replace: the `orchestrator` orchestrator (primary agent, keeps only phase summaries in context) and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to, each with its own model and tool set. Entry points beyond skill names: `/orch` (prompt) and `orchestrator` (agent).
+apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships five **agents** that skills cannot replace: the `orchestrator` orchestrator (primary agent, keeps only phase summaries in context) and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to, each with its own model and tool set. Entry point beyond skill names: `orchestrator` (agent, takes an issue number or a description). `/orch` is deprecated and removed in 3.0.0.
 
 ## Layout
 
@@ -26,7 +26,7 @@ apm.yml                               # marketplace: lists all packages
 | Package | Skills |
 |:--|:--|
 | `shared` | `implementation` (every change has tests; dispatches to `<lang>-implementation`), `detect-techstack` (JSON stack report), `diagnose` (bug fixes: red-capable feedback loop → minimal repro → ranked hypotheses → fix + regression test), `code-review` (severity-rated review using each language's `## Review rules`) |
-| `delivery` | `orch-pipeline` (plan → TDD → review fan-out → commit, `/orch`), `review-fanout`, `verify-project`, `issue-planning`, `retro` (user-invoked run retrospective, `scripts/Get-RunMetrics.ps1`), `handoff` (user-invoked hand-off document for the next session, `.agents/handoff-<date>.md`). Depends on `github` and `shared`; stack packages are installed per project. |
+| `delivery` | `review-fanout`, `verify-project`, `issue-planning`, `retro` (user-invoked run retrospective, `scripts/Get-RunMetrics.ps1`), `handoff` (user-invoked hand-off document for the next session, `.agents/handoff-<date>.md`), `orch-pipeline` (deprecated stub, removed in 3.0.0). Depends on `github` and `shared`; stack packages are installed per project. |
 | `github` | `github-issue` (routing skill for the Epic→Feature→PBI→Task hierarchy; references for standalone, batch, sub-issues, task issues, conventional commits, release branches), `github-pull-request` (targets the release branch, not `main`), `github-release` (cut the rolling `release/next`, finish with the release PR into `main`; owns the git-cliff changelog, `references/cliff-setup.md`) |
 | `dotnet` | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`. Depends on `dotnet/skills` (`dotnet` plugin) |
 | `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
