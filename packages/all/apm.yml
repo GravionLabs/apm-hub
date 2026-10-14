@@ -1,5 +1,5 @@
 name: all
-version: 2.2.3
+version: 2.2.4
 description: >
   Meta-package that installs every apm-hub package except apm-tooling in one step.
   Use it in workspaces that mix several tech stacks.

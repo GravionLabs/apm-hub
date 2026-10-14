@@ -8,73 +8,73 @@
     {
       "name": "core",
       "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the orchestrator agent and its subagents and the hooks. Stack packages are installed per project.",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/core"
     },
     {
       "name": "all",
       "description": "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks.",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/all"
     },
     {
       "name": "agents",
       "description": "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the explorer, planner, reviewer and implementer subagents it delegates to.",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/agents"
     },
     {
       "name": "hooks",
       "description": "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit on Claude Code, postToolUse on Copilot CLI) injects a hand-off hint above 150k tokens; the git guardrails (PreToolUse) deny destructive git commands. OpenCode gets a plugin (ledger and context warning) shipped at .apm/opencode/plugins/apm-hub-hooks.ts; after apm install, copy it to .opencode/plugins/ or ~/.config/opencode/plugins/ by hand until an apmw release with GravionLabs/apmw#38 (open) does it via apmw sanitize -p opencode.",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/hooks"
     },
     {
       "name": "apm-tooling",
       "description": "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files.",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/apm-tooling"
     },
     {
       "name": "delivery",
       "description": "Issue-driven development workflow: review fan-out, project verification, issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project.",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/delivery"
     },
     {
       "name": "dotnet",
       "description": "C#/.NET skills: implementation conventions and review rules, NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, MCP server generation.",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/dotnet"
     },
     {
       "name": "github",
       "description": "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation, pull request creation, release branches (cut, finish).",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/github"
     },
     {
       "name": "ng",
       "description": "Angular 21+ skills: implementation conventions and review rules, Vitest/TestBed testing, component and project scaffolding, NgRx Signal Store, AG Grid Enterprise.",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/ng"
     },
     {
       "name": "py",
       "description": "Python skills: implementation conventions and review rules, pytest testing with markers and pytest-mock, uv project scaffolding, curated uv CLI reference.",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/py"
     },
     {
       "name": "shared",
       "description": "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), severity-rated code review (code-review), bug diagnosis (diagnose).",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/shared"
     },
     {
       "name": "ts",
       "description": "TypeScript and Node.js skills: implementation conventions and review rules, Vitest testing, project scaffolding, ESLint/Prettier/Husky setup, pnpm migration, MCP server generation.",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "source": "./packages/ts"
     }
   ]
