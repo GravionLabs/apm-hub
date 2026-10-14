@@ -1,5 +1,5 @@
 name: dotnet
-version: 2.2.1
+version: 2.2.2
 description: C#/.NET skills. Implementation conventions and review rules (async, DI, logging, EF Core, Carter minimal APIs), NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, and MCP server generation.
 author:
   name: Gravion
