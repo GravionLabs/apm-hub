@@ -46,12 +46,12 @@ function padCell(value: string, width: number, alignment: Alignment): string {
   }
 }
 
-/** Parse a Markdown table row into trimmed cell strings (strips outer pipes) */
+/** Parse a Markdown table row into trimmed cell strings (strips outer pipes; `\|` stays inside its cell) */
 function parseRow(line: string): string[] {
   return line
     .trim()
     .replace(/^\||\|$/g, '')
-    .split('|')
+    .split(/(?<!\\)\|/)
     .map((c) => c.trim());
 }
 

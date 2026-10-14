@@ -19,6 +19,15 @@ describe('formatTablesInMarkdown', () => {
     expect(lines[3]).toBe('| Long name here | A much longer description |');
   });
 
+  it('keeps escaped pipes inside their cell', () => {
+    const input = ['| Agent | Role |', '| :--- | :--- |', '| `o` | `plan\\|full` runs |'].join('\n');
+
+    const lines = formatTablesInMarkdown(input).split('\n');
+
+    expect(lines[2]).toBe('| `o`   | `plan\\|full` runs |');
+    expect(lines[0]).toBe('| Agent | Role              |');
+  });
+
   it('handles center-aligned columns', () => {
     const input = [
       '| Left | Center | Right |',
