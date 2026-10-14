@@ -59,7 +59,7 @@ description: >
 
 - Scripts: flag-based, `--help`, no interactive prompts, data on stdout, diagnostics on stderr, non-zero exit on failure, dependencies declared and pinned
 - Load references conditionally, never all of them; keep chains one level deep (A → B, never A → B → C); paths relative from the skill root
-- Compose, don't duplicate: if two skills share a workflow, one delegates to the other (`orchestrator` calls `review-fanout` and `verify-project` instead of inlining them)
+- Compose, don't duplicate: if two skills share a workflow, one delegates to the other (`implementation` dispatches to `<lang>-implementation` instead of restating each language's conventions)
 - No content duplicated between body and references, or between two skills
 
 ### CLI output

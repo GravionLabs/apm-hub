@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { execFileSync } from 'child_process';
+import { countBodyLines } from './agent-size-validator';
 
 const pk = path.resolve(__dirname, '../../packages');
 const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
@@ -18,15 +19,15 @@ const batch = read('github/.apm/skills/github-issue/references/batch-workflow.md
 
 describe('orch-pipeline deprecation stub', () => {
   const stub = read('delivery/.apm/skills/orch-pipeline/SKILL.md');
-  const body = stub.split(/^---$/m)[2].trim().split('\n');
+  const frontmatter = stub.split(/^---$/m)[1];
 
   it('is deprecated, hidden from model invocation and points to the agent', () => {
-    expect(stub).toMatch(/^description: 'Deprecated, use the orchestrator agent/m);
-    expect(stub).toContain('disable-model-invocation: true');
-    expect(stub).toContain("opencode/autoinvoke: 'false'");
-    expect(body.length).toBeLessThanOrEqual(10);
+    expect(frontmatter).toMatch(/^description: 'Deprecated, use the orchestrator agent/m);
+    expect(frontmatter).toContain('disable-model-invocation: true');
+    expect(frontmatter).toContain("opencode/autoinvoke: 'false'");
+    expect(countBodyLines(stub)).toBeLessThanOrEqual(10);
     for (const c of ['claude', 'copilot', 'opencode']) expect(stub).toContain(`${c} --agent orchestrator`);
-    expect(stub).toContain('docs/working-mode.md');
+    expect(stub).toContain('https://github.com/GravionLabs/apm-hub/blob/main/docs/working-mode.md');
     expect(stub).toContain('3.0.0');
   });
 
@@ -37,9 +38,8 @@ describe('orch-pipeline deprecation stub', () => {
 });
 
 describe('task flow consistency', () => {
-  it.each([
-    ['orchestrator', orchestrator],
-  ])('%s describes the shared task flow', (_n, text) => {
+  it('orchestrator describes the shared task flow', () => {
+    const text = orchestrator;
     expect(text).toContain('task-<nr>-report.md');
     expect(text).toContain('<first BASE>..HEAD');
     // footer paired with never-Closes, in the same sentence
@@ -129,10 +129,18 @@ describe('task flow consistency', () => {
   });
 
   it('resume uses the ledger DONE line cross-checked with git, and bugs are PBI-like', () => {
-    for (const t of [orchestrator]) {
-      expect(t).toContain('`Task #<nr>: DONE`');
-      expect(t).toMatch(/no duplicate task commits/);
-    }
+    expect(orchestrator).toContain('`Task #<nr>: DONE`');
+    expect(orchestrator).toMatch(/no duplicate task commits/);
+    // the PR phase never re-commits: Task commits already exist from the implement phase
+    expect(orchestrator).toMatch(/Task commits are already made, no extra commit/);
+    // bugs: the implementer loads diagnose first; Task bodies under a Bug carry `Parent Bug: #<bug>`
+    expect(orchestrator).toMatch(/bug = label `bug`[^)]*load `diagnose` first/);
+    expect(taskIssues).toContain('`Parent Bug: #<bug>`');
+  });
+
+  it('the implementer loads the implementation skill for every task', () => {
+    const implementer = read('agents/.apm/agents/implementer.agent.md');
+    expect(implementer).toMatch(/Load the `implementation` skill/);
   });
 
   it('Parent Bug variant is consistent across publish, plan-schema, task-issues and template', () => {

@@ -26,7 +26,7 @@ The input type decides it (`labels`, else title prefix):
 | Epic | Features (`Feature: …`) | yes, at publish |
 | Feature | PBIs (`feat: …`, `fix: …`) | yes, at publish |
 | PBI or bug | tasks (`chore: …`) | only for ≥ 2 tasks: `[Task]` sub-issues at publish; one task stays in the plan file |
-| Description only | internal tasks | no |
+| Description only | internal tasks | no (the orchestrator creates the PBI at the gate, then Task issues as for a PBI) |
 
 ## Steps
 

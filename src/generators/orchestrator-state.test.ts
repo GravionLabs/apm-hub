@@ -304,9 +304,10 @@ describe('orchestrator flags: overview and review summary', () => {
   });
 
   it('orch prompt is a one-line deprecation pointing to the agent', () => {
-    expect(prompt).toContain('Deprecated');
+    const [, frontmatter, ...rest] = prompt.split(/^---$/m);
+    expect(frontmatter).toMatch(/^description: "Deprecated, use the orchestrator agent/m);
     expect(prompt).toContain('--agent orchestrator');
-    expect(prompt.split(/^---$/m)[2].trim().split('\n')).toHaveLength(1);
+    expect(rest.join('---').trim().split('\n')).toHaveLength(1);
   });
 
   it('agent states the defaults and delegates to the reference', () => {

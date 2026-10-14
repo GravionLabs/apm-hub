@@ -74,7 +74,7 @@ Flags, mode and issue: $ARGUMENTS
 The command runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
 session context keeps growing, so prefer `claude --agent orchestrator` for real work.
 
-### Copilot CLI and the deprecated `/orch`
+### Copilot CLI
 
 `copilot --agent orchestrator` runs the phases inline in the Copilot session (no per-phase subagent isolation), with the same modes, gates and ledger. The `/orch` prompt (skill `orch-pipeline`) is deprecated and removed in 3.0.0; use the orchestrator agent instead.
 

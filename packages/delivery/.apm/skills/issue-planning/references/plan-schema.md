@@ -41,8 +41,8 @@ Written to `.agents/<issue>/plan.json` by the planning step, read by the primary
 | Field | Rule |
 |:--|:--|
 | `phase`, `status` | `"plan"`; planning sets `ok` or `fail`; publish sets `published` or `partial` (the failing step goes in `summary`) |
-| `parent_issue` | Number of the planned issue, `null` for a description |
-| `input_type` | `epic`, `feature`, `pbi`, `bug`, `description` |
+| `parent_issue` | Number of the planned issue, `null` for a description until the orchestrator creates its PBI |
+| `input_type` | `epic`, `feature`, `pbi`, `bug`, `description`; the orchestrator rewrites a `description` plan to `pbi` when it creates the PBI at the plan gate |
 | `level` | `feature` (from epic), `pbi` (from feature), `task` (from pbi, bug, description) |
 | `depth` | `quick`, `standard`, `deep` (exploration budget only) |
 | `items[].id` | Unique plan id (`p1`, `p2`, …) |
@@ -57,7 +57,7 @@ Written to `.agents/<issue>/plan.json` by the planning step, read by the primary
 
 ## Validity
 
-- Level `task` from a PBI or bug with ≥ 2 items creates `[Task]` sub-issues (`task-issues.md` in `github-issue`); `issue` caches their numbers and the issues stay the source of truth. A single task or a description creates none: `issue` stays `null`, publish is a no-op. Never a mix of null and numbers after publish (`issue-plan-schema.test.ts` checks both rules). A plan from a `description` never has issue numbers.
+- Level `task` from a PBI or bug with ≥ 2 items creates `[Task]` sub-issues (`task-issues.md` in `github-issue`); `issue` caches their numbers and the issues stay the source of truth. A single task or a description creates none: `issue` stays `null`, publish is a no-op. The orchestrator first turns a description plan into a PBI plan at the plan gate (PBI created, `parent_issue` set, `input_type: pbi`, `Parent PBI` body lines; `github-issue` `references/orchestrator-gates.md`), so its ≥ 2 tasks are then published as `[Task]` sub-issues. Never a mix of null and numbers after publish (`issue-plan-schema.test.ts` checks both rules). A plan from a `description` never has issue numbers.
 - Ids are unique. Every string in `blocked_by` and every id in `blocks` resolves to an item; integers are existing issues (publish links them via the blocked_by endpoint even when the item is new). `blocked_by` has no cycles and no self-reference.
 - `recommended` is one of `options`; `options` has at least 2 distinct entries.
 - Publish runs only after every `questions[]` entry is answered, dropped or deferred.

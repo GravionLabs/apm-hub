@@ -12,4 +12,4 @@ Deprecated, removed in 3.0.0. Use the orchestrator agent instead:
 - `copilot --agent orchestrator`
 - `opencode --agent orchestrator`
 
-See `docs/working-mode.md`.
+See https://github.com/GravionLabs/apm-hub/blob/main/docs/working-mode.md.

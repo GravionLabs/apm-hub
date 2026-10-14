@@ -25,7 +25,7 @@ Read-only: never edit or commit.
 3. **Dedupe** by file + normalized evidence; keep highest severity. Never merge `spec` with `conventions` findings.
 4. **Verify** — a sub-agent (given the package path, not the diff) tries to disprove each CRITICAL/HIGH finding: `confirmed`, `refuted` (→ advisory), `unverifiable` (stays blocking).
 
-## Output (JSON only; with an issue number also write `.agents/<issue>/review.json`)
+## Output (JSON returned to the caller; a machine-readable copy for the caller goes to `.agents/<issue>/review.json`, else next to the package file in `$TMPDIR`)
 
 `{"mode":"mechanical|full","dimensions":[],"verdict":"APPROVE|CHANGES_REQUESTED","incomplete":false,"failedDimensions":[],"blocking":[{file,line,severity,issue,evidence}],"advisory":[]}`
 
