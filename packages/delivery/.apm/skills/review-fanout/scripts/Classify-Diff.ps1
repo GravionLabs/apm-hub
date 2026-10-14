@@ -44,7 +44,7 @@ $classes = [ordered]@{
   source      = '\.(c|cc|cpp|cs|cts|css|cjs|fs|go|h|hpp|html?|java|jsx?|kt|lua|mjs|mts|php|pl|ps1|psm1|psd1|py|r|rb|rs|scala|scss|sh|bash|zsh|svelte|swift|tsx?|vb|vue)$'
 }
 # Added lines that look like commands, installs or remote fetches add the security dimension.
-$risky = '\b(curl|wget|eval|iex|iwr|irm|chmod|chown|sudo|ssh|scp|sftp|rsync|nc|ncat|netcat|socat|telnet|npx|pnpx|bunx|uvx|base64|certutil|Invoke-Expression|Invoke-WebRequest|Invoke-RestMethod|DownloadString|FromBase64String)\b|\b[a-z][a-z0-9+.-]*://|\bgit@[\w.-]+:|\bgit\s+clone\b|\b(npm|pnpm|yarn|bun)\s+(i|install|add|dlx|exec|x)\b|\b(pip[0-9.]*|pipx|gem|cargo|uv\s+pip|uv\s+tool)\s+install\b|\bgo\s+(install|get)\b|\s-(enc\w*|ec)\b|\b(pwsh|powershell)(\.exe)?\b.*\s-e\b|\b(python[0-9.]*|py)\s+-c\b|\b(node|perl|ruby)\s+-e\b|\b(sh|bash|zsh)\s+(-c\b|<\()|\brm\s+(-\w+\s+)*-\w*[rf]|\|\s*(sh|bash|zsh|pwsh|powershell|python[0-9.]*|node|perl|ruby|iex)\b'
+$risky = '\b(curl|wget|eval|iex|iwr|irm|chmod|chown|sudo|ssh|scp|sftp|rsync|nc|ncat|netcat|socat|telnet|npx|pnpx|bunx|uvx|base64|certutil|Invoke-Expression|Invoke-WebRequest|Invoke-RestMethod|DownloadString|FromBase64String)\b|\b[a-z][a-z0-9+.-]*://|\bgit@[\w.-]+:|\bgit\s+clone\b|\b(npm|pnpm|yarn|bun)\s+(i|install|add|dlx|exec|x)\b|\b(pip[0-9.]*|pipx|gem|cargo|uv\s+pip|uv\s+tool)\s+install\b|\bgo\s+(install|get)\b|\s-(enc\w*|ec)\b|\b(pwsh|powershell)(\.exe)?\b.*\s-e\b|\b(python[0-9.]*|py)\s+-c\b|\b(node|perl|ruby)\s+-e\b|\b(sh|bash|zsh)\s+(-c\b|<\()|\brm\s+(-\w+\s+)*-\w*[rf]|\|\s*(sh|bash|zsh|pwsh|powershell|python[0-9.]*|node|perl|ruby|iex)\b|<script|^\+\s*(import|export)\s|\brequire\(|\bchild_process\b|\bprocess\.env\b|\bfs\.(write|unlink|rm)'
 $sensitive = 'auth|crypt|password|secret|token|oauth|login|http|network|socket|sql|query|database|jwt|session|cookie|permission|rbac|acl|cert|tls|ssl|cors|csrf|hash|api[-_]?key|\.github/workflows|hook|dockerfile|husky|\.mcp|makefile|\.npmrc|\.vscode|setup\.py|conftest|\.env|migration|(^|/)public/'
 
 function Get-LocationClass([string]$p) {
@@ -78,7 +78,7 @@ function Test-Declared([string]$name, [string[]]$lines) {
 # injective rename of locally declared identifiers. Never members (after . or ?.), object keys,
 # shorthand properties, keyword arguments, builtins or matcher names. Anything unprovable: $false.
 function Test-RenameOnly([string[]]$pathspec) {
-  $d = @(git -c core.quotepath=off --literal-pathspecs diff -M -U100000 --no-color $Range -- @pathspec 2>$null)
+  $d = @(git -c core.quotepath=off --literal-pathspecs diff --ignore-submodules=none -M -U100000 --no-color $Range -- @pathspec 2>$null)
   if ($LASTEXITCODE -ne 0) { return $false }
   $rem = @(); $add = @(); $ctx = @(); $inHunk = $false
   foreach ($l in $d) {
@@ -165,7 +165,7 @@ try {
     if ($untracked.Count -gt 0) { Exit-WithFull "untracked files present: $($untracked[0])" }
   }
 
-  $out = @(git -c core.quotepath=off --literal-pathspecs diff -M --raw --numstat $Range -- 2>$null)
+  $out = @(git -c core.quotepath=off --literal-pathspecs diff --ignore-submodules=none -M --raw --numstat $Range -- 2>$null)
   if ($LASTEXITCODE -ne 0) { Exit-WithFull 'git diff failed' }
   $raw = @($out | Where-Object { $_.StartsWith(':') })
   $num = @($out | Where-Object { -not $_.StartsWith(':') })
@@ -219,7 +219,7 @@ try {
       }
     }
     $lines += $changed
-    $added = @(git -c core.quotepath=off --literal-pathspecs diff -M -U0 --no-color $Range -- @files 2>$null)
+    $added = @(git -c core.quotepath=off --literal-pathspecs diff --ignore-submodules=none -M -U0 --no-color $Range -- @files 2>$null)
     if ($LASTEXITCODE -ne 0) { Exit-WithFull "git diff failed for $path" }
     if (@($added | Where-Object { $_.StartsWith('+') -and -not $_.StartsWith('+++') -and $_ -imatch $risky }).Count -gt 0) {
       $risk = $true

@@ -18,13 +18,15 @@ Every path (rename source and destination) gets one class, first match wins:
 
 ## Mechanical
 
-Based on one `git diff -M --raw --numstat`. Mechanical only when every file is one of:
+Based on one `git diff --ignore-submodules=none -M --raw --numstat` (a submodule pointer hidden by `ignore = all` still shows). Mechanical only when every file is one of:
 
 - a **pure rename** (`R100`) with unchanged mode whose source and destination have the **same class**, that class is not exec or build, and an instruction, source, other or test file keeps its file name (a directory move; only docs and manifests may change the name). `a.json` → `composer.json` or `lib.js` → `gulpfile.js` is full, `src/lib.js` → `lib/lib.js` is mechanical. A package-directory move (`packages/a/.apm/skills/**` → `packages/b/.apm/skills/**`, SKILL.md and scripts included) stays in one class: mechanical. A rename that changes class (source → `package.json`, a config, an entry point, a hook, `.github/`, an instruction file; or out of one) is full;
 - a **docs** or **manifest** file, modified, added, deleted or renamed with edits within its class (an added file must be mode 100644);
 - a **test** file, modified or renamed with edits within its class and keeping its file name, passing the test-file rule. Added or deleted test files are full.
 
 The changed lines (added + deleted) of all non-pure-rename files together total at most **20** (`-MaxLines`). Any content change in exec, build, instruction, source or other files is full (SKILL.md, scripts, agent and prompt edits included), as are mode changes, symlinks, submodules, type changes, binaries and any path git C-quotes (tab, newline, `"` or `\` in the name).
+
+A package rename that also edits skill, agent or prompt text (instruction files) is `full` by design: only the pure move is mechanical. The orchestrator passes the user's request for a `full` review as `-Force full`.
 
 Always-full rename destinations, tested from `src/evil.js` (exec, build and instruction examples):
 
@@ -95,7 +97,7 @@ Mechanical runs `correctness` and `spec`. `security` is added when:
 
 - any touched path (source and destination) matches auth, crypt, password, secret, token, oauth, login, http, network, socket, sql, query, database, jwt, session, cookie, permission, rbac, acl, cert, tls, ssl, cors, csrf, hash, apikey, `.github/workflows`, hook, Dockerfile, `.env`, migration or `public/`;
 - any manifest (`apm.yml`, `marketplace.json`, `plugin.json`) changed: it stays mechanical (cheap renames) but dependency or source edits get a security look;
-- any added line in a docs, manifest or test file (renamed with edits included) contains a command, install or remote pattern: `curl`, `wget`, `eval`, `iex`, `iwr`/`irm`, `Invoke-Expression`, `Invoke-WebRequest`, `Invoke-RestMethod`, `chmod`, `sudo`, `ssh`/`scp`/`rsync`, `nc`/`ncat`/`socat`, `npx`/`pnpx`/`bunx`/`uvx`, `npm`/`pnpm`/`yarn`/`bun` `install`/`add`/`dlx`/`exec`, `pip`/`pipx`/`gem`/`cargo`/`uv pip` `install`, `go install`/`go get`, `-enc`/`-EncodedCommand`, `pwsh -e`, `python -c`, `node`/`perl`/`ruby -e`, `bash -c`, `bash <(`, `rm -rf`, `base64`, `certutil`, any `scheme://` URL (`https://`, `ftp://`, `ssh://`), `git@host:`, `git clone`, a pipe into `sh`/`bash`/`zsh`/`pwsh`/`powershell`/`python`/`node`/`iex`. Docs stay mechanical.
+- any added line in a docs, manifest or test file (renamed with edits included) contains a command, install or remote pattern: `curl`, `wget`, `eval`, `iex`, `iwr`/`irm`, `Invoke-Expression`, `Invoke-WebRequest`, `Invoke-RestMethod`, `chmod`, `sudo`, `ssh`/`scp`/`rsync`, `nc`/`ncat`/`socat`, `npx`/`pnpx`/`bunx`/`uvx`, `npm`/`pnpm`/`yarn`/`bun` `install`/`add`/`dlx`/`exec`, `pip`/`pipx`/`gem`/`cargo`/`uv pip` `install`, `go install`/`go get`, `-enc`/`-EncodedCommand`, `pwsh -e`, `python -c`, `node`/`perl`/`ruby -e`, `bash -c`, `bash <(`, `rm -rf`, `base64`, `certutil`, any `scheme://` URL (`https://`, `ftp://`, `ssh://`), `git@host:`, `git clone`, a pipe into `sh`/`bash`/`zsh`/`pwsh`/`powershell`/`python`/`node`/`iex`, or looks like executable code (`.mdx` pages): `<script`, a line starting with `import` or `export`, `require(`, `child_process`, `process.env`, `fs.write`/`fs.unlink`/`fs.rm`. Docs stay mechanical.
 
 ## Full (all five dimensions)
 

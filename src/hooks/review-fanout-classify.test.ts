@@ -33,9 +33,14 @@ it('reference documents the always-full destination list', () => {
   expect(ALWAYS_FULL).toEqual(expect.arrayContaining(['package.json', 'jest.config.js', '.eslintrc.js', 'src/index.js', 'vitest.config.ts']));
 });
 
-it('reference lists every sensitive path trigger used by the tests', () => {
+it('reference names the path triggers that the SENSITIVE fixtures exercise', () => {
   const dims = REFERENCE.slice(REFERENCE.indexOf('## Dimensions'));
   for (const w of ['auth', 'jwt', 'tls', 'migration', 'hook', 'Dockerfile', '`.env`', '`public/`']) expect(dims).toContain(w);
+});
+
+it('reference lists the executable-looking docs triggers', () => {
+  const dims = REFERENCE.slice(REFERENCE.indexOf('## Dimensions'));
+  for (const w of ['<script', 'import', 'require(', 'child_process', 'process.env', 'fs.write']) expect(dims).toContain(w);
 });
 
 type Result = { mode: string; dimensions: string[]; reason: string };
@@ -110,33 +115,51 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
   // classifies all `<branch>~1..<branch>` ranges in ONE pwsh process. Each case is still its own test.
   const batched = () => {
     const setups: Array<() => void> = [];
-    let results: Result[] = [];
+    type Out = { exit: number; stderr: string; out: string };
+    let outs: Out[] = [];
+    const setupErrors: unknown[] = [];
     beforeAll(() => {
       reset();
-      const ranges = setups.map((setup) => {
+      const ranges = setups.map((setup, i) => {
         const branch = `case-${++caseNo}`;
         git('checkout', '-qf', '-b', branch, 'base');
-        setup();
-        git('add', '-A');
-        git('commit', '-qm', branch);
+        try {
+          setup();
+          git('add', '-A');
+          git('commit', '-qm', branch);
+        } catch (e) {
+          setupErrors[i] = e; // reported by this case's own test, not by the shared hook
+        }
         return `${branch}~1..${branch}`;
       });
       reset();
       const r = spawnSync('pwsh', ['-NoProfile', '-File', runner, SCRIPT, ...ranges], { cwd: dir, encoding: 'utf8', env: hermetic(home) });
       expect(r.status).toBe(0);
-      results = r.stdout.trim().split('\n').map((l) => JSON.parse(l) as Result);
-      expect(results).toHaveLength(ranges.length);
+      outs = r.stdout.trim().split('\n').map((l) => JSON.parse(l) as Out);
+      expect(outs).toHaveLength(ranges.length);
     }, 60000);
     return (name: string, setup: () => void, check: (r: Result) => void) => {
       const i = setups.push(setup) - 1;
-      it(name, () => check(results[i]));
+      it(name, () => {
+        if (setupErrors[i]) throw setupErrors[i];
+        expect({ exit: outs[i].exit, stderr: outs[i].stderr }).toEqual({ exit: 0, stderr: '' });
+        check(JSON.parse(outs[i].out) as Result);
+      });
     };
   };
 
   beforeAll(() => {
     home = fs.mkdtempSync(path.join(os.tmpdir(), 'classify-home-'));
     runner = path.join(home, 'run-many.ps1');
-    fs.writeFileSync(runner, 'param([string]$Script)\nforeach ($r in $args) { & $Script -Range $r }\n');
+    fs.writeFileSync(runner, [
+        'param([string]$Script)',
+        'foreach ($r in $args) {',
+        '  $global:LASTEXITCODE = $null',
+        '  $err = @(); $o = & $Script -Range $r 2>&1 | ForEach-Object { if ($_ -is [System.Management.Automation.ErrorRecord]) { $err += "$_" } else { $_ } }',
+        '  @{ exit = $LASTEXITCODE; stderr = ($err -join "`n"); out = (@($o) -join "`n") } | ConvertTo-Json -Compress',
+        '}',
+        '',
+      ].join('\n'));
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'classify-'));
     git('init', '-q', '-b', 'main');
     git('config', 'user.email', 't@t');
@@ -183,6 +206,8 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     const batch = batched();
 
     batch('same-class source rename is mechanical with correctness and spec', () => git('mv', 'old', 'new'), expectMech);
+
+    batch('pure docs rename to another file name is mechanical', () => mv('docs/guide.md', 'docs/other.md'), expectMech);
 
     batch('basename-preserving directory move of an other file is mechanical', () => mv('a.json', 'config/a.json'), expectMech);
 
@@ -377,6 +402,12 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
 
   describe('content changes', () => {
     const batch = batched();
+
+    batch(
+      'executable code in an added .mdx page gets the security dimension',
+      () => write('docs/page.mdx', 'export const x = require("child_process").execSync("id")\n'),
+      expectSec,
+    );
 
     batch('plain docs edit is mechanical with correctness and spec', () => write('docs/guide.md', body.replace('line 3', 'new name')), expectMech);
 
@@ -642,6 +673,12 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       expectMech(classify());
     });
 
+    it('working-tree mode classifies a staged pure rename (no -Range)', () => {
+      mv('docs/guide.md', 'docs/other.md');
+      expect(git('diff', '--cached', '-M', '--name-status')).toBe('R100\tdocs/guide.md\tdocs/other.md\n');
+      expectMech(classify());
+    });
+
     it('explicit committed range is classified from that range', () => {
       write('docs/guide.md', body.replace('line 3', 'x'));
       git('commit', '-qam', 'docs');
@@ -682,6 +719,18 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     it('submodule is full', () => {
       git('update-index', '--add', '--cacheinfo', '160000,' + 'a'.repeat(40) + ',sub');
       git('commit', '-qm', 'sub');
+      expectFull(classify(['-Range', 'HEAD~1..HEAD']), /^symlink or submodule: sub$/);
+    });
+
+    // Not batched: needs two commits. `ignore = all` must not hide the pointer bump.
+    it('submodule pointer bump hidden by ignore = all next to a docs edit is full', () => {
+      git('update-index', '--add', '--cacheinfo', '160000,' + 'a'.repeat(40) + ',sub');
+      write('.gitmodules', '[submodule "sub"]\n\tpath = sub\n\turl = ../sub\n\tignore = all\n');
+      git('add', '.gitmodules');
+      git('commit', '-qm', 'sub');
+      git('update-index', '--cacheinfo', '160000,' + 'b'.repeat(40) + ',sub');
+      write('README.md', body.replace('line 3', 'x'));
+      git('commit', '-qam', 'bump');
       expectFull(classify(['-Range', 'HEAD~1..HEAD']), /^symlink or submodule: sub$/);
     });
 
