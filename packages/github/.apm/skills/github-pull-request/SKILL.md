@@ -10,7 +10,7 @@ Create a PR from the current branch. No dialogue — tool calls only. On Claude 
 
 - `issue_number` (default: the number in the branch name `<type>/<nr>-<slug>`; stop when neither exists)
 - `branch` (default: `git branch --show-current`)
-- `base_branch` (default: the integration branch per the `github-issue` skill's `references/release-branches.md`: a `release/*` branch, or `main` only when the head is `release/*` or the user asked for a hotfix; `<base>` below)
+- `base_branch` (default: the integration branch per the `github-issue` skill's `references/release-branches.md`: `release/next`, or `main` only when the head is `release/*` or the user asked for a hotfix; `<base>` below)
 - `auto_merge` (default: false)
 - `add_reviewer` (default: true)
 
@@ -39,6 +39,6 @@ Create a PR from the current branch. No dialogue — tool calls only. On Claude 
 ## Rules
 
 - Never create an empty PR (no commits beyond the base branch)
-- `<base>` is `main` but the head is not `release/*` and no hotfix was requested → stop and report; the work belongs on a release branch
+- `<base>` is `main` but the head is not `release/*` and no hotfix was requested → stop and report; the work belongs on `release/next`
 - Branch must be pushed: if `git log origin/<branch>..HEAD` is non-empty, run `git push -u origin HEAD` first
 - Never claim verification that was not run; if nothing was run, say so in the body

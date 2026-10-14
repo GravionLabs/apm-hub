@@ -141,7 +141,7 @@ resumes from the ledger.
   and exit-0 behavior. Copilot versions that do not write `session.usage_record` stay silent: check `/context`
   or `/usage` yourself before a long step.
 - The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code; `preToolUse` on
-  Copilot CLI after the manual setup): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them,
+  Copilot CLI after the manual setup): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them (except the rolling `release/next`, which `github-release cut` deletes and recreates),
   `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
   uncommitted changes, also inside `env`, `sudo`, `bash -c`, `xargs` and similar wrappers, `git -c alias.*` values
   and `echo …`/heredocs piped into a shell. Every other command passes. Opt out per repo with
@@ -226,7 +226,7 @@ Commit and push, then `/clear`, then `/github-pull-request`. `/github-release fi
 skills read everything they need from `git` and `gh`; they never depend on the session history,
 and on Claude Code they run with `context: fork`, so even at the end of a long session they start
 with a fresh context.
-The release PR itself is opened and refreshed by CI on every push to `release/<x.y>`. After it is merged, CI writes the changelog, tags, publishes the release and closes the
+The release PR itself is opened and refreshed by CI on every push to `release/next`. After it is merged, CI writes the changelog, tags, publishes the release and closes the
 issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
 
 ## 5. Keep the skill list short

@@ -240,7 +240,7 @@ check() { # check <tokens...> of one git invocation (after the word git)
         dst="${dst#refs/heads/}"
         case "$dst" in HEAD | @) dst="$cur" ;; esac
         protected "$dst" || continue
-        { [ $isdel = 1 ] || [ $del = 1 ]; } && deny "git guardrails: deleting $dst on the remote is blocked ($OPTOUT)"
+        { [ $isdel = 1 ] || [ $del = 1 ]; } && [ "$dst" != "release/next" ] && deny "git guardrails: deleting $dst on the remote is blocked ($OPTOUT)"
         [ $pf = 1 ] && deny "git guardrails: force push to $dst is blocked ($OPTOUT)"
       done ;;
     reset)

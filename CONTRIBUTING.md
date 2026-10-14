@@ -41,3 +41,13 @@ pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1 -Full
 ## Issues
 
 Use the templates in `.github/ISSUE_TEMPLATE/` (Epic → Feature → PBI → Task, Bug). Children are linked as native GitHub sub-issues; see `packages/github/.apm/skills/github-issue/references/sub-issues.md`.
+
+## Releases
+
+Releases are cut from a single rolling branch, `release/next`. GitVersion increments the minor version by default on that branch (`GitVersion.yml`).
+
+- Major: add an empty commit with `+semver: major` in its message when finishing the release.
+- Patch: fix on `main` as a hotfix, then merge `main` into `release/next`.
+- Parallel lines: use `release/<x.y>` branches.
+
+Details: `packages/github/.apm/skills/github-issue/references/release-branches.md`.
