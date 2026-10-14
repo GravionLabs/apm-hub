@@ -12,11 +12,11 @@ pwsh scripts/Invoke-TriggerEvals.ps1 -Baseline evals/baseline.json -Out evals/re
 pwsh scripts/Invoke-TriggerEvals.ps1 -Skill review-fanout,verify-project   # subset
 ```
 
-Install the skills first (`apm install` in the directory you run from) so `claude` sees them. Each prompt goes to `claude -p <prompt> --output-format stream-json --verbose`; Skill `tool_use` calls in the transcript are the chosen skills (a `plugin:skill` name counts as `skill`). The exit code is 1 when a threshold or the baseline comparison fails.
+Install the skills first (`apm install` in the directory you run from) so `claude` sees them. Each prompt goes to `claude -p <prompt> --output-format stream-json --verbose --model haiku --max-turns 2 --disallowedTools Edit Write Bash NotebookEdit` (the tool deny list keeps the model from changing the repo); Skill `tool_use` calls in the transcript are the chosen skills (a `plugin:skill` name counts as `skill`). The exit code is 1 when a threshold or the baseline comparison fails.
 
 ## Cost caveat
 
-Every prompt runs `-Runs` times (default 3) as a real model session: with the current set that is hundreds of calls. Run it on demand, never in CI, and use `-Skill` or `-Runs 1` while iterating.
+Every prompt runs `-Runs` times (default 3) as a real model session: with the current set that is 228 calls. The runner uses `-Model haiku` (cheapest), `-MaxTurns 2` and runs `-ThrottleLimit 8` sessions in parallel; the model, runs and date are stored under `meta` in the result. Run it on demand, never in CI, and use `-Skill` or `-Runs 1` while iterating.
 
 ## Result schema
 
