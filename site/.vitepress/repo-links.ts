@@ -37,7 +37,9 @@ const EXTERNAL = /^([a-z][a-z0-9+.-]*:|\/|#)/i;
 function resolveRepoPath(target: string, relativePath: string): string | null {
   const dir = README_PAGES.has(relativePath) ? '' : posix.join('docs', posix.dirname(relativePath));
   const repoPath = posix.normalize(posix.join(dir, target));
-  return repoPath.startsWith('../') ? null : repoPath.replace(/\/$/, '');
+  if (repoPath === '..' || repoPath.startsWith('../')) return null;
+  const trimmed = repoPath.replace(/\/$/, '');
+  return trimmed === '.' ? '' : trimmed;
 }
 
 /**
@@ -53,14 +55,14 @@ export function repoLink(href: string, relativePath: string, files: RepoFiles): 
   if (!target) return href;
   const suffix = rest.join('');
   const repoPath = resolveRepoPath(target, relativePath);
-  if (!repoPath) return href;
+  if (repoPath === null) return href;
   const kind = files.kind(repoPath);
   if (!kind) return href;
   if (isSitePage(repoPath)) {
     return README_PAGES.has(relativePath) ? `${repoPath.slice('docs/'.length)}${suffix}` : href;
   }
   const base = `${REPO_URL}/${kind === 'directory' ? 'tree' : 'blob'}/${REPO_BRANCH}`;
-  return `${base}/${repoPath}${suffix}`;
+  return `${base}${repoPath ? `/${repoPath}` : ''}${suffix}`;
 }
 
 /** The shape of the markdown-it renderer that the plugin needs (what VitePress gives to `config`). */
