@@ -20,11 +20,11 @@ Every path (rename source and destination) gets one class, first match wins:
 
 Based on one `git diff -M --raw --numstat`. Mechanical only when every file is one of:
 
-- a **pure rename** (`R100`) with unchanged mode whose source and destination have the **same class**, that class is not exec or build, and an instruction file keeps its file name. A package-directory move (`packages/a/.apm/skills/**` → `packages/b/.apm/skills/**`, SKILL.md and scripts included) stays in one class: mechanical. A rename that changes class (source → `package.json`, a config, an entry point, a hook, `.github/`, an instruction file; or out of one) is full;
+- a **pure rename** (`R100`) with unchanged mode whose source and destination have the **same class**, that class is not exec or build, and an instruction, source, other or test file keeps its file name (a directory move; only docs and manifests may change the name). `a.json` → `composer.json` or `lib.js` → `gulpfile.js` is full, `src/lib.js` → `lib/lib.js` is mechanical. A package-directory move (`packages/a/.apm/skills/**` → `packages/b/.apm/skills/**`, SKILL.md and scripts included) stays in one class: mechanical. A rename that changes class (source → `package.json`, a config, an entry point, a hook, `.github/`, an instruction file; or out of one) is full;
 - a **docs** or **manifest** file, modified, added, deleted or renamed with edits within its class (an added file must be mode 100644);
-- a **test** file, modified or renamed with edits within its class, passing the test-file rule. Added or deleted test files are full.
+- a **test** file, modified or renamed with edits within its class and keeping its file name, passing the test-file rule. Added or deleted test files are full.
 
-The changed lines (added + deleted) of all non-pure-rename files together total at most **20** (`-MaxLines`). Any content change in exec, build, instruction, source or other files is full (SKILL.md, scripts, agent and prompt edits included), as are mode changes, symlinks, submodules, type changes and binaries.
+The changed lines (added + deleted) of all non-pure-rename files together total at most **20** (`-MaxLines`). Any content change in exec, build, instruction, source or other files is full (SKILL.md, scripts, agent and prompt edits included), as are mode changes, symlinks, submodules, type changes, binaries and any path git C-quotes (tab, newline, `"` or `\` in the name).
 
 Always-full rename destinations, tested from `src/evil.js` (exec, build and instruction examples):
 
@@ -101,4 +101,4 @@ Mechanical runs `correctness` and `spec`. `security` is added when:
 
 Everything else: other content change, binary, more lines than the threshold, empty diff, git or parse error, script error, unsupported change type. Unsure means full. `-Force full` skips classification.
 
-Known limits: a same-class rename into a convention-loaded directory (file-based routes, plugin folders) is still mechanical; the `correctness` reviewer sees it.
+Known limits: a basename-preserving move into a convention-loaded place is still mechanical: file-based routes, plugin folders, or a tool file not in the lists moved to where the tool reads it (`config/vercel.json` → `vercel.json`); the `correctness` reviewer sees it.

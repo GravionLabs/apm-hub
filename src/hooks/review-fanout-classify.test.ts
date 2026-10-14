@@ -13,6 +13,15 @@ const ALWAYS_FULL = (/Always-full rename destinations[^\n]*\n\n```text\n([\s\S]*
   .split('\n')
   .filter(Boolean);
 
+// Path triggers of $sensitive (reference "Dimensions"), each placed in an added docs file.
+const SENSITIVE = [
+  ...['auth', 'crypt', 'password', 'secret', 'token', 'oauth', 'login', 'http', 'network', 'socket', 'sql', 'query'],
+  ...['database', 'jwt', 'session', 'cookie', 'permission', 'rbac', 'acl', 'cert', 'tls', 'ssl', 'cors', 'csrf'],
+  ...['hash', 'apikey', 'api_key', 'hook', 'migration'],
+]
+  .map((w) => `docs/${w}-notes.md`)
+  .concat(['docs/my-dockerfile.md', 'docs/prod.env-notes.md', 'docs/public/notes.md']);
+
 if (!hasPwsh) console.warn('pwsh not found: skipping Classify-Diff.ps1 tests');
 
 it.runIf(!hasPwsh && !!process.env.CI)('pwsh is installed in CI', () => {
@@ -22,6 +31,11 @@ it.runIf(!hasPwsh && !!process.env.CI)('pwsh is installed in CI', () => {
 it('reference documents the always-full destination list', () => {
   expect(ALWAYS_FULL.length).toBeGreaterThan(40);
   expect(ALWAYS_FULL).toEqual(expect.arrayContaining(['package.json', 'jest.config.js', '.eslintrc.js', 'src/index.js', 'vitest.config.ts']));
+});
+
+it('reference lists every sensitive path trigger used by the tests', () => {
+  const dims = REFERENCE.slice(REFERENCE.indexOf('## Dimensions'));
+  for (const w of ['auth', 'jwt', 'tls', 'migration', 'hook', 'Dockerfile', '`.env`', '`public/`']) expect(dims).toContain(w);
 });
 
 type Result = { mode: string; dimensions: string[]; reason: string };
@@ -58,6 +72,8 @@ const TEST_BASE = [
 describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
   let dir: string;
   let home: string;
+  let runner: string;
+  let caseNo = 0;
   const run = (cmd: string, args: string[]) => {
     const r = spawnSync(cmd, args, { cwd: dir, encoding: 'utf8', env: hermetic(home) });
     if (r.status !== 0) throw new Error(r.stderr);
@@ -82,14 +98,47 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
   const editFirst = (n: number) =>
     Array.from({ length: 30 }, (_, i) => (i < n ? `edited ${i}` : `line ${i}`)).join('\n') + '\n';
 
+  // One fixture repo per file (tag `base`); every case starts from a hard reset to it.
+  const reset = () => {
+    git('checkout', '-qf', 'main');
+    git('reset', '-q', '--hard', 'base');
+    git('clean', '-qfdx');
+  };
+
+  // pwsh start-up dominates a single call, so most cases are batched: `batched()` registers one
+  // beforeAll per describe that runs every case's setup on its own branch from `base`, commits it and
+  // classifies all `<branch>~1..<branch>` ranges in ONE pwsh process. Each case is still its own test.
+  const batched = () => {
+    const setups: Array<() => void> = [];
+    let results: Result[] = [];
+    beforeAll(() => {
+      reset();
+      const ranges = setups.map((setup) => {
+        const branch = `case-${++caseNo}`;
+        git('checkout', '-qf', '-b', branch, 'base');
+        setup();
+        git('add', '-A');
+        git('commit', '-qm', branch);
+        return `${branch}~1..${branch}`;
+      });
+      reset();
+      const r = spawnSync('pwsh', ['-NoProfile', '-File', runner, SCRIPT, ...ranges], { cwd: dir, encoding: 'utf8', env: hermetic(home) });
+      expect(r.status).toBe(0);
+      results = r.stdout.trim().split('\n').map((l) => JSON.parse(l) as Result);
+      expect(results).toHaveLength(ranges.length);
+    }, 60000);
+    return (name: string, setup: () => void, check: (r: Result) => void) => {
+      const i = setups.push(setup) - 1;
+      it(name, () => check(results[i]));
+    };
+  };
+
   beforeAll(() => {
     home = fs.mkdtempSync(path.join(os.tmpdir(), 'classify-home-'));
-  });
-  afterAll(() => fs.rmSync(home, { recursive: true, force: true }));
-
-  beforeEach(() => {
+    runner = path.join(home, 'run-many.ps1');
+    fs.writeFileSync(runner, 'param([string]$Script)\nforeach ($r in $args) { & $Script -Range $r }\n');
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'classify-'));
-    git('init', '-q');
+    git('init', '-q', '-b', 'main');
     git('config', 'user.email', 't@t');
     git('config', 'user.name', 't');
     git('config', 'commit.gpgsign', 'false');
@@ -114,211 +163,298 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     write('src/b.test.ts', 'const a = 1;\nconst b = 2;\nexpect(a(b));\n');
     write('src/cm.test.ts', '// note\n/** doc */\nconst `x` = 1;\nlet s = "a"; let t = `a${s}`;\n');
     write('src/m.test.ts', 'const r = f();\nexpect(r).toEqual(2);\n');
+    write('a.json', '{}\n');
+    write('a.toml', 'x = 1\n');
+    write('x.yml', 'on: push\n');
+    write('notes', 'notes\n');
+    write('lib.js', 'module.exports = 1;\n');
+    write('lib2.py', 'X = 1\n');
     git('add', '.');
     git('commit', '-qm', 'base');
+    git('tag', 'base');
+  }, 60000);
+  afterAll(() => {
+    if (dir) fs.rmSync(dir, { recursive: true, force: true });
+    if (home) fs.rmSync(home, { recursive: true, force: true });
   });
-  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+  beforeEach(reset);
 
   describe('renames by location class', () => {
-    it('same-class source rename is mechanical with correctness and spec', () => {
-      git('mv', 'old', 'new');
-      expectMech(classify());
-    });
+    const batch = batched();
 
-    it('package-directory rename with SKILL.md, scripts, references, apm.yml entry and doc mention is mechanical (#178)', () => {
-      const pkg = 'packages/development-workflow';
-      write(`${pkg}/apm.yml`, 'name: development-workflow\ndescription: workflow skills for delivery\nversion: 1.0.0\nlicense: MIT\nskills:\n  - flow\n');
-      write(`${pkg}/.apm/skills/flow/SKILL.md`, '---\nname: flow\n---\nRun the flow.\n');
-      write(`${pkg}/.apm/skills/flow/scripts/Run-Flow.ps1`, 'Write-Output "flow"\n');
-      write(`${pkg}/.apm/skills/flow/references/steps.md`, 'Step one, step two.\n');
-      write('apm.yml', 'name: x\npackages:\n  - packages/development-workflow\n');
-      write('docs/guide.md', body.replace('line 3', 'see development-workflow'));
-      git('add', '-A');
-      git('commit', '-qm', 'pkg');
-      git('mv', pkg, 'packages/delivery');
-      write('packages/delivery/apm.yml', read('packages/delivery/apm.yml').replace('development-workflow', 'delivery'));
-      write('apm.yml', read('apm.yml').replace('development-workflow', 'delivery'));
-      write('docs/guide.md', read('docs/guide.md').replace('development-workflow', 'delivery'));
-      git('add', '-A');
-      const status = git('diff', '--cached', '-M', '--name-status');
-      expect(status).toMatch(/^R100\tpackages\/development-workflow\/\.apm\/skills\/flow\/SKILL\.md\tpackages\/delivery\//m);
-      expect(status).toMatch(/^R100\t[^\n]*scripts\/Run-Flow\.ps1/m);
-      const r = classify();
-      expectSec(r);
-      expect(r.reason).toMatch(/^only same-class renames and \d+ changed lines/);
-    });
+    batch('same-class source rename is mechanical with correctness and spec', () => git('mv', 'old', 'new'), expectMech);
 
-    it.each(ALWAYS_FULL)('pure rename src/evil.js -> %s is full', (dest) => {
-      if (fs.existsSync(path.join(dir, dest))) {
-        git('rm', '-q', dest);
-        git('commit', '-qm', 'free destination');
-      }
-      mv('src/evil.js', dest);
-      expect(git('diff', '--cached', '-M', '--name-status')).toBe(`R100\tsrc/evil.js\t${dest}\n`);
-      expectFull(classify(), /rename changes location class \(source -> (exec|build|instruction):/);
-    });
+    batch('basename-preserving directory move of an other file is mechanical', () => mv('a.json', 'config/a.json'), expectMech);
 
-    it.each([
+    batch(
+      'package-directory rename with SKILL.md, scripts, references, apm.yml entry and doc mention is mechanical (#178)',
+      () => {
+        const pkg = 'packages/development-workflow';
+        write(`${pkg}/apm.yml`, 'name: development-workflow\ndescription: workflow skills for delivery\nversion: 1.0.0\nlicense: MIT\nskills:\n  - flow\n');
+        write(`${pkg}/.apm/skills/flow/SKILL.md`, '---\nname: flow\n---\nRun the flow.\n');
+        write(`${pkg}/.apm/skills/flow/scripts/Run-Flow.ps1`, 'Write-Output "flow"\n');
+        write(`${pkg}/.apm/skills/flow/references/steps.md`, 'Step one, step two.\n');
+        write('apm.yml', 'name: x\npackages:\n  - packages/development-workflow\n');
+        write('docs/guide.md', body.replace('line 3', 'see development-workflow'));
+        git('add', '-A');
+        git('commit', '-qm', 'pkg');
+        git('mv', pkg, 'packages/delivery');
+        write('packages/delivery/apm.yml', read('packages/delivery/apm.yml').replace('development-workflow', 'delivery'));
+        write('apm.yml', read('apm.yml').replace('development-workflow', 'delivery'));
+        write('docs/guide.md', read('docs/guide.md').replace('development-workflow', 'delivery'));
+        git('add', '-A');
+        const status = git('diff', '--cached', '-M', '--name-status');
+        expect(status).toMatch(/^R100\tpackages\/development-workflow\/\.apm\/skills\/flow\/SKILL\.md\tpackages\/delivery\//m);
+        expect(status).toMatch(/^R100\t[^\n]*scripts\/Run-Flow\.ps1/m);
+      },
+      (r) => {
+        expectSec(r);
+        expect(r.reason).toMatch(/^only same-class renames and \d+ changed lines/);
+      },
+    );
+
+    for (const dest of ALWAYS_FULL) {
+      batch(
+        `pure rename src/evil.js -> ${dest} is full`,
+        () => {
+          if (fs.existsSync(path.join(dir, dest))) {
+            git('rm', '-q', dest);
+            git('commit', '-qm', 'free destination');
+          }
+          mv('src/evil.js', dest);
+          expect(git('diff', '--cached', '-M', '--name-status')).toBe(`R100\tsrc/evil.js\t${dest}\n`);
+        },
+        (r) => expectFull(r, /rename changes location class \(source -> (exec|build|instruction):/),
+      );
+    }
+
+    // Tool-loaded names outside the lists stay out of reach: a same-class rename keeps its file name.
+    for (const [from, to, cls] of [
+      ['a.json', 'composer.json', 'other'],
+      ['lib.js', 'gulpfile.js', 'source'],
+      ['lib2.py', 'fabfile.py', 'source'],
+      ['lib.js', 'Gruntfile.js', 'source'],
+      ['notes', 'Vagrantfile', 'other'],
+      ['x.yml', 'lefthook.yml', 'other'],
+      ['x.yml', 'action.yml', 'other'],
+      ['lib2.py', 'tasks.py', 'source'],
+      ['a.json', 'vercel.json', 'other'],
+      ['a.toml', 'netlify.toml', 'other'],
+      ['a.json', 'renovate.json', 'other'],
+      ['a.toml', '.cargo/config.toml', 'other'],
+      ['src/app.test.ts', 'src/app2.test.ts', 'test'],
+    ]) {
+      batch(
+        `same-class rename ${from} -> ${to} that changes the file name is full`,
+        () => mv(from, to),
+        (r) => expectFull(r, new RegExp(`^${cls} file renamed to another file name \\(${cls} -> ${cls}: `)),
+      );
+    }
+
+    // Git C-quotes such paths; unquoted they would be exec/build, quoted they look like `other`.
+    for (const [from, to] of [
+      ['a\tb.yml', '.github/workflows/a\tb.yml'],
+      ['d\tx/package.json', 'e\ty/package.json'],
+    ]) {
+      batch(
+        `rename between C-quoted paths ${JSON.stringify(from)} -> ${JSON.stringify(to)} is full`,
+        () => {
+          write(from, 'on: push\n');
+          git('add', '-A');
+          git('commit', '-qm', 'prep');
+          mv(from, to);
+        },
+        (r) => expectFull(r, /^quoted path \(tab, newline, quote or backslash\): "/),
+      );
+    }
+
+    for (const [from, to] of [
       ['.github/workflows/a.yml', '.github/workflows/b.yml'],
       ['package.json', 'sub/package.json'],
-    ])('same-class rename of an always-full path %s -> %s is full', (from, to) => {
-      if (!fs.existsSync(path.join(dir, from))) {
-        write(from, 'on: push\n');
-        git('add', '-A');
-        git('commit', '-qm', 'prep');
-      }
-      mv(from, to);
-      expectFull(classify(), /rename of an always-full path/);
-    });
+    ]) {
+      batch(
+        `same-class rename of an always-full path ${from} -> ${to} is full`,
+        () => {
+          if (!fs.existsSync(path.join(dir, from))) {
+            write(from, 'on: push\n');
+            git('add', '-A');
+            git('commit', '-qm', 'prep');
+          }
+          mv(from, to);
+        },
+        (r) => expectFull(r, /rename of an always-full path/),
+      );
+    }
 
-    it('skill reference renamed to SKILL.md is full', () => {
-      git('rm', '-q', 'packages/x/.apm/skills/foo/SKILL.md');
-      git('commit', '-qm', 'rm');
-      git('mv', 'packages/x/.apm/skills/foo/references/a.md', 'packages/x/.apm/skills/foo/SKILL.md');
-      expectFull(classify(), /instruction file renamed to another file name/);
-    });
+    batch(
+      'skill reference renamed to SKILL.md is full',
+      () => {
+        git('rm', '-q', 'packages/x/.apm/skills/foo/SKILL.md');
+        git('commit', '-qm', 'rm');
+        git('mv', 'packages/x/.apm/skills/foo/references/a.md', 'packages/x/.apm/skills/foo/SKILL.md');
+      },
+      (r) => expectFull(r, /instruction file renamed to another file name/),
+    );
 
-    it.each([
+    for (const [from, to, flow] of [
       ['docs/guide.md', 'AGENTS.md', /docs -> instruction/],
       ['packages/x/.apm/skills/foo/SKILL.md', 'notes.txt', /instruction -> other/],
       ['src/app.ts', 'src/app2.test.ts', /source -> test/],
-    ])('pure rename %s -> %s changes class and is full', (from, to, flow) => {
-      mv(from, to);
-      const r = classify();
-      expectFull(r, /rename changes location class/);
-      expect(r.reason).toMatch(flow);
-    });
+    ] as const) {
+      batch(
+        `pure rename ${from} -> ${to} changes class and is full`,
+        () => mv(from, to),
+        (r) => {
+          expectFull(r, /rename changes location class/);
+          expect(r.reason).toMatch(flow);
+        },
+      );
+    }
 
-    it('rename with edits from code into docs is full', () => {
-      git('mv', 'src/app.ts', 'docs/app.md');
-      write('docs/app.md', body.replace('line 3', 'new name'));
-      git('add', '-A');
-      expectFull(classify(), /rename with edits changes location class \(source -> docs/);
-    });
+    batch(
+      'rename with edits from code into docs is full',
+      () => {
+        git('mv', 'src/app.ts', 'docs/app.md');
+        write('docs/app.md', body.replace('line 3', 'new name'));
+      },
+      (r) => expectFull(r, /rename with edits changes location class \(source -> docs/),
+    );
 
-    it('rename plus code change is full and git pairs it as a rename', () => {
-      git('mv', 'old', 'new');
-      write('new/tool.ts', body.replace('line 3', 'changed'));
-      git('add', '-A');
-      expect(git('diff', '--cached', '-M', '--name-status')).toMatch(/^R0\d\d\told\/tool\.ts\tnew\/tool\.ts$/m);
-      expectFull(classify(), /^content change in source file: new\/tool\.ts$/);
-    });
+    batch(
+      'rename plus code change is full and git pairs it as a rename',
+      () => {
+        git('mv', 'old', 'new');
+        write('new/tool.ts', body.replace('line 3', 'changed'));
+        git('add', '-A');
+        expect(git('diff', '--cached', '-M', '--name-status')).toMatch(/^R0\d\d\told\/tool\.ts\tnew\/tool\.ts$/m);
+      },
+      (r) => expectFull(r, /^content change in source file: new\/tool\.ts$/),
+    );
 
-    it('rename with a mode change is full', () => {
-      git('mv', 'old/tool.ts', 'old/tool.sh');
-      fs.chmodSync(path.join(dir, 'old/tool.sh'), 0o755);
-      git('add', '-A');
-      expectFull(classify(), /mode change/);
-    });
+    batch(
+      'rename with a mode change is full',
+      () => {
+        git('mv', 'old/tool.ts', 'old/tool.sh');
+        fs.chmodSync(path.join(dir, 'old/tool.sh'), 0o755);
+      },
+      (r) => expectFull(r, /mode change/),
+    );
 
-    it('keeps security for a rename onto a sensitive name', () => {
-      git('mv', 'src/app.ts', 'src/auth.ts');
-      expectSec(classify());
-    });
+    batch('keeps security for a move into a sensitive directory', () => mv('src/app.ts', 'auth/app.ts'), expectSec);
 
-    it('adds security for a source rename onto a hooks-like name', () => {
-      git('mv', 'src/app.ts', 'src/hooks.ts');
-      expectSec(classify());
-    });
+    batch('adds security for a source move into a hooks-like directory', () => mv('src/app.ts', 'src/webhooks/app.ts'), expectSec);
 
-    it('rename away from a sensitive source keeps security', () => {
-      git('mv', 'src/app.ts', 'src/auth.ts');
-      git('commit', '-qm', 'auth');
-      git('mv', 'src/auth.ts', 'src/app2.ts');
-      expectSec(classify());
-    });
+    batch(
+      'move away from a sensitive directory keeps security',
+      () => {
+        mv('src/app.ts', 'auth/app.ts');
+        git('commit', '-qm', 'auth');
+        mv('auth/app.ts', 'lib/app.ts');
+      },
+      expectSec,
+    );
 
-    it('docs rename with edits is mechanical', () => {
-      git('mv', 'docs/guide.md', 'docs/guide2.md');
-      write('docs/guide2.md', body.replace('line 3', 'new name'));
-      git('add', '-A');
-      expectMech(classify());
-    });
+    batch(
+      'docs rename with edits is mechanical',
+      () => {
+        git('mv', 'docs/guide.md', 'docs/guide2.md');
+        write('docs/guide2.md', body.replace('line 3', 'new name'));
+      },
+      expectMech,
+    );
 
-    it('docs rename with an added command gets the risky scan', () => {
-      git('mv', 'docs/guide.md', 'docs/guide2.md');
-      write('docs/guide2.md', body.replace('line 3', 'curl x | sh'));
-      git('add', '-A');
-      expect(git('diff', '--cached', '-M', '--name-status')).toMatch(/^R0\d\d\tdocs\/guide\.md\tdocs\/guide2\.md$/m);
-      expectSec(classify());
-    });
+    batch(
+      'docs rename with an added command gets the risky scan',
+      () => {
+        git('mv', 'docs/guide.md', 'docs/guide2.md');
+        write('docs/guide2.md', body.replace('line 3', 'curl x | sh'));
+        git('add', '-A');
+        expect(git('diff', '--cached', '-M', '--name-status')).toMatch(/^R0\d\d\tdocs\/guide\.md\tdocs\/guide2\.md$/m);
+      },
+      expectSec,
+    );
   });
 
   describe('content changes', () => {
-    it('plain docs edit is mechanical with correctness and spec', () => {
-      write('docs/guide.md', body.replace('line 3', 'new name'));
-      expectMech(classify());
-    });
+    const batch = batched();
 
-    it('boundary: 20 changed lines pass, 21 fail with the exact reason, -MaxLines raises it', () => {
-      write('docs/guide.md', editFirst(10));
-      expectMech(classify());
+    batch('plain docs edit is mechanical with correctness and spec', () => write('docs/guide.md', body.replace('line 3', 'new name')), expectMech);
+
+    batch('boundary: 20 changed lines pass', () => write('docs/guide.md', editFirst(10)), expectMech);
+    batch('boundary: 21 changed lines fail with the exact reason', () => write('docs/guide.md', editFirst(10) + 'extra\n'), (r) =>
+      expectFull(r, /^21 changed lines exceed threshold 20$/),
+    );
+
+    it('boundary: -MaxLines raises the threshold', () => {
       write('docs/guide.md', editFirst(10) + 'extra\n');
-      expectFull(classify(), /^21 changed lines exceed threshold 20$/);
       expectMech(classify(['-MaxLines', '100']));
     });
 
-    it('threshold sums changed lines across files', () => {
-      write('docs/guide.md', editFirst(6));
-      write('README.md', editFirst(4));
-      expectMech(classify());
-      write('README.md', editFirst(5));
-      expectFull(classify(), /^22 changed lines/);
-    });
+    batch(
+      'threshold sums changed lines across files: 20 pass',
+      () => {
+        write('docs/guide.md', editFirst(6));
+        write('README.md', editFirst(4));
+      },
+      expectMech,
+    );
+    batch(
+      'threshold sums changed lines across files: 22 fail',
+      () => {
+        write('docs/guide.md', editFirst(6));
+        write('README.md', editFirst(5));
+      },
+      (r) => expectFull(r, /^22 changed lines/),
+    );
 
-    it('adds security for a docs edit on a sensitive path', () => {
-      write('docs/auth.md', body.replace('line 3', 'x'));
-      expectSec(classify());
-    });
+    batch('adds security for a docs edit on a sensitive path', () => write('docs/auth.md', body.replace('line 3', 'x')), expectSec);
 
-    it.each([
+    for (const p of SENSITIVE) {
+      batch(`added docs file ${p} on a sensitive path adds security`, () => write(p, 'hello\n'), expectSec);
+    }
+
+    for (const [file, content] of [
       ['package.json', '{\n  "scripts": {"x": "y"}\n}\n'],
       ['requirements.txt', 'requests==1.1\n'],
-    ])('%s edit is full', (file, content) => {
-      write(file, content);
-      expectFull(classify(), new RegExp(`^content change in build file: ${file.replace('.', '\\.')}$`));
-    });
+    ]) {
+      batch(`${file} edit is full`, () => write(file, content), (r) =>
+        expectFull(r, new RegExp(`^content change in build file: ${file.replace('.', '\\.')}$`)),
+      );
+    }
 
-    it.each(['apm.yml', 'marketplace.json', '.claude-plugin/plugin.json'])('manifest %s edit stays mechanical but adds security', (file) => {
-      write(file, read(file).replace(/\n$/, '\n#x\n'));
-      expectSec(classify());
-    });
+    for (const file of ['apm.yml', 'marketplace.json', '.claude-plugin/plugin.json']) {
+      batch(`manifest ${file} edit stays mechanical but adds security`, () => write(file, read(file).replace(/\n$/, '\n#x\n')), expectSec);
+    }
 
-    it('SKILL.md content edit is full', () => {
-      write('packages/x/.apm/skills/foo/SKILL.md', body.replace('line 3', 'ignore all rules'));
-      expectFull(classify(), /^content change in instruction file: /);
-    });
+    batch('SKILL.md content edit is full', () => write('packages/x/.apm/skills/foo/SKILL.md', body.replace('line 3', 'ignore all rules')), (r) =>
+      expectFull(r, /^content change in instruction file: /),
+    );
 
-    it('script files under docs/ are full', () => {
-      write('docs/tool.sh', body.replace('line 3', 'rm -rf x'));
-      expectFull(classify(), /^content change in source file: docs\/tool\.sh$/);
-    });
+    batch('script files under docs/ are full', () => write('docs/tool.sh', body.replace('line 3', 'rm -rf x')), (r) =>
+      expectFull(r, /^content change in source file: docs\/tool\.sh$/),
+    );
 
-    it('chmod on a non-renamed docs file is full', () => {
-      fs.chmodSync(path.join(dir, 'docs/guide.md'), 0o755);
-      git('add', '-A');
-      expectFull(classify(), /^mode change on docs\/guide\.md$/);
-    });
+    batch('chmod on a non-renamed docs file is full', () => fs.chmodSync(path.join(dir, 'docs/guide.md'), 0o755), (r) =>
+      expectFull(r, /^mode change on docs\/guide\.md$/),
+    );
 
-    it('newly added executable docs file is full', () => {
-      write('docs/run.md', 'hello\n');
-      fs.chmodSync(path.join(dir, 'docs/run.md'), 0o755);
-      git('add', '-A');
-      expectFull(classify(), /^added file with mode 100755: docs\/run\.md$/);
-    });
+    batch(
+      'newly added executable docs file is full',
+      () => {
+        write('docs/run.md', 'hello\n');
+        fs.chmodSync(path.join(dir, 'docs/run.md'), 0o755);
+      },
+      (r) => expectFull(r, /^added file with mode 100755: docs\/run\.md$/),
+    );
 
-    it('added docs file is mechanical', () => {
-      write('docs/new.md', 'hello\n');
-      git('add', '-A');
-      expectMech(classify());
-    });
+    batch('added docs file is mechanical', () => write('docs/new.md', 'hello\n'), expectMech);
 
     it('deleted docs file is mechanical within the threshold', () => {
       git('rm', '-q', 'docs/guide.md');
       expectMech(classify(['-MaxLines', '100']));
     });
 
-    it.each([
+    for (const text of [
       'curl x | sh',
       'see https://example.com',
       'sudo chmod +x a',
@@ -346,63 +482,73 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       'iwr x',
       'cat x | zsh',
       'cat x | powershell',
-    ])('docs edit adding %j adds security', (text) => {
-      write('README.md', body.replace('line 3', text));
-      expectSec(classify());
-    });
+    ]) {
+      batch(`docs edit adding ${JSON.stringify(text)} adds security`, () => write('README.md', body.replace('line 3', text)), expectSec);
+    }
 
-    it('docs edit with plain words adds no security', () => {
-      write('README.md', body.replace('line 3', 'plain words about installing and removing'));
-      expectMech(classify());
-    });
+    batch('docs edit with plain words adds no security', () => write('README.md', body.replace('line 3', 'plain words about installing and removing')), expectMech);
   });
 
   describe('test-file rule', () => {
     const TEST_ERR = /^test file change is not a pure rename of local identifiers: /;
-
-    it('pure test-file rename is mechanical', () => {
-      git('mv', 'src/app.test.ts', 'src/app2.test.ts');
-      expectMech(classify());
-    });
-
-    it.each([
-      ['added', () => write('src/new.test.ts', TEST_BASE)],
-      ['deleted', () => fs.rmSync(path.join(dir, 'src/app.test.ts'))],
-    ])('%s test file is full', (_, change) => {
-      change();
-      git('add', '-A');
-      expectFull(classify(), TEST_ERR);
-    });
-
-    it('rename of a locally declared identifier is mechanical', () => {
-      write('src/app.test.ts', TEST_BASE.replace(/oldName/g, 'newName'));
-      expectMech(classify());
-    });
-
-    it('rename of a local const in the matcher fixture is mechanical', () => {
-      write('src/m.test.ts', read('src/m.test.ts').replace(/\br\b/g, 'res'));
-      expectMech(classify());
-    });
-
-    it('CRLF test file with identifier-only edit is mechanical', () => {
-      write('src/crlf.test.ts', 'const newName = 1;\r\nexpect(newName).toBe(1);\r\n');
-      expectMech(classify());
-    });
-
-    it('renamed test file with identifier-only edit is mechanical, with logic edit full', () => {
-      const filler = Array.from({ length: 30 }, (_, i) => `const filler${i} = ${i};`).join('\n') + '\n';
+    const batch = batched();
+    const filler = Array.from({ length: 30 }, (_, i) => `const filler${i} = ${i};`).join('\n') + '\n';
+    const withFiller = () => {
       write('src/app.test.ts', TEST_BASE + filler);
       git('commit', '-qam', 'filler');
-      git('mv', 'src/app.test.ts', 'src/app2.test.ts');
-      write('src/app2.test.ts', (TEST_BASE + filler).replace(/oldName/g, 'newName'));
-      git('add', '-A');
-      expectMech(classify());
-      write('src/app2.test.ts', (TEST_BASE + filler).replace(/oldName/g, 'newName').replace('toBe(2)', 'toBe(3)'));
-      git('add', '-A');
-      expectFull(classify(), TEST_ERR);
-    });
+    };
 
-    it.each([
+    batch('pure test-file move is mechanical', () => mv('src/app.test.ts', 'spec/app.test.ts'), expectMech);
+
+    batch('added test file is full', () => write('src/new.test.ts', TEST_BASE), (r) => expectFull(r, TEST_ERR));
+    batch('deleted test file is full', () => fs.rmSync(path.join(dir, 'src/app.test.ts')), (r) => expectFull(r, TEST_ERR));
+
+    batch('rename of a locally declared identifier is mechanical', () => write('src/app.test.ts', TEST_BASE.replace(/oldName/g, 'newName')), expectMech);
+
+    batch('rename of a local const in the matcher fixture is mechanical', () => write('src/m.test.ts', read('src/m.test.ts').replace(/\br\b/g, 'res')), expectMech);
+
+    batch('CRLF test file with identifier-only edit is mechanical', () => write('src/crlf.test.ts', 'const newName = 1;\r\nexpect(newName).toBe(1);\r\n'), expectMech);
+
+    batch(
+      'moved test file with identifier-only edit is mechanical',
+      () => {
+        withFiller();
+        mv('src/app.test.ts', 'spec/app.test.ts');
+        write('spec/app.test.ts', (TEST_BASE + filler).replace(/oldName/g, 'newName'));
+      },
+      expectMech,
+    );
+    batch(
+      'moved test file with a logic edit is full',
+      () => {
+        withFiller();
+        mv('src/app.test.ts', 'spec/app.test.ts');
+        write('spec/app.test.ts', (TEST_BASE + filler).replace(/oldName/g, 'newName').replace('toBe(2)', 'toBe(3)'));
+      },
+      (r) => expectFull(r, TEST_ERR),
+    );
+    batch(
+      'test file renamed with edits to another file name is full',
+      () => {
+        withFiller();
+        mv('src/app.test.ts', 'spec/app2.test.ts');
+        write('spec/app2.test.ts', (TEST_BASE + filler).replace(/oldName/g, 'newName'));
+        git('add', '-A');
+        expect(git('diff', '--cached', '-M', '--name-status')).toMatch(/^R0\d\d\tsrc\/app\.test\.ts\tspec\/app2\.test\.ts$/m);
+      },
+      (r) => expectFull(r, /^test file renamed to another file name \(test -> test: /),
+    );
+
+    // Added lines of test files get the risky scan (reference "Dimensions"): a local renamed onto a
+    // command token passes the test-file rule and stays mechanical, but adds the security dimension.
+    for (const name of ['curl', 'npx', 'base64']) {
+      batch(`test-file rename r -> ${name} is mechanical with security`, () => write('src/m.test.ts', read('src/m.test.ts').replace(/\br\b/g, name)), (r) => {
+        expectSec(r);
+        expect(r.reason).toMatch(/^only same-class renames/);
+      });
+    }
+
+    for (const [name, file, from, to] of [
       ['matcher swap toEqual -> toBeDefined', 'src/m.test.ts', 'toEqual', 'toBeDefined'],
       ['number change', 'src/app.test.ts', 'toBe(2)', 'toBe(3)'],
       ['keyword swap', 'src/app.test.ts', 'const first', 'let first'],
@@ -417,22 +563,25 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       ['JSDoc change', 'src/cm.test.ts', '/** doc */', '/** docs */'],
       ['double-quoted string change', 'src/cm.test.ts', '"a"', '"b"'],
       ['template string change', 'src/cm.test.ts', '`a${s}`', '`b${s}`'],
-    ])('%s is full', (_, file, from, to) => {
-      const before = read(file);
-      expect(before).toContain(from);
-      write(file, before.replace(from, to));
-      expectFull(classify(), TEST_ERR);
-    });
+    ]) {
+      batch(
+        `${name} is full`,
+        () => {
+          const before = read(file);
+          expect(before).toContain(from);
+          write(file, before.replace(from, to));
+        },
+        (r) => expectFull(r, TEST_ERR),
+      );
+    }
 
-    it.each(['NaN', 'Math', 'process', 'undefined', 'globalThis', 'require', 'self', 'toBe'])(
-      'local renamed to builtin or matcher %s is full',
-      (name) => {
-        write('src/m.test.ts', read('src/m.test.ts').replace(/\br\b/g, name));
-        expectFull(classify(), TEST_ERR);
-      },
-    );
+    for (const name of ['NaN', 'Math', 'process', 'undefined', 'globalThis', 'require', 'self', 'toBe']) {
+      batch(`local renamed to builtin or matcher ${name} is full`, () => write('src/m.test.ts', read('src/m.test.ts').replace(/\br\b/g, name)), (r) =>
+        expectFull(r, TEST_ERR),
+      );
+    }
 
-    it.each([
+    for (const [name, content] of [
       ['named import', 'import { oldName } from "./app";\nexpect(oldName(1)).toBe(2);\n'],
       ['object destructuring', 'const { oldName } = mod;\nexpect(oldName(1)).toBe(2);\n'],
       ['member access', 'const oldName = 1;\nexpect(obj.oldName).toBe(oldName);\n'],
@@ -440,38 +589,43 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       ['object key', 'const oldName = 1;\nconst o = { oldName: 2 };\nexpect(o).toBe(oldName);\n'],
       ['shorthand property', 'const oldName = 1;\nexpect({ oldName }).toEqual(x);\n'],
       ['python keyword argument', 'def f(oldName):\n    return g(oldName=oldName)\n'],
-    ])('rename through a %s is full', (_, content) => {
-      write('src/k.test.ts', content);
-      git('add', '-A');
-      git('commit', '-qm', 'prep');
-      write('src/k.test.ts', content.replace(/oldName/g, 'newName'));
-      expectFull(classify(), TEST_ERR);
-    });
+    ]) {
+      batch(
+        `rename through a ${name} is full`,
+        () => {
+          write('src/k.test.ts', content);
+          git('add', '-A');
+          git('commit', '-qm', 'prep');
+          write('src/k.test.ts', content.replace(/oldName/g, 'newName'));
+        },
+        (r) => expectFull(r, TEST_ERR),
+      );
+    }
 
-    it('inconsistent rename is full', () => {
-      write('src/app.test.ts', TEST_BASE.replace('oldName(1)', 'other(1)').replace('const oldName', 'const newName'));
-      expectFull(classify(), TEST_ERR);
-    });
+    batch(
+      'inconsistent rename is full',
+      () => write('src/app.test.ts', TEST_BASE.replace('oldName(1)', 'other(1)').replace('const oldName', 'const newName')),
+      (r) => expectFull(r, TEST_ERR),
+    );
 
-    it('rename onto a name already used elsewhere is full', () => {
-      write('src/app.test.ts', TEST_BASE.replace(/oldName/g, 'first'));
-      expectFull(classify(), TEST_ERR);
-    });
+    batch('rename onto a name already used elsewhere is full', () => write('src/app.test.ts', TEST_BASE.replace(/oldName/g, 'first')), (r) => expectFull(r, TEST_ERR));
 
-    it('added assertion is full', () => {
-      write('src/app.test.ts', TEST_BASE + 'expect(1).toBe(1);\n');
-      expectFull(classify(), TEST_ERR);
-    });
+    batch('added assertion is full', () => write('src/app.test.ts', TEST_BASE + 'expect(1).toBe(1);\n'), (r) => expectFull(r, TEST_ERR));
 
-    it('rename that makes an assertion tautological is full', () => {
-      write('src/app.test.ts', 'const x = 1;\nconst expected = 1;\nexpect(x).toBe(expected);\n');
-      git('commit', '-qam', 'prep');
-      write('src/app.test.ts', 'const x = 1;\nconst x = 1;\nexpect(x).toBe(x);\n');
-      expectFull(classify(), TEST_ERR);
-    });
+    batch(
+      'rename that makes an assertion tautological is full',
+      () => {
+        write('src/app.test.ts', 'const x = 1;\nconst expected = 1;\nexpect(x).toBe(expected);\n');
+        git('commit', '-qam', 'prep');
+        write('src/app.test.ts', 'const x = 1;\nconst x = 1;\nexpect(x).toBe(x);\n');
+      },
+      (r) => expectFull(r, TEST_ERR),
+    );
   });
 
   describe('ranges, git state and failures', () => {
+    const batch = batched();
+
     it('-Force full overrides a mechanical diff', () => {
       write('docs/guide.md', body.replace('line 3', 'x'));
       expectFull(classify(['-Force', 'full']), /forced/);
@@ -481,6 +635,11 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       write('docs/guide.md', body.replace('line 3', 'x'));
       write('src/evil.ts', 'x\n');
       expectFull(classify(), /untracked/);
+    });
+
+    it('working-tree mode classifies unstaged edits', () => {
+      write('docs/guide.md', body.replace('line 3', 'x'));
+      expectMech(classify());
     });
 
     it('explicit committed range is classified from that range', () => {
@@ -499,10 +658,7 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       expectMech(classify(['-Range', 'HEAD~1...HEAD']));
     });
 
-    it('path with spaces is handled', () => {
-      write('docs/my guide.md', body.replace('line 3', 'x'));
-      expectMech(classify());
-    });
+    batch('path with spaces is handled', () => write('docs/my guide.md', body.replace('line 3', 'x')), expectMech);
 
     it('empty diff fails closed to full', () => {
       expectFull(classify(), /empty/);
@@ -518,30 +674,25 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       expect(fs.existsSync(path.join(dir, 'out.txt'))).toBe(false);
     });
 
-    it('binary files fail closed to full', () => {
-      fs.writeFileSync(path.join(dir, 'docs/img.md'), Buffer.from([0, 1, 2, 0, 255]));
-      git('add', '-A');
-      expectFull(classify(['-Range', 'HEAD']), /binary/);
-    });
+    batch('binary files fail closed to full', () => fs.writeFileSync(path.join(dir, 'docs/img.md'), Buffer.from([0, 1, 2, 0, 255])), (r) => expectFull(r, /binary/));
 
-    it('symlink is full', () => {
-      fs.symlinkSync('x', path.join(dir, 'docs/link.md'));
-      git('add', '-A');
-      expectFull(classify(), /^symlink or submodule: docs\/link\.md$/);
-    });
+    batch('symlink is full', () => fs.symlinkSync('x', path.join(dir, 'docs/link.md')), (r) => expectFull(r, /^symlink or submodule: docs\/link\.md$/));
 
+    // Not batched: `git add -A` would drop the gitlink, which has no working-tree directory.
     it('submodule is full', () => {
       git('update-index', '--add', '--cacheinfo', '160000,' + 'a'.repeat(40) + ',sub');
       git('commit', '-qm', 'sub');
       expectFull(classify(['-Range', 'HEAD~1..HEAD']), /^symlink or submodule: sub$/);
     });
 
-    it('type change from file to symlink is full', () => {
-      fs.rmSync(path.join(dir, 'docs/guide.md'));
-      fs.symlinkSync('x', path.join(dir, 'docs/guide.md'));
-      git('add', '-A');
-      expectFull(classify(), /symlink|unsupported/);
-    });
+    batch(
+      'type change from file to symlink is full',
+      () => {
+        fs.rmSync(path.join(dir, 'docs/guide.md'));
+        fs.symlinkSync('x', path.join(dir, 'docs/guide.md'));
+      },
+      (r) => expectFull(r, /^symlink or submodule: docs\/guide\.md$/),
+    );
 
     it('non-git working directory is full with exit 0', () => {
       const plain = fs.mkdtempSync(path.join(os.tmpdir(), 'classify-nogit-'));

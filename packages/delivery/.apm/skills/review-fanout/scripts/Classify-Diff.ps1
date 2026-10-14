@@ -29,8 +29,8 @@ function Exit-WithResult([string]$mode, [string[]]$dims, [string]$reason) {
 function Exit-WithFull([string]$reason) { Exit-WithResult 'full' $all $reason }
 
 # Location classes, first match wins. exec and build are always full (also as pure rename);
-# instruction files may only be renamed with identical content and file name; docs, manifest and
-# test may be edited (line threshold, test-file rule); source and other may only be renamed.
+# instruction, source and other files may only be moved with identical content and file name; docs,
+# manifest and test may be edited (line threshold, test-file rule); test files keep their file name.
 $classes = [ordered]@{
   # Executed by tools, hooks or CI without an explicit call.
   exec        = '(^|/)\.(github|husky|claude|opencode|cursor|vscode|devcontainer|circleci|gitlab|githooks)/|(^|/)hooks?/|(^|/)(\.mcp\.json|\.npmrc|\.yarnrc(\.yml)?|\.pre-commit-config\.yaml|\.pre-commit-hooks\.yaml|\.envrc|\.env(\.[^/]*)?|\.gitattributes|\.gitmodules|\.gitignore|\.gitlab-ci\.yml|\.travis\.yml|azure-pipelines\.yml|Jenkinsfile|GNUmakefile|[Mm]akefile|Dockerfile[^/]*|Containerfile|docker-compose[^/]*|compose\.ya?ml|Procfile|[Jj]ustfile|Taskfile\.ya?ml|sitecustomize\.py|usercustomize\.py)$|\.pth$'
@@ -195,17 +195,23 @@ try {
     }
     if ($oldMode -eq '000000' -and $newMode -ne '100644') { Exit-WithFull "added file with mode ${newMode}: $path" }
     if ($code -notmatch '^(M|A|D|R\d+)$') { Exit-WithFull "unsupported change type $code on $path" }
+    # Git C-quotes paths with tab, newline, quote or backslash; the anchored class regexes would miss them.
+    if (@($files | Where-Object { $_.StartsWith('"') }).Count -gt 0) { Exit-WithFull "quoted path (tab, newline, quote or backslash): $path" }
     $cls = @($files | ForEach-Object { Get-LocationClass $_ })
     $cls1 = @($cls | Select-Object -Unique)
     $flow = "$($cls -join ' -> '): $($files -join ' -> ')"
+    # Only docs and manifests may change their file name; elsewhere a rename is a directory move,
+    # so it cannot turn into a tool-loaded name missing from the lists (composer.json, gulpfile.js).
+    $names = @($files | ForEach-Object { $_ -replace '^.*/', '' } | Select-Object -Unique)
+    $renamed = $names.Count -ne 1 -and $cls1.Count -eq 1 -and $cls1[0] -notin @('docs', 'manifest')
     if ($code -eq 'R100') {
       if ($cls1.Count -ne 1) { Exit-WithFull "rename changes location class ($flow)" }
       if ($cls1[0] -in @('exec', 'build')) { Exit-WithFull "rename of an always-full path ($flow)" }
-      $names = @($files | ForEach-Object { $_ -replace '^.*/', '' } | Select-Object -Unique)
-      if ($cls1[0] -eq 'instruction' -and $names.Count -ne 1) { Exit-WithFull "instruction file renamed to another file name ($flow)" }
+      if ($renamed) { Exit-WithFull "$($cls1[0]) file renamed to another file name ($flow)" }
       continue
     }
     if ($cls1.Count -ne 1) { Exit-WithFull "rename with edits changes location class ($flow)" }
+    if ($renamed -and $cls1[0] -eq 'test') { Exit-WithFull "test file renamed to another file name ($flow)" }
     if ($cls1[0] -notin @('docs', 'manifest', 'test')) { Exit-WithFull "content change in $($cls1[0]) file: $path" }
     if ($cls1[0] -eq 'test') {
       if ($code -eq 'A' -or $code -eq 'D' -or -not (Test-RenameOnly $files)) {
