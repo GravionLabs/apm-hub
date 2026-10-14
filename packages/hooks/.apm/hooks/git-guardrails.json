@@ -4,14 +4,11 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "bash ./git-guardrails.sh", "timeout": 5 }
-        ]
-      }
-    ],
-    "preToolUse": [
-      {
-        "hooks": [
-          { "type": "command", "command": "bash ./git-guardrails.sh", "timeout": 5 }
+          {
+            "type": "command",
+            "command": "bash ./git-guardrails.sh",
+            "timeout": 5
+          }
         ]
       }
     ]

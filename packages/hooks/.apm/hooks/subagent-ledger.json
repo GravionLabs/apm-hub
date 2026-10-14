@@ -3,14 +3,11 @@
     "SubagentStop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash ./subagent-ledger.sh", "timeout": 5 }
-        ]
-      }
-    ],
-    "subagentStop": [
-      {
-        "hooks": [
-          { "type": "command", "command": "bash ./subagent-ledger.sh", "timeout": 5 }
+          {
+            "type": "command",
+            "command": "bash ./subagent-ledger.sh",
+            "timeout": 5
+          }
         ]
       }
     ]

@@ -26,8 +26,9 @@ describe('hook manifests: event set per harness', () => {
     expect(eventsOf(isClaude)).toEqual(['PreToolUse', 'SubagentStop', 'UserPromptSubmit']);
   });
 
-  it('Copilot gets exactly subagentStop, postToolUse, preToolUse', () => {
-    expect(eventsOf(isCopilot)).toEqual(['postToolUse', 'preToolUse', 'subagentStop']);
+  // Copilot events are not shipped (manual setup, docs/usage/copilot-hooks.md).
+  it('ships no Copilot (camelCase) events', () => {
+    expect(eventsOf(isCopilot)).toEqual([]);
   });
 
   it('PreToolUse uses matcher Bash and has no * entry', () => {
@@ -40,10 +41,8 @@ describe('hook manifests: event set per harness', () => {
   // manifest installed into Claude Code must not carry camelCase (Copilot) events.
   it.each(manifests.map((m) => [m.file, m.json] as const))(
     '%s carries no camelCase event into Claude Code',
-    (file, json) => {
-      const camel = Object.keys(json.hooks).filter(isCopilot);
-      if (file.endsWith('.copilot.json')) return;
-      expect(camel).toEqual([]);
+    (_file, json) => {
+      expect(Object.keys(json.hooks).filter(isCopilot)).toEqual([]);
     },
   );
 });
