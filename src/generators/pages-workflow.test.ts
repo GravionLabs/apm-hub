@@ -8,11 +8,13 @@ const wf = parse(text);
 
 describe('pages.yml workflow guard (#272)', () => {
   it('pins every action to a 40-hex SHA followed by a comment', () => {
-    const uses = text.split('\n').filter((l) => /^\s*-?\s*uses:/.test(l));
-    expect(uses.length).toBe(4);
-    for (const line of uses) {
-      expect(line).toMatch(/uses: [\w./-]+@[0-9a-f]{40} # \S+/);
-    }
+    const steps = Object.values(wf.jobs).flatMap((j) => (j as { steps: { uses?: string }[] }).steps);
+    const usesSteps = steps.filter((s) => s.uses);
+    expect(usesSteps.length).toBeGreaterThan(0);
+    for (const s of usesSteps) expect(s.uses).toMatch(/^[\w./-]+@[0-9a-f]{40}$/);
+    const lines = text.split('\n').filter((l) => /^\s*-?\s*uses:/.test(l));
+    expect(lines.length).toBe(usesSteps.length);
+    for (const line of lines) expect(line).toMatch(/@[0-9a-f]{40} # \S+/);
   });
 
   it('triggers on main, site-related pull requests and manual runs', () => {
@@ -21,6 +23,10 @@ describe('pages.yml workflow guard (#272)', () => {
       'site/**',
       'docs/**',
       'README.md',
+      'src/**',
+      'packages/**',
+      'package.json',
+      'pnpm-lock.yaml',
       '.github/workflows/pages.yml',
     ]);
     expect(wf.on).toHaveProperty('workflow_dispatch');
@@ -39,26 +45,37 @@ describe('pages.yml workflow guard (#272)', () => {
     );
   });
 
-  it('builds on pull requests without upload, and deploys only off pull requests with DEPLOY_PAGES', () => {
+  it('builds on pull requests without upload, and deploys only from main with DEPLOY_PAGES', () => {
     const { build, deploy } = wf.jobs;
     expect(build.name).toBe('Build the site');
-    expect(build.if).toContain("vars.DEPLOY_PAGES == 'true'");
+    expect(build.if).toBe("github.event_name == 'pull_request' || vars.DEPLOY_PAGES == 'true'");
     const upload = build.steps.find((s: { uses?: string }) => s.uses?.includes('upload-pages-artifact'));
-    expect(upload.if).toBe("github.event_name != 'pull_request'");
+    expect(upload.if).toBe("github.event_name != 'pull_request' && github.ref == 'refs/heads/main'");
     expect(upload.with.path).toBe('site/.vitepress/dist');
     expect(deploy.needs).toBe('build');
-    expect(deploy.if).toContain("!= 'pull_request'");
-    expect(deploy.if).toContain('DEPLOY_PAGES');
+    expect(deploy.if).toBe(
+      "github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_PAGES == 'true'",
+    );
     expect(deploy.permissions).toEqual({ pages: 'write', 'id-token': 'write' });
+    expect(deploy.environment.name).toBe('github-pages');
+    const step = deploy.steps.find((s: { id?: string }) => s.id === 'deployment');
+    expect(step.uses).toMatch(/^actions\/deploy-pages@/);
   });
 
-  it('regenerates the lists and sets the site base in the build job', () => {
-    const runs = wf.jobs.build.steps.map((s: { run?: string }) => s.run ?? '');
-    expect(runs).toContain('pnpm run generate:all');
-    expect(runs.some((r: string) => r.includes('SITE_BASE=/${{ github.event.repository.name }}/'))).toBe(true);
+  it('installs, regenerates the lists, then builds the site with the base from env', () => {
+    const runs: string[] = wf.jobs.build.steps.map((s: { run?: string }) => s.run ?? '').filter(Boolean);
+    const at = (needle: string) => runs.findIndex((r) => r.includes(needle));
+    expect(at('pnpm install --frozen-lockfile')).toBeGreaterThanOrEqual(0);
+    expect(at('pnpm install')).toBeLessThan(at('pnpm run generate:all'));
+    expect(at('pnpm run generate:all')).toBeLessThan(at('pnpm --filter site build'));
+    expect(runs[at('pnpm --filter site build')]).toBe('SITE_BASE="$BASE" pnpm --filter site build');
+    expect(wf.jobs.build.env.BASE).toBe('/${{ github.event.repository.name }}/');
   });
 
-  it('never commits or pushes', () => {
-    expect(text).not.toMatch(/git commit|git push/);
+  it('never commits or pushes in a run step', () => {
+    const runs = Object.values(wf.jobs).flatMap((j) =>
+      (j as { steps: { run?: string }[] }).steps.map((s) => s.run ?? ''),
+    );
+    for (const r of runs) expect(r).not.toMatch(/git commit|git push/);
   });
 });
