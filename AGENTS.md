@@ -76,4 +76,4 @@ pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Ro
 - [README.md](README.md) — installing packages
 - [docs/concepts/skill-frontmatter.md](docs/concepts/skill-frontmatter.md) — why the frontmatter is restricted
 - [docs/concepts/agent-frontmatter.md](docs/concepts/agent-frontmatter.md) — agent source format and the `metadata` block
-- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md) — incl. public surface and rename policy
