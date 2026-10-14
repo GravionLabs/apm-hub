@@ -1,7 +1,7 @@
 # Overview
 
 <!-- AUTO:start version -->
-Welcome to **apm-hub** v2.1.1 👋
+Welcome to **apm-hub** v2.2.0 👋
 <!-- AUTO:end version -->
 
 apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The one `agents` package adds the `orchestrator` primary agent and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to. Entry points beyond skill names are the `/orch` prompt and the `orchestrator` agent.
@@ -10,20 +10,20 @@ apm-hub is a library of reusable **skills** in the [agentskills.io](https://agen
 
 A package is a domain bundle of skills. Installing it copies the skills into your repository, where the agent picks them up by their `description` or when you name them.
 
-| Package                | What it covers                                                                                                                    |
-| :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
-| `shared`               | `implementation` (tests per change), `detect-techstack`, `code-review` (severity-rated), `diagnose` (bug diagnosis)               |
-| `delivery`             | `orch-pipeline` (`/orch`: plan → TDD → review fan-out → commit), `review-fanout`, `verify-project`, `issue-planning`              |
-| `github`               | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`                              |
-| `dotnet`               | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
-| `ts`                   | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
-| `py`                   | `py-implementation`, `py-test`, `py-create-project`                                                                               |
-| `ng`                   | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                       |
-| `agents`               | `orchestrator` (primary agent) plus the `explorer`, `planner`, `reviewer` and `implementer` subagents                              |
-| `hooks`                | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails); OpenCode plugin                              |
-| `core`                 | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                          |
-| `apm-tooling`          | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not in `all`)                                    |
-| `all`                  | every package except `apm-tooling`                                                                                          |
+| Package       | What it covers                                                                                                                    |
+| :------------ | :-------------------------------------------------------------------------------------------------------------------------------- |
+| `shared`      | `implementation` (tests per change), `detect-techstack`, `code-review` (severity-rated), `diagnose` (bug diagnosis)               |
+| `delivery`    | `orch-pipeline` (`/orch`: plan → TDD → review fan-out → commit), `review-fanout`, `verify-project`, `issue-planning`              |
+| `github`      | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`                              |
+| `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
+| `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
+| `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                               |
+| `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                       |
+| `agents`      | `orchestrator` (primary agent) plus the `explorer`, `planner`, `reviewer` and `implementer` subagents                             |
+| `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails); OpenCode plugin                             |
+| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                          |
+| `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not in `all`)                                    |
+| `all`         | every package except `apm-tooling`                                                                                                |
 
 The full list with descriptions is generated into [skill-list.md](skill-list.md).
 
