@@ -124,8 +124,9 @@ jobs:
 
       # Generated aggregate docs are gitignored/CI-owned; generate them in the
       # working tree only so the site build resolves its links. Never committed here.
+      # generate:all = tsc build + generate:ci; dist/ is not available after the test action.
       - name: Generate docs for site build
-        run: pnpm run generate:ci
+        run: pnpm run generate:all
 
       - name: Test docs site
         run: pnpm --filter site test
