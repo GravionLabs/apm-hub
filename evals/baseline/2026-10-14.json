@@ -1,0 +1,170 @@
+{
+  "date": "2026-10-14",
+  "model": "haiku",
+  "runs": 3,
+  "maxTurns": 2,
+  "sampleSize": {
+    "prompts": 76,
+    "runs": 228
+  },
+  "overall": {
+    "positives": 114,
+    "negatives": 114,
+    "triggerRate": 28.9,
+    "falseTriggerRate": 0
+  },
+  "skills": [
+    {
+      "skill": "code-review",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 33.3,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "detect-techstack",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 100,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "diagnose",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "dotnet-implementation",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "dotnet-test",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "github-issue",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "github-pull-request",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 100,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "github-release",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 100,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "implementation",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "issue-planning",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 83.3,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "ng-ag-grid-developer",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "ng-implementation",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "ng-test",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "py-implementation",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "py-test",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "review-fanout",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 66.7,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "ts-implementation",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "ts-test",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 0,
+      "falseTriggerRate": 0
+    },
+    {
+      "skill": "verify-project",
+      "positives": 6,
+      "negatives": 6,
+      "triggerRate": 66.7,
+      "falseTriggerRate": 0
+    }
+  ],
+  "thresholdFailures": [
+    "overall: trigger rate 28.9% < 80%",
+    "code-review: trigger rate 33.3% < 80%",
+    "diagnose: trigger rate 0% < 80%",
+    "dotnet-implementation: trigger rate 0% < 80%",
+    "dotnet-test: trigger rate 0% < 80%",
+    "github-issue: trigger rate 0% < 80%",
+    "implementation: trigger rate 0% < 80%",
+    "ng-ag-grid-developer: trigger rate 0% < 80%",
+    "ng-implementation: trigger rate 0% < 80%",
+    "ng-test: trigger rate 0% < 80%",
+    "py-implementation: trigger rate 0% < 80%",
+    "py-test: trigger rate 0% < 80%",
+    "review-fanout: trigger rate 66.7% < 80%",
+    "ts-implementation: trigger rate 0% < 80%",
+    "ts-test: trigger rate 0% < 80%",
+    "verify-project: trigger rate 66.7% < 80%"
+  ],
+  "note": "Installed skills lacked dotnet, ng, py and ts packages (and github-*/orch were partially present); 0% trigger for uninstalled skills is an environment artifact, not a description defect. Re-run with all@apm-hub installed."
+}

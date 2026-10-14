@@ -8,7 +8,7 @@ Skill descriptions decide whether a model loads a skill. `evals/skill-triggers.j
 pnpm install; pnpm run build                       # the scorer lives in dist/
 pwsh scripts/Invoke-TriggerEvals.ps1 -DryRun       # lists prompts and the command, calls nothing (also -WhatIf)
 pwsh scripts/Invoke-TriggerEvals.ps1 -Runs 3 -Out evals/results/trigger-results.json
-pwsh scripts/Invoke-TriggerEvals.ps1 -Baseline evals/baseline.json -Out evals/results/latest.json
+pwsh scripts/Invoke-TriggerEvals.ps1 -Baseline evals/baseline/2026-10-14.json -Out evals/results/latest.json
 pwsh scripts/Invoke-TriggerEvals.ps1 -Skill review-fanout,verify-project   # subset
 ```
 
@@ -41,6 +41,10 @@ Rates are percent (0-100). `triggerRate` is the share of positive runs where the
 - Regression: a re-run fails when a trigger rate drops, or a false-trigger rate rises, by more than 5 points against the baseline (overall or per skill).
 
 The numbers live in `src/generators/skill-trigger-score.ts`.
+
+## Baseline
+
+[`evals/baseline/2026-10-14.json`](../../evals/baseline/2026-10-14.json): model `haiku`, 3 runs, 76 prompts (228 runs), `--max-turns 2`. Overall trigger rate 28.9 %, false-trigger rate 0 %. The run did not pass the threshold: the machine had no `dotnet`, `ng`, `py` or `ts` skills installed (0 % for those), so their rates are not meaningful; re-run with all stacks installed (`all@apm-hub`) before using it as a gate. `evals/results/` is git-ignored.
 
 ## When to re-run
 
