@@ -9,6 +9,7 @@ const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
 const script = path.join(pk, 'shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1');
 
 const orchestrator = read('agents/.apm/agents/orchestrator.agent.md');
+const issueReader = read('agents/.apm/agents/issue-reader.agent.md');
 const taskIssues = read('github/.apm/skills/github-issue/references/task-issues.md');
 const planning = read('delivery/.apm/skills/issue-planning/SKILL.md');
 const detect = read('shared/.apm/skills/detect-techstack/SKILL.md');
@@ -34,9 +35,14 @@ describe('orchestrator state: contract strings (docs)', () => {
     expect(orchestrator).toContain('"Task merged"');
     expect(orchestrator).toContain('task-issues.md');
     expect(orchestrator).toContain('none open (all merged)');
-    expect(orchestrator).toContain('{n:.number,s:.state}');
-    expect(orchestrator).toContain('api --paginate');
-    expect(orchestrator.indexOf('Resolve the integration branch')).toBeLessThan(orchestrator.indexOf('Task merged'));
+    // the sub-issue query and the merged grep run in the issue-reader; the orchestrator keeps only the flags
+    expect(orchestrator).toContain('`issue-reader`');
+    expect(orchestrator).toContain('merged: true');
+    expect(orchestrator).not.toContain('api --paginate');
+    expect(issueReader).toContain('{n:.number,state:.state}');
+    expect(issueReader).toContain('api --paginate');
+    expect(issueReader).toContain('"Task merged"');
+    expect(orchestrator.indexOf('Read the issue')).toBeLessThan(orchestrator.indexOf('Task merged'));
   });
 
   it('orchestrator loads detect-techstack inline without hard-coding the script', () => {
@@ -52,6 +58,7 @@ describe('orchestrator state: contract strings (docs)', () => {
     expect(fetchAt).toBeLessThan(taskIssues.indexOf('--grep'));
     expect(taskIssues).toContain('`^[0-9]+$`');
     expect(orchestrator).not.toContain('gh issue close');
+    expect(issueReader).not.toContain('gh issue close');
     expect(planning).toContain('Task merged');
     expect(planning).not.toContain('--grep');
   });

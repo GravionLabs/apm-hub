@@ -37,7 +37,7 @@ Why: after an idle gap the prompt cache is rewritten, and that cost grows with t
 
 **Run**:
 
-1. Step 0 as usual; step 1 only resolves the integration branch (no `gh issue view`, no Task sub-issues).
+1. Step 0 as usual; step 1 dispatches `issue-reader` without an issue reference (branch-only mode) and keeps only `{branch, stale}` (no issue body, no Task sub-issues; `null` or `stale: true` → `github-release cut` first).
 2. State lives in `.agents/adhoc/`: the original description as the first line of `.agents/adhoc/description.txt`, the ledger `progress.md` with header `# orchestrator ledger — issue #adhoc — branch <branch>`. `mkdir`, `mv`, the `.git/info/exclude` edit and the file writes below run through Bash (the orchestrator has no file tool) and may prompt for permission.
 3. `.agents/adhoc/` already exists: resume only when the first line of its `description.txt` equals the new description; otherwise (another description run in this working tree, or a stale one) ask, never reuse silently. A `PBI created: #<nr>` line in its ledger means the PBI exists: never create a second one, continue at step 7.
 4. `explorer` and `planner` get the description; `issue-planning` writes `.agents/adhoc/plan.json` (`input_type: description`, `parent_issue: null`, level `task`).

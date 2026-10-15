@@ -8,6 +8,7 @@ const pk = path.resolve(__dirname, '../../packages');
 const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
 
 const orchestrator = read('agents/.apm/agents/orchestrator.agent.md');
+const issueReader = read('agents/.apm/agents/issue-reader.agent.md');
 const conventional = read('github/.apm/skills/github-issue/references/conventional-commits.md');
 const subIssues = read('github/.apm/skills/github-issue/references/sub-issues.md');
 const taskIssues = read('github/.apm/skills/github-issue/references/task-issues.md');
@@ -59,7 +60,8 @@ describe('task flow consistency', () => {
 
   it('orchestrator ledger line and task-only sub-issue handling', () => {
     expect(orchestrator).toContain('Task #<nr>: <status> — <sha>');
-    expect(orchestrator).toContain('select(any(.labels[];.name=="task"))');
+    expect(issueReader).toContain('select(any(.labels[];.name=="task"))');
+    expect(orchestrator).toMatch(/`pbi` children are separate PBIs/);
     expect(orchestrator).toMatch(/implement mode when the issue has no Task sub-issues/);
     expect(orchestrator).toMatch(/Task sub-issues never get their own branch or PR/);
     expect(orchestrator).toMatch(/Existing Task sub-issues are used as they are/);
