@@ -1,6 +1,6 @@
 # apm-hub — Working in this repository
 
-apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships seven **agents** that skills cannot replace: the `orchestrator` orchestrator (primary agent, keeps only phase summaries in context) and the `issue-reader`, `explorer`, `planner`, `reviewer`, `implementer` and `pr-writer` subagents it delegates to, each with its own model and tool set. Entry point beyond skill names: `orchestrator` (agent, takes an issue number or a description; modes `plan|implement|full|next|loop`) or the `/orchestrator` skill (inline). `/orch` is deprecated and removed in 3.0.0.
+apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distributed as APM packages. Skills load unchanged on GitHub Copilot, Claude Code and OpenCode. Workflows are skills. The one `agents` package ships the `/orchestrator` launcher skill and seven **agents** that skills cannot replace: the `orchestrator` orchestrator (primary agent, keeps only phase summaries in context) and the `issue-reader`, `explorer`, `planner`, `reviewer`, `implementer` and `pr-writer` subagents it delegates to, each with its own model and tool set. Entry point beyond skill names: `orchestrator` (agent, takes an issue number or a description; modes `plan|implement|full|next|loop`) or the `/orchestrator` skill (inline). `/orch` is deprecated and removed in 3.0.0.
 
 ## Layout
 
@@ -9,7 +9,7 @@ packages/<domain>/
 ├── apm.yml                    # name, version, description, skills list (agents list for the agents package)
 └── .apm/
     ├── skills/<name>/         # SKILL.md (+ scripts/ references/ templates/ assets/)
-    ├── agents/<name>.agent.md # agents package only; one source per agent, see docs/concepts/agent-frontmatter.md
+    ├── agents/<name>.agent.md # agents package only (it also ships the orchestrator launcher skill); one source per agent, see docs/concepts/agent-frontmatter.md
     ├── prompts/               # *.prompt.md (delivery only)
     └── issue-templates/       # GitHub issue templates (github package only)
 .github/skills/check-prerequisites/   # the only repo-local skill (contributor tooling)
