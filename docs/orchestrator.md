@@ -65,14 +65,14 @@ flowchart TD
     S6 --> END([PR URL, ledger complete])
 ```
 
-1. **Tech stack.** `detect-techstack` runs inline and returns JSON naming the language skills. Every later prompt carries it.
-2. **Explore.** The `explorer` summarizes the affected code in 300 words or less.
+1. **Tech stack.** `detect-techstack` runs inline and returns JSON naming the language skills. Step 1 writes it, with the integration branch, to the context file `.agents/<issue>/context.md`; every later prompt references that path instead of carrying the JSON.
+2. **Explore.** The `explorer` summarizes the affected code in 300 words or less; the summary is appended to `context.md`.
 3. **Plan.** The `planner` runs `issue-planning` and writes `.agents/<issue>/plan.json`. Only the path, a summary and the open question count enter the orchestrator's context. You approve at the plan gate. Existing Task sub-issues are used as they are, with no planner and no `plan.json`.
-4. **Implement.** One `implementer` per task, in blocking order, all on the PBI's single branch.
+4. **Implement.** One `implementer` per task, in blocking order, all on the PBI's single branch. Each gets the task, the branch and the path of `context.md`, not the pasted stack and exploration text, so a run with five tasks and two fix rounds emits them once instead of seven times.
 5. **Review.** One `review-fanout` over everything the run changed.
 6. **Pull request.** The orchestrator opens it itself with `github-pull-request`, into the integration branch, and never merges.
 
-What enters the orchestrator's context: the stack JSON, the issue text and `task` sub-issue numbers, the explorer summary, the plan path and summary, each implementer's reply, the review verdict and finding lines, and the PR URL. What stays outside: files read, `plan.json`, the diff, logs, task reports and the review package. Step wording: [orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md); planning: [issue-planning](../packages/delivery/.apm/skills/issue-planning/SKILL.md); review: [review-fanout](../packages/delivery/.apm/skills/review-fanout/SKILL.md); branch choice: [release-branches.md](../packages/github/.apm/skills/github-issue/references/release-branches.md).
+What enters the orchestrator's context: the stack JSON and the explorer summary once each, the issue text and `task` sub-issue numbers, the plan path and summary, each implementer's reply, the review verdict and finding lines, and the PR URL. What stays outside: files read, `context.md` once written, `plan.json`, the diff, logs, task reports and the review package. Step wording: [orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md); planning: [issue-planning](../packages/delivery/.apm/skills/issue-planning/SKILL.md); review: [review-fanout](../packages/delivery/.apm/skills/review-fanout/SKILL.md); branch choice: [release-branches.md](../packages/github/.apm/skills/github-issue/references/release-branches.md).
 
 ### Who talks to whom in a full run
 
@@ -205,6 +205,7 @@ A run keeps its state on disk and on GitHub, never in the model's memory, so a `
 | File | Written by | Purpose |
 |:--|:--|:--|
 | `progress.md` | orchestrator and the `SubagentStop` hook | the ledger: phase, task, fix round and ruling lines, plus one line per finished subagent |
+| `context.md` | orchestrator (steps 1 and 2) | integration branch, tech-stack JSON and exploration summary; subagents get its path instead of the text, and a resumed run reuses it |
 | `plan.json`, `plan.md` | `planner` | plan items with sizes, blockers and open questions; `plan.md` is the human view |
 | `task-<n>-report.md` | `implementer` | full report per task; `<n>` is the Task issue number, or the plan id (`p1`) for a single task without an issue |
 | `review-<n>.diff`, `review.json` | `review-fanout` | the review package the reviewers read, and the machine-readable verdict |
