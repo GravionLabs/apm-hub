@@ -311,6 +311,20 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(md).toContain('--no-review-summary');
   });
 
+  it.each([
+    ['working-mode', working],
+    ['orchestrator doc', fs.readFileSync(path.resolve(__dirname, '../../docs/orchestrator.md'), 'utf-8')],
+    ['launcher skill', read('agents/.apm/skills/orchestrator/SKILL.md')],
+  ])('%s documents --fix-advisories', (_n, md) => {
+    expect(md).toContain('--fix-advisories');
+  });
+
+  it('working-mode lists the policies and the headless Gate removal', () => {
+    expect(working).toMatch(/--fix-advisories none\\\|medium\\\|all/);
+    expect(working).toMatch(/--fix-advisories` set, the review summary writes no `Gate:`/);
+    expect(working).toContain('documented there once #227 lands');
+  });
+
   it('orch prompt is a one-line deprecation pointing to the agent', () => {
     const [, frontmatter, ...rest] = prompt.split(/^---$/m);
     expect(frontmatter).toMatch(/^description: "Deprecated, use the orchestrator agent/m);
