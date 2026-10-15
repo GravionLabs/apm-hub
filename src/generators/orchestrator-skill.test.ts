@@ -39,9 +39,20 @@ describe('orchestrator launcher skill', () => {
     const idx = paths.map((p) => skill.indexOf(`\`${p}\``));
     idx.forEach((i) => expect(i).toBeGreaterThanOrEqual(0));
     expect([...idx].sort((a, b) => a - b)).toEqual(idx);
-    expect(skill.indexOf('~/.claude/agents/orchestrator.md')).toBeGreaterThan(
-      skill.indexOf('`.claude/agents/orchestrator.md`'),
-    );
+  });
+
+  it('announces a project-level agent file and a differing global copy, never overrides the guardrails', () => {
+    expect(skill).toMatch(/project-level[^\n]*print its path/i);
+    expect(skill).toMatch(/global copy[^\n]*differs/i);
+    expect(skill).toMatch(/git guardrails/);
+  });
+
+  it('says next and loop take no description and names the client subagent mechanisms', () => {
+    expect(skill).toMatch(/`next` and `loop` take no description/);
+    expect(skill).not.toContain('via the Agent tool');
+    expect(skill).toMatch(/Claude Code `Agent`/);
+    expect(skill).toMatch(/OpenCode[^\n]*`task`/);
+    expect(skill).toMatch(/VS Code Copilot `runSubagent`/);
   });
 
   it('recommends the primary agent and the install hint', () => {
@@ -49,8 +60,8 @@ describe('orchestrator launcher skill', () => {
     expect(skill).toContain('apm install GravionLabs/apm-hub/packages/agents');
   });
 
-  it('is the only skill in the agents package manifest', () => {
+  it('is listed in the agents package manifest', () => {
     const manifest = parse(read('agents/apm.yml'));
-    expect(manifest.skills).toEqual(['orchestrator']);
+    expect(manifest.skills).toContain('orchestrator');
   });
 });
