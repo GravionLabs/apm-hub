@@ -1,5 +1,7 @@
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import { execFileSync } from 'child_process';
 
 const root = path.resolve(__dirname, '../..');
 const read = (p: string) => fs.readFileSync(path.join(root, p), 'utf-8');
@@ -60,6 +62,63 @@ describe('next-selection reference', () => {
     expect(reference).toMatch(/No candidate/);
     expect(reference).toContain('orchestrator next <feature> after /clear');
     expect(reference).toMatch(/is done/);
+  });
+
+  it('drops PBIs merged into the integration branch, fetching before the grep', () => {
+    expect(reference).toContain('## Merged (closes at release)');
+    expect(reference).toContain('gh pr list --state merged');
+    expect(reference).toContain('--grep');
+    expect(reference).toContain('origin/<integration-branch>');
+    const fetchAt = reference.indexOf('git fetch origin <integration-branch>');
+    expect(fetchAt).toBeGreaterThanOrEqual(0);
+    expect(fetchAt).toBeLessThan(reference.indexOf('--grep'));
+    expect(reference).toMatch(/never close them by hand/);
+  });
+
+  it('reports merged PBIs separately from waiting for merge in the no-candidate and end lines', () => {
+    const pick = reference.split('## Pick')[1].split('## End line')[0];
+    const end = reference.split('## End line after a PBI run')[1];
+    for (const part of [pick, end]) {
+      expect(part).toContain('merged, closes at release');
+      expect(part).toContain('waiting for merge: PR #<n>');
+    }
+    expect(end).toContain('merged, closes at release: #<a>, #<b>');
+    expect(end).toMatch(/every open PBI is merged[^\n]*Feature #<feature> is done\./);
+  });
+
+  describe('merged commit check (command read from the reference)', () => {
+    let dir: string;
+    const git = (...a: string[]) =>
+      execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: dir, encoding: 'utf-8' });
+    const find = (nr: string) => {
+      const cmd = /^git log .*--grep .*$/m.exec(reference)![0];
+      const words = cmd
+        .replace('git ', '')
+        .replace('<nr>', nr)
+        .replace('origin/<integration-branch>', 'origin/release/1.0')
+        .match(/"[^"]*"|\S+/g)!;
+      return git(...words.map((w) => w.replace(/^"|"$/g, ''))).trim();
+    };
+
+    beforeEach(() => {
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pbi-merged-'));
+      git('init', '-q', '-b', 'release/1.0');
+      git('commit', '-q', '--allow-empty', '-m', 'fix: a (#249)\n\nbody\n\nFixes #249\nCo-Authored-By: x <x@x>');
+      git('commit', '-q', '--allow-empty', '-m', 'feat: b\n\nCloses #31');
+      git('update-ref', 'refs/remotes/origin/release/1.0', 'HEAD');
+    });
+    afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+    it('matches Fixes #249 in a multi-line body and Closes #31 at the end', () => {
+      expect(find('249')).not.toBe('');
+      expect(find('31')).not.toBe('');
+    });
+
+    it('does not match #24 against #249 nor an unreferenced PBI', () => {
+      expect(find('24')).toBe('');
+      expect(find('3')).toBe('');
+      expect(find('999')).toBe('');
+    });
   });
 
   it('is linked from the github-issue skill', () => {
