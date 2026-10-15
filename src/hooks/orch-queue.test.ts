@@ -117,6 +117,37 @@ exit 0
       expect(run(['-IssueFile', 'none.txt', '-DryRun']).status).not.toBe(0);
     });
 
+    it('prints the narrow Copilot command, quoted for the shell, and --allow-all-tools only with -AllowAll', () => {
+      const narrow = run(['12', '-Harness', 'copilot', '-DryRun']).stdout;
+      expect(narrow).toContain('[dry-run] #12: copilot -p "full 12" --agent=orchestrator --no-ask-user --allow-tool=write ');
+      expect(narrow).toContain('"--allow-tool=shell(git:*)"');
+      expect(narrow).toContain('"--allow-tool=shell(gh:*)"');
+      expect(narrow).not.toContain('--allow-all-tools');
+      const all = run(['12', '-Harness', 'copilot', '-Mode', 'plan', '-AllowAll', '-DryRun']);
+      expect(all.status).toBe(0);
+      expect(all.stdout).toContain('[dry-run] #12: copilot -p "plan 12" --agent=orchestrator --no-ask-user --allow-all-tools\n');
+      expect(all.stdout).not.toContain('--allow-tool');
+    });
+
+    it('prints the narrow OpenCode command with OPENCODE_PERMISSION, and --auto without it with -AllowAll', () => {
+      const narrow = run(['12', '-Harness', 'opencode', '-DryRun']).stdout;
+      expect(narrow).toContain('[dry-run] #12: OPENCODE_PERMISSION=');
+      expect(narrow).toContain('opencode run --agent orchestrator "full 12"');
+      expect(narrow).toContain('\\"git *\\":\\"allow\\"');
+      expect(narrow).toContain('\\"*\\":\\"deny\\"');
+      expect(narrow).not.toContain('--auto');
+      const all = run(['12', '-Harness', 'opencode', '-Mode', 'implement', '-AllowAll', '-DryRun']);
+      expect(all.status).toBe(0);
+      expect(all.stdout).toContain('[dry-run] #12: opencode run --agent orchestrator --auto "implement 12"\n');
+      expect(all.stdout).not.toContain('OPENCODE_PERMISSION');
+    });
+
+    it.each(['copilot', 'opencode'])('does not report "No adapter" for %s', (h) => {
+      const r = run(['1', '-Harness', h, '-DryRun']);
+      expect(r.status).toBe(0);
+      expect(r.stderr).not.toContain('No adapter');
+    });
+
     it('fails clearly for an unknown harness adapter and an invalid mode', () => {
       expect(run(['1', '-Harness', 'nope', '-DryRun']).stderr).toContain("No adapter for harness 'nope'");
       expect(run(['1', '-Mode', 'next', '-DryRun']).status).not.toBe(0);
@@ -130,6 +161,25 @@ exit 0
       });
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain("'claude' not found on PATH");
+    });
+
+    it.each(['copilot', 'opencode'])('fails with a clear message when %s is not on PATH', (h) => {
+      const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '1', '-Harness', h], {
+        encoding: 'utf8', cwd: dir, env: { ...process.env, PATH: path.dirname(spawnSync('which', ['pwsh'], { encoding: 'utf8' }).stdout.trim()) },
+      });
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain(`'${h}' not found on PATH (harness '${h}')`);
+    });
+
+    it('passes OPENCODE_PERMISSION to the opencode process only for that run', () => {
+      fs.writeFileSync(
+        path.join(bin, 'opencode'),
+        `#!/bin/sh\necho "$OPENCODE_PERMISSION" > "${dir}/perm.txt"\nmkdir -p .agents/1\necho "Ledger complete." >> .agents/1/progress.md\n`,
+        { mode: 0o755 },
+      );
+      const r = run(['1', '-Harness', 'opencode'], true);
+      expect(r.status).toBe(0);
+      expect(JSON.parse(fs.readFileSync(path.join(dir, 'perm.txt'), 'utf8')).bash['*']).toBe('deny');
     });
 
     it('runs each issue in its own process, logs the output and reports done', () => {

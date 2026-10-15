@@ -39,7 +39,7 @@ function ConvertTo-IssueNumber([string]$Text, [string]$Where) {
   if ($t -notmatch '\A[1-9][0-9]{0,9}\z') { throw "Invalid issue number '$Text' ($Where)." }
   $t
 }
-function Format-Arg([string]$a) { if ($a -match '[\s"'']' -or $a -eq '') { '"' + ($a -replace '"', '\"') + '"' } else { $a } }
+function Format-Arg([string]$a) { if ($a -match '[\s"''()]' -or $a -eq '') { '"' + ($a -replace '"', '\"') + '"' } else { $a } }
 function Get-LedgerLines([string]$n) {
   $f = Join-Path (Join-Path '.agents' $n) 'progress.md'
   if (Test-Path -LiteralPath $f) { @(Get-Content -LiteralPath $f | Where-Object { $_.Trim() }) } else { @() }
@@ -75,17 +75,21 @@ foreach ($n in $queue) {
   if (Test-Complete (Get-LedgerLines $n)) { $results[$n] = 'skipped'; continue }
   $cmd = & $adapter -Issue $n -Mode $Mode -AllowAll:$AllowAll
   $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
-  if ($DryRun) { Write-Host "[dry-run] #${n}: $line"; $results[$n] = 'dry-run'; continue }
+  $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
+  $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
+  if ($DryRun) { Write-Host "[dry-run] #${n}: $envText"; $results[$n] = 'dry-run'; continue }
   $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
   if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
   $gatesBefore = @(Get-Gates (Get-LedgerLines $n)).Count
   $dir = Join-Path '.agents' $n
   New-Item -ItemType Directory -Path $dir -Force | Out-Null
   $log = Join-Path $dir 'run.log'
-  Write-Host "[run] #${n}: $line"
-  Add-Content -LiteralPath $log -Value "=== $(Get-Date -Format o) $line" -Encoding utf8
-  & $bin.Source @($cmd.Arguments) 2>&1 | Tee-Object -FilePath $log -Append | Out-Host
-  $code = $LASTEXITCODE
+  Write-Host "[run] #${n}: $envText"
+  Add-Content -LiteralPath $log -Value "=== $(Get-Date -Format o) $envText" -Encoding utf8
+  $saved = @{}
+  foreach ($k in $envVars.Keys) { $saved[$k] = [Environment]::GetEnvironmentVariable($k); [Environment]::SetEnvironmentVariable($k, [string]$envVars[$k]) }
+  try { & $bin.Source @($cmd.Arguments) 2>&1 | Tee-Object -FilePath $log -Append | Out-Host; $code = $LASTEXITCODE }
+  finally { foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) } }
   Add-Content -LiteralPath $log -Value "=== exit code $code" -Encoding utf8
   $after = Get-LedgerLines $n
   $gates = @(Get-Gates $after)
