@@ -16,8 +16,8 @@ const body = orchestrator.split(/^---$/m)[2];
 const description = /^description: (.*)$/m.exec(orchestrator)![1];
 
 describe('orchestrator plan and next modes', () => {
-  it('lists all four modes in the description', () => {
-    expect(description).toContain('plan|implement|full|next');
+  it('lists all five modes in the description', () => {
+    expect(description).toContain('plan|implement|full|next|loop');
   });
 
   it('detects the mode by first word and keeps one PBI per run', () => {
