@@ -20,11 +20,8 @@ param(
   [switch]$AllowAll
 )
 $ErrorActionPreference = 'Stop'
-$tools = @(
-  'Read', 'Grep', 'Glob', 'Edit', 'Write', 'Agent', 'Skill', 'SendMessage',
-  'Bash(git:*)', 'Bash(gh:*)', 'Bash(pwsh:*)', 'Bash(pnpm:*)', 'Bash(npm:*)', 'Bash(npx:*)',
-  'Bash(node:*)', 'Bash(dotnet:*)', 'Bash(uv:*)', 'Bash(python:*)', 'Bash(ng:*)'
-)
+$tools = @('Read', 'Grep', 'Glob', 'Edit', 'Write', 'Agent', 'Skill', 'SendMessage') +
+  @(& (Join-Path $PSScriptRoot 'allowed-commands.ps1') | ForEach-Object { "Bash($_`:*)" })
 $cliArgs = @('--agent', 'orchestrator', '-p', "$Mode $Issue", '--allowedTools', ($tools -join ','))
 if ($AllowAll) { $cliArgs += '--dangerously-skip-permissions' }
 [pscustomobject]@{ Executable = 'claude'; Arguments = $cliArgs }

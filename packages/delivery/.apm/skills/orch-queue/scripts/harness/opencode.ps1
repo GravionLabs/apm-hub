@@ -5,7 +5,7 @@
   OpenCode adapter for Invoke-OrchestratorQueue.ps1: returns the executable, arguments and environment for one headless run.
 .DESCRIPTION
   opencode run --agent orchestrator "<mode> <issue>". The narrow permission set travels in the OPENCODE_PERMISSION
-  environment variable (JSON merged into the config): edits, subagents and skills allowed, bash only for git, gh, pwsh
+  environment variable (JSON merged into the config): edits (not under .git/; .agents/ stays writable for reports), subagents and skills allowed, bash only for git, gh, pwsh
   and the common build and test runners, everything else denied, so the run fails closed. -AllowAll uses --auto
   (auto-approves permissions that are not explicitly denied) and sets no environment (explicit opt-in).
 .PARAMETER Issue    Issue number.
@@ -25,8 +25,8 @@ $envVars = @{}
 if ($AllowAll) { $cliArgs += '--auto' }
 else {
   $bash = [ordered]@{ '*' = 'deny' }
-  foreach ($s in 'git', 'gh', 'pwsh', 'pnpm', 'npm', 'npx', 'node', 'dotnet', 'uv', 'python', 'ng') { $bash["$s *"] = 'allow' }
-  $envVars['OPENCODE_PERMISSION'] = [ordered]@{ edit = 'allow'; task = 'allow'; skill = 'allow'; bash = $bash } | ConvertTo-Json -Compress -Depth 5
+  foreach ($s in & (Join-Path $PSScriptRoot 'allowed-commands.ps1')) { $bash["$s *"] = 'allow' }
+  $envVars['OPENCODE_PERMISSION'] = [ordered]@{ edit = [ordered]@{ '*' = 'allow'; '.git/**' = 'deny' }; task = 'allow'; skill = 'allow'; bash = $bash } | ConvertTo-Json -Compress -Depth 5
 }
 $cliArgs += "$Mode $Issue"
 [pscustomobject]@{ Executable = 'opencode'; Arguments = $cliArgs; Environment = $envVars }

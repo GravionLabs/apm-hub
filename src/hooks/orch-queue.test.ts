@@ -64,7 +64,11 @@ exit 0
       expect(r.status).toBe(0);
       expect(r.stdout).toContain('[dry-run] #12: claude --agent orchestrator -p "full 12" --allowedTools ');
       expect(r.stdout).toContain('-p "full 13"');
-      expect(r.stdout).toContain('Bash(git:*)');
+      expect(r.stdout).toContain('Bash(git status:*)');
+      expect(r.stdout).toContain('Bash(gh pr create:*)');
+      expect(r.stdout).not.toContain('gh pr merge');
+      expect(r.stdout).not.toContain('Bash(git:*)');
+      expect(r.stdout).not.toContain('Bash(gh:*)');
       expect(r.stdout).not.toContain('--dangerously-skip-permissions');
     });
 
@@ -120,9 +124,10 @@ exit 0
     it('prints the narrow Copilot command, quoted for the shell, and --allow-all-tools only with -AllowAll', () => {
       const narrow = run(['12', '-Harness', 'copilot', '-DryRun']).stdout;
       expect(narrow).toContain('[dry-run] #12: copilot -p "full 12" --agent=orchestrator --no-ask-user --allow-tool=write ');
-      expect(narrow).toContain('"--allow-tool=shell(git:*)"');
-      expect(narrow).toContain('"--allow-tool=shell(gh:*)"');
+      expect(narrow).toContain('"--allow-tool=shell(git status:*)"');
+      expect(narrow).toContain('"--allow-tool=shell(gh pr create:*)"');
       expect(narrow).not.toContain('--allow-all-tools');
+      expect(narrow).not.toContain('gh pr merge');
       const all = run(['12', '-Harness', 'copilot', '-Mode', 'plan', '-AllowAll', '-DryRun']);
       expect(all.status).toBe(0);
       expect(all.stdout).toContain('[dry-run] #12: copilot -p "plan 12" --agent=orchestrator --no-ask-user --allow-all-tools\n');
@@ -133,7 +138,7 @@ exit 0
       const narrow = run(['12', '-Harness', 'opencode', '-DryRun']).stdout;
       expect(narrow).toContain('[dry-run] #12: OPENCODE_PERMISSION=');
       expect(narrow).toContain('opencode run --agent orchestrator "full 12"');
-      expect(narrow).toContain('\\"git *\\":\\"allow\\"');
+      expect(narrow).toContain('\\"git status *\\":\\"allow\\"');
       expect(narrow).toContain('\\"*\\":\\"deny\\"');
       expect(narrow).not.toContain('--auto');
       const all = run(['12', '-Harness', 'opencode', '-Mode', 'implement', '-AllowAll', '-DryRun']);
@@ -179,7 +184,10 @@ exit 0
       );
       const r = run(['1', '-Harness', 'opencode'], true);
       expect(r.status).toBe(0);
-      expect(JSON.parse(fs.readFileSync(path.join(dir, 'perm.txt'), 'utf8')).bash['*']).toBe('deny');
+      const perm = JSON.parse(fs.readFileSync(path.join(dir, 'perm.txt'), 'utf8'));
+      expect(perm.bash['*']).toBe('deny');
+      expect(perm.bash['gh pr merge *']).toBeUndefined();
+      expect(perm.edit['.git/**']).toBe('deny');
     });
 
     it('runs each issue in its own process, logs the output and reports done', () => {
@@ -198,6 +206,76 @@ exit 0
       const r = run(['1'], true);
       expect(r.status).toBe(0);
       expect(calls()).toHaveLength(1);
+    });
+
+    it('ends a resumed run as done with exit 0 and keeps the earlier ledger content', () => {
+      ledger(1, '# orchestrator ledger', 'Phase read: complete', 'Gate: old question');
+      fakeClaude({ 1: 'complete' });
+      const r = run(['1'], true);
+      expect(r.status).toBe(0);
+      expect(r.stdout).toMatch(/^#1 done$/m);
+      const l = readLedger(1);
+      expect(l).toContain('# orchestrator ledger');
+      expect(l).toContain('Phase read: complete');
+      expect(l.trim().split('\n').pop()).toBe('Ledger complete.');
+    });
+
+    it('detects a new gate by count when an old Gate: line is already in the ledger', () => {
+      ledger(1, 'Gate: old question');
+      fakeClaude({ 1: 'gate' });
+      const r = run(['1'], true);
+      expect(r.status).toBe(2);
+      expect(r.stdout).toMatch(/^#1 gate$/m);
+    });
+
+    it('appends stdout, stderr and an exit-code trailer per run to run.log', () => {
+      fakeClaude({ 1: 'exit1' });
+      run(['1'], true);
+      fs.writeFileSync(path.join(dir, 'actions', '1'), 'complete');
+      run(['1'], true);
+      const log = fs.readFileSync(path.join(dir, '.agents/1/run.log'), 'utf8');
+      expect(log).toContain('crashed');
+      expect(log).toContain('=== exit code 1');
+      expect(log).toContain('output for 1');
+      expect(log).toContain('=== exit code 0');
+      expect(log.indexOf('=== exit code 1')).toBeLessThan(log.indexOf('=== exit code 0'));
+    });
+
+    it('checks the harness binary once up front, before the first issue is looked at', () => {
+      ledger(1, 'Ledger complete.');
+      const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '1', '2'], {
+        encoding: 'utf8', cwd: dir, env: { ...process.env, PATH: path.dirname(spawnSync('which', ['pwsh'], { encoding: 'utf8' }).stdout.trim()) },
+      });
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain("'claude' not found on PATH");
+      expect(fs.existsSync(path.join(dir, '.agents/2'))).toBe(false);
+    });
+
+    it('refuses a symlinked .agents/ directory', () => {
+      fs.mkdirSync(path.join(dir, 'elsewhere'));
+      fs.symlinkSync(path.join(dir, 'elsewhere'), path.join(dir, '.agents'));
+      fakeClaude({ 1: 'complete' });
+      const r = run(['1'], true);
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain('Refusing symlinked path');
+      expect(calls()).toHaveLength(0);
+    });
+
+    it('filters -Label issues by author_association only with -TrustedOnly', () => {
+      fs.writeFileSync(path.join(bin, 'gh'), `#!/bin/sh\necho "$@" > "${dir}/gh.args"\nprintf '4\\n'\n`, { mode: 0o755 });
+      run(['-Label', 'ready', '-DryRun'], true);
+      expect(fs.readFileSync(path.join(dir, 'gh.args'), 'utf8')).not.toContain('author_association');
+      run(['-Label', 'ready', '-TrustedOnly', '-DryRun'], true);
+      const args = fs.readFileSync(path.join(dir, 'gh.args'), 'utf8');
+      expect(args).toContain('select(.pull_request | not)');
+      expect(args).toContain('author_association | IN("OWNER","MEMBER","COLLABORATOR")');
+    });
+
+    it('fails when gh api fails for -Label', () => {
+      fs.writeFileSync(path.join(bin, 'gh'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+      const r = run(['-Label', 'ready', '-DryRun'], true);
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain("gh api failed for label 'ready'");
     });
 
     it('stops the queue on a gate, prints the question and exits non-zero', () => {
@@ -254,6 +332,8 @@ exit 0
   describe.skipIf(!posix)('Feature and Epic queue mode', () => {
     // fake claude: iteration k runs steps/<k> (a sh script); records AGENTS_LEDGER and args per call
     const fakeQueue = (steps: string[]) => {
+      fs.rmSync(path.join(dir, 'steps'), { recursive: true, force: true });
+      fs.rmSync(path.join(dir, 'count'), { force: true });
       fs.mkdirSync(path.join(dir, 'steps'));
       steps.forEach((body, i) => fs.writeFileSync(path.join(dir, 'steps', String(i + 1)), body));
       fs.writeFileSync(
@@ -267,17 +347,36 @@ sh "${dir}/steps/$c"
         { mode: 0o755 },
       );
     };
-    const pbiRun = (n: number, extra = '') =>
-      `mkdir -p .agents/${n}; echo "Next PBI: #${n} Title ${n}"; echo "Ledger complete." >> .agents/${n}/progress.md; ${extra}`;
+    const PR_URL = 'https://github.com/o/r/pull/101';
+    // a finished PBI run: announces the PBI, writes its ledger (optionally with the PR line) and prints extra output
+    const pbiRun = (n: number, o: { pr?: number; out?: string } = {}) =>
+      `mkdir -p .agents/${n}; echo "Next PBI: #${n} Title ${n}"; ` +
+      (o.pr ? `echo "Phase pull-request: complete — https://github.com/o/r/pull/${o.pr}" >> .agents/${n}/progress.md; ` : '') +
+      `echo "Ledger complete." >> .agents/${n}/progress.md; ${o.out ?? ''}`;
     const doneStep = 'echo "Feature #10 is done."; echo "Ledger complete. Start the next issue in a new session."';
     const queue = (nr = 10) => JSON.parse(fs.readFileSync(path.join(dir, '.agents', `queue-${nr}.json`), 'utf8'));
-    const ghFake = (verdict = '{"state":"OPEN","baseRefName":"release/next","headRefName":"feat/1-x"}') =>
+    type Pbi = { number: number | null; outcome: string; pr: number | null; note: string | null; gate: string | null };
+    const outcomes = () => (queue().pbis as Pbi[]).map((p) => [p.number, p.outcome]);
+
+    const defaultPr = { number: 101, state: 'OPEN', headRefName: 'feat/11-x', baseRefName: 'release/next', headRefOid: 'abc123' };
+    // fake gh: `pr list` prints the given PRs (or fails), `pr merge` exits with mergeExit
+    const ghFake = (prs: object[] = [defaultPr], o: { listFails?: boolean; mergeExit?: number } = {}) => {
+      fs.writeFileSync(path.join(dir, 'gh-list.json'), JSON.stringify(prs));
       fs.writeFileSync(
         path.join(bin, 'gh'),
-        `#!/bin/sh\necho "$@" >> "${dir}/gh.log"\ncase "$1 $2" in "pr view") echo '${verdict}';; esac\nexit 0\n`,
+        `#!/bin/sh
+echo "$@" >> "${dir}/gh.log"
+case "$1 $2" in
+  "pr list") ${o.listFails ? 'echo "boom" >&2; exit 1' : `cat "${dir}/gh-list.json"`} ;;
+  "pr merge") exit ${o.mergeExit ?? 0} ;;
+esac
+exit 0
+`,
         { mode: 0o755 },
       );
+    };
     const ghCalls = () => (fs.existsSync(path.join(dir, 'gh.log')) ? fs.readFileSync(path.join(dir, 'gh.log'), 'utf8') : '');
+    const approve = 'echo "Verdict: APPROVE"';
 
     it('dry run prints one next command and writes nothing', () => {
       const r = run(['-Feature', '10', '-DryRun']);
@@ -287,34 +386,64 @@ sh "${dir}/steps/$c"
       expect(run(['-Epic', '#11', '-Harness', 'copilot', '-DryRun']).stdout).toContain('copilot -p "next 11"');
     });
 
-    it('rejects -Feature with -Epic or issue numbers', () => {
+    it('rejects -Feature with -Epic, issue numbers or an explicit -Mode', () => {
       expect(run(['-Feature', '1', '-Epic', '2', '-DryRun']).status).not.toBe(0);
       expect(run(['5', '-Feature', '1', '-DryRun']).status).not.toBe(0);
+      const r = run(['-Feature', '1', '-Mode', 'plan', '-DryRun']);
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain('-Mode cannot be combined');
     });
 
     it('loops in fresh processes until the Feature is done and writes the queue json', () => {
-      fakeQueue([pbiRun(11, 'echo "PR #101 opened"'), pbiRun(12), doneStep]);
+      fakeQueue([pbiRun(11, { pr: 101 }), pbiRun(12), doneStep]);
       const r = run(['-Feature', '10'], true);
       expect(r.status).toBe(0);
       expect(calls()).toHaveLength(3);
       expect(calls()[0]).toContain('-p next 10');
       const q = queue();
-      expect(q.state).toBe('done');
-      expect(q.exitCode).toBe(0);
-      expect(q.pbis.map((p: { number: number; outcome: string }) => [p.number, p.outcome])).toEqual([[11, 'done'], [12, 'done']]);
+      expect(q).toMatchObject({ queue: 10, kind: 'Feature', state: 'done', exitCode: 0, mergeApproved: false });
+      expect(outcomes()).toEqual([[11, 'done'], [12, 'done']]);
       expect(q.pbis[0].pr).toBe(101);
+      expect(q.pbis[1].pr).toBeNull();
       expect(q.pbis[0].ledger).toBe('.agents/11/progress.md');
-      expect(q.started).toBeTruthy();
-      expect(q.pbis[0].ended).toBeTruthy();
+      expect(Date.parse(q.started)).not.toBeNaN();
+      expect(Date.parse(q.ended)).not.toBeNaN();
       expect(r.stdout).toContain('Feature #10 is done.');
     });
 
-    it('exports AGENTS_LEDGER of the announced PBI to the following iteration', () => {
+    it('ends an Epic run on "Epic #<nr> is done."', () => {
+      fakeQueue([pbiRun(11), 'echo "Epic #10 is done."']);
+      const r = run(['-Epic', '10'], true);
+      expect(r.status).toBe(0);
+      expect(queue()).toMatchObject({ kind: 'Epic', state: 'done' });
+      expect(calls()).toHaveLength(2);
+    });
+
+    it('does not accept a lower-case or mismatched done/gate line', () => {
+      fakeQueue(['echo "feature #10 is done."']);
+      expect(run(['-Feature', '10'], true).status).toBe(1);
+      fakeQueue(['echo "Epic #10 is done."']);
+      expect(run(['-Feature', '10'], true).status).toBe(1);
+      fakeQueue(['mkdir -p .agents/11; echo "Next PBI: #11 T"; echo "gate: lower case"']);
+      const r = run(['-Feature', '10'], true);
+      expect(r.status).toBe(1);
+      expect(outcomes()).toEqual([[11, 'failed']]);
+    });
+
+    it('requires exit code 0 for "is done."', () => {
+      fakeQueue(['echo "Feature #10 is done."; exit 3']);
+      const r = run(['-Feature', '10'], true);
+      expect(r.status).toBe(1);
+      expect(queue().state).toBe('failed');
+    });
+
+    it('clears AGENTS_LEDGER before every child, also an inherited value, and restores nothing into children', () => {
       fakeQueue([pbiRun(11), doneStep]);
-      run(['-Feature', '10'], true);
-      const env = fs.readFileSync(path.join(dir, 'env.log'), 'utf8').split('\n');
-      expect(env[0]).toBe('[1] unset');
-      expect(env[1]).toMatch(/^\[2\] .*\.agents[\\/]11[\\/]progress\.md$/);
+      const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Feature', '10'], {
+        encoding: 'utf8', cwd: dir, env: { ...process.env, AGENTS_LEDGER: '/ambient/progress.md', PATH: `${bin}${path.delimiter}${process.env.PATH}` },
+      });
+      expect(r.status).toBe(0);
+      expect(fs.readFileSync(path.join(dir, 'env.log'), 'utf8').trim().split('\n')).toEqual(['[1] unset', '[2] unset']);
     });
 
     it('stops at a Gate: line with exit 2 and records the gate text', () => {
@@ -322,10 +451,32 @@ sh "${dir}/steps/$c"
       const r = run(['-Epic', '10'], true);
       expect(r.status).toBe(2);
       expect(calls()).toHaveLength(2);
-      const q = queue();
-      expect(q.state).toBe('gate');
-      expect(q.pbis[1]).toMatchObject({ number: 12, outcome: 'gate', gate: 'Gate: Approve the plan?' });
+      expect(queue().state).toBe('gate');
+      expect(queue().pbis[1]).toMatchObject({ number: 12, outcome: 'gate', gate: 'Gate: Approve the plan?' });
       expect(r.stdout).toContain('Approve the plan?');
+    });
+
+    it('detects a gate that exists only in the ledger as a count increase, ignoring an old Gate: line', () => {
+      ledger(12, 'Gate: old question', 'Phase read: complete');
+      fakeQueue(['mkdir -p .agents/12; echo "Next PBI: #12 T"; echo "Gate: new question" >> .agents/12/progress.md']);
+      const r = run(['-Feature', '10'], true);
+      expect(r.status).toBe(2);
+      expect(queue().pbis[0].gate).toBe('Gate: new question');
+    });
+
+    it('does not report an old ledger gate as a gate when the resumed run just fails', () => {
+      ledger(12, 'Gate: old question');
+      fakeQueue(['echo "Next PBI: #12 T"']);
+      const r = run(['-Feature', '10'], true);
+      expect(r.status).toBe(1);
+      expect(outcomes()).toEqual([[12, 'failed']]);
+    });
+
+    it('lets a complete PBI ledger win over a Gate: line in the output (as in positional mode)', () => {
+      fakeQueue([pbiRun(11, { out: 'echo "Gate: stale"' }), doneStep]);
+      const r = run(['-Feature', '10'], true);
+      expect(r.status).toBe(0);
+      expect(outcomes()).toEqual([[11, 'done']]);
     });
 
     it('stops with exit 1 on a failed run, fail closed', () => {
@@ -333,16 +484,28 @@ sh "${dir}/steps/$c"
       const r = run(['-Feature', '10'], true);
       expect(r.status).toBe(1);
       expect(calls()).toHaveLength(2);
-      const q = queue();
-      expect(q.state).toBe('failed');
-      expect(q.pbis[1].outcome).toBe('failed');
+      expect(queue().state).toBe('failed');
+      expect(outcomes()).toEqual([[11, 'done'], [12, 'failed']]);
     });
 
     it('fails when the output names neither a PBI nor Feature done', () => {
       fakeQueue(['echo "nothing useful"']);
-      const r = run(['-Feature', '10'], true);
-      expect(r.status).toBe(1);
+      expect(run(['-Feature', '10'], true).status).toBe(1);
       expect(queue().pbis[0]).toMatchObject({ number: null, outcome: 'failed' });
+    });
+
+    it('reports "Nothing selectable" as state blocked with exit 3, not as a failure', () => {
+      fakeQueue(['echo "Nothing selectable: Feature #10"; echo "#12 waiting for merge: PR #5"']);
+      const r = run(['-Feature', '10'], true);
+      expect(r.status).toBe(3);
+      expect(queue()).toMatchObject({ state: 'blocked', exitCode: 3 });
+      expect(queue().pbis[0]).toMatchObject({ number: null, outcome: 'blocked' });
+      expect(r.stdout).toContain('Nothing selectable in Feature #10');
+    });
+
+    it('does not read "Nothing selectable" from a run that exited non-zero', () => {
+      fakeQueue(['echo "Nothing selectable: Feature #10"; exit 1']);
+      expect(run(['-Feature', '10'], true).status).toBe(1);
     });
 
     it('stops when the same PBI is selected twice in a row', () => {
@@ -353,66 +516,155 @@ sh "${dir}/steps/$c"
       expect(queue().pbis[1].note).toContain('twice in a row');
     });
 
-    it('continues past a failed PBI with -ContinueOnError and exits 1', () => {
+    it('with -ContinueOnError continues only when next picks a different PBI, and exits 1', () => {
       fakeQueue(['echo "Next PBI: #11 T"; exit 1', pbiRun(12), doneStep]);
       const r = run(['-Feature', '10', '-ContinueOnError'], true);
       expect(r.status).toBe(1);
       expect(calls()).toHaveLength(3);
-      expect(queue().pbis.map((p: { outcome: string }) => p.outcome)).toEqual(['failed', 'done']);
+      expect(outcomes()).toEqual([[11, 'failed'], [12, 'done']]);
+      fakeQueue(['echo "Next PBI: #11 T"; exit 1', 'echo "Next PBI: #11 T"; exit 1', doneStep]);
+      expect(run(['-Feature', '10', '-ContinueOnError'], true).status).toBe(1);
+      expect(calls()).toHaveLength(5);
+    });
+
+    it('marks a selected PBI whose ledger was already complete as skipped', () => {
+      ledger(11, 'Ledger complete.');
+      fakeQueue([`echo "Next PBI: #11 T"`, doneStep]);
+      const r = run(['-Feature', '10'], true);
+      expect(r.status).toBe(0);
+      expect(outcomes()).toEqual([[11, 'skipped']]);
     });
 
     it('lists PBIs from "merged, closes at release" on the done line as merged', () => {
       fakeQueue(['echo "Feature #10 is done — merged, closes at release: #5, #6"']);
       const r = run(['-Feature', '10'], true);
       expect(r.status).toBe(0);
-      expect(queue().pbis.map((p: { number: number; outcome: string }) => [p.number, p.outcome])).toEqual([[5, 'merged'], [6, 'merged']]);
+      expect(outcomes()).toEqual([[5, 'merged'], [6, 'merged']]);
     });
 
-    it('does not merge by default, even with an APPROVE verdict', () => {
-      ghFake();
-      fakeQueue([pbiRun(11, 'echo "PR #101 verdict APPROVE"'), doneStep]);
+    it('handles a PBI number beyond int range', () => {
+      fakeQueue(['mkdir -p .agents/4294967299; echo "Next PBI: #4294967299 T"; echo "Ledger complete." >> .agents/4294967299/progress.md', doneStep]);
       expect(run(['-Feature', '10'], true).status).toBe(0);
-      expect(ghCalls()).not.toContain('pr merge');
-      expect(queue().pbis[0].outcome).toBe('done');
+      expect(queue().pbis[0].number).toBe(4294967299);
     });
 
-    it('squash-merges an open APPROVE PR with -MergeApproved', () => {
-      ghFake();
-      fakeQueue([pbiRun(11, 'echo "PR #101 verdict APPROVE"'), doneStep]);
-      expect(run(['-Feature', '10', '-MergeApproved'], true).status).toBe(0);
-      expect(ghCalls()).toContain('pr merge 101 --squash');
-      expect(queue().pbis[0]).toMatchObject({ outcome: 'merged', pr: 101 });
+    it('writes queue-<nr>.log and appends each PBI output with the exit trailer to .agents/<pbi>/run.log', () => {
+      fakeQueue([pbiRun(11, { out: 'echo "hello 11"; echo "err 11" >&2' }), doneStep]);
+      run(['-Feature', '10'], true);
+      const qlog = fs.readFileSync(path.join(dir, '.agents/queue-10.log'), 'utf8');
+      expect(qlog).toContain('hello 11');
+      expect(qlog.match(/=== exit code 0/g)).toHaveLength(2);
+      const plog = fs.readFileSync(path.join(dir, '.agents/11/run.log'), 'utf8');
+      expect(plog).toContain('hello 11');
+      expect(plog).toContain('err 11');
+      expect(plog).toContain('=== exit code 0');
     });
 
-    it('does not merge CHANGES_REQUESTED, a release PR, a gate or a failure', () => {
-      ghFake();
-      fakeQueue([pbiRun(11, 'echo "PR #101 verdict CHANGES_REQUESTED"'), doneStep]);
-      run(['-Feature', '10', '-MergeApproved'], true);
-      expect(ghCalls()).not.toContain('pr merge');
+    it('refuses a symlinked .agents/', () => {
+      fs.mkdirSync(path.join(dir, 'elsewhere'));
+      fs.symlinkSync(path.join(dir, 'elsewhere'), path.join(dir, '.agents'));
+      fakeQueue([doneStep]);
+      const r = run(['-Feature', '10'], true);
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain('Refusing symlinked path');
+      expect(calls()).toHaveLength(0);
+    });
 
-      fs.rmSync(path.join(dir, 'steps'), { recursive: true });
-      fs.rmSync(path.join(dir, 'count'));
-      fs.rmSync(path.join(dir, '.agents'), { recursive: true });
-      ghFake('{"state":"OPEN","baseRefName":"main","headRefName":"release/next"}');
-      fakeQueue([pbiRun(12, 'echo "PR #102 APPROVE"'), doneStep]);
-      run(['-Feature', '10', '-MergeApproved'], true);
-      expect(ghCalls()).not.toContain('pr merge');
-      expect(queue().pbis[0].note).toContain('release PR');
+    describe('-MergeApproved', () => {
+      const lines = () => ghCalls().trim().split('\n').filter(Boolean);
 
-      fs.rmSync(path.join(dir, 'steps'), { recursive: true });
-      fs.rmSync(path.join(dir, 'count'));
-      ghFake();
-      fakeQueue([`mkdir -p .agents/13; echo "Next PBI: #13 T"; echo "PR #103 APPROVE"; echo "Gate: ok?" >> .agents/13/progress.md`]);
-      expect(run(['-Feature', '10', '-MergeApproved'], true).status).toBe(2);
-      expect(ghCalls()).not.toContain('pr merge');
+      it('does not merge by default, even with an APPROVE verdict', () => {
+        ghFake();
+        fakeQueue([pbiRun(11, { pr: 101, out: approve }), doneStep]);
+        expect(run(['-Feature', '10'], true).status).toBe(0);
+        expect(ghCalls()).toBe('');
+        expect(outcomes()).toEqual([[11, 'done']]);
+      });
+
+      it('squash-merges the PBI PR pinned to its head commit', () => {
+        ghFake();
+        fakeQueue([pbiRun(11, { pr: 101, out: approve }), doneStep]);
+        expect(run(['-Feature', '10', '-MergeApproved'], true).status).toBe(0);
+        expect(lines()).toContain('pr merge 101 --squash --match-head-commit abc123');
+        expect(outcomes()).toEqual([[11, 'merged']]);
+        expect(queue().pbis[0].pr).toBe(101);
+      });
+
+      it('finds the PR by the PBI head branch when the ledger has no PR line', () => {
+        ghFake();
+        fakeQueue([pbiRun(11, { out: approve }), doneStep]);
+        run(['-Feature', '10', '-MergeApproved'], true);
+        expect(lines()).toContain('pr merge 101 --squash --match-head-commit abc123');
+      });
+
+      it.each([
+        ['CHANGES_REQUESTED verdict', 'echo "Verdict: CHANGES_REQUESTED"', defaultPr, 'verdict is CHANGES_REQUESTED'],
+        ['a later non-APPROVE verdict wins', 'echo "Verdict: APPROVE"; echo "Verdict: CHANGES_REQUESTED"', defaultPr, 'verdict is CHANGES_REQUESTED'],
+        ['lower-case verdict', 'echo "Verdict: approve"', defaultPr, 'verdict is approve'],
+        ['prose that mentions approve', 'echo "I would APPROVE this"; echo "approve"', defaultPr, 'no Verdict: line'],
+        ['no verdict at all', 'echo ok', defaultPr, 'no Verdict: line'],
+        ['release head with a non-main base', approve, { ...defaultPr, headRefName: 'release/11-x', baseRefName: 'develop' }, 'release PR'],
+        ['main base with a non-release head', approve, { ...defaultPr, baseRefName: 'main' }, 'is not the integration branch'],
+        ['base that is not release/*', approve, { ...defaultPr, baseRefName: 'develop' }, 'is not the integration branch'],
+        ['a PR that is not open', approve, { ...defaultPr, state: 'MERGED' }, 'state MERGED'],
+        ['a PR of another PBI branch', approve, { ...defaultPr, headRefName: 'feat/99-other' }, 'no single open PR of PBI #11'],
+        ['APPROVE without any PR', approve, null, 'no single open PR'],
+      ])('does not merge: %s', (_name, out, pr, note) => {
+        ghFake(pr ? [pr] : []);
+        fakeQueue([pbiRun(11, { pr: pr ? 101 : undefined, out }), doneStep]);
+        const r = run(['-Feature', '10', '-MergeApproved'], true);
+        expect(r.status).toBe(0);
+        expect(ghCalls()).not.toContain('pr merge');
+        expect(queue().pbis[0].outcome).toBe('done');
+        expect(queue().pbis[0].note).toContain(note);
+      });
+
+      it('does not merge when the ledger PR is not among the open PRs of the PBI', () => {
+        ghFake([{ ...defaultPr, number: 555 }]);
+        fakeQueue([pbiRun(11, { pr: 101, out: approve }), doneStep]);
+        run(['-Feature', '10', '-MergeApproved'], true);
+        expect(ghCalls()).not.toContain('pr merge');
+      });
+
+      it('does not merge when gh pr list fails', () => {
+        ghFake([defaultPr], { listFails: true });
+        fakeQueue([pbiRun(11, { pr: 101, out: approve }), doneStep]);
+        expect(run(['-Feature', '10', '-MergeApproved'], true).status).toBe(0);
+        expect(ghCalls()).not.toContain('pr merge');
+        expect(queue().pbis[0].note).toContain('gh pr list failed');
+      });
+
+      it('does not merge on a gate', () => {
+        ghFake();
+        fakeQueue([`mkdir -p .agents/11; echo "Next PBI: #11 T"; ${approve}; echo "Gate: ok?" >> .agents/11/progress.md`]);
+        expect(run(['-Feature', '10', '-MergeApproved'], true).status).toBe(2);
+        expect(ghCalls()).not.toContain('pr merge');
+      });
+
+      it('does not merge a failed iteration that printed APPROVE', () => {
+        ghFake();
+        fakeQueue([`echo "Next PBI: #11 T"; ${approve}; exit 1`]);
+        expect(run(['-Feature', '10', '-MergeApproved'], true).status).toBe(1);
+        expect(ghCalls()).not.toContain('pr merge');
+      });
+
+      it('records failed and exits 1 when gh pr merge fails', () => {
+        ghFake([defaultPr], { mergeExit: 1 });
+        fakeQueue([pbiRun(11, { pr: 101, out: approve }), doneStep]);
+        const r = run(['-Feature', '10', '-MergeApproved'], true);
+        expect(r.status).toBe(1);
+        expect(outcomes()).toEqual([[11, 'failed']]);
+        expect(queue().state).toBe('failed');
+        expect(calls()).toHaveLength(1);
+      });
     });
   });
-
 });
 
 describe('orchestrator agent', () => {
   it('writes Ledger complete. through Add-LedgerLine.ps1 before the final report line', () => {
     const body = fs.readFileSync(AGENT, 'utf8');
-    expect(body).toMatch(/append `Ledger complete\.` as the last ledger line via `Add-LedgerLine\.ps1`/);
+    expect(body).toContain('Ledger complete.');
+    expect(body).toContain('Add-LedgerLine.ps1');
   });
 });

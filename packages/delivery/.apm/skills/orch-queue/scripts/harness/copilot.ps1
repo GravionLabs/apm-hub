@@ -21,7 +21,7 @@ param(
   [switch]$AllowAll
 )
 $ErrorActionPreference = 'Stop'
-$shell = 'git', 'gh', 'pwsh', 'pnpm', 'npm', 'npx', 'node', 'dotnet', 'uv', 'python', 'ng'
+$shell = @(& (Join-Path $PSScriptRoot 'allowed-commands.ps1'))
 $cliArgs = @('-p', "$Mode $Issue", '--agent=orchestrator', '--no-ask-user')
 if ($AllowAll) { $cliArgs += '--allow-all-tools' }
 else {

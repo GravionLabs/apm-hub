@@ -52,7 +52,7 @@ git log -E -i --grep "(close[sd]?|fix(e[sd])?|resolve[sd]?):? #$candidate([^0-9]
 
 The first remaining candidate in sub-issue order is the PBI. Announce it in one line before work starts: `Next PBI: #<nr> <title>`. Exactly one PBI per run; `loop` repeats the selection per `loop-mode.md`.
 
-No candidate: report per remaining open PBI what holds it (open blocker numbers, `needs-decision`, `waiting for merge: PR #<n>`, `merged, closes at release`) and stop.
+No candidate: start the report with `Nothing selectable: <feature|epic> #<nr>` (the queue runner keys on it), then per remaining open PBI what holds it (open blocker numbers, `needs-decision`, `waiting for merge: PR #<n>`, `merged, closes at release`) and stop.
 
 ## End line after a PBI run
 
@@ -60,6 +60,6 @@ When the PBI's parent is a Feature (`Parent Feature: #<n>` first body line, or `
 
 - Candidate found: `Next: #<nr> <title> — orchestrator next <feature> after /clear`
 - None, open PBIs remain: list what blocks each (open blockers, `needs-decision`, `waiting for merge: PR #<n>`). List merged PBIs separately: `merged, closes at release: #<a>, #<b>`.
-- No open PBI left: `Feature #<feature> is done.` Every open PBI merged: `Feature #<feature> is done — merged, closes at release: #<a>, #<b>`.
+- No open PBI left: `Feature #<feature> is done.` (for an Epic run: `Epic #<nr> is done.` once no open PBI remains in any of its Features) Every open PBI merged: `Feature #<feature> is done — merged, closes at release: #<a>, #<b>`.
 
 Keep the existing last line `Ledger complete. Start the next issue in a new session (/clear or a new orchestrator run).` after it.
