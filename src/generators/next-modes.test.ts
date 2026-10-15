@@ -28,8 +28,9 @@ describe('orchestrator plan and next modes', () => {
 
   it('cites the reference with its owning skill and orders Next before Ledger', () => {
     expect(body).toContain('`github-issue` `references/next-selection.md`');
-    const next = body.indexOf('Next: #<nr>');
-    const ledger = body.indexOf('Ledger complete.');
+    const report = body.slice(body.indexOf('Report at the end'));
+    const next = report.indexOf('Next: #<nr>');
+    const ledger = report.indexOf('Ledger complete.');
     expect(next).not.toBe(-1);
     expect(ledger).not.toBe(-1);
     expect(next).toBeLessThan(ledger);
@@ -79,13 +80,14 @@ describe('next-selection reference', () => {
   it('checks merged PRs by number and lets the jq keyword filter decide', () => {
     const cmd = commandFrom(merged, 'gh pr list', '--state merged');
     expect(cmd).toContain('--state merged');
+    expect(cmd).toContain('--base <integration-branch>');
     expect(cmd).toContain('--search "$candidate"');
     expect(cmd).toContain('closes|fixes|resolves');
     expect(cmd).not.toContain('--search "Closes');
   });
 
   it('defines the Feature rule: at least one PBI and every open PBI merged', () => {
-    expect(merged).toMatch(/Feature counts as merged when it has at least one PBI and every open PBI is merged/);
+    expect(merged).toMatch(/Feature counts as merged when it has at least one open PBI and every open PBI is merged/);
     const candidates = reference.split(/^## Candidates$/m)[1].split(/^## /m)[0];
     expect(candidates).toMatch(/merged Feature/);
     expect(candidates).not.toMatch(/or that has none/);

@@ -34,12 +34,12 @@ A non-empty list means in flight.
 
 ## Merged (closes at release)
 
-A PBI counts as merged when (a) a merged PR targets it or (b) a commit on the remote integration branch references it. PBIs stay open after the merge because CI closes them only when the release lands on `main`: never close them by hand, never re-propose them. A Feature counts as merged when it has at least one PBI and every open PBI is merged. Check merged first, before the blocked and in flight drops, so a merged PBI is reported as `merged, closes at release` even with an open blocker or PR.
+A PBI counts as merged when (a) a PR merged into the integration branch targets it or (b) a commit on the remote integration branch references it. PBIs stay open after the merge because CI closes them only when the release lands on `main`: never close them by hand, never re-propose them. A Feature counts as merged when it has at least one open PBI and every open PBI is merged (a Feature whose PBIs are all closed is done, not merged). Under an Epic, report merged Features like PBIs: `merged, closes at release: Feature #<n>`. Check merged first, before the blocked and in flight drops, so a merged PBI is reported as `merged, closes at release` even with an open blocker or PR.
 
-`$candidate` must match `^[0-9]+$` for both checks; `<integration-branch>` comes from `release-branches.md`. (a) is the open-PR check with `--state merged`, searched by number only (search terms are ANDed) and decided by the jq filter; a non-empty list means merged:
+`$candidate` must match `^[0-9]+$` for both checks; `<integration-branch>` comes from `release-branches.md`. (a) is the open-PR check with `--state merged --base <integration-branch>`, searched by number only (search terms are ANDed) and decided by the jq filter; a non-empty list means merged (`--limit 100` caps recall; (b) is the second net):
 
 ```powershell
-gh pr list --state merged --limit 100 --search "$candidate" --json number,headRefName,body | jq --arg nr $candidate '[.[] | select((.headRefName|test("/"+$nr+"-")) or (.body|test("(?i)(closes|fixes|resolves) #"+$nr+"\\b"))) | .number]'
+gh pr list --state merged --base <integration-branch> --limit 100 --search "$candidate" --json number,headRefName,body | jq --arg nr $candidate '[.[] | select((.headRefName|test("/"+$nr+"-")) or (.body|test("(?i)(closes|fixes|resolves) #"+$nr+"\\b"))) | .number]'
 ```
 
 (b) Run `git fetch origin <integration-branch>` once, before the first check. Any output of the following means merged (the trailing group keeps `#24` from matching `#249`):
