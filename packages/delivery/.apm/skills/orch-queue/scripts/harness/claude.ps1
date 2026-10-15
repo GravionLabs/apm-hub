@@ -9,14 +9,14 @@
   scripts) plus the common build and test runners; anything else is denied in -p mode, so the run fails closed
   instead of hanging on a prompt. -AllowAll adds --dangerously-skip-permissions (explicit opt-in).
 .PARAMETER Issue    Issue number.
-.PARAMETER Mode     plan, implement or full.
+.PARAMETER Mode     plan, implement, full or next.
 .PARAMETER AllowAll Skip all permission checks.
 .OUTPUTS PSCustomObject with Executable and Arguments.
 #>
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidatePattern('\A[1-9][0-9]{0,9}\z')][string]$Issue,
-  [ValidateSet('plan', 'implement', 'full')][string]$Mode = 'full',
+  [ValidateSet('plan', 'implement', 'full', 'next')][string]$Mode = 'full',
   [switch]$AllowAll
 )
 $ErrorActionPreference = 'Stop'

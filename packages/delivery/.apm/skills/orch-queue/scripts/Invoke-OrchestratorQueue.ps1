@@ -11,11 +11,24 @@
     neither                             -> failed: the queue stops (exit 1) unless -ContinueOnError
   Output of every run is appended to .agents/<issue>/run.log. The runner never merges and never answers a gate.
   Run it from the repository root. Exit codes: 0 all done/skipped, 1 failed, 2 gate.
+
+  -Feature <nr> / -Epic <nr> (queue mode): loops '<harness> --agent orchestrator -p "next <nr>"', one fresh process per
+  iteration, until the output has 'Feature #<nr> is done.', a 'Gate:' line or a failure (fail closed; -ContinueOnError
+  continues after a failed PBI; a PBI selected twice in a row stops the run). Selection stays in the orchestrator
+  (github-issue/references/next-selection.md). This is a process-level loop; it does NOT use the orchestrator 'loop'
+  mode and its ledger .agents/loop-<nr>/progress.md. State is cached in .agents/queue-<nr>.json (GitHub stays the
+  source of truth). AGENTS_LEDGER is set to the PBI ledger once 'Next PBI: #<n>' is announced (the runner's own
+  environment, so follow-up steps and the next iteration inherit it; a running child cannot be changed).
+  -MergeApproved: after a done PBI with an open PR and verdict APPROVE, 'gh pr merge <pr> --squash' into the PR's base
+  (the integration branch). Never a release PR (head release/* or base main/master), never after a gate or failure.
 .PARAMETER Issue           Issue numbers (positional), '#12' or '12'.
 .PARAMETER IssueFile       Text file with one issue number per line.
 .PARAMETER Label           Process all open issues (no PRs) with this label, ascending.
 .PARAMETER Mode            plan, implement or full (default), forwarded to the orchestrator.
 .PARAMETER Harness         Adapter in harness/<name>.ps1.
+.PARAMETER Feature         Queue mode: loop 'next <nr>' for this Feature.
+.PARAMETER Epic            Queue mode: same for an Epic.
+.PARAMETER MergeApproved   Queue mode: squash-merge an APPROVE PR (default off).
 .PARAMETER ContinueOnError Continue with the next issue after a failed run.
 .PARAMETER AllowAll        Opt in to the harness' unrestricted permission mode (default: narrow set).
 .PARAMETER DryRun          Print the exact commands and run nothing.
@@ -26,7 +39,10 @@ param(
   [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string[]]$Issue,
   [string]$IssueFile,
   [ValidatePattern('\A[A-Za-z0-9][A-Za-z0-9 ._:/-]{0,49}\z')][string]$Label,
-  [ValidateSet('plan', 'implement', 'full')][string]$Mode = 'full',
+  [ValidateSet('plan', 'implement', 'full', 'next')][string]$Mode = 'full',
+  [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string]$Feature,
+  [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string]$Epic,
+  [switch]$MergeApproved,
   [ValidatePattern('\A[a-z]{1,20}\z')][string]$Harness = 'claude',
   [switch]$ContinueOnError,
   [switch]$AllowAll,
@@ -47,6 +63,122 @@ function Get-LedgerLines([string]$n) {
 function Test-Complete([string[]]$Lines) { $Lines.Count -gt 0 -and $Lines[-1].Trim() -eq 'Ledger complete.' }
 function Get-Gates([string[]]$Lines) { @($Lines | Where-Object { $_ -match '\AGate:' }) }
 
+if ($Feature -or $Epic) {
+  if ($Feature -and $Epic) { throw 'Pass either -Feature or -Epic, not both.' }
+  if ($Issue -or $IssueFile -or $Label) { throw '-Feature/-Epic cannot be combined with issue numbers, -IssueFile or -Label.' }
+  $nr = ConvertTo-IssueNumber ($Feature ? $Feature : $Epic) 'queue'
+  $kind = $Feature ? 'Feature' : 'Epic'
+  $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
+  if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
+  $cmd = & $adapter -Issue $nr -Mode next -AllowAll:$AllowAll
+  $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
+  $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
+  $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
+  if ($DryRun) { Write-Host "[dry-run] ${kind} #${nr}: $envText"; exit 0 }
+  $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+  if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
+  if ($MergeApproved -and -not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)) { throw "'gh' not found on PATH (needed for -MergeApproved)." }
+
+  New-Item -ItemType Directory -Path '.agents' -Force | Out-Null
+  $queueFile = Join-Path '.agents' "queue-$nr.json"
+  $log = Join-Path '.agents' "queue-$nr.log"
+  $started = Get-Date -Format o
+  $pbis = [System.Collections.Generic.List[object]]::new()
+  function Save-Queue([string]$State, [int]$Code) {
+    $o = [ordered]@{ queue = [int]$nr; kind = $kind; harness = $Harness; state = $State; exitCode = $Code; started = $started
+      ended = (Get-Date -Format o); mergeApproved = [bool]$MergeApproved; pbis = @($pbis) }
+    Set-Content -LiteralPath $queueFile -Value ($o | ConvertTo-Json -Depth 6) -Encoding utf8
+  }
+  function Get-LastMatch([string[]]$Lines, [string]$Pattern) {
+    $m = @($Lines | Select-String -Pattern $Pattern)
+    if ($m.Count) { $m[-1].Matches[0] } else { $null }
+  }
+  $exit = 0; $state = 'running'; $prev = $null
+  Save-Queue $state 0
+  while ($true) {
+    $iterStart = Get-Date -Format o
+    $gatesBefore = @{}
+    foreach ($d in @(Get-ChildItem -LiteralPath '.agents' -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '\A[0-9]+\z' })) { $gatesBefore[$d.Name] = @(Get-Gates (Get-LedgerLines $d.Name)).Count }
+    $completeBefore = @(Get-ChildItem -LiteralPath '.agents' -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '\A[0-9]+\z' -and (Test-Complete (Get-LedgerLines $_.Name)) } | ForEach-Object Name)
+    Write-Host "[run] ${kind} #${nr}: $envText"
+    Add-Content -LiteralPath $log -Value "=== $iterStart $envText" -Encoding utf8
+    $saved = @{}
+    foreach ($k in $envVars.Keys) { $saved[$k] = [Environment]::GetEnvironmentVariable($k); [Environment]::SetEnvironmentVariable($k, [string]$envVars[$k]) }
+    try { $out = @(& $bin.Source @($cmd.Arguments) 2>&1 | ForEach-Object { "$_" }); $code = $LASTEXITCODE }
+    finally { foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) } }
+    $out | Out-Host
+    Add-Content -LiteralPath $log -Value ($out + "=== exit code $code") -Encoding utf8
+
+    $featureDone = @($out | Where-Object { $_ -match "\A\W*$kind #$nr is done\b" }).Count -gt 0
+    $mergedListed = @()
+    $ml = Get-LastMatch $out "$kind #$nr is done.*merged, closes at release:\s*(.+)\z"
+    if ($ml) { $mergedListed = @([regex]::Matches($ml.Groups[1].Value, '#(\d+)') | ForEach-Object { $_.Groups[1].Value }) }
+    $np = Get-LastMatch $out '\A\W*Next PBI: #(\d+)'
+    $pbi = if ($np) { $np.Groups[1].Value } else { $null }
+    $gm = Get-LastMatch @($out | ForEach-Object { $_.Trim() }) '\AGate:.*'
+    $stop = $false
+
+    if ($pbi) {
+      $env:AGENTS_LEDGER = Join-Path (Get-Location) (Join-Path (Join-Path '.agents' $pbi) 'progress.md')
+      $after = Get-LedgerLines $pbi
+      $gate = if ($gm) { $gm.Value } elseif (@(Get-Gates $after).Count -gt [int]$gatesBefore[$pbi]) { @(Get-Gates $after)[-1] } else { $null }
+      $pr = $null
+      $pm = Get-LastMatch $out '(?i)(?:/pull/|\bPR\s*#|pull request\s*#)(\d+)'
+      if ($pm) { $pr = [int]$pm.Groups[1].Value }
+      $entry = [ordered]@{ number = [int]$pbi; outcome = 'failed'; pr = $pr; ledger = ".agents/$pbi/progress.md"; gate = $gate; started = $iterStart; ended = $null; note = $null }
+      if ($prev -eq $pbi) { $entry.note = "selected twice in a row without progress; stopped"; $stop = $true; $exit = 1 }
+      elseif ($gate) { $entry.outcome = 'gate'; $stop = $true; $exit = 2 }
+      elseif ($code -eq 0 -and (Test-Complete $after)) { $entry.outcome = if ($completeBefore -contains $pbi) { 'skipped' } else { 'done' } }
+      else { $entry.note = "run ended without 'Ledger complete.' (exit code $code)" }
+      if ($entry.outcome -eq 'done' -and $MergeApproved -and $pr) {
+        $vm = Get-LastMatch $out '\b(APPROVE|CHANGES_REQUESTED)\b'
+        if ($vm -and $vm.Value -eq 'APPROVE') {
+          $info = $null
+          try { $info = (& gh pr view "$pr" --json state,baseRefName,headRefName | Out-String | ConvertFrom-Json) } catch { $info = $null }
+          if (-not $info -or $LASTEXITCODE -ne 0) { $entry.note = "PR #$pr not merged: gh pr view failed" }
+          elseif ($info.state -ne 'OPEN') { $entry.note = "PR #$pr not merged: state $($info.state)" }
+          elseif ($info.headRefName -match '\Arelease/' -or $info.baseRefName -match '\A(main|master)\z') { $entry.note = "PR #$pr not merged: release PR" }
+          else {
+            & gh pr merge "$pr" --squash 2>&1 | Out-Host
+            if ($LASTEXITCODE -eq 0) { $entry.outcome = 'merged' }
+            else { $entry.outcome = 'failed'; $entry.note = "gh pr merge #$pr failed"; $stop = $true; $exit = 1 }
+          }
+        } else { $entry.note = "PR #$pr not merged: verdict is not APPROVE" }
+      }
+      $entry.ended = Get-Date -Format o
+      $pbis.Add([pscustomobject]$entry)
+      $prev = $pbi
+      if ($entry.outcome -eq 'failed' -and -not $stop) {
+        if ($ContinueOnError) { $exit = 1 } else { $stop = $true; $exit = 1 }
+      }
+    } elseif (-not $featureDone) {
+      $gate = if ($gm) { $gm.Value } else { $null }
+      $pbis.Add([pscustomobject][ordered]@{ number = $null; outcome = $(if ($gate) { 'gate' } else { 'failed' }); pr = $null; ledger = $null; gate = $gate
+        started = $iterStart; ended = (Get-Date -Format o); note = $(if ($gate) { $null } else { "no 'Next PBI:' or '$kind #$nr is done.' in the output (exit code $code)" }) })
+      $stop = $true; $exit = if ($gate) { 2 } else { 1 }
+    }
+    if ($featureDone -and $exit -ne 2) {
+      foreach ($m in $mergedListed) {
+        if (-not ($pbis | Where-Object { "$($_.number)" -eq $m })) {
+          $pbis.Add([pscustomobject][ordered]@{ number = [int]$m; outcome = 'merged'; pr = $null; ledger = $null; gate = $null; started = $iterStart; ended = (Get-Date -Format o); note = 'merged, closes at release' })
+        }
+      }
+      $stop = $true
+    }
+    if ($stop) {
+      $state = if ($exit -eq 2) { 'gate' } elseif ($exit -ne 0) { 'failed' } else { 'done' }
+      if ($featureDone -and $exit -eq 0) { $state = 'done' }
+    }
+    Save-Queue $(if ($stop) { $state } else { 'running' }) $exit
+    if ($stop) { break }
+  }
+  foreach ($e in $pbis) { Write-Host "$(if ($e.number) { "#$($e.number)" } else { '-' }) $($e.outcome)$(if ($e.pr) { " (PR #$($e.pr))" })" }
+  if ($exit -eq 2) { Write-Host "Gate on ${kind} #${nr}, queue stopped (answer it, then run the queue again): $($pbis[-1].gate)" }
+  if ($exit -eq 0) { Write-Host "$kind #$nr is done." }
+  exit $exit
+}
+
+if ($Mode -eq 'next') { throw "-Mode next is only used by -Feature/-Epic." }
 $issues = [System.Collections.Generic.List[string]]::new()
 foreach ($i in $Issue) { $issues.Add((ConvertTo-IssueNumber $i 'argument')) }
 if ($IssueFile) {

@@ -9,14 +9,14 @@
   and the common build and test runners, everything else denied, so the run fails closed. -AllowAll uses --auto
   (auto-approves permissions that are not explicitly denied) and sets no environment (explicit opt-in).
 .PARAMETER Issue    Issue number.
-.PARAMETER Mode     plan, implement or full.
+.PARAMETER Mode     plan, implement, full or next.
 .PARAMETER AllowAll Auto-approve permissions.
 .OUTPUTS PSCustomObject with Executable, Arguments and Environment (hashtable, may be empty).
 #>
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidatePattern('\A[1-9][0-9]{0,9}\z')][string]$Issue,
-  [ValidateSet('plan', 'implement', 'full')][string]$Mode = 'full',
+  [ValidateSet('plan', 'implement', 'full', 'next')][string]$Mode = 'full',
   [switch]$AllowAll
 )
 $ErrorActionPreference = 'Stop'
