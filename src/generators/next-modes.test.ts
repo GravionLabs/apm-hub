@@ -168,7 +168,15 @@ describe('loop mode documentation', () => {
   it.each([
     ['docs/working-mode.md', workingMode],
     ['docs/orchestrator.md', read('docs/orchestrator.md')],
-  ])('%s mode table has a loop row', (_file, text) => {
-    expect(text).toMatch(/^\| `loop <[^`]*>` \|/m);
+  ])('%s mode table has a loop row that repeats next', (_file, text) => {
+    const row = text.split('\n').find((l) => /^\| `loop <[^`]*>` \|/.test(l));
+    expect(row).toBeDefined();
+    expect(row).toMatch(/[Rr]epeats? `next`/);
+  });
+
+  it('next still selects exactly one PBI per run', () => {
+    const nextRule = body.slice(body.indexOf('`next <feature|epic>`'), body.indexOf('`loop <feature|epic>`'));
+    expect(nextRule).toMatch(/Exactly one PBI per run \(except `loop`\)/);
+    expect(reference).toMatch(/^The first remaining candidate in sub-issue order is the PBI\./m);
   });
 });
