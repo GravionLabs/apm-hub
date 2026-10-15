@@ -356,6 +356,13 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(gates).toContain('MEDIUM');
   });
 
+  it('gates point PBIs and Features at the one merged definition in next-selection.md', () => {
+    const selection = read('github/.apm/skills/github-issue/references/next-selection.md');
+    expect(gates).toContain('next-selection.md');
+    expect(gates).toContain('Merged (closes at release)');
+    expect(selection.match(/^## Merged \(closes at release\)$/gm)).toHaveLength(1);
+  });
+
   it('github-issue links the gates reference', () => {
     expect(read('github/.apm/skills/github-issue/SKILL.md')).toContain('references/orchestrator-gates.md');
   });

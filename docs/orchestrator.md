@@ -268,10 +268,13 @@ flowchart TD
     B -->|"yes"| X["Drop"]
     B -->|"no"| C{"Open PR already<br/>references it?"}
     C -->|"yes"| Y["Drop: waiting for merge"]
-    C -->|"no"| D["Candidate"]
+    C -->|"no"| M{"Merged into the<br/>integration branch?"}
+    M -->|"yes"| V["Drop: merged, closes at release"]
+    M -->|"no"| D["Candidate"]
     D --> E["First in sub-issue order<br/>announce: Next PBI"]
     X --> Z{"Any candidate left?"}
     Y --> Z
+    V --> Z
     Z -->|"no"| W(["Report what blocks, stop"])
 ```
 
@@ -333,7 +336,7 @@ The final report has a fixed shape (defined in [orchestrator.agent.md](../packag
 - the rulings verbatim,
 - on failure, the first error line.
 
-After a `full`, `implement` or `next` run on a PBI whose parent is a Feature, the report adds a `Next:` line naming the next selectable PBI and the command to start it after `/clear`. It comes from the same selection as `next` ([next-selection.md](../packages/github/.apm/skills/github-issue/references/next-selection.md)), which uses `gh` only, with the PBI just finished excluded. If nothing is selectable the line lists what blocks each open PBI (open blockers, `needs-decision`, an open PR waiting for merge), or says the Feature is done. A PBI under an Epic, or without a parent, gets no `Next:` line. After a `plan` run the `Next:` line recommends `/clear` and then `orchestrator implement <issue>`.
+After a `full`, `implement` or `next` run on a PBI whose parent is a Feature, the report adds a `Next:` line naming the next selectable PBI and the command to start it after `/clear`. It comes from the same selection as `next` ([next-selection.md](../packages/github/.apm/skills/github-issue/references/next-selection.md)), which uses `gh` only, with the PBI just finished excluded. If nothing is selectable the line lists what blocks each open PBI (open blockers, `needs-decision`, `waiting for merge: PR #<n>`, or `merged, closes at release` for a PBI already on the integration branch), or says the Feature is done. A PBI under an Epic, or without a parent, gets no `Next:` line. After a `plan` run the `Next:` line recommends `/clear` and then `orchestrator implement <issue>`.
 
 The last line is a fixed closing line saying the ledger is complete and that the next issue starts in a new session. It marks the ledger as finished; the cost reasoning is in [Working mode](working-mode.md).
 
