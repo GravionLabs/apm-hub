@@ -64,18 +64,10 @@ A shell alias saves typing (`~/.zshrc` or the PowerShell profile):
 alias claude-orchestrator='claude --agent orchestrator'     # then: claude-orchestrator "plan 123"
 ```
 
-In a running Claude Code session a user-level command can start it inline, as `/orchestrator <mode> <issue>`.
-Create `~/.claude/commands/orchestrator.md` (it is not part of the package):
+The `orchestrator` skill ships with the `agents` package. In a running session (Claude Code, VS Code Copilot) `/orchestrator [flags] <mode> <issue>` starts the agent inline: it finds the installed agent file (project first, then global) and follows it.
+If you still have a local `~/.claude/commands/orchestrator.md`, delete it: a command and a skill of the same name both answer `/orchestrator`.
 
-```markdown
----
-description: Run the orchestrator inline: /orchestrator [--no-overview] [--no-review-summary] plan|implement|full|next <issue>
----
-Read ~/.claude/agents/orchestrator.md and follow its body as your instructions for this session.
-Flags, mode and issue: $ARGUMENTS
-```
-
-The command runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
+The skill runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
 session context keeps growing, so prefer `claude --agent orchestrator` for real work.
 
 ### Copilot CLI

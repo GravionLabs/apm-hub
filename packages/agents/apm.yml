@@ -1,6 +1,6 @@
 name: agents
 version: 2.2.4
-description: "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the issue-reader, explorer, planner, reviewer, implementer and pr-writer subagents it delegates to. Deploys to .claude/agents, .github/agents and .opencode/agents."
+description: "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the issue-reader, explorer, planner, reviewer, implementer and pr-writer subagents it delegates to, and the /orchestrator skill that runs the orchestrator inline. Deploys to .claude/agents, .github/agents and .opencode/agents."
 author:
   name: Gravion
 license: MIT
@@ -17,3 +17,5 @@ agents:
   - planner
   - pr-writer
   - reviewer
+skills:
+  - orchestrator
