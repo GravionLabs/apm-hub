@@ -78,7 +78,7 @@ session context keeps growing, so prefer `claude --agent orchestrator` for real 
 
 ### Copilot CLI
 
-`copilot --agent orchestrator` runs the phases inline in the Copilot session (no per-phase subagent isolation), with the same modes, gates and ledger. The `/orch` prompt (skill `orch-pipeline`) is deprecated and removed in 3.0.0; use the orchestrator agent instead.
+`copilot --agent orchestrator` runs with the same modes, gates and ledger and delegates the phases with Copilot CLI's `task` tool (own context window per subagent, `subagentStop` hook). Copilot subagents are stateless, so fix rounds start a fresh `implementer` instead of resuming one. Only a session without the `task` tool falls back to running the phases inline. Client matrix: [Clients](orchestrator.md#clients). The `/orch` prompt (skill `orch-pipeline`) is deprecated and removed in 3.0.0; use the orchestrator agent instead.
 
 ### Start from a description
 

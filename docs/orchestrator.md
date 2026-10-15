@@ -334,11 +334,13 @@ The last line is a fixed closing line saying the ledger is complete and that the
 
 ## Clients
 
-| Client | Start | Delegation |
-|:--|:--|:--|
-| Claude Code | `claude --agent orchestrator` | `Agent` with `subagent_type` |
-| GitHub Copilot CLI | `copilot --agent orchestrator` | no subagents: phases run inline |
-| VS Code Copilot | agent picker | `runSubagent` |
-| OpenCode | `opencode --agent orchestrator` | `task` with the agent name |
+| Client | Start | Delegation | Subagent starts subagents | Question tool in a subagent | Resume a finished subagent |
+|:--|:--|:--|:--|:--|:--|
+| Claude Code | `claude --agent orchestrator` | `Agent` with `subagent_type` | yes, 3 levels below the main conversation by default (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`; `1` turns it off) | no, `AskUserQuestion` is removed from every subagent | yes, `SendMessage` to its agent id, full history kept |
+| GitHub Copilot CLI | `copilot --agent orchestrator` | `task` with the agent name | not documented | not documented | no, subagents are stateless |
+| VS Code Copilot | agent picker | `runSubagent` | off by default (`chat.subagents.allowInvocationsFromSubagents`), then at most 5 levels | no, the clarifying-question tool is unavailable to subagents | no, each invocation is stateless |
+| OpenCode | `opencode --agent orchestrator` | `task` with the agent name (`permission.task`) | not documented | `permission.question` exists; behaviour inside a subagent not documented | not documented |
+
+Checked 2026-10-15 against [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents.md), [Copilot CLI features](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/comparing-cli-features), [VS Code subagents](https://code.visualstudio.com/docs/copilot/agents/subagents) and [OpenCode permissions](https://opencode.ai/docs/permissions/); "not documented" means neither a doc statement nor a recorded test run exists yet. The orchestrator dispatches one level down on every client and runs a phase inline only when the session has no subagent tool at all (the inline `/orchestrator` command). Anything that needs a subagent to start subagents, or to be resumed, is Claude Code only until a cell above changes.
 
 Started as a subagent, the orchestrator stops and asks the caller to start it as the primary agent: it needs the question tool for its gates. Agent source format: [Agent frontmatter](concepts/agent-frontmatter.md).
