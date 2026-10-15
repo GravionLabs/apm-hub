@@ -107,6 +107,16 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(fs.readFileSync(fresh, 'utf8')).toContain('Subagent reviewer: stopped — APPROVE');
     });
 
+    it('ignores a newer loop-<nr> ledger and writes to the newest PBI ledger', async () => {
+      const pbi = withLedger('42');
+      fs.utimesSync(pbi, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      const loop = withLedger('loop-7');
+      const h = await load();
+      await h['tool.execute.after'](...task('issue-reader', result('ok')));
+      expect(fs.readFileSync(pbi, 'utf8')).toContain('Subagent issue-reader: stopped — ok');
+      expect(fs.readFileSync(loop, 'utf8')).toBe('# ledger\n');
+    });
+
     it('honours AGENTS_LEDGER', async () => {
       withLedger();
       const other = path.join(dir, 'other.md');

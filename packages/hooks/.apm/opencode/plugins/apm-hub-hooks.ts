@@ -27,7 +27,7 @@ function isRegular(p: string): boolean {
 const CONTROL = /[\x00-\x1f\x7f\x85\u2028\u2029]/g;
 let partSeq = 0;
 
-/** Newest .agents/<issue>/progress.md under dir, or "" (AGENTS_LEDGER overrides). */
+/** Newest .agents/<issue>/progress.md under dir (loop-<nr> ledgers skipped), or "" (AGENTS_LEDGER overrides). */
 function findLedger(dir: string, override?: string): string {
   try {
     if (override) return isRegular(override) ? override : "";
@@ -35,7 +35,7 @@ function findLedger(dir: string, override?: string): string {
     let best = "";
     let bestTime = -1;
     for (const e of readdirSync(root, { withFileTypes: true })) {
-      if (!e.isDirectory() || e.isSymbolicLink()) continue;
+      if (!e.isDirectory() || e.isSymbolicLink() || /^loop-\d+$/.test(e.name)) continue;
       const p = join(root, e.name, "progress.md");
       if (!isRegular(p)) continue;
       const t = lstatSync(p).mtimeMs;

@@ -41,6 +41,18 @@ describe('subagent-ledger hook', () => {
     expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — APPROVE\n');
   });
 
+  it('ignores a newer .agents/loop-<nr>/progress.md and writes to the newest PBI ledger', () => {
+    withLedger();
+    const loop = path.join(dir, '.agents', 'loop-7', 'progress.md');
+    fs.mkdirSync(path.dirname(loop), { recursive: true });
+    fs.writeFileSync(loop, '# loop\n');
+    fs.utimesSync(ledger, new Date(2020, 1, 1), new Date(2020, 1, 1));
+    const r = run({ cwd: dir, agent_type: 'issue-reader', last_assistant_message: 'ok' });
+    expect(r.status).toBe(0);
+    expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent issue-reader: stopped — ok\n');
+    expect(fs.readFileSync(loop, 'utf8')).toBe('# loop\n');
+  });
+
   it('writes one line when the same payload fires twice', () => {
     withLedger();
     const payload = { cwd: dir, agent_type: 'implementer', last_assistant_message: 'Status: DONE' };
