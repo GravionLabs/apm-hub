@@ -21,12 +21,18 @@ describe('orchestrator agent rules', () => {
     expect(body).toMatch(/(never|not)[^.\n]{0,40}`general-purpose`/i);
   });
 
-  it('runs the pull request step inline in its own context', () => {
+  it('dispatches the pull request step to pr-writer and keeps only its JSON', () => {
     const step6 = lines.find((l) => /^6\.\s/.test(l));
     expect(step6).toBeDefined();
+    expect(step6).toContain('`pr-writer`');
     expect(step6).toContain('github-pull-request');
-    expect(step6).toMatch(/own context|inline/i);
-    expect(step6).toMatch(/no subagent/i);
+    expect(step6).toMatch(/\{number, url\}/);
+    expect(step6).not.toMatch(/inline|no subagent/i);
+  });
+
+  it('lists pr-writer among the dispatchable subagents with a model', () => {
+    expect(body).toMatch(/subagent_type: [^)]*pr-writer/);
+    expect(body).toMatch(/`pr-writer` sonnet/);
   });
 
   it('does not claim every phase runs in a subagent', () => {
