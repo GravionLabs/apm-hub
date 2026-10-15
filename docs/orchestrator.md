@@ -27,7 +27,7 @@ flowchart LR
 | Agent | Model | Tools | Returns |
 |:--|:--|:--|:--|
 | [`orchestrator`](../packages/agents/.apm/agents/orchestrator.agent.md) | inherit | Agent, Read, Grep, Glob, Bash, Skill, AskUserQuestion, SendMessage | phase summaries, PR URL, rulings |
-| [`issue-reader`](../packages/agents/.apm/agents/issue-reader.agent.md) | haiku | Read, Grep, Glob, Bash (read-only `gh` and `git`) | one JSON object: type, title, digest, integration branch, parent, bug flag, Task sub-issues with merged state, ledger state |
+| [`issue-reader`](../packages/agents/.apm/agents/issue-reader.agent.md) | haiku | Read, Grep, Glob, Bash (read-only `gh` and `git`) | one JSON object: type, title, digest, integration branch (`null` or `stale` when a cut is needed), parent, bug flag, Task sub-issues with merged state and sha, ledger `none` or `resume`; `{error}` on a bad reference |
 | [`explorer`](../packages/agents/.apm/agents/explorer.agent.md) | haiku | Read, Grep, Glob | summary with `file:line` references |
 | [`planner`](../packages/agents/.apm/agents/planner.agent.md) | inherit | Read, Grep, Glob, Bash, Skill, Agent | path of `plan.json`, summary, open question count |
 | [`implementer`](../packages/agents/.apm/agents/implementer.agent.md) | sonnet (overridable per task) | Read, Edit, Write, Grep, Glob, Bash, Skill | report file and a reply of 15 lines or less |

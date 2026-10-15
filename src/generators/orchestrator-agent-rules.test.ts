@@ -41,7 +41,9 @@ describe('orchestrator agent rules', () => {
     expect(step1).toContain('`issue-reader`');
     expect(step1).toMatch(/\{issue, type, title, digest, branch, bug, parent, tasks:\[\{n, state, merged, sha\}\], ledger\}/);
     expect(step1).toMatch(/\{error\}/);
-    expect(step1).toContain('merged: true');
+    expect(step1).toMatch(/`merged: true` and `state: open` close it/);
+    expect(step1).toMatch(/`null` or `stale: true` → cut one with `github-release`/);
+    expect(step1).toContain('`ledger: resume`');
     expect(step1).not.toContain('gh issue view');
     expect(step1).not.toContain('sub_issues');
     expect(step1).not.toContain('release-branches.md');
