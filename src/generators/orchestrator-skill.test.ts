@@ -60,6 +60,11 @@ describe('orchestrator launcher skill', () => {
     expect(skill).toContain('apm install GravionLabs/apm-hub/packages/agents');
   });
 
+  it('documents --fix-advisories in the description and the input list', () => {
+    expect(parse(frontmatter).description).toContain('--fix-advisories');
+    expect(skill).toMatch(/## 3\. Input[\s\S]*--fix-advisories none\|medium\|all/);
+  });
+
   it('is listed in the agents package manifest', () => {
     const manifest = parse(read('agents/apm.yml'));
     expect(manifest.skills).toContain('orchestrator');

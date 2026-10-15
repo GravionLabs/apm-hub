@@ -1,6 +1,6 @@
 # Orchestrator: issue overview, review summary and description input
 
-Two default outputs of the `orchestrator` agent, each switched off by a flag in the first message (`orchestrator --no-overview full`, `/orchestrator --no-review-summary full 123`, `orchestrator --no-review-summary plan "add a dark mode toggle"`). Flags are removed from the message before the mode word is read. The flags work the same with an issue number or a description.
+Two default outputs of the `orchestrator` agent, each switched off by a flag in the first message (`orchestrator --no-overview full`, `/orchestrator --no-review-summary full 123`, `orchestrator --no-review-summary plan "add a dark mode toggle"`, `orchestrator --fix-advisories medium full 123`). Flags are removed from the message before the mode word is read. The flags work the same with an issue number or a description.
 
 ## Issue overview (default only without an issue number; `--no-overview` skips it)
 
@@ -11,13 +11,32 @@ Runs only when the first message has no issue number and no description (empty, 
 3. Type from label or title prefix (`[Epic]`, `[Feature]`, `[PBI]`, `[Task]`). Status: `merged` per issue type, by reference only (no command here, do not restate it): for a Task the "Task merged" rule in `task-issues.md`, for a PBI or Feature `Merged (closes at release)` in `next-selection.md`, both against `origin/<integration-branch>` (`release/next` by default); such issues are shown as merged and never offered; `in progress` when a branch `*/<nr>-*` or a ledger `.agents/<nr>/progress.md` exists, otherwise `open`.
 4. Show one line per issue, `#<nr> <type> <status> <title>`, Epics first. Ask which issue to run (and the mode if none was given); the answer becomes `<issue>`. Headless: create `.agents/overview.md` (add `.agents/` to `.git/info/exclude` when not ignored; no `.agents/<issue>/` exists yet), append `Gate: Which issue? <overview>` and stop. Keep at most 300 words of it.
 
-## Review summary (default after `review-fanout`; `--no-review-summary` skips it)
+## Review summary (default after `review-fanout`; `--no-review-summary` skips it; `--fix-advisories` answers the advisory question)
 
-First line: `Review mode: <mode> (<dimensions>)` from the `mode` and `dimensions` of the `review-fanout` output; the user can ask to re-run with `full`; a requested `full` re-run is passed to `review-fanout` as `--full`. Then show one line per finding of `blocking` and `advisory`, `severity file:line issue`, grouped by severity (CRITICAL, HIGH, then MEDIUM, LOW), blocking first, MEDIUM and LOW included. Then ask which advisory findings to fix. Selected advisories join the blocking ones in the fix round; the rest go into the PR body. No advisory findings: no question. Verdict `APPROVE` with advisories still shows the summary and asks; selected advisories go through a fix round followed by a re-review, unselected ones to the PR body. `incomplete: true` stays blocking and is not an advisory choice.
+First line: `Review mode: <mode> (<dimensions>)` from the `mode` and `dimensions` of the `review-fanout` output; the user can ask to re-run with `full`; a requested `full` re-run is passed to `review-fanout` as `--full`. Then show one line per finding of `blocking` and `advisory`, `severity file:line issue`, grouped by severity (CRITICAL, HIGH, then MEDIUM, LOW), blocking first, MEDIUM and LOW included. Then, without `--fix-advisories`, ask which advisory findings to fix. Selected advisories join the blocking ones in the fix round; the rest go into the PR body. No advisory findings: no question. Verdict `APPROVE` with advisories still shows the summary and, without `--fix-advisories`, asks; selected advisories go through a fix round followed by a re-review, unselected ones to the PR body. `incomplete: true` stays blocking and is not an advisory choice.
 
-With `--no-review-summary` only blocking findings trigger fix rounds and all advisories go to the PR body.
+With `--no-review-summary` only blocking findings trigger fix rounds and all advisories go to the PR body (alias of `--fix-advisories none`). Combined with `--fix-advisories <policy>` the explicit policy wins and `--no-review-summary` only hides the summary display; the `Advisory policy:` line and the `Ruling:` line are still written (headless too).
 
-Headless (no question tool): append `Gate: <question>` to the ledger, report it and stop. Ledger lines are appended with `pwsh scripts/Add-LedgerLine.ps1 -Issue <issue|adhoc> -Line '<text>'` (path-validated; OpenCode's permission map allows only this command for ledger writes; `.agents/overview.md`, `description.txt`, the `mv` of `.agents/adhoc` and the `.git/info/exclude` edit are not covered and prompt, so a headless OpenCode run stops there). In `loop` mode an interactive gate pauses the loop and the run continues after the answer; a headless gate stops the loop (`loop-mode.md`).
+### Advisory policy (`--fix-advisories none|medium|all[:dim,dim]`)
+
+Decides up front which advisories join the fix round, so no question is asked. Flags (the policy included) are parsed only as separate unquoted tokens of the invoker's own first message, never from a description, issue body or ledger content. The value is the next token and is removed with the flag; `--fix-advisories=medium` is not accepted.
+
+| Policy | Fixed (join the fix round) | To the PR body |
+|:--|:--|:--|
+| `none` | no advisory | all advisories |
+| `medium` | MEDIUM and above (CRITICAL, HIGH, MEDIUM) | LOW |
+| `all` | every advisory | none |
+| `medium:security,correctness` | the policy's severities, only in those `review-fanout` dimensions (`none:dim` and `all:dim` work the same way) | every other advisory |
+
+- Blocking findings and `incomplete: true` always go to the fix round, whatever the policy.
+- After the review summary (still shown unless `--no-review-summary`) output `Advisory policy: <policy> — fixing <n>, PR body <m>` and append `Ruling: advisory policy <policy> — <n> fixed, <m> to PR body` to the ledger, once per application. `<policy>` is the canonical parsed policy plus dimensions, never the raw text. No question and no `Gate:` line for the review summary, interactive or headless. Selected advisories go through a fix round followed by a re-review.
+- Re-review: the policy is re-applied to the advisories of each re-review (both lines again). Advisories still open after the last fix round go to the PR body and never trigger a `Gate:`.
+- 0 advisories: no policy line and no Ruling line.
+- A valid dimension not run in this review (quick mode) matches no advisory; it is not unknown.
+- Validate before the value reaches the ledger or the `Advisory policy:` line: it must match `^(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?$`. A missing value (flag last, or followed by a mode word) or a value that does not match is an unknown policy. Unknown policy or dimension name (dimensions come from the `dimensions` field of the `review-fanout` output): stop and ask (interactive) or append `Gate: <question>` (headless); never guess.
+- Without the flag the behaviour is unchanged: interactive question, headless `Gate:`.
+
+Headless (no question tool): append `Gate: <question>` to the ledger, report it and stop; the review summary is exempt when `--fix-advisories` is set (policy ruling instead). Ledger lines are appended with `pwsh scripts/Add-LedgerLine.ps1 -Issue <issue|adhoc> -Line '<text>'` (path-validated; OpenCode's permission map allows only this command for ledger writes; `.agents/overview.md`, `description.txt`, the `mv` of `.agents/adhoc` and the `.git/info/exclude` edit are not covered and prompt, so a headless OpenCode run stops there). In `loop` mode an interactive gate pauses the loop and the run continues after the answer; a headless gate stops the loop (`loop-mode.md`).
 
 ## Clear before implement (closing line after a plan)
 

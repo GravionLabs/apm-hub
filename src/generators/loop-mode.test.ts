@@ -118,6 +118,11 @@ describe('loop-mode reference', () => {
     expect(stops).toMatch(/finish the current step first/);
   });
 
+  it('applies --fix-advisories to every PBI and exempts the review summary from the gate', () => {
+    expect(reference).toContain('applies to every PBI of the loop');
+    expect(section(reference, 'Interactive gates')).toContain('--fix-advisories');
+  });
+
   it('pauses on interactive gates and skips the clear-before-implement question', () => {
     const sec = section(reference, 'Interactive gates');
     expect(sec).toMatch(/continue the loop after the answer/);

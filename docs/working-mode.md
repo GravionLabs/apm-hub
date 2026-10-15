@@ -36,16 +36,17 @@ Exactly one PBI per run, except loop. The end line after a PBI of a Feature is d
 | "plan #123" / "plane Feature #123" | `plan 123` |
 | "do #123" / "implement #123" | `full 123` / `implement 123` |
 
-### Flags: overview and review summary
+### Flags: overview, review summary and advisory policy
 
-Two defaults, each switched off by a flag in the first message (also for `/orchestrator`):
+Two defaults, each switched off by a flag, and one flag that answers the advisory question up front. All go in the first message (also for `/orchestrator`):
 
 | Flag | Default without it |
 | :-- | :-- |
 | `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged, merged ones per the "Task merged" rule for Tasks and `Merged (closes at release)` in `next-selection.md` for PBIs and Features) and you pick one |
 | `--no-review-summary` | After `review-fanout` it shows one line per finding (`severity file:line issue`, blocking first, MEDIUM/LOW included) and asks which advisories to fix; the rest go to the PR body. With the flag only blocking findings trigger fix rounds |
+| `--fix-advisories none\|medium\|all[:dim,dim]` | Decides the advisory question up front: `none` sends all advisories to the PR body, `medium` fixes MEDIUM and above, `all` fixes every advisory; `:dim,dim` limits the policy to those `review-fanout` dimensions (other advisories go to the PR body). Blocking findings are always fixed. Prints `Advisory policy: <policy> — fixing <n>, PR body <m>` and writes a `Ruling:` ledger line |
 
-Headless runs write `Gate: <question>` to the ledger and stop. Details: `github-issue` `references/orchestrator-gates.md`.
+Headless runs write `Gate: <question>` to the ledger and stop; with `--fix-advisories` set, the review summary writes no `Gate:` line (policy ruling instead). The queue runner forwards the policy as `-FixAdvisories none|medium|all`, documented there once #227 lands. Details: `github-issue` `references/orchestrator-gates.md`.
 
 ### Setup
 

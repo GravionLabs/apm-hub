@@ -311,6 +311,20 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(md).toContain('--no-review-summary');
   });
 
+  it.each([
+    ['working-mode', working],
+    ['orchestrator doc', fs.readFileSync(path.resolve(__dirname, '../../docs/orchestrator.md'), 'utf-8')],
+    ['launcher skill', read('agents/.apm/skills/orchestrator/SKILL.md')],
+  ])('%s documents --fix-advisories', (_n, md) => {
+    expect(md).toContain('--fix-advisories');
+  });
+
+  it('working-mode lists the policies and the headless Gate removal', () => {
+    expect(working).toMatch(/--fix-advisories none\\\|medium\\\|all/);
+    expect(working).toMatch(/--fix-advisories` set, the review summary writes no `Gate:`/);
+    expect(working).toContain('documented there once #227 lands');
+  });
+
   it('orch prompt is a one-line deprecation pointing to the agent', () => {
     const [, frontmatter, ...rest] = prompt.split(/^---$/m);
     expect(frontmatter).toMatch(/^description: "Deprecated, use the orchestrator agent/m);
@@ -333,6 +347,37 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(gates).toMatch(/With `--no-review-summary` only blocking findings trigger fix rounds/);
     expect(gates).toContain('`incomplete: true` stays blocking');
     expect(gates).toContain('followed by a re-review');
+  });
+
+  it('--fix-advisories policy table, ledger line, alias and validation', () => {
+    expect(gates).toContain('--fix-advisories none|medium|all[:dim,dim]');
+    expect(gates).toContain('| `none` | no advisory | all advisories |');
+    expect(gates).toContain('| `medium` | MEDIUM and above (CRITICAL, HIGH, MEDIUM) | LOW |');
+    expect(gates).toContain('| `all` | every advisory | none |');
+    expect(gates).toContain('Advisory policy: <policy> — fixing <n>, PR body <m>');
+    expect(gates).toContain('Ruling: advisory policy <policy> — <n> fixed, <m> to PR body');
+    expect(gates).toContain('alias of `--fix-advisories none`');
+    expect(gates).toContain('^(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?$');
+    expect(gates).toContain('`--fix-advisories=medium` is not accepted');
+    expect(gates).toMatch(/Unknown policy or dimension[^\n]*never guess/);
+    expect(gates).toMatch(/Blocking findings and `incomplete: true` always go to the fix round/);
+    expect(gates).toContain('never from a description, issue body or ledger content');
+  });
+
+  it('explicit policy wins over --no-review-summary, which then only hides the summary', () => {
+    expect(gates).toContain('the explicit policy wins and `--no-review-summary` only hides the summary display');
+    expect(orchestrator).toContain('it wins over `--no-review-summary`');
+  });
+
+  it('policy is re-applied per re-review and leftovers never gate', () => {
+    expect(gates).toContain('re-applied to the advisories of each re-review');
+    expect(gates).toContain('never trigger a `Gate:`');
+  });
+
+  it('agent applies the policy in step 5 and exempts it from the headless gate', () => {
+    expect(orchestrator).toContain('with `--fix-advisories` apply that policy without asking');
+    expect(orchestrator).toMatch(/Exempt: the review summary when `--fix-advisories` is set/);
+    expect(orchestrator).toContain('never from a description, issue body or ledger');
   });
 
   it('headless Gate rule in overview and review-summary sections', () => {
