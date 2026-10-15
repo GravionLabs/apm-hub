@@ -46,8 +46,9 @@ The first word of the first message is the mode. Without a mode word the run is 
 | `implement` | Implement, review and open the PR for an issue that is already planned |
 | `full` | `plan` + `implement` in one run, for a PBI |
 | `next <feature or epic>` | Pick the next open, unblocked PBI and run it as `full` |
+| `loop <feature or epic>` | Repeat `next` in one session until nothing is selectable, a headless gate or the context warning |
 
-Exactly one PBI is handled per run. An Epic is planned into Features, a Feature into PBIs, a PBI into Tasks, one grilling cycle per level.
+Exactly one PBI is handled per run, except in `loop`. An Epic is planned into Features, a Feature into PBIs, a PBI into Tasks, one grilling cycle per level.
 
 ## The pipeline
 
@@ -280,6 +281,28 @@ flowchart TD
 
 After a run on a PBI of a Feature, the report ends with a `Next:` line built from the same selection; see [End of run](#end-of-run).
 
+## Looping with `loop`
+
+`orchestrator loop <feature or epic>` runs the open PBIs one after another in one session ([loop-mode.md](../packages/github/.apm/skills/github-issue/references/loop-mode.md)). It takes no description. Each PBI is a normal `full` run with its own branch, PR and ledger.
+
+```mermaid
+flowchart TD
+    A["Select per next"] --> B{"Candidate?"}
+    B -->|"no"| S1(["Loop: stopped, nothing selectable"])
+    B -->|"yes"| C["Run the PBI as full"]
+    C --> G{"Headless gate?"}
+    G -->|"yes"| S2(["Loop: stopped, headless gate"])
+    G -->|"no"| D["Loop: PBI #nr done, PR url"]
+    D --> W{"Context warning<br/>seen?"}
+    W -->|"yes"| S3(["Loop: stopped, context warning"])
+    W -->|"no"| A
+```
+
+- The finished PBI has an open PR, so the reselection drops it as `waiting for merge`. The loop never merges a PR; a PBI blocked by another PBI of the loop stays blocked until that PR is merged.
+- Interactive gates (plan gate, review summary, `CHANGES_REQUESTED`, red suite twice) pause the loop and it continues after your answer. Headless, the gate is recorded and the loop stops.
+- Loop ledger `.agents/loop-<nr>/progress.md`: header `# orchestrator ledger — loop #<nr> — branch <branch>`, one `Loop: PBI #<nr> done — <pr>` line per PBI and `Loop: stopped — <reason>` at the end. Per-PBI ledgers and `Ruling:` lines stay in `.agents/<pbi>/progress.md`.
+- Rerun `orchestrator loop <nr>` after `/clear` to resume: the PBIs with a `done` line are skipped.
+
 ## Hooks
 
 The `hooks` package adds three hooks around the orchestrator. They are plain bash scripts that never fail a run: every path exits 0 and a payload they cannot parse is ignored. The orchestrator does not call them and does not depend on them; they make the state on disk more complete and protect against accidents.
@@ -336,7 +359,7 @@ The final report has a fixed shape (defined in [orchestrator.agent.md](../packag
 - the rulings verbatim,
 - on failure, the first error line.
 
-After a `full`, `implement` or `next` run on a PBI whose parent is a Feature, the report adds a `Next:` line naming the next selectable PBI and the command to start it after `/clear`. It comes from the same selection as `next` ([next-selection.md](../packages/github/.apm/skills/github-issue/references/next-selection.md)), which uses `gh` only, with the PBI just finished excluded. If nothing is selectable the line lists what blocks each open PBI (open blockers, `needs-decision`, `waiting for merge: PR #<n>`, or `merged, closes at release` for a PBI already on the integration branch), or says the Feature is done. A PBI under an Epic, or without a parent, gets no `Next:` line. After a `plan` run the `Next:` line recommends `/clear` and then `orchestrator implement <issue>`.
+After a `full`, `implement`, `next` or `loop` run on a PBI whose parent is a Feature, the report adds a `Next:` line naming the next selectable PBI and the command to start it after `/clear`. It comes from the same selection as `next` ([next-selection.md](../packages/github/.apm/skills/github-issue/references/next-selection.md)), which uses `gh` only, with the PBI just finished excluded. If nothing is selectable the line lists what blocks each open PBI (open blockers, `needs-decision`, `waiting for merge: PR #<n>`, or `merged, closes at release` for a PBI already on the integration branch), or says the Feature is done. After `loop` the line refers to the last PBI handled, and the report adds `Loop: stopped — <reason>` (`nothing selectable`, `headless gate: <question>`, `context warning` or `user stop`). A PBI under an Epic, or without a parent, gets no `Next:` line. After a `plan` run the `Next:` line recommends `/clear` and then `orchestrator implement <issue>`.
 
 The last line is a fixed closing line saying the ledger is complete and that the next issue starts in a new session. It marks the ledger as finished; the cost reasoning is in [Working mode](working-mode.md).
 

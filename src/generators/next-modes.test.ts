@@ -156,9 +156,19 @@ describe('working-mode natural requests', () => {
   it.each([
     ['implementiere das nächste Feature', 'next <feature>'],
     ['plan all open features under #81', 'plan 81'],
+    ['arbeite Feature #81 ab', 'loop <feature>'],
   ])('maps "%s" to %s', (phrase, mode) => {
     const line = workingMode.split('\n').find((l) => l.includes(phrase));
     expect(line).toBeDefined();
     expect(line).toContain(mode);
+  });
+});
+
+describe('loop mode documentation', () => {
+  it.each([
+    ['docs/working-mode.md', workingMode],
+    ['docs/orchestrator.md', read('docs/orchestrator.md')],
+  ])('%s mode table has a loop row', (_file, text) => {
+    expect(text).toMatch(/^\| `loop <[^`]*>` \|/m);
   });
 });
