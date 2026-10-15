@@ -53,6 +53,68 @@ describe('subagent-ledger hook', () => {
     expect(fs.readFileSync(loop, 'utf8')).toBe('# loop\n');
   });
 
+  it('writes nothing and exits 0 when only loop ledgers exist', () => {
+    const loop = path.join(dir, '.agents', 'loop-7', 'progress.md');
+    fs.mkdirSync(path.dirname(loop), { recursive: true });
+    fs.writeFileSync(loop, '# loop\n');
+    const r = run({ cwd: dir, agent_type: 'reviewer', response: 'APPROVE' });
+    expect(r.status).toBe(0);
+    expect(fs.readFileSync(loop, 'utf8')).toBe('# loop\n');
+  });
+
+  it('treats a non-numeric loop-x directory as a PBI ledger', () => {
+    const odd = path.join(dir, '.agents', 'loop-x', 'progress.md');
+    fs.mkdirSync(path.dirname(odd), { recursive: true });
+    fs.writeFileSync(odd, '# odd\n');
+    run({ cwd: dir, agent_type: 'reviewer', response: 'APPROVE' });
+    expect(fs.readFileSync(odd, 'utf8')).toBe('# odd\nSubagent reviewer: stopped — APPROVE\n');
+  });
+
+  it('honours an AGENTS_LEDGER override pointing at a loop ledger', () => {
+    withLedger();
+    const loop = path.join(dir, '.agents', 'loop-7', 'progress.md');
+    fs.mkdirSync(path.dirname(loop), { recursive: true });
+    fs.writeFileSync(loop, '# loop\n');
+    const r = spawnSync('bash', [SCRIPT], {
+      input: JSON.stringify({ cwd: dir, agent_type: 'reviewer', response: 'ok' }),
+      encoding: 'utf8',
+      env: { ...process.env, AGENTS_LEDGER: loop },
+    });
+    expect(r.status).toBe(0);
+    expect(fs.readFileSync(loop, 'utf8')).toBe('# loop\nSubagent reviewer: stopped — ok\n');
+    expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\n');
+  });
+
+  it('does not write through a symlinked progress.md or a symlinked issue directory', () => {
+    const target = path.join(dir, 'target.md');
+    fs.writeFileSync(target, 'secret\n');
+    fs.mkdirSync(path.join(dir, '.agents', '7'), { recursive: true });
+    fs.symlinkSync(target, path.join(dir, '.agents', '7', 'progress.md'));
+    expect(run({ cwd: dir, agent_type: 'reviewer', response: 'x' }).status).toBe(0);
+    expect(fs.readFileSync(target, 'utf8')).toBe('secret\n');
+
+    const outside = path.join(dir, 'outside');
+    fs.mkdirSync(outside);
+    fs.writeFileSync(path.join(outside, 'progress.md'), 'secret\n');
+    fs.symlinkSync(outside, path.join(dir, '.agents', '8'));
+    expect(run({ cwd: dir, agent_type: 'reviewer', response: 'x' }).status).toBe(0);
+    expect(fs.readFileSync(path.join(outside, 'progress.md'), 'utf8')).toBe('secret\n');
+  });
+
+  it('does not write through a symlinked AGENTS_LEDGER', () => {
+    const target = path.join(dir, 'target.md');
+    fs.writeFileSync(target, 'secret\n');
+    const link = path.join(dir, 'link.md');
+    fs.symlinkSync(target, link);
+    const r = spawnSync('bash', [SCRIPT], {
+      input: JSON.stringify({ cwd: dir, agent_type: 'reviewer', response: 'x' }),
+      encoding: 'utf8',
+      env: { ...process.env, AGENTS_LEDGER: link },
+    });
+    expect(r.status).toBe(0);
+    expect(fs.readFileSync(target, 'utf8')).toBe('secret\n');
+  });
+
   it('writes one line when the same payload fires twice', () => {
     withLedger();
     const payload = { cwd: dir, agent_type: 'implementer', last_assistant_message: 'Status: DONE' };

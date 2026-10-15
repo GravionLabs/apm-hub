@@ -35,7 +35,7 @@ function findLedger(dir: string, override?: string): string {
     let best = "";
     let bestTime = -1;
     for (const e of readdirSync(root, { withFileTypes: true })) {
-      if (!e.isDirectory() || e.isSymbolicLink() || /^loop-\d+$/.test(e.name)) continue;
+      if (!e.isDirectory() || e.isSymbolicLink() || /^loop-[1-9]\d*$/.test(e.name)) continue;
       const p = join(root, e.name, "progress.md");
       if (!isRegular(p)) continue;
       const t = lstatSync(p).mtimeMs;

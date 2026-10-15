@@ -22,10 +22,12 @@ cwd="$(field cwd)"
 
 ledger="${AGENTS_LEDGER:-}"
 if [ -z "$ledger" ]; then
-  # newest .agents/<issue>/progress.md under the working tree, loop-<nr> ledgers excluded
-  ledger="$(ls -t "$cwd"/.agents/*/progress.md 2>/dev/null | grep -v '/\.agents/loop-[0-9]*/progress\.md$' | head -n 1)"
+  # newest .agents/<issue>/progress.md under the working tree, loop-<nr> ledgers excluded (loop-x is a PBI ledger)
+  ledger="$(ls -t "$cwd"/.agents/*/progress.md 2>/dev/null | grep -v '/\.agents/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"
 fi
 [ -n "$ledger" ] && [ -f "$ledger" ] || exit 0
+# never write through a symlink: neither the ledger nor its directory may be one (also for the AGENTS_LEDGER override)
+[ ! -L "$ledger" ] && [ ! -L "$(dirname "$ledger")" ] || exit 0
 
 first() { # first non-empty value among the given field names
   local k v

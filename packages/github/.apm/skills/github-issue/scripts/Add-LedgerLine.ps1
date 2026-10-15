@@ -6,7 +6,7 @@
 .DESCRIPTION
   The only shell command the orchestrator is allowed to use for ledger writes on OpenCode: the agent permission
   map cannot restrict a shell redirect target, so the path is validated here. -Issue must be a positive integer,
-  'adhoc' or 'loop-<nr>' (the loop ledger); the resolved path must stay under <current directory>/.agents/ and a symlinked .agents/ or issue directory is refused. Without -Line only the directory is created.
+  'adhoc' or 'loop-<nr>' (the loop ledger); the resolved path must stay under <current directory>/.agents/ and a symlinked .agents/, issue directory or progress.md is refused. Without -Line only the directory is created.
 .PARAMETER Issue Issue number, 'adhoc' or 'loop-<nr>'.
 .PARAMETER Line  One line of text (no line breaks).
 #>
@@ -25,4 +25,7 @@ if (-not $dir.StartsWith($base + [IO.Path]::DirectorySeparatorChar)) { throw "Pa
 # A symlinked .agents/ or issue directory is refused (it could point outside the project).
 foreach ($p in @($base, $dir)) { if ((Test-Path -LiteralPath $p) -and (Get-Item -LiteralPath $p -Force).LinkTarget) { throw "Refusing symlinked path: $p" } }
 New-Item -ItemType Directory -Path $dir -Force | Out-Null
-if ($PSBoundParameters.ContainsKey('Line')) { Add-Content -LiteralPath (Join-Path $dir 'progress.md') -Value $Line -Encoding utf8 }
+$file = Join-Path $dir 'progress.md'
+# A symlinked progress.md is refused as well (it could point outside the project).
+if ((Test-Path -LiteralPath $file) -and (Get-Item -LiteralPath $file -Force).LinkTarget) { throw "Refusing symlinked path: $file" }
+if ($PSBoundParameters.ContainsKey('Line')) { Add-Content -LiteralPath $file -Value $Line -Encoding utf8 }

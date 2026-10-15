@@ -117,6 +117,30 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(fs.readFileSync(loop, 'utf8')).toBe('# ledger\n');
     });
 
+    it('is a no-op when only loop ledgers exist', async () => {
+      const loop = withLedger('loop-7');
+      const h = await load();
+      await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
+      expect(fs.readFileSync(loop, 'utf8')).toBe('# ledger\n');
+    });
+
+    it('treats a non-numeric loop-x directory as a PBI ledger', async () => {
+      const odd = withLedger('loop-x');
+      const h = await load();
+      await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
+      expect(fs.readFileSync(odd, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — APPROVE\n');
+    });
+
+    it('honours an AGENTS_LEDGER override pointing at a loop ledger', async () => {
+      const pbi = withLedger();
+      const loop = withLedger('loop-7');
+      process.env.AGENTS_LEDGER = loop;
+      const h = await load();
+      await h['tool.execute.after'](...task('reviewer', result('ok')));
+      expect(fs.readFileSync(loop, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(fs.readFileSync(pbi, 'utf8')).toBe('# ledger\n');
+    });
+
     it('honours AGENTS_LEDGER', async () => {
       withLedger();
       const other = path.join(dir, 'other.md');
