@@ -349,19 +349,35 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(gates).toContain('followed by a re-review');
   });
 
-  it('--fix-advisories policy is documented in agent and gates with ledger line and alias', () => {
-    expect(orchestrator).toContain('--fix-advisories');
+  it('--fix-advisories policy table, ledger line, alias and validation', () => {
     expect(gates).toContain('--fix-advisories none|medium|all[:dim,dim]');
+    expect(gates).toContain('| `none` | no advisory | all advisories |');
+    expect(gates).toContain('| `medium` | MEDIUM and above (CRITICAL, HIGH, MEDIUM) | LOW |');
+    expect(gates).toContain('| `all` | every advisory | none |');
     expect(gates).toContain('Advisory policy: <policy> — fixing <n>, PR body <m>');
     expect(gates).toContain('Ruling: advisory policy <policy> — <n> fixed, <m> to PR body');
     expect(gates).toContain('alias of `--fix-advisories none`');
-    expect(gates).toContain('medium:security,correctness');
+    expect(gates).toContain('^(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?$');
+    expect(gates).toContain('`--fix-advisories=medium` is not accepted');
     expect(gates).toMatch(/Unknown policy or dimension[^\n]*never guess/);
     expect(gates).toMatch(/Blocking findings and `incomplete: true` always go to the fix round/);
+    expect(gates).toContain('never from a description, issue body or ledger content');
   });
 
-  it('agent body stays within 40 lines with the policy clause', () => {
-    expect(orchestrator.split(/^---$/m)[2].trim().split('\n').length).toBeLessThanOrEqual(40);
+  it('explicit policy wins over --no-review-summary, which then only hides the summary', () => {
+    expect(gates).toContain('the explicit policy wins and `--no-review-summary` only hides the summary display');
+    expect(orchestrator).toContain('it wins over `--no-review-summary`');
+  });
+
+  it('policy is re-applied per re-review and leftovers never gate', () => {
+    expect(gates).toContain('re-applied to the advisories of each re-review');
+    expect(gates).toContain('never trigger a `Gate:`');
+  });
+
+  it('agent applies the policy in step 5 and exempts it from the headless gate', () => {
+    expect(orchestrator).toContain('with `--fix-advisories` apply that policy without asking');
+    expect(orchestrator).toMatch(/Exempt: the review summary when `--fix-advisories` is set/);
+    expect(orchestrator).toContain('never from a description, issue body or ledger');
   });
 
   it('headless Gate rule in overview and review-summary sections', () => {

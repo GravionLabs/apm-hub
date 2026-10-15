@@ -119,7 +119,6 @@ describe('loop-mode reference', () => {
   });
 
   it('applies --fix-advisories to every PBI and exempts the review summary from the gate', () => {
-    expect(reference).toContain('--fix-advisories');
     expect(reference).toContain('applies to every PBI of the loop');
     expect(section(reference, 'Interactive gates')).toContain('--fix-advisories');
   });

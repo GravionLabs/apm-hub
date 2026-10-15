@@ -36,9 +36,9 @@ Exactly one PBI per run, except loop. The end line after a PBI of a Feature is d
 | "plan #123" / "plane Feature #123" | `plan 123` |
 | "do #123" / "implement #123" | `full 123` / `implement 123` |
 
-### Flags: overview and review summary
+### Flags: overview, review summary and advisory policy
 
-Two defaults, each switched off by a flag, plus one flag that answers the advisory question in the first message (also for `/orchestrator`):
+Two defaults, each switched off by a flag, and one flag that answers the advisory question up front. All go in the first message (also for `/orchestrator`):
 
 | Flag | Default without it |
 | :-- | :-- |
