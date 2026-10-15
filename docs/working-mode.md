@@ -23,13 +23,15 @@ The first word of the message is the mode; the issue type (Epic, Feature, PBI) c
 | `implement <nr>` | PBI | explore → implement → review → PR for a planned PBI |
 | `full <nr>` | PBI | plan if needed, then implement |
 | `next <nr>` | Feature / Epic | picks the first open PBI without open blocker, `needs-decision`, open PR (`waiting for merge`) or merge into the integration branch (`merged, closes at release`) (sub-issue order, recursive for an Epic), runs it like `full` |
+| `loop <nr>` | Feature / Epic | repeats `next` in one session until nothing is selectable, a gate needs you (interactive gates pause, headless stops), the context warning fired or 3 PBIs are done (the cap; the warning fires mid-loop only on Copilot CLI); loop ledger `.agents/loop-<nr>/progress.md` |
 
-Exactly one PBI per run. The end line after a PBI of a Feature is defined in `github-issue` `references/next-selection.md`.
+Exactly one PBI per run, except loop. The end line after a PBI of a Feature is defined in `github-issue` `references/next-selection.md`.
 
 | You say | Mode |
 | :-- | :-- |
 | "implementiere das nächste Feature" / "implement the next PBI of #81" | `next <feature>` |
 | "work on the next PBI under epic #81" | `next <epic>` |
+| "implement all remaining PBIs of #81" / "arbeite Feature #81 ab" | `loop <feature>` |
 | "plan all open features under #81" | `plan 81`, then one `plan <feature>` per open Feature, each in its own session |
 | "plan #123" / "plane Feature #123" | `plan 123` |
 | "do #123" / "implement #123" | `full 123` / `implement 123` |
@@ -62,18 +64,10 @@ A shell alias saves typing (`~/.zshrc` or the PowerShell profile):
 alias claude-orchestrator='claude --agent orchestrator'     # then: claude-orchestrator "plan 123"
 ```
 
-In a running Claude Code session a user-level command can start it inline, as `/orchestrator <mode> <issue>`.
-Create `~/.claude/commands/orchestrator.md` (it is not part of the package):
+The `orchestrator` skill ships with the `agents` package. In a running session (Claude Code, VS Code Copilot) `/orchestrator [flags] <mode> <issue>` starts the agent inline: it finds the installed agent file (project first, then global) and follows it.
+If you still have a local `~/.claude/commands/orchestrator.md`, delete it: a command and a skill of the same name both answer `/orchestrator`.
 
-```markdown
----
-description: Run the orchestrator inline: /orchestrator [--no-overview] [--no-review-summary] plan|implement|full|next <issue>
----
-Read ~/.claude/agents/orchestrator.md and follow its body as your instructions for this session.
-Flags, mode and issue: $ARGUMENTS
-```
-
-The command runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
+The skill runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
 session context keeps growing, so prefer `claude --agent orchestrator` for real work.
 
 ### Copilot CLI

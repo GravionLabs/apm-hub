@@ -46,8 +46,9 @@ The first word of the first message is the mode. Without a mode word the run is 
 | `implement` | Implement, review and open the PR for an issue that is already planned |
 | `full` | `plan` + `implement` in one run, for a PBI |
 | `next <feature or epic>` | Pick the next open, unblocked PBI and run it as `full` |
+| `loop <feature or epic>` | Repeat `next` in one session until nothing is selectable, a headless gate, the context warning or 3 finished PBIs |
 
-Exactly one PBI is handled per run. An Epic is planned into Features, a Feature into PBIs, a PBI into Tasks, one grilling cycle per level.
+Exactly one PBI is handled per run, except in `loop`. An Epic is planned into Features, a Feature into PBIs, a PBI into Tasks, one grilling cycle per level.
 
 ## The pipeline
 
@@ -280,13 +281,36 @@ flowchart TD
 
 After a run on a PBI of a Feature, the report ends with a `Next:` line built from the same selection; see [End of run](#end-of-run).
 
+## Looping with `loop`
+
+`orchestrator loop <feature or epic>` runs the open PBIs one after another in one session ([loop-mode.md](../packages/github/.apm/skills/github-issue/references/loop-mode.md)). It takes no description. Each PBI is a normal `full` run with its own branch, PR and ledger.
+
+```mermaid
+flowchart TD
+    A["Select per next"] --> B{"Candidate?"}
+    B -->|"no"| S1(["Loop: stopped, nothing selectable"])
+    B -->|"yes"| C["Run the PBI as full"]
+    C --> G{"Headless gate?"}
+    G -->|"yes"| S2(["Loop: stopped, headless gate"])
+    G -->|"no"| D["Loop: PBI #nr done, PR url"]
+    D --> W{"Context warning seen<br/>or 3 PBIs done?"}
+    W -->|"yes"| S3(["Loop: stopped, context warning / pbi cap"])
+    W -->|"no"| A
+```
+
+- The selection is the one of `next`, run by the orchestrator itself with `gh` on the loop target. It never reads the `Loop: … done` lines: the finished PBI drops out because its PR is open (`waiting for merge`) or merged (`merged, closes at release`); a PBI whose PR was closed without merge is selected again. The loop never merges a PR; a PBI blocked by another PBI of the loop stays blocked until that PR is merged, so a blocked-by chain inside one Feature ends the loop after the first PBI of the chain: the normal `nothing selectable` stop, not an error.
+- Stop conditions, checked before every reselection: the context warning of the `hooks` package appeared in the session; 3 PBIs finished in this run (the PBI cap); nothing selectable. The warning cannot fire mid-loop on every client: Copilot CLI injects it after any tool call (`postToolUse`), Claude Code (`UserPromptSubmit`) and OpenCode (`chat.message`) only with a user message, so there it appears at the earliest when you answer a gate. The cap is the fallback for those clients; the `hooks` package improves it. Stop reasons in the ledger: `nothing selectable`, `headless gate: <question>`, `context warning`, `pbi cap`, `user stop`.
+- Interactive gates (plan gate, review summary, `CHANGES_REQUESTED`, red suite twice) pause the loop and it continues after your answer. Headless, the gate is recorded and the loop stops.
+- Loop ledger `.agents/loop-<nr>/progress.md`: header `# orchestrator ledger — loop #<nr> — branch <branch>` (written once, when the file does not exist yet), one `Loop: PBI #<nr> done — <pr>` line per PBI and `Loop: stopped — <reason>` at the end. Per-PBI ledgers and `Ruling:` lines stay in `.agents/<pbi>/progress.md`. At each PBI boundary the orchestrator creates `.agents/<pbi>/progress.md` with its header before dispatching `issue-reader`, so the hook's `Subagent` lines of the new PBI do not land in the previous PBI's ledger.
+- Rerun `orchestrator loop <nr>` after `/clear` to resume: the orchestrator re-reads the Feature or Epic via the loop target number and runs the selection again; finished PBIs drop out by their PR state, not by the ledger. The report of a stopped loop ends with one `Next:` line: `Next: #<nr> <title> — orchestrator loop <feature> after /clear` when a PBI is still selectable or paused, otherwise the `next` variants (what blocks the rest, or the Feature is done).
+
 ## Hooks
 
 The `hooks` package adds three hooks around the orchestrator. They are plain bash scripts that never fail a run: every path exits 0 and a payload they cannot parse is ignored. The orchestrator does not call them and does not depend on them; they make the state on disk more complete and protect against accidents.
 
 | Hook | Event | Reads from the payload | Writes or blocks | Opt-out |
 |:--|:--|:--|:--|:--|
-| [`subagent-ledger.sh`](../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path` | appends `Subagent <name>: stopped — <first line, 120 chars>` to a ledger; only when a ledger exists, which the orchestrator creates | none |
+| [`subagent-ledger.sh`](../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path` | appends `Subagent <name>: stopped — <first line, 120 chars>` to the newest non-loop ledger; only when a ledger exists, which the orchestrator creates | none |
 | [`context-warning.sh`](../packages/hooks/.apm/hooks/context-warning.sh) | `UserPromptSubmit` | `transcript_path`, `session_id` | injects an `additionalContext` warning once the last request has at least 150k tokens (`CONTEXT_WARN_TOKENS`), again after +100k (`CONTEXT_WARN_STEP`) | none; raise `CONTEXT_WARN_TOKENS` to silence it |
 | [`git-guardrails.sh`](../packages/hooks/.apm/hooks/git-guardrails.sh) | `PreToolUse`, matcher `Bash` | `tool_name`, `cwd`, `tool_input.command` | prints a `permissionDecision: deny` JSON with the reason; nothing for allowed commands | `GIT_GUARDRAILS_OFF=1` or `.agents/guardrails.off` |
 
@@ -336,7 +360,7 @@ The final report has a fixed shape (defined in [orchestrator.agent.md](../packag
 - the rulings verbatim,
 - on failure, the first error line.
 
-After a `full`, `implement` or `next` run on a PBI whose parent is a Feature, the report adds a `Next:` line naming the next selectable PBI and the command to start it after `/clear`. It comes from the same selection as `next` ([next-selection.md](../packages/github/.apm/skills/github-issue/references/next-selection.md)), which uses `gh` only, with the PBI just finished excluded. If nothing is selectable the line lists what blocks each open PBI (open blockers, `needs-decision`, `waiting for merge: PR #<n>`, or `merged, closes at release` for a PBI already on the integration branch), or says the Feature is done. A PBI under an Epic, or without a parent, gets no `Next:` line. After a `plan` run the `Next:` line recommends `/clear` and then `orchestrator implement <issue>`.
+After a `full`, `implement`, `next` or `loop` run on a PBI whose parent is a Feature, the report adds a `Next:` line naming the next selectable PBI and the command to start it after `/clear`. It comes from the same selection as `next` ([next-selection.md](../packages/github/.apm/skills/github-issue/references/next-selection.md)), which uses `gh` only, with the PBI just finished excluded. If nothing is selectable the line lists what blocks each open PBI (open blockers, `needs-decision`, `waiting for merge: PR #<n>`, or `merged, closes at release` for a PBI already on the integration branch), or says the Feature is done. After `loop` the line refers to the last PBI handled (loop variant `orchestrator loop <feature> after /clear` when a PBI is still selectable, see [Looping with `loop`](#looping-with-loop)), and the report adds `Loop: stopped — <reason>` (`nothing selectable`, `headless gate: <question>`, `context warning`, `pbi cap` or `user stop`). A PBI under an Epic, or without a parent, gets no `Next:` line. After a `plan` run the `Next:` line recommends `/clear` and then `orchestrator implement <issue>`.
 
 The last line is a fixed closing line saying the ledger is complete and that the next issue starts in a new session. It marks the ledger as finished; the cost reasoning is in [Working mode](working-mode.md).
 

@@ -16,8 +16,8 @@ const body = orchestrator.split(/^---$/m)[2];
 const description = /^description: (.*)$/m.exec(orchestrator)![1];
 
 describe('orchestrator plan and next modes', () => {
-  it('lists all four modes in the description', () => {
-    expect(description).toContain('plan|implement|full|next');
+  it('lists all five modes in the description', () => {
+    expect(description).toContain('plan|implement|full|next|loop');
   });
 
   it('detects the mode by first word and keeps one PBI per run', () => {
@@ -156,9 +156,27 @@ describe('working-mode natural requests', () => {
   it.each([
     ['implementiere das nächste Feature', 'next <feature>'],
     ['plan all open features under #81', 'plan 81'],
+    ['arbeite Feature #81 ab', 'loop <feature>'],
   ])('maps "%s" to %s', (phrase, mode) => {
     const line = workingMode.split('\n').find((l) => l.includes(phrase));
     expect(line).toBeDefined();
     expect(line).toContain(mode);
+  });
+});
+
+describe('loop mode documentation', () => {
+  it.each([
+    ['docs/working-mode.md', workingMode],
+    ['docs/orchestrator.md', read('docs/orchestrator.md')],
+  ])('%s mode table has a loop row that repeats next', (_file, text) => {
+    const row = text.split('\n').find((l) => /^\| `loop <[^`]*>` \|/.test(l));
+    expect(row).toBeDefined();
+    expect(row).toMatch(/[Rr]epeats? `next`/);
+  });
+
+  it('next still selects exactly one PBI per run', () => {
+    const nextRule = body.slice(body.indexOf('`next <feature|epic>`'), body.indexOf('`loop <feature|epic>`'));
+    expect(nextRule).toMatch(/Exactly one PBI per run \(except `loop`\)/);
+    expect(reference).toMatch(/^The first remaining candidate in sub-issue order is the PBI\./m);
   });
 });

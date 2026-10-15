@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SubagentStop hook: append one line per finished subagent to the issue ledger
 # (.agents/<issue>/progress.md written by the orchestrator agent). Claude Code and Copilot CLI payloads.
+# Loop ledgers (.agents/loop-<nr>/) are skipped: the newest PBI ledger is used.
 # Never blocks: every path exits 0. Writes nothing when no ledger exists.
 
 payload="$(cat 2>/dev/null || true)"
@@ -21,10 +22,12 @@ cwd="$(field cwd)"
 
 ledger="${AGENTS_LEDGER:-}"
 if [ -z "$ledger" ]; then
-  # newest .agents/<issue>/progress.md under the working tree
-  ledger="$(ls -t "$cwd"/.agents/*/progress.md 2>/dev/null | head -n 1)"
+  # newest .agents/<issue>/progress.md under the working tree, loop-<nr> ledgers excluded (loop-x is a PBI ledger)
+  ledger="$(ls -t "$cwd"/.agents/*/progress.md 2>/dev/null | grep -v '/\.agents/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"
 fi
 [ -n "$ledger" ] && [ -f "$ledger" ] || exit 0
+# never write through a symlink: neither the ledger nor its directory may be one (also for the AGENTS_LEDGER override)
+[ ! -L "$ledger" ] && [ ! -L "$(dirname "$ledger")" ] || exit 0
 
 first() { # first non-empty value among the given field names
   local k v

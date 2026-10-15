@@ -1,6 +1,6 @@
 # Next-PBI selection
 
-Used by the `orchestrator` modes `next <feature|epic>` and by its end line after a `full`, `implement` or `next` run. `gh` and `git log` on the fetched integration branch: native sub-issues, blocked-by links, open and merged PRs, no file reads. The snippets are templates: set `$repo` (`owner/repo`), `$nr` (the issue being expanded) and `$candidate` (the PBI being checked).
+Used by the `orchestrator` modes `next <feature|epic>` and `loop <feature|epic>` (`loop-mode.md`) and by its end line after a `full`, `implement` or `next` run. `gh` and `git log` on the fetched integration branch: native sub-issues, blocked-by links, open and merged PRs, no file reads. The snippets are templates: set `$repo` (`owner/repo`), `$nr` (the issue being expanded) and `$candidate` (the PBI being checked).
 
 ## Candidates
 
@@ -50,7 +50,7 @@ git log -E -i --grep "(close[sd]?|fix(e[sd])?|resolve[sd]?):? #$candidate([^0-9]
 
 ## Pick
 
-The first remaining candidate in sub-issue order is the PBI. Announce it in one line before work starts: `Next PBI: #<nr> <title>`. Exactly one PBI per run.
+The first remaining candidate in sub-issue order is the PBI. Announce it in one line before work starts: `Next PBI: #<nr> <title>`. Exactly one PBI per run; `loop` repeats the selection per `loop-mode.md`.
 
 No candidate: report per remaining open PBI what holds it (open blocker numbers, `needs-decision`, `waiting for merge: PR #<n>`, `merged, closes at release`) and stop.
 
