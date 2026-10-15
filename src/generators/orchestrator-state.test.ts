@@ -42,7 +42,8 @@ describe('orchestrator state: contract strings (docs)', () => {
   it('orchestrator loads detect-techstack inline without hard-coding the script', () => {
     expect(orchestrator).toContain('`detect-techstack` inline (never a forked subagent)');
     expect(orchestrator).toContain('`Ruling:`');
-    expect(orchestrator).not.toContain('Detect-TechStack.ps1');
+    // the body must not hard-code it; the permission map in the frontmatter allows the scan like planner does
+    expect(orchestrator.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')).not.toContain('Detect-TechStack.ps1');
   });
 
   it('the merged-task rule lives once in task-issues.md; issue-planning refers to it', () => {

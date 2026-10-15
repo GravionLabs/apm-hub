@@ -109,34 +109,43 @@ for n in 101 102 103; do claude --agent orchestrator -p "implement $n"; done
 
 A headless run cannot answer permission prompts: allow `git`, `gh`, the build and test commands and
 edits for the project beforehand (Claude: `permissions.allow` in the project settings). OpenCode needs nothing
-for the ledger: the orchestrator's permission map allows `mkdir -p .agents/*`, `echo *` and `tee -a .agents/*/progress.md`
-(and `git`/`gh`), keeps `edit: deny` and asks for every other shell command, which `opencode run` auto-rejects.
-Claude Code has no per-agent bash list: allow `Bash(mkdir -p *)`, `Bash(echo *)` and `Edit(.agents/**)`
-(a shell redirect into `.agents/` counts as an edit). It cannot answer a
-gate either: at a blocked review or a twice-red suite it appends `Gate: <question>` to
+extra for the ledger: the orchestrator's permission map allows `git`, `gh`, the tech-stack scan and one ledger
+command, `pwsh <github-issue skill>/scripts/Add-LedgerLine.ps1 -Issue <issue|adhoc> -Line '<text>'`, which creates
+`.agents/<issue>/` and appends one line after validating the path. It keeps `edit: deny` and asks for every other shell
+command, which `opencode run` auto-rejects. Claude Code has no per-agent bash list: allow `Bash(pwsh *Add-LedgerLine.ps1 *)`
+and `Bash(pwsh *Detect-TechStack.ps1 *)`. Remaining limits: a shell redirect is not part of the command OpenCode matches, so
+`pwsh .../Add-LedgerLine.ps1 ... > src/a.ts` would be allowed and could truncate or create a file (it writes no content; a raw
+`echo *` rule would have allowed arbitrary content and was rejected); `git *` and `gh *` auto-allow every `git`/`gh` command.
+It cannot answer a gate either: at a blocked review or a twice-red suite it appends `Gate: <question>` to
 `.agents/<issue>/progress.md`, reports it and stops. Answer in an interactive `orchestrator` session, which
 resumes from the ledger.
 
 #### Headless smoke test and spike result (#222)
 
-`pwsh scripts/Invoke-HeadlessSmoke.ps1 [-Client opencode|claude|both] [-Keep]` creates a throwaway git repo without a
-remote (no GitHub writes), starts `opencode run --agent orchestrator` and `claude -p --agent orchestrator` with a
-ledger-only prompt and asserts that `.agents/999/progress.md` exists and the output holds no permission prompt. A client
-whose CLI is missing is skipped; the exit code is non-zero on failure. It needs the CLIs and a model and is not run in CI.
-The OpenCode run uses the permission map of `orchestrator.agent.md` in a project agent and an empty user config.
+`pwsh scripts/Invoke-HeadlessSmoke.ps1 [-Client opencode|claude|both] [-Stage ledger|plan|all] [-Keep]` creates a throwaway
+git repo without a remote (no GitHub writes) per client and stage and starts `opencode run --agent orchestrator` and
+`claude -p --agent orchestrator`. Stage `ledger` (default) runs the ledger helper and asserts the header line in
+`.agents/999/progress.md` and no permission prompt. Stage `plan` runs `plan <description>` with the full agent body and asserts
+no permission prompt and a `Gate:` line or a completed phase in the ledger. A missing CLI is skipped (exit 2 when all are
+skipped, 1 on a failure). It needs the CLIs and a model and is not run in CI. The OpenCode run uses the permission map of
+`orchestrator.agent.md` in a project agent and an empty user config.
 
-Spike (OpenCode 1.18.3, Claude Code, 2026-10-14, ledger-only prompt, no `plan`/`implement` run because those need GitHub):
+Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
 
-- OpenCode before the fix (`"git *"`, `"gh *"` allow, `"*"` ask last): `mkdir -p .agents/999` and the ledger append hit `ask`;
-  `opencode run` printed `permission requested: bash (...); auto-rejecting` and no ledger was written.
-  The map was also order-sensitive: OpenCode lets the last matching rule win, so a trailing `"*": ask` overrode `git *`/`gh *`.
-- OpenCode after the fix (`"*": ask` first, then the allow rules): the ledger is created and appended; `rm -rf .agents/999`
-  is still auto-rejected. Two OpenCode facts shaped the rules: `[0-9]` is not a character class in a pattern (use `*`), and a
-  redirect is not part of the matched command (`echo x >> f` is matched as `echo x`), so the append needs `echo *` and the
-  redirect target cannot be restricted by a pattern; `edit: deny` covers the edit tool only.
-- Claude Code: the run stops without writing the ledger (`mkdir`/redirect "needs approval"); with the allow rules above it
-  completes. That setting is project configuration, not part of the agent.
-- A `Gate:` line was not exercised (it needs a blocked review or a red suite on a real issue).
+- OpenCode before the fix (`"git *"`, `"gh *"` allow, `"*"` ask last): the ledger writes hit `ask`; `opencode run` printed
+  `permission requested: bash (...); auto-rejecting` and no ledger was written. OpenCode lets the last matching rule win, so
+  the trailing `"*": ask` also overrode `git *`/`gh *`; it is now first.
+- OpenCode after the fix: the ledger helper runs, `rm -rf .agents/999` is still auto-rejected. Facts that shaped the rules:
+  `[0-9]` is not a character class in a pattern (use `*`), and a redirect is not part of the matched command. Raw `mkdir`/`echo`/`tee`
+  rules therefore cannot be made safe, so ledger writes go through the validating helper.
+- Claude Code: without allow rules the run stops ("needs approval"); with `--allowedTools "Bash(pwsh *Add-LedgerLine.ps1 *)"` the
+  ledger helper completes. A project `.claude/settings.json` in a `/tmp` fixture was ignored.
+- Plan stage (`plan <description>`, no remote): partially met. OpenCode ran the skill load and the tech-stack scan (allowed after adding the
+  `Detect-TechStack.ps1` rules; before that it stopped there on a permission prompt), then the model issued `ls -la` outside the
+  contract and it was auto-rejected. Claude Code reached the planner and a plan, then stopped at a `mkdir` under `.agents/` the model chose
+  instead of the helper ("needs approval"). Neither run reached a `Gate:` line or a completed phase, so the plan/implement part of the
+  acceptance criterion is only partially covered; the stage is opt-in because it depends on the model following the contract. An
+  `implement` run needs a real issue and branch (GitHub) and was not run.
 
 ## 2. Without the orchestrator: one session per issue
 

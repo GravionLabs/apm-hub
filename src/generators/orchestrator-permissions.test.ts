@@ -1,17 +1,37 @@
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import { spawnSync } from 'child_process';
 import { parse } from 'yaml';
 
 const agentPath = path.resolve(__dirname, '../../packages/agents/.apm/agents/orchestrator.agent.md');
-const frontmatter = fs.readFileSync(agentPath, 'utf-8').match(/^---\n([\s\S]*?)\n---\n/)![1];
-const permission = parse(frontmatter).metadata.opencode.permission as Record<string, unknown>;
-const bash = permission.bash as Record<string, string>;
-const rules = Object.entries(bash);
+const scriptPath = path.resolve(
+  __dirname,
+  '../../packages/github/.apm/skills/github-issue/scripts/Add-LedgerLine.ps1',
+);
 
-// OpenCode matches the command text without redirects (spike, docs/working-mode.md): `echo x >> f` is matched as `echo x`,
-// so the ledger append needs `echo *`; the redirect target cannot be restricted by a pattern.
-// OpenCode wildcard: `*` matches any characters (including `/`), everything else is literal; the last matching rule wins.
-function decide(command: string): string {
+function loadBashRules(): [string, string][] {
+  const text = fs.readFileSync(agentPath, 'utf-8');
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+  if (!match) throw new Error(`No frontmatter found in ${agentPath}`);
+  const permission = parse(match[1])?.metadata?.opencode?.permission;
+  if (!permission?.bash) throw new Error(`metadata.opencode.permission.bash missing in ${agentPath}`);
+  return Object.entries(permission.bash as Record<string, string>);
+}
+
+function loadPermission(): Record<string, unknown> {
+  const text = fs.readFileSync(agentPath, 'utf-8');
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+  if (!match) throw new Error(`No frontmatter found in ${agentPath}`);
+  return parse(match[1]).metadata.opencode.permission;
+}
+
+// decide() models the semantics observed in the spike (docs/working-mode.md, "Headless smoke test and spike result"):
+// OpenCode splits a command at `;`, `&&`, `||` and `|`, drops redirects from every part, matches each part against the
+// rules (`*` = any characters including `/`, everything else literal) and lets the LAST matching rule win.
+// A command is allowed only when every part is allowed.
+function decidePart(rules: [string, string][], part: string): string {
+  const command = part.replace(/\s*\d*>>?\s*\S+/g, '').trim();
   let result = 'ask';
   for (const [pattern, action] of rules) {
     const re = new RegExp('^' + pattern.split('*').map((p) => p.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('.*') + '$');
@@ -20,37 +40,105 @@ function decide(command: string): string {
   return result;
 }
 
+function decide(rules: [string, string][], command: string): string {
+  const parts = command.split(/&&|\|\||;|\|/);
+  return parts.every((p) => decidePart(rules, p) === 'allow') ? 'allow' : 'ask';
+}
+
 describe('orchestrator OpenCode permissions', () => {
+  const rules = loadBashRules();
+  const ledger = (args: string) => `pwsh .claude/skills/github-issue/scripts/Add-LedgerLine.ps1 ${args}`;
+
   it('keeps edit denied for source files', () => {
-    expect(permission.edit).toBe('deny');
+    expect(loadPermission().edit).toBe('deny');
   });
 
   it('keeps the catch-all bash rule at ask and first, so later rules win', () => {
-    expect(bash['*']).toBe('ask');
+    expect(Object.fromEntries(rules)['*']).toBe('ask');
     expect(rules[0][0]).toBe('*');
   });
 
-  it('allows creating the issue directory and appending to the ledger', () => {
-    expect(decide('mkdir -p .agents/222')).toBe('allow');
-    expect(decide('mkdir -p .agents/adhoc')).toBe('allow');
-    expect(decide('echo "Phase plan: complete — n/a" >> .agents/222/progress.md')).toBe('allow');
-    expect(decide('tee -a .agents/222/progress.md')).toBe('allow');
+  it('allows ledger writes only through the Add-LedgerLine helper', () => {
+    expect(decide(rules, ledger('-Issue 222 -Line "Phase plan: complete — n/a"'))).toBe('allow');
+    expect(decide(rules, 'pwsh scripts/Add-LedgerLine.ps1 -Issue adhoc')).toBe('allow');
+    expect(decide(rules, 'pwsh /home/u/.agents/skills/detect-techstack/scripts/Detect-TechStack.ps1 -ProjectRoot .')).toBe('allow');
   });
 
   it('still allows git and gh', () => {
-    expect(decide('git status --short')).toBe('allow');
-    expect(decide('gh issue view 222')).toBe('allow');
+    expect(decide(rules, 'git status --short')).toBe('allow');
+    expect(decide(rules, 'gh issue view 222')).toBe('allow');
   });
 
-  it('asks for writes outside .agents/', () => {
-    expect(decide('mkdir -p src/foo')).toBe('ask');
-    expect(decide('tee -a src/index.ts')).toBe('ask');
-    expect(decide('rm -rf .agents')).toBe('ask');
+  it('no longer allows raw shell writes, with or without a redirect outside .agents/', () => {
+    for (const cmd of [
+      'echo x > src/a.ts',
+      'echo x >> src/index.ts',
+      'echo x',
+      'mkdir -p .agents/222',
+      'mkdir -p src/foo',
+      'tee -a .agents/222/progress.md',
+      'tee -a src/index.ts',
+      'cat >> .agents/222/progress.md',
+      'rm -rf .agents',
+    ]) {
+      expect(decide(rules, cmd)).toBe('ask');
+    }
   });
 
-  it('has no allow rule other than git, gh and .agents/ ledger commands', () => {
+  it('asks when the helper is chained with other commands', () => {
+    expect(decide(rules, ledger('-Issue 1 -Line x; rm -rf src'))).toBe('ask');
+    expect(decide(rules, ledger('-Issue 1 -Line x && rm -rf src'))).toBe('ask');
+    expect(decide(rules, ledger('-Issue 1 -Line x | sh'))).toBe('ask');
+  });
+
+  it('asks for other pwsh scripts', () => {
+    expect(decide(rules, 'pwsh scripts/Other.ps1 -Issue 1')).toBe('ask');
+    expect(decide(rules, 'pwsh -Command "rm -rf src"')).toBe('ask');
+  });
+
+  it('allows only git, gh, the techstack scan and the ledger helper', () => {
     const allowed = rules.filter(([, a]) => a === 'allow').map(([p]) => p);
-    const offenders = allowed.filter((p) => !/^(git|gh|echo) \*$/.test(p) && !/\.agents\//.test(p));
-    expect(offenders).toEqual([]);
+    expect(allowed).toEqual([
+      'git *',
+      'gh *',
+      'pwsh scripts/Detect-TechStack.ps1 *',
+      'pwsh */scripts/Detect-TechStack.ps1 *',
+      'pwsh scripts/Add-LedgerLine.ps1 *',
+      'pwsh */scripts/Add-LedgerLine.ps1 *',
+    ]);
+  });
+});
+
+// The pattern cannot restrict arguments, so the helper itself validates the path.
+const pwshAvailable = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
+describe.skipIf(!pwshAvailable)('Add-LedgerLine.ps1', () => {
+  let cwd: string;
+  beforeEach(() => {
+    cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-'));
+  });
+  afterEach(() => fs.rmSync(cwd, { recursive: true, force: true }));
+  const run = (...args: string[]) =>
+    spawnSync('pwsh', ['-NoProfile', '-File', scriptPath, ...args], { cwd, encoding: 'utf-8' });
+
+  it('creates the directory and appends lines', () => {
+    expect(run('-Issue', '222', '-Line', '# header').status).toBe(0);
+    expect(run('-Issue', '222', '-Line', 'Phase plan: complete').status).toBe(0);
+    expect(fs.readFileSync(path.join(cwd, '.agents/222/progress.md'), 'utf-8')).toBe('# header\nPhase plan: complete\n');
+  });
+
+  it('accepts adhoc and creates only the directory without -Line', () => {
+    expect(run('-Issue', 'adhoc').status).toBe(0);
+    expect(fs.existsSync(path.join(cwd, '.agents/adhoc'))).toBe(true);
+    expect(fs.existsSync(path.join(cwd, '.agents/adhoc/progress.md'))).toBe(false);
+  });
+
+  it.each(['../x', '5/..', '5 6', '0', '-1', 'x', '1;rm', '/etc'])('rejects issue %s', (issue) => {
+    const r = run('-Issue', issue, '-Line', 'x');
+    expect(r.status).not.toBe(0);
+    expect(fs.existsSync(path.join(cwd, '.agents'))).toBe(false);
+  });
+
+  it('rejects a multi-line value', () => {
+    expect(run('-Issue', '5', '-Line', 'a\nb').status).not.toBe(0);
   });
 });
