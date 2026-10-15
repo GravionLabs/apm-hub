@@ -24,11 +24,11 @@ Checked before every reselection, in this order:
 2. **PBI cap**: 3 PBIs finished in this loop run (`Loop: PBI … done` lines written by this run). The fallback for clients where the warning cannot fire mid-loop; the `hooks` package improves it, it does not replace it. Ledger reason `pbi cap`.
 3. **Nothing selectable** (first pick or any reselection): the `No candidate` report of `next-selection.md` per remaining open PBI (open blockers, `needs-decision`, `waiting for merge: PR #<n>`, `merged, closes at release`), then stop.
 
-A **headless gate** (no question tool) stops the loop at once: append `Gate: <question>` to the per-PBI ledger as `full` does, report it, `Loop: stopped — headless gate: <question>`. The user may stop the loop at any interactive gate (`user stop`). On every stop finish the current step first (never stop between a task commit and its ledger line), write the loop line of a PBI whose PR phase is complete, then the `Loop: stopped` line.
+A **headless gate** (no question tool) stops the loop at once: append `Gate: <question>` to the per-PBI ledger as `full` does, report it, `Loop: stopped — headless gate: <question>`. The review summary is exempt when `--fix-advisories` is set; the policy applies to every PBI of the loop. The user may stop the loop at any interactive gate (`user stop`). On every stop finish the current step first (never stop between a task commit and its ledger line), write the loop line of a PBI whose PR phase is complete, then the `Loop: stopped` line.
 
 ## Interactive gates
 
-Plan gate, review summary and `CHANGES_REQUESTED`, red suite twice: ask exactly as `full` does, then continue the loop after the answer. A gate pauses the loop, it never ends it. The "Clear before implement" question of `orchestrator-gates.md` is not asked in `loop`; the context-warning and cap stops replace it.
+Plan gate, review summary (not with `--fix-advisories`: the policy answers it) and `CHANGES_REQUESTED`, red suite twice: ask exactly as `full` does, then continue the loop after the answer. A gate pauses the loop, it never ends it. The "Clear before implement" question of `orchestrator-gates.md` is not asked in `loop`; the context-warning and cap stops replace it.
 
 ## Resume and compaction
 

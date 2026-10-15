@@ -335,6 +335,21 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(gates).toContain('followed by a re-review');
   });
 
+  it('--fix-advisories policy is documented in agent and gates with ledger line and alias', () => {
+    expect(orchestrator).toContain('--fix-advisories');
+    expect(gates).toContain('--fix-advisories none|medium|all[:dim,dim]');
+    expect(gates).toContain('Advisory policy: <policy> — fixing <n>, PR body <m>');
+    expect(gates).toContain('Ruling: advisory policy <policy> — <n> fixed, <m> to PR body');
+    expect(gates).toContain('alias of `--fix-advisories none`');
+    expect(gates).toContain('medium:security,correctness');
+    expect(gates).toMatch(/Unknown policy or dimension[^\n]*never guess/);
+    expect(gates).toMatch(/Blocking findings and `incomplete: true` always go to the fix round/);
+  });
+
+  it('agent body stays within 40 lines with the policy clause', () => {
+    expect(orchestrator.split(/^---$/m)[2].trim().split('\n').length).toBeLessThanOrEqual(40);
+  });
+
   it('headless Gate rule in overview and review-summary sections', () => {
     const [, overview, summary] = gates.split(/^## /m);
     expect(overview).toContain('Headless:');
