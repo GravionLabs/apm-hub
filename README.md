@@ -8,7 +8,7 @@ Documentation site: **[gravionlabs.github.io/apm-hub](https://gravionlabs.github
 
 ## What is apm-hub?
 
-**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the `agents` package adds the `orchestrator` primary agent and its `explorer`, `planner`, `reviewer` and `implementer` subagents. The entry point beyond skill names is the `orchestrator` agent (`/orch` is deprecated and removed in 3.0.0).
+**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the `agents` package adds the `orchestrator` primary agent and its `explorer`, `planner`, `reviewer`, `implementer` and `pr-writer` subagents. The entry point beyond skill names is the `orchestrator` agent (`/orch` is deprecated and removed in 3.0.0).
 
 Skills are the primary artifact: one `SKILL.md` source file loads unchanged on GitHub Copilot, Claude Code, and OpenCode. See the [skill frontmatter convention](docs/concepts/skill-frontmatter.md) for how that is guaranteed.
 
@@ -113,7 +113,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`              |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
-| `agents`      | `orchestrator`, `explorer`, `planner`, `reviewer`, `implementer` (subagents) — see below                                                       |
+| `agents`      | `orchestrator`, `explorer`, `planner`, `reviewer`, `implementer`, `pr-writer` (subagents) — see below                                          |
 | `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails); OpenCode plugin                                          |
 | `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                                       |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                               |
@@ -123,9 +123,9 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 
 ## 🤖 Agents
 
-Skills are the primary artifact; the `agents` package adds the five agents skills cannot replace.
+Skills are the primary artifact; the `agents` package adds the six agents skills cannot replace.
 `orchestrator` runs as the **primary agent** and keeps only phase summaries in its context; the
-four subagents each have their own model and tool set:
+five subagents each have their own model and tool set:
 
 | Agent          | Role                                                                                                                  |
 | :------------- | :-------------------------------------------------------------------------------------------------------------------- |
@@ -134,6 +134,7 @@ four subagents each have their own model and tool set:
 | `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary      |
 | `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                                            |
 | `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |
+| `pr-writer`    | git and `gh` only, runs `github-pull-request` for the PBI's one PR, returns `{number, url}` as JSON                  |
 
 ```powershell
 apm install GravionLabs/apm-hub/packages/core -g   # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents

@@ -1,12 +1,12 @@
 # The orchestrator
 
-The `orchestrator` runs the lifecycle of one GitHub issue: plan, explore, implement, review and open a pull request. It is a **primary agent** that keeps its own context small. Every phase except tech-stack detection and the PR runs in a subagent, and only a summary of at most 300 words comes back. The orchestrator never reads source files (the `explorer` does) and never edits files (the `implementer` does).
+The `orchestrator` runs the lifecycle of one GitHub issue: plan, explore, implement, review and open a pull request. It is a **primary agent** that keeps its own context small. Every phase except tech-stack detection runs in a subagent, and only a summary of at most 300 words comes back. The orchestrator never reads source files (the `explorer` does) and never edits files (the `implementer` does).
 
 [Working mode](working-mode.md) has the start commands and the flags. This page explains how a run works.
 
 ## The team
 
-Five agents ship in the `agents` package. The orchestrator is the only one you start; it dispatches the others.
+Six agents ship in the `agents` package. The orchestrator is the only one you start; it dispatches the others.
 
 ```mermaid
 flowchart LR
@@ -15,10 +15,12 @@ flowchart LR
     O -->|"issue + stack + summary"| P["planner<br/>inherit model, read-only<br/>writes plan.json"]
     O -->|"one task"| I["implementer<br/>sonnet by default<br/>tests, commits, report file"]
     O -->|"via review-fanout"| R["reviewer<br/>sonnet, read-only<br/>findings as JSON"]
+    O -->|"PBI, branch, task list"| W["pr-writer<br/>sonnet, git and gh only<br/>PR number and URL as JSON"]
     P -.->|"loads"| S1[["issue-planning"]]
     I -.->|"loads"| S2[["implementation"]]
     R -.->|"loads"| S3[["code-review"]]
-    O -.->|"loads"| S4[["detect-techstack<br/>review-fanout<br/>github-pull-request"]]
+    W -.->|"loads"| S5[["github-pull-request"]]
+    O -.->|"loads"| S4[["detect-techstack<br/>review-fanout"]]
 ```
 
 | Agent | Model | Tools | Returns |
@@ -28,8 +30,9 @@ flowchart LR
 | [`planner`](../packages/agents/.apm/agents/planner.agent.md) | inherit | Read, Grep, Glob, Bash, Skill, Agent | path of `plan.json`, summary, open question count |
 | [`implementer`](../packages/agents/.apm/agents/implementer.agent.md) | sonnet (overridable per task) | Read, Edit, Write, Grep, Glob, Bash, Skill | report file and a reply of 15 lines or less |
 | [`reviewer`](../packages/agents/.apm/agents/reviewer.agent.md) | sonnet | Read, Grep, Glob, Bash | findings JSON for one dimension |
+| [`pr-writer`](../packages/agents/.apm/agents/pr-writer.agent.md) | sonnet | Read, Grep, Glob, Bash (git, gh), Skill | `{number, url, closes}` for the one PR of the PBI |
 
-An agent exists only for a model per role, a host-enforced tool set, an output contract or a primary-agent entry point. Everything procedural is a skill: `issue-planning`, `implementation`, `review-fanout`, `code-review`, `detect-techstack` and `github-pull-request` do the work, the agents only carry the model, tools and return contract. The `orchestrator` runs `detect-techstack` and the pull request step inline; every other phase is a subagent, and the `planner` may start an `explorer` itself when it gets no exploration summary.
+An agent exists only for a model per role, a host-enforced tool set, an output contract or a primary-agent entry point. Everything procedural is a skill: `issue-planning`, `implementation`, `review-fanout`, `code-review`, `detect-techstack` and `github-pull-request` do the work, the agents only carry the model, tools and return contract. The `orchestrator` runs `detect-techstack` inline; every other phase is a subagent, and the `planner` may start an `explorer` itself when it gets no exploration summary.
 
 ## Modes
 
@@ -70,7 +73,7 @@ flowchart TD
 3. **Plan.** The `planner` runs `issue-planning` and writes `.agents/<issue>/plan.json`. Only the path, a summary and the open question count enter the orchestrator's context. You approve at the plan gate. Existing Task sub-issues are used as they are, with no planner and no `plan.json`.
 4. **Implement.** One `implementer` per task, in blocking order, all on the PBI's single branch. Each gets the task, the branch and the path of `context.md`, not the pasted stack and exploration text, so a run with five tasks and two fix rounds emits them once instead of seven times.
 5. **Review.** One `review-fanout` over everything the run changed.
-6. **Pull request.** The orchestrator opens it itself with `github-pull-request`, into the integration branch, and never merges.
+6. **Pull request.** The `pr-writer` runs `github-pull-request` in its own context, into the integration branch, and returns the PR number and URL as JSON; the orchestrator records the URL and never merges. Before this the PR phase ran inline, at the moment the context was largest.
 
 What enters the orchestrator's context: the stack JSON and the explorer summary once each, the issue text and `task` sub-issue numbers, the plan path and summary, each implementer's reply, the review verdict and finding lines, and the PR URL. What stays outside: files read, `context.md` once written, `plan.json`, the diff, logs, task reports and the review package. Step wording: [orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md); planning: [issue-planning](../packages/delivery/.apm/skills/issue-planning/SKILL.md); review: [review-fanout](../packages/delivery/.apm/skills/review-fanout/SKILL.md); branch choice: [release-branches.md](../packages/github/.apm/skills/github-issue/references/release-branches.md).
 
@@ -84,22 +87,24 @@ sequenceDiagram
     participant P as planner
     participant I as implementer
     participant R as reviewer
+    participant W as pr-writer
     U->>O: full 123
     O->>O: detect-techstack, read issue, create .agents/123
     O->>E: issue text
     E-->>O: summary, 300 words or less
-    O->>P: issue, stack JSON, summary
+    O->>P: issue, path of context.md
     P-->>O: plan.json path, summary, open questions
     O->>U: plan gate, grilling, approval
     U-->>O: approved
     loop each Task in blocking order
-        O->>I: Task issue, branch, stack, summary, model hint, report path
+        O->>I: Task issue, branch, path of context.md, model hint, report path
         I-->>O: Status DONE, 15 lines or less
     end
     O->>R: via review-fanout, one reviewer per dimension, in parallel
     R-->>O: findings JSON, verdict
     O->>U: review summary, pick advisories to fix
-    O->>O: github-pull-request
+    O->>W: PBI, branch, task list, unfixed advisories
+    W-->>O: PR number and URL as JSON
     O-->>U: PR URL and rulings
 ```
 

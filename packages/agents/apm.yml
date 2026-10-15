@@ -10,8 +10,9 @@ keywords:
   - subagent
   - workflow
 agents:
-  - orchestrator
   - explorer
-  - planner
   - implementer
+  - orchestrator
+  - planner
+  - pr-writer
   - reviewer
