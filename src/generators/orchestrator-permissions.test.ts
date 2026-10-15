@@ -27,7 +27,7 @@ function loadPermission(): Record<string, unknown> {
 }
 
 // decide() models the semantics observed in the spike (docs/working-mode.md, "Headless smoke test and spike result"):
-// OpenCode splits a command at `;`, `&&`, `||` and `|`, drops redirects from every part, matches each part against the
+// OpenCode splits a command at `;`, `&&`, `||`, `|`, `&` and newlines, drops redirects from every part, matches each part against the
 // rules (`*` = any characters including `/`, everything else literal) and lets the LAST matching rule win.
 // A command is allowed only when every part is allowed.
 function decidePart(rules: [string, string][], part: string): string {
@@ -41,13 +41,16 @@ function decidePart(rules: [string, string][], part: string): string {
 }
 
 function decide(rules: [string, string][], command: string): string {
-  const parts = command.split(/&&|\|\||;|\|/);
+  // Substitutions run a second command whose text is not matched: modelled conservatively as never allowed.
+  if (/\$\(|`/.test(command)) return 'ask';
+  const parts = command.split(/&&|\|\||;|\||&|\r?\n/);
   return parts.every((p) => decidePart(rules, p) === 'allow') ? 'allow' : 'ask';
 }
 
 describe('orchestrator OpenCode permissions', () => {
   const rules = loadBashRules();
   const ledger = (args: string) => `pwsh .claude/skills/github-issue/scripts/Add-LedgerLine.ps1 ${args}`;
+  const skillDirs = ['.claude/skills', '.opencode/skills', '.agents/skills', '.github/skills', '~/.claude/skills', '~/.agents/skills', '~/.config/opencode/skills'];
 
   it('keeps edit denied for source files', () => {
     expect(loadPermission().edit).toBe('deny');
@@ -60,8 +63,10 @@ describe('orchestrator OpenCode permissions', () => {
 
   it('allows ledger writes only through the Add-LedgerLine helper', () => {
     expect(decide(rules, ledger('-Issue 222 -Line "Phase plan: complete — n/a"'))).toBe('allow');
-    expect(decide(rules, 'pwsh scripts/Add-LedgerLine.ps1 -Issue adhoc')).toBe('allow');
-    expect(decide(rules, 'pwsh /home/u/.agents/skills/detect-techstack/scripts/Detect-TechStack.ps1 -ProjectRoot .')).toBe('allow');
+    for (const dir of skillDirs) {
+      expect(decide(rules, `pwsh ${dir}/github-issue/scripts/Add-LedgerLine.ps1 -Issue adhoc`)).toBe('allow');
+      expect(decide(rules, `pwsh ${dir}/detect-techstack/scripts/Detect-TechStack.ps1 -ProjectRoot .`)).toBe('allow');
+    }
   });
 
   it('still allows git and gh', () => {
@@ -89,23 +94,26 @@ describe('orchestrator OpenCode permissions', () => {
     expect(decide(rules, ledger('-Issue 1 -Line x; rm -rf src'))).toBe('ask');
     expect(decide(rules, ledger('-Issue 1 -Line x && rm -rf src'))).toBe('ask');
     expect(decide(rules, ledger('-Issue 1 -Line x | sh'))).toBe('ask');
+    expect(decide(rules, ledger('-Issue 1 -Line x & rm -rf src'))).toBe('ask');
+    expect(decide(rules, ledger('-Issue 1 -Line x\nrm -rf src'))).toBe('ask');
+    expect(decide(rules, ledger('-Issue 1 -Line $(rm -rf src)'))).toBe('ask');
+    expect(decide(rules, ledger('-Issue 1 -Line `rm -rf src`'))).toBe('ask');
   });
 
   it('asks for other pwsh scripts', () => {
     expect(decide(rules, 'pwsh scripts/Other.ps1 -Issue 1')).toBe('ask');
     expect(decide(rules, 'pwsh -Command "rm -rf src"')).toBe('ask');
+    expect(decide(rules, 'pwsh -Command x a/scripts/Add-LedgerLine.ps1 y')).toBe('ask');
+    expect(decide(rules, 'pwsh -NoProfile -Command "rm -rf src" x/scripts/Detect-TechStack.ps1 y')).toBe('ask');
+    expect(decide(rules, 'pwsh /tmp/x/scripts/Add-LedgerLine.ps1 1 y')).toBe('ask');
+    expect(decide(rules, 'pwsh /home/u/.agents/skills/github-issue/scripts/Add-LedgerLine.ps1 -Issue 1')).toBe('ask');
+    expect(decide(rules, 'pwsh .claude/skills/other/scripts/Add-LedgerLine.ps1 -Issue 1')).toBe('ask');
   });
 
-  it('allows only git, gh, the techstack scan and the ledger helper', () => {
+  it('has no allow rule that starts with a wildcard or lets pwsh run arbitrary scripts', () => {
     const allowed = rules.filter(([, a]) => a === 'allow').map(([p]) => p);
-    expect(allowed).toEqual([
-      'git *',
-      'gh *',
-      'pwsh scripts/Detect-TechStack.ps1 *',
-      'pwsh */scripts/Detect-TechStack.ps1 *',
-      'pwsh scripts/Add-LedgerLine.ps1 *',
-      'pwsh */scripts/Add-LedgerLine.ps1 *',
-    ]);
+    expect(allowed.filter((p) => p.startsWith('*') || /^pwsh \*/.test(p))).toEqual([]);
+    for (const p of allowed.filter((x) => x.startsWith('pwsh '))) expect(p).toMatch(/^pwsh \S+\/scripts\/(Add-LedgerLine|Detect-TechStack)\.ps1 \*$/);
   });
 });
 
@@ -132,13 +140,30 @@ describe.skipIf(!pwshAvailable)('Add-LedgerLine.ps1', () => {
     expect(fs.existsSync(path.join(cwd, '.agents/adhoc/progress.md'))).toBe(false);
   });
 
-  it.each(['../x', '5/..', '5 6', '0', '-1', 'x', '1;rm', '/etc'])('rejects issue %s', (issue) => {
+  it.each(['../x', '5/..', '5 6', '0', '-1', 'x', '1;rm', '/etc', '007', '5\n', '5\u2028'])('rejects issue %s', (issue) => {
     const r = run('-Issue', issue, '-Line', 'x');
     expect(r.status).not.toBe(0);
     expect(fs.existsSync(path.join(cwd, '.agents'))).toBe(false);
   });
 
-  it('rejects a multi-line value', () => {
-    expect(run('-Issue', '5', '-Line', 'a\nb').status).not.toBe(0);
+  it.each(['a\nb', 'a\u2028b', 'a\rb'])('rejects a multi-line value %j', (line) => {
+    expect(run('-Issue', '5', '-Line', line).status).not.toBe(0);
+  });
+
+  it('fails without prompting when -Issue is missing', () => {
+    const r = run('-Line', 'x');
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toContain('Invalid -Issue');
+  });
+
+  it.skipIf(process.platform === 'win32')('refuses a symlinked .agents directory', () => {
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'outside-'));
+    try {
+      fs.symlinkSync(outside, path.join(cwd, '.agents'));
+      expect(run('-Issue', '5', '-Line', 'x').status).not.toBe(0);
+      expect(fs.readdirSync(outside)).toEqual([]);
+    } finally {
+      fs.rmSync(outside, { recursive: true, force: true });
+    }
   });
 });

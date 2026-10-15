@@ -17,7 +17,7 @@ First line: `Review mode: <mode> (<dimensions>)` from the `mode` and `dimensions
 
 With `--no-review-summary` only blocking findings trigger fix rounds and all advisories go to the PR body.
 
-Headless (no question tool): append `Gate: <question>` to the ledger, report it and stop. Ledger lines are appended with `pwsh scripts/Add-LedgerLine.ps1 -Issue <issue|adhoc> -Line '<text>'` (path-validated; OpenCode's permission map allows only this command for ledger writes).
+Headless (no question tool): append `Gate: <question>` to the ledger, report it and stop. Ledger lines are appended with `pwsh scripts/Add-LedgerLine.ps1 -Issue <issue|adhoc> -Line '<text>'` (path-validated; OpenCode's permission map allows only this command for ledger writes; `.agents/overview.md`, `description.txt`, the `mv` of `.agents/adhoc` and the `.git/info/exclude` edit are not covered and prompt, so a headless OpenCode run stops there).
 
 ## Clear before implement (closing line after a plan)
 

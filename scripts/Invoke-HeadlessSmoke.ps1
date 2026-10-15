@@ -29,9 +29,10 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $helper = Join-Path $root 'packages/github/.apm/skills/github-issue/scripts/Add-LedgerLine.ps1'
-$helperRel = 'skills/github-issue/scripts/Add-LedgerLine.ps1'
-$header = "# orchestrator ledger - issue #$Issue - branch main"
-$ledgerPrompt = "Ledger check only, no GitHub access: write the single line '$header' to the ledger of issue $Issue with: pwsh $helperRel -Issue $Issue -Line '$header'. Run only that command, do not read anything back, then stop."
+$header = "# orchestrator ledger — issue #$Issue — branch main"
+# Installed location per client (the permission map pins these paths).
+function Get-HelperRel([string]$Name) { ($Name -eq 'opencode' ? '.opencode' : '.claude') + '/skills/github-issue/scripts/Add-LedgerLine.ps1' }
+function Get-LedgerPrompt([string]$Name) { "Ledger check only, no GitHub access: write the single line '$header' to the ledger of issue $Issue with: pwsh $(Get-HelperRel $Name) -Issue $Issue -Line '$header'. Run only that command, do not read anything back, then stop." }
 $planPrompt = 'plan add a greet(name) function to the fixture project in src/greet.ts'
 $promptRx = 'permission requested|auto-rejecting|requires approval|asked for approval|blocked the command|needs approval'
 
@@ -45,8 +46,9 @@ function New-Fixture([string]$Name) {
     git add package.json
     git -c user.email=smoke@example.com -c user.name=smoke commit -qm init
   } finally { Pop-Location }
-  New-Item -ItemType Directory -Path (Join-Path $dir (Split-Path $helperRel)) -Force | Out-Null
-  Copy-Item $helper (Join-Path $dir $helperRel)
+  $rel = Get-HelperRel ($Name -replace '-.*$', '')
+  New-Item -ItemType Directory -Path (Join-Path $dir (Split-Path $rel)) -Force | Out-Null
+  Copy-Item $helper (Join-Path $dir $rel)
   $dir
 }
 
@@ -66,7 +68,7 @@ function Invoke-Client([string]$Name, [string]$Dir, [string]$Prompt, [bool]$Full
   if (-not $bin) { return $null }
   # Claude Code has no per-agent bash allow list: the run is allowed the ledger helper (--allowedTools here;
   # permissions.allow in the project settings in real use, see docs/working-mode.md). Plan stage: git/gh read access too.
-  $allow = @('Bash(pwsh *Add-LedgerLine.ps1 *)') + ($Full ? @('Bash(git *)', 'Bash(gh *)', 'Bash(pwsh *Detect-TechStack.ps1 *)') : @())
+  $allow = @('Bash(pwsh .claude/skills/github-issue/scripts/Add-LedgerLine.ps1 *)') + ($Full ? @('Bash(git *)', 'Bash(gh *)', 'Bash(pwsh .claude/skills/detect-techstack/scripts/Detect-TechStack.ps1 *)') : @())
   $cliArgs = $Name -eq 'opencode' ? @('run', '--agent', 'orchestrator', $Prompt) : @('-p', '--agent', 'orchestrator', '--allowedTools') + $allow + @('--', $Prompt)
   if ($Name -eq 'opencode') {
     New-Item -ItemType Directory -Path (Join-Path $Dir '.opencode/agents') -Force | Out-Null
@@ -97,7 +99,7 @@ foreach ($c in $clients) {
   foreach ($st in $stages) {
     $full = $st -eq 'plan'
     $dir = New-Fixture "$c-$st"
-    $out = Invoke-Client $c $dir ($full ? $planPrompt : $ledgerPrompt) $full
+    $out = Invoke-Client $c $dir ($full ? $planPrompt : (Get-LedgerPrompt $c)) $full
     if ($null -eq $out) { Write-Host "SKIP $c/$st (CLI not found)"; Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue; continue }
     $ran++
     $problems = @()
@@ -108,7 +110,7 @@ foreach ($c in $clients) {
     elseif ($out -match $promptRx) { $problems += 'permission prompt in output' }
     if (-not $ledgerText) { $problems += 'no ledger written' }
     elseif (-not $full -and $ledgerText -notmatch [regex]::Escape($header)) { $problems += 'ledger lacks the header line' }
-    elseif ($full -and $ledgerText -notmatch '(?m)^(Gate:|Phase [^:]+: complete)') { $problems += 'ledger has neither a Gate: line nor a completed phase' }
+    elseif ($full -and $ledgerText -notmatch '(?m)^(Gate: .+|Phase \S+: complete — .+)$') { $problems += 'ledger has neither a Gate: line nor a completed phase' }
     if ($problems) {
       $failed++; Write-Host "FAIL $c/$st : $($problems -join '; ')"
       $flat = "$out" -replace '\s+', ' '; Write-Host ('  output tail: ' + $flat.Substring([Math]::Max(0, $flat.Length - 400)))

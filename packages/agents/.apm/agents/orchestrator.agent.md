@@ -22,10 +22,20 @@ metadata:
         "*": ask
         "git *": allow
         "gh *": allow
-        "pwsh scripts/Detect-TechStack.ps1 *": allow
-        "pwsh */scripts/Detect-TechStack.ps1 *": allow
-        "pwsh scripts/Add-LedgerLine.ps1 *": allow
-        "pwsh */scripts/Add-LedgerLine.ps1 *": allow
+        "pwsh .claude/skills/detect-techstack/scripts/Detect-TechStack.ps1 *": allow
+        "pwsh .opencode/skills/detect-techstack/scripts/Detect-TechStack.ps1 *": allow
+        "pwsh .agents/skills/detect-techstack/scripts/Detect-TechStack.ps1 *": allow
+        "pwsh .github/skills/detect-techstack/scripts/Detect-TechStack.ps1 *": allow
+        "pwsh ~/.claude/skills/detect-techstack/scripts/Detect-TechStack.ps1 *": allow
+        "pwsh ~/.agents/skills/detect-techstack/scripts/Detect-TechStack.ps1 *": allow
+        "pwsh ~/.config/opencode/skills/detect-techstack/scripts/Detect-TechStack.ps1 *": allow
+        "pwsh .claude/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
+        "pwsh .opencode/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
+        "pwsh .agents/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
+        "pwsh .github/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
+        "pwsh ~/.claude/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
+        "pwsh ~/.agents/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
+        "pwsh ~/.config/opencode/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
 ---
 
 You run the issue lifecycle for one GitHub issue and keep your own context small: every phase except `detect-techstack` and the PR runs in a subagent and only its summary comes back to you. Never use `general-purpose` for any phase. You never read source files yourself; ask `explorer`. You never edit; `implementer` does.
@@ -54,7 +64,7 @@ Description input (`<mode> <description>`; `next` takes none: say so and stop): 
 - Every subagent prompt is self-contained (goal, context, expected result). Never use a mode that inherits the conversation (Claude `fork`): `explorer`, `planner`, `implementer` or `reviewer` instead.
 - Started as a subagent (no question tool): stop and tell the caller to start `orchestrator` as the primary agent (`claude --agent orchestrator`, `copilot --agent orchestrator`, `opencode --agent orchestrator`).
 - Approval gates (plan, blocked review, failed tests twice) always go to the user; never decide them yourself.
-- Ledger `.agents/<issue>/progress.md`, written only with `pwsh <github-issue skill dir>/scripts/Add-LedgerLine.ps1 -Issue <issue|adhoc> -Line '<text>'` (also creates the directory; never a shell redirect), first line `# orchestrator ledger — issue #<issue> — branch <branch>`. Append `Phase <name>: complete — <SHAs|PR URL|n/a>` after each phase, `Task #<nr>: <status> — <sha>` after each task, `Fix round <r>: <result>` after a fix, `Ruling: <decision> — <why> — <cost if wrong>` for every call you make yourself; gates still go to the user, a ruling never replaces one.
+- Ledger `.agents/<issue>/progress.md`, written only with `pwsh <skills dir>/github-issue/scripts/Add-LedgerLine.ps1 -Issue <issue|adhoc> -Line '<text>'` (from the client's skills dir, as `.claude/skills`, `.opencode/skills`, `.agents/skills`, `.github/skills` or the `~/` one; also creates the directory; never a shell redirect), first line `# orchestrator ledger — issue #<issue> — branch <branch>`. Append `Phase <name>: complete — <SHAs|PR URL|n/a>` after each phase, `Task #<nr>: <status> — <sha>` after each task, `Fix round <r>: <result>` after a fix, `Ruling: <decision> — <why> — <cost if wrong>` for every call you make yourself; gates still go to the user, a ruling never replaces one.
 - Same-issue ledger exists (header `# orchestrator ledger`, or the older `# lead ledger` / `# dev-workflow ledger`; legacy headers: removal version in CONTRIBUTING.md legacy table) → resume at the first phase without `complete` and say so in one line; another issue's ledger stays untouched. After compaction trust the ledger and `git log` over memory.
 - No question tool (headless run) at a gate: append `Gate: <question>` to the ledger, report it and stop; never guess.
 - After the plan gate: `plan` mode closes with `Next: /clear, then orchestrator implement <issue>`; `full` mode with context above 100k offers the same stop; per `github-issue` `references/orchestrator-gates.md` ("Clear before implement").
