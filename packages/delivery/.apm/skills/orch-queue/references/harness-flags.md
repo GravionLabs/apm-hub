@@ -5,11 +5,21 @@ A headless run cannot answer permission prompts, so each adapter passes a narrow
 
 | Harness | Narrow (default) | `-AllowAll` |
 |:--|:--|:--|
-| `claude` | `claude --agent orchestrator -p "<mode> <nr>" --allowedTools <list>` (Bash for git, gh, pwsh and the build tools, Edit, Write) | `--dangerously-skip-permissions` |
+| `claude` | `claude --agent orchestrator -p "<mode> <nr>" --allowedTools <list>` (Bash per git/gh subcommand and the build tools, Edit, Write) | `--dangerously-skip-permissions` |
 | `copilot` | `copilot -p "<mode> <nr>" --agent=orchestrator --no-ask-user --allow-tool=write --allow-tool=shell(<cmd>:*)` for git, gh, pwsh, pnpm, npm, npx, node, dotnet, uv, python, ng | `--allow-all-tools` only |
-| `opencode` | `opencode run --agent orchestrator "<mode> <nr>"` with env `OPENCODE_PERMISSION` (JSON: edit, task, skill allow; bash `*` deny, listed commands allow) | `--auto`, no env |
+| `opencode` | `opencode run --agent orchestrator "<mode> <nr>"` with env `OPENCODE_PERMISSION` (JSON: edit allow except `.git/**`, task, skill allow; bash `*` deny, listed prefixes allow) | `--auto`, no env |
+
+The allowed prefixes live in `scripts/harness/allowed-commands.ps1` (one list for all adapters): `git` status, diff, log,
+show, add, commit, checkout, switch, branch, fetch, push, rev-parse, rev-list, merge-base, ls-files, remote; `gh` issue
+view/list/create/edit/close/comment, pr create/view/list/diff, repo view, api; plus pwsh, pnpm, npm, npx, node, dotnet,
+uv, python, ng. `gh pr merge`, `git reset`, `git clean` and `git rebase` are not allowed. A prefix rule cannot exclude flags,
+so `git push` also matches a force push (the git guardrails hook denies force pushes to `main` and `release/*`).
 
 ## Trade-offs
+
+- The narrow set limits accidents, it does not stop prompt injection: `gh api`, `pwsh` and the build tools can still do
+  a lot, and issue text (especially via `-Label`) reaches the model. Run on collaborator-authored issues (`-TrustedOnly`).
+- OpenCode denies edits under `.git/`; `.agents/` stays writable because the subagents write their reports there.
 
 - Narrow: the model cannot run commands outside the list (no `rm`, `curl`, `sudo`), at the price of stalls
   or failures when a project needs another tool. Extend the list in the adapter or fall back to `-AllowAll`.
@@ -34,6 +44,7 @@ no live headless run exists yet:
   `--allow-all-tools` is required for non-interactive mode, so the narrow set may stall. If a Copilot run hangs or
   denies every tool, rerun with `-AllowAll`
 - OpenCode: the keys `edit`, `task`, `skill`, `bash` and the `"git *"` patterns are from the docs, not exercised
-- output parsing for queue mode relies on `PR #<n>`, `/pull/<n>` and `APPROVE` appearing in the run output
+- multi-word prefixes (`shell(git status:*)`, `Bash(git status:*)`, `"git status *"`) and the OpenCode `edit` path rules are from the docs, not exercised
+- queue mode parses the run output (`Next PBI: #<n>`, `Gate:`, `Nothing selectable`, `<Feature|Epic> #<n> is done.`, `Verdict: APPROVE`) case-sensitively and the PBI ledger line `Phase pull-request: complete — <url>`
 
 Report a working or broken flag set as an issue so the adapter and this table can be corrected.

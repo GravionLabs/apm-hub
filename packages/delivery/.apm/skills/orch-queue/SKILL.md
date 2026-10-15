@@ -23,8 +23,9 @@ pwsh scripts/Invoke-OrchestratorQueue.ps1 -Feature 227                  # loop "
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Epic 300 -Harness opencode -ContinueOnError
 ```
 
-Always start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`,
-`-ContinueOnError`, `-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved`.
+Always start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`
+(not with `-Feature`/`-Epic`: the mode is always `next`, the adapters forward it as `next <nr>`), `-ContinueOnError`,
+`-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved`, `-TrustedOnly` (with `-Label`).
 
 ## Exit codes
 
@@ -33,6 +34,7 @@ Always start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (def
 | 0 | every issue done or skipped (queue mode: `Feature #<nr> is done`) |
 | 1 | a run failed (stops, unless `-ContinueOnError`), or a harness binary or adapter is missing |
 | 2 | a gate: the orchestrator needs a decision; the question is printed and the queue stops |
+| 3 | queue mode only: `Nothing selectable`, every open PBI is held by blockers or decisions (state `blocked`) |
 
 ## The ledger is the truth, not the exit code
 
@@ -49,16 +51,23 @@ The orchestrator appends `Ledger complete.` only after a successful run, never a
 
 `-Feature <nr>` / `-Epic <nr>` loops `next <nr>` in a fresh process per iteration; selection stays in the
 orchestrator (`github-issue/references/next-selection.md`). It stops on `Feature #<nr> is done`, a gate (exit 2), a
-failure (exit 1) or when the same PBI is selected twice in a row. State is cached in `.agents/queue-<nr>.json`
+failure (exit 1), `Nothing selectable` (exit 3) or when the same PBI is selected twice in a row; `-ContinueOnError`
+continues after a failed PBI only if `next` then picks a different one. Epics end on `Epic #<nr> is done.`. A complete
+PBI ledger wins over a `Gate:` line, as in list mode. State is cached in `.agents/queue-<nr>.json`
 (GitHub stays the source of truth), output in `.agents/queue-<nr>.log`. It does not use the orchestrator `loop` mode.
 
-`-MergeApproved` (default off) squash-merges the PR of a done PBI into the integration branch when the review
-verdict is APPROVE and the PR is open. Never a release PR (head `release/*` or base `main`), never after a gate or failure.
+`-MergeApproved` (default off) merges the PR of a done PBI when the last `Verdict:` line of the run is exactly
+`APPROVE`. The PR comes from the ledger line `Phase pull-request: complete — <url>` and `gh pr list`, its head branch must
+belong to the PBI (`/<pbi>-`), its base must be `release/*` and its head must not be `release/*` (the release PR). It runs
+`gh pr merge --squash --match-head-commit <sha>`. Never after a gate, a block or a failure.
 
 ## Rules
 
 - Permissions: the default is a narrow per-harness set, `-AllowAll` opts in to the unrestricted mode. Read
   [harness flags](references/harness-flags.md) before an unattended run: Copilot CLI cannot start subagents
   headless, and the narrow Copilot set may need `-AllowAll`.
+- The narrow permission set limits accidents; it does not stop prompt injection (an allowed `gh api` or `pwsh` can
+  do a lot). `-Label` feeds issue text to the model: use it on collaborator-authored issues, or add `-TrustedOnly`.
+- The runner refuses a symlinked `.agents/`.
 - Check `status <nr>` (sibling PBI) or `.agents/<nr>/progress.md` before and after a run.
 - Sequential only; `-Parallel` (worktrees) is a follow-up.
