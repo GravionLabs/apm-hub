@@ -44,13 +44,22 @@ describe('issue-reader agent contract', () => {
     expect(body).toMatch(/invalid integration branch/);
   });
 
+  it('saves the issue body through a gh redirect and allows only that write path', () => {
+    expect(body).toContain(`gh issue view <nr> --json title,body --jq '"# "+.title+"\\n\\n"+.body' > .agents/<nr>/issue.md`);
+    expect(body).toMatch(/never retyped/);
+    expect(frontmatter).toContain('"gh issue view * > .agents/[0-9]*/issue.md": allow');
+    expect(frontmatter).toContain('"mkdir -p .agents/[0-9]*": allow');
+    const writes = [...frontmatter.matchAll(/"([^"]*>[^"]*)": allow/g)].map((m) => m[1]);
+    expect(writes).toEqual(['gh issue view * > .agents/[0-9]*/issue.md']);
+  });
+
   it('keeps the description within 200 characters', () => {
     const description = frontmatter.match(/^description: (.*)$/m)![1];
     expect(description.length).toBeLessThanOrEqual(200);
   });
 
   it('states the JSON contract, the error shape and branch-only mode', () => {
-    expect(body).toMatch(/"issue": <nr>, "type", "title", "digest", "branch", "stale"\?, "bug", "parent", "tasks": \[\{"n", "state", "merged", "sha"\?\}\], "ledger": "none\|resume"/);
+    expect(body).toMatch(/"issue": <nr>, "type", "title", "digest", "file": "\.agents\/<nr>\/issue\.md", "branch", "stale"\?, "bug", "parent", "tasks": \[\{"n", "state", "merged", "sha"\?\}\], "ledger": "none\|resume"/);
     expect(body).toMatch(/`release\/next` if it exists, else the highest `release\/<x\.y>`/);
     expect(body).toMatch(/\{"error": "<first error line>"\}/);
     expect(body).toMatch(/\{"issue": null, "branch": "<branch>"\}/);
