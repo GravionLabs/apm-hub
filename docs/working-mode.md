@@ -22,9 +22,9 @@ The first word of the message is the mode; the issue type (Epic, Feature, PBI) c
 | `plan <nr>` | Epic / Feature / PBI | Epic → Features, Feature → PBIs (on request in the same run), PBI → tasks; one grilling cycle per level |
 | `implement <nr>` | PBI | explore → implement → review → PR for a planned PBI |
 | `full <nr>` | PBI | plan if needed, then implement |
-| `next <nr>` | Feature / Epic | picks the first open PBI without open blocker or `needs-decision` (sub-issue order, recursive for an Epic), runs it like `full` |
+| `next <nr>` | Feature / Epic | picks the first open PBI without open blocker, `needs-decision`, open PR (`waiting for merge`) or merge into the integration branch (`merged, closes at release`) (sub-issue order, recursive for an Epic), runs it like `full` |
 
-Exactly one PBI per run. After a PBI of a Feature the end line is `Next: #<nr> <title> — orchestrator next <feature> after /clear`, or lists what blocks the rest, or says the Feature is done. Selection: `github-issue` `references/next-selection.md`.
+Exactly one PBI per run. The end line after a PBI of a Feature is defined in `github-issue` `references/next-selection.md`.
 
 | You say | Mode |
 | :-- | :-- |
@@ -40,7 +40,7 @@ Two defaults, each switched off by a flag in the first message (also for `/orche
 
 | Flag | Default without it |
 | :-- | :-- |
-| `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged, merged ones per the "Task merged" rule) and you pick one |
+| `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged, merged ones per the "Task merged" rule for Tasks and `Merged (closes at release)` in `next-selection.md` for PBIs and Features) and you pick one |
 | `--no-review-summary` | After `review-fanout` it shows one line per finding (`severity file:line issue`, blocking first, MEDIUM/LOW included) and asks which advisories to fix; the rest go to the PR body. With the flag only blocking findings trigger fix rounds |
 
 Headless runs write `Gate: <question>` to the ledger and stop. Details: `github-issue` `references/orchestrator-gates.md`.
