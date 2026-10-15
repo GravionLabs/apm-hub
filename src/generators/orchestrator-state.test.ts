@@ -361,6 +361,16 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(gates).toContain('next-selection.md');
     expect(gates).toContain('Merged (closes at release)');
     expect(selection.match(/^## Merged \(closes at release\)$/gm)).toHaveLength(1);
+    expect(gates).not.toContain('git log');
+    expect(gates).not.toContain('gh pr list');
+    expect(gates).toMatch(/Task[^.]*"Task merged"[^.]*`task-issues\.md`/);
+    expect(gates).toMatch(/PBI or Feature `Merged \(closes at release\)`/);
+  });
+
+  it('docs mention the merged drop in the end line and the next mode', () => {
+    const docs = (f: string) => fs.readFileSync(path.join(pk, '../docs', f), 'utf-8');
+    expect(docs('orchestrator.md')).toContain('merged, closes at release');
+    expect(docs('working-mode.md')).toContain('merged, closes at release');
   });
 
   it('github-issue links the gates reference', () => {

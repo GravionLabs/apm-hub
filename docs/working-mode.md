@@ -22,9 +22,9 @@ The first word of the message is the mode; the issue type (Epic, Feature, PBI) c
 | `plan <nr>` | Epic / Feature / PBI | Epic → Features, Feature → PBIs (on request in the same run), PBI → tasks; one grilling cycle per level |
 | `implement <nr>` | PBI | explore → implement → review → PR for a planned PBI |
 | `full <nr>` | PBI | plan if needed, then implement |
-| `next <nr>` | Feature / Epic | picks the first open PBI without open blocker or `needs-decision` (sub-issue order, recursive for an Epic), runs it like `full` |
+| `next <nr>` | Feature / Epic | picks the first open PBI without open blocker, `needs-decision`, open PR (`waiting for merge`) or merge into the integration branch (`merged, closes at release`) (sub-issue order, recursive for an Epic), runs it like `full` |
 
-Exactly one PBI per run. After a PBI of a Feature the end line is `Next: #<nr> <title> — orchestrator next <feature> after /clear`, or lists what blocks the rest (open blockers, `needs-decision`, `waiting for merge: PR #<n>`, `merged, closes at release`), or says the Feature is done. Selection: `github-issue` `references/next-selection.md`.
+Exactly one PBI per run. The end line after a PBI of a Feature is defined in `github-issue` `references/next-selection.md`.
 
 | You say | Mode |
 | :-- | :-- |
