@@ -108,10 +108,56 @@ for n in 101 102 103; do claude --agent orchestrator -p "implement $n"; done
 ```
 
 A headless run cannot answer permission prompts: allow `git`, `gh`, the build and test commands and
-edits for the project beforehand (Claude: `permissions.allow` in the project settings). It cannot answer a
-gate either: at a blocked review or a twice-red suite it appends `Gate: <question>` to
+edits for the project beforehand (Claude: `permissions.allow` in the project settings). OpenCode needs nothing
+extra for the ledger: the orchestrator's permission map allows `git`, `gh`, the tech-stack scan and one ledger
+command, `pwsh <skills dir>/github-issue/scripts/Add-LedgerLine.ps1 -Issue <issue|adhoc> -Line '<text>'`, which creates
+`.agents/<issue>/` and appends one line after validating the path (positive integer or `adhoc`, no line breaks, path under
+`.agents/`, a symlinked `.agents/` is refused). The patterns pin the installed skill paths (`.claude/skills`, `.opencode/skills`,
+`.agents/skills`, `.github/skills` in the project; `~/.claude/skills`, `~/.agents/skills`, `~/.config/opencode/skills` globally,
+written literally with `~`: OpenCode does not expand `~` or `$HOME` in a pattern, so a model that writes the absolute home path gets a
+prompt). The trailing `*` lets `pwsh` receive further arguments after the pinned script path; those are the script's own parameters
+and are validated by the script. It keeps `edit: deny` and asks for every other shell command, which `opencode run` auto-rejects.
+Claude Code has no per-agent bash list: allow `Bash(pwsh .claude/skills/github-issue/scripts/Add-LedgerLine.ps1 *)` and
+`Bash(pwsh .claude/skills/detect-techstack/scripts/Detect-TechStack.ps1 *)` (or the global path).
+
+Limits: a shell redirect is not part of the command OpenCode matches, so `pwsh .../Add-LedgerLine.ps1 ... > src/a.ts` would be allowed and could
+truncate or create a file (it writes no content; a raw `echo *` rule would have allowed arbitrary content and was rejected).
+`git *` and `gh *` are auto-allowed on OpenCode and can write files (`git diff --output=`, `git apply`, `gh api -X`), so the write
+guard is not a boundary against a prompt-injected model in a headless OpenCode run. Other ledger-area writes are not covered
+by the helper and still prompt, which a headless OpenCode run auto-rejects, or end in a `Gate:` stop: `.agents/overview.md`,
+`.agents/adhoc/description.txt`, moving `.agents/adhoc` to `.agents/<issue>/`, and adding `.agents/` to `.git/info/exclude`.
+Prefer an interactive or pre-prepared setup for description input and the issue overview.
+
+It cannot answer a gate either: at a blocked review or a twice-red suite it appends `Gate: <question>` to
 `.agents/<issue>/progress.md`, reports it and stops. Answer in an interactive `orchestrator` session, which
 resumes from the ledger.
+
+#### Headless smoke test and spike result (#222)
+
+`pwsh scripts/Invoke-HeadlessSmoke.ps1 [-Client opencode|claude|both] [-Stage ledger|plan|all] [-Keep]` creates a throwaway
+git repo without a remote (no GitHub writes) per client and stage and starts `opencode run --agent orchestrator` and
+`claude -p --agent orchestrator`. Stage `ledger` (default) runs the ledger helper and asserts the header line in
+`.agents/999/progress.md` and no permission prompt. Stage `plan` runs `plan <description>` with the full agent body and asserts
+no permission prompt and a `Gate:` line or a completed phase in the ledger. A missing CLI is skipped (exit 2 when all are
+skipped, 1 on a failure). It needs the CLIs and a model and is not run in CI. The OpenCode run uses the permission map of
+`orchestrator.agent.md` in a project agent and an empty user config.
+
+Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
+
+- OpenCode before the fix (`"git *"`, `"gh *"` allow, `"*"` ask last): the ledger writes hit `ask`; `opencode run` printed
+  `permission requested: bash (...); auto-rejecting` and no ledger was written. OpenCode lets the last matching rule win, so
+  the trailing `"*": ask` also overrode `git *`/`gh *`; it is now first.
+- OpenCode after the fix: the ledger helper runs, `rm -rf .agents/999` is still auto-rejected. Facts that shaped the rules:
+  `[0-9]` is not a character class in a pattern (use `*`), and a redirect is not part of the matched command. Raw `mkdir`/`echo`/`tee`
+  rules therefore cannot be made safe, so ledger writes go through the validating helper.
+- Claude Code: without allow rules the run stops ("needs approval"); with `--allowedTools "Bash(pwsh .claude/skills/github-issue/scripts/Add-LedgerLine.ps1 *)"` the
+  ledger helper completes. A project `.claude/settings.json` in a `/tmp` fixture was ignored.
+- Plan stage (`plan <description>`, no remote): partially met. OpenCode ran the skill load and the tech-stack scan (allowed after adding the
+  `Detect-TechStack.ps1` rules; before that it stopped there on a permission prompt), then the model issued `ls -la` outside the
+  contract and it was auto-rejected. Claude Code reached the planner and a plan, then stopped at a `mkdir` under `.agents/` the model chose
+  instead of the helper ("needs approval"). Neither run reached a `Gate:` line or a completed phase, so the plan/implement part of the
+  acceptance criterion is only partially covered; the stage is opt-in because it depends on the model following the contract. An
+  `implement` run needs a real issue and branch (GitHub) and was not run.
 
 ## 2. Without the orchestrator: one session per issue
 
