@@ -1,6 +1,13 @@
-# Shell function
+# Launcher and shell function
 
-Wrap the runner once, then call `queue` from the repository root (the script must run there).
+Preferred: install the launcher with `pwsh <skills>/queue/scripts/Install-QueueLauncher.ps1` (`-Dir <dir>`, default
+`~/.local/bin`; `queue.cmd` on Windows). It is a tiny script that finds the runner at call time (project
+`.claude|.opencode|.agents|.github/skills`, then `~/.claude`, `~/.agents`, `~/.config/opencode`), `cd`s to the git
+toplevel and runs it with `pwsh -NoProfile -File`, so `queue` works from any subdirectory and survives skill updates. It
+never edits PATH or profiles (it prints a hint when `-Dir` is not on PATH), needs `-Force` to overwrite a different file,
+and `-Uninstall` removes only its own launcher. `-WhatIf` shows what would be written.
+
+Alternative, a shell function. Wrap the runner once, then call `queue` from the repository root (the script must run there).
 
 ```bash
 # bash / zsh (~/.bashrc, ~/.zshrc)

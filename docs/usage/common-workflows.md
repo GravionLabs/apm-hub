@@ -68,6 +68,8 @@ apm install delivery@apm-hub   # pulls in github, shared and the language packag
    pwsh <skills dir>/queue/scripts/Invoke-OrchestratorQueue.ps1 -Feature 227
    ```
 
+   Install a `queue` command once with `pwsh <skills dir>/queue/scripts/Install-QueueLauncher.ps1` (or `/queue install`), then call `queue -DryRun 101` from any repository directory.
+
    Exit 0 means all done, 1 a failure, 2 a gate that needs your answer. Check `status <nr>` before and after a run. `-Parallel` is a follow-up.
 
 3. **Open the pull request**

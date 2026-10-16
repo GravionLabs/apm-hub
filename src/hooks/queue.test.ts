@@ -7,6 +7,10 @@ const SCRIPT = path.resolve(
   __dirname,
   '../../packages/delivery/.apm/skills/queue/scripts/Invoke-OrchestratorQueue.ps1',
 );
+const INSTALLER = path.resolve(
+  __dirname,
+  '../../packages/delivery/.apm/skills/queue/scripts/Install-QueueLauncher.ps1',
+);
 const AGENT = path.resolve(__dirname, '../../packages/agents/.apm/agents/orchestrator.agent.md');
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 const posix = process.platform !== 'win32';
@@ -765,6 +769,137 @@ exit 0
         expect(queue().state).toBe('failed');
         expect(calls()).toHaveLength(1);
       });
+    });
+  });
+});
+
+describe.skipIf(!hasPwsh || !posix)('Install-QueueLauncher.ps1', () => {
+  let tmp: string;
+  let home: string;
+  let target: string;
+  let launcher: string;
+  beforeEach(() => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'qlaunch-'));
+    home = path.join(tmp, 'home');
+    target = path.join(tmp, 'bin');
+    launcher = path.join(target, 'queue');
+    fs.mkdirSync(home);
+  });
+  afterEach(() => fs.rmSync(tmp, { recursive: true, force: true }));
+
+  const env = () => ({ ...process.env, HOME: home });
+  const install = (...args: string[]) =>
+    spawnSync('pwsh', ['-NoProfile', '-File', INSTALLER, '-Dir', target, ...args], { encoding: 'utf8', cwd: tmp, env: env() });
+
+  it('installs an executable launcher with the marker and a PATH hint', () => {
+    const r = install();
+    expect(r.status).toBe(0);
+    expect(fs.statSync(launcher).mode & 0o111).not.toBe(0);
+    const body = fs.readFileSync(launcher, 'utf8');
+    expect(body.startsWith('#!/bin/sh\n# apm-hub queue launcher\n')).toBe(true);
+    expect(r.stdout).toContain('is not on PATH');
+  });
+
+  it('is idempotent', () => {
+    install();
+    const before = fs.statSync(launcher).mtimeMs;
+    const r = install();
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('Up to date');
+    expect(fs.statSync(launcher).mtimeMs).toBe(before);
+  });
+
+  it('refuses a foreign file and overwrites it with -Force', () => {
+    fs.mkdirSync(target);
+    fs.writeFileSync(launcher, '#!/bin/sh\necho mine\n');
+    const r = install();
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toContain('-Force');
+    expect(fs.readFileSync(launcher, 'utf8')).toContain('echo mine');
+    expect(install('-Force').status).toBe(0);
+    expect(fs.readFileSync(launcher, 'utf8')).toContain('apm-hub queue launcher');
+  });
+
+  it('needs -Force for a different older launcher', () => {
+    fs.mkdirSync(target);
+    fs.writeFileSync(launcher, '#!/bin/sh\n# apm-hub queue launcher\necho old\n');
+    expect(install().status).not.toBe(0);
+    expect(install('-Force').status).toBe(0);
+    expect(fs.readFileSync(launcher, 'utf8')).not.toContain('echo old');
+  });
+
+  it('does not follow a symlinked launcher', () => {
+    fs.mkdirSync(target);
+    const real = path.join(tmp, 'real');
+    fs.writeFileSync(real, 'x');
+    fs.symlinkSync(real, launcher);
+    const r = install('-Force');
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toContain('symlink');
+    expect(fs.readFileSync(real, 'utf8')).toBe('x');
+  });
+
+  it('-Uninstall removes only our launcher', () => {
+    install();
+    expect(install('-Uninstall').status).toBe(0);
+    expect(fs.existsSync(launcher)).toBe(false);
+    fs.mkdirSync(target, { recursive: true });
+    fs.writeFileSync(launcher, '#!/bin/sh\necho mine\n');
+    const r = install('-Uninstall');
+    expect(r.status).toBe(0);
+    expect(fs.readFileSync(launcher, 'utf8')).toContain('echo mine');
+  });
+
+  it('-WhatIf writes nothing', () => {
+    const r = install('-WhatIf');
+    expect(r.status).toBe(0);
+    expect(fs.existsSync(target)).toBe(false);
+  });
+
+  describe('the installed launcher', () => {
+    let repo: string;
+    const runner = (base: string, tag: string) => {
+      const dir = path.join(base, 'skills', 'queue', 'scripts');
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, 'Invoke-OrchestratorQueue.ps1'), `Write-Output "${tag} $($args -join '|') $((Get-Location).Path)"\n`);
+    };
+    const call = (cwd: string, ...args: string[]) => spawnSync(launcher, args, { encoding: 'utf8', cwd, env: env() });
+    beforeEach(() => {
+      install();
+      repo = path.join(tmp, 'repo');
+      fs.mkdirSync(path.join(repo, 'sub'), { recursive: true });
+      spawnSync('git', ['init', '-q'], { cwd: repo });
+      repo = fs.realpathSync(repo);
+    });
+
+    it('runs the project runner from the git toplevel and passes args', () => {
+      runner(path.join(repo, '.claude'), 'project');
+      runner(path.join(home, '.claude'), 'global');
+      const r = call(path.join(repo, 'sub'), '-DryRun', '-Mode', 'full', '12');
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe(`project -DryRun|-Mode|full|12 ${repo}`);
+    });
+
+    it('falls back to the global opencode runner, then the global claude runner', () => {
+      runner(path.join(home, '.config', 'opencode'), 'opencode');
+      expect(call(repo, '1').stdout.trim()).toBe(`opencode 1 ${repo}`);
+      runner(path.join(home, '.claude'), 'global');
+      expect(call(repo, '1').stdout.trim()).toBe(`global 1 ${repo}`);
+    });
+
+    it('errors when no runner is installed', () => {
+      const r = call(repo);
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain('not found');
+    });
+
+    it('errors outside a git repository', () => {
+      runner(path.join(home, '.claude'), 'global');
+      const outside = path.join(tmp, 'plain');
+      fs.mkdirSync(outside);
+      const r = spawnSync(launcher, [], { encoding: 'utf8', cwd: outside, env: { ...env(), GIT_CEILING_DIRECTORIES: tmp } });
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain('not inside a git repository');
     });
   });
 });

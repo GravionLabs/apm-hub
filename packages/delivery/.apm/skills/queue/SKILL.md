@@ -32,10 +32,21 @@ Always start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (def
 `/queue [dry-run] <full|implement|plan> <nr>...` or `/queue feature <nr>` / `/queue epic <nr>`, for example
 `/queue full 324`, `/queue implement 101 102`, `/queue feature 248`, `/queue epic 300`, `/queue dry-run implement 101`.
 Mapping to apply: first word `full|implement|plan` is `-Mode <word>`; `feature <nr>` / `epic <nr>` is `-Feature` / `-Epic`;
-`dry-run` is `-DryRun` (recommend it first); remaining numbers are positional issues; other `-Flags` pass through. Then run
+`dry-run` is `-DryRun` (recommend it first); remaining numbers are positional issues; other `-Flags` pass through; `install` / `uninstall` runs the installer below (not the runner). Then run
 `pwsh <skill dir>/scripts/Invoke-OrchestratorQueue.ps1 ...` from the repository root, print the summary lines and the exit
 code, and never answer a gate. The command runs in the current session, but every child is a fresh process; start long runs
 from a plain terminal, see [shell function](references/shell-function.md).
+
+## Install a launcher
+
+```powershell
+pwsh <skills>/queue/scripts/Install-QueueLauncher.ps1            # ~/.local/bin/queue (Windows: queue.cmd)
+pwsh <skills>/queue/scripts/Install-QueueLauncher.ps1 -Uninstall # removes only our launcher
+```
+
+Slash form: `/queue install` / `/queue uninstall` runs the installer with the default `-Dir`; ask the user before choosing a
+non-default `-Dir` and show what it wrote. Then `queue -DryRun 101` works from any repository subdirectory. Details:
+[shell function](references/shell-function.md).
 
 ## Exit codes
 
