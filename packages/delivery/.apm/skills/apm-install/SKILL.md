@@ -44,21 +44,27 @@ The contributor tooling package is not offered. What each package brings: [packa
   skill directories first. A copy found only in the project is repository code and is not run unless you pass
   `-TrustProject`; ask the user before doing so in a repository they do not trust.
 - The report maps `ts`/`js` to `ts`, `py` to `py`, `dotnet` to `dotnet`, and the `angular` framework to `ng`.
-- `detect-techstack` missing, failing or printing invalid output: base packages `shared`, `github`, `delivery` and a note
+- `detect-techstack` missing, failing or printing invalid output: the missing ones of `shared`, `github`, `delivery` and a note
   asking for `-Packages`. Ask the user which stack packages they want.
 - `-Global` without `-Packages` proposes only the base packages, with no stack detection; stack packages need `-Packages`.
-  The base packages are added only when the global client skill directories do not already hold them.
+  Each base package is checked separately (`shared` via `detect-techstack`, `github` via `github-issue`, `delivery` via
+  `review-fanout`) and only the missing ones are proposed.
 - Installed state comes from the manifest (`apm.yml`, `~/.apm/apm.yml` with `-Global`; comments ignored, `core` and `all`
   cover their members, `<pkg>@apm-hub` is recognised) and from `apm_modules/`. Those packages land in `skipped`.
 - No `apm.yml` yet: `apm install` creates it; the script only notes it.
 - A failing `apm install` stops the run: exit 1, `failed` names the package, `notAttempted` the rest.
 - `-DryRun` reports `wouldInstall`, never `installed`; install-only notes read "After install: ...".
 - The script uses the direct form `apm install GravionLabs/apm-hub/packages/<pkg>`, not `apm marketplace add` or
-  `<pkg>@apm-hub` (a deliberate deviation from the Task text; the marketplace form needs a registration step).
+  `<pkg>@apm-hub`, because it needs no registration step.
+- Installs track the default branch. `-Ref <tag|sha>` appends `#<ref>` to every package spec to pin one.
+- `-Packages` accepts comma-separated names (whitespace and empty entries ignored; an empty list exits 1). A requested
+  `core` or `all` covers its members: they are not installed next to it.
+- `apm` output goes to stderr, so stdout is pure JSON.
+- Hardening beyond the original task: the `-TrustProject` gate for a project-local `detect-techstack`, and `-Global`
+  without `-Packages` proposing only the missing base packages, were added on purpose.
 
 ## Missing prerequisites
 
 `apm` missing: `curl -sSL https://aka.ms/apm-unix | sh` (macOS/Linux) or `winget install Microsoft.APM`. `apmw` is
 needed only for agent packages (`agents`, `core`, `all`); the script warns when it is missing but still installs, see
-[after install](references/after-install.md). Do not install tools for the user
-without asking.
+[after install](references/after-install.md). Do not install tools for the user without asking.

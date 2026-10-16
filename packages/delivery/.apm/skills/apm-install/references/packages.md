@@ -1,6 +1,6 @@
 # apm-hub packages
 
-Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]` (direct path, not `apm marketplace add` or `<pkg>@apm-hub`: deliberate deviation from Task #348, no registration step).
+Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]` (direct path, not `apm marketplace add` or `<pkg>@apm-hub`: no registration step). Installs track the default branch; `-Ref <tag|sha>` pins one.
 
 | Package | Brings | Install |
 |:--|:--|:--|
