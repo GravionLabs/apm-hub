@@ -57,6 +57,16 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     add('advBad', ['12', '-FixAdvisories', 'all;rm', '-DryRun']);
     add('advBadPolicy', ['12', '-FixAdvisories', 'high', '-DryRun']);
     add('featureWithMode', ['-Feature', '1', '-Mode', 'plan', '-DryRun']);
+    add('advAll', ['12', '-FixAdvisories', 'all', '-DryRun']);
+    add('advOneDim', ['12', '-FixAdvisories', 'medium:security', '-DryRun']);
+    add('advTwoDims', ['12', '-Harness', 'copilot', '-FixAdvisories', 'medium:dim_a,dim-b', '-DryRun']);
+    add('advPlan', ['12', '-Mode', 'plan', '-FixAdvisories', 'all', '-DryRun']);
+    add('advEpicClaude', ['-Epic', '11', '-FixAdvisories', 'all', '-DryRun']);
+    add('advFeatureCopilot', ['-Feature', '10', '-Harness', 'copilot', '-FixAdvisories', 'none', '-DryRun']);
+    add('advTwoIssues', ['12', '13', '-FixAdvisories', 'medium', '-DryRun']);
+    for (const [i, v] of ['medium:', 'medium:a,', 'medium:a b', 'all --no-review', 'medium:a;b', 'none:$(x)', 'critical'].entries()) {
+      add(`advBad${i}`, ['12', '-FixAdvisories', v, '-DryRun']);
+    }
 
     const keys = Object.keys(defs);
     dirOf = {};
@@ -187,6 +197,32 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     it('leaves the command line unchanged without the parameter', () => {
       expect(R.default.stdout).not.toContain('--fix-advisories');
       expect(R['adapter copilot'].stdout).not.toContain('--fix-advisories');
+    });
+
+    it('accepts the bare all policy and dimension lists', () => {
+      expect(R.advAll.status).toBe(0);
+      expect(R.advAll.stdout).toContain('-p "--fix-advisories all full 12"');
+      expect(R.advOneDim.stdout).toContain('-p "--fix-advisories medium:security full 12"');
+      expect(R.advTwoDims.stdout).toContain('-p "--fix-advisories medium:dim_a,dim-b full 12"');
+    });
+
+    it('keeps the flag before an explicit mode word', () => {
+      expect(R.advPlan.stdout).toContain('-p "--fix-advisories all plan 12"');
+    });
+
+    it('puts the flag before next for claude -Epic and copilot -Feature', () => {
+      expect(R.advEpicClaude.stdout).toContain('-p "--fix-advisories all next 11"');
+      expect(R.advFeatureCopilot.stdout).toContain('-p "--fix-advisories none next 10"');
+    });
+
+    it('applies the flag to every issue of a multi-issue list', () => {
+      expect(R.advTwoIssues.stdout).toContain('-p "--fix-advisories medium full 12"');
+      expect(R.advTwoIssues.stdout).toContain('-p "--fix-advisories medium full 13"');
+    });
+
+    it.each([0, 1, 2, 3, 4, 5, 6])('rejects injection or malformed value (advBad%i)', (i) => {
+      expect(R[`advBad${i}`].status).not.toBe(0);
+      expect(R[`advBad${i}`].stderr).toContain(`Cannot validate argument on parameter 'FixAdvisories'`);
     });
 
     it.each(['advBad', 'advBadPolicy'])('rejects invalid value (%s)', (k) => {
