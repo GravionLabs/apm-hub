@@ -29,6 +29,9 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
      `git push origin --delete release/next` (the guardrail allows exactly this), then
      `git checkout -B release/next origin/<default>` (no local delete), `git push -u origin release/next`.
    No `+semver` commit: the version comes from the GitVersion branch config (`release-branches.md`).
+2a. `grep -l mark-merged-issues .github/workflows/*.yml` finds nothing → tell the user the repo does not label
+   merged issues and offer to copy `templates/release-branch.yml` to `.github/workflows/release-pr.yml`
+   (never silently; one PR per repo, see `references/merged-label.md`).
 3. If `--feature <nr>` → insert `Release branch: release/next` as the second line of that issue's
    body (`gh issue view <nr> --json body`, `gh issue edit <nr> --body-file -`); keep the `Parent …`
    line first. Child issues inherit it through the resolver.
@@ -61,6 +64,7 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
 ## Gotchas
 
 - Never merge the release PR yourself; the push to `main` builds and publishes the platform matrix, regenerates the changelog and closes the delivered issues.
+- The `merged` label lifecycle and rollout: `references/merged-label.md`.
 - A repo without `cliff.toml` gets no changelog from CI: follow `references/cliff-setup.md` once.
 - Hotfixes bypass this skill (`fix/<nr>-<slug>` from `main`); afterwards merge `main` into
   `release/next` so the fix is not lost.

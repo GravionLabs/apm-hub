@@ -34,6 +34,8 @@ A non-empty list means in flight.
 
 ## Merged (closes at release)
 
+The label `merged` (set by CI on merge into a `release/*` branch, see `github-release` `references/merged-label.md`) is a fast path: `gh issue list --label merged` finds merged candidates cheaply. The checks below stay authoritative, because labels can be edited by hand: a labelled PBI without a merged PR or commit is not merged, and an unlabelled one with a merged PR is.
+
 A PBI counts as merged when (a) a PR merged into the integration branch targets it or (b) a commit on the remote integration branch references it. PBIs stay open after the merge because CI closes them only when the release lands on `main`: never close them by hand, never re-propose them. A Feature counts as merged when it has at least one open PBI and every open PBI is merged (a Feature whose PBIs are all closed is done, not merged). Under an Epic, report merged Features like PBIs: `merged, closes at release: Feature #<n>`. Check merged first, before the blocked and in flight drops, so a merged PBI is reported as `merged, closes at release` even with an open blocker or PR.
 
 `$candidate` must match `^[0-9]+$` for both checks; `<integration-branch>` comes from `release-branches.md`. (a) is the open-PR check with `--state merged --base <integration-branch>`, searched by number only (search terms are ANDed) and decided by the jq filter; a non-empty list means merged (`--limit 100` caps recall; (b) is the second net):
