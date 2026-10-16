@@ -4,10 +4,10 @@
 .SYNOPSIS
   Command prefixes the narrow permission set of every adapter allows (single source for claude, copilot, opencode).
 .DESCRIPTION
-  git and gh are limited to the subcommands the pipeline uses. Not listed on purpose: 'gh pr merge' (the runner merges
-  only with -MergeApproved), 'git reset', 'git clean', 'git rebase'. 'git push' still matches a forced push (prefix
-  rules cannot exclude flags); the git guardrails hook denies force pushes to main and release/*.
-  The narrow set limits accidents; it does not stop prompt injection (an allowed 'gh api' or 'pwsh' can do a lot).
+  git and gh are limited to the subcommands the pipeline uses; this is a list of prefixes, not a sandbox. 'gh api' stays
+  allowed (sub-issue and blocked-by linking need it, also POST/GraphQL) and can do what 'gh pr merge' does; 'git push'
+  also matches a forced push (the git guardrails hook denies force pushes to main and release/*); pwsh and the build
+  tools run arbitrary code. The narrow set limits accidents, it does not stop prompt injection.
 .OUTPUTS string[] of command prefixes, e.g. 'git status', 'pnpm'.
 #>
 'git status', 'git diff', 'git log', 'git show', 'git add', 'git commit', 'git checkout', 'git switch', 'git branch',

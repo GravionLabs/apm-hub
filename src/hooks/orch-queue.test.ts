@@ -160,18 +160,23 @@ exit 0
   });
 
   describe.skipIf(!posix)('runs with a fake harness binary', () => {
+    // PATH containing only a symlink to pwsh: no harness binary, independent of the ambient environment
+    const onlyPwsh = (args: string[]) => {
+      const real = spawnSync('pwsh', ['-NoProfile', '-Command', '(Get-Command pwsh).Source'], { encoding: 'utf8' }).stdout.trim();
+      const only = path.join(dir, 'onlypwsh');
+      fs.mkdirSync(only, { recursive: true });
+      if (!fs.existsSync(path.join(only, 'pwsh'))) fs.symlinkSync(real, path.join(only, 'pwsh'));
+      return spawnSync(path.join(only, 'pwsh'), ['-NoProfile', '-File', SCRIPT, ...args], { encoding: 'utf8', cwd: dir, env: { PATH: only, HOME: process.env.HOME ?? dir } });
+    };
+
     it('fails with a clear message when the harness binary is not on PATH', () => {
-      const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '1'], {
-        encoding: 'utf8', cwd: dir, env: { ...process.env, PATH: path.dirname(process.execPath) + path.delimiter + path.dirname(spawnSync('which', ['pwsh'], { encoding: 'utf8' }).stdout.trim()) },
-      });
+      const r = onlyPwsh(['1']);
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain("'claude' not found on PATH");
     });
 
     it.each(['copilot', 'opencode'])('fails with a clear message when %s is not on PATH', (h) => {
-      const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '1', '-Harness', h], {
-        encoding: 'utf8', cwd: dir, env: { ...process.env, PATH: path.dirname(spawnSync('which', ['pwsh'], { encoding: 'utf8' }).stdout.trim()) },
-      });
+      const r = onlyPwsh(['1', '-Harness', h]);
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain(`'${h}' not found on PATH (harness '${h}')`);
     });
@@ -243,9 +248,7 @@ exit 0
 
     it('checks the harness binary once up front, before the first issue is looked at', () => {
       ledger(1, 'Ledger complete.');
-      const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '1', '2'], {
-        encoding: 'utf8', cwd: dir, env: { ...process.env, PATH: path.dirname(spawnSync('which', ['pwsh'], { encoding: 'utf8' }).stdout.trim()) },
-      });
+      const r = onlyPwsh(['1', '2']);
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain("'claude' not found on PATH");
       expect(fs.existsSync(path.join(dir, '.agents/2'))).toBe(false);
@@ -259,6 +262,19 @@ exit 0
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain('Refusing symlinked path');
       expect(calls()).toHaveLength(0);
+    });
+
+    it('refuses a dangling symlinked .agents/ and a symlinked run.log', () => {
+      fs.symlinkSync(path.join(dir, 'nowhere'), path.join(dir, '.agents'));
+      fakeClaude({ 1: 'complete' });
+      expect(run(['1'], true).stderr).toContain('Refusing symlinked path');
+      fs.rmSync(path.join(dir, '.agents'));
+      fs.mkdirSync(path.join(dir, '.agents/1'), { recursive: true });
+      fs.symlinkSync(path.join(dir, 'nowhere.log'), path.join(dir, '.agents/1/run.log'));
+      const r = run(['1'], true);
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain('Refusing symlinked path');
+      expect(fs.existsSync(path.join(dir, 'nowhere.log'))).toBe(false);
     });
 
     it('filters -Label issues by author_association only with -TrustedOnly', () => {
@@ -358,7 +374,7 @@ sh "${dir}/steps/$c"
     type Pbi = { number: number | null; outcome: string; pr: number | null; note: string | null; gate: string | null };
     const outcomes = () => (queue().pbis as Pbi[]).map((p) => [p.number, p.outcome]);
 
-    const defaultPr = { number: 101, state: 'OPEN', headRefName: 'feat/11-x', baseRefName: 'release/next', headRefOid: 'abc123' };
+    const defaultPr = { number: 101, state: 'OPEN', headRefName: 'feat/11-x', baseRefName: 'release/next', headRefOid: 'abc123', isCrossRepository: false, mergeable: 'MERGEABLE', mergeStateStatus: 'CLEAN', statusCheckRollup: [{ conclusion: 'SUCCESS' }] };
     // fake gh: `pr list` prints the given PRs (or fails), `pr merge` exits with mergeExit
     const ghFake = (prs: object[] = [defaultPr], o: { listFails?: boolean; mergeExit?: number } = {}) => {
       fs.writeFileSync(path.join(dir, 'gh-list.json'), JSON.stringify(prs));
@@ -560,6 +576,25 @@ exit 0
       expect(plog).toContain('=== exit code 0');
     });
 
+    it('on an unexpected runner error writes the queue json as failed and exits non-zero', () => {
+      fs.mkdirSync(path.join(dir, 'elsewhere'));
+      fs.mkdirSync(path.join(dir, '.agents'));
+      fs.symlinkSync(path.join(dir, 'elsewhere'), path.join(dir, '.agents/11'));
+      fakeQueue([pbiRun(11), doneStep]);
+      const r = run(['-Feature', '10'], true);
+      expect(r.status).not.toBe(0);
+      expect(queue()).toMatchObject({ state: 'failed', exitCode: 1 });
+      expect(queue().pbis.at(-1).note).toContain('runner error');
+    });
+
+    it('refuses a dangling symlinked .agents/', () => {
+      fs.symlinkSync(path.join(dir, 'nowhere'), path.join(dir, '.agents'));
+      fakeQueue([doneStep]);
+      const r = run(['-Feature', '10'], true);
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain('Refusing symlinked path');
+    });
+
     it('refuses a symlinked .agents/', () => {
       fs.mkdirSync(path.join(dir, 'elsewhere'));
       fs.symlinkSync(path.join(dir, 'elsewhere'), path.join(dir, '.agents'));
@@ -588,6 +623,8 @@ exit 0
         expect(lines()).toContain('pr merge 101 --squash --match-head-commit abc123');
         expect(outcomes()).toEqual([[11, 'merged']]);
         expect(queue().pbis[0].pr).toBe(101);
+        expect(queue().state).toBe('done');
+        expect(calls()).toHaveLength(2);
       });
 
       it('finds the PR by the PBI head branch when the ledger has no PR line', () => {
@@ -598,25 +635,94 @@ exit 0
       });
 
       it.each([
-        ['CHANGES_REQUESTED verdict', 'echo "Verdict: CHANGES_REQUESTED"', defaultPr, 'verdict is CHANGES_REQUESTED'],
-        ['a later non-APPROVE verdict wins', 'echo "Verdict: APPROVE"; echo "Verdict: CHANGES_REQUESTED"', defaultPr, 'verdict is CHANGES_REQUESTED'],
-        ['lower-case verdict', 'echo "Verdict: approve"', defaultPr, 'verdict is approve'],
-        ['prose that mentions approve', 'echo "I would APPROVE this"; echo "approve"', defaultPr, 'no Verdict: line'],
-        ['no verdict at all', 'echo ok', defaultPr, 'no Verdict: line'],
-        ['release head with a non-main base', approve, { ...defaultPr, headRefName: 'release/11-x', baseRefName: 'develop' }, 'release PR'],
-        ['main base with a non-release head', approve, { ...defaultPr, baseRefName: 'main' }, 'is not the integration branch'],
-        ['base that is not release/*', approve, { ...defaultPr, baseRefName: 'develop' }, 'is not the integration branch'],
-        ['a PR that is not open', approve, { ...defaultPr, state: 'MERGED' }, 'state MERGED'],
-        ['a PR of another PBI branch', approve, { ...defaultPr, headRefName: 'feat/99-other' }, 'no single open PR of PBI #11'],
-        ['APPROVE without any PR', approve, null, 'no single open PR'],
-      ])('does not merge: %s', (_name, out, pr, note) => {
+        ['CHANGES_REQUESTED verdict', 'echo "Verdict: CHANGES_REQUESTED"', defaultPr, 'verdict'],
+        ['a later non-APPROVE verdict wins', 'echo "Verdict: APPROVE"; echo "Verdict: CHANGES_REQUESTED"', defaultPr, 'verdict'],
+        ['lower-case verdict', 'echo "Verdict: approve"', defaultPr, 'verdict'],
+        ['APPROVE with a suffix after a dash', 'echo "Verdict: APPROVE - but 2 HIGH findings"', defaultPr, 'verdict'],
+        ['APPROVE with a trailing comment', 'echo "Verdict: APPROVE, see below"', defaultPr, 'verdict'],
+        ['prose that mentions approve', 'echo "I would APPROVE this"; echo "approve"', defaultPr, 'Verdict'],
+        ['no verdict at all', 'echo ok', defaultPr, 'Verdict'],
+        ['release head with a non-main base', approve, { ...defaultPr, headRefName: 'release/11-x', baseRefName: 'develop' }, 'release'],
+        ['main base with a non-release head', approve, { ...defaultPr, baseRefName: 'main' }, 'integration'],
+        ['base that is not release/*', approve, { ...defaultPr, baseRefName: 'develop' }, 'integration'],
+        ['a PR that is not open', approve, { ...defaultPr, state: 'MERGED' }, 'MERGED'],
+        ['a PR of another PBI branch', approve, { ...defaultPr, headRefName: 'feat/99-other' }, 'PBI #11'],
+        ['a cross-repository PR', approve, { ...defaultPr, isCrossRepository: true }, 'fork'],
+        ['unknown cross-repository status', approve, { ...defaultPr, isCrossRepository: undefined }, 'fork'],
+        ['a missing head commit', approve, { ...defaultPr, headRefOid: undefined }, 'head commit'],
+        ['failing checks', approve, { ...defaultPr, statusCheckRollup: [{ conclusion: 'SUCCESS' }, { conclusion: 'FAILURE' }] }, 'checks'],
+        ['pending checks', approve, { ...defaultPr, statusCheckRollup: [{ state: 'PENDING' }] }, 'checks'],
+        ['a PR that is not clean', approve, { ...defaultPr, mergeStateStatus: 'BLOCKED' }, 'clean'],
+        ['a conflicting PR', approve, { ...defaultPr, mergeable: 'CONFLICTING', mergeStateStatus: 'DIRTY' }, 'clean'],
+        ['APPROVE without any PR', approve, null, 'PBI #11'],
+      ])('does not merge: %s', (_name, out, pr, token) => {
         ghFake(pr ? [pr] : []);
         fakeQueue([pbiRun(11, { pr: pr ? 101 : undefined, out }), doneStep]);
         const r = run(['-Feature', '10', '-MergeApproved'], true);
         expect(r.status).toBe(0);
         expect(ghCalls()).not.toContain('pr merge');
-        expect(queue().pbis[0].outcome).toBe('done');
-        expect(queue().pbis[0].note).toContain(note);
+        expect(outcomes()).toEqual([[11, 'done']]);
+        expect(queue().state).toBe('done');
+        expect(queue().pbis[0].note).toContain(token);
+      });
+
+      it('does not merge when the child exited non-zero even with a complete ledger and APPROVE', () => {
+        ghFake();
+        fakeQueue([pbiRun(11, { pr: 101, out: `${approve}; exit 1` }), doneStep]);
+        const r = run(['-Feature', '10', '-MergeApproved'], true);
+        expect(ghCalls()).not.toContain('pr merge');
+        expect(outcomes()).toEqual([[11, 'done']]);
+        expect(queue().pbis[0].note).toContain('exit code 1');
+        expect(r.status).toBe(0); // ledger wins for the outcome, only the merge is withheld
+      });
+
+      it('does not merge when two open PRs match the PBI branch and the ledger names none', () => {
+        ghFake([defaultPr, { ...defaultPr, number: 102, headRefName: 'fix/11-again' }]);
+        fakeQueue([pbiRun(11, { out: approve }), doneStep]);
+        run(['-Feature', '10', '-MergeApproved'], true);
+        expect(ghCalls()).not.toContain('pr merge');
+        expect(queue().pbis[0].note).toContain('PBI #11');
+      });
+
+      it('does not let PBI 1 match a feat/11-x branch', () => {
+        ghFake();
+        fakeQueue([pbiRun(1, { out: approve }), 'echo "Feature #10 is done."']);
+        run(['-Feature', '10', '-MergeApproved'], true);
+        expect(ghCalls()).not.toContain('pr merge');
+      });
+
+      it('does not merge when gh pr list returns something that is not JSON', () => {
+        ghFake();
+        fs.writeFileSync(path.join(dir, 'gh-list.json'), 'not json at all');
+        fakeQueue([pbiRun(11, { pr: 101, out: approve }), doneStep]);
+        run(['-Feature', '10', '-MergeApproved'], true);
+        expect(ghCalls()).not.toContain('pr merge');
+        expect(outcomes()).toEqual([[11, 'done']]);
+      });
+
+      describe('local branch tip', () => {
+        const git = (...a: string[]) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' } });
+        const repoWithBranch = () => {
+          git('init', '-q');
+          git('commit', '-q', '--allow-empty', '-m', 'x');
+          git('branch', 'feat/11-x');
+          return git('rev-parse', 'feat/11-x').stdout.trim();
+        };
+        it('merges when the local branch tip equals the PR head', () => {
+          const oid = repoWithBranch();
+          ghFake([{ ...defaultPr, headRefOid: oid }]);
+          fakeQueue([pbiRun(11, { pr: 101, out: approve }), doneStep]);
+          run(['-Feature', '10', '-MergeApproved'], true);
+          expect(ghCalls()).toContain(`pr merge 101 --squash --match-head-commit ${oid}`);
+        });
+        it('skips the merge when the local branch tip differs from the PR head', () => {
+          repoWithBranch();
+          ghFake([{ ...defaultPr, headRefOid: 'ffffffffffffffffffffffffffffffffffffffff' }]);
+          fakeQueue([pbiRun(11, { pr: 101, out: approve }), doneStep]);
+          run(['-Feature', '10', '-MergeApproved'], true);
+          expect(ghCalls()).not.toContain('pr merge');
+          expect(queue().pbis[0].note).toContain('tip');
+        });
       });
 
       it('does not merge when the ledger PR is not among the open PRs of the PBI', () => {
@@ -653,7 +759,9 @@ exit 0
         fakeQueue([pbiRun(11, { pr: 101, out: approve }), doneStep]);
         const r = run(['-Feature', '10', '-MergeApproved'], true);
         expect(r.status).toBe(1);
+        expect(ghCalls()).toContain('pr merge 101');
         expect(outcomes()).toEqual([[11, 'failed']]);
+        expect(queue().pbis[0].note).toContain('merge');
         expect(queue().state).toBe('failed');
         expect(calls()).toHaveLength(1);
       });

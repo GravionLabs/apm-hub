@@ -25,10 +25,13 @@
   output in .agents/queue-<nr>.log and per PBI in .agents/<pbi>/run.log.
   AGENTS_LEDGER is cleared before every child (also an inherited value) and set to the PBI ledger only in the runner after
   'Next PBI: #<n>' is parsed (a running child cannot be changed); the caller's value is restored at the end.
-  -MergeApproved: after a done PBI whose last 'Verdict:' line is APPROVE, merge the PBI's open PR (found via the ledger
+  A 'Gate:' line in the output stops the queue even when the ledger has no new gate (the question must reach a human).
+  -MergeApproved: after a done PBI (child exit 0) whose last 'Verdict:' line is exactly 'Verdict: APPROVE', merge the PBI's open PR (found via the ledger
   line 'Phase pull-request: complete - <url>' and 'gh pr list', head branch must contain '/<pbi>-') with
   'gh pr merge <pr> --squash --match-head-commit <sha>'. Base must be release/*, head must not be release/*
-  (the release PR). Never after a gate, a block or a failure.
+  (the release PR), not a fork PR, mergeable and CLEAN with green checks (configure branch protection with required
+  checks so CLEAN means reviewed and tested). The reviewed commit is not recorded by the orchestrator; if the PBI
+  branch exists locally its tip must equal the PR head. Never after a gate, a block or a failure.
 .PARAMETER Issue           Issue numbers (positional), '#12' or '12'.
 .PARAMETER IssueFile       Text file with one issue number per line.
 .PARAMETER Label           Process all open issues (no PRs) with this label, ascending.
@@ -72,7 +75,9 @@ function Get-LedgerLines([string]$n) {
 }
 function Test-Complete([string[]]$Lines) { $Lines.Count -gt 0 -and $Lines[-1].Trim() -eq 'Ledger complete.' }
 function Test-NotSymlink([string]$Path) {
-  if ((Test-Path -LiteralPath $Path) -and (Get-Item -LiteralPath $Path -Force).LinkTarget) { throw "Refusing symlinked path: $Path" }
+  # Get-Item -Force (no Test-Path) also sees a dangling symlink.
+  $i = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+  if ($i -and $i.LinkTarget) { throw "Refusing symlinked path: $Path" }
 }
 function Get-Gates([string[]]$Lines) { @($Lines | Where-Object { $_ -match '\AGate:' }) }
 
@@ -115,7 +120,7 @@ if ($Feature -or $Epic) {
   function Resolve-PbiPr([string]$Pbi, [string[]]$LedgerLines) {
     $lm = Get-LastMatch $LedgerLines '\APhase pull-request: complete\b.*?/pull/(\d+)'
     $ledgerPr = if ($lm) { [long]$lm.Groups[1].Value } else { $null }
-    $json = & gh pr list --state open --limit 100 --json number,state,headRefName,baseRefName,headRefOid 2>&1 | Out-String
+    $json = & gh pr list --state open --limit 100 --json number,state,headRefName,baseRefName,headRefOid,isCrossRepository,mergeable,mergeStateStatus,statusCheckRollup 2>&1 | Out-String
     if ($LASTEXITCODE -ne 0) { return @{ Pr = $null; Note = 'not merged: gh pr list failed' } }
     try { $all = @($json | ConvertFrom-Json) } catch { return @{ Pr = $null; Note = 'not merged: gh pr list returned no JSON' } }
     $mine = @($all | Where-Object { $_.headRefName -match "(\A|/)$Pbi-" })
@@ -126,6 +131,7 @@ if ($Feature -or $Epic) {
   $callerLedger = $env:AGENTS_LEDGER
   $exit = 0; $state = 'running'; $prev = $null
   Save-Queue $state 0
+  try {
   while ($true) {
     $iterStart = Get-Date -Format o
     $gatesBefore = @{}
@@ -174,17 +180,28 @@ if ($Feature -or $Epic) {
       elseif ($gate) { $entry.outcome = 'gate'; $stop = $true; $exit = 2 }
       else { $entry.note = "run ended without 'Ledger complete.' (exit code $code)" }
       if ($entry.outcome -eq 'done' -and $MergeApproved) {
-        $vm = Get-LastMatch $out '\A\W*Verdict:?\W*([A-Za-z_]+)'
-        if (-not $vm) { $entry.note = 'not merged: no Verdict: line in the output' }
-        elseif ($vm.Groups[1].Value -cne 'APPROVE') { $entry.note = "not merged: verdict is $($vm.Groups[1].Value)" }
+        $vm = Get-LastMatch $out '\A\W*Verdict:.*'
+        if ($code -ne 0) { $entry.note = "not merged: child exit code $code" }
+        elseif (-not $vm) { $entry.note = 'not merged: no Verdict: line in the output' }
+        elseif ($vm.Value -cnotmatch '\A[\s*`>#_-]*Verdict:\s*APPROVE[\s*`_]*\z') { $entry.note = "not merged: verdict is not a plain APPROVE ($($vm.Value.Trim()))" }
         else {
           $res = Resolve-PbiPr $pbi $after
           $p = $res.Pr
-          if (-not $p) { $entry.note = $res.Note }
-          elseif ($p.state -ne 'OPEN') { $entry.note = "PR #$($p.number) not merged: state $($p.state)" }
-          elseif ($p.headRefName -match '\Arelease/') { $entry.note = "PR #$($p.number) not merged: release PR" }
-          elseif ($p.baseRefName -notmatch '\Arelease/') { $entry.note = "PR #$($p.number) not merged: base $($p.baseRefName) is not the integration branch (release/*)" }
-          elseif (-not $p.headRefOid) { $entry.note = "PR #$($p.number) not merged: head commit unknown" }
+          $why = $null
+          if (-not $p) { $why = $res.Note }
+          elseif ($p.state -ne 'OPEN') { $why = "PR #$($p.number) not merged: state $($p.state)" }
+          elseif ($p.headRefName -match '\Arelease/') { $why = "PR #$($p.number) not merged: release PR" }
+          elseif ($p.baseRefName -notmatch '\Arelease/') { $why = "PR #$($p.number) not merged: base $($p.baseRefName) is not the integration branch (release/*)" }
+          elseif ($p.isCrossRepository -ne $false -or $p.headRefName -match ':') { $why = "PR #$($p.number) not merged: fork or cross-repository PR" }
+          elseif (-not $p.headRefOid) { $why = "PR #$($p.number) not merged: head commit unknown" }
+          elseif ($p.mergeable -ne 'MERGEABLE' -or $p.mergeStateStatus -ne 'CLEAN') { $why = "PR #$($p.number) not merged: not mergeable/clean ($($p.mergeable)/$($p.mergeStateStatus))" }
+          elseif (@($p.statusCheckRollup | Where-Object { $_ -and -not (($_.conclusion -in 'SUCCESS', 'NEUTRAL', 'SKIPPED') -or ($_.state -eq 'SUCCESS')) }).Count) { $why = "PR #$($p.number) not merged: checks are not green" }
+          else {
+            # The reviewed commit is not recorded by the orchestrator: compare with the local branch tip when it exists.
+            $tip = (& git rev-parse --verify --quiet "refs/heads/$($p.headRefName)" 2>$null)
+            if ($LASTEXITCODE -eq 0 -and $tip -and $tip.Trim() -ne $p.headRefOid) { $why = "PR #$($p.number) not merged: head $($p.headRefOid) differs from local branch tip $($tip.Trim())" }
+          }
+          if ($why) { $entry.note = $why }
           else {
             $entry.pr = [long]$p.number
             & gh pr merge "$($p.number)" --squash --match-head-commit $p.headRefOid 2>&1 | Out-Host
@@ -220,7 +237,14 @@ if ($Feature -or $Epic) {
     Save-Queue $(if ($stop) { $state } else { 'running' }) $exit
     if ($stop) { break }
   }
-  [Environment]::SetEnvironmentVariable('AGENTS_LEDGER', $callerLedger)
+  } catch {
+    # unexpected error: leave a truthful cache, then fail
+    $exit = 1
+    try { $pbis.Add([pscustomobject][ordered]@{ number = $null; outcome = 'failed'; pr = $null; ledger = $null; gate = $null; started = $started; ended = (Get-Date -Format o); note = "runner error: $($_.Exception.Message)" }); Save-Queue 'failed' 1 } catch { Write-Warning "Could not write ${queueFile}: $($_.Exception.Message)" }
+    throw
+  } finally {
+    [Environment]::SetEnvironmentVariable('AGENTS_LEDGER', $callerLedger)
+  }
   foreach ($e in $pbis) { Write-Host "$(if ($e.number) { "#$($e.number)" } else { '-' }) $($e.outcome)$(if ($e.pr) { " (PR #$($e.pr))" })$(if ($e.note) { " - $($e.note)" })" }
   if ($exit -eq 2) { Write-Host "Gate on ${kind} #${nr}, queue stopped (answer it, then run the queue again): $($pbis[-1].gate)" }
   if ($exit -eq 3) { Write-Host "Nothing selectable in ${kind} #${nr}: open PBIs are held by blockers or decisions, see the output above." }
@@ -272,6 +296,7 @@ foreach ($n in $queue) {
   Test-NotSymlink $dir
   New-Item -ItemType Directory -Path $dir -Force | Out-Null
   $log = Join-Path $dir 'run.log'
+  Test-NotSymlink $log
   Write-Host "[run] #${n}: $envText"
   Add-Content -LiteralPath $log -Value "=== $(Get-Date -Format o) $envText" -Encoding utf8
   $saved = @{}
