@@ -49,6 +49,13 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     add('epicCopilotDry', ['-Epic', '#11', '-Harness', 'copilot', '-DryRun']);
     add('featureAndEpic', ['-Feature', '1', '-Epic', '2', '-DryRun']);
     add('featureWithIssue', ['5', '-Feature', '1', '-DryRun']);
+    add('advClaude', ['12', '-FixAdvisories', 'medium', '-DryRun']);
+    add('advCopilot', ['12', '-Harness', 'copilot', '-FixAdvisories', 'all:security,perf', '-DryRun']);
+    add('advOpencode', ['12', '-Harness', 'opencode', '-FixAdvisories', 'none', '-DryRun']);
+    add('advFeature', ['-Feature', '10', '-FixAdvisories', 'medium', '-DryRun']);
+    add('advEpicOpencode', ['-Epic', '11', '-Harness', 'opencode', '-FixAdvisories', 'medium', '-DryRun']);
+    add('advBad', ['12', '-FixAdvisories', 'all;rm', '-DryRun']);
+    add('advBadPolicy', ['12', '-FixAdvisories', 'high', '-DryRun']);
     add('featureWithMode', ['-Feature', '1', '-Mode', 'plan', '-DryRun']);
 
     const keys = Object.keys(defs);
@@ -162,6 +169,29 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       expect(R.modeNext.status).not.toBe(0);
       expect(R.modeNext.stderr).toContain("Cannot validate argument on parameter 'Mode'");
       expect(R.modeNext.stderr).toContain('"next"');
+    });
+  });
+
+  describe('-FixAdvisories', () => {
+    it('puts the flag before the mode word for every harness in list mode', () => {
+      expect(R.advClaude.stdout).toContain('-p "--fix-advisories medium full 12"');
+      expect(R.advCopilot.stdout).toContain('-p "--fix-advisories all:security,perf full 12"');
+      expect(R.advOpencode.stdout).toContain('"--fix-advisories none full 12"');
+    });
+
+    it('puts the flag before next in -Feature and -Epic mode', () => {
+      expect(R.advFeature.stdout).toContain('-p "--fix-advisories medium next 10"');
+      expect(R.advEpicOpencode.stdout).toContain('"--fix-advisories medium next 11"');
+    });
+
+    it('leaves the command line unchanged without the parameter', () => {
+      expect(R.default.stdout).not.toContain('--fix-advisories');
+      expect(R['adapter copilot'].stdout).not.toContain('--fix-advisories');
+    });
+
+    it.each(['advBad', 'advBadPolicy'])('rejects invalid value (%s)', (k) => {
+      expect(R[k].status).not.toBe(0);
+      expect(R[k].stderr).toContain(`Cannot validate argument on parameter 'FixAdvisories'`);
     });
   });
 
