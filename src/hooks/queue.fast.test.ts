@@ -55,11 +55,15 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     add('advFeature', ['-Feature', '10', '-FixAdvisories', 'medium', '-DryRun']);
     add('advEpicOpencode', ['-Epic', '11', '-Harness', 'opencode', '-FixAdvisories', 'medium', '-DryRun']);
     add('advBad', ['12', '-FixAdvisories', 'all;rm', '-DryRun']);
+    add('advBadUpper', ['12', '-FixAdvisories', 'ALL', '-DryRun']);
+    add('advBadDimCase', ['12', '-FixAdvisories', 'all:Sec', '-DryRun']);
+    add('advBadDimUnderscore', ['12', '-FixAdvisories', 'all:a_b', '-DryRun']);
+    add('advBadDimDigit', ['12', '-FixAdvisories', 'all:1x', '-DryRun']);
     add('advBadPolicy', ['12', '-FixAdvisories', 'high', '-DryRun']);
     add('featureWithMode', ['-Feature', '1', '-Mode', 'plan', '-DryRun']);
     add('advAll', ['12', '-FixAdvisories', 'all', '-DryRun']);
     add('advOneDim', ['12', '-FixAdvisories', 'medium:security', '-DryRun']);
-    add('advTwoDims', ['12', '-Harness', 'copilot', '-FixAdvisories', 'medium:dim_a,dim-b', '-DryRun']);
+    add('advTwoDims', ['12', '-Harness', 'copilot', '-FixAdvisories', 'medium:dim-a,dim-b', '-DryRun']);
     add('advPlan', ['12', '-Mode', 'plan', '-FixAdvisories', 'all', '-DryRun']);
     add('advEpicClaude', ['-Epic', '11', '-FixAdvisories', 'all', '-DryRun']);
     add('advFeatureCopilot', ['-Feature', '10', '-Harness', 'copilot', '-FixAdvisories', 'none', '-DryRun']);
@@ -203,7 +207,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       expect(R.advAll.status).toBe(0);
       expect(R.advAll.stdout).toContain('-p "--fix-advisories all full 12"');
       expect(R.advOneDim.stdout).toContain('-p "--fix-advisories medium:security full 12"');
-      expect(R.advTwoDims.stdout).toContain('-p "--fix-advisories medium:dim_a,dim-b full 12"');
+      expect(R.advTwoDims.stdout).toContain('-p "--fix-advisories medium:dim-a,dim-b full 12"');
     });
 
     it('keeps the flag before an explicit mode word', () => {
@@ -225,7 +229,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       expect(R[`advBad${i}`].stderr).toContain(`Cannot validate argument on parameter 'FixAdvisories'`);
     });
 
-    it.each(['advBad', 'advBadPolicy'])('rejects invalid value (%s)', (k) => {
+    it.each(['advBad', 'advBadPolicy', 'advBadUpper', 'advBadDimCase', 'advBadDimUnderscore', 'advBadDimDigit'])('rejects invalid value (%s)', (k) => {
       expect(R[k].status).not.toBe(0);
       expect(R[k].stderr).toContain(`Cannot validate argument on parameter 'FixAdvisories'`);
     });

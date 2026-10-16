@@ -18,7 +18,7 @@
 param(
   [Parameter(Mandatory)][ValidatePattern('\A[1-9][0-9]{0,9}\z')][string]$Issue,
   [ValidateSet('plan', 'implement', 'full', 'next')][string]$Mode = 'full',
-  [ValidatePattern('\A(none|medium|all)(:[A-Za-z0-9_-]+(,[A-Za-z0-9_-]+)*)?\z')][string]$FixAdvisories = '',
+  [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
   [switch]$AllowAll
 )
 $ErrorActionPreference = 'Stop'

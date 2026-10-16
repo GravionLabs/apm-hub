@@ -61,7 +61,7 @@ param(
   [switch]$TrustedOnly,
   [ValidatePattern('\A[a-z]{1,20}\z')][string]$Harness = 'claude',
   [switch]$ContinueOnError,
-  [ValidatePattern('\A(none|medium|all)(:[A-Za-z0-9_-]+(,[A-Za-z0-9_-]+)*)?\z')][string]$FixAdvisories = '',
+  [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
   [switch]$AllowAll,
   [switch]$DryRun
 )
