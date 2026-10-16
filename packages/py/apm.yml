@@ -1,5 +1,5 @@
 name: py
-version: 2.2.4
+version: 2.3.0
 description: Python skills. Implementation conventions and review rules, pytest/pytest-asyncio testing with markers and pytest-mock, project scaffolding with uv and ruff, and a curated uv CLI flag reference.
 author:
   name: Gravion

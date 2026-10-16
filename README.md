@@ -135,7 +135,7 @@ six subagents each have their own model and tool set:
 | `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary      |
 | `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                                            |
 | `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |
-| `pr-writer`    | git and `gh` only, runs `github-pull-request` for the PBI's one PR, returns `{number, url}` as JSON                  |
+| `pr-writer`    | git and `gh` only, runs `github-pull-request` for the PBI's one PR, returns `{number, url}` as JSON                   |
 
 ```powershell
 apm install GravionLabs/apm-hub/packages/core -g   # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents
