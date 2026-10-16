@@ -20,7 +20,25 @@ describe('review-lead agent contract', () => {
     expect(fm.metadata.claude.skills).toEqual(['review-fanout']);
     expect(fm.metadata.opencode.mode).toBe('subagent');
     expect(fm.metadata.opencode.permission.edit).toBe('deny');
-    expect(fm.metadata.opencode.permission.task).toBe('allow');
+  });
+
+  it('opencode permissions are narrow: git allowlist, task limited to reviewer, edit denied', () => {
+    const perm = fm.metadata.opencode.permission;
+    expect(perm.edit).toBe('deny');
+    expect(perm.task).toEqual({ '*': 'deny', reviewer: 'allow' });
+    expect(perm.bash['git *']).toBeUndefined();
+    for (const g of ['git diff*', 'git log*', 'git show*']) expect(perm.bash[g]).toBe('allow');
+    expect(perm.bash['*']).toBe('deny');
+    for (const [k, v] of Object.entries(perm.bash)) if (k.startsWith('git ')) expect(v).toBe('allow');
+    expect(Object.keys(perm.bash).filter((k) => /^git (push|commit|add|reset|checkout)/.test(k))).toEqual([]);
+  });
+
+  it('reply contract covers mode, failedDimensions, error shape, overflow and review path fallback', () => {
+    for (const key of ['"mode"', '"failedDimensions"', '"truncated"']) expect(body).toContain(key);
+    expect(body).toMatch(/Empty diff[^\n]*"error"/);
+    expect(body).toMatch(/never drop or shorten a blocking finding/);
+    expect(body).toContain('`$TMPDIR`');
+    expect(body).toContain('defaults to `HEAD`');
   });
 
   it('returns the output keys as JSON only within 300 words', () => {

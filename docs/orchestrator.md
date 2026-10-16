@@ -6,7 +6,7 @@ The `orchestrator` runs the lifecycle of one GitHub issue: plan, explore, implem
 
 ## The team
 
-Eight agents ship in the `agents` package. The orchestrator is the only one you start; it dispatches the others.
+Nine agents ship in the `agents` package. The orchestrator is the only one you start; it dispatches the others.
 
 ```mermaid
 flowchart LR
@@ -17,6 +17,7 @@ flowchart LR
     O -->|"one task"| I["implementer<br/>sonnet by default<br/>tests, commits, report file"]
     O -->|"range + issue (Claude Code)"| L["review-lead<br/>sonnet, read-only<br/>verdict + findings as JSON"]
     L -->|"via review-fanout"| R["reviewer<br/>sonnet, read-only<br/>findings as JSON"]
+    O -->|"loop: one PBI"| B["pbi-runner<br/>sonnet, Claude Code loop<br/>status, PR, summary as JSON"]
     O -->|"PBI, branch, task list"| W["pr-writer<br/>sonnet, git and gh only<br/>PR number and URL as JSON"]
     P -.->|"loads"| S1[["issue-planning"]]
     I -.->|"loads"| S2[["implementation"]]
@@ -34,6 +35,7 @@ flowchart LR
 | [`implementer`](../packages/agents/.apm/agents/implementer.agent.md) | sonnet (overridable per task) | Read, Edit, Write, Grep, Glob, Bash, Skill | report file and a reply of 15 lines or less |
 | [`reviewer`](../packages/agents/.apm/agents/reviewer.agent.md) | sonnet | Read, Grep, Glob, Bash | findings JSON for one dimension |
 | [`review-lead`](../packages/agents/.apm/agents/review-lead.agent.md) | sonnet | Agent, Read, Grep, Glob, Bash, Skill | verdict, findings list (severity, file, line, title, blocking), package and `review.json` paths; Claude Code only, other clients run `review-fanout` inline |
+| [`pbi-runner`](../packages/agents/.apm/agents/pbi-runner.agent.md) | sonnet | Agent, Read, Grep, Glob, Bash, Skill, SendMessage | `{status, pbi, pr, summary}` for one PBI, dispatched by `loop` on Claude Code |
 | [`pr-writer`](../packages/agents/.apm/agents/pr-writer.agent.md) | sonnet | Read, Grep, Glob, Bash (git, gh), Skill | `{number, url, closes}` for the one PR of the PBI |
 
 An agent exists only for a model per role, a host-enforced tool set, an output contract or a primary-agent entry point. Everything procedural is a skill: `issue-planning`, `implementation`, `review-fanout`, `code-review`, `detect-techstack` and `github-pull-request` do the work, the agents only carry the model, tools and return contract. The `orchestrator` runs `detect-techstack` inline; every other phase is a subagent, and the `planner` may start an `explorer` itself when it gets no exploration summary.

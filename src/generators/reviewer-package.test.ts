@@ -46,24 +46,33 @@ describe('reviewer without a review package (#233)', () => {
     expect(orchestrator).toContain('never after the PR phase');
   });
 
+  const step5 = (): string => {
+    const line = pipeline.split('\n').find((l) => /^5\.\s/.test(l));
+    if (!line) throw new Error('pbi-pipeline.md has no line starting with "5. "');
+    return line;
+  };
+
   it('step 5 dispatches review-lead on Claude Code and keeps the inline review-fanout elsewhere', () => {
-    const step5 = pipeline.split('\n').find((l) => /^5\.\s/.test(l))!;
-    expect(step5).toMatch(/Where a subagent may start subagents \(Claude Code[^)]*\) dispatch `review-lead` \(sonnet\)/);
-    expect(step5).toMatch(/keep only that JSON and build the review summary from `findings`/);
-    expect(step5).toMatch(/Everywhere else \(Copilot CLI, OpenCode, VS Code Copilot, no subagent tool\) run one `review-fanout` inline/);
-    expect(pipeline).toMatch(/`review-lead` sonnet; `reviewer` sonnet/);
+    expect(step5()).toMatch(/dispatch `review-lead` \(sonnet\)/);
+    expect(step5()).toMatch(/Claude Code/);
+    expect(step5()).toMatch(/build the review summary from `findings`/);
+    expect(step5()).toMatch(/Copilot CLI, OpenCode, VS Code Copilot[^)]*\) run one `review-fanout` inline/);
+    expect(pipeline).toMatch(/`review-lead` sonnet/);
+  });
+
+  it('step 5 treats a non-JSON review-lead reply as an error, records rulings and reuses an existing package', () => {
+    expect(step5()).toMatch(/not that JSON counts as `\{error\}`/);
+    expect(step5()).toContain('Ruling: review-lead retry');
+    expect(step5()).toContain('Ruling: review-lead fallback inline');
+    expect(step5()).toMatch(/reuse that package path/);
   });
 
   it('fix rounds pass the findings list and the review.json path, never the package', () => {
-    const step5 = pipeline.split('\n').find((l) => /^5\.\s/.test(l))!;
-    expect(step5).toMatch(/the blocking and selected findings as a list plus the `review\.json` path, never the package/);
+    expect(step5()).toMatch(/findings as a list plus the `review\.json` path, never the package/);
   });
 
   it('advisory policy is unchanged with review-lead', () => {
-    const step5 = pipeline.split('\n').find((l) => /^5\.\s/.test(l))!;
-    expect(step5).toContain('`--fix-advisories` apply that policy without asking');
-    expect(step5).toContain('the rest go to the PR body');
-    expect(step5).toContain('hidden by `--no-review-summary`');
+    for (const t of ['`--fix-advisories` apply that policy without asking', 'the rest go to the PR body', 'hidden by `--no-review-summary`']) expect(step5()).toContain(t);
   });
 
   it('verify-project does not fork into the reviewer agent', () => {
