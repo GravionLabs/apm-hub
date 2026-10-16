@@ -52,6 +52,8 @@ Exactly one PBI is handled per run, except in `loop`. An Epic is planned into Fe
 
 ## The pipeline
 
+The steps and per-PBI rules live in `github-issue` [`references/pbi-pipeline.md`](../packages/github/.apm/skills/github-issue/references/pbi-pipeline.md); the diagram summarises them.
+
 ```mermaid
 flowchart TD
     S0["0. Tech stack<br/>detect-techstack, inline"] --> S1["1. Read the issue<br/>issue-reader returns branch, digest<br/>and Task sub-issues with merged state"]

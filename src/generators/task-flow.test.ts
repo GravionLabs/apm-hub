@@ -7,7 +7,9 @@ import { countBodyLines } from './agent-size-validator';
 const pk = path.resolve(__dirname, '../../packages');
 const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
 
-const orchestrator = read('agents/.apm/agents/orchestrator.agent.md');
+const orchestratorAgent = read('agents/.apm/agents/orchestrator.agent.md');
+// steps 0-6 and per-PBI rules live in the pipeline reference
+const orchestrator = orchestratorAgent + '\n' + read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
 const issueReader = read('agents/.apm/agents/issue-reader.agent.md');
 const conventional = read('github/.apm/skills/github-issue/references/conventional-commits.md');
 const subIssues = read('github/.apm/skills/github-issue/references/sub-issues.md');

@@ -49,6 +49,8 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
 
    **Next open PBI of a Feature or Epic** (orchestrator `next` mode, end-line suggestion): `references/next-selection.md`; running them one after another until a gate (orchestrator `loop` mode, loop ledger, stop conditions): `references/loop-mode.md`. Orchestrator issue overview, review summary and description input (PBI created at the plan gate): `references/orchestrator-gates.md`.
 
+   **PBI pipeline** (orchestrator steps 0–6, per-PBI rules, gate points): `references/pbi-pipeline.md`.
+
    **Batch user requests** ("implement all PBIs in feature #12", "work through these issues"): collect the target issues, then process each one sequentially with the appropriate workflow above.
 
 ## Shared constraints (all workflows)

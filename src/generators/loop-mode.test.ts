@@ -88,7 +88,7 @@ describe('loop-mode reference', () => {
     expect(ledger).toContain("Add-LedgerLine.ps1 -Issue <pbi> -Line '# orchestrator ledger — issue #<pbi> — branch <branch>'");
     expect(ledger).toMatch(/header-only ledger, which resumes at step 1/);
     // the agent's step 1 creates the directory for the ledger; a pre-created one is a resume, not a conflict
-    expect(body).toMatch(/`ledger: resume` → the same-issue ledger rule/);
+    expect(read('packages/github/.apm/skills/github-issue/references/pbi-pipeline.md')).toMatch(/`ledger: resume` → the same-issue ledger rule/);
   });
 
   it('reselects by PR state, never by the ledger, and names the blocked-chain stop', () => {

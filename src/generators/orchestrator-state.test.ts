@@ -8,7 +8,9 @@ const pk = path.resolve(__dirname, '../../packages');
 const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
 const script = path.join(pk, 'shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1');
 
-const orchestrator = read('agents/.apm/agents/orchestrator.agent.md');
+const orchestratorAgent = read('agents/.apm/agents/orchestrator.agent.md');
+// steps 0-6 and per-PBI rules live in the pipeline reference
+const orchestrator = orchestratorAgent + '\n' + read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
 const issueReader = read('agents/.apm/agents/issue-reader.agent.md');
 const taskIssues = read('github/.apm/skills/github-issue/references/task-issues.md');
 const planning = read('delivery/.apm/skills/issue-planning/SKILL.md');

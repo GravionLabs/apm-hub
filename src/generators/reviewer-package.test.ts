@@ -6,7 +6,9 @@ const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
 
 const reviewer = read('agents/.apm/agents/reviewer.agent.md');
 const fanout = read('delivery/.apm/skills/review-fanout/SKILL.md');
-const orchestrator = read('agents/.apm/agents/orchestrator.agent.md');
+const orchestratorAgent = read('agents/.apm/agents/orchestrator.agent.md');
+// steps 0-6 and per-PBI rules live in the pipeline reference
+const orchestrator = orchestratorAgent + '\n' + read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
 const verify = read('delivery/.apm/skills/verify-project/SKILL.md');
 const specDim = read('delivery/.apm/skills/review-fanout/references/spec-dimension.md');
 

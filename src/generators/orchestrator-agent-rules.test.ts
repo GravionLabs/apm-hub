@@ -3,7 +3,11 @@ import * as path from 'path';
 
 const agentPath = path.resolve(__dirname, '../../packages/agents/.apm/agents/orchestrator.agent.md');
 const body = fs.readFileSync(agentPath, 'utf-8').replace(/^---\n[\s\S]*?\n---\n/, '');
-const lines = body.split('\n');
+const pipelinePath = path.resolve(__dirname, '../../packages/github/.apm/skills/github-issue/references/pbi-pipeline.md');
+const pipelineRef = fs.readFileSync(pipelinePath, 'utf-8');
+// steps 0-6 and the per-PBI rules moved to the reference; the body points to it
+const lines = (body + '\n' + pipelineRef).split('\n');
+const all = body + '\n' + pipelineRef;
 
 describe('orchestrator agent rules', () => {
   it('never allows general-purpose for a phase', () => {
@@ -32,7 +36,7 @@ describe('orchestrator agent rules', () => {
 
   it('lists pr-writer among the dispatchable subagents with a model', () => {
     expect(body).toMatch(/subagent_type: [^)]*pr-writer/);
-    expect(body).toMatch(/`pr-writer` sonnet/);
+    expect(pipelineRef).toMatch(/`pr-writer` sonnet/);
   });
 
   it('dispatches step 1 to issue-reader and keeps only its JSON', () => {
@@ -65,7 +69,15 @@ describe('orchestrator agent rules', () => {
 
   it('lists issue-reader among the dispatchable subagents on haiku', () => {
     expect(body).toMatch(/subagent_type: [^)]*issue-reader/);
-    expect(body).toMatch(/`issue-reader` haiku/);
+    expect(pipelineRef).toMatch(/`issue-reader` haiku/);
+  });
+
+  it('body points to the pipeline reference and the reference keeps every step and gate list', () => {
+    expect(body).toContain('`github-issue` `references/pbi-pipeline.md`');
+    for (const n of [0, 1, 2, 3, 4, 5, 6]) expect(pipelineRef).toMatch(new RegExp(`^${n}\\.\\s`, 'm'));
+    for (const phrase of ['Model per dispatch', 'Same-issue ledger exists', '## Gate points', 'red suite twice'.replace('red suite twice', 'Red suite twice'), 'CHANGES_REQUESTED', 'NEEDS_CONTEXT', 'Plan gate', 'Review summary'])
+      expect(pipelineRef).toContain(phrase);
+    expect(body).not.toMatch(/^\d\.\s/m);
   });
 
   it('does not claim every phase runs in a subagent', () => {
