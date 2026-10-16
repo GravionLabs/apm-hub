@@ -57,9 +57,11 @@ PBI ledger wins over a `Gate:` line, as in list mode. State is cached in `.agent
 (GitHub stays the source of truth), output in `.agents/queue-<nr>.log`. It does not use the orchestrator `loop` mode.
 
 `-MergeApproved` (default off) merges the PR of a done PBI when the last `Verdict:` line of the run is exactly
-`APPROVE`. The PR comes from the ledger line `Phase pull-request: complete — <url>` and `gh pr list`, its head branch must
+`APPROVE` (the whole line, no suffix) and the child exited 0. The PR comes from the ledger line `Phase pull-request: complete — <url>` and `gh pr list`, its head branch must
 belong to the PBI (`/<pbi>-`), its base must be `release/*` and its head must not be `release/*` (the release PR). It runs
-`gh pr merge --squash --match-head-commit <sha>`. Never after a gate, a block or a failure.
+`gh pr merge --squash --match-head-commit <sha>`. Fork PRs, PRs that are not mergeable/clean, failing checks and a
+local branch tip that differs from the PR head are skipped with a note; set branch protection with required checks.
+A `Gate:` line in the output stops the queue even without a new ledger gate. Never after a gate, a block or a failure.
 
 ## Rules
 
@@ -67,7 +69,8 @@ belong to the PBI (`/<pbi>-`), its base must be `release/*` and its head must no
   [harness flags](references/harness-flags.md) before an unattended run: Copilot CLI cannot start subagents
   headless, and the narrow Copilot set may need `-AllowAll`.
 - The narrow permission set limits accidents; it does not stop prompt injection (an allowed `gh api` or `pwsh` can
-  do a lot). `-Label` feeds issue text to the model: use it on collaborator-authored issues, or add `-TrustedOnly`.
+  do a lot, including `gh pr merge` via `gh api`). `-Label` feeds issue text to the model: use collaborator-authored
+  issues; `-TrustedOnly` filters only the issue author (not comments); positional and `-IssueFile` issues are unfiltered.
 - The runner refuses a symlinked `.agents/`.
 - Check `status <nr>` (sibling PBI) or `.agents/<nr>/progress.md` before and after a run.
 - Sequential only; `-Parallel` (worktrees) is a follow-up.

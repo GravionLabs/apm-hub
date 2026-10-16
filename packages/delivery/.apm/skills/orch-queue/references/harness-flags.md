@@ -12,13 +12,15 @@ A headless run cannot answer permission prompts, so each adapter passes a narrow
 The allowed prefixes live in `scripts/harness/allowed-commands.ps1` (one list for all adapters): `git` status, diff, log,
 show, add, commit, checkout, switch, branch, fetch, push, rev-parse, rev-list, merge-base, ls-files, remote; `gh` issue
 view/list/create/edit/close/comment, pr create/view/list/diff, repo view, api; plus pwsh, pnpm, npm, npx, node, dotnet,
-uv, python, ng. `gh pr merge`, `git reset`, `git clean` and `git rebase` are not allowed. A prefix rule cannot exclude flags,
-so `git push` also matches a force push (the git guardrails hook denies force pushes to `main` and `release/*`).
+uv, python, ng. `gh pr merge`, `git reset`, `git clean` and `git rebase` are not on the list, but that is not a guarantee:
+`gh api` stays allowed (sub-issue and blocked-by linking need it, including POST and GraphQL) and can merge a PR, `git push`
+also matches a force push (the git guardrails hook denies force pushes to `main` and `release/*`), and `pwsh` and the
+build tools run arbitrary code.
 
 ## Trade-offs
 
 - The narrow set limits accidents, it does not stop prompt injection: `gh api`, `pwsh` and the build tools can still do
-  a lot, and issue text (especially via `-Label`) reaches the model. Run on collaborator-authored issues (`-TrustedOnly`).
+  a lot, and issue text (especially via `-Label`) reaches the model. Run on collaborator-authored issues. `-TrustedOnly` filters only the issue author for `-Label`, not comments; positional issue numbers and `-IssueFile` are not filtered.
 - OpenCode denies edits under `.git/`; `.agents/` stays writable because the subagents write their reports there.
 
 - Narrow: the model cannot run commands outside the list (no `rm`, `curl`, `sudo`), at the price of stalls
