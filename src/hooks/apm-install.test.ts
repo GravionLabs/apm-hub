@@ -2,6 +2,8 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { parse } from 'yaml';
+import { countBodyLines } from '../generators/agent-size-validator';
 
 const SCRIPT = path.resolve(
   __dirname,
@@ -124,5 +126,33 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     const r = run([]);
     expect(r.json.installed).toEqual(['shared', 'github', 'delivery']);
     expect(r.json.notes.join(' ')).toContain('detect-techstack not installed');
+  });
+});
+
+describe('apm-install SKILL.md', () => {
+  const skillPath = path.resolve(__dirname, '../../packages/delivery/.apm/skills/apm-install/SKILL.md');
+  const text = fs.readFileSync(skillPath, 'utf-8');
+  const fm = parse(text.split(/^---$/m)[1]);
+
+  it('is a gated, user-invocable skill', () => {
+    expect(fm.name).toBe('apm-install');
+    expect(fm['disable-model-invocation']).toBe(true);
+    expect(fm['user-invocable']).toBe(true);
+    expect(fm.metadata['opencode/autoinvoke']).toBe('false');
+  });
+
+  it('documents the slash usage and the dry-run-first confirmation', () => {
+    expect(text).toContain('`/apm-install`');
+    expect(text).toContain('/apm-install core -g');
+    expect(text).toContain('/apm-install dry-run');
+    expect(text).toMatch(/confirmation/);
+    expect(countBodyLines(text)).toBeLessThanOrEqual(100);
+  });
+
+  it('links references that exist', () => {
+    const dir = path.dirname(skillPath);
+    for (const m of text.matchAll(/\]\((references\/[^)]+)\)/g)) {
+      expect(fs.existsSync(path.join(dir, m[1]))).toBe(true);
+    }
   });
 });
