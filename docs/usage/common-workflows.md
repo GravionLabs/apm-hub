@@ -61,6 +61,17 @@ apm install delivery@apm-hub   # pulls in github, shared and the language packag
 
    The orchestrator creates the branch per the conventional-commit type, writes testable tasks and stops at the **plan gate** for approval. Each task then goes through red → green → refactor and `verify-project`. `review-fanout` reviews the diff in parallel dimensions; blocking findings are fixed and re-reviewed. Modes: `plan`, `implement`, `full`, `next`; a description instead of an issue number creates the PBI at the plan gate. The old `/orch` prompt is deprecated (removed in 3.0.0).
 
+   For several planned issues, or a whole Feature, run the queue headless with one fresh session per issue (`queue`, package `delivery`):
+
+   ```powershell
+   pwsh <skills dir>/queue/scripts/Invoke-OrchestratorQueue.ps1 -DryRun -Mode implement 101 102 103
+   pwsh <skills dir>/queue/scripts/Invoke-OrchestratorQueue.ps1 -Feature 227
+   ```
+
+   Install a `queue` command once with `pwsh <skills dir>/queue/scripts/Install-QueueLauncher.ps1` (or `/queue install`), then call `queue -DryRun 101` from any repository directory.
+
+   Exit 0 means all done, 1 a failure, 2 a gate that needs your answer. Check `status <nr>` before and after a run. `-Parallel` is a follow-up.
+
 3. **Open the pull request**
 
    ```text

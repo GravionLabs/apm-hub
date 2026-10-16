@@ -99,8 +99,17 @@ inherits the previous one.
 claude --agent orchestrator -p "implement 123"          # headless: explore → implement → review → PR
 copilot --agent orchestrator -p "implement 123"         # GitHub Copilot CLI
 opencode run --agent orchestrator "implement 123"       # OpenCode
-for n in 101 102 103; do claude --agent orchestrator -p "implement $n"; done
+pwsh <skills dir>/queue/scripts/Invoke-OrchestratorQueue.ps1 -Mode implement 101 102 103   # queue runner, see below
 ```
+
+### Queue runner
+
+The `queue` skill (package `delivery`) replaces the shell loop: `Invoke-OrchestratorQueue.ps1` starts a fresh
+headless orchestrator per issue, reads the ledger `.agents/<issue>/progress.md` as the truth (`Ledger complete.` = done, a new
+`Gate:` line = stop with exit 2, otherwise failed with exit 1), and never answers a gate. `-Feature <nr>` / `-Epic <nr>`
+loops `next` until the Feature is done; `-MergeApproved` squash-merges APPROVE PRs into the integration branch (off by default).
+Start with `-DryRun`. Check `status <nr>` (sibling PBI; until then `.agents/<nr>/progress.md`) before and after a queue run.
+Sequential only; `-Parallel` is a follow-up. Permissions per harness: the skill's `references/harness-flags.md`.
 
 A headless run cannot answer permission prompts: allow `git`, `gh`, the build and test commands and
 edits for the project beforehand (Claude: `permissions.allow` in the project settings). OpenCode needs nothing
@@ -157,7 +166,7 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
 ## 2. Without the orchestrator: one session per issue
 
 - `claude "/github-issue 123"` — a fresh session per issue; `/clear` before the next one.
-- Batch: `for n in 101 102 103; do claude -p "/github-issue $n"; done` — each issue in its own headless session.
+- Batch: `pwsh <skills dir>/queue/scripts/Invoke-OrchestratorQueue.ps1 -Mode implement 101 102 103` — each issue in its own headless session (see [Queue runner](#queue-runner)).
 - Parallel issues: `claude --worktree <name>` (own checkout and context per worktree); the
   `implementer` agent accepts `isolation: worktree` for the same effect inside the orchestrator.
 - Copilot: a new chat per task in VS Code; `/clear` in the CLI. OpenCode: `/new`.
