@@ -6,7 +6,7 @@ The `orchestrator` runs the lifecycle of one GitHub issue: plan, explore, implem
 
 ## The team
 
-Seven agents ship in the `agents` package. The orchestrator is the only one you start; it dispatches the others.
+Nine agents ship in the `agents` package. The orchestrator is the only one you start; it dispatches the others.
 
 ```mermaid
 flowchart LR
@@ -15,7 +15,9 @@ flowchart LR
     O -->|"title and digest"| E["explorer<br/>haiku, read-only<br/>summary of 300 words or less"]
     O -->|"issue + stack + summary"| P["planner<br/>inherit model, read-only<br/>writes plan.json"]
     O -->|"one task"| I["implementer<br/>sonnet by default<br/>tests, commits, report file"]
-    O -->|"via review-fanout"| R["reviewer<br/>sonnet, read-only<br/>findings as JSON"]
+    O -->|"range + issue (Claude Code)"| L["review-lead<br/>sonnet, read-only<br/>verdict + findings as JSON"]
+    L -->|"via review-fanout"| R["reviewer<br/>sonnet, read-only<br/>findings as JSON"]
+    O -->|"loop: one PBI"| B["pbi-runner<br/>sonnet, Claude Code loop<br/>status, PR, summary as JSON"]
     O -->|"PBI, branch, task list"| W["pr-writer<br/>sonnet, git and gh only<br/>PR number and URL as JSON"]
     P -.->|"loads"| S1[["issue-planning"]]
     I -.->|"loads"| S2[["implementation"]]
@@ -32,6 +34,8 @@ flowchart LR
 | [`planner`](../packages/agents/.apm/agents/planner.agent.md) | inherit | Read, Grep, Glob, Bash, Skill, Agent | path of `plan.json`, summary, open question count |
 | [`implementer`](../packages/agents/.apm/agents/implementer.agent.md) | sonnet (overridable per task) | Read, Edit, Write, Grep, Glob, Bash, Skill | report file and a reply of 15 lines or less |
 | [`reviewer`](../packages/agents/.apm/agents/reviewer.agent.md) | sonnet | Read, Grep, Glob, Bash | findings JSON for one dimension |
+| [`review-lead`](../packages/agents/.apm/agents/review-lead.agent.md) | sonnet | Agent, Read, Grep, Glob, Bash, Skill | verdict, findings list (severity, file, line, title, blocking), package and `review.json` paths; Claude Code only, other clients run `review-fanout` inline |
+| [`pbi-runner`](../packages/agents/.apm/agents/pbi-runner.agent.md) | sonnet | Agent, Read, Grep, Glob, Bash, Skill, SendMessage | `{status, pbi, pr, summary}` for one PBI, dispatched by `loop` on Claude Code |
 | [`pr-writer`](../packages/agents/.apm/agents/pr-writer.agent.md) | sonnet | Read, Grep, Glob, Bash (git, gh), Skill | `{number, url, closes}` for the one PR of the PBI |
 
 An agent exists only for a model per role, a host-enforced tool set, an output contract or a primary-agent entry point. Everything procedural is a skill: `issue-planning`, `implementation`, `review-fanout`, `code-review`, `detect-techstack` and `github-pull-request` do the work, the agents only carry the model, tools and return contract. The `orchestrator` runs `detect-techstack` inline; every other phase is a subagent, and the `planner` may start an `explorer` itself when it gets no exploration summary.
@@ -77,7 +81,7 @@ flowchart TD
 2. **Explore.** The `explorer` gets the title and digest and summarizes the affected code in 300 words or less; the summary is appended to `context.md`.
 3. **Plan.** The `planner` runs `issue-planning` and writes `.agents/<issue>/plan.json`. Only the path, a summary and the open question count enter the orchestrator's context. You approve at the plan gate. Existing Task sub-issues are used as they are, with no planner and no `plan.json`.
 4. **Implement.** One `implementer` per task, in blocking order, all on the PBI's single branch. Each gets the task, the branch and the path of `context.md`, not the pasted stack and exploration text, so a run with five tasks and two fix rounds emits them once instead of seven times.
-5. **Review.** One `review-fanout` over everything the run changed.
+5. **Review.** One `review-fanout` over everything the run changed. On Claude Code the orchestrator dispatches `review-lead`, which runs `review-fanout` in its own context and returns the verdict and a findings list; elsewhere the orchestrator runs `review-fanout` inline.
 6. **Pull request.** The `pr-writer` runs `github-pull-request` in its own context, into the integration branch, and returns the PR number and URL as JSON; the orchestrator records the URL and never merges. Before this the PR phase ran inline, at the moment the context was largest.
 
 What enters the orchestrator's context: the stack JSON and the explorer summary once each, the reader's JSON (digest and `task` sub-issue numbers, never the issue body), the plan path and summary, each implementer's reply, the review verdict and finding lines, and the PR URL. What stays outside: files read, `context.md` once written, `plan.json`, the diff, logs, task reports and the review package. Step wording: [orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md); planning: [issue-planning](../packages/delivery/.apm/skills/issue-planning/SKILL.md); review: [review-fanout](../packages/delivery/.apm/skills/review-fanout/SKILL.md); branch choice: [release-branches.md](../packages/github/.apm/skills/github-issue/references/release-branches.md).
@@ -92,6 +96,7 @@ sequenceDiagram
     participant E as explorer
     participant P as planner
     participant I as implementer
+    participant L as review-lead
     participant R as reviewer
     participant W as pr-writer
     U->>O: full 123
@@ -109,8 +114,10 @@ sequenceDiagram
         O->>I: Task issue, branch, path of context.md, model hint, report path
         I-->>O: Status DONE, 15 lines or less
     end
-    O->>R: via review-fanout, one reviewer per dimension, in parallel
-    R-->>O: findings JSON, verdict
+    O->>L: range, issue, path of context.md (inline review-fanout where nesting is unsupported)
+    L->>R: one reviewer per dimension, in parallel
+    R-->>L: findings JSON
+    L-->>O: verdict, findings list, review.json path
     O->>U: review summary, pick advisories to fix
     O->>W: PBI, branch, task list, unfixed advisories
     W-->>O: PR number and URL as JSON
@@ -159,9 +166,11 @@ A bug (label `bug`, type `Bug` or a `fix` title prefix) makes the implementer lo
 
 `review-fanout` classifies the diff mechanically, then dispatches one `reviewer` per dimension in a single parallel batch: `correctness`, `security`, `conventions`, `tests` and `spec`. A second pass tries to disprove each CRITICAL or HIGH finding. The diff goes to a package file on disk and never enters the orchestrator's context.
 
+Where a subagent may start subagents (Claude Code, see [Clients](#clients)) the orchestrator dispatches `review-lead` (sonnet) with the range, the issue number and the path of `context.md`. It runs `review-fanout` in its own context and replies with JSON only: `verdict`, `incomplete`, a `findings` list and the paths of the package and of `review.json`. The review summary is built from `findings`. On Copilot CLI, OpenCode and VS Code Copilot, where nesting is not documented or off by default, and in the inline `/orchestrator` command, the orchestrator runs `review-fanout` itself as before. Fix rounds hand the implementer the findings list and the `review.json` path, never the package. The advisory choice, `--no-review-summary` and `--fix-advisories` behave the same either way.
+
 ```mermaid
 flowchart TD
-    A["review-fanout<br/>reviewers in parallel"] --> B["Dedupe, then verify<br/>CRITICAL and HIGH findings"]
+    A["review-lead (Claude Code) or inline<br/>review-fanout, reviewers in parallel"] --> B["Dedupe, then verify<br/>CRITICAL and HIGH findings"]
     B --> C{"Verdict"}
     C -->|"APPROVE"| D["Review summary<br/>one line per finding"]
     C -->|"CHANGES_REQUESTED"| D
@@ -373,7 +382,7 @@ The last line is a fixed closing line saying the ledger is complete and that the
 
 ## Models and cost
 
-- Claude Code passes `model` on every `Agent` call. `issue-reader` and `explorer` run on haiku, `planner` inherits, `implementer` defaults to sonnet and gets `inherit` or stronger for integration and design tasks, `reviewer` runs on sonnet.
+- Claude Code passes `model` on every `Agent` call. `issue-reader` and `explorer` run on haiku, `planner` inherits, `implementer` defaults to sonnet and gets `inherit` or stronger for integration and design tasks, `review-lead` and `reviewer` run on sonnet.
 - Runner mode (Claude Code loop): `pbi-runner` is pinned to sonnet, `planner` and verify run on opus, so the primary may run on haiku or sonnet. Primary growth per PBI is not yet measured; target under 3k tokens, procedure and the `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` requirement (3) in [Looping with `loop`](#looping-with-loop).
 - A cheaper model that needs two or three times the turns costs more. Sonnet is the floor for prose-only tasks.
 - OpenCode reads the model from the agent file; Copilot has no override.
@@ -388,7 +397,7 @@ The last line is a fixed closing line saying the ledger is complete and that the
 | VS Code Copilot | agent picker | `runSubagent` | off by default (`chat.subagents.allowInvocationsFromSubagents`), then at most 5 levels | no, the clarifying-question tool is unavailable to subagents | no, each invocation is stateless |
 | OpenCode | `opencode --agent orchestrator` | `task` with the agent name (`permission.task`) | not documented | `permission.question` exists; behaviour inside a subagent not documented | not documented |
 
-Checked 2026-10-15 against [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents.md), [Copilot CLI features](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/comparing-cli-features), [VS Code subagents](https://code.visualstudio.com/docs/copilot/agents/subagents) and [OpenCode permissions](https://opencode.ai/docs/permissions/); "not documented" means neither a doc statement nor a recorded test run exists yet. The orchestrator dispatches one level down on every client and runs a phase inline only when the session has no subagent tool at all (the inline `/orchestrator` command). Anything that needs a subagent to start subagents, or to be resumed, is Claude Code only until a cell above changes.
+Checked 2026-10-15 against [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents.md), [Copilot CLI features](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/comparing-cli-features), [VS Code subagents](https://code.visualstudio.com/docs/copilot/agents/subagents) and [OpenCode permissions](https://opencode.ai/docs/permissions/); "not documented" means neither a doc statement nor a recorded test run exists yet. The orchestrator dispatches one level down on every client and runs a phase inline only when the session has no subagent tool at all (the inline `/orchestrator` command). Anything that needs a subagent to start subagents, or to be resumed, is Claude Code only until a cell above changes; that includes `review-lead`, so the other clients keep the inline `review-fanout`.
 
 ### Runner checks (Claude Code)
 

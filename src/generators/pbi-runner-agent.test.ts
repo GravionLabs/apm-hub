@@ -52,6 +52,7 @@ describe('pbi-runner agent contract', () => {
       'final verify opus',
       'implementer` sonnet',
       'fix round 3 opus',
+      'review-lead` sonnet',
       'reviewer` sonnet',
       'pr-writer` sonnet',
     ]) {
@@ -63,7 +64,7 @@ describe('pbi-runner agent contract', () => {
   // `name model` pairs of rule 2 (runner) and of the pin sentence in the reference
   const pins = (text: string) => {
     const out: Record<string, string> = {};
-    for (const m of text.matchAll(/(?:`(issue-reader|explorer|planner|implementer|reviewer|pr-writer)`|(final verify|fix round 3)) (haiku|sonnet|opus)/g)) {
+    for (const m of text.matchAll(/(?:`(issue-reader|explorer|planner|implementer|review-lead|reviewer|pr-writer)`|(final verify|fix round 3)) (haiku|sonnet|opus)/g)) {
       out[m[1] ?? m[2]] = m[3];
     }
     return out;
@@ -71,7 +72,7 @@ describe('pbi-runner agent contract', () => {
 
   it('names a model for every subagent it dispatches', () => {
     const rule2 = body.split('\n').find((l) => l.startsWith('2. '))!;
-    const dispatched = ['issue-reader', 'explorer', 'planner', 'implementer', 'reviewer', 'pr-writer', 'final verify', 'fix round 3'];
+    const dispatched = ['issue-reader', 'explorer', 'planner', 'implementer', 'review-lead', 'reviewer', 'pr-writer', 'final verify', 'fix round 3'];
     expect(Object.keys(pins(rule2)).sort()).toEqual([...dispatched].sort());
   });
 
@@ -80,13 +81,13 @@ describe('pbi-runner agent contract', () => {
     const sentence = pipelineRef.match(/pins `planner`[^.]*\./)![0];
     const refPins: Record<string, string> = {};
     // each name takes the model of the next "to <model>" after it
-    for (const m of sentence.matchAll(/`(issue-reader|explorer|planner|implementer|reviewer|pr-writer)`|final verify|fix round 3/g)) {
+    for (const m of sentence.matchAll(/`(issue-reader|explorer|planner|implementer|review-lead|reviewer|pr-writer)`|final verify|fix round 3/g)) {
       const model = sentence.slice(m.index).match(/ to (haiku|sonnet|opus)/)![1];
       refPins[m[1] ?? m[0]] = model;
     }
     const runner = pins(rule2);
     for (const [k, v] of Object.entries(refPins)) expect(runner[k]).toBe(v);
-    expect(Object.keys(refPins)).toHaveLength(8);
+    expect(Object.keys(refPins)).toHaveLength(9);
   });
 
   it('maps reader and pr-writer errors to FAILED and leaves a headless gate unresumed', () => {
