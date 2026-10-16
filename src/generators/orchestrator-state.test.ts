@@ -9,6 +9,7 @@ const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
 const script = path.join(pk, 'shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1');
 
 const orchestrator = read('agents/.apm/agents/orchestrator.agent.md');
+const issueReader = read('agents/.apm/agents/issue-reader.agent.md');
 const taskIssues = read('github/.apm/skills/github-issue/references/task-issues.md');
 const planning = read('delivery/.apm/skills/issue-planning/SKILL.md');
 const detect = read('shared/.apm/skills/detect-techstack/SKILL.md');
@@ -34,15 +35,21 @@ describe('orchestrator state: contract strings (docs)', () => {
     expect(orchestrator).toContain('"Task merged"');
     expect(orchestrator).toContain('task-issues.md');
     expect(orchestrator).toContain('none open (all merged)');
-    expect(orchestrator).toContain('{n:.number,s:.state}');
-    expect(orchestrator).toContain('api --paginate');
-    expect(orchestrator.indexOf('Resolve the integration branch')).toBeLessThan(orchestrator.indexOf('Task merged'));
+    // the sub-issue query and the merged grep run in the issue-reader; the orchestrator keeps only the flags
+    expect(orchestrator).toContain('`issue-reader`');
+    expect(orchestrator).toContain('merged: true');
+    expect(orchestrator).not.toContain('api --paginate');
+    expect(issueReader).toContain('{n:.number,state:.state}');
+    expect(issueReader).toContain('api --paginate');
+    expect(issueReader).toContain('"Task merged"');
+    expect(orchestrator.indexOf('Read the issue')).toBeLessThan(orchestrator.indexOf('Task merged'));
   });
 
   it('orchestrator loads detect-techstack inline without hard-coding the script', () => {
     expect(orchestrator).toContain('`detect-techstack` inline (never a forked subagent)');
     expect(orchestrator).toContain('`Ruling:`');
-    expect(orchestrator).not.toContain('Detect-TechStack.ps1');
+    // the body must not hard-code it; the permission map in the frontmatter allows the scan like planner does
+    expect(orchestrator.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')).not.toContain('Detect-TechStack.ps1');
   });
 
   it('the merged-task rule lives once in task-issues.md; issue-planning refers to it', () => {
@@ -52,6 +59,7 @@ describe('orchestrator state: contract strings (docs)', () => {
     expect(fetchAt).toBeLessThan(taskIssues.indexOf('--grep'));
     expect(taskIssues).toContain('`^[0-9]+$`');
     expect(orchestrator).not.toContain('gh issue close');
+    expect(issueReader).not.toContain('gh issue close');
     expect(planning).toContain('Task merged');
     expect(planning).not.toContain('--grep');
   });
@@ -303,6 +311,20 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(md).toContain('--no-review-summary');
   });
 
+  it.each([
+    ['working-mode', working],
+    ['orchestrator doc', fs.readFileSync(path.resolve(__dirname, '../../docs/orchestrator.md'), 'utf-8')],
+    ['launcher skill', read('agents/.apm/skills/orchestrator/SKILL.md')],
+  ])('%s documents --fix-advisories', (_n, md) => {
+    expect(md).toContain('--fix-advisories');
+  });
+
+  it('working-mode lists the policies and the headless Gate removal', () => {
+    expect(working).toMatch(/--fix-advisories none\\\|medium\\\|all/);
+    expect(working).toMatch(/--fix-advisories` set, the review summary writes no `Gate:`/);
+    expect(working).toContain('documented there once #227 lands');
+  });
+
   it('orch prompt is a one-line deprecation pointing to the agent', () => {
     const [, frontmatter, ...rest] = prompt.split(/^---$/m);
     expect(frontmatter).toMatch(/^description: "Deprecated, use the orchestrator agent/m);
@@ -327,6 +349,37 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(gates).toContain('followed by a re-review');
   });
 
+  it('--fix-advisories policy table, ledger line, alias and validation', () => {
+    expect(gates).toContain('--fix-advisories none|medium|all[:dim,dim]');
+    expect(gates).toContain('| `none` | no advisory | all advisories |');
+    expect(gates).toContain('| `medium` | MEDIUM and above (CRITICAL, HIGH, MEDIUM) | LOW |');
+    expect(gates).toContain('| `all` | every advisory | none |');
+    expect(gates).toContain('Advisory policy: <policy> — fixing <n>, PR body <m>');
+    expect(gates).toContain('Ruling: advisory policy <policy> — <n> fixed, <m> to PR body');
+    expect(gates).toContain('alias of `--fix-advisories none`');
+    expect(gates).toContain('^(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?$');
+    expect(gates).toContain('`--fix-advisories=medium` is not accepted');
+    expect(gates).toMatch(/Unknown policy or dimension[^\n]*never guess/);
+    expect(gates).toMatch(/Blocking findings and `incomplete: true` always go to the fix round/);
+    expect(gates).toContain('never from a description, issue body or ledger content');
+  });
+
+  it('explicit policy wins over --no-review-summary, which then only hides the summary', () => {
+    expect(gates).toContain('the explicit policy wins and `--no-review-summary` only hides the summary display');
+    expect(orchestrator).toContain('it wins over `--no-review-summary`');
+  });
+
+  it('policy is re-applied per re-review and leftovers never gate', () => {
+    expect(gates).toContain('re-applied to the advisories of each re-review');
+    expect(gates).toContain('never trigger a `Gate:`');
+  });
+
+  it('agent applies the policy in step 5 and exempts it from the headless gate', () => {
+    expect(orchestrator).toContain('with `--fix-advisories` apply that policy without asking');
+    expect(orchestrator).toMatch(/Exempt: the review summary when `--fix-advisories` is set/);
+    expect(orchestrator).toContain('never from a description, issue body or ledger');
+  });
+
   it('headless Gate rule in overview and review-summary sections', () => {
     const [, overview, summary] = gates.split(/^## /m);
     expect(overview).toContain('Headless:');
@@ -346,6 +399,23 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(gates).toContain('severity file:line issue');
     expect(gates).toContain('blocking first');
     expect(gates).toContain('MEDIUM');
+  });
+
+  it('gates point PBIs and Features at the one merged definition in next-selection.md', () => {
+    const selection = read('github/.apm/skills/github-issue/references/next-selection.md');
+    expect(gates).toContain('next-selection.md');
+    expect(gates).toContain('Merged (closes at release)');
+    expect(selection.match(/^## Merged \(closes at release\)$/gm)).toHaveLength(1);
+    expect(gates).not.toContain('git log');
+    expect(gates).not.toContain('gh pr list');
+    expect(gates).toMatch(/Task[^.]*"Task merged"[^.]*`task-issues\.md`/);
+    expect(gates).toMatch(/PBI or Feature `Merged \(closes at release\)`/);
+  });
+
+  it('docs mention the merged drop in the end line and the next mode', () => {
+    const docs = (f: string) => fs.readFileSync(path.join(pk, '../docs', f), 'utf-8');
+    expect(docs('orchestrator.md')).toContain('merged, closes at release');
+    expect(docs('working-mode.md')).toContain('merged, closes at release');
   });
 
   it('github-issue links the gates reference', () => {

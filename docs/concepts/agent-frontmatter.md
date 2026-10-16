@@ -83,8 +83,10 @@ the fix loop instead of retrying the same model.
   The `implementer` writes its full report to `.agents/<issue>/task-<n>-report.md` and replies in
   ≤ 15 lines: `Status: DONE|DONE_WITH_CONCERNS|BLOCKED|NEEDS_CONTEXT`, commits, one test line,
   concerns, report path. Detail lives in the file, not in the caller's context.
-- Name the client mechanisms where they differ (Claude `Agent`, OpenCode `task`, Copilot
-  `runSubagent`) and the inline fallback for clients without subagents.
+- Name the client mechanisms where they differ (Claude `Agent`, OpenCode and Copilot CLI `task`,
+  VS Code Copilot `runSubagent`) and the inline fallback for a session without a subagent tool.
+  Do not design an agent around a subagent that starts subagents or that is resumed later: the
+  [client matrix](../orchestrator.md#clients) shows that only Claude Code documents both.
 - Delegate by agent name; never duplicate a skill's body in an agent.
 
 ## Enforcement
