@@ -80,6 +80,12 @@ describe('orchestrator agent rules', () => {
     expect(body).not.toMatch(/^\d\.\s/m);
   });
 
+  it('lists review-lead among the dispatchable subagents on sonnet', () => {
+    expect(body).toMatch(/subagent_type: [^)]*review-lead/);
+    expect(body).toMatch(/`review-lead` in step 5/);
+    expect(pipelineRef).toMatch(/`review-lead` sonnet/);
+  });
+
   it('does not claim every phase runs in a subagent', () => {
     expect(body).not.toMatch(/every phase runs in a subagent/i);
   });

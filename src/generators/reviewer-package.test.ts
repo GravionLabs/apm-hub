@@ -9,6 +9,7 @@ const fanout = read('delivery/.apm/skills/review-fanout/SKILL.md');
 const orchestratorAgent = read('agents/.apm/agents/orchestrator.agent.md');
 // steps 0-6 and per-PBI rules live in the pipeline reference
 const orchestrator = orchestratorAgent + '\n' + read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
+const pipeline = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
 const verify = read('delivery/.apm/skills/verify-project/SKILL.md');
 const specDim = read('delivery/.apm/skills/review-fanout/references/spec-dimension.md');
 
@@ -43,6 +44,26 @@ describe('reviewer without a review package (#233)', () => {
   it('orchestrator dispatches reviewer only via review-fanout, never after the PR', () => {
     expect(orchestrator).toMatch(/only from `review-fanout`, only after that package file exists/);
     expect(orchestrator).toContain('never after the PR phase');
+  });
+
+  it('step 5 dispatches review-lead on Claude Code and keeps the inline review-fanout elsewhere', () => {
+    const step5 = pipeline.split('\n').find((l) => /^5\.\s/.test(l))!;
+    expect(step5).toMatch(/Where a subagent may start subagents \(Claude Code[^)]*\) dispatch `review-lead` \(sonnet\)/);
+    expect(step5).toMatch(/keep only that JSON and build the review summary from `findings`/);
+    expect(step5).toMatch(/Everywhere else \(Copilot CLI, OpenCode, VS Code Copilot, no subagent tool\) run one `review-fanout` inline/);
+    expect(pipeline).toMatch(/`review-lead` sonnet; `reviewer` sonnet/);
+  });
+
+  it('fix rounds pass the findings list and the review.json path, never the package', () => {
+    const step5 = pipeline.split('\n').find((l) => /^5\.\s/.test(l))!;
+    expect(step5).toMatch(/the blocking and selected findings as a list plus the `review\.json` path, never the package/);
+  });
+
+  it('advisory policy is unchanged with review-lead', () => {
+    const step5 = pipeline.split('\n').find((l) => /^5\.\s/.test(l))!;
+    expect(step5).toContain('`--fix-advisories` apply that policy without asking');
+    expect(step5).toContain('the rest go to the PR body');
+    expect(step5).toContain('hidden by `--no-review-summary`');
   });
 
   it('verify-project does not fork into the reviewer agent', () => {
