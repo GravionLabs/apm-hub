@@ -22,19 +22,21 @@ describe('review-lead agent contract', () => {
     expect(fm.metadata.opencode.permission.edit).toBe('deny');
   });
 
-  it('opencode permissions are narrow: git allowlist, task limited to reviewer, edit denied', () => {
+  it('opencode permissions are a minimal read-only stub and the body says Claude Code only', () => {
     const perm = fm.metadata.opencode.permission;
     expect(perm.edit).toBe('deny');
     expect(perm.task).toEqual({ '*': 'deny', reviewer: 'allow' });
-    expect(perm.bash['git *']).toBeUndefined();
-    for (const g of ['git diff*', 'git log*', 'git show*']) expect(perm.bash[g]).toBe('allow');
     expect(perm.bash['*']).toBe('deny');
-    for (const [k, v] of Object.entries(perm.bash)) if (k.startsWith('git ')) expect(v).toBe('allow');
-    expect(Object.keys(perm.bash).filter((k) => /^git (push|commit|add|reset|checkout)/.test(k))).toEqual([]);
+    const allowed = Object.keys(perm.bash).filter((k) => perm.bash[k] === 'allow').sort();
+    expect(allowed).toEqual(['git diff *', 'git log *', 'git merge-base *', 'git rev-parse *', 'git show *']);
+    for (const k of allowed) expect(k).toMatch(/^git [a-z-]+ \*$/);
+    expect(JSON.stringify(perm)).not.toMatch(/pwsh|"gh |"git \*"|"\*": "allow"/);
+    expect(body).toMatch(/Claude Code only/);
+    expect(body).toMatch(/run as a `reviewer` dispatch/);
   });
 
   it('reply contract covers mode, failedDimensions, error shape, overflow and review path fallback', () => {
-    for (const key of ['"mode"', '"failedDimensions"', '"truncated"']) expect(body).toContain(key);
+    for (const key of ['"mode"', '"failedDimensions"', '"truncated"', '"step"']) expect(body).toContain(key);
     expect(body).toMatch(/Empty diff[^\n]*"error"/);
     expect(body).toMatch(/never drop or shorten a blocking finding/);
     expect(body).toContain('`$TMPDIR`');
@@ -54,7 +56,7 @@ describe('review-lead agent contract', () => {
   it('takes range, issue and context.md and dispatches only reviewer and the verify sub-agent', () => {
     expect(body).toContain('`<base>..<head>`');
     expect(body).toContain('context.md');
-    expect(body).toMatch(/only agents you dispatch are `reviewer`.*verify sub-agent/);
+    expect(body).toMatch(/only agents you dispatch are `reviewer`.*verify step/);
     expect(body).toMatch(/never `implementer`, `pr-writer` or another `review-lead`/);
     expect(body).toContain('`review-fanout`');
   });

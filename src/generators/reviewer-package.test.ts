@@ -57,6 +57,7 @@ describe('reviewer without a review package (#233)', () => {
     expect(step5()).toMatch(/Claude Code/);
     expect(step5()).toMatch(/build the review summary from `findings`/);
     expect(step5()).toMatch(/Copilot CLI, OpenCode, VS Code Copilot[^)]*\) run one `review-fanout` inline/);
+    expect(step5()).toContain('{verdict, mode, incomplete, failedDimensions, findings:');
     expect(pipeline).toMatch(/`review-lead` sonnet/);
   });
 
