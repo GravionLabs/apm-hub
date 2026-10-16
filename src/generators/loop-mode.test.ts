@@ -45,7 +45,7 @@ describe('orchestrator agent: loop mode', () => {
     expect(loopRule).toMatch(/repeats `next`/);
     expect(loopRule).toContain(DONE_LINE);
     expect(loopRule).toContain(LEDGER);
-    expect(loopRule.length).toBeLessThan(560);
+    expect(loopRule.length).toBeLessThan(500);
   });
 
   it('names the stop conditions and the gate pause inside the loop rule', () => {
@@ -180,6 +180,13 @@ describe('loop-mode reference: runner mode', () => {
     expect(runner).toContain('`Loop: stopped — runner blocked`');
     expect(runner).toContain('`Loop: stopped — runner failed`');
     for (const reason of RUNNER_REASONS) expect(ledger).toContain(`\`${reason}\``);
+  });
+
+  it('pins the runner to sonnet and detects a missing question tool by trying AskUserQuestion', () => {
+    expect(runner).toContain('`subagent_type: pbi-runner`, `model: sonnet`');
+    expect(runner).toMatch(/trying `AskUserQuestion` on the first `GATE`/);
+    expect(runner).toMatch(/The runner is not resumed/);
+    expect(runner).toMatch(/`Gate:` without a later `Ruling:` as stopped/);
   });
 
   it('caps at 10 PBIs in runner mode and 3 inline, the context warning still stops', () => {
