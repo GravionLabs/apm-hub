@@ -51,6 +51,8 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    apm marketplace add GravionLabs/apm-hub
    ```
 
+   Or let the `/apm-install` skill detect your stack and install the matching packages.
+
 3. Install individual packages:
    ```bash
    apm install ng@apm-hub
