@@ -2,7 +2,7 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { AGENT, INSTALLER, hasPwsh, posix, runBatch, type BatchCase, type BatchResult } from './queue.helpers';
+import { AGENT, INSTALLER, hasPwsh, isolatedEnv, posix, runBatch, type BatchCase, type BatchResult } from './queue.helpers';
 
 // Fast project: validation, -DryRun, launcher text and the agent file. The -DryRun/validation cases of
 // Invoke-OrchestratorQueue.ps1 run batched in ONE pwsh process (queue-batch.ps1), each case in its own
@@ -58,7 +58,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       fs.mkdirSync(dir);
       dirOf[k] = dir;
       defs[k].setup?.(dir);
-      return { args: defs[k].args, cwd: dir, path: defs[k].withBin ? `${bin}${path.delimiter}${process.env.PATH}` : undefined };
+      return { key: k, args: defs[k].args, cwd: dir, path: defs[k].withBin ? `${bin}${path.delimiter}${process.env.PATH}` : undefined };
     });
     const results = runBatch(cases);
     R = Object.fromEntries(keys.map((k, i) => [k, results[i]]));
@@ -114,12 +114,15 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     });
 
     it.each([[['abc']], [['0']], [['1;rm']], [[]]])('rejects invalid input %j', (args) => {
-      expect(R[`invalid ${JSON.stringify(args)}`].status).not.toBe(0);
+      const r = R[`invalid ${JSON.stringify(args)}`];
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain(args.length ? `Cannot validate argument on parameter 'Issue'` : 'No issues: pass issue numbers');
     });
 
     it('rejects a bad line in -IssueFile and a missing file', () => {
       expect(R.badLine.stderr).toContain('q.txt line 2');
       expect(R.missingFile.status).not.toBe(0);
+      expect(R.missingFile.stderr).toContain('Issue file not found: none.txt');
     });
 
     it('prints the narrow Copilot command, quoted for the shell, and --allow-all-tools only with -AllowAll', () => {
@@ -157,6 +160,8 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     it('fails clearly for an unknown harness adapter and an invalid mode', () => {
       expect(R.unknownHarness.stderr).toContain("No adapter for harness 'nope'");
       expect(R.modeNext.status).not.toBe(0);
+      expect(R.modeNext.stderr).toContain("Cannot validate argument on parameter 'Mode'");
+      expect(R.modeNext.stderr).toContain('"next"');
     });
   });
 
@@ -166,12 +171,16 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       expect(r.status).toBe(0);
       expect(r.stdout).toContain('[dry-run] Feature #10: claude --agent orchestrator -p "next 10" --allowedTools ');
       expect(fs.existsSync(path.join(dirOf.featureDry, '.agents'))).toBe(false);
+      // nothing leaked into the test process' own working directory either
+      for (const f of ['queue-10.json', 'queue-11.json']) expect(fs.existsSync(path.join(process.cwd(), '.agents', f))).toBe(false);
       expect(R.epicCopilotDry.stdout).toContain('copilot -p "next 11"');
     });
 
     it('rejects -Feature with -Epic, issue numbers or an explicit -Mode', () => {
       expect(R.featureAndEpic.status).not.toBe(0);
+      expect(R.featureAndEpic.stderr).toContain('Pass either -Feature or -Epic');
       expect(R.featureWithIssue.status).not.toBe(0);
+      expect(R.featureWithIssue.stderr).toContain('cannot be combined with issue numbers');
       const r = R.featureWithMode;
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain('-Mode cannot be combined');
@@ -183,15 +192,18 @@ describe.skipIf(!hasPwsh || !posix)('Install-QueueLauncher.ps1 launcher text (-S
   // both flavors from one pwsh process
   let sh: string;
   let cmd: string;
+  let home: string;
   beforeAll(() => {
+    home = fs.mkdtempSync(path.join(os.tmpdir(), 'qshow-'));
     const r = spawnSync(
       'pwsh',
       ['-NoProfile', '-Command', `& '${INSTALLER}' -Show -Flavor sh; '<<<SPLIT>>>'; & '${INSTALLER}' -Show -Flavor cmd`],
-      { encoding: 'utf8' },
+      { encoding: 'utf8', cwd: home, env: isolatedEnv(home) },
     );
     expect(r.status).toBe(0);
     [sh, cmd] = r.stdout.split(/<<<SPLIT>>>\r?\n?/);
   });
+  afterAll(() => fs.rmSync(home, { recursive: true, force: true }));
   const norm = (d: string) => d.replace(/\$top|%TOP%/g, 'TOP').replace(/\$HOME|%USERPROFILE%/g, 'HOME').replace(/\\/g, '/');
   const dirsOf = (text: string, re: RegExp) => [...(text.match(re)?.[1] ?? '').matchAll(/"([^"]+)"/g)].map((m) => norm(m[1]));
 

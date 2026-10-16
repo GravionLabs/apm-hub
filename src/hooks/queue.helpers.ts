@@ -15,9 +15,16 @@ export const AGENT = path.resolve(__dirname, '../../packages/agents/.apm/agents/
 export const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 export const posix = process.platform !== 'win32';
 
-if (!hasPwsh && process.env.CI) throw new Error('pwsh is required in CI');
+if (!hasPwsh && process.env.CI) throw new Error('CI is set but pwsh did not start: the queue tests need pwsh and must not be skipped silently in CI');
 
-export type BatchCase = { args: string[]; cwd: string; path?: string };
+// HOME points into `home`; every other variable the scripts could read a home or a runner from is removed.
+export const isolatedEnv = (home: string, extra: Record<string, string> = {}): NodeJS.ProcessEnv => {
+  const e: NodeJS.ProcessEnv = { ...process.env, HOME: home, GIT_CONFIG_GLOBAL: os.devNull, GIT_CONFIG_NOSYSTEM: '1', QUEUE_POLL_SECONDS: '0', ...extra };
+  for (const k of ['USERPROFILE', 'XDG_CONFIG_HOME', 'QUEUE_RUNNER', 'QUEUE_CALLER_CWD', 'OPENCODE_PERMISSION', 'AGENTS_LEDGER']) if (!(k in extra)) delete e[k];
+  return e;
+};
+
+export type BatchCase = { key: string; args: string[]; cwd: string; path?: string };
 export type BatchResult = { status: number; stdout: string; stderr: string };
 
 // Runs all cases in one pwsh process (see queue-batch.ps1); results are in case order.
@@ -27,12 +34,14 @@ export const runBatch = (cases: BatchCase[]): BatchResult[] => {
     const spec = path.join(tmp, 'cases.json');
     const out = path.join(tmp, 'results.json');
     fs.writeFileSync(spec, JSON.stringify(cases));
+    const home = path.join(tmp, 'home');
+    fs.mkdirSync(home);
     const r = spawnSync('pwsh', ['-NoProfile', '-File', path.join(__dirname, 'queue-batch.ps1'), SCRIPT, spec, out], {
       encoding: 'utf8',
-      env: { ...process.env, QUEUE_POLL_SECONDS: '0' },
+      env: isolatedEnv(home),
     });
-    if (r.status !== 0 || !fs.existsSync(out)) throw new Error(`batch wrapper failed: ${r.stderr}${r.stdout}`);
-    return JSON.parse(fs.readFileSync(out, 'utf8').replace(/^﻿/, '')) as BatchResult[];
+    if (r.status !== 0 || !fs.existsSync(out)) throw new Error(`batch wrapper failed (cases: ${cases.map((c) => c.key).join(', ')}): ${r.stderr}${r.stdout}`);
+    return JSON.parse(fs.readFileSync(out, 'utf8').replace(/^\uFEFF/, '')) as BatchResult[];
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
