@@ -249,6 +249,77 @@ describe('subagent-ledger hook', () => {
     expect(fs.readdirSync(dir)).toEqual([]);
   });
 
+  describe('pbi-runner and nested stops', () => {
+    const runner = (reply: unknown, extra: object = {}) => ({
+      cwd: dir,
+      agent_type: 'pbi-runner',
+      agent_id: 'r1',
+      last_assistant_message: typeof reply === 'string' ? reply : JSON.stringify(reply),
+      ...extra,
+    });
+
+    it('summarises a GATE reply with its phase', () => {
+      withLedger();
+      run(runner({ status: 'GATE', pbi: 7, phase: 'plan', question: 'Proceed?', options: ['yes', 'no'] }));
+      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent pbi-runner: stopped — GATE plan\n');
+    });
+
+    it('summarises a DONE reply with the PR url, also pretty-printed in a code fence', () => {
+      withLedger();
+      const json = JSON.stringify({ status: 'DONE', pbi: 7, pr: 'https://x/pull/9', summary: 'a\nb' }, null, 2);
+      run(runner('```json\n' + json + '\n```'));
+      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent pbi-runner: stopped — DONE https://x/pull/9\n');
+    });
+
+    it('summarises BLOCKED and FAILED by status only', () => {
+      withLedger();
+      run(runner({ status: 'BLOCKED', pbi: 7, pr: null, summary: 's' }, { agent_id: 'r2' }));
+      run(runner({ status: 'FAILED', pbi: 7, pr: null, summary: 's' }, { agent_id: 'r3' }));
+      expect(fs.readFileSync(ledger, 'utf8')).toBe(
+        '# ledger\nSubagent pbi-runner: stopped — BLOCKED\nSubagent pbi-runner: stopped — FAILED\n',
+      );
+    });
+
+    it('writes a depth-2 implementer stop into the PBI ledger, not a newer loop ledger', () => {
+      withLedger();
+      fs.mkdirSync(path.join(dir, '.agents', 'loop-300'), { recursive: true });
+      const loop = path.join(dir, '.agents', 'loop-300', 'progress.md');
+      fs.writeFileSync(loop, '# loop\n');
+      run({ cwd: dir, agent_type: 'implementer', agent_id: 'i1', last_assistant_message: 'Status: DONE' });
+      run(runner({ status: 'DONE', pbi: 7, pr: 'u' }));
+      expect(fs.readFileSync(loop, 'utf8')).toBe('# loop\n');
+      expect(fs.readFileSync(ledger, 'utf8')).toBe(
+        '# ledger\nSubagent implementer: stopped — Status: DONE\nSubagent pbi-runner: stopped — DONE u\n',
+      );
+    });
+
+    it('records a resumed runner (same agent_id) once per distinct outcome', () => {
+      withLedger();
+      run(runner({ status: 'GATE', phase: 'plan' }));
+      run(runner({ status: 'DONE', pr: 'u' }));
+      // an interleaved child line and a repeated resume stop must not duplicate the earlier runner line
+      run({ cwd: dir, agent_type: 'reviewer', agent_id: 'v1', last_assistant_message: 'APPROVE' });
+      run(runner({ status: 'DONE', pr: 'u' }));
+      expect(fs.readFileSync(ledger, 'utf8')).toBe(
+        '# ledger\nSubagent pbi-runner: stopped — GATE plan\nSubagent pbi-runner: stopped — DONE u\nSubagent reviewer: stopped — APPROVE\n',
+      );
+    });
+
+    it('still records two different agents with the same message', () => {
+      withLedger();
+      run({ cwd: dir, agent_type: 'implementer', agent_id: 'a', last_assistant_message: 'Status: DONE' });
+      run({ cwd: dir, agent_type: 'reviewer', agent_id: 'b', last_assistant_message: 'x' });
+      run({ cwd: dir, agent_type: 'implementer', agent_id: 'c', last_assistant_message: 'Status: DONE' });
+      expect(fs.readFileSync(ledger, 'utf8').split('\n').filter(Boolean)).toHaveLength(4);
+    });
+
+    it('falls back to the first line for a runner reply without a status object', () => {
+      withLedger();
+      run(runner('plain text'));
+      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent pbi-runner: stopped — plain text\n');
+    });
+  });
+
   it('exits 0 on an empty payload', () => {
     expect(run('').status).toBe(0);
   });

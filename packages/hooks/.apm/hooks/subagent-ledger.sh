@@ -2,6 +2,9 @@
 # SubagentStop hook: append one line per finished subagent to the issue ledger
 # (.agents/<issue>/progress.md written by the orchestrator agent). Claude Code and Copilot CLI payloads.
 # Loop ledgers (.agents/loop-<nr>/) are skipped: the newest PBI ledger is used.
+# SubagentStop fires at every depth (pbi-runner and its children) and again on a SendMessage resume, so the
+# line is deduplicated per agent_id (sidecar .ledger-seen next to the ledger). pbi-runner stops are summarised
+# from the status of its JSON reply: `GATE <phase>`, `DONE <pr>`, `BLOCKED`, `FAILED`.
 # Never blocks: every path exits 0. Writes nothing when no ledger exists.
 
 payload="$(cat 2>/dev/null || true)"
@@ -49,6 +52,29 @@ last_text_line() { # last non-empty assistant text line of a JSONL transcript (n
     | select(length > 0)] | last // empty' "$1" 2>/dev/null \
     | grep -v '^[[:space:]]*$' | tail -n 1 | cut -c1-120
 }
+runner_status() { # `GATE <phase>` / `DONE <pr>` / `<STATUS>` from the JSON reply of pbi-runner (needs jq)
+  command -v jq >/dev/null 2>&1 || return 0
+  local msg
+  msg="$(printf '%s' "$payload" | jq -r '.last_assistant_message // .response // empty' 2>/dev/null)"
+  [ -n "$msg" ] || msg="$(last_text_all "$(field agent_transcript_path)")"
+  printf '%s' "$msg" | jq -rR -s '
+    (capture("(?<j>\\{[\\s\\S]*\\})").j // empty) | (try fromjson catch empty) | objects
+    | select((.status | type) == "string" and (.status | test("^(GATE|DONE|BLOCKED|FAILED)$")))
+    | .status + (if .status == "GATE" and ((.phase | type) == "string") and (.phase != "") then " " + .phase
+        elif .status == "DONE" and ((.pr | type) == "string") and (.pr != "") then " " + .pr else "" end)' 2>/dev/null \
+    | head -n 1 | cut -c1-120
+}
+last_text_all() { # last assistant text of a transcript, all lines
+  [ -n "$1" ] && [ -f "$1" ] && command -v jq >/dev/null 2>&1 || return 0
+  jq -rRn '[inputs | fromjson? | objects
+    | select(.type == "assistant" or .role == "assistant" or ((.message | objects | .role) == "assistant"))
+    | ((.message | objects | .content) // .content)
+    | if type == "string" then . elif type == "array" then ([.[] | objects | select(.type == "text") | .text | strings] | join("\n")) else empty end
+    | select(length > 0)] | last // empty' "$1" 2>/dev/null
+}
+case "$agent_lc" in pbi-runner|*[:/.]pbi-runner)
+  rs="$(runner_status)"; [ -n "$rs" ] && summary="$rs" ;;
+esac
 if [ -z "$summary" ]; then
   # only the subagent's own transcript; transcript_path is the parent session and must not be used
   summary="$(last_text_line "$(field agent_transcript_path)")"
@@ -66,5 +92,13 @@ else
 fi
 # idempotent: Copilot CLI may fire both event casings; skip when the last line is identical
 [ "$(tail -n 1 "$ledger" 2>/dev/null)" = "$line" ] && exit 0
+# idempotent per agent: a resume (same agent_id) that ends with the same line is not written twice
+agent_id="$(field agent_id)"
+seen="$(dirname "$ledger")/.ledger-seen"
+if [ -n "$agent_id" ] && [ ! -L "$seen" ]; then
+  key="$agent_id	$line"
+  grep -qxF -- "$key" "$seen" 2>/dev/null && exit 0
+  printf '%s\n' "$key" >> "$seen" 2>/dev/null || true
+fi
 printf '%s\n' "$line" >> "$ledger" 2>/dev/null || true
 exit 0
