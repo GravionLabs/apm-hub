@@ -23,7 +23,7 @@ The contributor tooling package is not offered. What each package brings: [packa
 
 ## Steps
 
-1. Always run a dry run first and show the user the proposal (the `commands` list, `skipped`, `notes`):
+1. Always run a dry run first and show the user the proposal (`wouldInstall`, `skipped`, `commands`, `notes`):
 
    ```powershell
    pwsh scripts/Install-HubPackages.ps1 -DryRun                    # detect, propose
@@ -32,25 +32,33 @@ The contributor tooling package is not offered. What each package brings: [packa
    ```
 
 2. Ask for confirmation. Never install without it, even when the packages were named in the slash command.
-3. Run the same command without `-DryRun`. Print the JSON summary `{installed, skipped, commands, notes}`.
+3. Run the same command without `-DryRun`. The result lists `installed`, `skipped`, `failed`, `notAttempted`, `provides`
+   (what each installed package brings), `dependencies` (`angular/skills` for `ng`, `dotnet/skills` for `dotnet`) and
+   `notes`. Tell the user what was installed, which dependencies came along, and any failed or not-attempted package.
 4. Relay the `notes` and follow [after install](references/after-install.md): `apmw sanitize` for agents, the OpenCode
    plugin copy, what to commit.
 
 ## Behavior of the script
 
-- Without `-Packages` it runs `detect-techstack` (looked up in the project's, then your home skill directories) and maps
-  typescript/javascript to `ts`, python to `py`, csharp to `dotnet` and angular to `ng`.
-- `detect-techstack` not installed: it falls back to the base packages `shared`, `github`, `delivery` and adds a note
-  asking for `-Packages`. Ask the user which stack packages they want, or suggest installing `shared` first and running
-  `/apm-install` again.
-- The base packages are added only when the global client skill directories do not already hold them.
-- Packages already listed in the manifest (`apm.yml`, or `~/.apm/apm.yml` with `-Global`) land in `skipped`: it only
-  installs what is missing.
-- A failing `apm install` stops the run: exit 1 and a note naming the package.
-- Dependencies on `dotnet/skills` and `angular/skills` come with `dotnet` and `ng`; no separate step.
+- Detection runs a script: without `-Packages` it runs `detect-techstack`, even under `-DryRun`. It looks in your home
+  skill directories first. A copy found only in the project is repository code and is not run unless you pass
+  `-TrustProject`; ask the user before doing so in a repository they do not trust.
+- The report maps `ts`/`js` to `ts`, `py` to `py`, `dotnet` to `dotnet`, and the `angular` framework to `ng`.
+- `detect-techstack` missing, failing or printing invalid output: base packages `shared`, `github`, `delivery` and a note
+  asking for `-Packages`. Ask the user which stack packages they want.
+- `-Global` without `-Packages` proposes only the base packages, with no stack detection; stack packages need `-Packages`.
+  The base packages are added only when the global client skill directories do not already hold them.
+- Installed state comes from the manifest (`apm.yml`, `~/.apm/apm.yml` with `-Global`; comments ignored, `core` and `all`
+  cover their members, `<pkg>@apm-hub` is recognised) and from `apm_modules/`. Those packages land in `skipped`.
+- No `apm.yml` yet: `apm install` creates it; the script only notes it.
+- A failing `apm install` stops the run: exit 1, `failed` names the package, `notAttempted` the rest.
+- `-DryRun` reports `wouldInstall`, never `installed`; install-only notes read "After install: ...".
+- The script uses the direct form `apm install GravionLabs/apm-hub/packages/<pkg>`, not `apm marketplace add` or
+  `<pkg>@apm-hub` (a deliberate deviation from the Task text; the marketplace form needs a registration step).
 
 ## Missing prerequisites
 
 `apm` missing: `curl -sSL https://aka.ms/apm-unix | sh` (macOS/Linux) or `winget install Microsoft.APM`. `apmw` is
-needed only for agent packages, see [after install](references/after-install.md). Do not install tools for the user
+needed only for agent packages (`agents`, `core`, `all`); the script warns when it is missing but still installs, see
+[after install](references/after-install.md). Do not install tools for the user
 without asking.

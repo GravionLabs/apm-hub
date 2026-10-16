@@ -1,6 +1,6 @@
 # apm-hub packages
 
-Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]`.
+Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]` (direct path, not `apm marketplace add` or `<pkg>@apm-hub`: deliberate deviation from Task #348, no registration step).
 
 | Package | Brings | Install |
 |:--|:--|:--|
@@ -22,4 +22,4 @@ Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]`.
 
 ## Detection mapping
 
-typescript, javascript: `ts`. python: `py`. csharp: `dotnet`. angular framework: `ng` (next to `ts`).
+detect-techstack emits `ts`, `js`, `py`, `dotnet`: `ts` and `js` map to `ts`, `py` to `py`, `dotnet` to `dotnet`. angular framework: `ng` (next to `ts`).
