@@ -23,7 +23,7 @@ The first word of the message is the mode; the issue type (Epic, Feature, PBI) c
 | `implement <nr>` | PBI | explore → implement → review → PR for a planned PBI |
 | `full <nr>` | PBI | plan if needed, then implement |
 | `next <nr>` | Feature / Epic | picks the first open PBI without open blocker, `needs-decision`, open PR (`waiting for merge`) or merge into the integration branch (`merged, closes at release`) (sub-issue order, recursive for an Epic), runs it like `full` |
-| `loop <nr>` | Feature / Epic | repeats `next` in one session until nothing is selectable, a gate needs you (interactive gates pause, headless stops), the context warning fired or 3 PBIs are done (the cap; the warning fires mid-loop only on Copilot CLI); loop ledger `.agents/loop-<nr>/progress.md` |
+| `loop <nr>` | Feature / Epic | repeats `next` in one session until nothing is selectable, a gate needs you (interactive gates pause, headless stops), the context warning fired or 3 PBIs are done (the cap, 10 on Claude Code where `pbi-runner` runs each PBI; the warning fires mid-loop only on Copilot CLI); loop ledger `.agents/loop-<nr>/progress.md` |
 
 Exactly one PBI per run, except loop. The end line after a PBI of a Feature is defined in `github-issue` `references/next-selection.md`.
 
