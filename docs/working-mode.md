@@ -229,6 +229,8 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
   subagent-heavy sessions, 4+ sessions in parallel and sessions older than 8 hours.
 - Queue instead of running four or more sessions at once; one issue per session, one session at a time,
   unless the issues are independent and each is small.
+- One window for long runs: run `loop` in a [herdr](usage/herdr.md) pane; it shows `blocked` at every gate
+  and keeps running when you detach.
 - A session older than 8 hours needs a reason (a watch, a loop). Otherwise write the hand-off into the
   ledger or a memory note and start a new session.
 
