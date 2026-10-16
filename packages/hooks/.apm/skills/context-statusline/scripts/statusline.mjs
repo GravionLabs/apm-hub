@@ -21,7 +21,8 @@ function render(input) {
 
   const model = str(input.model?.display_name);
   if (model) out += ` ${c('36', model)}`;
-  const ctx = pct(input.context_window?.used_percentage);
+  // Copilot CLI: current_context_used_percentage matches /context, so it wins when present.
+  const ctx = pct(input.context_window?.current_context_used_percentage) ?? pct(input.context_window?.used_percentage);
   if (ctx !== null) out += ` ${c('33', `ctx:${ctx}%`)}`;
 
   if (existsSync(dir)) {

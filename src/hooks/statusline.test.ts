@@ -42,6 +42,17 @@ describe('statusline.mjs', () => {
     expect(strip(r.stdout)).toMatch(new RegExp(`:${tmp.replace(/[\\/]/g, '.')}$`));
   });
 
+  it('prefers current_context_used_percentage (Copilot CLI payload, no rate limits)', () => {
+    const r = run(STATUS, JSON.stringify({
+      cwd: tmp, session_id: 's1', model: { id: 'gpt-5', display_name: 'GPT-5' }, workspace: { current_dir: tmp },
+      context_window: { used_percentage: 30, current_context_used_percentage: 12.4 }, cost: { total_premium_requests: 3 },
+    }));
+    const out = strip(r.stdout);
+    expect(out).toContain('GPT-5 ctx:12%');
+    expect(out).not.toContain('5h:');
+    expect(strip(run(STATUS, JSON.stringify({ workspace: { current_dir: tmp }, context_window: { used_percentage: 30, current_context_used_percentage: null } })).stdout)).toContain('ctx:30%');
+  });
+
   it('shows only the 7d limit when 5h is missing', () => {
     const out = strip(run(STATUS, JSON.stringify({ workspace: { current_dir: tmp }, rate_limits: { seven_day: { used_percentage: 7 } } })).stdout);
     expect(out).toMatch(/ 7d:7%$/);
@@ -228,5 +239,98 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1', () => {
   it('-Uninstall without settings.json is a no-op', () => {
     expect(install('-Uninstall').status).toBe(0);
     expect(fs.existsSync(settings)).toBe(false);
+  });
+});
+
+describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1 -Client copilot', () => {
+  let tmp: string;
+  let home: string;
+  let chome: string;
+  beforeEach(() => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'slcop-'));
+    home = path.join(tmp, 'home');
+    chome = path.join(tmp, 'chome');
+    fs.mkdirSync(home);
+  });
+  afterEach(() => fs.rmSync(tmp, { recursive: true, force: true }));
+
+  const install = (env2: Record<string, string>, ...args: string[]) => {
+    const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, ...env2 };
+    delete env.USERPROFILE;
+    if (!('COPILOT_HOME' in env2)) delete env.COPILOT_HOME;
+    return spawnSync('pwsh', ['-NoProfile', '-File', INSTALLER, '-Client', 'copilot', ...args], { encoding: 'utf8', cwd: tmp, env });
+  };
+  const sp = (base: string) => path.join(base, 'settings.json');
+  const read = (base: string) => JSON.parse(fs.readFileSync(sp(base), 'utf8'));
+  const entry = (base: string) => ({ type: 'command', command: `node ${base}/apm-hub/statusline/statusline.mjs`, padding: 1 });
+
+  it('installs under ~/.copilot with the feature flag and no subagent entry', () => {
+    const r = install({});
+    expect(r.status).toBe(0);
+    const base = path.join(home, '.copilot');
+    expect(read(base)).toEqual({ statusLine: entry('~/.copilot'), feature_flags: { enabled: ['STATUS_LINE'] } });
+    expect(fs.readFileSync(path.join(base, 'apm-hub/statusline/statusline.mjs'), 'utf8')).toBe(fs.readFileSync(STATUS, 'utf8'));
+    expect(fs.existsSync(path.join(base, 'apm-hub/statusline/subagent-statusline.mjs'))).toBe(false);
+    expect(fs.existsSync(path.join(home, '.claude'))).toBe(false);
+  });
+
+  it('uses COPILOT_HOME with an absolute command path', () => {
+    expect(install({ COPILOT_HOME: chome }).status).toBe(0);
+    expect(read(chome).statusLine).toEqual(entry(chome));
+    expect(fs.existsSync(path.join(home, '.copilot'))).toBe(false);
+  });
+
+  it('keeps existing flags and keys, adds the flag once, is idempotent', () => {
+    fs.mkdirSync(chome);
+    fs.writeFileSync(sp(chome), JSON.stringify({ model: 'x', feature_flags: { enabled: ['OTHER'], disabled: ['D'] } }));
+    expect(install({ COPILOT_HOME: chome }).status).toBe(0);
+    const once = fs.readFileSync(sp(chome), 'utf8');
+    expect(read(chome)).toEqual({ model: 'x', feature_flags: { enabled: ['OTHER', 'STATUS_LINE'], disabled: ['D'] }, statusLine: entry(chome) });
+    const r = install({ COPILOT_HOME: chome });
+    expect(r.stdout).toContain('Up to date');
+    expect(fs.readFileSync(sp(chome), 'utf8')).toBe(once);
+    expect(fs.readdirSync(chome).filter((f) => f.includes('.bak-'))).toHaveLength(1);
+  });
+
+  it('does not duplicate an already enabled flag', () => {
+    fs.mkdirSync(chome);
+    fs.writeFileSync(sp(chome), JSON.stringify({ feature_flags: { enabled: ['STATUS_LINE'] } }));
+    install({ COPILOT_HOME: chome });
+    expect(read(chome).feature_flags.enabled).toEqual(['STATUS_LINE']);
+  });
+
+  it('refuses a foreign statusLine without -Force, replaces it with -Force', () => {
+    fs.mkdirSync(chome);
+    const orig = JSON.stringify({ statusLine: { type: 'command', command: 'mine' } });
+    fs.writeFileSync(sp(chome), orig);
+    const r = install({ COPILOT_HOME: chome });
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toContain('-Force');
+    expect(fs.readFileSync(sp(chome), 'utf8')).toBe(orig);
+    expect(install({ COPILOT_HOME: chome }, '-Force').status).toBe(0);
+    expect(read(chome).statusLine).toEqual(entry(chome));
+  });
+
+  it('-WhatIf changes nothing', () => {
+    expect(install({ COPILOT_HOME: chome }, '-WhatIf').status).toBe(0);
+    expect(fs.existsSync(chome)).toBe(false);
+  });
+
+  it('-Uninstall removes entry and script, leaves the flag and other keys', () => {
+    fs.mkdirSync(chome);
+    fs.writeFileSync(sp(chome), JSON.stringify({ keep: 1 }));
+    install({ COPILOT_HOME: chome });
+    expect(install({ COPILOT_HOME: chome }, '-Uninstall').status).toBe(0);
+    expect(read(chome)).toEqual({ keep: 1, feature_flags: { enabled: ['STATUS_LINE'] } });
+    expect(fs.existsSync(path.join(chome, 'apm-hub/statusline'))).toBe(false);
+  });
+
+  it('-Client all installs both', () => {
+    const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, COPILOT_HOME: chome };
+    delete env.USERPROFILE;
+    const r = spawnSync('pwsh', ['-NoProfile', '-File', INSTALLER, '-Client', 'all'], { encoding: 'utf8', cwd: tmp, env });
+    expect(r.status).toBe(0);
+    expect(Object.keys(read(path.join(home, '.claude')))).toEqual(['statusLine', 'subagentStatusLine']);
+    expect(read(chome).statusLine).toEqual(entry(chome));
   });
 });

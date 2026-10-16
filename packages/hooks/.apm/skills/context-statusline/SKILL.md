@@ -1,6 +1,6 @@
 ---
 name: context-statusline
-description: '/context-statusline: install a Claude Code status line (model, context %, git branch, rate limits) and a per-subagent context status line. Use for "show context usage in the status line".'
+description: '/context-statusline: install a status line (model, context %, git branch, limits) for Claude Code or Copilot CLI, plus a Claude Code subagent line. Use for "show context usage in the status line".'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'
@@ -8,14 +8,15 @@ metadata:
 
 # context-statusline
 
-Claude Code only. Two Node scripts (Node >= 22, no dependencies, same on Linux, macOS and Windows) and an installer
+Claude Code (status line and subagent line) and GitHub Copilot CLI (status line only, experimental). Two Node scripts (Node >= 22, no dependencies, same on Linux, macOS and Windows) and an installer
 that wires them into `~/.claude/settings.json`. PowerShell 7+ is needed for the installer only.
 
 ## Install
 
 ```powershell
 pwsh scripts/Install-Statusline.ps1 -WhatIf     # show what would change
-pwsh scripts/Install-Statusline.ps1             # install
+pwsh scripts/Install-Statusline.ps1             # install for Claude Code (default)
+pwsh scripts/Install-Statusline.ps1 -Client copilot   # or: all
 pwsh scripts/Install-Statusline.ps1 -Force      # replace a statusLine / subagentStatusLine you set yourself
 pwsh scripts/Install-Statusline.ps1 -Uninstall  # remove only our entries and files
 ```
@@ -26,6 +27,7 @@ The installer:
 - sets `statusLine` and `subagentStatusLine` to `{"type":"command","command":"node ~/.claude/apm-hub/statusline/<file>.mjs"}`
 - keeps every other settings key, writes `settings.json.bak-<timestamp>` before changing, uses 2-space indent
 - is idempotent; a foreign entry (not pointing at `apm-hub/statusline/`) is refused without `-Force`
+- `-Client copilot` writes `$COPILOT_HOME` (else `~/.copilot`) `settings.json`: only `statusLine` (padding 1) and `STATUS_LINE` added to `feature_flags.enabled`; it has its own script copy under `apm-hub/statusline/` there. `-Uninstall` leaves the flag in place
 - re-run it after `apm update` to refresh the copied scripts
 
 Restart Claude Code (or open a new session) to see the lines.
@@ -44,4 +46,4 @@ unparseable input gives the defaults (status line) or no output (subagent line).
 
 - Never edit other `settings.json` keys by hand-rolled text replacement; use the installer.
 - Windows: `~` and forward slashes are expanded by Claude Code in the command, Git Bash or PowerShell.
-- Other clients (Copilot CLI, OpenCode) have no equivalent setting; the skill does nothing there.
+- Copilot CLI has no subagent status line, and sends no `rate_limits` (the `5h`/`7d` part stays empty); its payload fields are from community guides, not official docs. OpenCode has no equivalent.

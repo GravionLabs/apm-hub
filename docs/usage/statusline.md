@@ -1,6 +1,6 @@
 # Status line and subagent status line
 
-The `context-statusline` skill of the `hooks` package (Claude Code only) shows how full the context is, in the status line
+The `context-statusline` skill of the `hooks` package (Claude Code; the status line also on GitHub Copilot CLI) shows how full the context is, in the status line
 of the main session and per subagent in the agent panel. It keeps the [working mode](../working-mode.md) honest: you see the
 context grow before the 150k warning fires.
 
@@ -23,6 +23,20 @@ Or run `/context-statusline`. The installer copies `statusline.mjs` and `subagen
 `node ~/.claude/apm-hub/statusline/<file>.mjs`. Other keys stay untouched, a `settings.json.bak-<timestamp>` is written
 first, and a second run changes nothing. A `statusLine` you set yourself is replaced only with `-Force`; `-Uninstall`
 removes only the entries and files this installer wrote. Re-run it after `apm update` to refresh the copies.
+
+## GitHub Copilot CLI
+
+Copilot CLI has an experimental `statusLine` and no subagent equivalent. `Install-Statusline.ps1 -Client copilot` (or `all`):
+
+- copies `statusline.mjs` to `~/.copilot/apm-hub/statusline/` (own copy, independent of the Claude Code one; with `COPILOT_HOME` set, to `$COPILOT_HOME/apm-hub/statusline/` and the command carries that absolute path with `/`)
+- sets `statusLine` to `{"type":"command","command":"node ~/.copilot/apm-hub/statusline/statusline.mjs","padding":1}` in `~/.copilot/settings.json` (or `$COPILOT_HOME/settings.json`)
+- adds `STATUS_LINE` once to `feature_flags.enabled`, keeping other flags and keys
+- same backup, idempotency, `-Force` and `-WhatIf` rules as for Claude Code; `-Uninstall` removes the entry and script but leaves the `STATUS_LINE` flag (another status line may rely on it)
+
+The script prefers `context_window.current_context_used_percentage` (matches `/context`) over `used_percentage`. Copilot sends no
+`rate_limits`, so `5h`/`7d` is omitted. The Copilot payload fields (`cwd`, `session_id`, `model.id`, `model.display_name`,
+`workspace.current_dir`, `context_window.*`, `cost.total_premium_requests`) are taken from community guides, not from official
+documentation, and may change while the feature is experimental.
 
 ## Requirements and behaviour
 
