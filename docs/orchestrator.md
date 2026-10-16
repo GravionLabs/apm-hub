@@ -52,6 +52,8 @@ Exactly one PBI is handled per run, except in `loop`. An Epic is planned into Fe
 
 ## The pipeline
 
+The steps and per-PBI rules live in `github-issue` [`references/pbi-pipeline.md`](../packages/github/.apm/skills/github-issue/references/pbi-pipeline.md); the diagram summarises them.
+
 ```mermaid
 flowchart TD
     S0["0. Tech stack<br/>detect-techstack, inline"] --> S1["1. Read the issue<br/>issue-reader returns branch, digest<br/>and Task sub-issues with merged state"]
@@ -217,6 +219,7 @@ A run keeps its state on disk and on GitHub, never in the model's memory, so a `
 | File | Written by | Purpose |
 |:--|:--|:--|
 | `progress.md` | orchestrator and the `SubagentStop` hook | the ledger: phase, task, fix round and ruling lines, plus one line per finished subagent |
+| `.ledger-seen` | `SubagentStop` hook | `<agent_id> <payload hash>` per written stop; makes the hook idempotent across nested agents and resumes; safe to delete |
 | `issue.md` | `issue-reader` (step 1) | the issue title and body verbatim, one snapshot per run; subagents read it instead of calling `gh issue view` |
 | `context.md` | orchestrator (steps 1 and 2) | integration branch, issue title and digest, tech-stack JSON and exploration summary; subagents get its path instead of the text, and a resumed run reuses it |
 | `plan.json`, `plan.md` | `planner` | plan items with sizes, blockers and open questions; `plan.md` is the human view |
@@ -302,6 +305,10 @@ flowchart TD
 - Stop conditions, checked before every reselection: the context warning of the `hooks` package appeared in the session; 3 PBIs finished in this run (the PBI cap); nothing selectable. The warning cannot fire mid-loop on every client: Copilot CLI injects it after any tool call (`postToolUse`), Claude Code (`UserPromptSubmit`) and OpenCode (`chat.message`) only with a user message, so there it appears at the earliest when you answer a gate. The cap is the fallback for those clients; the `hooks` package improves it. Stop reasons in the ledger: `nothing selectable`, `headless gate: <question>`, `context warning`, `pbi cap`, `user stop`.
 - Interactive gates (plan gate, review summary, `CHANGES_REQUESTED`, red suite twice) pause the loop and it continues after your answer. Headless, the gate is recorded and the loop stops.
 - Loop ledger `.agents/loop-<nr>/progress.md`: header `# orchestrator ledger — loop #<nr> — branch <branch>` (written once, when the file does not exist yet), one `Loop: PBI #<nr> done — <pr>` line per PBI and `Loop: stopped — <reason>` at the end. Per-PBI ledgers and `Ruling:` lines stay in `.agents/<pbi>/progress.md`. At each PBI boundary the orchestrator creates `.agents/<pbi>/progress.md` with its header before dispatching `issue-reader`, so the hook's `Subagent` lines of the new PBI do not land in the previous PBI's ledger.
+- Runner mode (Claude Code, with `Agent` and `SendMessage`): the primary stays thin. Per PBI it dispatches the `pbi-runner` subagent with `{pbi, loop, flags}` (`--fix-advisories` and `--no-review-summary` forwarded verbatim) and keeps only its JSON. A `GATE` reply is asked with `AskUserQuestion` and the answer goes back with `SendMessage` to the runner until it returns `DONE`, `BLOCKED` or `FAILED`; the runner records the `Ruling:`. `BLOCKED` and `FAILED` stop the loop with the reasons `runner blocked` and `runner failed`. The cap is 10 PBIs in runner mode and 3 inline; Copilot CLI and OpenCode keep the inline loop.
+- Primary model in runner mode: not yet measured. By design the primary only selects, dispatches the runner, asks gates and writes `Loop:` lines, and every model-heavy phase runs in a subagent: the runner is pinned to sonnet, `planner` and the verify phase to opus. The primary may therefore run on haiku or sonnet; opus is not needed for it. Whether haiku relays gates and keeps the ledger reliably over ten PBIs has not been measured, so start with sonnet.
+- Depth: runner mode needs `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` of at least 3 (runner, then review-lead, then reviewer, once [#307](https://github.com/GravionLabs/apm-hub/issues/307) lands). Depth 3 dispatch was verified in [#340](#runner-checks-claude-code); a depth-3 agent has no `Agent` tool. The default allows 3 levels; `1` turns nesting off and breaks runner mode.
+- Measurement (not yet measured, no numbers recorded): run `orchestrator loop <feature>` over three small planned PBIs on Claude Code, then run the `retro` skill's `scripts/Get-RunMetrics.ps1` on the session and read the primary's context growth per PBI. Target: under 3k tokens of primary growth per PBI. If a PBI exceeds it, name the biggest contributor and open a follow-up issue. Record the primary model with the numbers. Tracked in [#345](https://github.com/GravionLabs/apm-hub/issues/345).
 - Rerun `orchestrator loop <nr>` after `/clear` to resume: the orchestrator re-reads the Feature or Epic via the loop target number and runs the selection again; finished PBIs drop out by their PR state, not by the ledger. The report of a stopped loop ends with one `Next:` line: `Next: #<nr> <title> — orchestrator loop <feature> after /clear` when a PBI is still selectable or paused, otherwise the `next` variants (what blocks the rest, or the Feature is done).
 
 ## Hooks
@@ -310,7 +317,7 @@ The `hooks` package adds three hooks around the orchestrator. They are plain bas
 
 | Hook | Event | Reads from the payload | Writes or blocks | Opt-out |
 |:--|:--|:--|:--|:--|
-| [`subagent-ledger.sh`](../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path` | appends `Subagent <name>: stopped — <first line, 120 chars>` to the newest non-loop ledger; only when a ledger exists, which the orchestrator creates | none |
+| [`subagent-ledger.sh`](../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path`, `agent_id` | appends `Subagent <name>: stopped — <first line, 120 chars>` to the newest non-loop ledger; only when a ledger exists, which the orchestrator creates. Agent name and `agent_id` are sanitised; a `pbi-runner` stop is summarised from the `status` of its JSON reply (`GATE <phase>`, `DONE <pr>`, `BLOCKED`, `FAILED`; needs `jq`). Dedupe per `agent_id` and payload in the sidecar `.agents/<issue>/.ledger-seen` (a regular file, never a symlink), so the stop events of nested agents and of a `SendMessage` resume are written once | none |
 | [`context-warning.sh`](../packages/hooks/.apm/hooks/context-warning.sh) | `UserPromptSubmit` | `transcript_path`, `session_id` | injects an `additionalContext` warning once the last request has at least 150k tokens (`CONTEXT_WARN_TOKENS`), again after +100k (`CONTEXT_WARN_STEP`) | none; raise `CONTEXT_WARN_TOKENS` to silence it |
 | [`git-guardrails.sh`](../packages/hooks/.apm/hooks/git-guardrails.sh) | `PreToolUse`, matcher `Bash` | `tool_name`, `cwd`, `tool_input.command` | prints a `permissionDecision: deny` JSON with the reason; nothing for allowed commands | `GIT_GUARDRAILS_OFF=1` or `.agents/guardrails.off` |
 
@@ -337,7 +344,7 @@ The diagram shows where each hook fires: the guard sits in front of every Bash c
 Behaviour you should know about, verified against the scripts:
 
 - **The ledger hook picks the newest ledger, not necessarily the issue's.** It appends to `$AGENTS_LEDGER` when set, otherwise to the most recently modified `.agents/*/progress.md` under `cwd`. It writes nothing when no ledger exists. With two issues in one working tree the line can land in the wrong one; the same limit is noted for description runs in [orchestrator-gates.md](../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md).
-- It skips the orchestrator itself (the agent name `orchestrator`, in any case and with a namespace such as `plugin:orchestrator`), because the orchestrator writes its own lines. It does not append the same line twice in a row. When the payload has no summary it falls back to the last line of the subagent transcript and, for the `implementer`, to the path of a task report touched in the last 10 minutes.
+- It skips the orchestrator itself (the agent name `orchestrator`, in any case and with a namespace such as `plugin:orchestrator`), because the orchestrator writes its own lines. It does not append the same stop twice: with a valid `agent_id` it keeps a hash per agent in `.agents/<issue>/.ledger-seen` (a repeated `GATE review` of a resumed runner is still written), without one it skips an identical last line. When the payload has no summary it falls back to the last line of the subagent transcript and, for the `implementer`, to the path of a task report touched in the last 10 minutes.
 - **The guardrails deny** force pushes to `main` or `release/*`, remote deletes of protected branches, `git reset --hard`, `git clean -f` (not `-n`), `git branch -D`, and `git checkout .` or `git restore .` when the tree is dirty. The exact rules are in [git-guardrails.sh](../packages/hooks/.apm/hooks/git-guardrails.sh). It is a guard against accidents, not a security boundary: it fails open on an empty or unparseable payload and on commands above 24 KB.
 - **Opt-out** is global, not per command: `GIT_GUARDRAILS_OFF=1` in the environment, or an empty file `.agents/guardrails.off` in the working directory or the repository root. It stays active until the variable is unset or the file is deleted.
 
@@ -367,6 +374,7 @@ The last line is a fixed closing line saying the ledger is complete and that the
 ## Models and cost
 
 - Claude Code passes `model` on every `Agent` call. `issue-reader` and `explorer` run on haiku, `planner` inherits, `implementer` defaults to sonnet and gets `inherit` or stronger for integration and design tasks, `reviewer` runs on sonnet.
+- Runner mode (Claude Code loop): `pbi-runner` is pinned to sonnet, `planner` and verify run on opus, so the primary may run on haiku or sonnet. Primary growth per PBI is not yet measured; target under 3k tokens, procedure and the `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` requirement (3) in [Looping with `loop`](#looping-with-loop).
 - A cheaper model that needs two or three times the turns costs more. Sonnet is the floor for prose-only tasks.
 - OpenCode reads the model from the agent file; Copilot has no override.
 - `plan` mode ends with `Next: /clear, then orchestrator implement <issue>`. Planning fills the context, and after an idle gap the prompt cache is rewritten at a cost that grows with it. In `full` mode above 100k tokens the orchestrator offers the same stop once.
@@ -381,5 +389,20 @@ The last line is a fixed closing line saying the ledger is complete and that the
 | OpenCode | `opencode --agent orchestrator` | `task` with the agent name (`permission.task`) | not documented | `permission.question` exists; behaviour inside a subagent not documented | not documented |
 
 Checked 2026-10-15 against [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents.md), [Copilot CLI features](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/comparing-cli-features), [VS Code subagents](https://code.visualstudio.com/docs/copilot/agents/subagents) and [OpenCode permissions](https://opencode.ai/docs/permissions/); "not documented" means neither a doc statement nor a recorded test run exists yet. The orchestrator dispatches one level down on every client and runs a phase inline only when the session has no subagent tool at all (the inline `/orchestrator` command). Anything that needs a subagent to start subagents, or to be resumed, is Claude Code only until a cell above changes.
+
+### Runner checks (Claude Code)
+
+Spike for the per-PBI runner ([#340](https://github.com/GravionLabs/apm-hub/issues/340)), run 2026-10-16 with Claude Code 2.1.301 against throwaway agents in a scratch directory (not committed). Depth counts from the main conversation: the primary is 0, the runner 1.
+
+| # | Check | Result |
+|:--|:--|:--|
+| 1 | A subagent dispatches `Agent` with an explicit `model`; the child runs on it | yes. Runner (sonnet) dispatched a worker with `model: haiku`; the worker reported `claude-haiku-5-5` |
+| 2 | A subagent resumes its own finished child with `SendMessage` | yes. The runner sent `SendMessage` to the worker's agent id; the worker answered with its first answer in context |
+| 3 | The primary resumes a runner that returned `GATE:` with `SendMessage` | yes. The runner kept its history (the secret word from the first turn came back after the resume). `SendMessage` is a deferred tool; the primary loads it through ToolSearch first |
+| 4 | Depth 2 and depth 3 dispatch | depth 2 yes (runner → worker), depth 3 yes (runner → worker → worker). A depth-3 agent has no `Agent` tool, so a fourth level cannot exist. `review-fanout` itself was not run in the spike; its `reviewer` dispatch is a depth-2 `Agent` call from the runner, the same path as the worker. Unverified end to end |
+| 5 | `SubagentStop` for nested children | yes, it fires for every depth (1, 2, 3). Payload keys: `session_id`, `transcript_path` (main session), `cwd`, `agent_id`, `agent_type` (the agent name, e.g. `worker`, `runner`), `agent_transcript_path` (`.../<session>/subagents/agent-<id>.jsonl`), `last_assistant_message`, `background_tasks`. No parent id and no depth field. A `SendMessage` resume fires another stop for the same `agent_id`, so one agent can produce several stops |
+| 6 | `claude --agent orchestrator -p` keeps `Agent` and `Skill` | yes. With and without `--permission-mode bypassPermissions` and `--model sonnet` the agent reported `Agent`, `Skill`, `SendMessage` and `Read`, and a worker dispatch worked. The "no tools available" of the #339 queue run did not reproduce with a minimal agent; its cause is not found (not the headless flag as such) |
+
+Consequences for the runner: nothing is blocked. The runner may start `reviewer`, `explorer` and `implementer` (depth 2) and resume them; the ledger hook sees these stops and cannot tell the depth from the payload, so it must key on `agent_type` and `agent_id`.
 
 Started as a subagent, the orchestrator stops and asks the caller to start it as the primary agent: it needs the question tool for its gates. Agent source format: [Agent frontmatter](concepts/agent-frontmatter.md).

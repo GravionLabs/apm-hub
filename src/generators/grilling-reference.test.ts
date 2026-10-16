@@ -11,7 +11,7 @@ describe('grilling reference', () => {
   const publish = read(path.join(skillDir, 'references/publish.md'));
   const json = read(path.join(skillDir, 'references/plan.schema.json'));
   const skill = read(path.join(skillDir, 'SKILL.md'));
-  const orchestrator = read(path.join(root, 'agents/.apm/agents/orchestrator.agent.md'));
+  const orchestrator = read(path.join(root, 'agents/.apm/agents/orchestrator.agent.md')) + read(path.join(root, 'github/.apm/skills/github-issue/references/pbi-pipeline.md'));
 
   it('attributes mattpocock/skills under MIT', () => {
     expect(grilling).toContain('mattpocock/skills');

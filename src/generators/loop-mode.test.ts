@@ -26,6 +26,7 @@ const HEADER = '# orchestrator ledger — loop #<nr> — branch <branch>';
 const DONE_LINE = 'Loop: PBI #<nr> done — <pr>';
 const STOP_LINE = 'Loop: stopped — <reason>';
 const STOP_REASONS = ['nothing selectable', 'headless gate: <question>', 'context warning', 'pbi cap', 'user stop'];
+const RUNNER_REASONS = ['runner blocked', 'runner failed'];
 const RESUME_LINE = 'orchestrator loop <feature> after /clear';
 
 describe('orchestrator agent: loop mode', () => {
@@ -88,7 +89,7 @@ describe('loop-mode reference', () => {
     expect(ledger).toContain("Add-LedgerLine.ps1 -Issue <pbi> -Line '# orchestrator ledger — issue #<pbi> — branch <branch>'");
     expect(ledger).toMatch(/header-only ledger, which resumes at step 1/);
     // the agent's step 1 creates the directory for the ledger; a pre-created one is a resume, not a conflict
-    expect(body).toMatch(/`ledger: resume` → the same-issue ledger rule/);
+    expect(read('packages/github/.apm/skills/github-issue/references/pbi-pipeline.md')).toMatch(/`ledger: resume` → the same-issue ledger rule/);
   });
 
   it('reselects by PR state, never by the ledger, and names the blocked-chain stop', () => {
@@ -106,7 +107,7 @@ describe('loop-mode reference', () => {
   it('lists the stop conditions with the client differences and the PBI cap fallback', () => {
     const stops = section(reference, 'Stop conditions');
     expect(stops).toMatch(/1\. \*\*Context warning\*\*/);
-    expect(stops).toMatch(/2\. \*\*PBI cap\*\*: 3 PBIs finished/);
+    expect(stops).toMatch(/2\. \*\*PBI cap\*\*: 3 PBIs finished in this loop run \(10 in runner mode\)/);
     expect(stops).toMatch(/3\. \*\*Nothing selectable\*\*/);
     expect(stops).toMatch(/No candidate/);
     expect(stops).toMatch(/`hooks` package/);
@@ -145,6 +146,70 @@ describe('loop-mode reference', () => {
     expect(end).toContain(`Next: #<nr> <title> — ${RESUME_LINE}`);
     expect(end).toMatch(/nothing selectable → the variants of `next-selection\.md`/);
     expect(end).toContain('Ledger complete. Start the next issue in a new session');
+  });
+});
+
+describe('loop-mode reference: runner mode', () => {
+  const runner = section(reference, 'Runner mode (Claude Code)');
+  const ledger = section(reference, 'Loop ledger');
+
+  it('is used only on Claude Code with Agent and SendMessage, other clients keep the inline loop', () => {
+    expect(runner).toMatch(/Claude Code and the session has the `Agent` and `SendMessage` tools/);
+    expect(runner).toMatch(/every other client keeps the inline loop/);
+    expect(runner).toContain('ToolSearch');
+  });
+
+  it('dispatches pbi-runner and forwards the flags verbatim', () => {
+    expect(runner).toContain('subagent_type: pbi-runner');
+    expect(runner).toContain('{pbi, loop: <nr>, flags, context}');
+    expect(runner).toMatch(/forwards `--fix-advisories` and `--no-review-summary` verbatim/);
+    expect(runner).toMatch(/create the PBI ledger header/);
+  });
+
+  it('relays a GATE: AskUserQuestion, then SendMessage to the runner, until a final status', () => {
+    expect(runner.indexOf('`GATE`')).toBeGreaterThan(-1);
+    expect(runner.indexOf('`AskUserQuestion`')).toBeLessThan(runner.indexOf('`SendMessage` the answer'));
+    expect(runner).toMatch(/runner's agent id/);
+    expect(runner).toMatch(/until a final status/);
+    expect(runner).toMatch(/primary makes no `Ruling:` itself/);
+  });
+
+  it('stops headless at a gate and records the runner reasons', () => {
+    expect(runner).toContain('Loop: stopped — headless gate: <question>');
+    expect(runner).toContain('`DONE` → `Loop: PBI #<nr> done — <pr>`');
+    expect(runner).toContain('`Loop: stopped — runner blocked`');
+    expect(runner).toContain('`Loop: stopped — runner failed`');
+    for (const reason of RUNNER_REASONS) expect(ledger).toContain(`\`${reason}\``);
+  });
+
+  it('pins the runner to sonnet and detects a missing question tool by trying AskUserQuestion', () => {
+    expect(runner).toContain('`subagent_type: pbi-runner`, `model: sonnet`');
+    expect(runner).toMatch(/trying `AskUserQuestion` on the first `GATE`/);
+    expect(runner).toMatch(/The runner is not resumed/);
+    expect(runner).toMatch(/`Gate:` without a later `Ruling:` as stopped/);
+  });
+
+  it('caps at 10 PBIs in runner mode and 3 inline, the context warning still stops', () => {
+    expect(runner).toMatch(/10 finished PBIs in runner mode \(3 inline\)/);
+    expect(runner).toMatch(/context warning still stops/);
+    expect(section(reference, 'Stop conditions')).toContain('3 PBIs finished in this loop run');
+  });
+
+  it('is announced in one sentence of the agent and keeps the inline rule text', () => {
+    expect(loopRule).toMatch(/runner mode: `pbi-runner` per PBI, gates relayed \(`loop-mode.md`\)/);
+    expect(loopRule).toMatch(/after 3 finished PBIs \(the cap\)/);
+    expect(section(reference, 'Interactive gates')).toMatch(/continue the loop after the answer/);
+  });
+
+  it('is documented with the reasons and caps', () => {
+    const loopDocs = section(docs, 'Looping with `loop`');
+    expect(loopDocs).toMatch(/Runner mode \(Claude Code/);
+    expect(loopDocs).toContain('`pbi-runner`');
+    expect(loopDocs).toContain('`AskUserQuestion`');
+    expect(loopDocs).toContain('`SendMessage`');
+    for (const reason of RUNNER_REASONS) expect(loopDocs).toContain(`\`${reason}\``);
+    expect(loopDocs).toMatch(/10 PBIs in runner mode and 3 inline/);
+    expect(workingMode).toMatch(/10 on Claude Code/);
   });
 });
 

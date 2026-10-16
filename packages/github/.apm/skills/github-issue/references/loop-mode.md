@@ -6,7 +6,7 @@ Runs the open PBIs of a Feature or Epic one after another in one session: select
 
 - Path `.agents/loop-<nr>/progress.md`, written only with `pwsh <skills dir>/github-issue/scripts/Add-LedgerLine.ps1 -Issue loop-<nr> -Line '<text>'` (creates the directory; never a shell redirect). `Add-LedgerLine` writes no headers: write the header line `# orchestrator ledger — loop #<nr> — branch <branch>` yourself, only when `.agents/loop-<nr>/progress.md` does not exist yet.
 - After the PR phase of each PBI: `Loop: PBI #<nr> done — <pr>` (the PR URL from `pr-writer`).
-- At the end: `Loop: stopped — <reason>` with exactly one of `nothing selectable`, `headless gate: <question>`, `context warning`, `pbi cap`, `user stop`.
+- At the end: `Loop: stopped — <reason>` with exactly one of `nothing selectable`, `headless gate: <question>`, `context warning`, `pbi cap`, `user stop`; runner mode adds `runner blocked` and `runner failed`.
 - Per-PBI ledgers `.agents/<pbi>/progress.md`, their `Phase`, `Task`, `Fix round` and `Ruling:` lines are unchanged: a ruling is recorded in the ledger of the PBI it was made for, never in the loop ledger. The `hooks` `SubagentStop` ledger and the OpenCode plugin skip `loop-<nr>` directories, so subagent lines land in the newest per-PBI ledger.
 - PBI boundary: right after announcing `Next PBI: #<nr> <title>` and before dispatching `issue-reader`, create `.agents/<pbi>/progress.md` with its header (`Add-LedgerLine.ps1 -Issue <pbi> -Line '# orchestrator ledger — issue #<pbi> — branch <branch>'`); otherwise the reader's stop line of the new PBI lands in the previous PBI's ledger (the hook picks the newest existing one). The reader then reports `ledger: resume` on a header-only ledger, which resumes at step 1: no difference to a fresh start.
 
@@ -21,10 +21,20 @@ A `plan` is never run inside the loop beyond the plan gate of a PBI without Task
 Checked before every reselection, in this order:
 
 1. **Context warning**: the warning text injected by the `hooks` package appeared in this session. There is no file to read: the signal is that the text has appeared in your own context. Clients differ: Copilot CLI (`postToolUse`) injects it after any tool call, so it fires inside a running loop; Claude Code (`UserPromptSubmit`) and OpenCode (`chat.message`) inject it only with a user message, so in an unattended loop it appears at the earliest when the user answers an interactive gate.
-2. **PBI cap**: 3 PBIs finished in this loop run (`Loop: PBI … done` lines written by this run). The fallback for clients where the warning cannot fire mid-loop; the `hooks` package improves it, it does not replace it. Ledger reason `pbi cap`.
+2. **PBI cap**: 3 PBIs finished in this loop run (10 in runner mode) (`Loop: PBI … done` lines written by this run). The fallback for clients where the warning cannot fire mid-loop; the `hooks` package improves it, it does not replace it. Ledger reason `pbi cap`.
 3. **Nothing selectable** (first pick or any reselection): the `No candidate` report of `next-selection.md` per remaining open PBI (open blockers, `needs-decision`, `waiting for merge: PR #<n>`, `merged, closes at release`), then stop.
 
 A **headless gate** (no question tool) stops the loop at once: append `Gate: <question>` to the per-PBI ledger as `full` does, report it, `Loop: stopped — headless gate: <question>`. The review summary is exempt when `--fix-advisories` is set; the policy applies to every PBI of the loop. The user may stop the loop at any interactive gate (`user stop`). On every stop finish the current step first (never stop between a task commit and its ledger line), write the loop line of a PBI whose PR phase is complete, then the `Loop: stopped` line.
+
+## Runner mode (Claude Code)
+
+Used when the client is Claude Code and the session has the `Agent` and `SendMessage` tools (`SendMessage` is deferred: load it with `ToolSearch` first); every other client keeps the inline loop of this file, unchanged. The primary only selects, relays and records; the PBI pipeline runs in `pbi-runner`.
+
+1. Select and announce as above, then create the PBI ledger header (boundary rule above).
+2. Dispatch `pbi-runner` with `Agent` (`subagent_type: pbi-runner`, `model: sonnet`) and `{pbi, loop: <nr>, flags, context}`; `flags` forwards `--fix-advisories` and `--no-review-summary` verbatim. Keep only its JSON and the agent id.
+3. `GATE` reply: ask with `AskUserQuestion` (options from the reply, recommended first), then `SendMessage` the answer to the runner's agent id; repeat until a final status. The primary makes no `Ruling:` itself; the runner records it. Question tool unavailable: the primary learns it by trying `AskUserQuestion` on the first `GATE`; a tool-unavailable error (or no such tool) means headless for the rest of the run. Headless: the runner already wrote `Gate:`; append `Loop: stopped — headless gate: <question>` and stop. The runner is not resumed (its last ledger line stays `Gate:`, with no `Ruling:`); a queue reader treats a `Gate:` without a later `Ruling:` as stopped, an answered gate has both.
+4. `DONE` → `Loop: PBI #<nr> done — <pr>`, then the stop checks and reselection. `BLOCKED` → `Loop: stopped — runner blocked`; `FAILED` (also `issue-reader` `{error}` and a `pr-writer` failure after its retry) → `Loop: stopped — runner failed`; add the summary to the end report.
+5. Cap: 10 finished PBIs in runner mode (3 inline). The context warning still stops the loop.
 
 ## Interactive gates
 
