@@ -31,7 +31,9 @@
   'gh pr merge <pr> --squash --match-head-commit <sha>'. Base must be release/*, head must not be release/*
   (the release PR), not a fork PR, mergeable and CLEAN with green checks (configure branch protection with required
   checks so CLEAN means reviewed and tested). The reviewed commit is not recorded by the orchestrator; if the PBI
-  branch exists locally its tip must equal the PR head. Never after a gate, a block or a failure.
+  branch exists locally its tip must equal the PR head, else the tip on origin (git ls-remote) must; unverifiable -> no merge.
+  UNKNOWN mergeability is polled up to 3 times (QUEUE_POLL_SECONDS, default 5); an empty check list is skipped ('no checks reported').
+  QUEUE_CALLER_CWD (set by the launcher) is the directory a relative -IssueFile is resolved against. Never after a gate, a block or a failure.
 .PARAMETER Issue           Issue numbers (positional), '#12' or '12'.
 .PARAMETER IssueFile       Text file with one issue number per line.
 .PARAMETER Label           Process all open issues (no PRs) with this label, ascending.
@@ -62,6 +64,11 @@ param(
   [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
+# The queue launcher cd's to the git toplevel and passes the caller's directory here, so a relative -IssueFile still
+# resolves against where the user typed it. Not inherited by the children.
+$callerCwd = $env:QUEUE_CALLER_CWD
+[Environment]::SetEnvironmentVariable('QUEUE_CALLER_CWD', $null)
+if ($IssueFile -and $callerCwd -and -not [IO.Path]::IsPathRooted($IssueFile)) { $IssueFile = Join-Path $callerCwd $IssueFile }
 
 function ConvertTo-IssueNumber([string]$Text, [string]$Where) {
   $t = $Text.Trim() -replace '\A#', ''
@@ -110,6 +117,22 @@ if ($Feature -or $Epic) {
     $o = [ordered]@{ queue = [long]$nr; kind = $kind; harness = $Harness; state = $State; exitCode = $Code; started = $started
       ended = (Get-Date -Format o); mergeApproved = [bool]$MergeApproved; pbis = @($pbis) }
     Set-Content -LiteralPath $queueFile -Value ($o | ConvertTo-Json -Depth 6) -Encoding utf8
+  }
+  # right after PR creation GitHub may still compute mergeability (UNKNOWN): poll a bounded number of times.
+  # QUEUE_POLL_SECONDS (default 5) is the sleep between polls; 0 disables sleeping (tests).
+  function Wait-PrState($P) {
+    $sec = if ($env:QUEUE_POLL_SECONDS -match '\A[0-9]{1,3}\z') { [int]$env:QUEUE_POLL_SECONDS } else { 5 }
+    for ($i = 0; $i -lt 3 -and ($P.mergeable -eq 'UNKNOWN' -or $P.mergeStateStatus -eq 'UNKNOWN'); $i++) {
+      if ($sec) { Start-Sleep -Seconds $sec }
+      $j = & gh pr view "$($P.number)" --json mergeable,mergeStateStatus,statusCheckRollup 2>$null | Out-String
+      if ($LASTEXITCODE -ne 0) { continue }
+      try { $v = $j | ConvertFrom-Json } catch { continue }
+      if (-not $v) { continue }
+      foreach ($f in 'mergeable', 'mergeStateStatus', 'statusCheckRollup') {
+        if ($v.PSObject.Properties[$f]) { $P | Add-Member -NotePropertyName $f -NotePropertyValue $v.$f -Force }
+      }
+    }
+    $P
   }
   function Get-LastMatch([string[]]$Lines, [string]$Pattern) {
     $m = @($Lines | Select-String -CaseSensitive -Pattern $Pattern)
@@ -187,6 +210,7 @@ if ($Feature -or $Epic) {
         else {
           $res = Resolve-PbiPr $pbi $after
           $p = $res.Pr
+          if ($p -and ($p.mergeable -eq 'UNKNOWN' -or $p.mergeStateStatus -eq 'UNKNOWN')) { $p = Wait-PrState $p }
           $why = $null
           if (-not $p) { $why = $res.Note }
           elseif ($p.state -ne 'OPEN') { $why = "PR #$($p.number) not merged: state $($p.state)" }
@@ -194,12 +218,22 @@ if ($Feature -or $Epic) {
           elseif ($p.baseRefName -notmatch '\Arelease/') { $why = "PR #$($p.number) not merged: base $($p.baseRefName) is not the integration branch (release/*)" }
           elseif ($p.isCrossRepository -ne $false -or $p.headRefName -match ':') { $why = "PR #$($p.number) not merged: fork or cross-repository PR" }
           elseif (-not $p.headRefOid) { $why = "PR #$($p.number) not merged: head commit unknown" }
+          elseif ($p.mergeable -eq 'UNKNOWN' -or $p.mergeStateStatus -eq 'UNKNOWN') { $why = "PR #$($p.number) not merged: mergeability still UNKNOWN after 3 polls" }
           elseif ($p.mergeable -ne 'MERGEABLE' -or $p.mergeStateStatus -ne 'CLEAN') { $why = "PR #$($p.number) not merged: not mergeable/clean ($($p.mergeable)/$($p.mergeStateStatus))" }
+          elseif (-not $p.statusCheckRollup -or @($p.statusCheckRollup).Count -eq 0) { $why = "PR #$($p.number) not merged: no checks reported" }
           elseif (@($p.statusCheckRollup | Where-Object { $_ -and -not (($_.conclusion -in 'SUCCESS', 'NEUTRAL', 'SKIPPED') -or ($_.state -eq 'SUCCESS')) }).Count) { $why = "PR #$($p.number) not merged: checks are not green" }
           else {
-            # The reviewed commit is not recorded by the orchestrator: compare with the local branch tip when it exists.
+            # The reviewed commit is not recorded by the orchestrator: compare with the local branch tip when it exists,
+            # otherwise with the tip of the branch on origin. Not verifiable -> no merge.
             $tip = (& git rev-parse --verify --quiet "refs/heads/$($p.headRefName)" 2>$null)
-            if ($LASTEXITCODE -eq 0 -and $tip -and $tip.Trim() -ne $p.headRefOid) { $why = "PR #$($p.number) not merged: head $($p.headRefOid) differs from local branch tip $($tip.Trim())" }
+            if ($LASTEXITCODE -eq 0 -and $tip) { $where = 'local branch'; $tip = $tip.Trim() }
+            else {
+              $where = 'origin branch'
+              $rl = @(& git ls-remote origin "refs/heads/$($p.headRefName)" 2>$null)
+              $tip = if ($LASTEXITCODE -eq 0 -and $rl.Count -eq 1 -and "$($rl[0])" -match '\A([0-9a-f]{40,64})\s') { $Matches[1] } else { $null }
+            }
+            if (-not $tip) { $why = "PR #$($p.number) not merged: head $($p.headRefOid) cannot be verified (no local branch, not found on origin)" }
+            elseif ($tip -ne $p.headRefOid) { $why = "PR #$($p.number) not merged: head $($p.headRefOid) differs from $where tip $tip" }
           }
           if ($why) { $entry.note = $why }
           else {
