@@ -382,4 +382,19 @@ The last line is a fixed closing line saying the ledger is complete and that the
 
 Checked 2026-10-15 against [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents.md), [Copilot CLI features](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/comparing-cli-features), [VS Code subagents](https://code.visualstudio.com/docs/copilot/agents/subagents) and [OpenCode permissions](https://opencode.ai/docs/permissions/); "not documented" means neither a doc statement nor a recorded test run exists yet. The orchestrator dispatches one level down on every client and runs a phase inline only when the session has no subagent tool at all (the inline `/orchestrator` command). Anything that needs a subagent to start subagents, or to be resumed, is Claude Code only until a cell above changes.
 
+### Runner checks (Claude Code)
+
+Spike for the per-PBI runner ([#340](https://github.com/GravionLabs/apm-hub/issues/340)), run 2026-10-16 with Claude Code 2.1.301 against throwaway agents in a scratch directory (not committed). Depth counts from the main conversation: the primary is 0, the runner 1.
+
+| # | Check | Result |
+|:--|:--|:--|
+| 1 | A subagent dispatches `Agent` with an explicit `model`; the child runs on it | yes. Runner (sonnet) dispatched a worker with `model: haiku`; the worker reported `claude-haiku-5-5` |
+| 2 | A subagent resumes its own finished child with `SendMessage` | yes. The runner sent `SendMessage` to the worker's agent id; the worker answered with its first answer in context |
+| 3 | The primary resumes a runner that returned `GATE:` with `SendMessage` | yes. The runner kept its history (the secret word from the first turn came back after the resume). `SendMessage` is a deferred tool; the primary loads it through ToolSearch first |
+| 4 | Depth 2 and depth 3 dispatch | depth 2 yes (runner → worker), depth 3 yes (runner → worker → worker). A depth-3 agent has no `Agent` tool, so a fourth level cannot exist. `review-fanout` itself was not run in the spike; its `reviewer` dispatch is a depth-2 `Agent` call from the runner, the same path as the worker. Unverified end to end |
+| 5 | `SubagentStop` for nested children | yes, it fires for every depth (1, 2, 3). Payload keys: `session_id`, `transcript_path` (main session), `cwd`, `agent_id`, `agent_type` (the agent name, e.g. `worker`, `runner`), `agent_transcript_path` (`.../<session>/subagents/agent-<id>.jsonl`), `last_assistant_message`, `background_tasks`. No parent id and no depth field. A `SendMessage` resume fires another stop for the same `agent_id`, so one agent can produce several stops |
+| 6 | `claude --agent orchestrator -p` keeps `Agent` and `Skill` | yes. With and without `--permission-mode bypassPermissions` and `--model sonnet` the agent reported `Agent`, `Skill`, `SendMessage` and `Read`, and a worker dispatch worked. The "no tools available" of the #339 queue run did not reproduce with a minimal agent; its cause is not found (not the headless flag as such) |
+
+Consequences for the runner: nothing is blocked. The runner may start `reviewer`, `explorer` and `implementer` (depth 2) and resume them; the ledger hook sees these stops and cannot tell the depth from the payload, so it must key on `agent_type` and `agent_id`.
+
 Started as a subagent, the orchestrator stops and asks the caller to start it as the primary agent: it needs the question tool for its gates. Agent source format: [Agent frontmatter](concepts/agent-frontmatter.md).
