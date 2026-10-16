@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 // tests with fake harness binaries and the launcher installer, split over several files so they run in parallel).
 // `vitest run` runs both; `pnpm run test:fast` runs only `fast`.
 const shared = { globals: true, environment: 'node' } as const;
+const exclude = ['**/node_modules/**', 'src/**/*.integration.test.ts'];
 
 export default defineConfig({
   test: {
@@ -14,8 +15,21 @@ export default defineConfig({
       reportsDirectory: 'coverage',
     },
     projects: [
-      { extends: false, test: { ...shared, name: 'fast', include: ['src/**/*.test.ts'], exclude: ['**/node_modules/**', 'src/**/*.integration.test.ts'] } },
-      { extends: false, test: { ...shared, name: 'integration', include: ['src/**/*.integration.test.ts'] } },
+      { extends: false, test: { ...shared, name: 'fast', include: ['src/**/*.test.ts'], exclude } },
+      {
+        extends: false,
+        test: {
+          ...shared,
+          name: 'integration',
+          include: ['src/**/*.integration.test.ts'],
+          // pwsh cold starts are slow on loaded runners: generous timeout for every integration file (no per-file setConfig needed)
+          testTimeout: 30000,
+          hookTimeout: 30000,
+          // cap parallel pwsh-spawning files so they cannot starve the timing-bound tests of the fast project (git-guardrails)
+          maxWorkers: 2,
+          sequence: { groupOrder: 1 }, // required by vitest when maxWorkers differs; runs after fast, never concurrently
+        },
+      },
     ],
   },
 });

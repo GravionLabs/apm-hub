@@ -4,8 +4,6 @@ import * as os from 'os';
 import * as path from 'path';
 import { INSTALLER, SCRIPT, hasPwsh, posix } from './queue.helpers';
 
-vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
-
 describe.skipIf(!hasPwsh || !posix)('Install-QueueLauncher.ps1', () => {
   let tmp: string;
   let home: string;

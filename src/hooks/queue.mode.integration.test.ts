@@ -4,9 +4,6 @@ import * as os from 'os';
 import * as path from 'path';
 import { SCRIPT, hasPwsh, posix, queueHelpers } from './queue.helpers';
 
-// Every case spawns pwsh (some several times); the 5 s default flakes on loaded CI runners.
-vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
-
 describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
   let dir: string;
   let bin: string;

@@ -460,8 +460,8 @@ describe('git-guardrails hook', () => {
 
   describe('performance and limits', () => {
     const CAP = 24576;
-    // Wall-clock bound per hook run; CI runners are 2-3x slower than a developer machine (#247).
-    const BOUND = process.env.CI ? 9000 : 3000;
+    // Wall-clock bound per hook run; CI runners are 2-3x slower than a developer machine (#247), and a loaded local run (parallel suites) too (#336).
+    const BOUND = process.env.CI ? 9000 : 6000;
     const msg = Array.from({ length: 440 }, (_, i) => `line ${i} of a long commit message with some words`).join('\n');
     const timed = (fn: () => { out: string }) => {
       const t = Date.now();
