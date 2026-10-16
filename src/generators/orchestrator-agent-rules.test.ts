@@ -75,12 +75,31 @@ describe('orchestrator agent rules', () => {
   it('body points to the pipeline reference and the reference keeps every step and gate list', () => {
     expect(body).toContain('`github-issue` `references/pbi-pipeline.md`');
     for (const n of [0, 1, 2, 3, 4, 5, 6]) expect(pipelineRef).toMatch(new RegExp(`^${n}\\.\\s`, 'm'));
-    for (const phrase of ['Model per dispatch', 'Same-issue ledger exists', '## Gate points', 'red suite twice'.replace('red suite twice', 'Red suite twice'), 'CHANGES_REQUESTED', 'NEEDS_CONTEXT', 'Plan gate', 'Review summary'])
+    for (const phrase of ['Model per dispatch', 'Same-issue ledger exists', '## Gate points', 'Red suite twice', 'CHANGES_REQUESTED', 'NEEDS_CONTEXT', 'Plan gate', 'Review summary'])
       expect(pipelineRef).toContain(phrase);
     expect(body).not.toMatch(/^\d\.\s/m);
   });
 
   it('does not claim every phase runs in a subagent', () => {
     expect(body).not.toMatch(/every phase runs in a subagent/i);
+  });
+
+  it('lists exactly the six gate points in the reference and routes runner gates through Gate: lines', () => {
+    const section = pipelineRef.split('## Gate points')[1].split(/\n## /)[0];
+    const items = section.split('\n').filter((l) => /^\d+\.\s/.test(l));
+    expect(items).toHaveLength(6);
+    expect(items[0]).toMatch(/^1\. Plan gate \(step 3\)/);
+    expect(items[1]).toMatch(/^2\. Review summary \(step 5\).*--fix-advisories/);
+    expect(items[2]).toMatch(/^3\. `CHANGES_REQUESTED` still blocked after fix round 3/);
+    expect(items[3]).toMatch(/^4\. Red suite twice/);
+    expect(items[4]).toMatch(/^5\. `NEEDS_CONTEXT` from a bug implementer/);
+    expect(items[5]).toMatch(/^6\. .*append `Gate: <question>`/);
+    expect(section).toMatch(/runner appends `Gate: <question>` for every item above/);
+  });
+
+  it('allows pbi-runner as the one nested-subagent exception', () => {
+    expect(body).toMatch(/subagent_type: [^)]*pbi-runner/);
+    expect(body).toMatch(/except `pbi-runner` in loop runner mode/);
+    expect(body).toMatch(/`pr-writer` or `pbi-runner` instead/);
   });
 });
