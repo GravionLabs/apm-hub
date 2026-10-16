@@ -20,6 +20,9 @@
 .PARAMETER Global
   Install user-wide (apm -g) instead of into the project.
 
+.PARAMETER Ref
+  Optional tag or commit sha appended as `#<ref>` to every package spec. Without it apm tracks the default branch.
+
 .PARAMETER TrustProject
   Allow running a project-local Detect-TechStack.ps1 (repository code). Off by default.
 
@@ -33,6 +36,7 @@
 param(
   [string[]]$Packages,
   [switch]$Global,
+  [string]$Ref,
   [switch]$TrustProject,
   [switch]$DryRun
 )
@@ -50,13 +54,22 @@ if (-not (Get-Command apm -ErrorAction SilentlyContinue)) {
 
 # pwsh -File passes "ts,ng" as one string: split on commas, then validate
 $valid = 'shared', 'github', 'delivery', 'agents', 'hooks', 'core', 'all', 'ts', 'py', 'ng', 'dotnet'
-if ($Packages) {
-  $Packages = @($Packages | ForEach-Object { $_ -split ',' } | Where-Object { $_ })
+if ($PSBoundParameters.ContainsKey('Packages')) {
+  $Packages = @($Packages | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+  if ($Packages.Count -eq 0) {
+    [Console]::Error.WriteLine("-Packages is empty. Valid: $($valid -join ', ')")
+    exit 1
+  }
   $bad = @($Packages | Where-Object { $valid -notcontains $_ })
   if ($bad) {
     [Console]::Error.WriteLine("Invalid package(s): $($bad -join ', '). Valid: $($valid -join ', ')")
     exit 1
   }
+}
+
+if ($Ref -and $Ref -notmatch '^[\w][\w./-]*$') {
+  [Console]::Error.WriteLine("Invalid -Ref '$Ref': use a tag, branch or commit sha.")
+  exit 1
 }
 
 $userHome = if ($env:HOME) { $env:HOME } else { $env:USERPROFILE }
@@ -81,11 +94,16 @@ $provides = @{
 }
 $externalDeps = @{ ng = 'angular/skills (angular-developer)'; dotnet = 'dotnet/skills (dotnet plugin)' }
 
-function Test-GlobalBase {
-  foreach ($d in $homeDirs) {
-    if (Test-Path (Join-Path $userHome "$d/github-issue")) { return $true }
+# Base packages already present in the user's client skill directories (one marker skill each)
+function Get-MissingBase {
+  $marker = [ordered]@{ shared = 'detect-techstack'; github = 'github-issue'; delivery = 'review-fanout' }
+  $missing = [System.Collections.Generic.List[string]]::new()
+  foreach ($k in $marker.Keys) {
+    $found = $false
+    foreach ($d in $homeDirs) { if (Test-Path (Join-Path $userHome "$d/$($marker[$k])")) { $found = $true; break } }
+    if (-not $found) { $missing.Add($k) }
   }
-  return $false
+  return $missing
 }
 
 # User-trusted locations first; project-local copy is repository code
@@ -107,7 +125,7 @@ function Find-Detect {
 
 $langMap = @{ ts = 'ts'; js = 'ts'; typescript = 'ts'; javascript = 'ts'; py = 'py'; python = 'py'; dotnet = 'dotnet'; csharp = 'dotnet' }
 $wanted = [System.Collections.Generic.List[string]]::new()
-$addBase = -not (Test-GlobalBase)
+$missingBase = Get-MissingBase
 if ($Packages) {
   $Packages | ForEach-Object { if (-not $wanted.Contains($_)) { $wanted.Add($_) } }
 } else {
@@ -133,8 +151,19 @@ if ($Packages) {
       $notes.Add('detect-techstack not installed: only base packages resolved. Pass -Packages for stack packages.')
     }
   }
-  if ($addBase) {
-    foreach ($b in 'shared', 'github', 'delivery') { if (-not $wanted.Contains($b)) { $wanted.Add($b) } }
+  foreach ($b in $missingBase) { if (-not $wanted.Contains($b)) { $wanted.Add($b) } }
+  if ($Global -and $wanted.Count -eq 0) { $notes.Add('The base packages are already installed globally: nothing to propose.') }
+}
+
+# A requested core/all covers its members: no redundant install
+foreach ($cover in @(@('all', $allMembers), @('core', $coreMembers))) {
+  if ($wanted.Contains($cover[0])) {
+    foreach ($m in $cover[1]) {
+      if ($m -ne $cover[0] -and $wanted.Contains($m)) {
+        [void]$wanted.Remove($m)
+        $notes.Add("$m is covered by $($cover[0]): not installed separately.")
+      }
+    }
   }
 }
 
@@ -147,7 +176,8 @@ if (Test-Path $manifest) {
     $l = ($line -replace '(^|\s)#.*$', '').Trim()
     foreach ($pkg in $allMembers) {
       $e = [regex]::Escape($pkg)
-      if ($l -match "(?<![\w./-])$([regex]::Escape($hubPath))/$e(?=[#'""\s@]|$)" -or $l -match "(?<![\w./-])$e@apm-hub(?![\w-])") { [void]$have.Add($pkg) }
+      $src = '(?:(?:https?://)?github\.com/|git@github\.com:)?'
+      if ($l -match "(?<![\w./-])$src$([regex]::Escape($hubPath))/$e(?:\.git)?/?(?=[#'""\s@]|$)" -or $l -match "(?<![\w./-])$e@apm-hub(?![\w-])") { [void]$have.Add($pkg) }
     }
   }
 } else {
@@ -166,12 +196,14 @@ $failed = $null
 $notAttempted = [System.Collections.Generic.List[string]]::new()
 
 foreach ($pkg in $wanted) {
-  if ($failed) { $notAttempted.Add($pkg); continue }
   if ($have.Contains($pkg)) { $skipped.Add($pkg); continue }
-  $apmArgs = @('install', "$hubPath/$pkg") + $(if ($Global) { '-g' } else { @() })
+  if ($failed) { $notAttempted.Add($pkg); continue }
+  $spec = "$hubPath/$pkg" + $(if ($Ref) { "#$Ref" } else { '' })
+  $apmArgs = @('install', $spec) + $(if ($Global) { '-g' } else { @() })
   $commands.Add('apm ' + ($apmArgs -join ' '))
   if (-not $DryRun) {
-    & apm @apmArgs | Out-Host
+    # apm output goes to stderr: stdout stays pure JSON
+    & apm @apmArgs 2>&1 | ForEach-Object { [Console]::Error.WriteLine("$_") }
     if ($LASTEXITCODE -ne 0) { $failed = $pkg; $notes.Add("apm install failed for $pkg (exit $LASTEXITCODE)"); continue }
   }
   $done.Add($pkg)

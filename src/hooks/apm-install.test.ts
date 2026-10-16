@@ -38,7 +38,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   const fakeApm = (exitFor = '') =>
     fs.writeFileSync(
       path.join(bin, 'apm'),
-      `#!/bin/sh\necho "$@" >> "${dir}/apm.log"\ncase "$*" in *"${exitFor || 'NEVER-MATCH'}"*) exit 1;; esac\n`,
+      `#!/bin/sh\necho "$@" >> "${dir}/apm.log"\necho "apm noise: $*"\ncase "$*" in *"${exitFor || 'NEVER-MATCH'}"*) exit 1;; esac\n`,
       { mode: 0o755 },
     );
   const apmCalls = () =>
@@ -51,7 +51,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   // fake detect emitting the names the real script emits (ts, js, py, dotnet)
   const fakeDetect = (report: object, root = home, client = '.claude/skills') =>
     fs.writeFileSync(detectDir(root, client), `param($ProjectRoot)\n'${JSON.stringify(report)}'\n`);
-  const globalBase = () => fs.mkdirSync(path.join(home, '.claude/skills/github-issue'), { recursive: true });
+  const globalBase = (skills = ['detect-techstack', 'github-issue', 'review-fanout']) =>
+    skills.forEach((n) => fs.mkdirSync(path.join(home, '.claude/skills', n), { recursive: true }));
   const manifest = (text: string, root = proj) => fs.writeFileSync(path.join(root, 'apm.yml'), text);
 
   const run = (args: string[], pathEnv = `${bin}:${process.env.PATH}`) => {
@@ -60,7 +61,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
       cwd: proj,
       env: { ...process.env, HOME: home, PATH: pathEnv },
     });
-    return { ...r, json: r.stdout.trim().startsWith('{') ? JSON.parse(r.stdout.slice(r.stdout.indexOf('{'))) : null };
+    // stdout must be pure JSON (apm output goes to stderr)
+    return { ...r, json: r.stdout.trim() ? JSON.parse(r.stdout) : null };
   };
   const notes = (r: { json: { notes: string[] } }) => r.json.notes.join(' | ');
 
@@ -89,13 +91,14 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     fs.writeFileSync(path.join(proj, 'angular.json'), '{}');
     globalBase();
     const r = run(['-DryRun']);
-    expect(r.json.wouldInstall).toEqual(expect.arrayContaining(['ts', 'ng']));
+    expect(r.json.wouldInstall).toEqual(['ts', 'ng']);
   });
 
   it('adds the base packages unless a global core is present', () => {
     fakeApm();
     fakeDetect({ languages: ['ts'], frameworks: ['angular'] });
-    expect(run(['-DryRun']).json.wouldInstall).toEqual(['ts', 'ng', 'shared', 'github', 'delivery']);
+    // the home detect-techstack proves `shared` is already there
+    expect(run(['-DryRun']).json.wouldInstall).toEqual(['ts', 'ng', 'github', 'delivery']);
     globalBase();
     expect(run(['-DryRun']).json.wouldInstall).toEqual(['ts', 'ng']);
   });
@@ -137,7 +140,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     fs.writeFileSync(detectDir(home), script);
     const r = run(['-DryRun']);
     expect(r.status).toBe(0);
-    expect(r.json.wouldInstall).toEqual(['shared', 'github', 'delivery']);
+    expect(r.json.wouldInstall).toEqual(['github', 'delivery']);
     expect(notes(r)).toContain('detect-techstack failed');
     expect(r.stderr).not.toContain('at <ScriptBlock>');
   });
@@ -243,8 +246,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     const marker = path.join(dir, 'ran');
     fs.writeFileSync(detectDir(home), `param($ProjectRoot)\nSet-Content '${marker}' x\n'{"languages":["ts"],"frameworks":[]}'\n`);
     const r = run(['-Global', '-DryRun']);
-    expect(r.json.wouldInstall).toEqual(['shared', 'github', 'delivery']);
-    expect(r.json.commands[0]).toBe('apm install GravionLabs/apm-hub/packages/shared -g');
+    expect(r.json.wouldInstall).toEqual(['github', 'delivery']);
+    expect(r.json.commands[0]).toBe('apm install GravionLabs/apm-hub/packages/github -g');
     expect(fs.existsSync(marker)).toBe(false);
     globalBase();
     expect(run(['-Global', '-DryRun']).json.wouldInstall).toEqual([]);
@@ -266,7 +269,107 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     const r = run(['-Packages', 'ng,dotnet,agents', '-DryRun']);
     expect(Object.keys(r.json.provides)).toEqual(['ng', 'dotnet', 'agents']);
     expect(r.json.provides.agents).toContain('orchestrator');
+    expect(r.json.provides.ng).toContain('ng-implementation');
     expect(r.json.dependencies).toEqual(['angular/skills (angular-developer)', 'dotnet/skills (dotnet plugin)']);
+    expect(run(['-Packages', 'all', '-DryRun']).json.dependencies.sort()).toEqual([
+      'angular/skills (angular-developer)',
+      'dotnet/skills (dotnet plugin)',
+    ]);
+    expect(run(['-Packages', 'ts', '-DryRun']).json.dependencies).toEqual([]);
+  });
+
+  it('checks each base package separately and proposes only the missing ones', () => {
+    fakeApm();
+    globalBase(['github-issue']);
+    expect(run(['-Global', '-DryRun']).json.wouldInstall).toEqual(['shared', 'delivery']);
+    globalBase(['detect-techstack', 'review-fanout']);
+    const r = run(['-Global', '-DryRun']);
+    expect(r.json.wouldInstall).toEqual([]);
+    expect(notes(r)).toContain('already installed globally');
+  });
+
+  it('puts installed packages in skipped, not notAttempted, after a failure; same shape in a dry run', () => {
+    fakeApm('packages/py');
+    manifest('  apm:\n    - GravionLabs/apm-hub/packages/dotnet\n');
+    const r = run(['-Packages', 'ts,py,dotnet,ng']);
+    expect(r.json.installed).toEqual(['ts']);
+    expect(r.json.failed).toBe('py');
+    expect(r.json.skipped).toEqual(['dotnet']);
+    expect(r.json.notAttempted).toEqual(['ng']);
+    const dry = run(['-Packages', 'ts,py,dotnet,ng', '-DryRun']);
+    expect(dry.json.skipped).toEqual(['dotnet']);
+    expect(dry.json.failed).toBeNull();
+    expect(dry.json.notAttempted).toEqual([]);
+  });
+
+  it('reports a first-package failure with everything else not attempted', () => {
+    fakeApm('packages/ts');
+    const r = run(['-Packages', 'ts,py']);
+    expect(r.status).toBe(1);
+    expect(r.json.installed).toEqual([]);
+    expect(r.json.failed).toBe('ts');
+    expect(r.json.notAttempted).toEqual(['py']);
+  });
+
+  it('has failed null and no notAttempted on success', () => {
+    fakeApm();
+    const r = run(['-Packages', 'ts']);
+    expect(r.json.failed).toBeNull();
+    expect(r.json.notAttempted).toEqual([]);
+  });
+
+  it.each([
+    'https://github.com/GravionLabs/apm-hub/packages/ts.git',
+    'git@github.com:GravionLabs/apm-hub/packages/ts/',
+    'GravionLabs/apm-hub/packages/ts.git#v1',
+  ])('recognises the manifest form %s', (entry) => {
+    fakeApm();
+    manifest(`  apm:\n    - ${entry}\n`);
+    expect(run(['-Packages', 'ts']).json.skipped).toEqual(['ts']);
+  });
+
+  it('does not match a look-alike host or owner in the manifest', () => {
+    fakeApm();
+    manifest('  apm:\n    - https://evil.example/GravionLabs/apm-hub/packages/ts\n    - xGravionLabs/apm-hub/packages/py\n');
+    expect(run(['-Packages', 'ts,py']).json.installed).toEqual(['ts', 'py']);
+  });
+
+  it('trims whitespace and ignores empty entries in -Packages', () => {
+    fakeApm();
+    expect(run(['-Packages', 'ts, py,,', '-DryRun']).json.wouldInstall).toEqual(['ts', 'py']);
+  });
+
+  it('exits 1 for an empty -Packages list instead of detecting', () => {
+    fakeApm();
+    const r = run(['-Packages', ' , ']);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('-Packages is empty');
+    expect(apmCalls()).toEqual([]);
+  });
+
+  it('does not install members next to a requested core or all', () => {
+    fakeApm();
+    const core = run(['-Packages', 'core,shared,ts', '-DryRun']);
+    expect(core.json.wouldInstall).toEqual(['core', 'ts']);
+    expect(notes(core)).toContain('shared is covered by core');
+    expect(run(['-Packages', 'ts,all,core', '-DryRun']).json.wouldInstall).toEqual(['all']);
+  });
+
+  it('keeps apm output off stdout so it stays pure JSON', () => {
+    fakeApm();
+    const r = run(['-Packages', 'ts']);
+    expect(r.stdout).not.toContain('apm noise');
+    expect(r.stderr).toContain('apm noise');
+  });
+
+  it('appends -Ref to the package spec and rejects an unsafe ref', () => {
+    fakeApm();
+    const r = run(['-Packages', 'ts', '-Ref', 'v2.3.0']);
+    expect(r.json.commands).toEqual(['apm install GravionLabs/apm-hub/packages/ts#v2.3.0']);
+    expect(apmCalls()).toEqual(['install GravionLabs/apm-hub/packages/ts#v2.3.0']);
+    const bad = run(['-Packages', 'ts', '-Ref', 'x; rm -rf /']);
+    expect(bad.status).toBe(1);
+    expect(bad.stderr).toContain('Invalid -Ref');
   });
 
   it('notes the OpenCode plugin copy for hooks, core and all', () => {
@@ -279,10 +382,16 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
 
   it('warns when apmw is missing and an agent package is selected, without failing', () => {
     fakeApm();
-    const r = run(['-Packages', 'agents'], `${bin}:${path.dirname(pwshPath)}:/usr/bin:/bin`);
-    const hasApmw = spawnSync('sh', ['-c', 'PATH=/usr/bin:/bin command -v apmw']).status === 0;
-    expect(r.status).toBe(0);
-    if (!hasApmw) expect(notes(r)).toContain('apmw not found');
+    // PATH without apmw: bin (fake apm) plus the directory of pwsh only if it holds no apmw
+    const lean = fs.mkdtempSync(path.join(dir, 'lean-'));
+    fs.symlinkSync(pwshPath, path.join(lean, 'pwsh'));
+    const missing = run(['-Packages', 'agents', '-DryRun'], `${bin}:${lean}`);
+    expect(missing.status).toBe(0);
+    expect(notes(missing)).toContain('apmw not found');
+    fs.writeFileSync(path.join(bin, 'apmw'), '#!/bin/sh\n', { mode: 0o755 });
+    const present = run(['-Packages', 'agents', '-DryRun'], `${bin}:${lean}`);
+    expect(notes(present)).not.toContain('apmw not found');
+    expect(notes(present)).toContain('apmw sanitize');
   });
 
   it('exits 1 when apm is not on PATH', () => {
