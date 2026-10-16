@@ -3,8 +3,10 @@
 # (.agents/<issue>/progress.md written by the orchestrator agent). Claude Code and Copilot CLI payloads.
 # Loop ledgers (.agents/loop-<nr>/) are skipped: the newest PBI ledger is used.
 # SubagentStop fires at every depth (pbi-runner and its children) and again on a SendMessage resume, so the
-# line is deduplicated per agent_id (sidecar .ledger-seen next to the ledger). pbi-runner stops are summarised
-# from the status of its JSON reply: `GATE <phase>`, `DONE <pr>`, `BLOCKED`, `FAILED`.
+# stop is deduplicated per agent_id and payload hash (sidecar .ledger-seen next to the ledger, regular file only):
+# the same stop fired twice is written once, a resumed agent with a new reply (even the same `GATE review`) again.
+# pbi-runner stops are summarised from the status of its JSON reply (needs jq): `GATE <phase>`, `DONE <pr>`,
+# `BLOCKED`, `FAILED`.
 # Never blocks: every path exits 0. Writes nothing when no ledger exists.
 
 payload="$(cat 2>/dev/null || true)"
@@ -37,34 +39,16 @@ first() { # first non-empty value among the given field names
   for k in "$@"; do v="$(field "$k")"; [ -n "$v" ] && { printf '%s' "$v"; return; }; done
 }
 agent="$(first agent_type agentType agentName subagent_type)"
+# the name ends up in a markdown line: allow only name characters, cap 64
+agent="$(printf '%s' "$agent" | tr -cd 'A-Za-z0-9:_./-' | cut -c1-64)"
 [ -n "$agent" ] || agent="subagent"
 # the orchestrator writes its own ledger entries; its stop events are noise (any case or namespace)
 agent_lc="$(printf '%s' "$agent" | tr '[:upper:]' '[:lower:]')"
 case "$agent_lc" in orchestrator|*[:/.]orchestrator) exit 0 ;; esac
-summary="$(first last_assistant_message response | head -n 1 | cut -c1-120)"
+clean() { tr -d '\000-\010\013-\037\177'; } # no control characters in a ledger line
+summary="$(first last_assistant_message response | head -n 1 | clean | cut -c1-120)"
 
-last_text_line() { # last non-empty assistant text line of a JSONL transcript (needs jq; skips invalid lines)
-  [ -n "$1" ] && [ -f "$1" ] && command -v jq >/dev/null 2>&1 || return 0
-  jq -rRn '[inputs | fromjson? | objects
-    | select(.type == "assistant" or .role == "assistant" or ((.message | objects | .role) == "assistant"))
-    | ((.message | objects | .content) // .content)
-    | if type == "string" then . elif type == "array" then ([.[] | objects | select(.type == "text") | .text | strings] | join("\n")) else empty end
-    | select(length > 0)] | last // empty' "$1" 2>/dev/null \
-    | grep -v '^[[:space:]]*$' | tail -n 1 | cut -c1-120
-}
-runner_status() { # `GATE <phase>` / `DONE <pr>` / `<STATUS>` from the JSON reply of pbi-runner (needs jq)
-  command -v jq >/dev/null 2>&1 || return 0
-  local msg
-  msg="$(printf '%s' "$payload" | jq -r '.last_assistant_message // .response // empty' 2>/dev/null)"
-  [ -n "$msg" ] || msg="$(last_text_all "$(field agent_transcript_path)")"
-  printf '%s' "$msg" | jq -rR -s '
-    (capture("(?<j>\\{[\\s\\S]*\\})").j // empty) | (try fromjson catch empty) | objects
-    | select((.status | type) == "string" and (.status | test("^(GATE|DONE|BLOCKED|FAILED)$")))
-    | .status + (if .status == "GATE" and ((.phase | type) == "string") and (.phase != "") then " " + .phase
-        elif .status == "DONE" and ((.pr | type) == "string") and (.pr != "") then " " + .pr else "" end)' 2>/dev/null \
-    | head -n 1 | cut -c1-120
-}
-last_text_all() { # last assistant text of a transcript, all lines
+last_text_all() { # last assistant text of a JSONL transcript, all lines (needs jq; skips invalid lines)
   [ -n "$1" ] && [ -f "$1" ] && command -v jq >/dev/null 2>&1 || return 0
   jq -rRn '[inputs | fromjson? | objects
     | select(.type == "assistant" or .role == "assistant" or ((.message | objects | .role) == "assistant"))
@@ -72,8 +56,28 @@ last_text_all() { # last assistant text of a transcript, all lines
     | if type == "string" then . elif type == "array" then ([.[] | objects | select(.type == "text") | .text | strings] | join("\n")) else empty end
     | select(length > 0)] | last // empty' "$1" 2>/dev/null
 }
+last_text_line() { # last non-empty line of that text
+  last_text_all "$1" | grep -v '^[[:space:]]*$' | tail -n 1 | clean | cut -c1-120
+}
+runner_status() { # `GATE <phase>` / `DONE <pr>` / `<STATUS>` from the JSON reply of pbi-runner (needs jq)
+  command -v jq >/dev/null 2>&1 || return 0
+  local msg
+  msg="$(printf '%s' "$payload" | jq -r '.last_assistant_message // .response // empty' 2>/dev/null)"
+  [ -n "$msg" ] || msg="$(last_text_all "$(field agent_transcript_path)")"
+  # last JSON object of the reply with a known status (a fenced or pretty-printed block, text around it allowed)
+  printf '%s' "$msg" | jq -rR -s '
+    def valid: type == "object" and (.status | type) == "string" and (.status | test("^(GATE|DONE|BLOCKED|FAILED)$"));
+    def cands: . as $s | ([match("\\{"; "g").offset] | .[-20:] | reverse[]) as $i
+      | ([$s | match("\\}"; "g").offset] | .[-20:] | reverse[] | select(. > $i)) as $j | $s[$i:$j + 1];
+    first(cands | (try fromjson catch empty) | select(valid)) // empty
+    | .status + (if .status == "GATE" and ((.phase | type) == "string") and (.phase | test("^[A-Za-z0-9_-]+$")) then " " + .phase
+        elif .status == "DONE" and ((.pr | type) == "string") and (.pr | test("^(#?[0-9]+|https://[^ ]+)$")) then " " + .pr else "" end)' 2>/dev/null \
+    | head -n 1 | cut -c1-120
+}
 case "$agent_lc" in pbi-runner|*[:/.]pbi-runner)
-  rs="$(runner_status)"; [ -n "$rs" ] && summary="$rs" ;;
+  rs="$(runner_status)"
+  if [ -n "$rs" ]; then summary="$rs"
+  elif ! command -v jq >/dev/null 2>&1; then case "$summary" in '{'*|'```'*) summary="" ;; esac; fi ;;
 esac
 if [ -z "$summary" ]; then
   # only the subagent's own transcript; transcript_path is the parent session and must not be used
@@ -90,15 +94,18 @@ if [ -n "$summary" ]; then
 else
   line="$(printf 'Subagent %s: stopped' "$agent")"
 fi
-# idempotent: Copilot CLI may fire both event casings; skip when the last line is identical
-[ "$(tail -n 1 "$ledger" 2>/dev/null)" = "$line" ] && exit 0
-# idempotent per agent: a resume (same agent_id) that ends with the same line is not written twice
 agent_id="$(field agent_id)"
+printf '%s' "$agent_id" | grep -Eq '^[A-Za-z0-9_-]{1,64}$' || agent_id=""
 seen="$(dirname "$ledger")/.ledger-seen"
-if [ -n "$agent_id" ] && [ ! -L "$seen" ]; then
-  key="$agent_id	$line"
+key=""
+if [ -n "$agent_id" ] && command -v cksum >/dev/null 2>&1 && [ ! -L "$seen" ] && { [ ! -e "$seen" ] || [ -f "$seen" ]; }; then
+  # idempotent per stop event: same agent_id and same payload (a duplicate fire) is written once
+  key="$agent_id $(printf '%s' "$payload" | cksum | cut -d' ' -f1)"
   grep -qxF -- "$key" "$seen" 2>/dev/null && exit 0
-  printf '%s\n' "$key" >> "$seen" 2>/dev/null || true
+else
+  # no usable agent_id: Copilot CLI may fire both event casings; skip when the last line is identical
+  [ "$(tail -n 1 "$ledger" 2>/dev/null)" = "$line" ] && exit 0
 fi
 printf '%s\n' "$line" >> "$ledger" 2>/dev/null || true
+[ -n "$key" ] && { printf '%s\n' "$key" >> "$seen" 2>/dev/null || true; }
 exit 0
