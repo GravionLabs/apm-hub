@@ -5,7 +5,7 @@ import * as path from 'path';
 
 const SCRIPT = path.resolve(
   __dirname,
-  '../../packages/delivery/.apm/skills/orch-queue/scripts/Invoke-OrchestratorQueue.ps1',
+  '../../packages/delivery/.apm/skills/queue/scripts/Invoke-OrchestratorQueue.ps1',
 );
 const AGENT = path.resolve(__dirname, '../../packages/agents/.apm/agents/orchestrator.agent.md');
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;

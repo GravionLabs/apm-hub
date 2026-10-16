@@ -1,12 +1,12 @@
 ---
-name: orch-queue
+name: queue
 description: 'Run the orchestrator headless over a list of issues or a whole Feature/Epic, one fresh process per issue. Use for "run these issues overnight", "work the Feature queue", "headless batch".'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'
 ---
 
-# orch-queue
+# queue
 
 `scripts/Invoke-OrchestratorQueue.ps1` starts one fresh headless `orchestrator` process per issue (own context, no
 cache rewrite from a long session). Plan interactively first: the plan gate needs you, a headless run only
@@ -26,6 +26,16 @@ pwsh scripts/Invoke-OrchestratorQueue.ps1 -Epic 300 -Harness opencode -ContinueO
 Always start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`
 (not with `-Feature`/`-Epic`: the mode is always `next`, the adapters forward it as `next <nr>`), `-ContinueOnError`,
 `-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved`, `-TrustedOnly` (with `-Label`).
+
+## Slash usage
+
+`/queue [dry-run] <full|implement|plan> <nr>...` or `/queue feature <nr>` / `/queue epic <nr>`, for example
+`/queue full 324`, `/queue implement 101 102`, `/queue feature 248`, `/queue epic 300`, `/queue dry-run implement 101`.
+Mapping to apply: first word `full|implement|plan` is `-Mode <word>`; `feature <nr>` / `epic <nr>` is `-Feature` / `-Epic`;
+`dry-run` is `-DryRun` (recommend it first); remaining numbers are positional issues; other `-Flags` pass through. Then run
+`pwsh <skill dir>/scripts/Invoke-OrchestratorQueue.ps1 ...` from the repository root, print the summary lines and the exit
+code, and never answer a gate. The command runs in the current session, but every child is a fresh process; start long runs
+from a plain terminal, see [shell function](references/shell-function.md).
 
 ## Exit codes
 
