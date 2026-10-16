@@ -52,3 +52,5 @@ for a hotfix: stop and report instead of creating it.
 
 `<default>` (the repo default branch, `git symbolic-ref refs/remotes/origin/HEAD --short` minus
 `origin/`, fallback `main`) is only used by `github-release` itself.
+
+Issues merged into a release branch carry the label `merged` until the release closes them (`github-release` `references/merged-label.md`).
