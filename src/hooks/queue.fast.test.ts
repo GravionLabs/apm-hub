@@ -1,0 +1,227 @@
+import { spawnSync } from 'child_process';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { AGENT, INSTALLER, hasPwsh, posix, runBatch, type BatchCase, type BatchResult } from './queue.helpers';
+
+// Fast project: validation, -DryRun, launcher text and the agent file. The -DryRun/validation cases of
+// Invoke-OrchestratorQueue.ps1 run batched in ONE pwsh process (queue-batch.ps1), each case in its own
+// working directory; every `it` below asserts on its own case result. Safety net: pwsh cold starts can be slow on CI.
+vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
+
+describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh process)', () => {
+  let root: string;
+  let R: Record<string, BatchResult>;
+  let dirOf: Record<string, string>;
+
+  beforeAll(() => {
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'queue-fast-'));
+    const bin = path.join(root, 'bin');
+    fs.mkdirSync(bin);
+    const defs: Record<string, { args: string[]; setup?: (dir: string) => void; withBin?: boolean }> = {};
+    const add = (key: string, args: string[], setup?: (dir: string) => void, withBin = false) => (defs[key] = { args, setup, withBin });
+    const ledger = (n: number, ...lines: string[]) => (dir: string) => {
+      fs.mkdirSync(path.join(dir, '.agents', String(n)), { recursive: true });
+      fs.writeFileSync(path.join(dir, '.agents', String(n), 'progress.md'), lines.join('\n') + '\n');
+    };
+    const file = (name: string, content: string) => (dir: string) => fs.writeFileSync(path.join(dir, name), content);
+
+    add('default', ['12', '#13', '-DryRun']);
+    add('allowAll', ['5', '-Mode', 'plan', '-AllowAll', '-DryRun']);
+    add('issueFile', ['-IssueFile', 'q.txt', '-DryRun'], file('q.txt', '7\n\n#8\n7\n'));
+    if (posix) {
+      add('label', ['-Label', 'queue ready', '-DryRun'], (dir) => fs.writeFileSync(path.join(bin, 'gh'), `#!/bin/sh\necho "$@" > "${dir}/gh.args"\nprintf '30\\n4\\n'\n`, { mode: 0o755 }), true);
+    }
+    add('skipped', ['12', '13', '-DryRun'], ledger(12, '# orchestrator ledger', 'Ledger complete.'));
+    add('notLast', ['12', '-DryRun'], ledger(12, 'Ledger complete.', 'Fix round 1: x'));
+    for (const a of [['abc'], ['0'], ['1;rm'], []]) add(`invalid ${JSON.stringify(a)}`, [...a, '-DryRun']);
+    add('badLine', ['-IssueFile', 'q.txt', '-DryRun'], file('q.txt', '7\nfoo\n'));
+    add('missingFile', ['-IssueFile', 'none.txt', '-DryRun']);
+    add('copilotNarrow', ['12', '-Harness', 'copilot', '-DryRun']);
+    add('copilotAll', ['12', '-Harness', 'copilot', '-Mode', 'plan', '-AllowAll', '-DryRun']);
+    add('opencodeNarrow', ['12', '-Harness', 'opencode', '-DryRun']);
+    add('opencodeAll', ['12', '-Harness', 'opencode', '-Mode', 'implement', '-AllowAll', '-DryRun']);
+    add('adapter copilot', ['1', '-Harness', 'copilot', '-DryRun']);
+    add('adapter opencode', ['1', '-Harness', 'opencode', '-DryRun']);
+    add('unknownHarness', ['1', '-Harness', 'nope', '-DryRun']);
+    add('modeNext', ['1', '-Mode', 'next', '-DryRun']);
+    add('featureDry', ['-Feature', '10', '-DryRun']);
+    add('epicCopilotDry', ['-Epic', '#11', '-Harness', 'copilot', '-DryRun']);
+    add('featureAndEpic', ['-Feature', '1', '-Epic', '2', '-DryRun']);
+    add('featureWithIssue', ['5', '-Feature', '1', '-DryRun']);
+    add('featureWithMode', ['-Feature', '1', '-Mode', 'plan', '-DryRun']);
+
+    const keys = Object.keys(defs);
+    dirOf = {};
+    const cases: BatchCase[] = keys.map((k, i) => {
+      const dir = path.join(root, `c${i}`);
+      fs.mkdirSync(dir);
+      dirOf[k] = dir;
+      defs[k].setup?.(dir);
+      return { args: defs[k].args, cwd: dir, path: defs[k].withBin ? `${bin}${path.delimiter}${process.env.PATH}` : undefined };
+    });
+    const results = runBatch(cases);
+    R = Object.fromEntries(keys.map((k, i) => [k, results[i]]));
+  });
+  afterAll(() => fs.rmSync(root, { recursive: true, force: true }));
+
+  describe('input and dry run', () => {
+    it('prints one claude command per positional issue with the default mode full', () => {
+      const r = R.default;
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain('[dry-run] #12: claude --agent orchestrator -p "full 12" --allowedTools ');
+      expect(r.stdout).toContain('-p "full 13"');
+      expect(r.stdout).toContain('Bash(git status:*)');
+      expect(r.stdout).toContain('Bash(gh pr create:*)');
+      expect(r.stdout).not.toContain('gh pr merge');
+      expect(r.stdout).not.toContain('Bash(git:*)');
+      expect(r.stdout).not.toContain('Bash(gh:*)');
+      expect(r.stdout).not.toContain('--dangerously-skip-permissions');
+    });
+
+    it('forwards -Mode and adds the permission bypass only with -AllowAll', () => {
+      const r = R.allowAll;
+      expect(r.stdout).toContain('-p "plan 5"');
+      expect(r.stdout).toContain('--dangerously-skip-permissions');
+    });
+
+    it('reads issues from -IssueFile, ignoring blank lines and duplicates', () => {
+      const r = R.issueFile;
+      expect(r.status).toBe(0);
+      expect(r.stdout.match(/\[dry-run\]/g)).toHaveLength(2);
+      expect(r.stdout).toContain('-p "full 7"');
+      expect(r.stdout).toContain('-p "full 8"');
+    });
+
+    it.skipIf(!posix)('resolves -Label through gh api GET, ascending, without pull requests', () => {
+      const r = R.label;
+      expect(r.status).toBe(0);
+      expect(r.stdout.indexOf('full 4')).toBeLessThan(r.stdout.indexOf('full 30'));
+      const args = fs.readFileSync(path.join(dirOf.label, 'gh.args'), 'utf8');
+      expect(args).toContain('--method GET');
+      expect(args).toContain('labels=queue%20ready');
+    });
+
+    it('lists an issue with a complete ledger as skipped and starts nothing', () => {
+      const r = R.skipped;
+      expect(r.stdout).not.toContain('-p "full 12"');
+      expect(r.stdout).toContain('-p "full 13"');
+      expect(r.stdout).toMatch(/^#12 skipped$/m);
+    });
+
+    it('does not skip when Ledger complete. is not the last line', () => {
+      expect(R.notLast.stdout).toContain('-p "full 12"');
+    });
+
+    it.each([[['abc']], [['0']], [['1;rm']], [[]]])('rejects invalid input %j', (args) => {
+      expect(R[`invalid ${JSON.stringify(args)}`].status).not.toBe(0);
+    });
+
+    it('rejects a bad line in -IssueFile and a missing file', () => {
+      expect(R.badLine.stderr).toContain('q.txt line 2');
+      expect(R.missingFile.status).not.toBe(0);
+    });
+
+    it('prints the narrow Copilot command, quoted for the shell, and --allow-all-tools only with -AllowAll', () => {
+      const narrow = R.copilotNarrow.stdout;
+      expect(narrow).toContain('[dry-run] #12: copilot -p "full 12" --agent=orchestrator --no-ask-user --allow-tool=write ');
+      expect(narrow).toContain('"--allow-tool=shell(git status:*)"');
+      expect(narrow).toContain('"--allow-tool=shell(gh pr create:*)"');
+      expect(narrow).not.toContain('--allow-all-tools');
+      expect(narrow).not.toContain('gh pr merge');
+      const all = R.copilotAll;
+      expect(all.status).toBe(0);
+      expect(all.stdout).toContain('[dry-run] #12: copilot -p "plan 12" --agent=orchestrator --no-ask-user --allow-all-tools\n');
+      expect(all.stdout).not.toContain('--allow-tool');
+    });
+
+    it('prints the narrow OpenCode command with OPENCODE_PERMISSION, and --auto without it with -AllowAll', () => {
+      const narrow = R.opencodeNarrow.stdout;
+      expect(narrow).toContain('[dry-run] #12: OPENCODE_PERMISSION=');
+      expect(narrow).toContain('opencode run --agent orchestrator "full 12"');
+      expect(narrow).toContain('\\"git status *\\":\\"allow\\"');
+      expect(narrow).toContain('\\"*\\":\\"deny\\"');
+      expect(narrow).not.toContain('--auto');
+      const all = R.opencodeAll;
+      expect(all.status).toBe(0);
+      expect(all.stdout).toContain('[dry-run] #12: opencode run --agent orchestrator --auto "implement 12"\n');
+      expect(all.stdout).not.toContain('OPENCODE_PERMISSION');
+    });
+
+    it.each(['copilot', 'opencode'])('does not report "No adapter" for %s', (h) => {
+      const r = R[`adapter ${h}`];
+      expect(r.status).toBe(0);
+      expect(r.stderr).not.toContain('No adapter');
+    });
+
+    it('fails clearly for an unknown harness adapter and an invalid mode', () => {
+      expect(R.unknownHarness.stderr).toContain("No adapter for harness 'nope'");
+      expect(R.modeNext.status).not.toBe(0);
+    });
+  });
+
+  describe('Feature and Epic queue mode (dry run and validation)', () => {
+    it('dry run prints one next command and writes nothing', () => {
+      const r = R.featureDry;
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain('[dry-run] Feature #10: claude --agent orchestrator -p "next 10" --allowedTools ');
+      expect(fs.existsSync(path.join(dirOf.featureDry, '.agents'))).toBe(false);
+      expect(R.epicCopilotDry.stdout).toContain('copilot -p "next 11"');
+    });
+
+    it('rejects -Feature with -Epic, issue numbers or an explicit -Mode', () => {
+      expect(R.featureAndEpic.status).not.toBe(0);
+      expect(R.featureWithIssue.status).not.toBe(0);
+      const r = R.featureWithMode;
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain('-Mode cannot be combined');
+    });
+  });
+});
+
+describe.skipIf(!hasPwsh || !posix)('Install-QueueLauncher.ps1 launcher text (-Show), also the Windows variant, text-level only', () => {
+  // both flavors from one pwsh process
+  let sh: string;
+  let cmd: string;
+  beforeAll(() => {
+    const r = spawnSync(
+      'pwsh',
+      ['-NoProfile', '-Command', `& '${INSTALLER}' -Show -Flavor sh; '<<<SPLIT>>>'; & '${INSTALLER}' -Show -Flavor cmd`],
+      { encoding: 'utf8' },
+    );
+    expect(r.status).toBe(0);
+    [sh, cmd] = r.stdout.split(/<<<SPLIT>>>\r?\n?/);
+  });
+  const norm = (d: string) => d.replace(/\$top|%TOP%/g, 'TOP').replace(/\$HOME|%USERPROFILE%/g, 'HOME').replace(/\\/g, '/');
+  const dirsOf = (text: string, re: RegExp) => [...(text.match(re)?.[1] ?? '').matchAll(/"([^"]+)"/g)].map((m) => norm(m[1]));
+
+  it('the cmd launcher uses setlocal so cd /d does not leak, and returns the exit code', () => {
+    expect(cmd).toMatch(/^@echo off\r\nsetlocal\r\n/);
+    expect(cmd.indexOf('setlocal')).toBeLessThan(cmd.indexOf('cd /d'));
+    expect(cmd).toContain('endlocal & exit /b %ERRORLEVEL%');
+    expect(cmd).toContain('QUEUE_RUNNER');
+  });
+
+  it('sh and cmd search the same seven directories in the same order', () => {
+    const fromSh = dirsOf(sh, /for base in([\s\S]*?); do/);
+    const fromCmd = dirsOf(cmd, /for %%b in \((.*)\) do/);
+    expect(fromSh).toEqual([
+      'TOP/.claude/skills',
+      'TOP/.opencode/skills',
+      'TOP/.agents/skills',
+      'TOP/.github/skills',
+      'HOME/.claude/skills',
+      'HOME/.agents/skills',
+      'HOME/.config/opencode/skills',
+    ]);
+    expect(fromCmd).toEqual(fromSh);
+  });
+});
+
+describe('orchestrator agent', () => {
+  it('writes Ledger complete. through Add-LedgerLine.ps1 before the final report line', () => {
+    const body = fs.readFileSync(AGENT, 'utf8');
+    expect(body).toContain('Ledger complete.');
+    expect(body).toContain('Add-LedgerLine.ps1');
+  });
+});

@@ -33,6 +33,7 @@ The repo uses pnpm (`pnpm-lock.yaml`) only. `test/integration` is the exception:
    pnpm run build; pnpm test
    pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .
    ```
+   Vitest has two projects: `fast` (everything except `*.integration.test.ts`) and `integration` (the pwsh-heavy queue tests with fake `claude`/`gh` binaries and the launcher installer). `pnpm run test:fast` runs only `fast` for quick local feedback; `pnpm test` and `pnpm run test:ci` (CI, with coverage) run the full suite. Name a new pwsh-heavy test `*.integration.test.ts`, and batch validation or `-DryRun` cases into one pwsh process (`src/hooks/queue-batch.ps1`) instead of spawning one per case.
 5. Update the package `description` in `packages/<domain>/apm.yml` and the root `apm.yml` when the package scope changed, and the skill table in AGENTS.md.
 6. Open a PR with a conventional-commit title (`feat(py): …`, `fix(github): …`). The changelog is generated from commit messages with git-cliff.
 

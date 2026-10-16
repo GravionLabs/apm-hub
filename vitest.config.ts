@@ -1,15 +1,21 @@
 import { defineConfig } from 'vitest/config';
 
+// Two projects: `fast` (everything except *.integration.test.ts) and `integration` (pwsh-heavy queue
+// tests with fake harness binaries and the launcher installer, split over several files so they run in parallel).
+// `vitest run` runs both; `pnpm run test:fast` runs only `fast`.
+const shared = { globals: true, environment: 'node' } as const;
+
 export default defineConfig({
   test: {
-    globals: true,
-    environment: 'node',
-    include: ['src/**/*.test.ts'],
     reporters: ['default', ['junit', { outputFile: 'test-results/junit.xml' }]],
     coverage: {
       provider: 'v8',
       reporter: ['cobertura', 'text'],
       reportsDirectory: 'coverage',
     },
+    projects: [
+      { extends: false, test: { ...shared, name: 'fast', include: ['src/**/*.test.ts'], exclude: ['**/node_modules/**', 'src/**/*.integration.test.ts'] } },
+      { extends: false, test: { ...shared, name: 'integration', include: ['src/**/*.integration.test.ts'] } },
+    ],
   },
 });

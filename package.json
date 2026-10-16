@@ -12,6 +12,7 @@
     "generate:all": "npm run build && npm run generate:ci",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "vitest run",
+    "test:fast": "vitest run --project fast",
     "test:ci": "vitest run --coverage",
     "test:integration": "cd test/integration && npm install --silent && vitest run",
     "test:watch": "vitest",
