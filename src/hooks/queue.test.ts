@@ -15,6 +15,9 @@ const AGENT = path.resolve(__dirname, '../../packages/agents/.apm/agents/orchest
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 const posix = process.platform !== 'win32';
 
+// Every case spawns pwsh (some several times); the 5 s default flakes on loaded CI runners.
+vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
+
 if (!hasPwsh && process.env.CI) throw new Error('pwsh is required in CI');
 
 describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
