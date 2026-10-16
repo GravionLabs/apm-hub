@@ -25,9 +25,6 @@ export default defineConfig({
           // pwsh cold starts are slow on loaded runners: generous timeout for every integration file (no per-file setConfig needed)
           testTimeout: 30000,
           hookTimeout: 30000,
-          // cap parallel pwsh-spawning files so they cannot starve the timing-bound tests of the fast project (git-guardrails)
-          maxWorkers: 2,
-          sequence: { groupOrder: 1 }, // required by vitest when maxWorkers differs; runs after fast, never concurrently
         },
       },
     ],
