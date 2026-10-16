@@ -5,10 +5,64 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.3.0] — 2026-10-16
+
+### Bug Fixes
+- **agents**: Harden the issue-reader permission map and input validation (#304)
+- **agents**: Allow orchestrator ledger writes under .agents/ headless on OpenCode (#222)
+- **agents**: Route orchestrator ledger writes through a validating helper (#222)
+- **agents**: Pin helper script paths in orchestrator permissions (#222)
+- **github**: Next-selection drops PBIs already merged into the integration branch (#249)
+- **github**: Review fixes for the PBI merged rule (#249)
+- **github**: Scope the merged-PR check to the integration branch (#249)
+- **hooks**: Refuse symlinked ledgers, align the loop-<nr> filter (#308)
+- **agents**: Loop PBI cap, one Next line, PBI-boundary ledger (#308)
+- **agents**: Launcher names the agent file and client dispatch (#308)
+- **agents**: Tighten --fix-advisories rules after review (#324)
+- Harden queue mode merge, parsing, permissions and tests (#227)
+- Document queue exit 3, merge rules and permission limits (#227)
+- Tighten -MergeApproved guards and runner robustness (#227)
+- Reword queue permission and merge docs (#227)
+- Harden queue launcher and merge guards (#227)
+- Give pwsh-spawning queue tests CI headroom (#227)
+
+
+### Documentation
+- Add orchestrator concept page (#269)
+- Address review findings (#269)
+- Merge orchestrator concept page into orchestrator page (#269)
+- **agents**: Client matrix for subagent nesting, questions and resume; retire the "Copilot CLI has no subagents" rule (#306)
+- **github**: Gates overview and docs reference the one PBI merged rule (#249)
+- Document the orchestrator loop mode (#308)
+- Loop stop fallback, resume by PR state, README tables (#308)
+- **agents**: Document --fix-advisories in launcher skill and docs (#324)
+- Add orch-queue skill and queue runner docs (#227)
+- Align queue skill docs, slash mapping and exit codes (#227)
+
+
+### Features
+- **agents**: Pr-writer subagent opens the PR and returns only its number and URL (#305)
+- **agents**: Issue-reader subagent resolves issue, branch and task state as JSON (#304)
+- **agents**: Issue-reader saves the issue body to .agents/<issue>/issue.md (#304)
+- **agents**: Orchestrator loop <feature|epic> mode (#308)
+- **agents**: Ship the /orchestrator launcher as a tracked skill (#308)
+- **agents**: Define the --fix-advisories policy for the review gate (#324)
+- Add orchestrator queue runner core and Claude adapter (#227)
+- Add Copilot CLI and OpenCode queue adapters (#227)
+- Add Feature/Epic queue mode with queue json and -MergeApproved (#227)
+- Add queue launcher installer (#227)
+
+
+### Refactoring
+- **agents**: Orchestrator hands subagents a context file instead of pasted stack and exploration (#303)
+- Rename orch-queue skill to queue and add slash usage (#227)
+
+
 ## [2.2.4] — 2026-10-14
 
 ### Documentation
 - **site**: Zoomable Mermaid diagrams, hide HTML comment markers
+- Update CHANGELOG.md for v2.2.4 [skip ci]
 
 
 ## [2.2.3] — 2026-10-14
