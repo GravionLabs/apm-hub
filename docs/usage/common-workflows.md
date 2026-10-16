@@ -70,7 +70,7 @@ apm install delivery@apm-hub   # pulls in github, shared and the language packag
 
    Install a `queue` command once with `pwsh <skills dir>/queue/scripts/Install-QueueLauncher.ps1` (or `/queue install`), then call `queue -DryRun 101` from any repository directory.
 
-   Exit 0 means all done, 1 a failure, 2 a gate that needs your answer. Check `status <nr>` before and after a run. `-Parallel` is a follow-up.
+   Exit 0 means all done, 1 a failure, 2 a gate that needs your answer, 3 (Feature/Epic queue) nothing selectable because every open PBI is held by blockers or decisions. The runner merges nothing unless you pass the opt-in `-MergeApproved`. The launcher prefers the project-local runner over the global one, so do not run `queue` in an untrusted repository. Check `status <nr>` before and after a run. `-Parallel` is a follow-up.
 
 3. **Open the pull request**
 

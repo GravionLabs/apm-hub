@@ -1,6 +1,6 @@
 ---
 name: queue
-description: 'Run the orchestrator headless over a list of issues or a whole Feature/Epic, one fresh process per issue. Use for "run these issues overnight", "work the Feature queue", "headless batch".'
+description: '/queue: run the orchestrator headless over issues or a Feature/Epic, one fresh process each; /queue install adds a launcher. Use for "run these issues overnight", "work the Feature queue".'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'
@@ -23,30 +23,32 @@ pwsh scripts/Invoke-OrchestratorQueue.ps1 -Feature 227                  # loop "
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Epic 300 -Harness opencode -ContinueOnError
 ```
 
-Always start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`
+Start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`
 (not with `-Feature`/`-Epic`: the mode is always `next`, the adapters forward it as `next <nr>`), `-ContinueOnError`,
-`-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved`, `-TrustedOnly` (with `-Label`).
+`-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved` (opt-in, otherwise the runner never merges), `-TrustedOnly` (with `-Label`).
 
 ## Slash usage
 
-`/queue [dry-run] <full|implement|plan> <nr>...` or `/queue feature <nr>` / `/queue epic <nr>`, for example
-`/queue full 324`, `/queue implement 101 102`, `/queue feature 248`, `/queue epic 300`, `/queue dry-run implement 101`.
-Mapping to apply: first word `full|implement|plan` is `-Mode <word>`; `feature <nr>` / `epic <nr>` is `-Feature` / `-Epic`;
-`dry-run` is `-DryRun` (recommend it first); remaining numbers are positional issues; other `-Flags` pass through; `install` / `uninstall` runs the installer below (not the runner). Then run
-`pwsh <skill dir>/scripts/Invoke-OrchestratorQueue.ps1 ...` from the repository root, print the summary lines and the exit
-code, and never answer a gate. The command runs in the current session, but every child is a fresh process; start long runs
-from a plain terminal, see [shell function](references/shell-function.md).
+`/queue [dry-run] [full|implement|plan] <nr>...`, `/queue [dry-run] feature <nr>`, `/queue [dry-run] epic <nr>`,
+`/queue install`, `/queue uninstall`. Examples: `/queue 101` (default mode full), `/queue full 324`,
+`/queue dry-run implement 101 102`, `/queue dry-run feature 248`, `/queue epic 300`. Mapping: `dry-run` is `-DryRun` (recommend it first) and may be followed by the mode word; a mode word `full|implement|plan`
+is `-Mode <word>` (none: the runner default `full`); `feature <nr>` / `epic <nr>` is `-Feature` / `-Epic` and takes no
+mode (`/queue implement feature 248` is rejected with a message, the mode is always `next`); remaining numbers are
+positional issues. Pass `-AllowAll` or `-MergeApproved` through only when the user asks for it explicitly. `install` /
+`uninstall` runs the installer (below), not the runner. Run `pwsh scripts/Invoke-OrchestratorQueue.ps1 ...` from the
+repository root, print the summary lines and the exit code, and never answer a gate. Every child is a fresh process;
+start long runs from a plain terminal, see [launcher and shell function](references/shell-function.md).
 
 ## Install a launcher
 
 ```powershell
-pwsh <skills>/queue/scripts/Install-QueueLauncher.ps1            # ~/.local/bin/queue (Windows: queue.cmd)
-pwsh <skills>/queue/scripts/Install-QueueLauncher.ps1 -Uninstall # removes only our launcher
+pwsh scripts/Install-QueueLauncher.ps1            # ~/.local/bin/queue (Windows: queue.cmd)
+pwsh scripts/Install-QueueLauncher.ps1 -Uninstall # removes only our launcher
 ```
 
-Slash form: `/queue install` / `/queue uninstall` runs the installer with the default `-Dir`; ask the user before choosing a
-non-default `-Dir` and show what it wrote. Then `queue -DryRun 101` works from any repository subdirectory. Details:
-[shell function](references/shell-function.md).
+Then `queue -DryRun 101` works from any repository subdirectory. The launcher runs the project-local runner before the global
+one, with your rights: do not run `queue` in a repository you do not trust. `QUEUE_RUNNER` overrides the lookup. Ask the user
+before a non-default `-Dir`. Details: [launcher and shell function](references/shell-function.md).
 
 ## Exit codes
 
@@ -80,8 +82,9 @@ PBI ledger wins over a `Gate:` line, as in list mode. State is cached in `.agent
 `-MergeApproved` (default off) merges the PR of a done PBI when the last `Verdict:` line of the run is exactly
 `APPROVE` (the whole line, no suffix) and the child exited 0. The PR comes from the ledger line `Phase pull-request: complete — <url>` and `gh pr list`, its head branch must
 belong to the PBI (`/<pbi>-`), its base must be `release/*` and its head must not be `release/*` (the release PR). It runs
-`gh pr merge --squash --match-head-commit <sha>`. Fork PRs, PRs that are not mergeable/clean, failing checks and a
-local branch tip that differs from the PR head are skipped with a note; set branch protection with required checks.
+`gh pr merge --squash --match-head-commit <sha>`. Fork PRs, PRs that are not mergeable/clean (UNKNOWN is polled 3 times,
+`QUEUE_POLL_SECONDS`), failing or missing checks ("no checks reported") and a head that differs from the local branch tip (or,
+without a local branch, from the tip on origin; unverifiable also skips) are skipped with a note; set branch protection with required checks.
 A `Gate:` line in the output stops the queue even without a new ledger gate. Never after a gate, a block or a failure.
 
 ## Rules
@@ -93,5 +96,4 @@ A `Gate:` line in the output stops the queue even without a new ledger gate. Nev
   do a lot, including `gh pr merge` via `gh api`). `-Label` feeds issue text to the model: use collaborator-authored
   issues; `-TrustedOnly` filters only the issue author (not comments); positional and `-IssueFile` issues are unfiltered.
 - The runner refuses a symlinked `.agents/`.
-- Check `status <nr>` (sibling PBI) or `.agents/<nr>/progress.md` before and after a run.
-- Sequential only; `-Parallel` (worktrees) is a follow-up.
+- Check `status <nr>` or `.agents/<nr>/progress.md` before and after a run. Sequential only (`-Parallel` is a follow-up).

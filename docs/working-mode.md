@@ -107,7 +107,11 @@ pwsh <skills dir>/queue/scripts/Invoke-OrchestratorQueue.ps1 -Mode implement 101
 The `queue` skill (package `delivery`) replaces the shell loop: `Invoke-OrchestratorQueue.ps1` starts a fresh
 headless orchestrator per issue, reads the ledger `.agents/<issue>/progress.md` as the truth (`Ledger complete.` = done, a new
 `Gate:` line = stop with exit 2, otherwise failed with exit 1), and never answers a gate. `-Feature <nr>` / `-Epic <nr>`
-loops `next` until the Feature is done; `-MergeApproved` squash-merges APPROVE PRs into the integration branch (off by default).
+loops `next` until the Feature is done. The runners never merge unless the opt-in `-MergeApproved` is given, which squash-merges
+APPROVE PRs into the integration branch (off by default). Exit codes: 0 all done, 1 a failure, 2 a gate that needs your
+answer, 3 (queue mode) nothing selectable, every open PBI is held by blockers or decisions. `pwsh <skills dir>/queue/scripts/Install-QueueLauncher.ps1`
+(or `/queue install`) installs a `queue` command that works from any repository directory; the project-local runner wins
+over the global one and runs with your rights, so do not use it in an untrusted repository (`QUEUE_RUNNER` overrides the lookup).
 Start with `-DryRun`. Check `status <nr>` (sibling PBI; until then `.agents/<nr>/progress.md`) before and after a queue run.
 Sequential only; `-Parallel` is a follow-up. Permissions per harness: the skill's `references/harness-flags.md`.
 

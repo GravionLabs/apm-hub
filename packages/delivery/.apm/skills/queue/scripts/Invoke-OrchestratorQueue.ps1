@@ -9,8 +9,8 @@
     last line 'Ledger complete.'        -> done (before the run: skipped, nothing is started)
     new 'Gate: <question>' line         -> gate: the queue stops, the question is printed, exit 2
     neither                             -> failed: the queue stops (exit 1) unless -ContinueOnError
-  Output of every run is appended to .agents/<issue>/run.log. The runner never merges and never answers a gate.
-  Run it from the repository root. Exit codes: 0 all done/skipped, 1 failed, 2 gate.
+  Output of every run is appended to .agents/<issue>/run.log. The runner never merges (unless the opt-in -MergeApproved is given) and never answers a gate.
+  Run it from the repository root. Exit codes: 0 all done/skipped, 1 failed, 2 gate, 3 nothing selectable (queue mode only).
 
   -Feature <nr> / -Epic <nr> (queue mode): loops '<harness> --agent orchestrator -p "next <nr>"', one fresh process per
   iteration (selection stays in the orchestrator, github-issue/references/next-selection.md). Stops on:
