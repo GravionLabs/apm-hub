@@ -3,10 +3,14 @@
   Resolve and install the apm-hub packages a project needs with `apm`.
 
 .DESCRIPTION
-  Without -Packages, runs the installed detect-techstack script and maps the stack to
-  packages (typescript/javascript -> ts, python -> py, csharp -> dotnet, angular -> ng).
-  The base packages shared, github, delivery are added only when not installed globally.
-  Packages already listed in apm.yml are skipped. Install form:
+  Without -Packages (project install), runs the installed detect-techstack script and maps the
+  stack to packages (ts/js -> ts, py -> py, dotnet -> dotnet, angular -> ng). That script is
+  looked up in the user's own skill directories first; a copy that only exists in the project is
+  code from the repository and runs only with -TrustProject. Without detection the base packages
+  shared, github, delivery are proposed (only when not installed globally). With -Global and no
+  -Packages only the base packages are proposed, no stack detection.
+  Packages already in the manifest or in apm_modules (core/all cover their members) are skipped.
+  A missing apm.yml is created by `apm install` itself. Install form:
   apm install GravionLabs/apm-hub/packages/<pkg> [-g]
 
 .PARAMETER Packages
@@ -16,15 +20,20 @@
 .PARAMETER Global
   Install user-wide (apm -g) instead of into the project.
 
+.PARAMETER TrustProject
+  Allow running a project-local Detect-TechStack.ps1 (repository code). Off by default.
+
 .PARAMETER DryRun
-  Print the commands in the JSON result, run nothing.
+  Print the commands in the JSON result, run nothing. The result lists `wouldInstall`, not `installed`.
 
 .OUTPUTS
-  JSON {installed, skipped, commands, notes}. Exit 1 when apm or pwsh 7 is missing or a command fails.
+  JSON {dryRun, installed|wouldInstall, skipped, failed, notAttempted, commands, provides, dependencies, notes}.
+  Exit 1 when apm or pwsh 7 is missing, a package name is invalid or an install command fails.
 #>
 param(
   [string[]]$Packages,
   [switch]$Global,
+  [switch]$TrustProject,
   [switch]$DryRun
 )
 
@@ -51,83 +60,150 @@ if ($Packages) {
 }
 
 $userHome = if ($env:HOME) { $env:HOME } else { $env:USERPROFILE }
-$skillDirs = '.claude/skills', '.opencode/skills', '.agents/skills', '.github/skills'
-$globalDirs = '.claude/skills', '.config/opencode/skills', '.copilot/skills', '.agents/skills'
+$projectDirs = '.claude/skills', '.opencode/skills', '.agents/skills', '.github/skills'
+$homeDirs = '.claude/skills', '.config/opencode/skills', '.copilot/skills', '.agents/skills', '.opencode/skills', '.github/skills'
 $notes = [System.Collections.Generic.List[string]]::new()
+$hubPath = 'GravionLabs/apm-hub/packages'
+$coreMembers = 'shared', 'github', 'delivery', 'agents', 'hooks'
+$allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet')
+$provides = @{
+  shared   = 'skills: implementation, detect-techstack, diagnose, code-review'
+  github   = 'skills: github-issue, github-pull-request, github-release'
+  delivery = 'skills: review-fanout, verify-project, issue-planning, retro, handoff, queue, apm-install'
+  agents   = 'orchestrator skill and agents: orchestrator, issue-reader, explorer, planner, reviewer, review-lead, implementer, pr-writer, pbi-runner'
+  hooks    = 'hooks: subagent ledger, context warning, git guardrails; OpenCode plugin'
+  core     = 'github, delivery, shared, agents, hooks'
+  all      = 'every package except apm-tooling'
+  ts       = 'skills: ts-implementation, ts-test, ts-create-project, ts-mcp-server-generator, ts-pnpm-workflow, setup-prettier-eslint-husky'
+  py       = 'skills: py-implementation, py-test, py-create-project'
+  ng       = 'skills: ng-implementation, ng-test, ng-create-project, ng-ag-grid-developer'
+  dotnet   = 'skills: dotnet-implementation, dotnet-test, dotnet-create-solution, dotnet-mcp-server-generator'
+}
+$externalDeps = @{ ng = 'angular/skills (angular-developer)'; dotnet = 'dotnet/skills (dotnet plugin)' }
 
 function Test-GlobalBase {
-  foreach ($d in $globalDirs) {
+  foreach ($d in $homeDirs) {
     if (Test-Path (Join-Path $userHome "$d/github-issue")) { return $true }
   }
   return $false
 }
 
+# User-trusted locations first; project-local copy is repository code
 function Find-Detect {
-  $roots = @($skillDirs | ForEach-Object { Join-Path (Get-Location) $_ }) + @($skillDirs | ForEach-Object { Join-Path $userHome $_ })
-  foreach ($r in $roots) {
-    $p = Join-Path $r 'detect-techstack/scripts/Detect-TechStack.ps1'
+  foreach ($d in $homeDirs) {
+    $p = Join-Path $userHome "$d/detect-techstack/scripts/Detect-TechStack.ps1"
     if (Test-Path $p) { return $p }
+  }
+  foreach ($d in $projectDirs) {
+    $p = Join-Path (Get-Location) "$d/detect-techstack/scripts/Detect-TechStack.ps1"
+    if (Test-Path $p) {
+      if ($TrustProject) { return $p }
+      $notes.Add("detect-techstack found only in the project ($d): not run because it is repository code. Pass -TrustProject to run it, or -Packages.")
+      return $null
+    }
   }
   return $null
 }
 
+$langMap = @{ ts = 'ts'; js = 'ts'; typescript = 'ts'; javascript = 'ts'; py = 'py'; python = 'py'; dotnet = 'dotnet'; csharp = 'dotnet' }
 $wanted = [System.Collections.Generic.List[string]]::new()
+$addBase = -not (Test-GlobalBase)
 if ($Packages) {
   $Packages | ForEach-Object { if (-not $wanted.Contains($_)) { $wanted.Add($_) } }
 } else {
-  $detect = Find-Detect
-  if ($detect) {
-    $report = (& pwsh -NoProfile -File $detect -ProjectRoot . | Out-String) | ConvertFrom-Json
-    $map = @{ typescript = 'ts'; javascript = 'ts'; python = 'py'; csharp = 'dotnet' }
-    foreach ($l in @($report.languages)) {
-      if ($map.ContainsKey($l) -and -not $wanted.Contains($map[$l])) { $wanted.Add($map[$l]) }
-    }
-    if (@($report.frameworks) -contains 'angular' -and -not $wanted.Contains('ng')) { $wanted.Add('ng') }
+  if ($Global) {
+    $notes.Add('Global install without -Packages proposes only the base packages (no stack detection). Pass -Packages (e.g. core, ts) for more.')
   } else {
-    $notes.Add('detect-techstack not installed: only base packages resolved. Pass -Packages for stack packages.')
+    $detect = Find-Detect
+    if ($detect) {
+      try {
+        $out = & pwsh -NoProfile -File $detect -ProjectRoot . 2>$null | Out-String
+        if ($LASTEXITCODE -ne 0) { throw "exit $LASTEXITCODE" }
+        $report = $out | ConvertFrom-Json -ErrorAction Stop
+        foreach ($l in @($report.languages)) {
+          $k = "$l".ToLowerInvariant()
+          if ($langMap.ContainsKey($k) -and -not $wanted.Contains($langMap[$k])) { $wanted.Add($langMap[$k]) }
+        }
+        if (@($report.frameworks) -contains 'angular' -and -not $wanted.Contains('ng')) { $wanted.Add('ng') }
+      } catch {
+        $wanted.Clear()
+        $notes.Add("detect-techstack failed ($($_.Exception.Message)): only base packages resolved. Pass -Packages for stack packages.")
+      }
+    } elseif (-not ($notes | Where-Object { $_ -like 'detect-techstack found only*' })) {
+      $notes.Add('detect-techstack not installed: only base packages resolved. Pass -Packages for stack packages.')
+    }
   }
-  if (-not (Test-GlobalBase)) {
+  if ($addBase) {
     foreach ($b in 'shared', 'github', 'delivery') { if (-not $wanted.Contains($b)) { $wanted.Add($b) } }
   }
 }
 
-$manifest = if ($Global) { Join-Path $userHome '.apm/apm.yml' } else { Join-Path (Get-Location) 'apm.yml' }
-$manifestText = if (Test-Path $manifest) { Get-Content $manifest -Raw } else { '' }
+# Installed state: manifest lines (comments ignored) and apm_modules directories
+$base = if ($Global) { Join-Path $userHome '.apm' } else { (Get-Location).Path }
+$manifest = Join-Path $base 'apm.yml'
+$have = [System.Collections.Generic.HashSet[string]]::new()
+if (Test-Path $manifest) {
+  foreach ($line in Get-Content $manifest) {
+    $l = ($line -replace '(^|\s)#.*$', '').Trim()
+    foreach ($pkg in $allMembers) {
+      $e = [regex]::Escape($pkg)
+      if ($l -match "(?<![\w./-])$([regex]::Escape($hubPath))/$e(?=[#'""\s@]|$)" -or $l -match "(?<![\w./-])$e@apm-hub(?![\w-])") { [void]$have.Add($pkg) }
+    }
+  }
+} else {
+  $notes.Add("No apm.yml at ${manifest}: apm install creates it.")
+}
+foreach ($pkg in $allMembers) {
+  if (Test-Path (Join-Path $base "apm_modules/$hubPath/$pkg")) { [void]$have.Add($pkg) }
+}
+if ($have.Contains('core')) { $coreMembers | ForEach-Object { [void]$have.Add($_) } }
+if ($have.Contains('all')) { $allMembers | ForEach-Object { [void]$have.Add($_) } }
 
-$installed = [System.Collections.Generic.List[string]]::new()
+$done = [System.Collections.Generic.List[string]]::new()
 $skipped = [System.Collections.Generic.List[string]]::new()
 $commands = [System.Collections.Generic.List[string]]::new()
-$failed = $false
+$failed = $null
+$notAttempted = [System.Collections.Generic.List[string]]::new()
 
 foreach ($pkg in $wanted) {
-  if ($manifestText -match "(?m)packages/$([regex]::Escape($pkg))\s*$|packages/$([regex]::Escape($pkg))['""\s#]") {
-    $skipped.Add($pkg)
-    continue
-  }
-  $spec = "GravionLabs/apm-hub/packages/$pkg"
-  $apmArgs = @('install', $spec) + $(if ($Global) { '-g' } else { @() })
+  if ($failed) { $notAttempted.Add($pkg); continue }
+  if ($have.Contains($pkg)) { $skipped.Add($pkg); continue }
+  $apmArgs = @('install', "$hubPath/$pkg") + $(if ($Global) { '-g' } else { @() })
   $commands.Add('apm ' + ($apmArgs -join ' '))
   if (-not $DryRun) {
     & apm @apmArgs | Out-Host
-    if ($LASTEXITCODE -ne 0) { $failed = $true; $notes.Add("apm install failed for $pkg (exit $LASTEXITCODE)"); break }
+    if ($LASTEXITCODE -ne 0) { $failed = $pkg; $notes.Add("apm install failed for $pkg (exit $LASTEXITCODE)"); continue }
   }
-  $installed.Add($pkg)
+  $done.Add($pkg)
 }
 
+$when = if ($DryRun) { 'After install: ' } else { '' }
 $g = if ($Global) { ' -g' } else { '' }
-if ($installed -contains 'agents' -or $installed -contains 'core' -or $installed -contains 'all') {
-  $notes.Add("Run apmw sanitize$g -p claude|opencode|copilot to rewrite the agent frontmatter per client (required for OpenCode).")
+if ($done | Where-Object { $_ -in 'agents', 'core', 'all' }) {
+  $notes.Add("${when}run apmw sanitize$g -p claude|opencode|copilot to rewrite the agent frontmatter per client (required for OpenCode).")
+  if (-not (Get-Command apmw -ErrorAction SilentlyContinue)) {
+    $notes.Add('apmw not found: install it with pipx install apmw or uv tool install apmw before the sanitize step.')
+  }
 }
-if ($installed -contains 'hooks' -or $installed -contains 'all') {
+if ($done | Where-Object { $_ -in 'hooks', 'core', 'all' }) {
   $dest = if ($Global) { '~/.config/opencode/plugins/' } else { '.opencode/plugins/' }
-  $notes.Add("OpenCode: copy packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts to $dest by hand.")
+  $notes.Add("${when}OpenCode: copy packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts to $dest by hand.")
 }
 
-[ordered]@{
-  installed = @($installed)
-  skipped   = @($skipped)
-  commands  = @($commands)
-  notes     = @($notes)
-} | ConvertTo-Json -Depth 3
+$prov = [ordered]@{}
+foreach ($p in $done) { $prov[$p] = $provides[$p] }
+$deps = @($done | Where-Object { $externalDeps.ContainsKey($_) } | ForEach-Object { $externalDeps[$_] })
+if ($done -contains 'all') { $deps = @($externalDeps.Values) }
+
+$result = [ordered]@{ dryRun = [bool]$DryRun }
+$result[$(if ($DryRun) { 'wouldInstall' } else { 'installed' })] = @($done)
+$result.skipped = @($skipped)
+$result.failed = $failed
+$result.notAttempted = @($notAttempted)
+$result.commands = @($commands)
+$result.provides = $prov
+$result.dependencies = $deps
+$result.notes = @($notes)
+$result | ConvertTo-Json -Depth 4
 
 if ($failed) { exit 1 }
