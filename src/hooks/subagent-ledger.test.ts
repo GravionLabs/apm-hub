@@ -2,8 +2,11 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { BRANCHES_BOUND, BRANCHES_UNBOUND, gitCleanEnv } from './ledger-test-helpers';
 
 const SCRIPT = path.resolve(__dirname, '../../packages/hooks/.apm/hooks/subagent-ledger.sh');
+
+const cleanEnv = (extra: Record<string, string> = {}): NodeJS.ProcessEnv => gitCleanEnv(process.env, extra);
 
 describe('subagent-ledger hook', () => {
   let dir: string;
@@ -24,7 +27,7 @@ describe('subagent-ledger hook', () => {
     spawnSync('bash', [SCRIPT], {
       input: typeof payload === 'string' ? payload : JSON.stringify(payload),
       encoding: 'utf8',
-      env: { ...process.env, AGENTS_LEDGER: '' },
+      env: cleanEnv({ AGENTS_LEDGER: '' }),
     });
 
   it('appends a line for a Claude payload', () => {
@@ -143,11 +146,11 @@ describe('subagent-ledger hook', () => {
 
   it('falls back to defaults and cuts the summary to 120 chars', () => {
     withLedger();
-    run({ cwd: dir });
-    run({ cwd: dir, response: 'a'.repeat(200) });
+    run({ cwd: dir, agent_type: 'reviewer' });
+    run({ cwd: dir, agent_type: 'planner', response: 'a'.repeat(200) });
     const lines = fs.readFileSync(ledger, 'utf8').trim().split('\n');
-    expect(lines[1]).toBe('Subagent subagent: stopped');
-    expect(lines[2]).toBe(`Subagent subagent: stopped — ${'a'.repeat(120)}`);
+    expect(lines[1]).toBe('Subagent reviewer: stopped');
+    expect(lines[2]).toBe(`Subagent planner: stopped — ${'a'.repeat(120)}`);
   });
 
   it('uses the last text line of the agent transcript when the message is missing', () => {
@@ -214,7 +217,7 @@ describe('subagent-ledger hook', () => {
     const r = spawnSync('bash', [SCRIPT], {
       input: JSON.stringify({ cwd: dir, agent_type: 'reviewer', agent_transcript_path: path.join(dir, 'x.jsonl') }),
       encoding: 'utf8',
-      env: { ...process.env, AGENTS_LEDGER: '', PATH: bin },
+      env: cleanEnv({ AGENTS_LEDGER: '', PATH: bin }),
     });
     expect(r.status).toBe(0);
     expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped\n');
@@ -247,6 +250,338 @@ describe('subagent-ledger hook', () => {
     expect(r.status).toBe(0);
     expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
     expect(fs.readdirSync(dir)).toEqual([]);
+  });
+
+  describe('agent allowlist and branch binding', () => {
+    const git = (...args: string[]) =>
+      spawnSync('git', ['-C', dir, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...args], { encoding: 'utf8', env: cleanEnv() });
+    const repo = (branch: string) => {
+      for (const a of [['init', '-q'], ['checkout', '-q', '-b', branch], ['commit', '-q', '--allow-empty', '-m', 'init']]) {
+        const r = git(...a);
+        if (r.status !== 0) throw new Error(`git ${a.join(' ')} failed: ${r.stderr}`);
+      }
+      expect(git('rev-parse', '--abbrev-ref', 'HEAD').stdout.trim()).toBe(branch);
+    };
+    const stop = (type: string) => run({ cwd: dir, agent_type: type, last_assistant_message: 'ok' });
+    const mk = (nr: string, mtime?: Date) => {
+      const f = path.join(dir, '.agents', nr, 'progress.md');
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, `# ${nr}\n`);
+      if (mtime) fs.utimesSync(f, mtime, mtime);
+      return f;
+    };
+    const read = (f: string) => fs.readFileSync(f, 'utf8');
+
+    it.each(['general-purpose', 'Explore', 'subagent', 'evil:general-purpose'])('writes nothing for foreign agent %s', (t) => {
+      withLedger();
+      const r = run({ cwd: dir, agent_type: t, last_assistant_message: 'x' });
+      expect(r.status).toBe(0);
+      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\n');
+    });
+
+    it.each(['agents:implementer', 'agents/implementer', 'a:b:reviewer'])('writes for namespaced agent %s', (t) => {
+      withLedger();
+      run({ cwd: dir, agent_type: t, last_assistant_message: 'x' });
+      expect(fs.readFileSync(ledger, 'utf8')).toBe(`# ledger\nSubagent ${t}: stopped — x\n`);
+    });
+
+    it.each(['issue-reader', 'explorer', 'planner', 'reviewer', 'review-lead', 'implementer', 'pr-writer', 'pbi-runner'])(
+      'writes for %s',
+      (t) => {
+        withLedger();
+        run({ cwd: dir, agent_type: t, last_assistant_message: 'x' });
+        expect(fs.readFileSync(ledger, 'utf8')).toBe(`# ledger\nSubagent ${t}: stopped — x\n`);
+      },
+    );
+
+    it('writes to the ledger of the branch issue although another ledger is newer', () => {
+      repo('fix/7-x');
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      const r = run({ cwd: dir, agent_type: 'implementer', last_assistant_message: 'ok' });
+      expect(r.status).toBe(0);
+      expect(read(l7)).toBe('# 7\nSubagent implementer: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('writes nothing when the branch issue has no ledger', () => {
+      repo('feat/7-x');
+      const l9 = mk('9');
+      const r = run({ cwd: dir, agent_type: 'implementer', last_assistant_message: 'ok' });
+      expect(r.status).toBe(0);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('falls back to the newest ledger on a branch without a number', () => {
+      repo('main');
+      const old = mk('7', new Date(2020, 1, 1));
+      const nw = mk('9');
+      run({ cwd: dir, agent_type: 'implementer', last_assistant_message: 'ok' });
+      expect(read(nw)).toBe('# 9\nSubagent implementer: stopped — ok\n');
+      expect(read(old)).toBe('# 7\n');
+    });
+
+    it('does not bind to loop-<nr> and keeps the loop ledger out of the fallback', () => {
+      repo('main');
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const loop = mk('loop-8');
+      run({ cwd: dir, agent_type: 'reviewer', last_assistant_message: 'ok' });
+      expect(read(loop)).toBe('# loop-8\n');
+      expect(read(l7)).toBe('# 7\nSubagent reviewer: stopped — ok\n');
+    });
+
+    it.each(BRANCHES_BOUND)('binds branch %s to .agents/7', (b) => {
+      repo(b);
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      stop('reviewer');
+      expect(read(l7)).toBe('# 7\nSubagent reviewer: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it.each(BRANCHES_UNBOUND)('yields no number for branch %s and falls back to the newest ledger', (b) => {
+      repo(b);
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      stop('reviewer');
+      expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('sends a stop before the new PBI branch exists to the ledger of the branch still checked out', () => {
+      repo('fix/7-x'); // previous PBI's branch; the next PBI's ledger (9) is already created and newer
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      stop('issue-reader');
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('does not write through a symlinked .agents/<nr> directory on the branch-bound path', () => {
+      repo('fix/7-x');
+      const real = path.join(dir, 'real');
+      fs.mkdirSync(real);
+      fs.writeFileSync(path.join(real, 'progress.md'), 'secret\n');
+      fs.mkdirSync(path.join(dir, '.agents'));
+      fs.symlinkSync(real, path.join(dir, '.agents', '7'));
+      expect(stop('reviewer').status).toBe(0);
+      expect(read(path.join(real, 'progress.md'))).toBe('secret\n');
+    });
+
+    it('does not write through a symlinked .agents directory', () => {
+      repo('fix/7-x');
+      const real = path.join(dir, 'real');
+      fs.mkdirSync(path.join(real, '7'), { recursive: true });
+      fs.writeFileSync(path.join(real, '7', 'progress.md'), 'secret\n');
+      fs.symlinkSync(real, path.join(dir, '.agents'));
+      expect(stop('reviewer').status).toBe(0);
+      expect(read(path.join(real, '7', 'progress.md'))).toBe('secret\n');
+    });
+
+    it('falls back to the newest ledger when git is not on PATH', () => {
+      repo('fix/7-x');
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      const bin = path.join(dir, 'bin');
+      fs.mkdirSync(bin);
+      for (const c of ['cat', 'sed', 'head', 'tail', 'cut', 'ls', 'dirname', 'tr', 'grep', 'find', 'sort', 'bash', 'cksum']) {
+        const src = ['/usr/bin', '/bin'].map((d) => path.join(d, c)).find((f) => fs.existsSync(f));
+        if (src) fs.symlinkSync(src, path.join(bin, c));
+      }
+      const r = spawnSync('bash', [SCRIPT], {
+        input: JSON.stringify({ cwd: dir, agent_type: 'reviewer', last_assistant_message: 'ok' }),
+        encoding: 'utf8',
+        env: cleanEnv({ AGENTS_LEDGER: '', PATH: bin }),
+      });
+      expect(r.status).toBe(0);
+      expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('writes a namespaced foreign prefix by the last name part (documented rule)', () => {
+      withLedger();
+      stop('evil:reviewer');
+      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent evil:reviewer: stopped — ok\n');
+    });
+
+    it('falls back to the newest ledger on a detached HEAD', () => {
+      repo('fix/7-x');
+      git('checkout', '-q', '--detach');
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      stop('reviewer');
+      expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('falls back to the newest ledger outside a git repository', () => {
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      stop('reviewer');
+      expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('writes nothing on fix/8-x when only the loop ledger .agents/loop-8 exists', () => {
+      repo('fix/8-x');
+      const loop = mk('loop-8');
+      stop('reviewer');
+      expect(read(loop)).toBe('# loop-8\n');
+    });
+
+    it('writes nothing for a payload without an agent field', () => {
+      withLedger();
+      const r = run({ cwd: dir, last_assistant_message: 'ok' });
+      expect(r.status).toBe(0);
+      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\n');
+    });
+
+    it('cuts the agent name at 64 characters before the allowlist check', () => {
+      withLedger();
+      const fits = 'a'.repeat(55) + ':reviewer'; // 64 characters
+      stop('a'.repeat(56) + ':reviewer'); // 65: cut to ":reviewe", not allowlisted
+      stop(fits);
+      expect(fs.readFileSync(ledger, 'utf8')).toBe(`# ledger\nSubagent ${fits}: stopped — ok\n`);
+    });
+
+    it.each(['agents.reviewer', 'a:b.explorer'])('accepts the "." namespace separator in %s', (t) => {
+      withLedger();
+      stop(t);
+      expect(fs.readFileSync(ledger, 'utf8')).toBe(`# ledger\nSubagent ${t}: stopped — ok\n`);
+    });
+
+    /** Repo config whose fsmonitor command and hooks would create a marker file; checked live with `git status`. */
+    const hostileConfig = () => {
+      const marker = path.join(dir, 'MARKER');
+      const hooks = path.join(dir, 'evil-hooks');
+      fs.mkdirSync(hooks);
+      for (const h of ['post-checkout', 'pre-commit', 'reference-transaction', 'post-index-change']) {
+        fs.writeFileSync(path.join(hooks, h), `#!/bin/sh\ntouch '${marker}'\n`, { mode: 0o755 });
+      }
+      expect(git('config', 'core.fsmonitor', `touch '${marker}'; echo`).status).toBe(0);
+      expect(git('config', 'core.hooksPath', hooks).status).toBe(0);
+      git('status'); // positive control: this config does run the command
+      expect(fs.existsSync(marker)).toBe(true);
+      fs.rmSync(marker);
+      return marker;
+    };
+
+    it('does not run a repository fsmonitor command or hooks and still binds to the branch issue', () => {
+      repo('fix/7-x');
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      const marker = hostileConfig();
+      expect(stop('reviewer').status).toBe(0);
+      expect(fs.existsSync(marker)).toBe(false);
+      expect(read(l7)).toBe('# 7\nSubagent reviewer: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    /** Runs the hook with a `git` on PATH that runs the given shell body (default: fail with exit 128). */
+    const runWithBrokenGit = (cwd: string, script = 'exit 128') => {
+      const bin = path.join(dir, 'broken-bin');
+      fs.mkdirSync(bin, { recursive: true });
+      fs.writeFileSync(path.join(bin, 'git'), `#!/bin/sh\n${script}\n`, { mode: 0o755 });
+      return spawnSync('bash', [SCRIPT], {
+        input: JSON.stringify({ cwd, agent_type: 'reviewer', last_assistant_message: 'ok' }),
+        encoding: 'utf8',
+        env: cleanEnv({ AGENTS_LEDGER: '', PATH: `${bin}${path.delimiter}${process.env.PATH ?? ''}` }),
+      });
+    };
+
+    it('writes nothing when git fails inside a repository (no newest-ledger fallback)', () => {
+      repo('fix/7-x');
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      const r = runWithBrokenGit(dir);
+      expect(r.status).toBe(0);
+      expect(read(l7)).toBe('# 7\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('writes nothing when git fails in a subdirectory of a repository', () => {
+      repo('main');
+      const sub = path.join(dir, 'pkg');
+      const l3 = path.join(sub, '.agents', '3', 'progress.md');
+      fs.mkdirSync(path.dirname(l3), { recursive: true });
+      fs.writeFileSync(l3, '# 3\n');
+      expect(runWithBrokenGit(sub).status).toBe(0);
+      expect(read(l3)).toBe('# 3\n');
+    });
+
+    it('writes nothing when real git cannot read the repository (corrupt HEAD)', () => {
+      repo('fix/7-x');
+      const l9 = mk('9');
+      fs.writeFileSync(path.join(dir, '.git', 'HEAD'), 'garbage\n');
+      expect(stop('reviewer').status).toBe(0);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('still falls back to the newest ledger outside a repository when git fails', () => {
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      expect(runWithBrokenGit(dir).status).toBe(0);
+      expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('passes -c core.fsmonitor=false -c core.hooksPath=/dev/null to git', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const realGit = spawnSync('sh', ['-c', 'command -v git'], { encoding: 'utf8', env: cleanEnv() }).stdout.trim();
+      const bin = path.join(dir, 'shim');
+      const log = path.join(dir, 'git-args.log');
+      fs.mkdirSync(bin);
+      fs.writeFileSync(path.join(bin, 'git'), `#!/bin/sh\nprintf '%s ' "$@" >> '${log}'\nexec '${realGit}' "$@"\n`, { mode: 0o755 });
+      const r = spawnSync('bash', [SCRIPT], {
+        input: JSON.stringify({ cwd: dir, agent_type: 'reviewer', last_assistant_message: 'ok' }),
+        encoding: 'utf8',
+        env: cleanEnv({ AGENTS_LEDGER: '', PATH: `${bin}${path.delimiter}${process.env.PATH ?? ''}` }),
+      });
+      expect(r.status).toBe(0);
+      expect(fs.readFileSync(log, 'utf8')).toContain('-c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse');
+      expect(read(l7)).toBe('# 7\nSubagent reviewer: stopped — ok\n');
+    });
+
+    it('resolves .agents under the payload cwd: a stop from a repo subdirectory does not reach the root ledger', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const sub = path.join(dir, 'src', 'deep');
+      fs.mkdirSync(sub, { recursive: true });
+      const r = run({ cwd: sub, agent_type: 'reviewer', last_assistant_message: 'ok' });
+      expect(r.status).toBe(0);
+      expect(read(l7)).toBe('# 7\n');
+      expect(fs.existsSync(path.join(sub, '.agents'))).toBe(false);
+    });
+
+    it('binds a subdirectory cwd to the branch issue ledger under that subdirectory', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const sub = path.join(dir, 'pkg');
+      const own = path.join(sub, '.agents', '7', 'progress.md');
+      const newer = path.join(sub, '.agents', '9', 'progress.md');
+      for (const f of [own, newer]) {
+        fs.mkdirSync(path.dirname(f), { recursive: true });
+        fs.writeFileSync(f, '# sub\n');
+      }
+      fs.utimesSync(own, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      run({ cwd: sub, agent_type: 'reviewer', last_assistant_message: 'ok' });
+      expect(read(own)).toBe('# sub\nSubagent reviewer: stopped — ok\n');
+      expect(read(newer)).toBe('# sub\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('lets AGENTS_LEDGER win over the branch binding', () => {
+      repo('fix/7-x');
+      mk('7');
+      const l9 = mk('9');
+      spawnSync('bash', [SCRIPT], {
+        input: JSON.stringify({ cwd: dir, agent_type: 'reviewer', response: 'ok' }),
+        encoding: 'utf8',
+        env: cleanEnv({ AGENTS_LEDGER: l9 }),
+      });
+      expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+    });
   });
 
   describe('pbi-runner and nested stops', () => {
@@ -378,7 +713,7 @@ describe('subagent-ledger hook', () => {
       const r = spawnSync('bash', [SCRIPT], {
         input: JSON.stringify(runner({ status: 'DONE', pr: 'https://x/pull/9' })),
         encoding: 'utf8',
-        env: { ...process.env, AGENTS_LEDGER: '', PATH: bin },
+        env: cleanEnv({ AGENTS_LEDGER: '', PATH: bin }),
       });
       expect(r.status).toBe(0);
       expect(fs.readFileSync(ledger, 'utf8')).toBe(LEDGER('Subagent pbi-runner: stopped'));
@@ -386,11 +721,11 @@ describe('subagent-ledger hook', () => {
 
     it('sanitises the agent name', () => {
       withLedger();
-      run({ cwd: dir, agent_type: 'evil\r\n- injected `x` ' + 'a'.repeat(100), agent_id: 'e1', last_assistant_message: 'ok' });
+      run({ cwd: dir, agent_type: 'evil\r\n- injected `x` ' + 'a'.repeat(100) + '/reviewer', agent_id: 'e1', last_assistant_message: 'ok' }); // cut at 64: dropped
+      run({ cwd: dir, agent_type: 'agents:re\r\nviewer`', agent_id: 'e2', last_assistant_message: 'ok' });
+      run({ cwd: dir, agent_type: 'ev\r\nil- `x`:reviewer', agent_id: 'e3', last_assistant_message: 'ok' });
       const out = fs.readFileSync(ledger, 'utf8').split('\n');
-      expect(out).toHaveLength(3);
-      expect(out[1]).toMatch(/^Subagent evil-injectedx?a{0,64}: stopped — ok$/);
-      expect(out[1].length).toBeLessThan(120);
+      expect(out).toEqual(['# ledger', 'Subagent agents:reviewer: stopped — ok', 'Subagent evil-x:reviewer: stopped — ok', '']);
     });
 
     it('does not dedupe without a valid agent_id and does not write a sidecar', () => {

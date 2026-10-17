@@ -25,6 +25,8 @@ The `hooks` package installs hooks for **Claude Code only**. apm 0.33.0 integrat
 
 For a project install use the absolute path of `.claude/hooks/hooks/` instead. `postToolUse` has no `transcriptPath`; the context warning reads `session-state/<id>/events.jsonl` instead.
 
+The `subagentStop` ledger hook records only the orchestrator's subagents, in the ledger of the issue in the branch name; rules in [orchestrator.md § Hooks](../orchestrator.md#hooks).
+
 Verify the guardrail: in a repository with uncommitted changes ask Copilot CLI to run `git reset --hard`; the call must be denied. If it runs, the hook is not loaded.
 
 ## Upgrading from an earlier version
