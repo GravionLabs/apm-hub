@@ -1,13 +1,13 @@
 # Project template
 
-GravionLabs is a user account, so `markProjectV2AsTemplate` (organizations only) does not apply. The template is a normal project named "Project Template" at number `<template-nr>` (to be filled in once it exists), already brought to the standard with `apply -Sync`.
+GravionLabs is a user account, so `markProjectV2AsTemplate` (organizations only) does not apply. The template is a normal project named "Project Template" at number `15` (https://github.com/users/GravionLabs/projects/15), copied from APM Hub (#5), the reference instance. It carries the UI-only settings ("Show hierarchy", sort of Recently closed); change those in #5 and the template together.
 
 ## New project for a repo
 
 1. Look up ids:
 
 ```powershell
-gh api graphql -f query='query($l:String!,$n:Int!){user(login:$l){id projectV2(number:$n){id}}}' -f l=GravionLabs -F n=<template-nr>
+gh api graphql -f query='query($l:String!,$n:Int!){user(login:$l){id projectV2(number:$n){id}}}' -f l=GravionLabs -F n=15
 gh repo view GravionLabs/<repo> --json id
 ```
 
