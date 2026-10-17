@@ -139,16 +139,43 @@ function Sum-Of($items, [string]$prop) { $t = 0.0; foreach ($i in $items) { $t +
 
 # --- ledger
 $fix = 0; $rulings = @(); $gates = @(); $ledgerOut = $null
+$taskMap = [ordered]@{}; $lastTask = $null; $reviewPasses = 0
+# Optional ' — model <name>' suffix (older ledgers have none): null when absent.
+function Get-LedgerModel([string]$line) { if ($line -match '(?i)\bmodel\s+([A-Za-z0-9_.:/-]+)\s*$') { return $Matches[1] } return $null }
 if ($Ledger -and (Test-Path $Ledger)) {
   $ledgerOut = Hide-Path (Resolve-Path $Ledger).Path
   foreach ($line in Get-Content $Ledger) {
-    if ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++ }
+    if ($line -match '^\s*(?:[-*]\s+)?Task\s+#(\d+):\s*([A-Za-z_]+)') {
+      $n = $Matches[1]; $st = $Matches[2]; $lastTask = $n
+      $taskMap[$n] = [pscustomobject]@{ n = [int]$n; model = (Get-LedgerModel $line); status = $st; fixRounds = 0; escalated = $false }
+    }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\s+(\d+)\b') {
+      $round = [int]$Matches[1]; $fix++
+      # A fix round belongs to the task it names (#<nr>), else to the last Task line above it.
+      $target = $lastTask
+      if ($line -match '#(\d+)' -and $taskMap.Contains($Matches[1])) { $target = $Matches[1] }
+      if ($target) {
+        $t = $taskMap[$target]; $t.fixRounds++
+        $fm = Get-LedgerModel $line
+        # Escalation: a fix round on a different model than the Task line, or fix round >= 3 (fresh implementer one tier up).
+        if ($round -ge 3 -or ($fm -and $t.model -and $fm -ne $t.model)) { $t.escalated = $true }
+      }
+    }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++ }
+    elseif ($line -match '^\s*(?:[-*]\s+)?(Phase review|Review round)\b') { $reviewPasses++ }
     elseif ($line -match '^\s*(?:[-*]\s+)?Ruling:\s*(.*)$') { $rulings += Hide-Secrets $Matches[1] }
     elseif ($line -match '^\s*(?:[-*]\s+)?Gate:\s*(.*)$') { $gates += Hide-Secrets $Matches[1] }
   }
 } else {
   $warnings.Add('Ledger not found; fixRounds, rulings and gates are 0.')
 }
+
+# Review passes cover the whole PBI range, so every task reports the run's count.
+$taskList = @($taskMap.Values | ForEach-Object {
+  [ordered]@{ task = $_.n; model = $_.model; status = $_.status; fixRounds = $_.fixRounds; reviewRounds = $reviewPasses }
+})
+$escalated = @($taskMap.Values | Where-Object { $_.escalated }).Count
+$escalationShare = if ($taskMap.Count -gt 0) { [math]::Round($escalated / $taskMap.Count, 4) } else { 0 }
 
 [ordered]@{
   transcript = Hide-Path (Resolve-Path $Transcript).Path
@@ -163,6 +190,8 @@ if ($Ledger -and (Test-Path $Ledger)) {
     byRole = $roleList
   }
   fixRounds = $fix
+  tasks = $taskList
+  escalationShare = $escalationShare
   rulings = [ordered]@{ count = $rulings.Count; items = @($rulings) }
   gates = [ordered]@{ count = $gates.Count; items = @($gates) }
 } | ConvertTo-Json -Depth 8

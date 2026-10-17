@@ -221,4 +221,53 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     fs.writeFileSync(empty, '');
     expect(run(['-Transcript', t, '-Ledger', empty]).json.rulings.count).toBe(0);
   });
+
+  describe('per-task ledger metrics', () => {
+    const metrics = (lines: string[]) => {
+      const t = path.join(dir, 't.jsonl');
+      fs.writeFileSync(t, '');
+      const l = path.join(dir, 'tasks.md');
+      fs.writeFileSync(l, lines.join('\n') + '\n');
+      return run(['-Transcript', t, '-Ledger', l]).json;
+    };
+
+    it('reports model, rounds and status per task with no escalation', () => {
+      const json = metrics([
+        '# ledger',
+        'Task #11: DONE — abc1234 — model sonnet',
+        'Task #12: DONE — def5678 — model opus',
+        'Phase review: complete — n/a',
+        'Fix round 1: DONE — model opus',
+      ]);
+      expect(json.tasks).toEqual([
+        { task: 11, model: 'sonnet', status: 'DONE', fixRounds: 0, reviewRounds: 1 },
+        { task: 12, model: 'opus', status: 'DONE', fixRounds: 1, reviewRounds: 1 },
+      ]);
+      expect(json.escalationShare).toBe(0);
+      expect(json.fixRounds).toBe(1);
+    });
+
+    it('yields null models for ledgers without the model suffix and 0 share without tasks', () => {
+      const old = metrics(['Task #5: DONE — abc1234', 'Fix round 1: DONE']);
+      expect(old.tasks).toEqual([{ task: 5, model: null, status: 'DONE', fixRounds: 1, reviewRounds: 0 }]);
+      expect(old.escalationShare).toBe(0);
+      const none = metrics(['# ledger']);
+      expect(none.tasks).toEqual([]);
+      expect(none.escalationShare).toBe(0);
+    });
+
+    it('counts a different fix model or fix round 3 as escalation', () => {
+      const json = metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Fix round 1: #1 DONE — model opus',
+        'Task #2: DONE — b — model sonnet',
+        'Task #3: DONE — c — model sonnet',
+        'Fix round 1: x — model sonnet',
+        'Fix round 3: #3 x — model sonnet',
+        'Task #4: DONE — d — model sonnet',
+      ]);
+      expect(json.tasks.map((t: { fixRounds: number }) => t.fixRounds)).toEqual([1, 0, 2, 0]);
+      expect(json.escalationShare).toBe(0.5);
+    });
+  });
 });
