@@ -58,7 +58,7 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
 - Work branches are cut from and merged into the integration branch (`release/next` by default, explicit `release/<x.y>` only for parallel lines), never `main` (`references/release-branches.md`); `github-release` cuts and finishes it.
 - Branch name `<type>/<nr>-<slug>` per `references/conventional-commits.md`; `<slug>` from the issue title (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
 - One logical change per commit; commit format per `references/conventional-commits.md`.
-- Commit and PR titles reference the issue: `<type>: <description> (#<nr>)`; the PR body contains `Closes #<nr>` for every issue it completes.
+- Commit and PR titles reference the issue: `<type>: <description> (#<nr>)`; the PR body contains `Closes #<nr>` for every issue it completes (only partly delivered: `Refs #<nr>` and `## Not delivered`, see `github-pull-request`).
 - Verify before every commit: run build + full test suite (load the `detect-techstack` skill if the project's commands are unknown). Never commit or move on with a red suite.
 - Never merge a PR with failing checks.
 - Closing a child is all that's needed — the native sub-issue link updates the parent's progress automatically. There is no checklist to tick. If a child turns out not to be linked to its parent, link it (`references/sub-issues.md`) instead of adding a checklist.
