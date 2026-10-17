@@ -5,6 +5,13 @@ import * as path from 'path';
 
 const SCRIPT = path.resolve(__dirname, '../../packages/hooks/.apm/hooks/subagent-ledger.sh');
 
+// no inherited GIT_DIR/GIT_WORK_TREE/... (e.g. when run from a git hook) and no user git config
+const cleanEnv = (extra: Record<string, string> = {}): NodeJS.ProcessEnv => {
+  const env = { ...process.env };
+  for (const k of Object.keys(env)) if (k.startsWith('GIT_')) delete env[k];
+  return { ...env, GIT_CONFIG_GLOBAL: os.devNull, GIT_CONFIG_SYSTEM: os.devNull, ...extra };
+};
+
 describe('subagent-ledger hook', () => {
   let dir: string;
   let ledger: string;
@@ -24,7 +31,7 @@ describe('subagent-ledger hook', () => {
     spawnSync('bash', [SCRIPT], {
       input: typeof payload === 'string' ? payload : JSON.stringify(payload),
       encoding: 'utf8',
-      env: { ...process.env, AGENTS_LEDGER: '' },
+      env: cleanEnv({ AGENTS_LEDGER: '' }),
     });
 
   it('appends a line for a Claude payload', () => {
@@ -251,12 +258,13 @@ describe('subagent-ledger hook', () => {
 
   describe('agent allowlist and branch binding', () => {
     const git = (...args: string[]) =>
-      spawnSync('git', ['-C', dir, '-c', 'user.email=t@t', '-c', 'user.name=t', ...args], { encoding: 'utf8' });
+      spawnSync('git', ['-C', dir, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...args], { encoding: 'utf8', env: cleanEnv() });
     const repo = (branch: string) => {
       git('init', '-q');
       git('checkout', '-q', '-b', branch);
       git('commit', '-q', '--allow-empty', '-m', 'init');
     };
+    const stop = (type: string) => run({ cwd: dir, agent_type: type, last_assistant_message: 'ok' });
     const mk = (nr: string, mtime?: Date) => {
       const f = path.join(dir, '.agents', nr, 'progress.md');
       fs.mkdirSync(path.dirname(f), { recursive: true });
@@ -324,6 +332,78 @@ describe('subagent-ledger hook', () => {
       expect(read(l7)).toBe('# 7\nSubagent reviewer: stopped — ok\n');
     });
 
+    it.each([
+      ['feat/scope/7-x', 'scope segment'],
+      ['Feat/7-x', 'upper-case type'],
+      ['fix/7', 'no slug (#357 style)'],
+      ['feat/a/b/7-x', 'two scope segments'],
+    ])('binds branch %s (%s) to .agents/7', (b) => {
+      repo(b);
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      stop('reviewer');
+      expect(read(l7)).toBe('# 7\nSubagent reviewer: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it.each(['main', 'release/next', 'fix/7x-y', 'fix/x7-y', 'fix/7/slug', 'feat/'])(
+      'yields no number for branch %s and falls back to the newest ledger',
+      (b) => {
+        repo(b);
+        const l7 = mk('7', new Date(2020, 1, 1));
+        const l9 = mk('9');
+        stop('reviewer');
+        expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+        expect(read(l7)).toBe('# 7\n');
+      },
+    );
+
+    it('falls back to the newest ledger on a detached HEAD', () => {
+      repo('fix/7-x');
+      git('checkout', '-q', '--detach');
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      stop('reviewer');
+      expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('falls back to the newest ledger outside a git repository', () => {
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      stop('reviewer');
+      expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('writes nothing on fix/8-x when only the loop ledger .agents/loop-8 exists', () => {
+      repo('fix/8-x');
+      const loop = mk('loop-8');
+      stop('reviewer');
+      expect(read(loop)).toBe('# loop-8\n');
+    });
+
+    it('writes nothing for a payload without an agent field', () => {
+      withLedger();
+      const r = run({ cwd: dir, last_assistant_message: 'ok' });
+      expect(r.status).toBe(0);
+      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\n');
+    });
+
+    it('cuts the agent name at 64 characters before the allowlist check', () => {
+      withLedger();
+      const fits = 'a'.repeat(55) + ':reviewer'; // 64 characters
+      stop('a'.repeat(56) + ':reviewer'); // 65: cut to ":reviewe", not allowlisted
+      stop(fits);
+      expect(fs.readFileSync(ledger, 'utf8')).toBe(`# ledger\nSubagent ${fits}: stopped — ok\n`);
+    });
+
+    it.each(['agents.reviewer', 'a:b.explorer'])('accepts the "." namespace separator in %s', (t) => {
+      withLedger();
+      stop(t);
+      expect(fs.readFileSync(ledger, 'utf8')).toBe(`# ledger\nSubagent ${t}: stopped — ok\n`);
+    });
+
     it('lets AGENTS_LEDGER win over the branch binding', () => {
       repo('fix/7-x');
       mk('7');
@@ -331,7 +411,7 @@ describe('subagent-ledger hook', () => {
       spawnSync('bash', [SCRIPT], {
         input: JSON.stringify({ cwd: dir, agent_type: 'reviewer', response: 'ok' }),
         encoding: 'utf8',
-        env: { ...process.env, AGENTS_LEDGER: l9 },
+        env: cleanEnv({ AGENTS_LEDGER: l9 }),
       });
       expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
     });
@@ -474,11 +554,11 @@ describe('subagent-ledger hook', () => {
 
     it('sanitises the agent name', () => {
       withLedger();
-      run({ cwd: dir, agent_type: 'evil\r\n- injected `x` ' + 'a'.repeat(100) + '/reviewer', agent_id: 'e1', last_assistant_message: 'ok' });
+      run({ cwd: dir, agent_type: 'evil\r\n- injected `x` ' + 'a'.repeat(100) + '/reviewer', agent_id: 'e1', last_assistant_message: 'ok' }); // cut at 64: dropped
       run({ cwd: dir, agent_type: 'agents:re\r\nviewer`', agent_id: 'e2', last_assistant_message: 'ok' });
+      run({ cwd: dir, agent_type: 'ev\r\nil- `x`:reviewer', agent_id: 'e3', last_assistant_message: 'ok' });
       const out = fs.readFileSync(ledger, 'utf8').split('\n');
-      expect(out).toHaveLength(3);
-      expect(out[1]).toBe('Subagent agents:reviewer: stopped — ok');
+      expect(out).toEqual(['# ledger', 'Subagent agents:reviewer: stopped — ok', 'Subagent evil-x:reviewer: stopped — ok', '']);
     });
 
     it('does not dedupe without a valid agent_id and does not write a sidecar', () => {

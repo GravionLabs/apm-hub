@@ -2,8 +2,8 @@
 # SubagentStop hook: append one line per finished subagent to the issue ledger
 # (.agents/<issue>/progress.md written by the orchestrator agent). Claude Code and Copilot CLI payloads.
 # Only the orchestrator's subagents are written (allowlist). The ledger is the one of the issue number in the git branch
-# (<type>/<nr>-<slug>): .agents/<nr>/progress.md, nothing when it is missing; without a number the newest PBI ledger is
-# used. Loop ledgers (.agents/loop-<nr>/) are skipped. AGENTS_LEDGER overrides both.
+# (<type>/[<scope>/]<nr>[-<slug>], type case-insensitive): .agents/<nr>/progress.md, nothing when it is missing; without a
+# number (main, release/next, detached HEAD, no git) the newest PBI ledger is used. Loop ledgers (.agents/loop-<nr>/) are skipped. AGENTS_LEDGER overrides both.
 # SubagentStop fires at every depth (pbi-runner and its children) and again on a SendMessage resume, so the
 # stop is deduplicated per agent_id and payload hash (sidecar .ledger-seen next to the ledger, regular file only):
 # the same stop fired twice is written once, a resumed agent with a new reply (even the same `GATE review`) again.
@@ -35,11 +35,10 @@ agent="$(first agent_type agentType agentName subagent_type)"
 # the name ends up in a markdown line: allow only name characters, cap 64
 agent="$(printf '%s' "$agent" | tr -cd 'A-Za-z0-9:_./-' | cut -c1-64)"
 [ -n "$agent" ] || agent="subagent"
-# the orchestrator writes its own ledger entries; its stop events are noise (any case or namespace)
 agent_lc="$(printf '%s' "$agent" | tr '[:upper:]' '[:lower:]')"
-case "$agent_lc" in orchestrator|*[:/.]orchestrator) exit 0 ;; esac
-# only the orchestrator's own subagents are recorded; a namespaced name (<prefix>:<name>, <prefix>/<name>) counts by its last part
-base="${agent_lc##*[:/]}"
+# only the orchestrator's own subagents are recorded (this also drops the orchestrator, which writes its own entries);
+# a namespaced name (<prefix>:<name>, <prefix>/<name>, <prefix>.<name>) counts by its last part
+base="${agent_lc##*[:/.]}"
 case "$base" in
   issue-reader|explorer|planner|reviewer|review-lead|implementer|pr-writer|pbi-runner) ;;
   *) exit 0 ;;
@@ -47,10 +46,11 @@ esac
 
 ledger="${AGENTS_LEDGER:-}"
 if [ -z "$ledger" ]; then
-  # bind to the issue number of the current branch (<type>/<nr>-<slug>): its ledger or nothing
+  # bind to the issue number of the current branch (<type>/[<scope>/]<nr>[-<slug>]): its ledger or nothing
   branch="$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
-  if [[ "$branch" =~ ^[a-z]+/([0-9]+)- ]]; then
-    ledger="$cwd/.agents/${BASH_REMATCH[1]}/progress.md"
+  branch_re='^[A-Za-z]+/([^/]+/)*([0-9]+)(-[^/]*)?$'
+  if [[ "$branch" =~ $branch_re ]]; then
+    ledger="$cwd/.agents/${BASH_REMATCH[2]}/progress.md"
   else
     # no number (or no git): newest .agents/<issue>/progress.md under the working tree, loop-<nr> ledgers excluded (loop-x is a PBI ledger)
     ledger="$(ls -t "$cwd"/.agents/*/progress.md 2>/dev/null | grep -v '/\.agents/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"

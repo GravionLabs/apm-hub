@@ -36,6 +36,9 @@ describe('opencode plugin apm-hub-hooks', () => {
     delete process.env.AGENTS_LEDGER;
     delete process.env.CONTEXT_WARN_TOKENS;
     delete process.env.CONTEXT_WARN_STEP;
+    for (const k of Object.keys(process.env)) if (k.startsWith('GIT_')) delete process.env[k]; // e.g. GIT_DIR from a git hook
+    process.env.GIT_CONFIG_GLOBAL = os.devNull;
+    process.env.GIT_CONFIG_SYSTEM = os.devNull;
   });
   afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -188,8 +191,11 @@ describe('opencode plugin apm-hub-hooks', () => {
       const h = await load();
       await h['tool.execute.after'](...task('evil\n- forged line\r\tx:reviewer', result('ok')));
       await h['tool.execute.after'](...task('a'.repeat(100) + ':reviewer', result('ok'))); // cut to 64, no allowlisted name left
+      const fits = 'a'.repeat(55) + ':reviewer'; // exactly 64
+      await h['tool.execute.after'](...task('a'.repeat(56) + ':reviewer', result('ok'))); // 65: cut to ":reviewe"
+      await h['tool.execute.after'](...task(fits, result('ok')));
       const lines = fs.readFileSync(ledger, 'utf8').split('\n');
-      expect(lines).toEqual(['# ledger', 'Subagent evil - forged line x:reviewer: stopped — ok', '']);
+      expect(lines).toEqual(['# ledger', 'Subagent evil-forgedlinex:reviewer: stopped — ok', `Subagent ${fits}: stopped — ok`, '']);
     });
 
     it('replaces control characters in the summary', async () => {
@@ -247,10 +253,11 @@ describe('opencode plugin apm-hub-hooks', () => {
   });
 
   describe('ledger binding (#357)', () => {
-    const git = (...a: string[]) => execFileSync('git', ['-C', dir, ...a], { stdio: 'ignore' });
+    const git = (...a: string[]) => execFileSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...a], { stdio: 'ignore' });
     const repo = (branch: string) => {
-      git('init', '-q', '-b', branch);
-      git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'init');
+      git('init', '-q');
+      git('symbolic-ref', 'HEAD', `refs/heads/${branch}`); // not `init -b` (git >= 2.28)
+      git('commit', '-q', '--allow-empty', '-m', 'init');
     };
     const read = (issue: string) => fs.readFileSync(path.join(dir, '.agents', issue, 'progress.md'), 'utf8');
     const run = async (name: unknown) => (await load())['tool.execute.after'](...task(name, result('ok')));
@@ -322,6 +329,67 @@ describe('opencode plugin apm-hub-hooks', () => {
       withLedger('3');
       await run('reviewer');
       expect(read('3')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+    });
+
+    it.each([
+      ['feat/scope/12-x', 'scope segment'],
+      ['Feat/12-x', 'upper-case type'],
+      ['fix/12', 'no slug'],
+    ])('binds branch %s (%s) to .agents/12', async (b) => {
+      repo(b);
+      const own = withLedger('12');
+      fs.utimesSync(own, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      withLedger('99');
+      await run('reviewer');
+      expect(read('12')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(read('99')).toBe('# ledger\n');
+    });
+
+    it.each(['main', 'release/next', 'fix/12x-y', 'fix/12/slug'])('yields no number for branch %s (newest-ledger fallback)', async (b) => {
+      repo(b);
+      const old = withLedger('12');
+      fs.utimesSync(old, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      withLedger('99');
+      await run('reviewer');
+      expect(read('12')).toBe('# ledger\n');
+      expect(read('99')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+    });
+
+    it('writes nothing on fix/8-x when only the loop ledger exists', async () => {
+      repo('fix/8-x');
+      withLedger('loop-8');
+      await run('reviewer');
+      expect(read('loop-8')).toBe('# ledger\n');
+    });
+
+    it('does not write through a symlinked .agents/<nr> directory', async () => {
+      repo('fix/12-x');
+      const real = path.join(dir, 'real');
+      fs.mkdirSync(real);
+      fs.writeFileSync(path.join(real, 'progress.md'), 'secret\n');
+      fs.mkdirSync(path.join(dir, '.agents'));
+      fs.symlinkSync(real, path.join(dir, '.agents', '12'));
+      await run('reviewer');
+      expect(fs.readFileSync(path.join(real, 'progress.md'), 'utf8')).toBe('secret\n');
+    });
+
+    it('falls back to the newest ledger when git cannot run', async () => {
+      repo('fix/12-x');
+      const own = withLedger('12');
+      fs.utimesSync(own, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      withLedger('99');
+      process.env.PATH = path.join(dir, 'no-bin'); // git not found
+      await run('reviewer');
+      expect(read('99')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(read('12')).toBe('# ledger\n');
+    });
+
+    it('falls back to the newest ledger outside a git repository', async () => {
+      const old = withLedger('12');
+      fs.utimesSync(old, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      withLedger('99');
+      await run('reviewer');
+      expect(read('99')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
     });
 
     it('AGENTS_LEDGER wins over the branch binding', async () => {

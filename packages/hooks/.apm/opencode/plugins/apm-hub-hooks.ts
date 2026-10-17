@@ -1,7 +1,7 @@
 // OpenCode plugin: ports of the apm-hub hooks that OpenCode cannot run as shell hooks.
 //  - subagent ledger: after a `task` tool call of an orchestrator subagent (allowlist), append
 //    `Subagent <name>: stopped — <first line>` to .agents/<nr>/progress.md of the issue number in the git branch
-//    (<type>/<nr>-<slug>); nothing when that ledger is missing; the newest non-loop ledger only for a branch without
+//    (<type>/[<scope>/]<nr>[-<slug>]); nothing when that ledger is missing; the newest non-loop ledger only for a branch without
 //    a number. Same rules and format as subagent-ledger.sh; AGENTS_LEDGER overrides.
 //  - context warning: on a new user message, warn once the last request passed CONTEXT_WARN_TOKENS (default
 //    150000), again after another CONTEXT_WARN_STEP (default 100000). Same logic as context-warning.sh.
@@ -32,11 +32,11 @@ let partSeq = 0;
 
 const AGENTS = new Set(["issue-reader", "explorer", "planner", "reviewer", "review-lead", "implementer", "pr-writer", "pbi-runner"]);
 
-/** Issue number of the current git branch (<type>/<nr>-<slug>), or "" (no number, detached HEAD, not a repo). */
+/** Issue number of the current git branch (<type>/[<scope>/]<nr>[-<slug>]), or "" (no number, detached HEAD, not a repo). */
 function branchIssue(dir: string): string {
   try {
-    const branch = execFileSync("git", ["-C", dir, "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
-    return /^[a-z]+\/([0-9]+)-/.exec(branch)?.[1] ?? "";
+    const branch = execFileSync("git", ["-C", dir, "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000 }).trim();
+    return /^[A-Za-z]+\/(?:[^/]+\/)*([0-9]+)(?:-[^/]*)?$/.exec(branch)?.[1] ?? "";
   } catch {
     return "";
   }
@@ -49,7 +49,7 @@ function findLedger(dir: string, override?: string): string {
     const nr = branchIssue(dir);
     if (nr) {
       const own = join(dir, ".agents", nr, "progress.md");
-      return isRegular(own) ? own : "";
+      return isRegular(own) && !lstatSync(join(dir, ".agents", nr)).isSymbolicLink() ? own : "";
     }
     const root = join(dir, ".agents");
     let best = "";
@@ -81,8 +81,8 @@ function summaryOf(output: string): string {
 /** Ledger line for a finished `task` call, or "" when the call is not a ledger-worthy subagent stop. */
 function ledgerLine(input: any, output: any): string {
   if (input?.tool !== "task") return "";
-  const agent = text(input?.args?.subagent_type).replace(CONTROL, " ").replace(/\s+/g, " ").trim().slice(0, 64);
-  if (!AGENTS.has(agent.toLowerCase().split(/[:/]/).pop() ?? "")) return "";
+  const agent = text(input?.args?.subagent_type).replace(/[^A-Za-z0-9:_./-]/g, "").slice(0, 64);
+  if (!AGENTS.has(agent.toLowerCase().split(/[:/.]/).pop() ?? "")) return "";
   const summary = summaryOf(text(output?.output));
   return summary ? `Subagent ${agent}: stopped — ${summary}` : `Subagent ${agent}: stopped`;
 }
