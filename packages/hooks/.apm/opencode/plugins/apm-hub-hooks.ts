@@ -1,11 +1,14 @@
 // OpenCode plugin: ports of the apm-hub hooks that OpenCode cannot run as shell hooks.
-//  - subagent ledger: after a `task` tool call, append `Subagent <name>: stopped — <first line>` to the newest
-//    .agents/*/progress.md (same format as subagent-ledger.sh; skips the orchestrator; no-op without a ledger).
+//  - subagent ledger: after a `task` tool call of an orchestrator subagent (allowlist), append
+//    `Subagent <name>: stopped — <first line>` to .agents/<nr>/progress.md of the issue number in the git branch
+//    (<type>/<nr>-<slug>); nothing when that ledger is missing; the newest non-loop ledger only for a branch without
+//    a number. Same rules and format as subagent-ledger.sh; AGENTS_LEDGER overrides.
 //  - context warning: on a new user message, warn once the last request passed CONTEXT_WARN_TOKENS (default
 //    150000), again after another CONTEXT_WARN_STEP (default 100000). Same logic as context-warning.sh.
 // Never throws: every hook swallows errors. Keep this file self-contained and export ONLY the plugin function:
 // OpenCode calls every function export as a plugin and fails to load the file on non-function exports.
 import { appendFileSync, lstatSync, readdirSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 
 const text = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -27,10 +30,27 @@ function isRegular(p: string): boolean {
 const CONTROL = /[\x00-\x1f\x7f\x85\u2028\u2029]/g;
 let partSeq = 0;
 
-/** Newest .agents/<issue>/progress.md under dir (loop-<nr> ledgers skipped), or "" (AGENTS_LEDGER overrides). */
+const AGENTS = new Set(["issue-reader", "explorer", "planner", "reviewer", "review-lead", "implementer", "pr-writer", "pbi-runner"]);
+
+/** Issue number of the current git branch (<type>/<nr>-<slug>), or "" (no number, detached HEAD, not a repo). */
+function branchIssue(dir: string): string {
+  try {
+    const branch = execFileSync("git", ["-C", dir, "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    return /^[a-z]+\/([0-9]+)-/.exec(branch)?.[1] ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** Branch issue ledger (may not exist), else newest .agents/<issue>/progress.md (loop-<nr> skipped) when the branch has no number; AGENTS_LEDGER overrides. */
 function findLedger(dir: string, override?: string): string {
   try {
     if (override) return isRegular(override) ? override : "";
+    const nr = branchIssue(dir);
+    if (nr) {
+      const own = join(dir, ".agents", nr, "progress.md");
+      return isRegular(own) ? own : "";
+    }
     const root = join(dir, ".agents");
     let best = "";
     let bestTime = -1;
@@ -61,8 +81,8 @@ function summaryOf(output: string): string {
 /** Ledger line for a finished `task` call, or "" when the call is not a ledger-worthy subagent stop. */
 function ledgerLine(input: any, output: any): string {
   if (input?.tool !== "task") return "";
-  const agent = text(input?.args?.subagent_type).replace(CONTROL, " ").replace(/\s+/g, " ").trim().slice(0, 64) || "subagent";
-  if (/^(.*[:/.])?orchestrator$/i.test(agent)) return "";
+  const agent = text(input?.args?.subagent_type).replace(CONTROL, " ").replace(/\s+/g, " ").trim().slice(0, 64);
+  if (!AGENTS.has(agent.toLowerCase().split(/[:/]/).pop() ?? "")) return "";
   const summary = summaryOf(text(output?.output));
   return summary ? `Subagent ${agent}: stopped — ${summary}` : `Subagent ${agent}: stopped`;
 }

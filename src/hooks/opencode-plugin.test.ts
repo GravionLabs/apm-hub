@@ -2,6 +2,7 @@ import { vi } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { execFileSync } from 'child_process';
 
 const PLUGIN = path.resolve(__dirname, '../../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts');
 
@@ -90,11 +91,11 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(fs.readFileSync(ledger, 'utf8').split('\n')[1]).toBe(`Subagent explorer: stopped — ${'x'.repeat(120)}`);
     });
 
-    it('writes the bare line without a result and defaults the name', async () => {
+    it('writes the bare line without a result', async () => {
       withLedger();
       const h = await load();
-      await h['tool.execute.after'](...task(undefined, ''));
-      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent subagent: stopped\n');
+      await h['tool.execute.after'](...task('planner', ''));
+      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent planner: stopped\n');
     });
 
     it('uses the newest ledger', async () => {
@@ -182,13 +183,13 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
     });
 
-    it('sanitizes newlines and control characters in the agent name and caps it at 64', async () => {
+    it('sanitizes newlines and control characters in the agent name and ignores names cut at 64', async () => {
       withLedger();
       const h = await load();
-      await h['tool.execute.after'](...task('evil\n- forged line\r\tx', result('ok')));
-      await h['tool.execute.after'](...task('a'.repeat(100), result('ok')));
+      await h['tool.execute.after'](...task('evil\n- forged line\r\tx:reviewer', result('ok')));
+      await h['tool.execute.after'](...task('a'.repeat(100) + ':reviewer', result('ok'))); // cut to 64, no allowlisted name left
       const lines = fs.readFileSync(ledger, 'utf8').split('\n');
-      expect(lines).toEqual(['# ledger', 'Subagent evil - forged line x: stopped — ok', `Subagent ${'a'.repeat(64)}: stopped — ok`, '']);
+      expect(lines).toEqual(['# ledger', 'Subagent evil - forged line x:reviewer: stopped — ok', '']);
     });
 
     it('replaces control characters in the summary', async () => {
@@ -242,6 +243,96 @@ describe('opencode plugin apm-hub-hooks', () => {
       process.env.AGENTS_LEDGER = dir; // a directory
       const h = await load();
       await expect(h['tool.execute.after'](...task('reviewer', result('x')))).resolves.toBeUndefined();
+    });
+  });
+
+  describe('ledger binding (#357)', () => {
+    const git = (...a: string[]) => execFileSync('git', ['-C', dir, ...a], { stdio: 'ignore' });
+    const repo = (branch: string) => {
+      git('init', '-q', '-b', branch);
+      git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'init');
+    };
+    const read = (issue: string) => fs.readFileSync(path.join(dir, '.agents', issue, 'progress.md'), 'utf8');
+    const run = async (name: unknown) => (await load())['tool.execute.after'](...task(name, result('ok')));
+
+    it.each(['issue-reader', 'explorer', 'planner', 'reviewer', 'review-lead', 'implementer', 'pr-writer', 'pbi-runner'])(
+      'records the allowlisted agent %s',
+      async (n) => {
+        withLedger();
+        await run(n);
+        expect(read('7')).toBe(`# ledger\nSubagent ${n}: stopped — ok\n`);
+      },
+    );
+
+    it('records a namespaced allowlisted agent by its last part', async () => {
+      withLedger();
+      await run('agents:reviewer');
+      await run('apm/Explorer');
+      expect(read('7')).toBe('# ledger\nSubagent agents:reviewer: stopped — ok\nSubagent apm/Explorer: stopped — ok\n');
+    });
+
+    it.each(['general', 'subagent', 'build-helper', 'my-reviewer', 'reviewer-x', 'agents:other'])(
+      'ignores the foreign agent %s',
+      async (n) => {
+        withLedger();
+        await run(n);
+        expect(read('7')).toBe('# ledger\n');
+      },
+    );
+
+    it('ignores a missing subagent type', async () => {
+      withLedger();
+      await run(undefined);
+      expect(read('7')).toBe('# ledger\n');
+    });
+
+    it('writes to the ledger of the branch issue even when another one is newer', async () => {
+      repo('feat/12-thing');
+      const own = withLedger('12');
+      fs.utimesSync(own, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      withLedger('99');
+      await run('reviewer');
+      expect(read('12')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(read('99')).toBe('# ledger\n');
+    });
+
+    it('writes nothing when the branch issue has no ledger', async () => {
+      repo('fix/12-thing');
+      withLedger('99');
+      await run('reviewer');
+      expect(read('99')).toBe('# ledger\n');
+      expect(fs.existsSync(path.join(dir, '.agents', '12'))).toBe(false);
+    });
+
+    it('falls back to the newest non-loop ledger on a branch without a number', async () => {
+      repo('main');
+      const old = withLedger('1');
+      fs.utimesSync(old, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      withLedger('2');
+      withLedger('loop-5');
+      await run('reviewer');
+      expect(read('1')).toBe('# ledger\n');
+      expect(read('2')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(read('loop-5')).toBe('# ledger\n');
+    });
+
+    it('falls back to the newest ledger on a detached HEAD', async () => {
+      repo('fix/12-thing');
+      git('checkout', '-q', '--detach');
+      withLedger('3');
+      await run('reviewer');
+      expect(read('3')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+    });
+
+    it('AGENTS_LEDGER wins over the branch binding', async () => {
+      repo('fix/12-thing');
+      withLedger('12');
+      const other = path.join(dir, 'other.md');
+      fs.writeFileSync(other, '');
+      process.env.AGENTS_LEDGER = other;
+      await run('reviewer');
+      expect(fs.readFileSync(other, 'utf8')).toBe('Subagent reviewer: stopped — ok\n');
+      expect(read('12')).toBe('# ledger\n');
     });
   });
 
