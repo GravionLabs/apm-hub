@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # SubagentStop hook: append one line per finished subagent to the issue ledger
 # (.agents/<issue>/progress.md written by the orchestrator agent). Claude Code and Copilot CLI payloads.
-# Loop ledgers (.agents/loop-<nr>/) are skipped: the newest PBI ledger is used.
+# Only the orchestrator's subagents are written (allowlist). The ledger is the one of the issue number in the git branch
+# (<type>/<nr>-<slug>): .agents/<nr>/progress.md, nothing when it is missing; without a number the newest PBI ledger is
+# used. Loop ledgers (.agents/loop-<nr>/) are skipped. AGENTS_LEDGER overrides both.
 # SubagentStop fires at every depth (pbi-runner and its children) and again on a SendMessage resume, so the
 # stop is deduplicated per agent_id and payload hash (sidecar .ledger-seen next to the ledger, regular file only):
 # the same stop fired twice is written once, a resumed agent with a new reply (even the same `GATE review`) again.
@@ -25,15 +27,6 @@ field() { # field <name>: first string value of "name" in the payload (jq, else 
 cwd="$(field cwd)"
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
 
-ledger="${AGENTS_LEDGER:-}"
-if [ -z "$ledger" ]; then
-  # newest .agents/<issue>/progress.md under the working tree, loop-<nr> ledgers excluded (loop-x is a PBI ledger)
-  ledger="$(ls -t "$cwd"/.agents/*/progress.md 2>/dev/null | grep -v '/\.agents/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"
-fi
-[ -n "$ledger" ] && [ -f "$ledger" ] || exit 0
-# never write through a symlink: neither the ledger nor its directory may be one (also for the AGENTS_LEDGER override)
-[ ! -L "$ledger" ] && [ ! -L "$(dirname "$ledger")" ] || exit 0
-
 first() { # first non-empty value among the given field names
   local k v
   for k in "$@"; do v="$(field "$k")"; [ -n "$v" ] && { printf '%s' "$v"; return; }; done
@@ -45,6 +38,28 @@ agent="$(printf '%s' "$agent" | tr -cd 'A-Za-z0-9:_./-' | cut -c1-64)"
 # the orchestrator writes its own ledger entries; its stop events are noise (any case or namespace)
 agent_lc="$(printf '%s' "$agent" | tr '[:upper:]' '[:lower:]')"
 case "$agent_lc" in orchestrator|*[:/.]orchestrator) exit 0 ;; esac
+# only the orchestrator's own subagents are recorded; a namespaced name (<prefix>:<name>, <prefix>/<name>) counts by its last part
+base="${agent_lc##*[:/]}"
+case "$base" in
+  issue-reader|explorer|planner|reviewer|review-lead|implementer|pr-writer|pbi-runner) ;;
+  *) exit 0 ;;
+esac
+
+ledger="${AGENTS_LEDGER:-}"
+if [ -z "$ledger" ]; then
+  # bind to the issue number of the current branch (<type>/<nr>-<slug>): its ledger or nothing
+  branch="$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  if [[ "$branch" =~ ^[a-z]+/([0-9]+)- ]]; then
+    ledger="$cwd/.agents/${BASH_REMATCH[1]}/progress.md"
+  else
+    # no number (or no git): newest .agents/<issue>/progress.md under the working tree, loop-<nr> ledgers excluded (loop-x is a PBI ledger)
+    ledger="$(ls -t "$cwd"/.agents/*/progress.md 2>/dev/null | grep -v '/\.agents/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"
+  fi
+fi
+[ -n "$ledger" ] && [ -f "$ledger" ] || exit 0
+# never write through a symlink: neither the ledger nor its directory may be one (also for the AGENTS_LEDGER override)
+[ ! -L "$ledger" ] && [ ! -L "$(dirname "$ledger")" ] || exit 0
+
 clean() { tr -d '\000-\010\013-\037\177'; } # no control characters in a ledger line
 summary="$(first last_assistant_message response | head -n 1 | clean | cut -c1-120)"
 
