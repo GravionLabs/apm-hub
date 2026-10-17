@@ -139,23 +139,30 @@ function Sum-Of($items, [string]$prop) { $t = 0.0; foreach ($i in $items) { $t +
 
 # --- ledger
 $fix = 0; $rulings = @(); $gates = @(); $ledgerOut = $null
-$taskMap = [ordered]@{}; $lastTask = $null; $reviewPasses = 0
+$taskMap = [ordered]@{}; $lastTask = $null; $reviewPasses = 0; $unattributed = 0
 # Optional ' — model <name>' suffix (older ledgers have none): null when absent.
-function Get-LedgerModel([string]$line) { if ($line -match '(?i)\bmodel\s+([A-Za-z0-9_.:/-]+)\s*$') { return Hide-Secrets $Matches[1] } return $null }
+function Get-LedgerModel([string]$line) { if ($line -match '(?i)(?:^|\s)model\s+([A-Za-z0-9_.:/-]+)\s*$') { return Hide-Secrets $Matches[1] } return $null }
 if ($Ledger -and (Test-Path $Ledger)) {
   $ledgerOut = Hide-Path (Resolve-Path $Ledger).Path
   foreach ($line in Get-Content $Ledger) {
-    if ($line -match '^\s*(?:[-*]\s+)?Task\s+#(\d+):\s*([A-Za-z_]+)') {
+    if ($line -match '^\s*(?:[-*]\s+)?Task\s+#(\d{1,9}):\s*([A-Za-z_]+)') {
       $n = $Matches[1]; $st = $Matches[2]; $lastTask = $n
-      if ($taskMap.Contains($n)) { $taskMap[$n].model = Get-LedgerModel $line; $taskMap[$n].status = $st }  # repeated line: latest wins, counters stay
+      if ($taskMap.Contains($n)) {  # repeated line: latest status wins, a model is never replaced by null, counters stay
+        $nm = Get-LedgerModel $line
+        if ($nm) { $taskMap[$n].model = $nm }
+        $taskMap[$n].status = $st
+      }
       else { $taskMap[$n] = [pscustomobject]@{ n = [int]$n; model = (Get-LedgerModel $line); status = $st; fixRounds = 0; escalated = $false; escalatedTo = $null } }
     }
-    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\s+(\d+)(?:\s*\(#(\d+)\))?') {
+    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\s+(\d{1,9})(?:\s*\(#(\w+)\))?') {
       $round = [int]$Matches[1]; $fix++
-      # New form `Fix round <r> (#<task>): ...` names its task; an old line without it falls back to the last Task line above.
-      $target = $lastTask
-      if ($Matches[2] -and $taskMap.Contains($Matches[2])) { $target = $Matches[2] }
-      if ($target) {
+      # `Fix round <r> (#<task>): ...` names its task and counts only for a known Task line; an unknown name (e.g. p1) stays unattributed.
+      # A legacy line without `(#...)` is attributed to the last Task line above it (old ledgers); none above: unattributed.
+      $target = $null
+      if ($Matches[2]) { if ($taskMap.Contains($Matches[2])) { $target = $Matches[2] } }
+      else { $target = $lastTask }
+      if (-not $target) { $unattributed++ }
+      else {
         $t = $taskMap[$target]; $t.fixRounds++
         $fm = Get-LedgerModel $line
         # Escalation: a fix round on a different named model than the Task line (`inherit` is not a model name), or fix round >= 3 (fresh implementer one tier up).
@@ -163,7 +170,7 @@ if ($Ledger -and (Test-Path $Ledger)) {
         if ($round -ge 3 -or ($named -and $fm -ne $t.model)) { $t.escalated = $true; if ($fm -and $fm -ne 'inherit') { $t.escalatedTo = $fm } }
       }
     }
-    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++ }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++; $unattributed++ }
     elseif ($line -match '^\s*(?:[-*]\s+)?Phase review\b') { $reviewPasses++ }
     elseif ($line -match '^\s*(?:[-*]\s+)?Ruling:\s*(.*)$') { $rulings += Hide-Secrets $Matches[1] }
     elseif ($line -match '^\s*(?:[-*]\s+)?Gate:\s*(.*)$') { $gates += Hide-Secrets $Matches[1] }
@@ -172,6 +179,7 @@ if ($Ledger -and (Test-Path $Ledger)) {
   $warnings.Add('Ledger not found; fixRounds, rulings and gates are 0.')
 }
 
+# reviewRounds is run-wide by design: review runs once over the whole PBI range, not per task.
 # Review passes cover the whole PBI range, so every task reports the run's count.
 $taskList = @($taskMap.Values | ForEach-Object {
   [ordered]@{ task = $_.n; model = $_.model; status = $_.status; fixRounds = $_.fixRounds; escalated = $_.escalated; escalatedTo = $_.escalatedTo; reviewRounds = $reviewPasses }
@@ -192,6 +200,7 @@ $escalationShare = if ($taskMap.Count -gt 0) { [math]::Round($escalated / $taskM
     byRole = $roleList
   }
   fixRounds = $fix
+  unattributedFixRounds = $unattributed
   tasks = $taskList
   escalationShare = $escalationShare
   rulings = [ordered]@{ count = $rulings.Count; items = @($rulings) }

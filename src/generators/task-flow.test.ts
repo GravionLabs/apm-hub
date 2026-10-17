@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { execFileSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
 import { countBodyLines } from './agent-size-validator';
 
 const pk = path.resolve(__dirname, '../../packages');
@@ -20,7 +20,9 @@ const publish = read('delivery/.apm/skills/issue-planning/references/publish.md'
 const planSchemaDoc = read('delivery/.apm/skills/issue-planning/references/plan-schema.md');
 const batch = read('github/.apm/skills/github-issue/references/batch-workflow.md');
 
-describe('ledger format agreement with Get-RunMetrics', () => {
+const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
+
+describe.skipIf(!hasPwsh)('ledger format agreement with Get-RunMetrics', () => {
   it('parses the exact Task and Fix round lines the pipeline spec documents', () => {
     const spec = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
     const taskFmt = /`(Task #<nr>: <status> — <sha> — model <name>)`/.exec(spec)?.[1];
@@ -32,14 +34,24 @@ describe('ledger format agreement with Get-RunMetrics', () => {
       const t = path.join(dir, 't.jsonl');
       fs.writeFileSync(t, '');
       const l = path.join(dir, 'progress.md');
-      const fill = (f: string) => f.replace('<nr>', '7').replace('<status>', 'DONE').replace('<sha>', 'abc1234').replace('<task>', '7').replace('<r>', '1').replace('<result>', 'DONE').replace('<name>', 'opus');
+      const values: Record<string, string> = { nr: '7', status: 'DONE', sha: 'abc1234', task: '7', r: '1', result: 'DONE', name: 'opus' };
+      const fill = (f: string) => f.replace(/<(\w+)>/g, (m, k) => values[k] ?? m);
       fs.writeFileSync(l, [fill(taskFmt!), fill(fixFmt!)].join('\n') + '\n');
       const script = path.join(pk, 'delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1');
       const out = execFileSync('pwsh', ['-NoProfile', '-File', script, '-Transcript', t, '-Ledger', l], { encoding: 'utf-8' });
-      expect(JSON.parse(out).tasks[0]).toMatchObject({ task: 7, model: 'opus', fixRounds: 1 });
+      expect(JSON.parse(out).tasks[0]).toMatchObject({ task: 7, model: 'opus', fixRounds: 1, escalated: false, escalatedTo: null });
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('retro escalation line contract', () => {
+  it('SKILL.md documents the one-line format and not a model-policy.md file', () => {
+    const retro = read('delivery/.apm/skills/retro/SKILL.md');
+    expect(retro).toContain('Escalation: #<task> <kind> — <model> -> <model> after <n> fix rounds');
+    expect(retro).toMatch(/model-policy\.md[^.]*does not exist/);
+    expect(retro.split('\n').length).toBeLessThanOrEqual(100);
   });
 });
 

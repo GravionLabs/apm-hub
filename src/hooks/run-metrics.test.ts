@@ -268,6 +268,8 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       ]);
       expect(json.tasks.map((t: { fixRounds: number }) => t.fixRounds)).toEqual([1, 0, 2, 0]);
       expect(json.escalationShare).toBe(0.5);
+      expect(json.tasks.map((t: { escalated: boolean }) => t.escalated)).toEqual([true, false, true, false]);
+      expect(json.tasks.map((t: { escalatedTo: string | null }) => t.escalatedTo)).toEqual(['opus', null, 'sonnet', null]);
     });
 
     it('attributes fix rounds to the named task, not the last Task line', () => {
@@ -325,6 +327,40 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     it('counts only Phase review lines as review rounds', () => {
       const json = metrics(['Task #1: DONE — a', 'Phase review: complete — n/a', 'Review round 2: x', 'Phase review: complete — n/a']);
       expect(json.tasks[0].reviewRounds).toBe(2);
+    });
+
+    it('keeps a fix round with an unknown target unattributed instead of charging the last task', () => {
+      const json = metrics(['Task #1: DONE — a — model sonnet', 'Task #2: DONE — b — model sonnet', 'Fix round 1 (#p1): x — model opus']);
+      expect(json.tasks.map((t: { fixRounds: number }) => t.fixRounds)).toEqual([0, 0]);
+      expect(json.fixRounds).toBe(1);
+      expect(json.unattributedFixRounds).toBe(1);
+    });
+
+    it('leaves a fix round unattributed when no Task line precedes it', () => {
+      const json = metrics(['Fix round 1: x', 'Task #1: DONE — a']);
+      expect(json.tasks[0].fixRounds).toBe(0);
+      expect(json.unattributedFixRounds).toBe(1);
+    });
+
+    it('reads bulleted Task and Fix round lines', () => {
+      const json = metrics(['- Task #1: DONE — a — model sonnet', '* Fix round 1 (#1): x — model opus']);
+      expect(json.tasks[0]).toMatchObject({ fixRounds: 1, escalated: true, escalatedTo: 'opus' });
+    });
+
+    it('does not replace a model with null on a repeated Task line without suffix', () => {
+      const json = metrics(['Task #1: BLOCKED — a — model opus', 'Task #1: DONE — b']);
+      expect(json.tasks[0]).toMatchObject({ model: 'opus', status: 'DONE' });
+    });
+
+    it('reports escalatedTo null for round 3 without a model and ignores an oversized task number', () => {
+      const json = metrics(['Task #1: DONE — a', 'Fix round 3 (#1): x', 'Task #99999999999: DONE — z']);
+      expect(json.tasks[0]).toMatchObject({ escalated: true, escalatedTo: null });
+      expect(json.tasks).toHaveLength(1);
+    });
+
+    it('reports the run-wide review count on every task', () => {
+      const json = metrics(['Task #1: DONE — a', 'Task #2: DONE — b', 'Phase review: complete — n/a', 'Phase review: complete — n/a']);
+      expect(json.tasks.map((t: { reviewRounds: number }) => t.reviewRounds)).toEqual([2, 2]);
     });
   });
 });
