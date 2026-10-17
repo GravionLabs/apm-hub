@@ -25,16 +25,16 @@ pwsh scripts/Invoke-OrchestratorQueue.ps1 -Epic 300 -Harness opencode -ContinueO
 
 Start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`
 (not with `-Feature`/`-Epic`: the mode is always `next`, the adapters forward it as `next <nr>`), `-ContinueOnError`,
-`-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved` (opt-in, otherwise the runner never merges), `-TrustedOnly` (with `-Label`).
+`-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved` (opt-in, otherwise the runner never merges), `-TrustedOnly` (with `-Label`),
+`-FixAdvisories none|medium|all[:dim,dim]` (lowercase dimensions; forwarded as `--fix-advisories <policy>`, no review-summary gate; CRITICAL/HIGH always block).
 
 ## Slash usage
 
-`/queue [dry-run] [full|implement|plan] <nr>...`, `/queue [dry-run] feature <nr>`, `/queue [dry-run] epic <nr>`,
-`/queue install`, `/queue uninstall`. Examples: `/queue 101` (default mode full), `/queue full 324`,
-`/queue dry-run implement 101 102`, `/queue dry-run feature 248`, `/queue epic 300`. Mapping: `dry-run` is `-DryRun` (recommend it first) and may be followed by the mode word; a mode word `full|implement|plan`
+`/queue [dry-run] [fix=<policy>] [full|implement|plan] <nr>...`, `/queue [dry-run] feature <nr>`, `/queue [dry-run] epic <nr>`,
+`/queue install`, `/queue uninstall`. Examples: `/queue 101` (default mode full), `/queue full 324`, `/queue dry-run implement 101 102`, `/queue dry-run feature 248`, `/queue epic 300`. Mapping: `dry-run` is `-DryRun` (recommend it first) and may be followed by the mode word; a mode word `full|implement|plan`
 is `-Mode <word>` (none: the runner default `full`); `feature <nr>` / `epic <nr>` is `-Feature` / `-Epic` and takes no
 mode (`/queue implement feature 248` is rejected with a message, the mode is always `next`); remaining numbers are
-positional issues. Pass `-AllowAll` or `-MergeApproved` through only when the user asks for it explicitly. `install` /
+positional issues. `fix=medium|all|none[:dim]` is `-FixAdvisories <policy>`, only when the user gives it. Pass `-AllowAll` or `-MergeApproved` through only when the user asks for it explicitly. `install` /
 `uninstall` runs the installer (below), not the runner. Run `pwsh scripts/Invoke-OrchestratorQueue.ps1 ...` from the
 repository root, print the summary lines and the exit code, and never answer a gate. Every child is a fresh process;
 start long runs from a plain terminal, see [launcher and shell function](references/shell-function.md).

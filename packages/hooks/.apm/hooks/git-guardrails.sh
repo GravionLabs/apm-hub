@@ -198,7 +198,7 @@ check() { # check <tokens...> of one git invocation (after the word git)
     [ $# -gt 0 ] && printf -v q ' %q' "$@"
     for a in "${al[@]}"; do
       v="${a#*=}"; d="${a%%=*}"; d="${d#*.}"; pf=""
-      [ "${d,,}" = "${sub,,}" ] && pf="$q"
+      [ "$(printf %s "$d" | tr '[:upper:]' '[:lower:]')" = "$(printf %s "$sub" | tr '[:upper:]' '[:lower:]')" ] && pf="$q" # bash 3.2 (macOS) has no ${var,,}
       case "$v" in
         !*) analyze "${v#!}$pf" ;;
         *) AWD="$wd" AFOR="$foreign" analyze "git $v$pf" ;;

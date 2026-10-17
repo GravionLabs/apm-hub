@@ -44,6 +44,7 @@
 .PARAMETER MergeApproved   Queue mode: squash-merge the PBI's open PR on an APPROVE verdict (default off).
 .PARAMETER TrustedOnly     With -Label: only issues authored by OWNER, MEMBER or COLLABORATOR (issue text is untrusted input).
 .PARAMETER ContinueOnError Continue with the next issue after a failed run.
+.PARAMETER FixAdvisories Optional advisory policy (none, medium, all; optionally `:dim,dim`) passed to the orchestrator as `--fix-advisories <policy>` before the mode word.
 .PARAMETER AllowAll        Opt in to the harness' unrestricted permission mode (default: narrow set).
 .PARAMETER DryRun          Print the exact commands and run nothing.
 #>
@@ -60,10 +61,12 @@ param(
   [switch]$TrustedOnly,
   [ValidatePattern('\A[a-z]{1,20}\z')][string]$Harness = 'claude',
   [switch]$ContinueOnError,
+  [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
   [switch]$AllowAll,
   [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
+$adv = $FixAdvisories ? @{ FixAdvisories = $FixAdvisories } : @{}
 # The queue launcher cd's to the git toplevel and passes the caller's directory here, so a relative -IssueFile still
 # resolves against where the user typed it. Not inherited by the children.
 $callerCwd = $env:QUEUE_CALLER_CWD
@@ -96,7 +99,7 @@ if ($Feature -or $Epic) {
   $kind = $Feature ? 'Feature' : 'Epic'
   $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
   if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
-  $cmd = & $adapter -Issue $nr -Mode next -AllowAll:$AllowAll
+  $cmd = & $adapter -Issue $nr -Mode next -AllowAll:$AllowAll @adv
   $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
   $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
   $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
@@ -308,7 +311,7 @@ $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
 if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
 
 if (-not $DryRun) {
-  $probe = & $adapter -Issue $queue[0] -Mode $Mode -AllowAll:$AllowAll
+  $probe = & $adapter -Issue $queue[0] -Mode $Mode -AllowAll:$AllowAll @adv
   if (-not (Get-Command $probe.Executable -CommandType Application -ErrorAction SilentlyContinue)) { throw "'$($probe.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
   Test-NotSymlink '.agents'
 }
@@ -318,7 +321,7 @@ $stopped = $false
 foreach ($n in $queue) {
   if ($stopped) { $results[$n] = 'not-run'; continue }
   if (Test-Complete (Get-LedgerLines $n)) { $results[$n] = 'skipped'; continue }
-  $cmd = & $adapter -Issue $n -Mode $Mode -AllowAll:$AllowAll
+  $cmd = & $adapter -Issue $n -Mode $Mode -AllowAll:$AllowAll @adv
   $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
   $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
   $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '

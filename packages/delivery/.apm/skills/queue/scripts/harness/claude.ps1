@@ -10,6 +10,7 @@
   instead of hanging on a prompt. -AllowAll adds --dangerously-skip-permissions (explicit opt-in).
 .PARAMETER Issue    Issue number.
 .PARAMETER Mode     plan, implement, full or next.
+.PARAMETER FixAdvisories Optional advisory policy (none, medium, all; optionally `:dim,dim`) passed to the orchestrator as `--fix-advisories <policy>` before the mode word.
 .PARAMETER AllowAll Skip all permission checks.
 .OUTPUTS PSCustomObject with Executable and Arguments.
 #>
@@ -17,11 +18,13 @@
 param(
   [Parameter(Mandatory)][ValidatePattern('\A[1-9][0-9]{0,9}\z')][string]$Issue,
   [ValidateSet('plan', 'implement', 'full', 'next')][string]$Mode = 'full',
+  [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
   [switch]$AllowAll
 )
 $ErrorActionPreference = 'Stop'
+$prompt = ($FixAdvisories ? "--fix-advisories $FixAdvisories " : '') + "$Mode $Issue"
 $tools = @('Read', 'Grep', 'Glob', 'Edit', 'Write', 'Agent', 'Skill', 'SendMessage') +
   @(& (Join-Path $PSScriptRoot 'allowed-commands.ps1') | ForEach-Object { "Bash($_`:*)" })
-$cliArgs = @('--agent', 'orchestrator', '-p', "$Mode $Issue", '--allowedTools', ($tools -join ','))
+$cliArgs = @('--agent', 'orchestrator', '-p', $prompt, '--allowedTools', ($tools -join ','))
 if ($AllowAll) { $cliArgs += '--dangerously-skip-permissions' }
 [pscustomobject]@{ Executable = 'claude'; Arguments = $cliArgs }

@@ -17,6 +17,10 @@ uv, python, ng. `gh pr merge`, `git reset`, `git clean` and `git rebase` are not
 also matches a force push (the git guardrails hook denies force pushes to `main` and `release/*`), and `pwsh` and the
 build tools run arbitrary code.
 
+`-FixAdvisories <policy>` (`none|medium|all[:dim,dim]`, only when given) is spliced into the same prompt string as its own token before the mode word: `-p "--fix-advisories medium full 101"` (claude, copilot) and the `opencode run` message; in `-Feature`/`-Epic` runs it precedes `next`. Without it the command is unchanged. CRITICAL and HIGH findings always block; the policy only decides which advisories (MEDIUM, LOW) join the fix round.
+
+Client recognition (checked against `orchestrator.agent.md` and `github-issue/references/orchestrator-gates.md`, not live): the flag handling is in the agent body, so it is the same on Claude Code, Copilot CLI and OpenCode. The orchestrator takes flags as separate unquoted tokens of the first message, in any position, removes them before reading the mode word and takes the next token as the value, so `--fix-advisories medium full 101` is recognized and the review summary is answered without a `Gate:`. The orchestrator accepts only lowercase dimensions (`^(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?$`), the runner pattern is wider: an uppercase dimension passes the runner and then ends in a `Gate:` (exit 2).
+
 ## Trade-offs
 
 - The narrow set limits accidents, it does not stop prompt injection: `gh api`, `pwsh` and the build tools can still do

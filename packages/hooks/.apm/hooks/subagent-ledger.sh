@@ -85,7 +85,7 @@ if [ -z "$summary" ]; then
 fi
 if [ -z "$summary" ] && [ "$agent" = "implementer" ]; then
   # only the implementer writes task reports; accept a report touched in the last 10 minutes
-  report="$(find "$(dirname "$ledger")" -maxdepth 1 -name 'task-*-report.md' -mmin -10 -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -n 1 | cut -d' ' -f2-)"
+  report="$(find "$(dirname "$ledger")" -maxdepth 1 -name 'task-*-report.md' -mmin -10 -exec ls -t {} + 2>/dev/null | head -n 1)"
   [ -n "$report" ] && summary="report: ${report#"$cwd"/}"
 fi
 

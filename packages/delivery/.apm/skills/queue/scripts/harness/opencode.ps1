@@ -10,6 +10,7 @@
   (auto-approves permissions that are not explicitly denied) and sets no environment (explicit opt-in).
 .PARAMETER Issue    Issue number.
 .PARAMETER Mode     plan, implement, full or next.
+.PARAMETER FixAdvisories Optional advisory policy (none, medium, all; optionally `:dim,dim`) passed to the orchestrator as `--fix-advisories <policy>` before the mode word.
 .PARAMETER AllowAll Auto-approve permissions.
 .OUTPUTS PSCustomObject with Executable, Arguments and Environment (hashtable, may be empty).
 #>
@@ -17,9 +18,11 @@
 param(
   [Parameter(Mandatory)][ValidatePattern('\A[1-9][0-9]{0,9}\z')][string]$Issue,
   [ValidateSet('plan', 'implement', 'full', 'next')][string]$Mode = 'full',
+  [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
   [switch]$AllowAll
 )
 $ErrorActionPreference = 'Stop'
+$prompt = ($FixAdvisories ? "--fix-advisories $FixAdvisories " : '') + "$Mode $Issue"
 $cliArgs = @('run', '--agent', 'orchestrator')
 $envVars = @{}
 if ($AllowAll) { $cliArgs += '--auto' }
@@ -28,5 +31,5 @@ else {
   foreach ($s in & (Join-Path $PSScriptRoot 'allowed-commands.ps1')) { $bash["$s *"] = 'allow' }
   $envVars['OPENCODE_PERMISSION'] = [ordered]@{ edit = [ordered]@{ '*' = 'allow'; '.git/**' = 'deny' }; task = 'allow'; skill = 'allow'; bash = $bash } | ConvertTo-Json -Compress -Depth 5
 }
-$cliArgs += "$Mode $Issue"
+$cliArgs += $prompt
 [pscustomobject]@{ Executable = 'opencode'; Arguments = $cliArgs; Environment = $envVars }
