@@ -465,6 +465,64 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read('99')).toBe('# ledger\n');
     });
 
+    /** Puts a `git` on PATH that runs the given shell body instead of git. */
+    const brokenGit = (script = 'exit 128') => {
+      const bin = path.join(dir, 'broken-bin');
+      fs.mkdirSync(bin, { recursive: true });
+      fs.writeFileSync(path.join(bin, 'git'), `#!/bin/sh\n${script}\n`, { mode: 0o755 });
+      process.env.PATH = `${bin}${path.delimiter}${process.env.PATH ?? ''}`;
+    };
+
+    it('writes nothing when git fails inside a repository (no newest-ledger fallback)', async () => {
+      repo('fix/12-x');
+      const own = withLedger('12');
+      fs.utimesSync(own, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      withLedger('99');
+      brokenGit();
+      await expect(run('reviewer')).resolves.toBeUndefined();
+      expect(read('12')).toBe('# ledger\n');
+      expect(read('99')).toBe('# ledger\n');
+    });
+
+    it('writes nothing when git times out inside a repository', async () => {
+      repo('main');
+      withLedger('99');
+      brokenGit('sleep 5');
+      await expect(run('reviewer')).resolves.toBeUndefined();
+      expect(read('99')).toBe('# ledger\n');
+    }, 15000);
+
+    it('writes nothing when git fails in a subdirectory of a repository', async () => {
+      repo('main');
+      const sub = path.join(dir, 'pkg');
+      const l3 = path.join(sub, '.agents', '3', 'progress.md');
+      fs.mkdirSync(path.dirname(l3), { recursive: true });
+      fs.writeFileSync(l3, '# 3\n');
+      brokenGit();
+      const mod = await import(/* @vite-ignore */ PLUGIN);
+      const h: Hooks = await mod.ApmHubHooks({ directory: sub });
+      await h['tool.execute.after'](...task('reviewer', result('ok')));
+      expect(fs.readFileSync(l3, 'utf8')).toBe('# 3\n');
+    });
+
+    it('writes nothing when real git cannot read the repository (corrupt HEAD)', async () => {
+      repo('fix/12-x');
+      withLedger('99');
+      fs.writeFileSync(path.join(dir, '.git', 'HEAD'), 'garbage\n');
+      await run('reviewer');
+      expect(read('99')).toBe('# ledger\n');
+    });
+
+    it('still falls back to the newest ledger outside a repository when git fails', async () => {
+      const old = withLedger('12');
+      fs.utimesSync(old, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      withLedger('99');
+      brokenGit();
+      await run('reviewer');
+      expect(read('99')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(read('12')).toBe('# ledger\n');
+    });
+
     it('passes -c core.fsmonitor=false -c core.hooksPath=/dev/null to git', async () => {
       repo('fix/12-x');
       withLedger('12');

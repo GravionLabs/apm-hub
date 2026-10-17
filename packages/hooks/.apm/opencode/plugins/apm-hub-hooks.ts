@@ -1,15 +1,15 @@
 // OpenCode plugin: ports of the apm-hub hooks that OpenCode cannot run as shell hooks.
 //  - subagent ledger: after a `task` tool call of an orchestrator subagent (allowlist), append
 //    `Subagent <name>: stopped — <first line>` to .agents/<nr>/progress.md of the issue number in the git branch
-//    (<type>/[<scope>/]<nr>[-<slug>]); nothing when that ledger is missing; the newest non-loop ledger only for a branch without
-//    a number. Same rules and format as subagent-ledger.sh; AGENTS_LEDGER overrides.
+//    (<type>/[<scope>/]<nr>[-<slug>]); nothing when that ledger is missing or git fails inside a repository; the newest
+//    non-loop ledger only without a number (also detached HEAD), without git or outside a repository. Same rules and format as subagent-ledger.sh; AGENTS_LEDGER overrides.
 //  - context warning: on a new user message, warn once the last request passed CONTEXT_WARN_TOKENS (default
 //    150000), again after another CONTEXT_WARN_STEP (default 100000). Same logic as context-warning.sh.
 // Never throws: every hook swallows errors. Keep this file self-contained and export ONLY the plugin function:
 // OpenCode calls every function export as a plugin and fails to load the file on non-function exports.
-import { appendFileSync, lstatSync, readdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, lstatSync, readdirSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const text = (v: unknown): string => (typeof v === "string" ? v : "");
 const int = (v: string | undefined, d: number): number => {
@@ -32,13 +32,22 @@ let partSeq = 0;
 
 const AGENTS = new Set(["issue-reader", "explorer", "planner", "reviewer", "review-lead", "implementer", "pr-writer", "pbi-runner"]);
 
-/** Issue number of the current git branch (<type>/[<scope>/]<nr>[-<slug>]), or "" (no number, detached HEAD, not a repo). */
-function branchIssue(dir: string): string {
+/** True when dir or a parent holds a .git entry (checked without git). */
+function inRepo(dir: string): boolean {
+  for (let d = dir; d; d = dirname(d)) {
+    if (existsSync(join(d, ".git"))) return true;
+    if (dirname(d) === d) return false;
+  }
+  return false;
+}
+
+/** Issue number of the current git branch (<type>/[<scope>/]<nr>[-<slug>]), "" (no number, detached HEAD, no git, not a repo), or null when git fails or times out inside a repository (write nothing). */
+function branchIssue(dir: string): string | null {
   try {
     const branch = execFileSync("git", ["-C", dir, "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000 }).trim();
     return /^(?:feat|fix|chore|docs|refactor|test|perf|ci|build|style|revert|hotfix)\/(?:[^/]+\/)*([0-9]+)(?:-[^/]*)?$/i.exec(branch)?.[1] ?? "";
-  } catch {
-    return "";
+  } catch (e: any) {
+    return e?.code === "ENOENT" || !inRepo(dir) ? "" : null;
   }
 }
 
@@ -48,6 +57,7 @@ function findLedger(dir: string, override?: string): string {
     if (override) return isRegular(override) ? override : "";
     if (lstatSync(join(dir, ".agents")).isSymbolicLink()) return ""; // never write through a symlinked .agents
     const nr = branchIssue(dir);
+    if (nr === null) return "";
     if (nr) {
       const own = join(dir, ".agents", nr, "progress.md");
       return isRegular(own) && !lstatSync(join(dir, ".agents", nr)).isSymbolicLink() ? own : "";

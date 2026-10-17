@@ -477,6 +477,54 @@ describe('subagent-ledger hook', () => {
       expect(read(l9)).toBe('# 9\n');
     });
 
+    /** Runs the hook with a `git` on PATH that runs the given shell body (default: fail with exit 128). */
+    const runWithBrokenGit = (cwd: string, script = 'exit 128') => {
+      const bin = path.join(dir, 'broken-bin');
+      fs.mkdirSync(bin, { recursive: true });
+      fs.writeFileSync(path.join(bin, 'git'), `#!/bin/sh\n${script}\n`, { mode: 0o755 });
+      return spawnSync('bash', [SCRIPT], {
+        input: JSON.stringify({ cwd, agent_type: 'reviewer', last_assistant_message: 'ok' }),
+        encoding: 'utf8',
+        env: cleanEnv({ AGENTS_LEDGER: '', PATH: `${bin}${path.delimiter}${process.env.PATH ?? ''}` }),
+      });
+    };
+
+    it('writes nothing when git fails inside a repository (no newest-ledger fallback)', () => {
+      repo('fix/7-x');
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      const r = runWithBrokenGit(dir);
+      expect(r.status).toBe(0);
+      expect(read(l7)).toBe('# 7\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('writes nothing when git fails in a subdirectory of a repository', () => {
+      repo('main');
+      const sub = path.join(dir, 'pkg');
+      const l3 = path.join(sub, '.agents', '3', 'progress.md');
+      fs.mkdirSync(path.dirname(l3), { recursive: true });
+      fs.writeFileSync(l3, '# 3\n');
+      expect(runWithBrokenGit(sub).status).toBe(0);
+      expect(read(l3)).toBe('# 3\n');
+    });
+
+    it('writes nothing when real git cannot read the repository (corrupt HEAD)', () => {
+      repo('fix/7-x');
+      const l9 = mk('9');
+      fs.writeFileSync(path.join(dir, '.git', 'HEAD'), 'garbage\n');
+      expect(stop('reviewer').status).toBe(0);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('still falls back to the newest ledger outside a repository when git fails', () => {
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      expect(runWithBrokenGit(dir).status).toBe(0);
+      expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
     it('passes -c core.fsmonitor=false -c core.hooksPath=/dev/null to git', () => {
       repo('fix/7-x');
       const l7 = mk('7');
