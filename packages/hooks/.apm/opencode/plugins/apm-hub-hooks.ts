@@ -35,8 +35,8 @@ const AGENTS = new Set(["issue-reader", "explorer", "planner", "reviewer", "revi
 /** Issue number of the current git branch (<type>/[<scope>/]<nr>[-<slug>]), or "" (no number, detached HEAD, not a repo). */
 function branchIssue(dir: string): string {
   try {
-    const branch = execFileSync("git", ["-C", dir, "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000 }).trim();
-    return /^[A-Za-z]+\/(?:[^/]+\/)*([0-9]+)(?:-[^/]*)?$/.exec(branch)?.[1] ?? "";
+    const branch = execFileSync("git", ["-C", dir, "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000 }).trim();
+    return /^(?:feat|fix|chore|docs|refactor|test|perf|ci|build|style|revert|hotfix)\/(?:[^/]+\/)*([0-9]+)(?:-[^/]*)?$/i.exec(branch)?.[1] ?? "";
   } catch {
     return "";
   }
@@ -46,6 +46,7 @@ function branchIssue(dir: string): string {
 function findLedger(dir: string, override?: string): string {
   try {
     if (override) return isRegular(override) ? override : "";
+    if (lstatSync(join(dir, ".agents")).isSymbolicLink()) return ""; // never write through a symlinked .agents
     const nr = branchIssue(dir);
     if (nr) {
       const own = join(dir, ".agents", nr, "progress.md");
@@ -82,6 +83,7 @@ function summaryOf(output: string): string {
 function ledgerLine(input: any, output: any): string {
   if (input?.tool !== "task") return "";
   const agent = text(input?.args?.subagent_type).replace(/[^A-Za-z0-9:_./-]/g, "").slice(0, 64);
+  // a namespaced name counts by its last part (plugin namespaces are not known up front; see subagent-ledger.sh)
   if (!AGENTS.has(agent.toLowerCase().split(/[:/.]/).pop() ?? "")) return "";
   const summary = summaryOf(text(output?.output));
   return summary ? `Subagent ${agent}: stopped — ${summary}` : `Subagent ${agent}: stopped`;

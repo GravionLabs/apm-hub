@@ -215,7 +215,7 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
   short hand-off note in the issue. A `orchestrator` run keeps its own hand-off note: the ledger
   `.agents/<issue>/progress.md` (phases done, fix rounds, rulings); a new session resumes from it.
   The `hooks` package adds a `Subagent <name>: stopped — <first line>` line for
-  every finished subagent (`SubagentStop` on Claude Code via apm, `subagentStop` on Copilot CLI after the manual setup; no-op without a ledger).
+  every finished orchestrator subagent, written to the ledger of the issue number in the git branch (`SubagentStop` on Claude Code via apm, `subagentStop` on Copilot CLI after the manual setup; no-op without that ledger; newest ledger only on a branch without a number).
 - **`handoff` or the ledger alone.** One issue: the ledger is the hand-off; `/clear` and resume with the orchestrator
   end line (`orchestrator next <feature>`). Work that spans several issues or several repositories, or that has open
   decisions the ledgers do not hold: run `handoff <focus of the next session>` before `/clear`. It writes
@@ -238,7 +238,7 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
 
 | Hook | Claude Code | Copilot CLI | OpenCode |
 | :-- | :-- | :-- | :-- |
-| Subagent ledger line | `SubagentStop` | `subagentStop` (manual) | plugin `tool.execute.after` for `task` (`packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`) |
+| Subagent ledger line | `SubagentStop` | `subagentStop` (manual) | plugin `tool.execute.after` for `task`, same allowlist and branch binding (`packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`) |
 | Context warning | `UserPromptSubmit` | `postToolUse` (manual) | same plugin: `message.updated` token usage, warning added as a synthetic part by `chat.message`; unknown until the first assistant reply after a restart |
 | Git guardrails | `PreToolUse` | `preToolUse` (manual) | not available yet |
 
