@@ -20,6 +20,29 @@ const publish = read('delivery/.apm/skills/issue-planning/references/publish.md'
 const planSchemaDoc = read('delivery/.apm/skills/issue-planning/references/plan-schema.md');
 const batch = read('github/.apm/skills/github-issue/references/batch-workflow.md');
 
+describe('ledger format agreement with Get-RunMetrics', () => {
+  it('parses the exact Task and Fix round lines the pipeline spec documents', () => {
+    const spec = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
+    const taskFmt = /`(Task #<nr>: <status> — <sha> — model <name>)`/.exec(spec)?.[1];
+    const fixFmt = /`(Fix round <r> \(#<task>\): <result> — model <name>)`/.exec(spec)?.[1];
+    expect(taskFmt).toBeDefined();
+    expect(fixFmt).toBeDefined();
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-fmt-'));
+    try {
+      const t = path.join(dir, 't.jsonl');
+      fs.writeFileSync(t, '');
+      const l = path.join(dir, 'progress.md');
+      const fill = (f: string) => f.replace('<nr>', '7').replace('<status>', 'DONE').replace('<sha>', 'abc1234').replace('<task>', '7').replace('<r>', '1').replace('<result>', 'DONE').replace('<name>', 'opus');
+      fs.writeFileSync(l, [fill(taskFmt!), fill(fixFmt!)].join('\n') + '\n');
+      const script = path.join(pk, 'delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1');
+      const out = execFileSync('pwsh', ['-NoProfile', '-File', script, '-Transcript', t, '-Ledger', l], { encoding: 'utf-8' });
+      expect(JSON.parse(out).tasks[0]).toMatchObject({ task: 7, model: 'opus', fixRounds: 1 });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('orch-pipeline deprecation stub', () => {
   const stub = read('delivery/.apm/skills/orch-pipeline/SKILL.md');
   const frontmatter = stub.split(/^---$/m)[1];
@@ -63,7 +86,8 @@ describe('task flow consistency', () => {
   it('orchestrator ledger line and task-only sub-issue handling', () => {
     expect(orchestrator).toContain('Task #<nr>: <status> — <sha>');
     expect(orchestrator).toContain('Task #<nr>: <status> — <sha> — model <name>');
-    expect(orchestrator).toContain('Fix round <r>: <result> — model <name>');
+    expect(orchestrator).toContain('Fix round <r> (#<task>): <result> — model <name>');
+    expect(orchestrator).toContain('`<pbi>` for a single task without issue');
     expect(issueReader).toContain('select(any(.labels[];.name=="task"))');
     expect(orchestrator).toMatch(/`pbi` children are separate PBIs/);
     expect(orchestrator).toMatch(/implement mode when the issue has no Task sub-issues/);

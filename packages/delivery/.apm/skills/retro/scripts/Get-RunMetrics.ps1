@@ -141,28 +141,30 @@ function Sum-Of($items, [string]$prop) { $t = 0.0; foreach ($i in $items) { $t +
 $fix = 0; $rulings = @(); $gates = @(); $ledgerOut = $null
 $taskMap = [ordered]@{}; $lastTask = $null; $reviewPasses = 0
 # Optional ' — model <name>' suffix (older ledgers have none): null when absent.
-function Get-LedgerModel([string]$line) { if ($line -match '(?i)\bmodel\s+([A-Za-z0-9_.:/-]+)\s*$') { return $Matches[1] } return $null }
+function Get-LedgerModel([string]$line) { if ($line -match '(?i)\bmodel\s+([A-Za-z0-9_.:/-]+)\s*$') { return Hide-Secrets $Matches[1] } return $null }
 if ($Ledger -and (Test-Path $Ledger)) {
   $ledgerOut = Hide-Path (Resolve-Path $Ledger).Path
   foreach ($line in Get-Content $Ledger) {
     if ($line -match '^\s*(?:[-*]\s+)?Task\s+#(\d+):\s*([A-Za-z_]+)') {
       $n = $Matches[1]; $st = $Matches[2]; $lastTask = $n
-      $taskMap[$n] = [pscustomobject]@{ n = [int]$n; model = (Get-LedgerModel $line); status = $st; fixRounds = 0; escalated = $false }
+      if ($taskMap.Contains($n)) { $taskMap[$n].model = Get-LedgerModel $line; $taskMap[$n].status = $st }  # repeated line: latest wins, counters stay
+      else { $taskMap[$n] = [pscustomobject]@{ n = [int]$n; model = (Get-LedgerModel $line); status = $st; fixRounds = 0; escalated = $false; escalatedTo = $null } }
     }
-    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\s+(\d+)\b') {
+    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\s+(\d+)(?:\s*\(#(\d+)\))?') {
       $round = [int]$Matches[1]; $fix++
-      # A fix round belongs to the task it names (#<nr>), else to the last Task line above it.
+      # New form `Fix round <r> (#<task>): ...` names its task; an old line without it falls back to the last Task line above.
       $target = $lastTask
-      if ($line -match '#(\d+)' -and $taskMap.Contains($Matches[1])) { $target = $Matches[1] }
+      if ($Matches[2] -and $taskMap.Contains($Matches[2])) { $target = $Matches[2] }
       if ($target) {
         $t = $taskMap[$target]; $t.fixRounds++
         $fm = Get-LedgerModel $line
-        # Escalation: a fix round on a different model than the Task line, or fix round >= 3 (fresh implementer one tier up).
-        if ($round -ge 3 -or ($fm -and $t.model -and $fm -ne $t.model)) { $t.escalated = $true }
+        # Escalation: a fix round on a different named model than the Task line (`inherit` is not a model name), or fix round >= 3 (fresh implementer one tier up).
+        $named = $fm -and $t.model -and $fm -ne 'inherit' -and $t.model -ne 'inherit'
+        if ($round -ge 3 -or ($named -and $fm -ne $t.model)) { $t.escalated = $true; if ($fm -and $fm -ne 'inherit') { $t.escalatedTo = $fm } }
       }
     }
     elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++ }
-    elseif ($line -match '^\s*(?:[-*]\s+)?(Phase review|Review round)\b') { $reviewPasses++ }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Phase review\b') { $reviewPasses++ }
     elseif ($line -match '^\s*(?:[-*]\s+)?Ruling:\s*(.*)$') { $rulings += Hide-Secrets $Matches[1] }
     elseif ($line -match '^\s*(?:[-*]\s+)?Gate:\s*(.*)$') { $gates += Hide-Secrets $Matches[1] }
   }
@@ -172,7 +174,7 @@ if ($Ledger -and (Test-Path $Ledger)) {
 
 # Review passes cover the whole PBI range, so every task reports the run's count.
 $taskList = @($taskMap.Values | ForEach-Object {
-  [ordered]@{ task = $_.n; model = $_.model; status = $_.status; fixRounds = $_.fixRounds; reviewRounds = $reviewPasses }
+  [ordered]@{ task = $_.n; model = $_.model; status = $_.status; fixRounds = $_.fixRounds; escalated = $_.escalated; escalatedTo = $_.escalatedTo; reviewRounds = $reviewPasses }
 })
 $escalated = @($taskMap.Values | Where-Object { $_.escalated }).Count
 $escalationShare = if ($taskMap.Count -gt 0) { [math]::Round($escalated / $taskMap.Count, 4) } else { 0 }
