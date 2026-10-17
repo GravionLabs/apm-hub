@@ -77,12 +77,11 @@ function Get-ProjectPlan {
         options = @($script:LevelOptions | ForEach-Object { [ordered]@{ name = $_.name; color = $_.color; description = '' } }) })
   }
 
-  # 3. Sync (open issues only)
+  # 3. Sync: Level for every issue (Recently closed shows it), Status for open issues only
   if ($Sync) {
     $todo = if ($statusNames -contains 'Todo') { 'Todo' } else { $statusNames[0] }
     $levelNames = @{ epic = 'Epic'; feature = 'Feature'; pbi = 'PBI'; task = 'Task'; bug = 'Bug' }
     foreach ($item in @($State.items)) {
-      if ($item.state -ne 'OPEN') { continue }
       $labels = @($item.labels | ForEach-Object { "$_".ToLowerInvariant() })
       if (-not $item.level) {
         $lvl = $null
@@ -90,6 +89,7 @@ function Get-ProjectPlan {
         if (-not $lvl -and "$($item.title)" -match '^\s*\[(Epic|Feature|PBI|Task)\]') { $lvl = $Matches[1] }
         if ($lvl) { $actions.Add([ordered]@{ type = 'SetItem'; item = $item.id; number = $item.number; field = 'Level'; option = $lvl }) }
       }
+      if ($item.state -ne 'OPEN') { continue }
       if ($labels -contains 'merged') {
         if ($item.status -ne 'In release') { $actions.Add([ordered]@{ type = 'SetItem'; item = $item.id; number = $item.number; field = 'Status'; option = 'In release' }) }
       } elseif ($item.status -eq 'In release') {

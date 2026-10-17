@@ -127,9 +127,12 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
       expect(set(a, 3, 'Status')).toBe('Backlog');
     });
 
-    it('leaves closed items untouched', () => {
+    it('sets Level on closed items but never their Status', () => {
       const a = sync([item(1, { state: 'CLOSED', labels: ['merged', 'pbi'], status: 'Done' }), item(2, { state: 'CLOSED', status: 'In release' })]);
-      expect(a).toHaveLength(0);
+      expect(set(a, 1, 'Level')).toBe('PBI');
+      expect(set(a, 1, 'Status')).toBeUndefined();
+      expect(set(a, 2, 'Status')).toBeUndefined();
+      expect(a).toHaveLength(1);
     });
 
     it('does nothing without -Sync', () => {
