@@ -10,6 +10,11 @@
   Explicit ledger path (overrides -Issue).
 .PARAMETER SubagentsDir
   Default: <transcript without .jsonl>/subagents.
+.OUTPUTS
+  JSON: transcript, ledger, warnings, main, subagents, fixRounds (all Fix round lines), unattributedFixRounds (the part of
+  fixRounds no task could be charged with: unknown task id or no Task line above; fixRounds minus the tasks[] sum),
+  tasks[] (task = issue number or plan id such as "p1", model, status, fixRounds, escalated, escalatedTo, reviewRounds),
+  escalationShare, rulings, gates.
 #>
 [CmdletBinding()]
 param(
@@ -145,18 +150,19 @@ function Get-LedgerModel([string]$line) { if ($line -match '(?i)(?:^|\s)model\s+
 if ($Ledger -and (Test-Path $Ledger)) {
   $ledgerOut = Hide-Path (Resolve-Path $Ledger).Path
   foreach ($line in Get-Content $Ledger) {
-    if ($line -match '^\s*(?:[-*]\s+)?Task\s+#(\d{1,9}):\s*([A-Za-z_]+)') {
+    # Task id: the Task issue number, or the plan id (p1) of a single task without issue.
+    if ($line -match '^\s*(?:[-*]\s+)?Task\s+#(\d{1,9}|p\d{1,9}):\s*([A-Za-z_]+)') {
       $n = $Matches[1]; $st = $Matches[2]; $lastTask = $n
       if ($taskMap.Contains($n)) {  # repeated line: latest status wins, a model is never replaced by null, counters stay
         $nm = Get-LedgerModel $line
         if ($nm) { $taskMap[$n].model = $nm }
         $taskMap[$n].status = $st
       }
-      else { $taskMap[$n] = [pscustomobject]@{ n = [int]$n; model = (Get-LedgerModel $line); status = $st; fixRounds = 0; escalated = $false; escalatedTo = $null } }
+      else { $taskMap[$n] = [pscustomobject]@{ n = $(if ($n -match '^\d+$') { [int]$n } else { $n }); model = (Get-LedgerModel $line); status = $st; fixRounds = 0; escalated = $false; escalatedTo = $null } }
     }
     elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\s+(\d{1,9})(?:\s*\(#(\w+)\))?') {
       $round = [int]$Matches[1]; $fix++
-      # `Fix round <r> (#<task>): ...` names its task and counts only for a known Task line; an unknown name (e.g. p1) stays unattributed.
+      # `Fix round <r> (#<task>): ...` names its task and counts only for a known Task line; an unknown id stays unattributed.
       # A legacy line without `(#...)` is attributed to the last Task line above it (old ledgers); none above: unattributed.
       $target = $null
       if ($Matches[2]) { if ($taskMap.Contains($Matches[2])) { $target = $Matches[2] } }

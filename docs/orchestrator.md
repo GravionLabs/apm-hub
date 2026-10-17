@@ -213,8 +213,8 @@ The orchestrator writes `.agents/<issue>/progress.md`, with the first line `# or
 
 ```text
 Phase Plan: complete — plan.json
-Task #201: DONE — 3f2a9c1
-Fix round 1: 2 blocking fixed
+Task #201: DONE — 3f2a9c1 — model sonnet
+Fix round 1 (#201): 2 blocking fixed — model sonnet
 Ruling: used sonnet for the docs task — prose only — slower retries
 Phase Pull request: complete — https://github.com/<owner>/<repo>/pull/210
 ```
