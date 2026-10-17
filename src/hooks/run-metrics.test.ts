@@ -221,4 +221,193 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     fs.writeFileSync(empty, '');
     expect(run(['-Transcript', t, '-Ledger', empty]).json.rulings.count).toBe(0);
   });
+
+  describe('per-task ledger metrics', () => {
+    const metrics = (lines: string[]) => {
+      const t = path.join(dir, 't.jsonl');
+      fs.writeFileSync(t, '');
+      const l = path.join(dir, 'tasks.md');
+      fs.writeFileSync(l, lines.join('\n') + '\n');
+      return run(['-Transcript', t, '-Ledger', l]).json;
+    };
+
+    it('reports model, rounds and status per task with no escalation', () => {
+      const json = metrics([
+        '# ledger',
+        'Task #11: DONE — abc1234 — model sonnet',
+        'Task #12: DONE — def5678 — model opus',
+        'Phase review: complete — n/a',
+        'Fix round 1: DONE — model opus',
+      ]);
+      expect(json.tasks).toEqual([
+        { task: 11, model: 'sonnet', status: 'DONE', fixRounds: 0, escalated: false, escalatedTo: null, reviewRounds: 1 },
+        { task: 12, model: 'opus', status: 'DONE', fixRounds: 1, escalated: false, escalatedTo: null, reviewRounds: 1 },
+      ]);
+      expect(json.escalationShare).toBe(0);
+      expect(json.fixRounds).toBe(1);
+    });
+
+    it('yields null models for ledgers without the model suffix and 0 share without tasks', () => {
+      const old = metrics(['Task #5: DONE — abc1234', 'Fix round 1: DONE']);
+      expect(old.tasks).toEqual([{ task: 5, model: null, status: 'DONE', fixRounds: 1, escalated: false, escalatedTo: null, reviewRounds: 0 }]);
+      expect(old.escalationShare).toBe(0);
+      const none = metrics(['# ledger']);
+      expect(none.tasks).toEqual([]);
+      expect(none.escalationShare).toBe(0);
+    });
+
+    it('escalates a task whose fix round runs on a different named model, with that model as target', () => {
+      const json = metrics(['Task #1: DONE — a — model sonnet', 'Fix round 1 (#1): DONE — model opus']);
+      expect(json.tasks[0]).toMatchObject({ fixRounds: 1, escalated: true, escalatedTo: 'opus' });
+    });
+
+    it('escalates a task at fix round 3 even on the same model', () => {
+      const json = metrics(['Task #1: DONE — a — model sonnet', 'Fix round 3 (#1): x — model sonnet']);
+      expect(json.tasks[0]).toMatchObject({ fixRounds: 1, escalated: true });
+    });
+
+    it('does not escalate on fix rounds 1-2 with the same model', () => {
+      const json = metrics(['Task #1: DONE — a — model sonnet', 'Fix round 1 (#1): x — model sonnet', 'Fix round 2 (#1): x — model sonnet']);
+      expect(json.tasks[0]).toMatchObject({ fixRounds: 2, escalated: false, escalatedTo: null });
+    });
+
+    it('does not escalate when either side has no model suffix', () => {
+      const json = metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Fix round 1 (#1): x',
+        'Task #2: DONE — b',
+        'Fix round 1 (#2): x — model opus',
+      ]);
+      expect(json.tasks.map((t: { escalated: boolean }) => t.escalated)).toEqual([false, false]);
+    });
+
+    it('reports escalatedTo null for a fix round 3 on inherit', () => {
+      const json = metrics(['Task #1: DONE — a — model sonnet', 'Fix round 3 (#1): x — model inherit']);
+      expect(json.tasks[0]).toMatchObject({ escalated: true, escalatedTo: null });
+    });
+
+    it('reports the share of escalated tasks', () => {
+      const json = metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Fix round 1 (#1): x — model opus',
+        'Task #2: DONE — b — model sonnet',
+        'Task #3: DONE — c — model sonnet',
+        'Task #4: DONE — d — model sonnet',
+      ]);
+      expect(json.escalationShare).toBe(0.25);
+    });
+
+    it('attributes a legacy fix line with a model suffix to the last Task line', () => {
+      const json = metrics(['Task #1: DONE — a — model sonnet', 'Task #2: DONE — b — model sonnet', 'Fix round 1: x — model opus']);
+      expect(json.tasks.map((t: { fixRounds: number }) => t.fixRounds)).toEqual([0, 1]);
+      expect(json.tasks[1]).toMatchObject({ escalated: true, escalatedTo: 'opus' });
+      expect(json.unattributedFixRounds).toBe(0);
+    });
+
+    it('tracks a single task without issue under its plan id', () => {
+      const json = metrics(['Task #p1: DONE — a — model sonnet', 'Fix round 1 (#p1): x — model sonnet', 'Fix round 3 (#p1): x — model opus']);
+      expect(json.tasks).toEqual([
+        { task: 'p1', model: 'sonnet', status: 'DONE', fixRounds: 2, escalated: true, escalatedTo: 'opus', reviewRounds: 0 },
+      ]);
+      expect(json.unattributedFixRounds).toBe(0);
+      expect(json.escalationShare).toBe(1);
+    });
+
+    it('ignores a Task line whose id is neither a number nor a plan id', () => {
+      const json = metrics(['Task #abc: DONE — a', 'Fix round 1 (#abc): x']);
+      expect(json.tasks).toEqual([]);
+      expect(json.unattributedFixRounds).toBe(1);
+    });
+
+    it('attributes fix rounds to the named task, not the last Task line', () => {
+      const json = metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Task #2: DONE — b — model sonnet',
+        'Fix round 1 (#1): DONE — model sonnet',
+        'Fix round 2 (#1): DONE — model sonnet',
+      ]);
+      expect(json.tasks.map((t: { fixRounds: number }) => t.fixRounds)).toEqual([2, 0]);
+    });
+
+    it('falls back to the last Task line for old fix lines and ignores a stray #number in the text', () => {
+      const json = metrics([
+        'Task #1: DONE — a',
+        'Task #2: DONE — b',
+        'Fix round 1: resolved #1 findings',
+      ]);
+      expect(json.tasks.map((t: { fixRounds: number }) => t.fixRounds)).toEqual([0, 1]);
+    });
+
+    it('keeps counters when a Task line repeats and the latest status wins', () => {
+      const json = metrics([
+        'Task #1: BLOCKED — a — model sonnet',
+        'Fix round 1 (#1): x — model sonnet',
+        'Task #1: DONE — b — model opus',
+      ]);
+      expect(json.tasks).toHaveLength(1);
+      expect(json.tasks[0]).toMatchObject({ status: 'DONE', model: 'opus', fixRounds: 1 });
+    });
+
+    it('handles mixed ledgers with and without model suffixes', () => {
+      const json = metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Task #2: DONE — b',
+        'Fix round 1 (#2): x — model opus',
+      ]);
+      expect(json.tasks.map((t: { model: string | null }) => t.model)).toEqual(['sonnet', null]);
+      expect(json.escalationShare).toBe(0);
+    });
+
+    it('does not count inherit versus a named model as escalation, but a different named model is, with its target', () => {
+      const json = metrics([
+        'Task #1: DONE — a — model inherit',
+        'Fix round 1 (#1): x — model opus',
+        'Task #2: DONE — b — model sonnet',
+        'Fix round 1 (#2): x — model inherit',
+        'Task #3: DONE — c — model sonnet',
+        'Fix round 1 (#3): x — model opus',
+      ]);
+      expect(json.tasks.map((t: { escalated: boolean }) => t.escalated)).toEqual([false, false, true]);
+      expect(json.tasks[2].escalatedTo).toBe('opus');
+    });
+
+    it('counts only Phase review lines as review rounds', () => {
+      const json = metrics(['Task #1: DONE — a', 'Phase review: complete — n/a', 'Review round 2: x', 'Phase review: complete — n/a']);
+      expect(json.tasks[0].reviewRounds).toBe(2);
+    });
+
+    it('keeps a fix round with an unknown target unattributed instead of charging the last task', () => {
+      const json = metrics(['Task #1: DONE — a — model sonnet', 'Task #2: DONE — b — model sonnet', 'Fix round 1 (#p9): x — model opus']);
+      expect(json.tasks.map((t: { fixRounds: number }) => t.fixRounds)).toEqual([0, 0]);
+      expect(json.fixRounds).toBe(1);
+      expect(json.unattributedFixRounds).toBe(1);
+    });
+
+    it('leaves a fix round unattributed when no Task line precedes it', () => {
+      const json = metrics(['Fix round 1: x', 'Task #1: DONE — a']);
+      expect(json.tasks[0].fixRounds).toBe(0);
+      expect(json.unattributedFixRounds).toBe(1);
+    });
+
+    it('reads bulleted Task and Fix round lines', () => {
+      const json = metrics(['- Task #1: DONE — a — model sonnet', '* Fix round 1 (#1): x — model opus']);
+      expect(json.tasks[0]).toMatchObject({ fixRounds: 1, escalated: true, escalatedTo: 'opus' });
+    });
+
+    it('does not replace a model with null on a repeated Task line without suffix', () => {
+      const json = metrics(['Task #1: BLOCKED — a — model opus', 'Task #1: DONE — b']);
+      expect(json.tasks[0]).toMatchObject({ model: 'opus', status: 'DONE' });
+    });
+
+    it('reports escalatedTo null for round 3 without a model and ignores an oversized task number', () => {
+      const json = metrics(['Task #1: DONE — a', 'Fix round 3 (#1): x', 'Task #99999999999: DONE — z']);
+      expect(json.tasks[0]).toMatchObject({ escalated: true, escalatedTo: null });
+      expect(json.tasks).toHaveLength(1);
+    });
+
+    it('reports the run-wide review count on every task', () => {
+      const json = metrics(['Task #1: DONE — a', 'Task #2: DONE — b', 'Phase review: complete — n/a', 'Phase review: complete — n/a']);
+      expect(json.tasks.map((t: { reviewRounds: number }) => t.reviewRounds)).toEqual([2, 2]);
+    });
+  });
 });

@@ -10,6 +10,11 @@
   Explicit ledger path (overrides -Issue).
 .PARAMETER SubagentsDir
   Default: <transcript without .jsonl>/subagents.
+.OUTPUTS
+  JSON: transcript, ledger, warnings, main, subagents, fixRounds (all Fix round lines), unattributedFixRounds (the part of
+  fixRounds no task could be charged with: unknown task id or no Task line above; fixRounds minus the tasks[] sum),
+  tasks[] (task = issue number or plan id such as "p1", model, status, fixRounds, escalated, escalatedTo, reviewRounds),
+  escalationShare, rulings, gates.
 #>
 [CmdletBinding()]
 param(
@@ -139,16 +144,54 @@ function Sum-Of($items, [string]$prop) { $t = 0.0; foreach ($i in $items) { $t +
 
 # --- ledger
 $fix = 0; $rulings = @(); $gates = @(); $ledgerOut = $null
+$taskMap = [ordered]@{}; $lastTask = $null; $reviewPasses = 0; $unattributed = 0
+# Optional ' — model <name>' suffix (older ledgers have none): null when absent.
+function Get-LedgerModel([string]$line) { if ($line -match '(?i)(?:^|\s)model\s+([A-Za-z0-9_.:/-]+)\s*$') { return Hide-Secrets $Matches[1] } return $null }
 if ($Ledger -and (Test-Path $Ledger)) {
   $ledgerOut = Hide-Path (Resolve-Path $Ledger).Path
   foreach ($line in Get-Content $Ledger) {
-    if ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++ }
+    # Task id: the Task issue number, or the plan id (p1) of a single task without issue.
+    if ($line -match '^\s*(?:[-*]\s+)?Task\s+#(\d{1,9}|p\d{1,9}):\s*([A-Za-z_]+)') {
+      $n = $Matches[1]; $st = $Matches[2]; $lastTask = $n
+      if ($taskMap.Contains($n)) {  # repeated line: latest status wins, a model is never replaced by null, counters stay
+        $nm = Get-LedgerModel $line
+        if ($nm) { $taskMap[$n].model = $nm }
+        $taskMap[$n].status = $st
+      }
+      else { $taskMap[$n] = [pscustomobject]@{ n = $(if ($n -match '^\d+$') { [int]$n } else { $n }); model = (Get-LedgerModel $line); status = $st; fixRounds = 0; escalated = $false; escalatedTo = $null } }
+    }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\s+(\d{1,9})(?:\s*\(#(\w+)\))?') {
+      $round = [int]$Matches[1]; $fix++
+      # `Fix round <r> (#<task>): ...` names its task and counts only for a known Task line; an unknown id stays unattributed.
+      # A legacy line without `(#...)` is attributed to the last Task line above it (old ledgers); none above: unattributed.
+      $target = $null
+      if ($Matches[2]) { if ($taskMap.Contains($Matches[2])) { $target = $Matches[2] } }
+      else { $target = $lastTask }
+      if (-not $target) { $unattributed++ }
+      else {
+        $t = $taskMap[$target]; $t.fixRounds++
+        $fm = Get-LedgerModel $line
+        # Escalation: a fix round on a different named model than the Task line (`inherit` is not a model name), or fix round >= 3 (fresh implementer one tier up).
+        $named = $fm -and $t.model -and $fm -ne 'inherit' -and $t.model -ne 'inherit'
+        if ($round -ge 3 -or ($named -and $fm -ne $t.model)) { $t.escalated = $true; if ($fm -and $fm -ne 'inherit') { $t.escalatedTo = $fm } }
+      }
+    }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++; $unattributed++ }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Phase review\b') { $reviewPasses++ }
     elseif ($line -match '^\s*(?:[-*]\s+)?Ruling:\s*(.*)$') { $rulings += Hide-Secrets $Matches[1] }
     elseif ($line -match '^\s*(?:[-*]\s+)?Gate:\s*(.*)$') { $gates += Hide-Secrets $Matches[1] }
   }
 } else {
   $warnings.Add('Ledger not found; fixRounds, rulings and gates are 0.')
 }
+
+# reviewRounds is run-wide by design: review runs once over the whole PBI range, not per task.
+# Review passes cover the whole PBI range, so every task reports the run's count.
+$taskList = @($taskMap.Values | ForEach-Object {
+  [ordered]@{ task = $_.n; model = $_.model; status = $_.status; fixRounds = $_.fixRounds; escalated = $_.escalated; escalatedTo = $_.escalatedTo; reviewRounds = $reviewPasses }
+})
+$escalated = @($taskMap.Values | Where-Object { $_.escalated }).Count
+$escalationShare = if ($taskMap.Count -gt 0) { [math]::Round($escalated / $taskMap.Count, 4) } else { 0 }
 
 [ordered]@{
   transcript = Hide-Path (Resolve-Path $Transcript).Path
@@ -163,6 +206,9 @@ if ($Ledger -and (Test-Path $Ledger)) {
     byRole = $roleList
   }
   fixRounds = $fix
+  unattributedFixRounds = $unattributed
+  tasks = $taskList
+  escalationShare = $escalationShare
   rulings = [ordered]@{ count = $rulings.Count; items = @($rulings) }
   gates = [ordered]@{ count = $gates.Count; items = @($gates) }
 } | ConvertTo-Json -Depth 8

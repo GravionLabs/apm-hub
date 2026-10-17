@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { execFileSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
 import { countBodyLines } from './agent-size-validator';
 
 const pk = path.resolve(__dirname, '../../packages');
@@ -19,6 +19,57 @@ const publish = read('delivery/.apm/skills/issue-planning/references/publish.md'
 
 const planSchemaDoc = read('delivery/.apm/skills/issue-planning/references/plan-schema.md');
 const batch = read('github/.apm/skills/github-issue/references/batch-workflow.md');
+
+const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
+
+describe.skipIf(!hasPwsh)('ledger format agreement with Get-RunMetrics', () => {
+  it('parses the exact Task and Fix round lines the pipeline spec documents', () => {
+    const spec = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
+    const taskFmt = /`(Task #<nr>: <status> — <sha> — model <name>)`/.exec(spec)?.[1];
+    const fixFmt = /`(Fix round <r> \(#<task>\): <result> — model <name>)`/.exec(spec)?.[1];
+    expect(taskFmt).toBeDefined();
+    expect(fixFmt).toBeDefined();
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-fmt-'));
+    try {
+      const t = path.join(dir, 't.jsonl');
+      fs.writeFileSync(t, '');
+      const l = path.join(dir, 'progress.md');
+      const values: Record<string, string> = { nr: '7', status: 'DONE', sha: 'abc1234', task: '7', r: '1', result: 'DONE', name: 'opus' };
+      const fill = (f: string) => f.replace(/<(\w+)>/g, (m, k) => values[k] ?? m);
+      fs.writeFileSync(l, [fill(taskFmt!), fill(fixFmt!)].join('\n') + '\n');
+      const script = path.join(pk, 'delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1');
+      const out = execFileSync('pwsh', ['-NoProfile', '-File', script, '-Transcript', t, '-Ledger', l], { encoding: 'utf-8' });
+      expect(JSON.parse(out).tasks[0]).toMatchObject({ task: 7, model: 'opus', fixRounds: 1, escalated: false, escalatedTo: null });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('fills the retro Escalation line from the script output of an escalated plan-id task', () => {
+    const retro = read('delivery/.apm/skills/retro/SKILL.md');
+    const lineFmt = /`(Escalation: #<task> <kind> — <model> -> <model> after <n> fix rounds)`/.exec(retro)?.[1];
+    expect(lineFmt).toBeDefined();
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-esc-'));
+    try {
+      const t = path.join(dir, 't.jsonl');
+      fs.writeFileSync(t, '');
+      const l = path.join(dir, 'progress.md');
+      fs.writeFileSync(l, ['Task #p1: DONE — abc1234 — model sonnet', 'Fix round 1 (#p1): DONE — model sonnet', 'Fix round 2 (#p1): DONE — model opus'].join('\n') + '\n');
+      const script = path.join(pk, 'delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1');
+      const task = JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', script, '-Transcript', t, '-Ledger', l], { encoding: 'utf-8' })).tasks[0];
+      expect(task.escalated).toBe(true);
+      const models = [task.model, task.escalatedTo];
+      const line = lineFmt!
+        .replace('<task>', String(task.task))
+        .replace('<kind>', 'feat')
+        .replace(/<model>/g, () => models.shift())
+        .replace('<n>', String(task.fixRounds));
+      expect(line).toBe('Escalation: #p1 feat — sonnet -> opus after 2 fix rounds');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
 
 describe('orch-pipeline deprecation stub', () => {
   const stub = read('delivery/.apm/skills/orch-pipeline/SKILL.md');
@@ -62,6 +113,9 @@ describe('task flow consistency', () => {
 
   it('orchestrator ledger line and task-only sub-issue handling', () => {
     expect(orchestrator).toContain('Task #<nr>: <status> — <sha>');
+    expect(orchestrator).toContain('Task #<nr>: <status> — <sha> — model <name>');
+    expect(orchestrator).toContain('Fix round <r> (#<task>): <result> — model <name>');
+    expect(orchestrator).toContain('the plan id (e.g. `p1`) for a single task without issue');
     expect(issueReader).toContain('select(any(.labels[];.name=="task"))');
     expect(orchestrator).toMatch(/`pbi` children are separate PBIs/);
     expect(orchestrator).toMatch(/implement mode when the issue has no Task sub-issues/);
