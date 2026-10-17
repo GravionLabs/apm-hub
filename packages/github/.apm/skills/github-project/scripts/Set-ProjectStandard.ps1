@@ -180,7 +180,9 @@ function Get-ProjectState {
 
 function Invoke-Plan($Actions, $State) {
   $field = { param($name) (@($State.fields) | Where-Object { $_.name -eq $name } | Select-Object -First 1) }
-  foreach ($a in $Actions) {
+  # Fields and views first: a failing item edit must not leave the project without its views.
+  $ordered = @($Actions | Where-Object { $_.type -ne 'SetItem' }) + @($Actions | Where-Object { $_.type -eq 'SetItem' })
+  foreach ($a in $ordered) {
     switch ($a.type) {
       'UpdateStatusOptions' {
         $f = & $field 'Status'
@@ -195,8 +197,13 @@ function Invoke-Plan($Actions, $State) {
         $f = & $field $a.field
         $o = $f.options | Where-Object { $_.name -eq $a.option } | Select-Object -First 1
         if (-not $o) { throw "Option '$($a.option)' not found in field $($a.field)." }
-        & gh project item-edit --project-id $State.projectId --id $a.item --field-id $f.id --single-select-option-id $o.id | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw "gh project item-edit failed for #$($a.number)." }
+        # Bulk edits hit GitHub's secondary rate limit now and then: retry with backoff.
+        foreach ($try in 1..4) {
+          $out = & gh project item-edit --project-id $State.projectId --id $a.item --field-id $f.id --single-select-option-id $o.id 2>&1
+          if ($LASTEXITCODE -eq 0) { break }
+          if ($try -eq 4) { throw "gh project item-edit failed for #$($a.number): $out" }
+          Start-Sleep -Seconds (15 * $try)
+        }
       }
       'CreateView' {
         $ids = { param($names) @($names | ForEach-Object { [int64](& $field $_).databaseId }) }
