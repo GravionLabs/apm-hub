@@ -62,6 +62,8 @@ describe('task flow consistency', () => {
 
   it('orchestrator ledger line and task-only sub-issue handling', () => {
     expect(orchestrator).toContain('Task #<nr>: <status> — <sha>');
+    expect(orchestrator).toContain('Task #<nr>: <status> — <sha> — model <name>');
+    expect(orchestrator).toContain('Fix round <r>: <result> — model <name>');
     expect(issueReader).toContain('select(any(.labels[];.name=="task"))');
     expect(orchestrator).toMatch(/`pbi` children are separate PBIs/);
     expect(orchestrator).toMatch(/implement mode when the issue has no Task sub-issues/);
