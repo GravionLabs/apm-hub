@@ -1,6 +1,6 @@
 name: github
 version: 2.3.0
-description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation workflows, pull request creation, and release branches (cut, finish)."
+description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation workflows, pull request creation, release branches (cut, finish), and the GitHub Project standard (github-project)."
 author:
   name: Gravion
 license: MIT
@@ -12,5 +12,6 @@ keywords:
   - git
 skills:
   - github-issue
+  - github-project
   - github-pull-request
   - github-release

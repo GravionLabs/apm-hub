@@ -8,6 +8,8 @@
 2. The issue stays open and keeps the label while the release branch is unreleased.
 3. The release lands on `main`: `close-release-issues` (`gh-release`) closes the issue and removes `merged`.
 
+The project status `In release` mirrors the label (`github-project sync`); the label stays the source of truth.
+
 Labels can be edited by hand, so skills treat `merged` as a fast path only (`next-selection.md` in `github-issue`).
 
 ## Rollout to existing repos
