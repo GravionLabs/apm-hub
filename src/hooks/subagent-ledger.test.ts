@@ -450,6 +450,79 @@ describe('subagent-ledger hook', () => {
       expect(fs.readFileSync(ledger, 'utf8')).toBe(`# ledger\nSubagent ${t}: stopped — ok\n`);
     });
 
+    /** Repo config whose fsmonitor command and hooks would create a marker file; checked live with `git status`. */
+    const hostileConfig = () => {
+      const marker = path.join(dir, 'MARKER');
+      const hooks = path.join(dir, 'evil-hooks');
+      fs.mkdirSync(hooks);
+      for (const h of ['post-checkout', 'pre-commit', 'reference-transaction', 'post-index-change']) {
+        fs.writeFileSync(path.join(hooks, h), `#!/bin/sh\ntouch '${marker}'\n`, { mode: 0o755 });
+      }
+      expect(git('config', 'core.fsmonitor', `touch '${marker}'; echo`).status).toBe(0);
+      expect(git('config', 'core.hooksPath', hooks).status).toBe(0);
+      git('status'); // positive control: this config does run the command
+      expect(fs.existsSync(marker)).toBe(true);
+      fs.rmSync(marker);
+      return marker;
+    };
+
+    it('does not run a repository fsmonitor command or hooks and still binds to the branch issue', () => {
+      repo('fix/7-x');
+      const l7 = mk('7', new Date(2020, 1, 1));
+      const l9 = mk('9');
+      const marker = hostileConfig();
+      expect(stop('reviewer').status).toBe(0);
+      expect(fs.existsSync(marker)).toBe(false);
+      expect(read(l7)).toBe('# 7\nSubagent reviewer: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('passes -c core.fsmonitor=false -c core.hooksPath=/dev/null to git', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const realGit = spawnSync('sh', ['-c', 'command -v git'], { encoding: 'utf8', env: cleanEnv() }).stdout.trim();
+      const bin = path.join(dir, 'shim');
+      const log = path.join(dir, 'git-args.log');
+      fs.mkdirSync(bin);
+      fs.writeFileSync(path.join(bin, 'git'), `#!/bin/sh\nprintf '%s ' "$@" >> '${log}'\nexec '${realGit}' "$@"\n`, { mode: 0o755 });
+      const r = spawnSync('bash', [SCRIPT], {
+        input: JSON.stringify({ cwd: dir, agent_type: 'reviewer', last_assistant_message: 'ok' }),
+        encoding: 'utf8',
+        env: cleanEnv({ AGENTS_LEDGER: '', PATH: `${bin}${path.delimiter}${process.env.PATH ?? ''}` }),
+      });
+      expect(r.status).toBe(0);
+      expect(fs.readFileSync(log, 'utf8')).toContain('-c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse');
+      expect(read(l7)).toBe('# 7\nSubagent reviewer: stopped — ok\n');
+    });
+
+    it('resolves .agents under the payload cwd: a stop from a repo subdirectory does not reach the root ledger', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const sub = path.join(dir, 'src', 'deep');
+      fs.mkdirSync(sub, { recursive: true });
+      const r = run({ cwd: sub, agent_type: 'reviewer', last_assistant_message: 'ok' });
+      expect(r.status).toBe(0);
+      expect(read(l7)).toBe('# 7\n');
+      expect(fs.existsSync(path.join(sub, '.agents'))).toBe(false);
+    });
+
+    it('binds a subdirectory cwd to the branch issue ledger under that subdirectory', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const sub = path.join(dir, 'pkg');
+      const own = path.join(sub, '.agents', '7', 'progress.md');
+      const newer = path.join(sub, '.agents', '9', 'progress.md');
+      for (const f of [own, newer]) {
+        fs.mkdirSync(path.dirname(f), { recursive: true });
+        fs.writeFileSync(f, '# sub\n');
+      }
+      fs.utimesSync(own, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      run({ cwd: sub, agent_type: 'reviewer', last_assistant_message: 'ok' });
+      expect(read(own)).toBe('# sub\nSubagent reviewer: stopped — ok\n');
+      expect(read(newer)).toBe('# sub\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
     it('lets AGENTS_LEDGER win over the branch binding', () => {
       repo('fix/7-x');
       mk('7');

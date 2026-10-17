@@ -215,10 +215,17 @@ describe('opencode plugin apm-hub-hooks', () => {
       const target = path.join(dir, 'target.md');
       fs.writeFileSync(target, 'secret\n');
       fs.mkdirSync(path.join(dir, '.agents', '7'), { recursive: true });
-      fs.symlinkSync(target, path.join(dir, '.agents', '7', 'progress.md'));
+      const link = path.join(dir, '.agents', '7', 'progress.md');
+      fs.symlinkSync(target, link);
       const h = await load();
-      await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
+      await expect(h['tool.execute.after'](...task('reviewer', result('APPROVE')))).resolves.toBeUndefined();
       expect(fs.readFileSync(target, 'utf8')).toBe('secret\n');
+      expect(fs.readdirSync(path.join(dir, '.agents', '7'))).toEqual(['progress.md']);
+      // control: the same call writes once the link is a regular file, so the symlink is the reason for the refusal
+      fs.rmSync(link);
+      fs.writeFileSync(link, '# ledger\n');
+      await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
+      expect(fs.readFileSync(link, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — APPROVE\n');
     });
 
     it('does not write through a symlinked AGENTS_LEDGER', async () => {
@@ -368,8 +375,14 @@ describe('opencode plugin apm-hub-hooks', () => {
       fs.mkdirSync(path.join(real, '12'), { recursive: true });
       fs.writeFileSync(path.join(real, '12', 'progress.md'), 'secret\n');
       fs.symlinkSync(real, path.join(dir, '.agents'));
-      await run('reviewer');
+      await expect(run('reviewer')).resolves.toBeUndefined();
       expect(fs.readFileSync(path.join(real, '12', 'progress.md'), 'utf8')).toBe('secret\n');
+      expect(fs.readdirSync(path.join(real, '12'))).toEqual(['progress.md']);
+      // control: the same tree as a real directory is written, so the symlink is the reason for the refusal
+      fs.rmSync(path.join(dir, '.agents'));
+      fs.cpSync(real, path.join(dir, '.agents'), { recursive: true });
+      await run('reviewer');
+      expect(read('12')).toBe('secret\nSubagent reviewer: stopped — ok\n');
     });
 
     it('writes a namespaced foreign prefix by the last name part (documented rule)', async () => {
@@ -392,8 +405,17 @@ describe('opencode plugin apm-hub-hooks', () => {
       fs.writeFileSync(path.join(real, 'progress.md'), 'secret\n');
       fs.mkdirSync(path.join(dir, '.agents'));
       fs.symlinkSync(real, path.join(dir, '.agents', '12'));
-      await run('reviewer');
+      withLedger('99'); // newer fallback candidate: a refusal must not fall back to it
+      await expect(run('reviewer')).resolves.toBeUndefined();
       expect(fs.readFileSync(path.join(real, 'progress.md'), 'utf8')).toBe('secret\n');
+      expect(fs.readdirSync(real)).toEqual(['progress.md']);
+      expect(read('99')).toBe('# ledger\n');
+      // control: the same ledger in a real directory is written
+      fs.rmSync(path.join(dir, '.agents', '12'));
+      fs.cpSync(real, path.join(dir, '.agents', '12'), { recursive: true });
+      await run('reviewer');
+      expect(read('12')).toBe('secret\nSubagent reviewer: stopped — ok\n');
+      expect(read('99')).toBe('# ledger\n');
     });
 
     it('falls back to the newest ledger when git cannot run', async () => {
@@ -413,6 +435,79 @@ describe('opencode plugin apm-hub-hooks', () => {
       withLedger('99');
       await run('reviewer');
       expect(read('99')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+    });
+
+    /** Repo config whose fsmonitor command and hooks would create a marker file; checked live with `git status`. */
+    const hostileConfig = () => {
+      const marker = path.join(dir, 'MARKER');
+      const hooks = path.join(dir, 'evil-hooks');
+      fs.mkdirSync(hooks);
+      for (const h of ['post-checkout', 'pre-commit', 'reference-transaction', 'post-index-change']) {
+        fs.writeFileSync(path.join(hooks, h), `#!/bin/sh\ntouch '${marker}'\n`, { mode: 0o755 });
+      }
+      git('config', 'core.fsmonitor', `touch '${marker}'; echo`);
+      git('config', 'core.hooksPath', hooks);
+      git('status'); // positive control: this config does run the command
+      expect(fs.existsSync(marker)).toBe(true);
+      fs.rmSync(marker);
+      return marker;
+    };
+
+    it('does not run a repository fsmonitor command or hooks and still binds to the branch issue', async () => {
+      repo('fix/12-x');
+      const own = withLedger('12');
+      fs.utimesSync(own, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      withLedger('99');
+      const marker = hostileConfig();
+      await run('reviewer');
+      expect(fs.existsSync(marker)).toBe(false);
+      expect(read('12')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(read('99')).toBe('# ledger\n');
+    });
+
+    it('passes -c core.fsmonitor=false -c core.hooksPath=/dev/null to git', async () => {
+      repo('fix/12-x');
+      withLedger('12');
+      const realGit = execFileSync('sh', ['-c', 'command -v git'], { encoding: 'utf8' }).trim();
+      const bin = path.join(dir, 'shim');
+      const log = path.join(dir, 'git-args.log');
+      fs.mkdirSync(bin);
+      fs.writeFileSync(path.join(bin, 'git'), `#!/bin/sh\nprintf '%s ' "$@" >> '${log}'\nexec '${realGit}' "$@"\n`, { mode: 0o755 });
+      process.env.PATH = `${bin}${path.delimiter}${process.env.PATH ?? ''}`;
+      await run('reviewer');
+      expect(fs.readFileSync(log, 'utf8')).toContain('-c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse');
+      expect(read('12')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+    });
+
+    it('resolves .agents under ctx.directory: a plugin opened in a repo subdirectory does not reach the root ledger', async () => {
+      repo('fix/12-x');
+      withLedger('12');
+      const sub = path.join(dir, 'src', 'deep');
+      fs.mkdirSync(sub, { recursive: true });
+      const mod = await import(/* @vite-ignore */ PLUGIN);
+      const h: Hooks = await mod.ApmHubHooks({ directory: sub });
+      await expect(h['tool.execute.after'](...task('reviewer', result('ok')))).resolves.toBeUndefined();
+      expect(read('12')).toBe('# ledger\n');
+      expect(fs.existsSync(path.join(sub, '.agents'))).toBe(false);
+    });
+
+    it('binds a subdirectory ctx.directory to the branch issue ledger under that subdirectory', async () => {
+      repo('fix/12-x');
+      withLedger('12');
+      const sub = path.join(dir, 'pkg');
+      const own = path.join(sub, '.agents', '12', 'progress.md');
+      const newer = path.join(sub, '.agents', '99', 'progress.md');
+      for (const f of [own, newer]) {
+        fs.mkdirSync(path.dirname(f), { recursive: true });
+        fs.writeFileSync(f, '# sub\n');
+      }
+      fs.utimesSync(own, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      const mod = await import(/* @vite-ignore */ PLUGIN);
+      const h: Hooks = await mod.ApmHubHooks({ directory: sub });
+      await h['tool.execute.after'](...task('reviewer', result('ok')));
+      expect(fs.readFileSync(own, 'utf8')).toBe('# sub\nSubagent reviewer: stopped — ok\n');
+      expect(fs.readFileSync(newer, 'utf8')).toBe('# sub\n');
+      expect(read('12')).toBe('# ledger\n');
     });
 
     it('AGENTS_LEDGER wins over the branch binding', async () => {
