@@ -63,7 +63,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     add('statusDry', ['-Status', '248', '-DryRun']);
     add('statusCopilot', ['-Status', '#248', '-Harness', 'copilot', '-DryRun']);
     add('statusOpencode', ['-Status', '248', '-Harness', 'opencode', '-DryRun']);
-    for (const [k, extra] of Object.entries({ Issue: ['5'], Feature: ['-Feature', '1'], Mode: ['-Mode', 'plan'], Merge: ['-MergeApproved'], Continue: ['-ContinueOnError'], Fix: ['-FixAdvisories', 'all'], Label: ['-Label', 'x'] })) {
+    for (const [k, extra] of Object.entries({ Issue: ['5'], Feature: ['-Feature', '1'], Mode: ['-Mode', 'plan'], Merge: ['-MergeApproved'], Continue: ['-ContinueOnError'], Fix: ['-FixAdvisories', 'all'], Label: ['-Label', 'x'], Trusted: ['-TrustedOnly'] })) {
       add(`statusWith${k}`, ['-Status', '248', ...extra, '-DryRun']);
     }
     add('statusBad', ['-Status', 'abc', '-DryRun']);
@@ -260,6 +260,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       ['statusWithContinue', '-ContinueOnError'],
       ['statusWithFix', '-FixAdvisories'],
       ['statusWithLabel', '-Label'],
+      ['statusWithTrusted', '-TrustedOnly'],
     ])('rejects %s', (key, word) => {
       expect(R[key].status).not.toBe(0);
       expect(R[key].stderr).toContain('-Status cannot be combined with');

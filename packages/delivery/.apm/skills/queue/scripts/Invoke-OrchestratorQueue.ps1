@@ -13,7 +13,7 @@
   Run it from the repository root. Exit codes: 0 all done/skipped, 1 failed, 2 gate, 3 nothing selectable (queue mode only).
 
   -Status <nr>: one-shot 'status <nr>' (no loop, no ledger); prints .agents/status-<nr>.md. Exit 0: file written during this run and
-  'Status: .agents/status-<nr>.md' in the output; 2: 'Gate:' line; 1: otherwise. Output in .agents/status-<nr>.log. Not combinable with other selectors.
+  'Status: .agents/status-<nr>.md' in the output; 2: 'Gate:' line; 1: otherwise. Output in .agents/status-<nr>.log. Not combinable with other selectors. Output and the table are printed with control characters stripped; the marker may be markdown-wrapped.
 
   -Feature <nr> / -Epic <nr> (queue mode): loops '<harness> --agent orchestrator -p "next <nr>"', one fresh process per
   iteration (selection stays in the orchestrator, github-issue/references/next-selection.md). Stops on:
@@ -94,20 +94,30 @@ function Test-NotSymlink([string]$Path) {
   $i = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
   if ($i -and $i.LinkTarget) { throw "Refusing symlinked path: $Path" }
 }
+function Get-HarnessInvocation([string]$Nr, [string]$HarnessMode, [hashtable]$Extra) {
+  $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
+  if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
+  $cmd = & $adapter -Issue $Nr -Mode $HarnessMode -AllowAll:$AllowAll @Extra
+  $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
+  $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
+  $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
+  @{ Cmd = $cmd; EnvVars = $envVars; EnvText = $envText }
+}
+# Untrusted text (issue titles, model output) must not reach the terminal with escape sequences: strip CSI, OSC and other control characters.
+function Remove-ControlChar([string]$Text) {
+  $t = [regex]::Replace($Text, '\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(\x07|\x1b\\)|\x1b.?', '')
+  [regex]::Replace($t, '[\x00-\x08\x0b-\x1f\x7f-\x9f]', '')
+}
 function Get-Gates([string[]]$Lines) { @($Lines | Where-Object { $_ -match '\AGate:' }) }
 
 if ($Status) {
   $bad = [ordered]@{ 'issue numbers' = ($Issue.Count -gt 0); '-IssueFile' = [bool]$IssueFile; '-Label' = [bool]$Label; '-Feature/-Epic' = [bool]($Feature -or $Epic)
-    '-Mode' = $PSBoundParameters.ContainsKey('Mode'); '-MergeApproved' = [bool]$MergeApproved; '-ContinueOnError' = [bool]$ContinueOnError; '-FixAdvisories' = [bool]$FixAdvisories }
+    '-Mode' = $PSBoundParameters.ContainsKey('Mode'); '-MergeApproved' = [bool]$MergeApproved; '-ContinueOnError' = [bool]$ContinueOnError; '-FixAdvisories' = [bool]$FixAdvisories; '-TrustedOnly' = [bool]$TrustedOnly }
   $bad = @($bad.Keys | Where-Object { $bad[$_] })
   if ($bad) { throw "-Status cannot be combined with $($bad -join ', ')." }
   $nr = ConvertTo-IssueNumber $Status 'status'
-  $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
-  if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
-  $cmd = & $adapter -Issue $nr -Mode status -AllowAll:$AllowAll
-  $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
-  $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
-  $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
+  $inv = Get-HarnessInvocation $nr 'status' @{}
+  $cmd = $inv.Cmd; $envVars = $inv.EnvVars; $envText = $inv.EnvText
   if ($DryRun) { Write-Host "[dry-run] Status #${nr}: $envText"; exit 0 }
   $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
   if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
@@ -129,6 +139,7 @@ if ($Status) {
     foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) }
     [Environment]::SetEnvironmentVariable('AGENTS_LEDGER', $callerLedger)
   }
+  $out = @($out | ForEach-Object { Remove-ControlChar $_ })
   $out | Out-Host
   Add-Content -LiteralPath $log -Value ($out + "=== exit code $code") -Encoding utf8
   $trimmed = @($out | ForEach-Object { $_.Trim() })
@@ -136,13 +147,13 @@ if ($Status) {
   if ($gateLine) { Write-Host "Gate on status #${nr}: $gateLine"; exit 2 }
   Test-NotSymlink $statusFile
   $fi = Get-Item -LiteralPath $statusFile -Force -ErrorAction SilentlyContinue
-  $marker = @($trimmed | Where-Object { $_ -ceq "Status: .agents/status-$nr.md" }).Count -gt 0
+  $marker = @($trimmed | Where-Object { $_ -cmatch "Status:[\s*``_]*\.agents/status-$nr\.md(?![\w./-])" }).Count -gt 0
   $why = if ($code -ne 0) { "child exit code $code" }
     elseif (-not $fi) { "no status file $statusFile" }
     elseif ($fi.LastWriteTime -lt $start) { "status file $statusFile is stale (not written by this run)" }
     elseif (-not $marker) { "no 'Status: .agents/status-$nr.md' line in the output" }
   if ($why) { Write-Host "Status #${nr} failed: $why"; exit 1 }
-  Get-Content -LiteralPath $statusFile | Out-Host
+  Get-Content -LiteralPath $statusFile | ForEach-Object { Remove-ControlChar $_ } | Out-Host
   exit 0
 }
 
@@ -152,12 +163,8 @@ if ($Feature -or $Epic) {
   if ($PSBoundParameters.ContainsKey('Mode')) { throw '-Mode cannot be combined with -Feature/-Epic (the mode is always next).' }
   $nr = ConvertTo-IssueNumber ($Feature ? $Feature : $Epic) 'queue'
   $kind = $Feature ? 'Feature' : 'Epic'
-  $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
-  if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
-  $cmd = & $adapter -Issue $nr -Mode next -AllowAll:$AllowAll @adv
-  $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
-  $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
-  $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
+  $inv = Get-HarnessInvocation $nr 'next' $adv
+  $cmd = $inv.Cmd; $envVars = $inv.EnvVars; $envText = $inv.EnvText
   if ($DryRun) { Write-Host "[dry-run] ${kind} #${nr}: $envText"; exit 0 }
   $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
   if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }

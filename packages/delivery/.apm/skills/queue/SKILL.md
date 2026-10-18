@@ -19,14 +19,15 @@ pwsh scripts/Invoke-OrchestratorQueue.ps1 -DryRun 101 102 103          # prints 
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Mode implement 101 102 103   # issue list (default mode: full)
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Mode implement -IssueFile todo.txt   # one number per line
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Mode implement -Label ready          # open issues with a label, ascending
-pwsh scripts/Invoke-OrchestratorQueue.ps1 -Feature 227                  # loop "next 227" until done; -Epic 300 likewise
+pwsh scripts/Invoke-OrchestratorQueue.ps1 -Feature 227                  # loop "next 227" until the Feature is done
+pwsh scripts/Invoke-OrchestratorQueue.ps1 -Epic 300 -Harness opencode -ContinueOnError   # same for an Epic
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Status 248                   # one-shot headless status, prints .agents/status-248.md
 ```
 
 Start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`
 (not with `-Feature`/`-Epic`: the mode is always `next`, the adapters forward it as `next <nr>`), `-ContinueOnError`,
 `-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved` (opt-in, otherwise the runner never merges), `-TrustedOnly` (with `-Label`),
-`-Status <nr>` (alone: no issues, `-Mode`, `-Feature`/`-Epic`, `-MergeApproved`, `-ContinueOnError`, `-FixAdvisories`), `-FixAdvisories none|medium|all[:dim,dim]` (lowercase dimensions; forwarded as `--fix-advisories <policy>`, no review-summary gate; CRITICAL/HIGH always block).
+`-Status <nr>` (alone: no other selector or option), `-FixAdvisories none|medium|all[:dim,dim]` (lowercase dimensions; forwarded as `--fix-advisories <policy>`, no review-summary gate; CRITICAL/HIGH always block).
 
 ## Slash usage
 
@@ -95,5 +96,4 @@ A `Gate:` line in the output stops the queue even without a new ledger gate. Nev
 - The narrow permission set limits accidents; it does not stop prompt injection (an allowed `gh api` or `pwsh` can
   do a lot, including `gh pr merge` via `gh api`). `-Label` feeds issue text to the model: use collaborator-authored
   issues; `-TrustedOnly` filters only the issue author (not comments); positional and `-IssueFile` issues are unfiltered.
-- The runner refuses a symlinked `.agents/`.
-- Check `/queue status <nr>` or `.agents/<nr>/progress.md` before and after a run. Sequential only.
+- The runner refuses a symlinked `.agents/`. Check `/queue status <nr>` or `.agents/<nr>/progress.md` before and after a run. Sequential only (`-Parallel` is a follow-up).
