@@ -18,7 +18,7 @@ One state per PBI, first match wins (merged first, like `next-selection.md`):
 2. `pr-open #<n>`: the open-PR check of `next-selection.md` `## Drop the in flight`.
 3. `needs-decision`: the label.
 4. `blocked by #<a>, #<b>`: the open blockers from the blocked-by endpoint of `next-selection.md` `## Drop the blocked`.
-5. `in progress (<detail>)`: a local `.agents/<nr>/progress.md` exists and has no line `Ledger complete.` -> detail is the last `Phase <name>: complete` phase, or `started`. Otherwise a remote branch matching `/<nr>-` in the fetched refs (`git fetch --prune`, then `git branch -r --list '*/<nr>-*'`) -> `in progress (branch <name>)`. A ledger that ends with `Ledger complete.` does not count as in progress and falls through to this branch clause, then to `open`.
+5. `in progress (<detail>)`: a local `.agents/<nr>/progress.md` exists and its last non-empty line is not `Ledger complete.` -> detail is the last `Phase <name>: complete` phase, or `started`. Otherwise a remote branch matching `/<nr>-` in the fetched refs (`git fetch --prune`, then `git branch -r --list '*/<nr>-*'`) -> `in progress (branch <name>)`. A ledger whose last non-empty line is `Ledger complete.` does not count and falls through to this branch clause, then to `open`.
 6. `open`: none of the above.
 
 ## Pick line

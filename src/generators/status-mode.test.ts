@@ -24,9 +24,9 @@ describe('status.md: status table rules', () => {
     expect(status).not.toContain('--grep');
   });
 
-  it('defines in progress by the missing Ledger complete line and the remote branch', () => {
+  it('defines in progress by the ledger not ending in Ledger complete and the remote branch', () => {
     const states = section(status, 'States');
-    expect(states).toMatch(/no line `Ledger complete\.`/);
+    expect(states).toMatch(/last non-empty line is not `Ledger complete\.`/);
     expect(states).toContain('/<nr>-');
   });
 
