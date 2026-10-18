@@ -14,7 +14,11 @@ packages/<domain>/
     └── issue-templates/       # GitHub issue templates (github package only)
 .github/skills/check-prerequisites/   # the only repo-local skill (contributor tooling)
 .github/ISSUE_TEMPLATE/               # copy of packages/github/.apm/issue-templates/
-src/                                  # TypeScript generators for docs/*.md (Vitest tests)
+src/                                  # TypeScript generators for docs/*.md, unit tests next to the code (*.test.ts)
+test/packages/<domain>/               # Vitest tests of package content (skills, agents, scripts, hooks)
+test/repo/ test/helpers/              # repository checks (workflows), shared test helpers
+test/integration/queue/               # pwsh-heavy *.integration.test.ts (Vitest project `integration`)
+test/integration/skills/              # Copilot SDK harness, own package.json (`pnpm run test:integration`)
 scripts/check-manifests.mjs           # apm.yml skills list ⇄ directories on disk
 site/                                 # VitePress docs site: renders docs/ in place, README as home via docs/index.md (see site/README.md)
 apm.yml                               # marketplace: lists all packages
