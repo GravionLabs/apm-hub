@@ -251,6 +251,30 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     expect(fs.readFileSync(marker(), 'utf8')).toBe(expected);
   });
 
+  it('writes the two-field marker in a directory outside any repository', () => {
+    expect(spawnSync('git', ['-C', dir, 'rev-parse', '--git-dir'], { env: gitCleanEnv(process.env) }).status).not.toBe(0);
+    withLoop();
+    const r = run('-Issue', '9', '-Bind', 'loop-5');
+    expect(r.status).toBe(0);
+    expect(fs.readFileSync(marker(), 'utf8')).toBe('9 loop-5\n');
+  });
+
+  it('writes the two-field marker when git is not on the PATH', () => {
+    repo('fix/12-x');
+    withLoop();
+    const pwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '(Get-Process -Id $PID).Path'], { encoding: 'utf8' }).stdout.trim();
+    const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'addledger-nogit-'));
+    try {
+      const env = { ...gitCleanEnv(process.env), PATH: bin };
+      expect(spawnSync(pwsh, ['-NoProfile', '-Command', 'if (Get-Command git -ErrorAction Ignore) { exit 1 }'], { env }).status).toBe(0);
+      const r = spawnSync(pwsh, ['-NoProfile', '-File', SCRIPT, '-Issue', '9', '-Bind', 'loop-5'], { cwd: dir, encoding: 'utf8', env });
+      expect(r.status).toBe(0);
+      expect(fs.readFileSync(marker(), 'utf8')).toBe('9 loop-5\n');
+    } finally {
+      fs.rmSync(bin, { recursive: true, force: true });
+    }
+  });
+
   it('writes the two-field marker on a detached HEAD', () => {
     repo('fix/12-x');
     spawnSync('git', ['-C', dir, 'checkout', '-q', '--detach'], { env: gitCleanEnv(process.env) });

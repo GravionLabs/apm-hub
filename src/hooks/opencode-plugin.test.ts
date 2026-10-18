@@ -895,6 +895,27 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read(l9)).toBe('# 9\n');
     });
 
+    it('ignores the recorded-branch marker of a stopped loop: the line lands in the origin ledger', async () => {
+      repo('fix/12-x');
+      const l12 = mk('12');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\nLoop: stopped — user stop\n');
+      marker('9 loop-5 12\n');
+      await stop();
+      expect(read(l12)).toBe(`# 12\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('does not create the missing PBI ledger of a recorded-branch marker', async () => {
+      repo('fix/12-x');
+      const l12 = mk('12');
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12\n');
+      await stop();
+      expect(fs.existsSync(path.join(dir, '.agents', '9'))).toBe(false);
+      expect(read(l12)).toBe(`# 12\n${LINE}`);
+    });
+
     it('accepts the recorded-branch marker without a trailing newline', async () => {
       repo('fix/12-x');
       mk('12');
