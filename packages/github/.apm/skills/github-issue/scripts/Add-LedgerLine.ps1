@@ -8,7 +8,7 @@
   map cannot restrict a shell redirect target, so the path is validated here. -Issue must be a positive integer,
   'adhoc' or 'loop-<nr>' (the loop ledger); the resolved path must stay under <current directory>/.agents/ and a symlinked .agents/, issue directory or progress.md is refused. Without -Line only the directory is created.
   -Bind loop-<nr> (with an integer -Issue, the PBI the loop starts) appends 'Loop: PBI #<issue> started' to the existing
-  loop ledger .agents/loop-<nr>/progress.md and writes the marker .agents/current ('<issue> loop-<nr>'); the SubagentStop
+  loop ledger .agents/loop-<nr>/progress.md (the PBI ledger must exist or be created by -Line) and writes the marker .agents/current ('<issue> loop-<nr>'); the SubagentStop
   hook and the OpenCode plugin then bind subagent lines to that PBI's ledger until the loop ledger records 'Loop: stopped'.
   -Unbind (alone) removes the marker; no marker is a no-op. A symlinked marker or loop ledger is refused.
 .PARAMETER Issue  Issue number, 'adhoc' or 'loop-<nr>'.
@@ -53,6 +53,9 @@ if ($binding) {
   foreach ($p in @($loopDir, $loopFile, $marker)) { if (Test-Link $p) { throw "Refusing symlinked path: $p" } }
   if (-not (Test-Path -LiteralPath $loopFile -PathType Leaf)) { throw "No loop ledger ${loopFile}: write its header first." }
   if (Test-Path -LiteralPath $marker -PathType Container) { throw "Not a file: $marker" }
+  # the PBI ledger must exist (or be created by -Line in this call): a marker without it binds nothing
+  $pbiFile = Join-Path $dir 'progress.md'
+  if (-not $PSBoundParameters.ContainsKey('Line') -and -not (Test-Path -LiteralPath $pbiFile -PathType Leaf)) { throw "No PBI ledger ${pbiFile}: write its header first (-Line)." }
 }
 New-Item -ItemType Directory -Path $dir -Force | Out-Null
 $file = Join-Path $dir 'progress.md'
@@ -60,6 +63,7 @@ $file = Join-Path $dir 'progress.md'
 if ((Test-Path -LiteralPath $file) -and (Get-Item -LiteralPath $file -Force).LinkTarget) { throw "Refusing symlinked path: $file" }
 if ($PSBoundParameters.ContainsKey('Line')) { Add-Content -LiteralPath $file -Value $Line -Encoding utf8 }
 if ($binding) {
+  if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "No PBI ledger ${file}: nothing bound." }
   # the start line first: a marker is live only while the last 'Loop: ' line is not 'Loop: stopped'
   Add-Content -LiteralPath $loopFile -Value "Loop: PBI #$Issue started" -Encoding utf8
   [IO.File]::WriteAllText($marker, "$Issue $Bind`n")

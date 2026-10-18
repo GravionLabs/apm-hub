@@ -69,9 +69,16 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   const run = (...args: string[]) => spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { cwd: dir, encoding: 'utf8' });
   const marker = () => path.join(dir, '.agents', 'current');
   const loopLedger = (nr = '5') => path.join(dir, '.agents', `loop-${nr}`, 'progress.md');
-  const withLoop = (content = '# loop\n') => {
+  const pbiLedger = (nr = '9') => path.join(dir, '.agents', nr, 'progress.md');
+  const withPbi = (content = '# 9\n') => {
+    fs.mkdirSync(path.dirname(pbiLedger()), { recursive: true });
+    fs.writeFileSync(pbiLedger(), content);
+  };
+  /** Loop ledger plus the PBI 9 ledger header (the boundary writes the header before -Bind). */
+  const withLoop = (content = '# loop\n', pbi = true) => {
     fs.mkdirSync(path.dirname(loopLedger()), { recursive: true });
     fs.writeFileSync(loopLedger(), content);
+    if (pbi) withPbi();
   };
 
   it('writes the marker and records the start in the loop ledger', () => {
@@ -83,7 +90,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   });
 
   it('writes the PBI ledger line first when -Line is given too', () => {
-    withLoop();
+    withLoop('# loop\n', false);
     expect(run('-Issue', '9', '-Line', '# orchestrator ledger — issue #9', '-Bind', 'loop-5').status).toBe(0);
     expect(fs.readFileSync(path.join(dir, '.agents', '9', 'progress.md'), 'utf8')).toBe('# orchestrator ledger — issue #9\n');
     expect(fs.readFileSync(marker(), 'utf8')).toBe('9 loop-5\n');
@@ -150,6 +157,76 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     const r = run('-Issue', '9', '-Bind', 'loop-5');
     expect(r.status).not.toBe(0);
     expect(fs.existsSync(path.join(real, 'current'))).toBe(false);
+  });
+
+  it('fails without a PBI ledger and writes nothing (no marker, no start line, no PBI directory)', () => {
+    withLoop('# loop\n', false);
+    const r = run('-Issue', '9', '-Bind', 'loop-5');
+    expect(r.status).not.toBe(0);
+    expect(r.stderr + r.stdout).toMatch(/PBI ledger/);
+    expect(fs.existsSync(marker())).toBe(false);
+    expect(fs.readFileSync(loopLedger(), 'utf8')).toBe('# loop\n');
+    expect(fs.existsSync(path.join(dir, '.agents', '9'))).toBe(false);
+  });
+
+  it('creates the PBI ledger with -Line in the same call, then binds', () => {
+    withLoop('# loop\n', false);
+    expect(run('-Issue', '9', '-Line', '# 9', '-Bind', 'loop-5').status).toBe(0);
+    expect(fs.readFileSync(pbiLedger(), 'utf8')).toBe('# 9\n');
+    expect(fs.readFileSync(marker(), 'utf8')).toBe('9 loop-5\n');
+  });
+
+  it('a failing -Bind with -Line does not create the PBI ledger when the loop ledger is missing', () => {
+    const r = run('-Issue', '9', '-Line', '# 9', '-Bind', 'loop-5');
+    expect(r.status).not.toBe(0);
+    expect(fs.existsSync(path.join(dir, '.agents', '9'))).toBe(false);
+    expect(fs.existsSync(marker())).toBe(false);
+  });
+
+  it('a failing -Bind with -Line leaves the PBI ledger unchanged when the marker is a symlink', () => {
+    withLoop();
+    const target = path.join(dir, 'target');
+    fs.writeFileSync(target, 'secret\n');
+    fs.symlinkSync(target, marker());
+    expect(run('-Issue', '9', '-Line', 'more', '-Bind', 'loop-5').status).not.toBe(0);
+    expect(fs.readFileSync(pbiLedger(), 'utf8')).toBe('# 9\n');
+    expect(fs.readFileSync(loopLedger(), 'utf8')).toBe('# loop\n');
+    expect(fs.readFileSync(target, 'utf8')).toBe('secret\n');
+  });
+
+  it('a failing -Bind with -Line leaves the PBI ledger unchanged when the marker is a directory', () => {
+    withLoop();
+    fs.mkdirSync(marker());
+    const r = run('-Issue', '9', '-Line', 'more', '-Bind', 'loop-5');
+    expect(r.status).not.toBe(0);
+    expect(fs.readFileSync(pbiLedger(), 'utf8')).toBe('# 9\n');
+    expect(fs.readFileSync(loopLedger(), 'utf8')).toBe('# loop\n');
+    expect(fs.statSync(marker()).isDirectory()).toBe(true);
+  });
+
+  it('-Bind refuses a directory marker without -Line too', () => {
+    withLoop();
+    fs.mkdirSync(marker());
+    expect(run('-Issue', '9', '-Bind', 'loop-5').status).not.toBe(0);
+    expect(fs.readFileSync(loopLedger(), 'utf8')).toBe('# loop\n');
+  });
+
+  it('-Unbind refuses a symlinked .agents and keeps the marker behind it', () => {
+    const real = path.join(dir, 'real');
+    fs.mkdirSync(real);
+    fs.writeFileSync(path.join(real, 'current'), '9 loop-5\n');
+    fs.symlinkSync(real, path.join(dir, '.agents'));
+    const r = run('-Unbind');
+    expect(r.status).not.toBe(0);
+    expect(r.stderr + r.stdout).toMatch(/symlinked/);
+    expect(fs.readFileSync(path.join(real, 'current'), 'utf8')).toBe('9 loop-5\n');
+  });
+
+  it('-Unbind leaves a directory named current alone and exits 0', () => {
+    fs.mkdirSync(marker(), { recursive: true });
+    fs.writeFileSync(path.join(marker(), 'keep'), 'x');
+    expect(run('-Unbind').status).toBe(0);
+    expect(fs.readFileSync(path.join(marker(), 'keep'), 'utf8')).toBe('x');
   });
 
   it('-Unbind removes the marker', () => {
