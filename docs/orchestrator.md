@@ -50,6 +50,7 @@ The first word of the first message is the mode. Without a mode word the run is 
 | `implement` | Implement, review and open the PR for an issue that is already planned |
 | `full` | `plan` + `implement` in one run, for a PBI |
 | `next <feature or epic>` | Pick the next open, unblocked PBI and run it as `full` |
+| `status <feature or epic>` | Print the per-PBI state table and the line `next` would pick; read-only, runs nothing |
 | `loop <feature or epic>` | Repeat `next` in one session until nothing is selectable, a headless gate, the context warning or 3 finished PBIs |
 
 Exactly one PBI is handled per run, except in `loop`. An Epic is planned into Features, a Feature into PBIs, a PBI into Tasks, one grilling cycle per level.
@@ -272,6 +273,10 @@ flowchart TD
     G -->|"plan"| H(["Stop after PBI and plan"])
     G -->|"full"| I["Continue as full on the new PBI"]
 ```
+
+## Checking state with `status`
+
+`orchestrator status <feature or epic>` is the first command after `/clear`: one line per PBI (recursive for an Epic) with its state (`merged`, `pr-open`, `needs-decision`, `blocked by`, `in progress`, `open`) and the line `next` would pick. It uses `gh`, `git` and existing ledgers only, writes no ledger and starts no work. Headless, the table goes to `.agents/status-<nr>.md` and the reply ends with `Status: .agents/status-<nr>.md`; interactive, it is shown and you are asked which mode to start. For a headless run use `/queue status <nr>`. A PBI or a description is rejected. State definitions and precedence: [status.md](../packages/github/.apm/skills/github-issue/references/status.md).
 
 ## Picking work with `next`
 

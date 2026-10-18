@@ -15,7 +15,7 @@ per phase in its own context and hands the rest to `issue-reader`, `explorer`, `
 
 ### Modes and natural requests
 
-The first word of the message is the mode; the issue type (Epic, Feature, PBI) comes from its label or title prefix. The first word must be the mode word (the table below is what to type, or what the `/orchestrator` command should translate your request to); a plain sentence without it runs `full`, which is for a PBI only.
+The first word of the message is the mode; the issue type (Epic, Feature, PBI) comes from its label or title prefix. The first word must be the mode word (the table below is what to type, or what the `/orchestrator` command should translate your request to); a plain sentence without it runs `full`, which is for a PBI only. After `/clear`, start with `orchestrator status <feature|epic>`: it shows where the work stands and what `next` would pick, and runs nothing.
 
 | Mode | On | Does |
 | :-- | :-- | :-- |
@@ -23,6 +23,7 @@ The first word of the message is the mode; the issue type (Epic, Feature, PBI) c
 | `implement <nr>` | PBI | explore → implement → review → PR for a planned PBI |
 | `full <nr>` | PBI | plan if needed, then implement |
 | `next <nr>` | Feature / Epic | picks the first open PBI without open blocker, `needs-decision`, open PR (`waiting for merge`) or merge into the integration branch (`merged, closes at release`) (sub-issue order, recursive for an Epic), runs it like `full` |
+| `status <nr>` | Feature / Epic | per-PBI state table (`merged`, `pr-open`, `needs-decision`, `blocked by`, `in progress`, `open`) and the line `next` would pick; read-only, nothing runs, no ledger; rules in `github-issue` `references/status.md` |
 | `loop <nr>` | Feature / Epic | repeats `next` in one session until nothing is selectable, a gate needs you (interactive gates pause, headless stops), the context warning fired or 3 PBIs are done (the cap, 10 on Claude Code where `pbi-runner` runs each PBI; the warning fires mid-loop only on Copilot CLI); loop ledger `.agents/loop-<nr>/progress.md` |
 
 Exactly one PBI per run, except loop. The end line after a PBI of a Feature is defined in `github-issue` `references/next-selection.md`.
@@ -31,6 +32,7 @@ Exactly one PBI per run, except loop. The end line after a PBI of a Feature is d
 | :-- | :-- |
 | "implementiere das nächste Feature" / "implement the next PBI of #81" | `next <feature>` |
 | "work on the next PBI under epic #81" | `next <epic>` |
+| "where are we on #81" / "wie ist der Stand von #81" | `status 81` |
 | "implement all remaining PBIs of #81" / "arbeite Feature #81 ab" | `loop <feature>` |
 | "plan all open features under #81" | `plan 81`, then one `plan <feature>` per open Feature, each in its own session |
 | "plan #123" / "plane Feature #123" | `plan 123` |
@@ -42,7 +44,7 @@ Two defaults, each switched off by a flag, and one flag that answers the advisor
 
 | Flag | Default without it |
 | :-- | :-- |
-| `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged, merged ones per the "Task merged" rule for Tasks and `Merged (closes at release)` in `next-selection.md` for PBIs and Features) and you pick one |
+| `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged (in progress: a local ledger without `Ledger complete.`, else a remote branch `/<nr>-`, see `references/status.md`), merged ones per the "Task merged" rule for Tasks and `Merged (closes at release)` in `next-selection.md` for PBIs and Features) and you pick one |
 | `--no-review-summary` | After `review-fanout` it shows one line per finding (`severity file:line issue`, blocking first, MEDIUM/LOW included) and asks which advisories to fix; the rest go to the PR body. With the flag only blocking findings trigger fix rounds |
 | `--fix-advisories none\|medium\|all[:dim,dim]` | Decides the advisory question up front: `none` sends all advisories to the PR body, `medium` fixes MEDIUM and above, `all` fixes every advisory; `:dim,dim` limits the policy to those `review-fanout` dimensions (other advisories go to the PR body). Blocking findings are always fixed. Prints `Advisory policy: <policy> — fixing <n>, PR body <m>` and writes a `Ruling:` ledger line |
 

@@ -104,3 +104,26 @@ describe('status mode word: gates parser and launcher skill', () => {
     expect(launcher).toContain('a description for `plan|implement|full`;');
   });
 });
+
+describe('status mode docs', () => {
+  const working = read('docs/working-mode.md');
+  const orch = read('docs/orchestrator.md');
+
+  it('working-mode.md names status as the first command after /clear', () => {
+    expect(working).toMatch(/After `\/clear`, start with `orchestrator status <feature\|epic>`/);
+    expect(working).toContain('| `status <nr>` |');
+    expect(working).toContain('`status 81`');
+  });
+
+  it('orchestrator.md lists the mode and has a status section before next', () => {
+    expect(orch).toContain('| `status <feature or epic>` |');
+    const a = orch.indexOf('## Checking state with `status`');
+    expect(a).toBeGreaterThan(0);
+    expect(a).toBeLessThan(orch.indexOf('## Picking work with `next`'));
+  });
+
+  it('AGENTS.md agents row lists status', () => {
+    const agents = read('AGENTS.md');
+    expect(agents.match(/modes `plan\|implement\|full\|next\|loop\|status`/g)).toHaveLength(2);
+  });
+});
