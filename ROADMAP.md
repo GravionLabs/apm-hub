@@ -22,24 +22,36 @@ Closing: Feature #248 and Epic #300 once #251 is merged. Then `github-release` f
 
 Feature #385 closes with #386.
 
-## 2.6.0 — Epic #387, Feature #388: agent-bus MVP
+## 2.6.0 — Epic #387, Feature #388: dromos MVP
 
 | Order | Issue | Title | Size | Depends on |
 | --- | --- | --- | --- | --- |
-| 1 | #389 | `SubagentStop` hook sends `progress` to `$AGENT_BUS_URL/ingest` | M | #375; `POST /ingest` in `GravionLabs/agent-bus` |
+| 1 | #389 | `SubagentStop` hook sends `progress` to `$DROMOS_URL/ingest` | M | #375; `POST /ingest` in `GravionLabs/dromos` |
 
-Opt-in through `AGENT_BUS_URL`; without it nothing changes.
+Opt-in through `DROMOS_URL`; without it nothing changes.
 
-## 2.7.0 — Feature #390: attention, queue, usage, `/bus-mux`
+## 2.7.0 — Feature #390: attention, queue, usage, `/dromos-mux`
 
 | Order | Issue | Title | Size | Depends on |
 | --- | --- | --- | --- | --- |
 | 1 | #391 | `pbi-runner` `GATE|BLOCKED|FAILED` as `attention` | S | #389 |
 | 2 | #392 | queue runner reports `queue.item`, supports `-Mux` | M | #389 |
 | 3 | #393 | status line reports `usage` | S | #389 |
-| 4 | #394 | user-invoked `/bus-mux` skill in `delivery` | M | #392, bus-mux released |
+| 4 | #394 | user-invoked `/dromos-mux` skill in `delivery` | M | #392, dromos-mux released |
 
 Epic #387 closes with #394.
+
+### After 2.7.0 — Feature #398: queue runner as driver on the bus session API
+
+Not scheduled yet. Splits `Invoke-OrchestratorQueue.ps1` into driver (stays in apm-hub) and executor (bus session API, `GravionLabs/dromos` Feature #61); #392's `-Mux` is reworked into it. Order in dromos: `ROADMAP.md` there, stage 4.
+
+| Needs from dromos | Enables in apm-hub |
+| --- | --- |
+| #62–#65 (headless sessions, restart, HTTP) | executor choice in the queue runner, overnight Epic runs without dromos-mux |
+| #66–#68 (idle, pane mode) | `-Mux` as pane executor, following a run in dromos-mux |
+| #43 (`/ingest`) | already needed for 2.6.0 (#389) |
+
+PBIs for #398 are planned when #65 is released (`orchestrator plan 398`).
 
 ## 3.0.0 — breaking
 
@@ -49,5 +61,6 @@ Epic #387 closes with #394.
 
 ## Risks
 
-- 2.6.0 and 2.7.0 depend on the agent-bus repository (ingest endpoint, bus-mux); if it lags, those releases shift, nothing else does.
+- #398 depends on the session API in dromos#61; until then the local executor stays the only one.
+- 2.6.0 and 2.7.0 depend on the dromos repository (ingest endpoint, dromos-mux); if it lags, those releases shift, nothing else does.
 - 2.5.0 and 2.6.0 can swap without harm; 2.4.0 comes first because it is nearly done.
