@@ -14,7 +14,11 @@ packages/<domain>/
     └── issue-templates/       # GitHub issue templates (github package only)
 .github/skills/check-prerequisites/   # the only repo-local skill (contributor tooling)
 .github/ISSUE_TEMPLATE/               # copy of packages/github/.apm/issue-templates/
-src/                                  # TypeScript generators for docs/*.md (Vitest tests)
+src/                                  # TypeScript generators for docs/*.md, unit tests next to the code (*.test.ts)
+test/packages/<domain>/               # Vitest tests of package content (skills, agents, scripts, hooks)
+test/repo/ test/helpers/              # repository checks (workflows), shared test helpers
+test/integration/queue/               # pwsh-heavy *.integration.test.ts (Vitest project `integration`)
+test/integration/skills/              # Copilot SDK harness, own package.json (`pnpm run test:integration`)
 scripts/check-manifests.mjs           # apm.yml skills list ⇄ directories on disk
 site/                                 # VitePress docs site: renders docs/ in place, README as home via docs/index.md (see site/README.md)
 apm.yml                               # marketplace: lists all packages
@@ -55,6 +59,15 @@ Every language package provides `<lang>-implementation` (conventions + `## Revie
 - Body ≤ 40 lines (enforced by `src/generators/agent-size-validator.test.ts`); it states the return contract and delegates to skills by name.
 - An agent is justified only by a model per role, a host-enforced tool set, an output contract or a primary-agent entry point. Everything procedural is a skill.
 - After changing an agent, copy it to `apmw/tests/fixtures/agents/` and regenerate the goldens there.
+
+## Tests
+
+- Code in `src/`: unit test next to it as `<name>.test.ts`.
+- Package content (skills, agents, scripts, hooks): `test/packages/<domain>/<topic>.test.ts`, `<domain>` is the package of the file under test; a flow across several packages around the orchestrator goes to `agents`.
+- Repository files outside `packages/` (workflows, `.github/`): `test/repo/`. Helpers shared by several test directories: `test/helpers/` (no `.test.ts` suffix).
+- pwsh-heavy tests (many processes, fake binaries): `*.integration.test.ts` in `test/integration/queue/`; elsewhere the `fast` project skips them. Batch cases into one pwsh process with `test/helpers/queue-batch.ps1`.
+- Resolve repo files from `__dirname` (`path.resolve(__dirname, '../../../packages/...')` in `test/packages/<domain>/`).
+- `test/integration/skills/` is the Copilot SDK harness with its own `package.json`; no repo tests there.
 
 ## Commands
 

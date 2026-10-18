@@ -10,7 +10,7 @@
     "generate:root-apm": "node dist/index.js --root-apm",
     "generate:ci": "node dist/index.js --aggregate",
     "generate:all": "npm run build && npm run generate:ci",
-    "format": "prettier --write \"src/**/*.ts\"",
+    "format": "prettier --write \"{src,test}/**/*.ts\"",
     "test": "vitest run",
     "test:fast": "vitest run --project fast",
     "test:ci": "vitest run --coverage",
