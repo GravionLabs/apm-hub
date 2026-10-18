@@ -1,7 +1,8 @@
 // OpenCode plugin: ports of the apm-hub hooks that OpenCode cannot run as shell hooks.
 //  - subagent ledger: after a `task` tool call of an orchestrator subagent (allowlist), append
 //    `Subagent <name>: stopped — <first line>` to the ledger of the PBI named by a live loop marker .agents/current
-//    (`<pbi> loop-<nr>`), else to .agents/<nr>/progress.md of the issue number in the git branch
+//    (`<pbi> loop-<nr>[ <origin>]`) unless the branch names another issue that is not the PBI, the origin or a
+//    `Loop: PBI #<nr> done` PBI, else to .agents/<nr>/progress.md of the issue number in the git branch
 //    (<type>/[<scope>/]<nr>[-<slug>]); nothing when that ledger is missing or git fails inside a repository; the newest
 //    non-loop ledger only without a number (also detached HEAD), without git or outside a repository. Same rules and format as subagent-ledger.sh; AGENTS_LEDGER overrides.
 //  - context warning: on a new user message, warn once the last request passed CONTEXT_WARN_TOKENS (default
