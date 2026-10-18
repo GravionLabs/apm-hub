@@ -20,3 +20,38 @@ export const BRANCHES_BOUND = [
 
 /** Branch names that carry no issue number: the newest-ledger fallback applies. */
 export const BRANCHES_UNBOUND = ['main', 'release/next', 'release/2', 'renovate/3-major', 'fix/7x-y', 'fix/x7-y', 'fix/7/slug', 'feat/x'];
+
+/** Contents of .agents/current that break the strict `<pbi> loop-<nr>` format: the marker is ignored (branch rule applies). */
+export const MARKERS_MALFORMED = [
+  '',
+  '\n',
+  '9',
+  '9\n',
+  '09 loop-5\n',
+  '9x loop-5\n',
+  '../7 loop-5\n',
+  '9 loop-05\n',
+  '9 loop-x\n',
+  '9 loop-5/../loop-6\n',
+  '9 ../loop-5\n',
+  ' 9 loop-5\n',
+  '9  loop-5\n',
+  '9 loop-5 \n',
+  '9 loop-5\r\n',
+  '9 loop-5\n\n',
+  '9 loop-5\n7 loop-5\n',
+  '9 loop-5\0',
+  'loop-5 9\n',
+  '12345678901 loop-5\n',
+];
+
+/** Loop ledger contents for which a marker is stale (the loop stopped) or still live (running or resumed). */
+export const LOOP_LEDGERS_STALE = [
+  '# loop\nLoop: PBI #9 started\nLoop: stopped — user stop\n',
+  '# loop\nLoop: PBI #9 started\nLoop: PBI #9 done — https://x/pr/1\nLoop: stopped — nothing selectable\n',
+];
+export const LOOP_LEDGERS_LIVE = [
+  '# loop\nLoop: PBI #9 started\n',
+  '# loop\nLoop: PBI #8 started\nLoop: PBI #8 done — https://x/pr/1\nLoop: stopped — pbi cap\nLoop: PBI #9 started\n',
+  '# loop\nLoop: PBI #9 started\nSome note mentioning Loop: stopped later\n',
+];

@@ -2,7 +2,7 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { BRANCHES_BOUND, BRANCHES_UNBOUND, gitCleanEnv } from './ledger-test-helpers';
+import { BRANCHES_BOUND, BRANCHES_UNBOUND, LOOP_LEDGERS_LIVE, LOOP_LEDGERS_STALE, MARKERS_MALFORMED, gitCleanEnv } from './ledger-test-helpers';
 
 const SCRIPT = path.resolve(__dirname, '../../packages/hooks/.apm/hooks/subagent-ledger.sh');
 
@@ -348,8 +348,8 @@ describe('subagent-ledger hook', () => {
       expect(read(l7)).toBe('# 7\n');
     });
 
-    it('sends a stop before the new PBI branch exists to the ledger of the branch still checked out', () => {
-      repo('fix/7-x'); // previous PBI's branch; the next PBI's ledger (9) is already created and newer
+    it('without a .agents/current marker binds a stop to the ledger of the branch still checked out', () => {
+      repo('fix/7-x'); // no loop binding: the branch rule applies although ledger 9 is newer
       const l7 = mk('7', new Date(2020, 1, 1));
       const l9 = mk('9');
       stop('issue-reader');
@@ -581,6 +581,189 @@ describe('subagent-ledger hook', () => {
         env: cleanEnv({ AGENTS_LEDGER: l9 }),
       });
       expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — ok\n');
+    });
+  });
+
+  describe('loop marker .agents/current (#375)', () => {
+    const git = (...args: string[]) =>
+      spawnSync('git', ['-C', dir, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...args], { encoding: 'utf8', env: cleanEnv() });
+    const repo = (branch: string) => {
+      for (const a of [['init', '-q'], ['checkout', '-q', '-b', branch], ['commit', '-q', '--allow-empty', '-m', 'init']]) {
+        const r = git(...a);
+        if (r.status !== 0) throw new Error(`git ${a.join(' ')} failed: ${r.stderr}`);
+      }
+    };
+    const mk = (nr: string, content = `# ${nr}\n`, mtime?: Date) => {
+      const f = path.join(dir, '.agents', nr, 'progress.md');
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, content);
+      if (mtime) fs.utimesSync(f, mtime, mtime);
+      return f;
+    };
+    const read = (f: string) => fs.readFileSync(f, 'utf8');
+    const marker = (content = '9 loop-5\n') => fs.writeFileSync(path.join(dir, '.agents', 'current'), content);
+    const stop = (type = 'issue-reader', env: Record<string, string> = { AGENTS_LEDGER: '' }) =>
+      spawnSync('bash', [SCRIPT], {
+        input: JSON.stringify({ cwd: dir, agent_type: type, last_assistant_message: 'ok' }),
+        encoding: 'utf8',
+        env: cleanEnv(env),
+      });
+    const OLD = new Date(2020, 1, 1);
+    const LOOP = '# loop\nLoop: PBI #9 started\n';
+    /** Previous PBI 7 checked out, next PBI 9 bound by the loop 5 (the #375 scenario). */
+    const scenario = (loop = LOOP) => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const l9 = mk('9', '# 9\n', OLD);
+      const lp = mk('loop-5', loop);
+      return { l7, l9, lp };
+    };
+
+    it('sends a stop before the new PBI branch exists to the bound PBI, not the branch still checked out', () => {
+      const { l7, l9, lp } = scenario();
+      marker();
+      expect(stop().status).toBe(0);
+      expect(read(l9)).toBe('# 9\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+      expect(read(lp)).toBe(LOOP);
+    });
+
+    it('accepts a marker without a trailing newline', () => {
+      const { l7, l9 } = scenario();
+      marker('9 loop-5');
+      stop();
+      expect(read(l9)).toBe('# 9\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('wins over the newest-ledger fallback on the integration branch', () => {
+      repo('release/next');
+      const l9 = mk('9', '# 9\n', OLD);
+      const l7 = mk('7');
+      mk('loop-5', LOOP);
+      marker();
+      stop();
+      expect(read(l9)).toBe('# 9\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('wins outside a git repository too', () => {
+      const l9 = mk('9', '# 9\n', OLD);
+      const l7 = mk('7');
+      mk('loop-5', LOOP);
+      marker();
+      stop();
+      expect(read(l9)).toBe('# 9\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('loses against AGENTS_LEDGER', () => {
+      const { l7, l9 } = scenario();
+      const other = mk('3');
+      marker();
+      stop('reviewer', { AGENTS_LEDGER: other });
+      expect(read(other)).toBe('# 3\nSubagent reviewer: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it.each(MARKERS_MALFORMED.map((m) => [JSON.stringify(m), m]))('ignores the malformed marker %s and binds to the branch', (_, m) => {
+      const { l7, l9 } = scenario();
+      marker(m);
+      expect(stop().status).toBe(0);
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('ignores a symlinked marker', () => {
+      const { l7, l9 } = scenario();
+      const real = path.join(dir, 'real-current');
+      fs.writeFileSync(real, '9 loop-5\n');
+      fs.symlinkSync(real, path.join(dir, '.agents', 'current'));
+      stop();
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('ignores a marker that is a directory', () => {
+      const { l7 } = scenario();
+      fs.mkdirSync(path.join(dir, '.agents', 'current'));
+      stop();
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+    });
+
+    it('ignores a marker whose PBI ledger does not exist and creates none', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      mk('loop-5', LOOP);
+      marker();
+      stop();
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+      expect(fs.existsSync(path.join(dir, '.agents', '9'))).toBe(false);
+    });
+
+    it('ignores a marker whose loop ledger does not exist', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const l9 = mk('9', '# 9\n', OLD);
+      marker();
+      stop();
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it.each(LOOP_LEDGERS_STALE.map((l) => [JSON.stringify(l), l]))('ignores a stale marker when the loop ledger is %s', (_, l) => {
+      const { l7, l9, lp } = scenario(l);
+      marker();
+      stop();
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(lp)).toBe(l);
+    });
+
+    it.each([...LOOP_LEDGERS_LIVE, '# loop\n'].map((l) => [JSON.stringify(l), l]))('honours the marker while the loop ledger is %s', (_, l) => {
+      const { l7, l9 } = scenario(l);
+      marker();
+      stop();
+      expect(read(l9)).toBe('# 9\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('ignores a marker whose loop ledger is a symlink', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const l9 = mk('9', '# 9\n', OLD);
+      const real = path.join(dir, 'real-loop.md');
+      fs.writeFileSync(real, LOOP);
+      fs.mkdirSync(path.join(dir, '.agents', 'loop-5'));
+      fs.symlinkSync(real, path.join(dir, '.agents', 'loop-5', 'progress.md'));
+      marker();
+      stop();
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('does not write through a symlinked bound PBI directory and falls back to the branch', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      mk('loop-5', LOOP);
+      const real = path.join(dir, 'real');
+      fs.mkdirSync(real);
+      fs.writeFileSync(path.join(real, 'progress.md'), 'secret\n');
+      fs.symlinkSync(real, path.join(dir, '.agents', '9'));
+      marker();
+      stop();
+      expect(read(path.join(real, 'progress.md'))).toBe('secret\n');
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+    });
+
+    it.each(['general-purpose', 'Explore', 'subagent'])('writes nothing for the foreign agent %s with a valid marker', (t) => {
+      const { l7, l9, lp } = scenario();
+      marker();
+      expect(stop(t).status).toBe(0);
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(l7)).toBe('# 7\n');
+      expect(read(lp)).toBe(LOOP);
     });
   });
 
