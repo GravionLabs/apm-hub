@@ -2,7 +2,7 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { BRANCHES_BOUND, BRANCHES_UNBOUND, LOOP_LEDGERS_LIVE, LOOP_LEDGERS_STALE, MARKERS_MALFORMED, gitCleanEnv } from './ledger-test-helpers';
+import { BRANCHES_BOUND, BRANCHES_UNBOUND, LOOP_LEDGERS_FOREIGN_BRANCH, LOOP_LEDGERS_LIVE, LOOP_LEDGERS_STALE, MARKERS_MALFORMED, gitCleanEnv } from './ledger-test-helpers';
 
 const SCRIPT = path.resolve(__dirname, '../../packages/hooks/.apm/hooks/subagent-ledger.sh');
 
@@ -609,7 +609,7 @@ describe('subagent-ledger hook', () => {
         env: cleanEnv(env),
       });
     const OLD = new Date(2020, 1, 1);
-    const LOOP = '# loop\nLoop: PBI #9 started\n';
+    const LOOP = '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\n';
     /** Previous PBI 7 checked out, next PBI 9 bound by the loop 5 (the #375 scenario). */
     const scenario = (loop = LOOP) => {
       repo('fix/7-x');
@@ -721,7 +721,7 @@ describe('subagent-ledger hook', () => {
       expect(read(lp)).toBe(l);
     });
 
-    it.each([...LOOP_LEDGERS_LIVE, '# loop\n'].map((l) => [JSON.stringify(l), l]))('honours the marker while the loop ledger is %s', (_, l) => {
+    it.each(LOOP_LEDGERS_LIVE.map((l) => [JSON.stringify(l), l]))('honours the marker while the loop ledger is %s', (_, l) => {
       const { l7, l9 } = scenario(l);
       marker();
       stop();
@@ -755,6 +755,103 @@ describe('subagent-ledger hook', () => {
       stop();
       expect(read(path.join(real, 'progress.md'))).toBe('secret\n');
       expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+    });
+
+    it.each(LOOP_LEDGERS_FOREIGN_BRANCH.map((l) => [JSON.stringify(l), l]))('ignores the marker on a branch whose issue the loop has not finished: %s', (_, l) => {
+      const { l7, l9 } = scenario(l);
+      marker();
+      stop();
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('does not let the stale marker of a killed loop capture a later run on another issue branch', () => {
+      repo('fix/12-other');
+      const l12 = mk('12');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', LOOP); // killed: no `Loop: stopped`, no -Unbind
+      marker();
+      stop();
+      expect(read(l12)).toBe('# 12\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('honours the marker on the bound PBI branch itself', () => {
+      repo('feat/9-next');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('7');
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker();
+      stop();
+      expect(read(l9)).toBe('# 9\nSubagent issue-reader: stopped — ok\n');
+    });
+
+    it('honours the marker on a detached HEAD', () => {
+      repo('fix/7-x');
+      git('checkout', '-q', '--detach');
+      const l9 = mk('9', '# 9\n', OLD);
+      const l7 = mk('7');
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker();
+      stop();
+      expect(read(l9)).toBe('# 9\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('ignores a marker whose loop directory is a symlink', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const l9 = mk('9', '# 9\n', OLD);
+      const real = path.join(dir, 'real-loop');
+      fs.mkdirSync(real);
+      fs.writeFileSync(path.join(real, 'progress.md'), LOOP);
+      fs.symlinkSync(real, path.join(dir, '.agents', 'loop-5'));
+      marker();
+      stop();
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(path.join(real, 'progress.md'))).toBe(LOOP);
+    });
+
+    it('does not write through a symlinked bound PBI progress.md and falls back to the branch', () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      mk('loop-5', LOOP);
+      const target = path.join(dir, 'target.md');
+      fs.writeFileSync(target, 'secret\n');
+      fs.mkdirSync(path.join(dir, '.agents', '9'));
+      fs.symlinkSync(target, path.join(dir, '.agents', '9', 'progress.md'));
+      marker();
+      stop();
+      expect(read(target)).toBe('secret\n');
+      expect(read(l7)).toBe('# 7\nSubagent issue-reader: stopped — ok\n');
+    });
+
+    it('writes nothing through a symlinked .agents even with a valid marker', () => {
+      repo('fix/7-x');
+      const real = path.join(dir, 'real');
+      for (const [f, c] of [['7/progress.md', '# 7\n'], ['9/progress.md', '# 9\n'], ['loop-5/progress.md', LOOP], ['current', '9 loop-5\n']]) {
+        fs.mkdirSync(path.dirname(path.join(real, f)), { recursive: true });
+        fs.writeFileSync(path.join(real, f), c);
+      }
+      fs.symlinkSync(real, path.join(dir, '.agents'));
+      expect(stop().status).toBe(0);
+      expect(read(path.join(real, '9', 'progress.md'))).toBe('# 9\n');
+      expect(read(path.join(real, '7', 'progress.md'))).toBe('# 7\n');
+      expect(read(path.join(real, 'loop-5', 'progress.md'))).toBe(LOOP);
+    });
+
+    it('dedupes a repeated stop per agent_id with the sidecar next to the bound ledger', () => {
+      const { l7, l9 } = scenario();
+      marker();
+      const payload = JSON.stringify({ cwd: dir, agent_type: 'reviewer', agent_id: 'a1b2', last_assistant_message: 'APPROVE' });
+      const fire = () => spawnSync('bash', [SCRIPT], { input: payload, encoding: 'utf8', env: cleanEnv({ AGENTS_LEDGER: '' }) });
+      expect(fire().status).toBe(0);
+      expect(fire().status).toBe(0);
+      expect(read(l9)).toBe('# 9\nSubagent reviewer: stopped — APPROVE\n');
+      expect(read(l7)).toBe('# 7\n');
+      expect(fs.existsSync(path.join(dir, '.agents', '9', '.ledger-seen'))).toBe(true);
+      expect(fs.existsSync(path.join(dir, '.agents', '7', '.ledger-seen'))).toBe(false);
     });
 
     it.each(['general-purpose', 'Explore', 'subagent'])('writes nothing for the foreign agent %s with a valid marker', (t) => {

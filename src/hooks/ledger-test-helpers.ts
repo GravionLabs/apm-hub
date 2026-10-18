@@ -45,13 +45,24 @@ export const MARKERS_MALFORMED = [
   '12345678901 loop-5\n',
 ];
 
-/** Loop ledger contents for which a marker is stale (the loop stopped) or still live (running or resumed). */
+/** Loop ledger contents for which a marker is stale (the loop stopped) or still live (running or resumed). The live ones
+ * record PBI 7 (the branch `fix/7-x` of the scenario) as done, which the foreign-branch guard requires. */
 export const LOOP_LEDGERS_STALE = [
-  '# loop\nLoop: PBI #9 started\nLoop: stopped — user stop\n',
-  '# loop\nLoop: PBI #9 started\nLoop: PBI #9 done — https://x/pr/1\nLoop: stopped — nothing selectable\n',
+  '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\nLoop: stopped — user stop\n',
+  '# loop\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\nLoop: PBI #9 done — https://x/pr/9\nLoop: stopped — nothing selectable\n',
 ];
 export const LOOP_LEDGERS_LIVE = [
+  '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\n',
+  '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: stopped — pbi cap\nLoop: PBI #9 started\n',
+  '# loop\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\nSome note mentioning Loop: stopped later\n',
+  '# loop\nLoop: PBI #7 done\n',
+];
+
+/** Loop ledgers that do not record the branch issue 7 as done: on `fix/7-x` the marker for PBI 9 is ignored. */
+export const LOOP_LEDGERS_FOREIGN_BRANCH = [
   '# loop\nLoop: PBI #9 started\n',
-  '# loop\nLoop: PBI #8 started\nLoop: PBI #8 done — https://x/pr/1\nLoop: stopped — pbi cap\nLoop: PBI #9 started\n',
-  '# loop\nLoop: PBI #9 started\nSome note mentioning Loop: stopped later\n',
+  '# loop\nLoop: PBI #7 started\nLoop: PBI #9 started\n',
+  '# loop\nLoop: PBI #70 done — https://x/pr/70\nLoop: PBI #9 started\n',
+  '# loop\nLoop: PBI #17 done — https://x/pr/17\nLoop: PBI #9 started\n',
+  '# loop\nNote: Loop: PBI #7 done\nLoop: PBI #9 started\n',
 ];
