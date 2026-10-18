@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { execFileSync } from 'child_process';
-import { BRANCHES_BOUND, BRANCHES_UNBOUND, gitCleanEnv } from './ledger-test-helpers';
+import { BRANCHES_BOUND, BRANCHES_UNBOUND, LOOP_LEDGERS_FOREIGN_BRANCH, LOOP_LEDGERS_LIVE, LOOP_LEDGERS_STALE, MARKERS_MALFORMED, gitCleanEnv } from './ledger-test-helpers';
 
 const PLUGIN = path.resolve(__dirname, '../../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts');
 
@@ -359,8 +359,8 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read('99')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
     });
 
-    it('sends a stop before the new PBI branch exists to the ledger of the branch still checked out', async () => {
-      repo('fix/7-x');
+    it('without a .agents/current marker binds a stop to the ledger of the branch still checked out', async () => {
+      repo('fix/7-x'); // no loop binding: the branch rule applies although ledger 9 is newer
       const prev = withLedger('7');
       fs.utimesSync(prev, new Date(2020, 1, 1), new Date(2020, 1, 1));
       withLedger('9');
@@ -577,6 +577,362 @@ describe('opencode plugin apm-hub-hooks', () => {
       await run('reviewer');
       expect(fs.readFileSync(other, 'utf8')).toBe('Subagent reviewer: stopped — ok\n');
       expect(read('12')).toBe('# ledger\n');
+    });
+  });
+
+  describe('loop marker .agents/current (#375)', () => {
+    const git = (...a: string[]) => execFileSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...a], { stdio: 'ignore' });
+    const repo = (branch: string) => {
+      git('init', '-q');
+      git('symbolic-ref', 'HEAD', `refs/heads/${branch}`);
+      git('commit', '-q', '--allow-empty', '-m', 'init');
+    };
+    const mk = (nr: string, content = `# ${nr}\n`, mtime?: Date) => {
+      const f = path.join(dir, '.agents', nr, 'progress.md');
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, content);
+      if (mtime) fs.utimesSync(f, mtime, mtime);
+      return f;
+    };
+    const read = (f: string) => fs.readFileSync(f, 'utf8');
+    const marker = (content = '9 loop-5\n') => fs.writeFileSync(path.join(dir, '.agents', 'current'), content);
+    const stop = async (name = 'issue-reader') => (await load())['tool.execute.after'](...task(name, result('ok')));
+    const OLD = new Date(2020, 1, 1);
+    const LOOP = '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\n';
+    const scenario = (loop = LOOP) => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const l9 = mk('9', '# 9\n', OLD);
+      const lp = mk('loop-5', loop);
+      return { l7, l9, lp };
+    };
+    const LINE = 'Subagent issue-reader: stopped — ok\n';
+
+    it('sends a stop before the new PBI branch exists to the bound PBI, not the branch still checked out', async () => {
+      const { l7, l9, lp } = scenario();
+      marker();
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l7)).toBe('# 7\n');
+      expect(read(lp)).toBe(LOOP);
+    });
+
+    it('accepts a marker without a trailing newline', async () => {
+      const { l7, l9 } = scenario();
+      marker('9 loop-5');
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('wins over the newest-ledger fallback on the integration branch', async () => {
+      repo('release/next');
+      const l9 = mk('9', '# 9\n', OLD);
+      const l7 = mk('7');
+      mk('loop-5', LOOP);
+      marker();
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('wins outside a git repository too', async () => {
+      const l9 = mk('9', '# 9\n', OLD);
+      const l7 = mk('7');
+      mk('loop-5', LOOP);
+      marker();
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('loses against AGENTS_LEDGER', async () => {
+      const { l7, l9 } = scenario();
+      const other = mk('3');
+      marker();
+      process.env.AGENTS_LEDGER = other;
+      await stop('reviewer');
+      expect(read(other)).toBe('# 3\nSubagent reviewer: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it.each(MARKERS_MALFORMED.map((m) => [JSON.stringify(m), m]))('ignores the malformed marker %s and binds to the branch', async (_, m) => {
+      const { l7, l9 } = scenario();
+      marker(m);
+      await stop();
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('ignores a symlinked marker', async () => {
+      const { l7, l9 } = scenario();
+      const real = path.join(dir, 'real-current');
+      fs.writeFileSync(real, '9 loop-5\n');
+      fs.symlinkSync(real, path.join(dir, '.agents', 'current'));
+      await stop();
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('ignores a marker that is a directory', async () => {
+      const { l7 } = scenario();
+      fs.mkdirSync(path.join(dir, '.agents', 'current'));
+      await stop();
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+    });
+
+    it('ignores a marker whose PBI ledger does not exist and creates none', async () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      mk('loop-5', LOOP);
+      marker();
+      await stop();
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+      expect(fs.existsSync(path.join(dir, '.agents', '9'))).toBe(false);
+    });
+
+    it('ignores a marker whose loop ledger does not exist', async () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const l9 = mk('9', '# 9\n', OLD);
+      marker();
+      await stop();
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it.each(LOOP_LEDGERS_STALE.map((l) => [JSON.stringify(l), l]))('ignores a stale marker when the loop ledger is %s', async (_, l) => {
+      const { l7, l9, lp } = scenario(l);
+      marker();
+      await stop();
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(lp)).toBe(l);
+    });
+
+    it.each(LOOP_LEDGERS_LIVE.map((l) => [JSON.stringify(l), l]))('honours the marker while the loop ledger is %s', async (_, l) => {
+      const { l7, l9 } = scenario(l);
+      marker();
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('ignores a marker whose loop ledger is a symlink', async () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const l9 = mk('9', '# 9\n', OLD);
+      const real = path.join(dir, 'real-loop.md');
+      fs.writeFileSync(real, LOOP);
+      fs.mkdirSync(path.join(dir, '.agents', 'loop-5'));
+      fs.symlinkSync(real, path.join(dir, '.agents', 'loop-5', 'progress.md'));
+      marker();
+      await stop();
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('does not write through a symlinked bound PBI directory and falls back to the branch', async () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      mk('loop-5', LOOP);
+      const real = path.join(dir, 'real');
+      fs.mkdirSync(real);
+      fs.writeFileSync(path.join(real, 'progress.md'), 'secret\n');
+      fs.symlinkSync(real, path.join(dir, '.agents', '9'));
+      marker();
+      await stop();
+      expect(read(path.join(real, 'progress.md'))).toBe('secret\n');
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+    });
+
+    it.each(LOOP_LEDGERS_FOREIGN_BRANCH.map((l) => [JSON.stringify(l), l]))('ignores the marker on a branch whose issue the loop has not finished: %s', async (_, l) => {
+      const { l7, l9 } = scenario(l);
+      marker();
+      await stop();
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('does not let the stale marker of a killed loop capture a later run on another issue branch', async () => {
+      repo('fix/12-other');
+      const l12 = mk('12');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', LOOP); // killed: no `Loop: stopped`, no -Unbind
+      marker();
+      await stop();
+      expect(read(l12)).toBe(`# 12\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('honours the marker on the bound PBI branch itself', async () => {
+      repo('feat/9-next');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('7');
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker();
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+    });
+
+    it('honours the marker on a detached HEAD', async () => {
+      repo('fix/7-x');
+      git('checkout', '-q', '--detach');
+      const l9 = mk('9', '# 9\n', OLD);
+      const l7 = mk('7');
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker();
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('ignores a marker whose loop directory is a symlink', async () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      const l9 = mk('9', '# 9\n', OLD);
+      const real = path.join(dir, 'real-loop');
+      fs.mkdirSync(real);
+      fs.writeFileSync(path.join(real, 'progress.md'), LOOP);
+      fs.symlinkSync(real, path.join(dir, '.agents', 'loop-5'));
+      marker();
+      await stop();
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(path.join(real, 'progress.md'))).toBe(LOOP);
+    });
+
+    it('does not write through a symlinked bound PBI progress.md and falls back to the branch', async () => {
+      repo('fix/7-x');
+      const l7 = mk('7');
+      mk('loop-5', LOOP);
+      const target = path.join(dir, 'target.md');
+      fs.writeFileSync(target, 'secret\n');
+      fs.mkdirSync(path.join(dir, '.agents', '9'));
+      fs.symlinkSync(target, path.join(dir, '.agents', '9', 'progress.md'));
+      marker();
+      await stop();
+      expect(read(target)).toBe('secret\n');
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+    });
+
+    it('writes nothing through a symlinked .agents even with a valid marker', async () => {
+      repo('fix/7-x');
+      const real = path.join(dir, 'real');
+      for (const [f, c] of [['7/progress.md', '# 7\n'], ['9/progress.md', '# 9\n'], ['loop-5/progress.md', LOOP], ['current', '9 loop-5\n']]) {
+        fs.mkdirSync(path.dirname(path.join(real, f)), { recursive: true });
+        fs.writeFileSync(path.join(real, f), c);
+      }
+      fs.symlinkSync(real, path.join(dir, '.agents'));
+      await expect(stop()).resolves.toBeUndefined();
+      expect(read(path.join(real, '9', 'progress.md'))).toBe('# 9\n');
+      expect(read(path.join(real, '7', 'progress.md'))).toBe('# 7\n');
+      expect(read(path.join(real, 'loop-5', 'progress.md'))).toBe(LOOP);
+    });
+
+    it('writes an identical stop once into the bound ledger (last-line dedupe)', async () => {
+      const { l7, l9 } = scenario();
+      marker();
+      await stop();
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('writes nothing with a live marker when real git cannot read the repository (corrupt HEAD)', async () => {
+      const { l7, l9, lp } = scenario();
+      marker();
+      fs.writeFileSync(path.join(dir, '.git', 'HEAD'), 'garbage\n');
+      await stop();
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(l7)).toBe('# 7\n');
+      expect(read(lp)).toBe(LOOP);
+    });
+
+    it('writes nothing with a live marker when git fails inside a repository', async () => {
+      const { l7, l9 } = scenario();
+      marker();
+      const bin = path.join(dir, 'broken-bin');
+      fs.mkdirSync(bin, { recursive: true });
+      fs.writeFileSync(path.join(bin, 'git'), '#!/bin/sh\nexit 128\n', { mode: 0o755 });
+      process.env.PATH = `${bin}${path.delimiter}${process.env.PATH ?? ''}`;
+      await stop();
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it.each(BRANCHES_UNBOUND)('honours a live marker on the branch %s without an issue number', async (b) => {
+      repo(b);
+      const l9 = mk('9', '# 9\n', OLD);
+      const l7 = mk('7');
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker();
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('honours the marker on the branch recorded at -Bind (first PBI bound from an unrelated issue branch)', async () => {
+      repo('fix/12-x');
+      const l12 = mk('12');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12\n');
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l12)).toBe('# 12\n');
+    });
+
+    it('still treats another issue branch as foreign when the marker recorded a different one', async () => {
+      repo('fix/13-x');
+      const l13 = mk('13');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12\n');
+      await stop();
+      expect(read(l13)).toBe(`# 13\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('ignores the recorded-branch marker of a stopped loop: the line lands in the origin ledger', async () => {
+      repo('fix/12-x');
+      const l12 = mk('12');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\nLoop: stopped — user stop\n');
+      marker('9 loop-5 12\n');
+      await stop();
+      expect(read(l12)).toBe(`# 12\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('does not create the missing PBI ledger of a recorded-branch marker', async () => {
+      repo('fix/12-x');
+      const l12 = mk('12');
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12\n');
+      await stop();
+      expect(fs.existsSync(path.join(dir, '.agents', '9'))).toBe(false);
+      expect(read(l12)).toBe(`# 12\n${LINE}`);
+    });
+
+    it('accepts the recorded-branch marker without a trailing newline', async () => {
+      repo('fix/12-x');
+      mk('12');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12');
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+    });
+
+    it.each(['general', 'subagent', 'build-helper'])('writes nothing for the foreign agent %s with a valid marker', async (t) => {
+      const { l7, l9, lp } = scenario();
+      marker();
+      await stop(t);
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(l7)).toBe('# 7\n');
+      expect(read(lp)).toBe(LOOP);
     });
   });
 

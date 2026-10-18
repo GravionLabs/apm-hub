@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # SubagentStop hook: append one line per finished subagent to the issue ledger
 # (.agents/<issue>/progress.md written by the orchestrator agent). Claude Code and Copilot CLI payloads.
-# Writes only for the orchestrator's subagents, into .agents/<nr>/progress.md of the issue number in the git branch
-# (<type>/[<scope>/]<nr>[-<slug>]); no ledger, no write. Branch without a number, detached HEAD, no git or no repository:
-# newest PBI ledger; git failing inside a repository: no write. AGENTS_LEDGER wins.
+# Writes only for the orchestrator's subagents. Target: AGENTS_LEDGER; else the PBI of a live loop marker
+# .agents/current (`<pbi> loop-<nr>`, regular file, its loop ledger present without a final `Loop: stopped`, the PBI
+# ledger present, the branch number absent, equal to <pbi> or to the marker's recorded branch, or recorded as
+# `Loop: PBI #<nr> done`); else
+# .agents/<nr>/progress.md of the issue number in the git branch (<type>/[<scope>/]<nr>[-<slug>]); no ledger,
+# no write. Branch without a number, detached HEAD, no git or no repository: newest PBI ledger; git failing inside a
+# repository: no write.
 # SubagentStop fires at every depth (pbi-runner and its children) and again on a SendMessage resume, so the
 # stop is deduplicated per agent_id and payload hash (sidecar .ledger-seen next to the ledger, regular file only):
 # the same stop fired twice is written once, a resumed agent with a new reply (even the same `GATE review`) again.
@@ -45,27 +49,61 @@ case "$base" in
   *) exit 0 ;;
 esac
 
+regular() { [ -f "$1" ] && [ ! -L "$1" ] && [ ! -L "$(dirname "$1")" ]; } # regular file, neither it nor its dir a symlink
+bound_ledger() { # bound_ledger <branch nr>: ledger of the PBI named by the loop marker .agents/current, else nothing
+  local m="$cwd/.agents/current" c="" re pbi loop origin loop_ledger last cr=$'\r'
+  [ -f "$m" ] && [ ! -L "$m" ] || return 0
+  IFS= read -r -d '' c < "$m" 2>/dev/null
+  # strict format: one line `<pbi> loop-<nr>[ <origin>]`, optional trailing newline (ASCII only, so length = bytes);
+  # <origin> is the issue number of the branch -Bind ran on
+  re=$'^([1-9][0-9]{0,9}) (loop-[1-9][0-9]{0,9})( ([1-9][0-9]{0,9}))?\n?$'
+  [[ "$c" =~ $re ]] || return 0
+  pbi="${BASH_REMATCH[1]}"; loop="${BASH_REMATCH[2]}"; origin="${BASH_REMATCH[4]}"
+  # nothing after a NUL byte: the file size must equal what was read
+  [ "$(wc -c < "$m" 2>/dev/null | tr -d ' ')" = "${#c}" ] || return 0
+  # stale guard: the loop ledger exists and its last `Loop: ` line is not a `Loop: stopped` line
+  loop_ledger="$cwd/.agents/$loop/progress.md"
+  regular "$loop_ledger" || return 0
+  last="$(grep -a '^Loop: ' "$loop_ledger" 2>/dev/null | tail -n 1)"
+  case "$last" in 'Loop: stopped'*) return 0 ;; esac
+  # foreign-branch guard: a branch naming another issue wins unless it is the branch -Bind ran on or the loop
+  # finished that issue (its previous PBI); a trailing CR (CRLF ledger) is accepted
+  if [ -n "$1" ] && [ "$1" != "$pbi" ] && [ "$1" != "$origin" ]; then
+    grep -aEq "^Loop: PBI #$1 done( |$cr?\$)" "$loop_ledger" 2>/dev/null || return 0
+  fi
+  regular "$cwd/.agents/$pbi/progress.md" && printf '%s' "$cwd/.agents/$pbi/progress.md"
+}
+
 ledger="${AGENTS_LEDGER:-}"
 if [ -z "$ledger" ]; then
-  # bind to the issue number of the current branch (<type>/[<scope>/]<nr>[-<slug>]): its ledger or nothing
-  # (no fsmonitor, no hooks from the repository config; a symlinked .agents is never written through)
+  # a symlinked .agents is never written through
   [ ! -L "$cwd/.agents" ] || exit 0
-  branch=""
+  # issue number of the current branch (<type>/[<scope>/]<nr>[-<slug>]), read without fsmonitor and repository hooks
+  branch=""; git_failed=""
   if command -v git >/dev/null 2>&1; then
-    # git present: a failure inside a repository (corrupt, unsafe owner, broken git) writes nothing, never the newest ledger
+    # git present: a failure inside a repository (corrupt, unsafe owner, broken git) means: no branch number
     branch="$(git -C "$cwd" -c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse --abbrev-ref HEAD 2>/dev/null)" || {
       d="$cwd"
-      while [ -n "$d" ] && [ "$d" != "/" ] && [ "$d" != "." ]; do [ -e "$d/.git" ] && exit 0; d="$(dirname "$d")"; done
+      while [ -n "$d" ] && [ "$d" != "/" ] && [ "$d" != "." ]; do [ -e "$d/.git" ] && { git_failed=1; break; }; d="$(dirname "$d")"; done
       branch=""
     }
   fi
   branch="$(printf '%s' "$branch" | tr '[:upper:]' '[:lower:]')"
   branch_re='^(feat|fix|chore|docs|refactor|test|perf|ci|build|style|revert|hotfix)/([^/]+/)*([0-9]+)(-[^/]*)?$'
-  if [[ "$branch" =~ $branch_re ]]; then
-    ledger="$cwd/.agents/${BASH_REMATCH[3]}/progress.md"
-  else
-    # no number, detached HEAD ("HEAD"), no git or no repository: newest .agents/<issue>/progress.md under the working tree, loop-<nr> ledgers excluded (loop-x is a PBI ledger)
-    ledger="$(ls -t "$cwd"/.agents/*/progress.md 2>/dev/null | grep -v '/\.agents/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"
+  nr=""
+  [[ "$branch" =~ $branch_re ]] && nr="${BASH_REMATCH[3]}"
+  # git failing inside a repository: no write, not even through the loop marker, never the newest ledger
+  [ -z "$git_failed" ] || exit 0
+  # 1. the loop marker binds the stop to the PBI the loop is running (lines before its branch exists, #375)
+  ledger="$(bound_ledger "$nr")"
+  if [ -z "$ledger" ]; then
+    if [ -n "$nr" ]; then
+      # 3. the branch issue's ledger or nothing
+      ledger="$cwd/.agents/$nr/progress.md"
+    else
+      # 4. no number, detached HEAD ("HEAD"), no git or no repository: newest .agents/<issue>/progress.md under the working tree, loop-<nr> ledgers excluded (loop-x is a PBI ledger)
+      ledger="$(ls -t "$cwd"/.agents/*/progress.md 2>/dev/null | grep -v '/\.agents/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"
+    fi
   fi
 fi
 [ -n "$ledger" ] && [ -f "$ledger" ] || exit 0

@@ -92,6 +92,20 @@ describe('loop-mode reference', () => {
     expect(read('packages/github/.apm/skills/github-issue/references/pbi-pipeline.md')).toMatch(/`ledger: resume` → the same-issue ledger rule/);
   });
 
+  it('binds the loop to the new PBI before issue-reader and unbinds at every stop (#375)', () => {
+    const ledger = section(reference, 'Loop ledger');
+    expect(ledger).toContain('Add-LedgerLine.ps1 -Issue <pbi> -Bind loop-<nr>');
+    expect(ledger).toContain('`Loop: PBI #<pbi> started`');
+    expect(ledger).toContain('`.agents/current` (`<pbi> loop-<nr>`, plus the issue number of the branch it ran on');
+    expect(ledger).toMatch(/last `Loop: ` line is not a `Loop: stopped` line/);
+    expect(ledger).not.toMatch(/prefer the marker over the branch number/);
+    expect(ledger).toMatch(/a `Loop: PBI #<nr> done` line; any other issue branch wins/);
+    expect(ledger).toMatch(/`-Bind` fails without the PBI ledger/);
+    expect(ledger).not.toContain('apm-hub/issues/375');
+    expect(section(reference, 'Stop conditions')).toMatch(/then the `Loop: stopped` line, then `Add-LedgerLine\.ps1 -Unbind`/);
+    expect(section(reference, 'Runner mode (Claude Code)')).toMatch(/header and bind it[\s\S]*followed by `Add-LedgerLine\.ps1 -Unbind`/);
+  });
+
   it('reselects by PR state, never by the ledger, and names the blocked-chain stop', () => {
     const sel = section(reference, 'Selection and reselection');
     expect(sel).toContain('next-selection.md');
