@@ -60,6 +60,15 @@ Every language package provides `<lang>-implementation` (conventions + `## Revie
 - An agent is justified only by a model per role, a host-enforced tool set, an output contract or a primary-agent entry point. Everything procedural is a skill.
 - After changing an agent, copy it to `apmw/tests/fixtures/agents/` and regenerate the goldens there.
 
+## Tests
+
+- Code in `src/`: unit test next to it as `<name>.test.ts`.
+- Package content (skills, agents, scripts, hooks): `test/packages/<domain>/<topic>.test.ts`, `<domain>` is the package of the file under test; a flow across several packages around the orchestrator goes to `agents`.
+- Repository files outside `packages/` (workflows, `.github/`): `test/repo/`. Helpers shared by several test directories: `test/helpers/` (no `.test.ts` suffix).
+- pwsh-heavy tests (many processes, fake binaries): `*.integration.test.ts` in `test/integration/queue/`; elsewhere the `fast` project skips them. Batch cases into one pwsh process with `test/helpers/queue-batch.ps1`.
+- Resolve repo files from `__dirname` (`path.resolve(__dirname, '../../../packages/...')` in `test/packages/<domain>/`).
+- `test/integration/skills/` is the Copilot SDK harness with its own `package.json`; no repo tests there.
+
 ## Commands
 
 ```powershell
