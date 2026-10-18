@@ -46,3 +46,61 @@ describe('status.md: status table rules', () => {
     expect(gates).toContain('`status.md` `## States`');
   });
 });
+
+const orchestrator = read('packages/agents/.apm/agents/orchestrator.agent.md');
+const agentBody = orchestrator.split(/^---$/m).slice(2).join('---');
+const agentDescription = /^description: (.*)$/m.exec(orchestrator)![1];
+const statusRule = agentBody.split('\n').find(l => l.startsWith('`status <feature|epic>`')) ?? '';
+const launcher = read('packages/agents/.apm/skills/orchestrator/SKILL.md');
+
+describe('status mode word: orchestrator agent', () => {
+  it('lists status as the sixth mode in the description', () => {
+    expect(agentDescription).toContain('plan|implement|full|next|loop|status');
+    expect(agentDescription).toMatch(/status prints the PBI state table/);
+  });
+
+  it('accepts status as a first-word mode', () => {
+    expect(agentBody).toMatch(/`next`, `loop` or `status`; otherwise \*\*full\*\*/);
+  });
+
+  it('has its own status rule line pointing to references/status.md', () => {
+    expect(statusRule).not.toBe('');
+    expect(statusRule).toContain('`github-issue` `references/status.md`');
+    expect(statusRule).not.toContain('`loop <feature|epic>`');
+  });
+
+  it('names the headless file, the writer script and the Status line', () => {
+    expect(statusRule).toContain('.agents/status-<nr>.md');
+    expect(statusRule).toContain('Write-StatusTable.ps1');
+    expect(statusRule).toContain('Status: .agents/status-<nr>.md');
+    expect(statusRule).toMatch(/interactive: show the table and ask which mode to start/);
+  });
+
+  it('is read-only and writes no ledger, Next or Ledger complete line', () => {
+    expect(statusRule).toMatch(/read-only: no ledger, no `Next:` or `Ledger complete\.` lines/);
+    expect(agentBody).toMatch(/Report at the end \(not for `status`/);
+  });
+
+  it('rejects a PBI or a description', () => {
+    expect(statusRule).toMatch(/A PBI or a description: say `status` needs a Feature or Epic number and stop/);
+    expect(agentBody).toMatch(/`next` takes none, nor does `loop` or `status`: say so and stop/);
+  });
+});
+
+describe('status mode word: gates parser and launcher skill', () => {
+  it('gates parser accepts status and rejects a status description', () => {
+    const parse = section(gates, 'Description input');
+    expect(parse).toMatch(/`next`, `loop` or `status`/);
+    expect(parse).toMatch(/`status <description>`[^\n]*needs a Feature or Epic number and stop/);
+  });
+
+  it('launcher skill lists status and takes no description for it', () => {
+    const description = /^description: (.*)$/m.exec(launcher)![1];
+    expect(description).toContain('plan|implement|full|next|loop|status');
+    expect(launcher).toMatch(/`next`, `loop` and `status` take no description/);
+  });
+
+  it('does not accept a status mode in the description-capable list', () => {
+    expect(launcher).toContain('a description for `plan|implement|full`;');
+  });
+});

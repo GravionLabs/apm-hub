@@ -21,7 +21,7 @@ describe('orchestrator launcher skill', () => {
   });
 
   it('lists the same modes as the agent, extracted so they cannot drift', () => {
-    const modes = /\b(plan\|implement\|full\|next\|loop)\b/.exec(agent)?.[1];
+    const modes = /\b(plan\|implement\|full\|next\|loop\|status)\b/.exec(agent)?.[1];
     expect(modes).toBeDefined();
     expect(parse(frontmatter).description).toContain(modes!);
     expect(parse(frontmatter).description.length).toBeLessThanOrEqual(200);
@@ -47,8 +47,8 @@ describe('orchestrator launcher skill', () => {
     expect(skill).toMatch(/git guardrails/);
   });
 
-  it('says next and loop take no description and names the client subagent mechanisms', () => {
-    expect(skill).toMatch(/`next` and `loop` take no description/);
+  it('says next, loop and status take no description and names the client subagent mechanisms', () => {
+    expect(skill).toMatch(/`next`, `loop` and `status` take no description/);
     expect(skill).not.toContain('via the Agent tool');
     expect(skill).toMatch(/Claude Code `Agent`/);
     expect(skill).toMatch(/OpenCode[^\n]*`task`/);
