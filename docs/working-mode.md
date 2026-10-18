@@ -44,7 +44,7 @@ Two defaults, each switched off by a flag, and one flag that answers the advisor
 
 | Flag | Default without it |
 | :-- | :-- |
-| `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged (in progress: a local ledger without `Ledger complete.`, else a remote branch `/<nr>-`, see `references/status.md`), merged ones per the "Task merged" rule for Tasks and `Merged (closes at release)` in `next-selection.md` for PBIs and Features) and you pick one |
+| `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged (in progress as defined in `github-issue` `references/status.md`), merged ones per the "Task merged" rule for Tasks and `Merged (closes at release)` in `next-selection.md` for PBIs and Features) and you pick one |
 | `--no-review-summary` | After `review-fanout` it shows one line per finding (`severity file:line issue`, blocking first, MEDIUM/LOW included) and asks which advisories to fix; the rest go to the PR body. With the flag only blocking findings trigger fix rounds |
 | `--fix-advisories none\|medium\|all[:dim,dim]` | Decides the advisory question up front: `none` sends all advisories to the PR body, `medium` fixes MEDIUM and above, `all` fixes every advisory; `:dim,dim` limits the policy to those `review-fanout` dimensions (other advisories go to the PR body). Blocking findings are always fixed. Prints `Advisory policy: <policy> — fixing <n>, PR body <m>` and writes a `Ruling:` ledger line |
 
