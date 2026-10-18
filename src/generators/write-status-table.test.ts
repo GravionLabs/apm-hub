@@ -87,4 +87,23 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
     expect(fs.readFileSync(secret, 'utf8')).toBe('secret\n');
     expect(fs.readdirSync(path.join(dir, '.agents'))).toEqual(['status-5.md']);
   });
+
+  it.skipIf(process.platform === 'win32')('refuses a dangling symlinked .agents/', () => {
+    const missing = path.join(os.tmpdir(), `missing-${process.pid}-${Date.now()}`);
+    fs.symlinkSync(missing, path.join(dir, '.agents'));
+    const r = run(['-Issue', '5', '-Path', withFile(table)]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr + r.stdout).toMatch(/symlinked/);
+    expect(fs.existsSync(missing)).toBe(false);
+  });
+
+  it.skipIf(process.platform === 'win32')('refuses a dangling symlinked target and does not create the link target', () => {
+    const missing = path.join(dir, 'not-there.md');
+    fs.mkdirSync(path.join(dir, '.agents'));
+    fs.symlinkSync(missing, target('5'));
+    const r = run(['-Issue', '5', '-Path', withFile(table)]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr + r.stdout).toMatch(/symlinked/);
+    expect(fs.existsSync(missing)).toBe(false);
+  });
 });

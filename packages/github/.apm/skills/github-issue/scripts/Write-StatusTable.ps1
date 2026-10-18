@@ -30,7 +30,8 @@ $base = [IO.Path]::GetFullPath((Join-Path (Get-Location).Path '.agents'))
 $file = [IO.Path]::GetFullPath((Join-Path $base "status-$Issue.md"))
 if (-not $file.StartsWith($base + [IO.Path]::DirectorySeparatorChar)) { throw "Path escapes .agents/: $file" }
 # A symlinked .agents/ or target is refused (it could point outside the project).
-foreach ($p in @($base, $file)) { if ((Test-Path -LiteralPath $p) -and (Get-Item -LiteralPath $p -Force).LinkTarget) { throw "Refusing symlinked path: $p" } }
+# Get-Item -Force (not Test-Path) also sees a dangling symlink.
+foreach ($p in @($base, $file)) { $i = Get-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue; if ($i -and $i.LinkTarget) { throw "Refusing symlinked path: $p" } }
 New-Item -ItemType Directory -Path $base -Force | Out-Null
 $tmp = Join-Path $base ".status-$Issue.$([guid]::NewGuid().ToString('N')).tmp"
 try {
