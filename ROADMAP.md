@@ -41,6 +41,18 @@ Opt-in through `AGENT_BUS_URL`; without it nothing changes.
 
 Epic #387 closes with #394.
 
+### After 2.7.0 — Feature #398: queue runner as driver on the bus session API
+
+Not scheduled yet. Splits `Invoke-OrchestratorQueue.ps1` into driver (stays in apm-hub) and executor (bus session API, `GravionLabs/agent-bus` Feature #61); #392's `-Mux` is reworked into it. Order in agent-bus: `ROADMAP.md` there, stage 4.
+
+| Needs from agent-bus | Enables in apm-hub |
+| --- | --- |
+| #62–#65 (headless sessions, restart, HTTP) | executor choice in the queue runner, overnight Epic runs without bus-mux |
+| #66–#68 (idle, pane mode) | `-Mux` as pane executor, following a run in bus-mux |
+| #43 (`/ingest`) | already needed for 2.6.0 (#389) |
+
+PBIs for #398 are planned when #65 is released (`orchestrator plan 398`).
+
 ## 3.0.0 — breaking
 
 | Issue | Title | Depends on |
@@ -49,5 +61,6 @@ Epic #387 closes with #394.
 
 ## Risks
 
+- #398 depends on the session API in agent-bus#61; until then the local executor stays the only one.
 - 2.6.0 and 2.7.0 depend on the agent-bus repository (ingest endpoint, bus-mux); if it lags, those releases shift, nothing else does.
 - 2.5.0 and 2.6.0 can swap without harm; 2.4.0 comes first because it is nearly done.
