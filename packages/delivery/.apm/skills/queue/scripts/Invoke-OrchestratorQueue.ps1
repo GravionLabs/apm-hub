@@ -12,6 +12,9 @@
   Output of every run is appended to .agents/<issue>/run.log. The runner never merges (unless the opt-in -MergeApproved is given) and never answers a gate.
   Run it from the repository root. Exit codes: 0 all done/skipped, 1 failed, 2 gate, 3 nothing selectable (queue mode only).
 
+  -Status <nr>: one-shot 'status <nr>' (no loop, no ledger); prints .agents/status-<nr>.md. Exit 0: file written during this run and
+  'Status: .agents/status-<nr>.md' in the output; 2: 'Gate:' line; 1: otherwise. Output in .agents/status-<nr>.log. Not combinable with other selectors. Output and the table are printed with control characters stripped; the marker may be markdown-wrapped.
+
   -Feature <nr> / -Epic <nr> (queue mode): loops '<harness> --agent orchestrator -p "next <nr>"', one fresh process per
   iteration (selection stays in the orchestrator, github-issue/references/next-selection.md). Stops on:
     '<Feature|Epic> #<nr> is done.' (child exit 0)  -> state done, exit 0
@@ -25,7 +28,7 @@
   output in .agents/queue-<nr>.log and per PBI in .agents/<pbi>/run.log.
   AGENTS_LEDGER is cleared before every child (also an inherited value) and set to the PBI ledger only in the runner after
   'Next PBI: #<n>' is parsed (a running child cannot be changed); the caller's value is restored at the end.
-  A 'Gate:' line in the output stops the queue even when the ledger has no new gate (the question must reach a human).
+  A 'Gate:' line (at line start, may be markdown-wrapped: '**Gate**:', '> Gate:'; case-sensitive) in the output stops the queue even when the ledger has no new gate (the question must reach a human).
   -MergeApproved: after a done PBI (child exit 0) whose last 'Verdict:' line is exactly 'Verdict: APPROVE', merge the PBI's open PR (found via the ledger
   line 'Phase pull-request: complete - <url>' and 'gh pr list', head branch must contain '/<pbi>-') with
   'gh pr merge <pr> --squash --match-head-commit <sha>'. Base must be release/*, head must not be release/*
@@ -41,6 +44,7 @@
 .PARAMETER Harness         Adapter in harness/<name>.ps1.
 .PARAMETER Feature         Queue mode: loop 'next <nr>' for this Feature.
 .PARAMETER Epic            Queue mode: same for an Epic.
+.PARAMETER Status          One-shot: run 'status <nr>' headless and print .agents/status-<nr>.md. Exit 0 written, 1 missing or stale, 2 gate. No ledger.
 .PARAMETER MergeApproved   Queue mode: squash-merge the PBI's open PR on an APPROVE verdict (default off).
 .PARAMETER TrustedOnly     With -Label: only issues authored by OWNER, MEMBER or COLLABORATOR (issue text is untrusted input).
 .PARAMETER ContinueOnError Continue with the next issue after a failed run.
@@ -57,6 +61,7 @@ param(
   [ValidateSet('plan', 'implement', 'full')][string]$Mode = 'full',
   [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string]$Feature,
   [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string]$Epic,
+  [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string]$Status,
   [switch]$MergeApproved,
   [switch]$TrustedOnly,
   [ValidatePattern('\A[a-z]{1,20}\z')][string]$Harness = 'claude',
@@ -89,7 +94,74 @@ function Test-NotSymlink([string]$Path) {
   $i = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
   if ($i -and $i.LinkTarget) { throw "Refusing symlinked path: $Path" }
 }
-function Get-Gates([string[]]$Lines) { @($Lines | Where-Object { $_ -match '\AGate:' }) }
+function Get-HarnessInvocation([string]$Nr, [string]$HarnessMode, [hashtable]$Extra) {
+  $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
+  if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
+  $cmd = & $adapter -Issue $Nr -Mode $HarnessMode -AllowAll:$AllowAll @Extra
+  $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
+  $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
+  $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
+  @{ Cmd = $cmd; EnvVars = $envVars; EnvText = $envText }
+}
+# Untrusted text (issue titles, model output) must not reach the terminal with escape sequences: strip CSI, OSC (payload
+# limited to one line) and other control characters. Same patterns as github-issue/scripts/Write-StatusTable.ps1: skills do not share code.
+function Remove-ControlChar([string]$Text) {
+  $t = [regex]::Replace($Text, '\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b\r\n]*(\x07|\x1b\\)|\x1b.?', '')
+  [regex]::Replace($t, '[\x00-\x08\x0b-\x1f\x7f-\x9f]', '')
+}
+# Line markers may be markdown-wrapped: opening wrappers (spaces, list dash, quote, bold, code) before the word,
+# closing wrappers between the word and the colon ('**Gate**:'). Case-sensitive, never mid-line ('See Gate:').
+$MarkerStart = '\A[\s*`>_-]*'
+$MarkerEnd = '[*`_]*:'
+$GatePattern = $MarkerStart + 'Gate' + $MarkerEnd
+function Get-Gates([string[]]$Lines) { @($Lines | ForEach-Object { "$_".Trim() } | Where-Object { $_ -cmatch $GatePattern }) }
+
+if ($Status) {
+  $bad = [ordered]@{ 'issue numbers' = ($Issue.Count -gt 0); '-IssueFile' = [bool]$IssueFile; '-Label' = [bool]$Label; '-Feature/-Epic' = [bool]($Feature -or $Epic)
+    '-Mode' = $PSBoundParameters.ContainsKey('Mode'); '-MergeApproved' = [bool]$MergeApproved; '-ContinueOnError' = [bool]$ContinueOnError; '-FixAdvisories' = [bool]$FixAdvisories; '-TrustedOnly' = [bool]$TrustedOnly }
+  $bad = @($bad.Keys | Where-Object { $bad[$_] })
+  if ($bad) { throw "-Status cannot be combined with $($bad -join ', ')." }
+  $nr = ConvertTo-IssueNumber $Status 'status'
+  $inv = Get-HarnessInvocation $nr 'status' @{}
+  $cmd = $inv.Cmd; $envVars = $inv.EnvVars; $envText = $inv.EnvText
+  if ($DryRun) { Write-Host "[dry-run] Status #${nr}: $envText"; exit 0 }
+  $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+  if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
+  Test-NotSymlink '.agents'
+  New-Item -ItemType Directory -Path '.agents' -Force | Out-Null
+  $statusFile = Join-Path '.agents' "status-$nr.md"
+  $log = Join-Path '.agents' "status-$nr.log"
+  Test-NotSymlink $statusFile
+  Test-NotSymlink $log
+  $start = Get-Date
+  Write-Host "[run] Status #${nr}: $envText"
+  Add-Content -LiteralPath $log -Value "=== $($start.ToString('o')) $envText" -Encoding utf8
+  $callerLedger = $env:AGENTS_LEDGER
+  $saved = @{}
+  foreach ($k in $envVars.Keys) { $saved[$k] = [Environment]::GetEnvironmentVariable($k); [Environment]::SetEnvironmentVariable($k, [string]$envVars[$k]) }
+  [Environment]::SetEnvironmentVariable('AGENTS_LEDGER', $null)
+  try { $out = @(& $bin.Source @($cmd.Arguments) 2>&1 | ForEach-Object { "$_" }); $code = $LASTEXITCODE }
+  finally {
+    foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) }
+    [Environment]::SetEnvironmentVariable('AGENTS_LEDGER', $callerLedger)
+  }
+  $out = @($out | ForEach-Object { Remove-ControlChar $_ })
+  $out | Out-Host
+  Add-Content -LiteralPath $log -Value ($out + "=== exit code $code") -Encoding utf8
+  $trimmed = @($out | ForEach-Object { $_.Trim() })
+  $gateLine = @(Get-Gates $trimmed) | Select-Object -Last 1
+  if ($gateLine) { Write-Host "Gate on status #${nr}: $gateLine"; exit 2 }
+  Test-NotSymlink $statusFile
+  $fi = Get-Item -LiteralPath $statusFile -Force -ErrorAction SilentlyContinue
+  $marker = @($trimmed | Where-Object { $_ -cmatch ($MarkerStart + 'Status' + $MarkerEnd + '[\s*`_]*' + "\.agents/status-$nr\.md(?![\w./-])") }).Count -gt 0
+  $why = if ($code -ne 0) { "child exit code $code" }
+    elseif (-not $fi) { "no status file $statusFile" }
+    elseif ($fi.LastWriteTime -lt $start) { "status file $statusFile is stale (not written by this run)" }
+    elseif (-not $marker) { "no 'Status: .agents/status-$nr.md' line in the output" }
+  if ($why) { Write-Host "Status #${nr} failed: $why"; exit 1 }
+  Get-Content -LiteralPath $statusFile | ForEach-Object { Remove-ControlChar $_ } | Out-Host
+  exit 0
+}
 
 if ($Feature -or $Epic) {
   if ($Feature -and $Epic) { throw 'Pass either -Feature or -Epic, not both.' }
@@ -97,12 +169,8 @@ if ($Feature -or $Epic) {
   if ($PSBoundParameters.ContainsKey('Mode')) { throw '-Mode cannot be combined with -Feature/-Epic (the mode is always next).' }
   $nr = ConvertTo-IssueNumber ($Feature ? $Feature : $Epic) 'queue'
   $kind = $Feature ? 'Feature' : 'Epic'
-  $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
-  if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
-  $cmd = & $adapter -Issue $nr -Mode next -AllowAll:$AllowAll @adv
-  $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
-  $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
-  $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
+  $inv = Get-HarnessInvocation $nr 'next' $adv
+  $cmd = $inv.Cmd; $envVars = $inv.EnvVars; $envText = $inv.EnvText
   if ($DryRun) { Write-Host "[dry-run] ${kind} #${nr}: $envText"; exit 0 }
   $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
   if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
@@ -184,7 +252,7 @@ if ($Feature -or $Epic) {
     if ($ml) { $mergedListed = @([regex]::Matches($ml.Groups[1].Value, '#(\d+)') | ForEach-Object { $_.Groups[1].Value }) }
     $np = Get-LastMatch $out '\A\W*Next PBI: #([0-9]{1,10})\b'
     $pbi = if ($np) { $np.Groups[1].Value } else { $null }
-    $gm = Get-LastMatch @($out | ForEach-Object { $_.Trim() }) '\AGate:.*'
+    $gm = @(Get-Gates $out) | Select-Object -Last 1
     $blockedLine = Get-LastMatch @($out | ForEach-Object { $_.Trim() }) '\A\W*Nothing selectable\b.*'
     $stop = $false
 
@@ -197,7 +265,7 @@ if ($Feature -or $Epic) {
       $env:AGENTS_LEDGER = Join-Path (Get-Location) (Join-Path $pbiDir 'progress.md')
       $after = Get-LedgerLines $pbi
       $newGate = @(Get-Gates $after).Count -gt [int]$gatesBefore[$pbi]
-      $gate = if ($gm) { $gm.Value } elseif ($newGate) { @(Get-Gates $after)[-1] } else { $null }
+      $gate = if ($gm) { $gm } elseif ($newGate) { @(Get-Gates $after)[-1] } else { $null }
       $lp = Get-LastMatch $after '\APhase pull-request: complete\b.*?/pull/(\d+)'
       $pr = if ($lp) { [long]$lp.Groups[1].Value } else { $null }
       $entry = [ordered]@{ number = [long]$pbi; outcome = 'failed'; pr = $pr; ledger = ".agents/$pbi/progress.md"; gate = $gate; started = $iterStart; ended = $null; note = $null }
@@ -255,7 +323,7 @@ if ($Feature -or $Epic) {
         if (-not $ContinueOnError) { $stop = $true }
       }
     } elseif (-not $featureDone) {
-      $gate = if ($gm) { $gm.Value } else { $null }
+      $gate = if ($gm) { $gm } else { $null }
       $blocked = (-not $gate) -and $blockedLine -and $code -eq 0
       $pbis.Add([pscustomobject][ordered]@{ number = $null; outcome = $(if ($gate) { 'gate' } elseif ($blocked) { 'blocked' } else { 'failed' }); pr = $null; ledger = $null; gate = $gate
         started = $iterStart; ended = (Get-Date -Format o)

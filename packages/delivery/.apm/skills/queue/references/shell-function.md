@@ -29,7 +29,7 @@ queue() { pwsh "$HOME/.claude/skills/queue/scripts/Invoke-OrchestratorQueue.ps1"
 function queue { pwsh "$HOME/.claude/skills/queue/scripts/Invoke-OrchestratorQueue.ps1" @args }
 ```
 
-Usage: `queue -DryRun -Mode full 324`, then `queue -Mode full 324`.
+Usage: `queue -DryRun -Mode full 324`, then `queue -Mode full 324`. One-shot status: `queue -Status 248`.
 
 Paths: `~/.claude/skills/queue/...` is the global Claude Code install; a project install uses
 `./.claude/skills/queue/...` (`.opencode/skills`, `.github/skills` for the other clients). Global OpenCode is

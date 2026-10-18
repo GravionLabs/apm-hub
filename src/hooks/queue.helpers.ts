@@ -14,6 +14,9 @@ export const INSTALLER = path.resolve(
 export const AGENT = path.resolve(__dirname, '../../packages/agents/.apm/agents/orchestrator.agent.md');
 export const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 export const posix = process.platform !== 'win32';
+// Gate-line forms the queue must detect (markdown-wrapped at line start) and must ignore (mid-line, prefixed, wrong case).
+export const GATE_ACCEPT = ['Gate: x', '**Gate:** x', '**Gate**: x', '`Gate:` x', '> Gate: x'];
+export const GATE_REJECT = ['See Gate: x', 'xGate: x', 'gate: x'];
 
 if (!hasPwsh && process.env.CI) throw new Error('CI is set but pwsh did not start: the queue tests need pwsh and must not be skipped silently in CI');
 

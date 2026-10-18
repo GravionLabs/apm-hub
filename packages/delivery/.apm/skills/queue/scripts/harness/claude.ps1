@@ -9,7 +9,7 @@
   scripts) plus the common build and test runners; anything else is denied in -p mode, so the run fails closed
   instead of hanging on a prompt. -AllowAll adds --dangerously-skip-permissions (explicit opt-in).
 .PARAMETER Issue    Issue number.
-.PARAMETER Mode     plan, implement, full or next.
+.PARAMETER Mode     plan, implement, full, next or status.
 .PARAMETER FixAdvisories Optional advisory policy (none, medium, all; optionally `:dim,dim`) passed to the orchestrator as `--fix-advisories <policy>` before the mode word.
 .PARAMETER AllowAll Skip all permission checks.
 .OUTPUTS PSCustomObject with Executable and Arguments.
@@ -17,7 +17,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidatePattern('\A[1-9][0-9]{0,9}\z')][string]$Issue,
-  [ValidateSet('plan', 'implement', 'full', 'next')][string]$Mode = 'full',
+  [ValidateSet('plan', 'implement', 'full', 'next', 'status')][string]$Mode = 'full',
   [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
   [switch]$AllowAll
 )

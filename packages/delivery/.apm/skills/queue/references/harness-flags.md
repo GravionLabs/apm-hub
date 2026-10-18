@@ -52,5 +52,6 @@ no live headless run exists yet:
 - OpenCode: the keys `edit`, `task`, `skill`, `bash` and the `"git *"` patterns are from the docs, not exercised
 - multi-word prefixes (`shell(git status:*)`, `Bash(git status:*)`, `"git status *"`) and the OpenCode `edit` path rules are from the docs, not exercised
 - queue mode parses the run output (`Next PBI: #<n>`, `Gate:`, `Nothing selectable`, `<Feature|Epic> #<n> is done.`, `Verdict: APPROVE`) case-sensitively and the PBI ledger line `Phase pull-request: complete — <url>`
+- `-Status <nr>` runs `status <nr>` once and parses `Gate:` and the line `Status: .agents/status-<nr>.md` (case-sensitive); it also needs `.agents/status-<nr>.md` written during the run, and reads no ledger
 
 Report a working or broken flag set as an issue so the adapter and this table can be corrected.

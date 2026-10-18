@@ -221,8 +221,9 @@ describe('loop mode: sibling references', () => {
 
   it('gates reference lists loop as a mode word and rejects a loop description', () => {
     const parse = section(gates, 'Description input');
-    expect(parse).toMatch(/`plan`, `implement`, `full`, `next` or `loop`/);
+    expect(parse).toMatch(/`plan`, `implement`, `full`, `next`, `loop` or `status`/);
     expect(parse).toMatch(/`loop <description>`[^\n]*needs a Feature or Epic number and stop/);
+    expect(parse).toMatch(/`status <description>`[^\n]*needs a Feature or Epic number and stop/);
     expect(gates).toMatch(/pauses the loop/);
     expect(gates).toMatch(/not asked in `loop`/);
   });
