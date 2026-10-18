@@ -2,7 +2,7 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { SCRIPT, hasPwsh, posix, queueHelpers } from './queue.helpers';
+import { GATE_ACCEPT, GATE_REJECT, SCRIPT, hasPwsh, posix, queueHelpers } from './queue.helpers';
 
 describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
   let dir: string;
@@ -130,6 +130,37 @@ exit 0
       expect(queue().state).toBe('gate');
       expect(queue().pbis[1]).toMatchObject({ number: 12, outcome: 'gate', gate: 'Gate: Approve the plan?' });
       expect(r.stdout).toContain('Approve the plan?');
+    });
+
+    describe('gate line in the output', () => {
+      const gateRun = (line: string) => {
+        fakeQueue([`mkdir -p .agents/11; echo "Next PBI: #11 T"; printf '%s\\n' '${line}'`]);
+        return run(['-Feature', '10'], true);
+      };
+      it.each(GATE_ACCEPT)('accepts %s: exit 2, state gate, gate text recorded', (line) => {
+        const r = gateRun(line);
+        expect(r.status).toBe(2);
+        expect(queue().pbis[0]).toMatchObject({ number: 11, outcome: 'gate', gate: line });
+        expect(r.stdout).toContain(`Gate on Feature #10, queue stopped (answer it, then run the queue again): ${line}`);
+      });
+      it.each(GATE_REJECT)('rejects %s: exit 1, PBI failed', (line) => {
+        const r = gateRun(line);
+        expect(r.status).toBe(1);
+        expect(outcomes()).toEqual([[11, 'failed']]);
+        expect(r.stdout).not.toContain('Gate on Feature');
+      });
+      it('accepts a wrapped gate without a selected PBI', () => {
+        fakeQueue([`printf '%s\\n' '**Gate**: which PBI?'`]);
+        const r = run(['-Feature', '10'], true);
+        expect(r.status).toBe(2);
+        expect(queue().pbis[0]).toMatchObject({ number: null, outcome: 'gate', gate: '**Gate**: which PBI?' });
+      });
+      it('counts a wrapped gate written only to the PBI ledger', () => {
+        fakeQueue([`mkdir -p .agents/11; echo "Next PBI: #11 T"; echo '**Gate**: ledger only' >> .agents/11/progress.md`]);
+        const r = run(['-Feature', '10'], true);
+        expect(r.status).toBe(2);
+        expect(queue().pbis[0].gate).toBe('**Gate**: ledger only');
+      });
     });
 
     it('detects a gate that exists only in the ledger as a count increase, ignoring an old Gate: line', () => {

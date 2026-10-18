@@ -2,7 +2,7 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { SCRIPT, hasPwsh, posix, queueHelpers } from './queue.helpers';
+import { GATE_ACCEPT, GATE_REJECT, SCRIPT, hasPwsh, posix, queueHelpers } from './queue.helpers';
 
 describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () => {
   let dir: string;
@@ -98,6 +98,8 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
       '> Status: `.agents/status-248.md`',
       '`Status:` .agents/status-248.md',
       '  - Status: .agents/status-248.md',
+      '**Status**: .agents/status-248.md',
+      '`Status`: `.agents/status-248.md`',
     ])('accepts %s', (line) => {
       expect(marker(line).status).toBe(0);
     });
@@ -113,6 +115,24 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
       const r = marker(line);
       expect(r.status).toBe(1);
       expect(r.stdout).toContain("no 'Status: .agents/status-248.md' line");
+    });
+  });
+
+  describe('gate line', () => {
+    const gate = (line: string) => {
+      fake(`${WRITE}; printf '%s\\n' '${line}'`);
+      return run(['-Status', '248'], true);
+    };
+    it.each(GATE_ACCEPT)('accepts %s: exit 2 and prints the gate', (line) => {
+      const r = gate(line);
+      expect(r.status).toBe(2);
+      expect(r.stdout).toContain(`Gate on status #248: ${line}`);
+    });
+    it.each(GATE_REJECT)('rejects %s: no gate, exit 0 with the table', (line) => {
+      const r = gate(line);
+      expect(r.status).toBe(0);
+      expect(r.stdout).not.toContain('Gate on status');
+      expect(r.stdout).toContain('| #1 | merged |');
     });
   });
 

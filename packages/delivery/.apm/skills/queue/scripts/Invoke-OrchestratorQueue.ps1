@@ -28,7 +28,7 @@
   output in .agents/queue-<nr>.log and per PBI in .agents/<pbi>/run.log.
   AGENTS_LEDGER is cleared before every child (also an inherited value) and set to the PBI ledger only in the runner after
   'Next PBI: #<n>' is parsed (a running child cannot be changed); the caller's value is restored at the end.
-  A 'Gate:' line in the output stops the queue even when the ledger has no new gate (the question must reach a human).
+  A 'Gate:' line (at line start, may be markdown-wrapped: '**Gate**:', '> Gate:'; case-sensitive) in the output stops the queue even when the ledger has no new gate (the question must reach a human).
   -MergeApproved: after a done PBI (child exit 0) whose last 'Verdict:' line is exactly 'Verdict: APPROVE', merge the PBI's open PR (found via the ledger
   line 'Phase pull-request: complete - <url>' and 'gh pr list', head branch must contain '/<pbi>-') with
   'gh pr merge <pr> --squash --match-head-commit <sha>'. Base must be release/*, head must not be release/*
@@ -103,12 +103,18 @@ function Get-HarnessInvocation([string]$Nr, [string]$HarnessMode, [hashtable]$Ex
   $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
   @{ Cmd = $cmd; EnvVars = $envVars; EnvText = $envText }
 }
-# Untrusted text (issue titles, model output) must not reach the terminal with escape sequences: strip CSI, OSC and other control characters.
+# Untrusted text (issue titles, model output) must not reach the terminal with escape sequences: strip CSI, OSC (payload
+# limited to one line) and other control characters. Same patterns as github-issue/scripts/Write-StatusTable.ps1: skills do not share code.
 function Remove-ControlChar([string]$Text) {
-  $t = [regex]::Replace($Text, '\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(\x07|\x1b\\)|\x1b.?', '')
+  $t = [regex]::Replace($Text, '\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b\r\n]*(\x07|\x1b\\)|\x1b.?', '')
   [regex]::Replace($t, '[\x00-\x08\x0b-\x1f\x7f-\x9f]', '')
 }
-function Get-Gates([string[]]$Lines) { @($Lines | Where-Object { $_ -match '\AGate:' }) }
+# Line markers may be markdown-wrapped: opening wrappers (spaces, list dash, quote, bold, code) before the word,
+# closing wrappers between the word and the colon ('**Gate**:'). Case-sensitive, never mid-line ('See Gate:').
+$MarkerStart = '\A[\s*`>_-]*'
+$MarkerEnd = '[*`_]*:'
+$GatePattern = $MarkerStart + 'Gate' + $MarkerEnd
+function Get-Gates([string[]]$Lines) { @($Lines | ForEach-Object { "$_".Trim() } | Where-Object { $_ -cmatch $GatePattern }) }
 
 if ($Status) {
   $bad = [ordered]@{ 'issue numbers' = ($Issue.Count -gt 0); '-IssueFile' = [bool]$IssueFile; '-Label' = [bool]$Label; '-Feature/-Epic' = [bool]($Feature -or $Epic)
@@ -143,11 +149,11 @@ if ($Status) {
   $out | Out-Host
   Add-Content -LiteralPath $log -Value ($out + "=== exit code $code") -Encoding utf8
   $trimmed = @($out | ForEach-Object { $_.Trim() })
-  $gateLine = @($trimmed | Where-Object { $_ -cmatch '\A[\s*`>_-]*Gate:' }) | Select-Object -Last 1
+  $gateLine = @(Get-Gates $trimmed) | Select-Object -Last 1
   if ($gateLine) { Write-Host "Gate on status #${nr}: $gateLine"; exit 2 }
   Test-NotSymlink $statusFile
   $fi = Get-Item -LiteralPath $statusFile -Force -ErrorAction SilentlyContinue
-  $marker = @($trimmed | Where-Object { $_ -cmatch "\A[\s*``_>-]*Status:[\s*``_]*\.agents/status-$nr\.md(?![\w./-])" }).Count -gt 0
+  $marker = @($trimmed | Where-Object { $_ -cmatch ($MarkerStart + 'Status' + $MarkerEnd + '[\s*`_]*' + "\.agents/status-$nr\.md(?![\w./-])") }).Count -gt 0
   $why = if ($code -ne 0) { "child exit code $code" }
     elseif (-not $fi) { "no status file $statusFile" }
     elseif ($fi.LastWriteTime -lt $start) { "status file $statusFile is stale (not written by this run)" }
@@ -246,7 +252,7 @@ if ($Feature -or $Epic) {
     if ($ml) { $mergedListed = @([regex]::Matches($ml.Groups[1].Value, '#(\d+)') | ForEach-Object { $_.Groups[1].Value }) }
     $np = Get-LastMatch $out '\A\W*Next PBI: #([0-9]{1,10})\b'
     $pbi = if ($np) { $np.Groups[1].Value } else { $null }
-    $gm = Get-LastMatch @($out | ForEach-Object { $_.Trim() }) '\AGate:.*'
+    $gm = @(Get-Gates $out) | Select-Object -Last 1
     $blockedLine = Get-LastMatch @($out | ForEach-Object { $_.Trim() }) '\A\W*Nothing selectable\b.*'
     $stop = $false
 
@@ -259,7 +265,7 @@ if ($Feature -or $Epic) {
       $env:AGENTS_LEDGER = Join-Path (Get-Location) (Join-Path $pbiDir 'progress.md')
       $after = Get-LedgerLines $pbi
       $newGate = @(Get-Gates $after).Count -gt [int]$gatesBefore[$pbi]
-      $gate = if ($gm) { $gm.Value } elseif ($newGate) { @(Get-Gates $after)[-1] } else { $null }
+      $gate = if ($gm) { $gm } elseif ($newGate) { @(Get-Gates $after)[-1] } else { $null }
       $lp = Get-LastMatch $after '\APhase pull-request: complete\b.*?/pull/(\d+)'
       $pr = if ($lp) { [long]$lp.Groups[1].Value } else { $null }
       $entry = [ordered]@{ number = [long]$pbi; outcome = 'failed'; pr = $pr; ledger = ".agents/$pbi/progress.md"; gate = $gate; started = $iterStart; ended = $null; note = $null }
@@ -317,7 +323,7 @@ if ($Feature -or $Epic) {
         if (-not $ContinueOnError) { $stop = $true }
       }
     } elseif (-not $featureDone) {
-      $gate = if ($gm) { $gm.Value } else { $null }
+      $gate = if ($gm) { $gm } else { $null }
       $blocked = (-not $gate) -and $blockedLine -and $code -eq 0
       $pbis.Add([pscustomobject][ordered]@{ number = $null; outcome = $(if ($gate) { 'gate' } elseif ($blocked) { 'blocked' } else { 'failed' }); pr = $null; ledger = $null; gate = $gate
         started = $iterStart; ended = (Get-Date -Format o)
