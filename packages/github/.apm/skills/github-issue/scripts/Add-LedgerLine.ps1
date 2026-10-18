@@ -8,7 +8,8 @@
   map cannot restrict a shell redirect target, so the path is validated here. -Issue must be a positive integer,
   'adhoc' or 'loop-<nr>' (the loop ledger); the resolved path must stay under <current directory>/.agents/ and a symlinked .agents/, issue directory or progress.md is refused. Without -Line only the directory is created.
   -Bind loop-<nr> (with an integer -Issue, the PBI the loop starts) appends 'Loop: PBI #<issue> started' to the existing
-  loop ledger .agents/loop-<nr>/progress.md (the PBI ledger must exist or be created by -Line) and writes the marker .agents/current ('<issue> loop-<nr>'); the SubagentStop
+  loop ledger .agents/loop-<nr>/progress.md (the PBI ledger must exist or be created by -Line) and writes the marker .agents/current ('<issue> loop-<nr>',
+  plus ' <nr>' when the current branch carries another issue number: the hooks do not treat that branch as foreign); the SubagentStop
   hook and the OpenCode plugin then bind subagent lines to that PBI's ledger until the loop ledger records 'Loop: stopped'.
   -Unbind (alone) removes the marker; no marker is a no-op. A symlinked marker or loop ledger is refused.
 .PARAMETER Issue  Issue number, 'adhoc' or 'loop-<nr>'.
@@ -63,8 +64,13 @@ $file = Join-Path $dir 'progress.md'
 if ((Test-Path -LiteralPath $file) -and (Get-Item -LiteralPath $file -Force).LinkTarget) { throw "Refusing symlinked path: $file" }
 if ($PSBoundParameters.ContainsKey('Line')) { Add-Content -LiteralPath $file -Value $Line -Encoding utf8 }
 if ($binding) {
-  if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "No PBI ledger ${file}: nothing bound." }
   # the start line first: a marker is live only while the last 'Loop: ' line is not 'Loop: stopped'
   Add-Content -LiteralPath $loopFile -Value "Loop: PBI #$Issue started" -Encoding utf8
-  [IO.File]::WriteAllText($marker, "$Issue $Bind`n")
+  # third field: the issue number of the branch this runs on (the hooks do not treat that branch as foreign)
+  $origin = ''
+  try {
+    $branch = & git -c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse --abbrev-ref HEAD 2>$null
+    if ($LASTEXITCODE -eq 0 -and "$branch" -match '\A(feat|fix|chore|docs|refactor|test|perf|ci|build|style|revert|hotfix)/([^/]+/)*([1-9][0-9]{0,9})(-[^/]*)?\z' -and $Matches[3] -ne $Issue) { $origin = " $($Matches[3])" }
+  } catch { $origin = '' } # no git: two-field marker
+  [IO.File]::WriteAllText($marker, "$Issue $Bind$origin`n")
 }
