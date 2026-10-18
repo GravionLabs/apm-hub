@@ -60,6 +60,13 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     add('advBadDimUnderscore', ['12', '-FixAdvisories', 'all:a_b', '-DryRun']);
     add('advBadDimDigit', ['12', '-FixAdvisories', 'all:1x', '-DryRun']);
     add('advBadPolicy', ['12', '-FixAdvisories', 'high', '-DryRun']);
+    add('statusDry', ['-Status', '248', '-DryRun']);
+    add('statusCopilot', ['-Status', '#248', '-Harness', 'copilot', '-DryRun']);
+    add('statusOpencode', ['-Status', '248', '-Harness', 'opencode', '-DryRun']);
+    for (const [k, extra] of Object.entries({ Issue: ['5'], Feature: ['-Feature', '1'], Mode: ['-Mode', 'plan'], Merge: ['-MergeApproved'], Continue: ['-ContinueOnError'], Fix: ['-FixAdvisories', 'all'], Label: ['-Label', 'x'] })) {
+      add(`statusWith${k}`, ['-Status', '248', ...extra, '-DryRun']);
+    }
+    add('statusBad', ['-Status', 'abc', '-DryRun']);
     add('featureWithMode', ['-Feature', '1', '-Mode', 'plan', '-DryRun']);
     add('advAll', ['12', '-FixAdvisories', 'all', '-DryRun']);
     add('advOneDim', ['12', '-FixAdvisories', 'medium:security', '-DryRun']);
@@ -232,6 +239,35 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     it.each(['advBad', 'advBadPolicy', 'advBadUpper', 'advBadDimCase', 'advBadDimUnderscore', 'advBadDimDigit'])('rejects invalid value (%s)', (k) => {
       expect(R[k].status).not.toBe(0);
       expect(R[k].stderr).toContain(`Cannot validate argument on parameter 'FixAdvisories'`);
+    });
+  });
+
+  describe('-Status (dry run and validation)', () => {
+    it('prints the status command per harness and writes nothing', () => {
+      expect(R.statusDry.status).toBe(0);
+      expect(R.statusDry.stdout).toContain('[dry-run] Status #248: claude --agent orchestrator -p "status 248" --allowedTools ');
+      expect(R.statusCopilot.stdout).toContain('[dry-run] Status #248: copilot -p "status 248"');
+      expect(R.statusOpencode.stdout).toContain('opencode run --agent orchestrator');
+      expect(R.statusOpencode.stdout).toContain('"status 248"');
+      expect(fs.existsSync(path.join(dirOf.statusDry, '.agents'))).toBe(false);
+    });
+
+    it.each([
+      ['statusWithIssue', 'issue numbers'],
+      ['statusWithFeature', '-Feature/-Epic'],
+      ['statusWithMode', '-Mode'],
+      ['statusWithMerge', '-MergeApproved'],
+      ['statusWithContinue', '-ContinueOnError'],
+      ['statusWithFix', '-FixAdvisories'],
+      ['statusWithLabel', '-Label'],
+    ])('rejects %s', (key, word) => {
+      expect(R[key].status).not.toBe(0);
+      expect(R[key].stderr).toContain('-Status cannot be combined with');
+      expect(R[key].stderr).toContain(word);
+    });
+
+    it('rejects a non-numeric number', () => {
+      expect(R.statusBad.status).not.toBe(0);
     });
   });
 

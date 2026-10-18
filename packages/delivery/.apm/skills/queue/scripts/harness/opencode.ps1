@@ -9,7 +9,7 @@
   and the common build and test runners, everything else denied, so the run fails closed. -AllowAll uses --auto
   (auto-approves permissions that are not explicitly denied) and sets no environment (explicit opt-in).
 .PARAMETER Issue    Issue number.
-.PARAMETER Mode     plan, implement, full or next.
+.PARAMETER Mode     plan, implement, full, next or status.
 .PARAMETER FixAdvisories Optional advisory policy (none, medium, all; optionally `:dim,dim`) passed to the orchestrator as `--fix-advisories <policy>` before the mode word.
 .PARAMETER AllowAll Auto-approve permissions.
 .OUTPUTS PSCustomObject with Executable, Arguments and Environment (hashtable, may be empty).
@@ -17,7 +17,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)][ValidatePattern('\A[1-9][0-9]{0,9}\z')][string]$Issue,
-  [ValidateSet('plan', 'implement', 'full', 'next')][string]$Mode = 'full',
+  [ValidateSet('plan', 'implement', 'full', 'next', 'status')][string]$Mode = 'full',
   [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
   [switch]$AllowAll
 )

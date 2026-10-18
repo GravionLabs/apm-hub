@@ -19,20 +19,20 @@ pwsh scripts/Invoke-OrchestratorQueue.ps1 -DryRun 101 102 103          # prints 
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Mode implement 101 102 103   # issue list (default mode: full)
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Mode implement -IssueFile todo.txt   # one number per line
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Mode implement -Label ready          # open issues with a label, ascending
-pwsh scripts/Invoke-OrchestratorQueue.ps1 -Feature 227                  # loop "next 227" until the Feature is done
-pwsh scripts/Invoke-OrchestratorQueue.ps1 -Epic 300 -Harness opencode -ContinueOnError
+pwsh scripts/Invoke-OrchestratorQueue.ps1 -Feature 227                  # loop "next 227" until done; -Epic 300 likewise
+pwsh scripts/Invoke-OrchestratorQueue.ps1 -Status 248                   # one-shot headless status, prints .agents/status-248.md
 ```
 
 Start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`
 (not with `-Feature`/`-Epic`: the mode is always `next`, the adapters forward it as `next <nr>`), `-ContinueOnError`,
 `-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved` (opt-in, otherwise the runner never merges), `-TrustedOnly` (with `-Label`),
-`-FixAdvisories none|medium|all[:dim,dim]` (lowercase dimensions; forwarded as `--fix-advisories <policy>`, no review-summary gate; CRITICAL/HIGH always block).
+`-Status <nr>` (alone: no issues, `-Mode`, `-Feature`/`-Epic`, `-MergeApproved`, `-ContinueOnError`, `-FixAdvisories`), `-FixAdvisories none|medium|all[:dim,dim]` (lowercase dimensions; forwarded as `--fix-advisories <policy>`, no review-summary gate; CRITICAL/HIGH always block).
 
 ## Slash usage
 
-`/queue [dry-run] [fix=<policy>] [full|implement|plan] <nr>...`, `/queue [dry-run] feature <nr>`, `/queue [dry-run] epic <nr>`,
+`/queue [dry-run] [fix=<policy>] [full|implement|plan] <nr>...`, `/queue [dry-run] feature <nr>`, `/queue [dry-run] epic <nr>`, `/queue [dry-run] status <nr>`,
 `/queue install`, `/queue uninstall`. Examples: `/queue 101` (default mode full), `/queue full 324`, `/queue dry-run implement 101 102`, `/queue dry-run feature 248`, `/queue epic 300`. Mapping: `dry-run` is `-DryRun` (recommend it first) and may be followed by the mode word; a mode word `full|implement|plan`
-is `-Mode <word>` (none: the runner default `full`); `feature <nr>` / `epic <nr>` is `-Feature` / `-Epic` and takes no
+is `-Mode <word>` (none: the runner default `full`); `status <nr>` is `-Status` (no mode word, no `fix=`); `feature <nr>` / `epic <nr>` is `-Feature` / `-Epic` and takes no
 mode (`/queue implement feature 248` is rejected with a message, the mode is always `next`); remaining numbers are
 positional issues. `fix=medium|all|none[:dim]` is `-FixAdvisories <policy>`, only when the user gives it. Pass `-AllowAll` or `-MergeApproved` through only when the user asks for it explicitly. `install` /
 `uninstall` runs the installer (below), not the runner. Run `pwsh scripts/Invoke-OrchestratorQueue.ps1 ...` from the
@@ -54,9 +54,9 @@ before a non-default `-Dir`. Details: [launcher and shell function](references/s
 
 | Code | Meaning |
 |:--|:--|
-| 0 | every issue done or skipped (queue mode: `Feature #<nr> is done`) |
-| 1 | a run failed (stops, unless `-ContinueOnError`), or a harness binary or adapter is missing |
-| 2 | a gate: the orchestrator needs a decision; the question is printed and the queue stops |
+| 0 | every issue done or skipped (queue mode: `Feature #<nr> is done`; `-Status`: the status file was written) |
+| 1 | a run failed (stops, unless `-ContinueOnError`), a harness binary or adapter is missing, or `-Status` wrote no fresh file |
+| 2 | a gate: the orchestrator needs a decision; the question is printed and the queue stops (`-Status`: also a gate) |
 | 3 | queue mode only: `Nothing selectable`, every open PBI is held by blockers or decisions (state `blocked`) |
 
 ## The ledger is the truth, not the exit code
@@ -96,4 +96,4 @@ A `Gate:` line in the output stops the queue even without a new ledger gate. Nev
   do a lot, including `gh pr merge` via `gh api`). `-Label` feeds issue text to the model: use collaborator-authored
   issues; `-TrustedOnly` filters only the issue author (not comments); positional and `-IssueFile` issues are unfiltered.
 - The runner refuses a symlinked `.agents/`.
-- Check `status <nr>` or `.agents/<nr>/progress.md` before and after a run. Sequential only (`-Parallel` is a follow-up).
+- Check `/queue status <nr>` or `.agents/<nr>/progress.md` before and after a run. Sequential only.
