@@ -143,11 +143,11 @@ if ($Status) {
   $out | Out-Host
   Add-Content -LiteralPath $log -Value ($out + "=== exit code $code") -Encoding utf8
   $trimmed = @($out | ForEach-Object { $_.Trim() })
-  $gateLine = @($trimmed | Where-Object { $_ -cmatch '\AGate:' }) | Select-Object -Last 1
+  $gateLine = @($trimmed | Where-Object { $_ -cmatch '\A[\s*`>_-]*Gate:' }) | Select-Object -Last 1
   if ($gateLine) { Write-Host "Gate on status #${nr}: $gateLine"; exit 2 }
   Test-NotSymlink $statusFile
   $fi = Get-Item -LiteralPath $statusFile -Force -ErrorAction SilentlyContinue
-  $marker = @($trimmed | Where-Object { $_ -cmatch "Status:[\s*``_]*\.agents/status-$nr\.md(?![\w./-])" }).Count -gt 0
+  $marker = @($trimmed | Where-Object { $_ -cmatch "\A[\s*``_>-]*Status:[\s*``_]*\.agents/status-$nr\.md(?![\w./-])" }).Count -gt 0
   $why = if ($code -ne 0) { "child exit code $code" }
     elseif (-not $fi) { "no status file $statusFile" }
     elseif ($fi.LastWriteTime -lt $start) { "status file $statusFile is stale (not written by this run)" }

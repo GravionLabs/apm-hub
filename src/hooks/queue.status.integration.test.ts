@@ -87,36 +87,61 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
     expect(calls()).toHaveLength(0);
   });
 
-  it('accepts a markdown-wrapped marker but not another path', () => {
-    fake("printf '| #1 | merged |\\n' > .agents/status-248.md; echo '**Status: `.agents/status-248.md`**'");
-    expect(run(['-Status', '248'], true).status).toBe(0);
-    fake('printf "| #1 | merged |\\n" > .agents/status-248.md; echo "Status: .agents/status-2480.md"');
-    expect(run(['-Status', '248'], true).status).toBe(1);
+  describe('marker line', () => {
+    const marker = (line: string) => {
+      fake(`printf '| #1 | merged |\\n' > .agents/status-248.md; printf '%s\\n' '${line}'`);
+      return run(['-Status', '248'], true);
+    };
+    it.each([
+      'Status: .agents/status-248.md',
+      '**Status: `.agents/status-248.md`**',
+      '> Status: `.agents/status-248.md`',
+      '`Status:` .agents/status-248.md',
+      '  - Status: .agents/status-248.md',
+    ])('accepts %s', (line) => {
+      expect(marker(line).status).toBe(0);
+    });
+    it.each([
+      'xStatus: .agents/status-248.md',
+      'status: .agents/status-248.md',
+      'See Status: .agents/status-248.md',
+      'Status: .agents/status-2480.md',
+      'Status: .agents/status-248.md.bak',
+      'Status: .agents/status-248.mdx',
+      'Status: .agents/status-24.md',
+    ])('rejects %s', (line) => {
+      const r = marker(line);
+      expect(r.status).toBe(1);
+      expect(r.stdout).toContain("no 'Status: .agents/status-248.md' line");
+    });
   });
 
-  it('strips escape sequences from the table and the child output', () => {
-    fake(`printf '| #1 \\033]0;pwn\\007\\033[31mred\\033[0m |\\n' > .agents/status-248.md; printf 'out \\033[2Jclear\\n'; ${'echo "Status: .agents/status-248.md"'}`);
+  it('strips escape sequences from the table, the output and the log', () => {
+    const esc = String.raw`C1:\0302\0205 bare:\033Z ST:\033]8;;u\033\\ok osc:\033]0;pwn\007 csi:\033[31mred\033[0m cr:a\rb`;
+    fake(String.raw`printf '| #1 \033[2Jtable |\n' > .agents/status-248.md; printf '%b\n' '${esc}'; echo "Status: .agents/status-248.md"`);
     const r = run(['-Status', '248'], true);
     expect(r.status).toBe(0);
-    expect(r.stdout).toContain('| #1 red |');
-    expect(r.stdout).toContain('out clear');
+    const log = fs.readFileSync(path.join(dir, '.agents', 'status-248.log'), 'utf8');
+    for (const text of [r.stdout, log]) {
+      expect(text).not.toMatch(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/);
+      expect(text).toContain('C1: bare: ST:ok osc: csi:red cr:a');
+    }
+    expect(r.stdout).toContain('| #1 table |');
+  });
+
+  it('strips an escape sequence from the printed Gate line', () => {
+    fake(String.raw`printf '**Gate:** \033[31mpick\033[0m one\n'`);
+    const r = run(['-Status', '248'], true);
+    expect(r.status).toBe(2);
+    expect(r.stdout).toContain('Gate:** pick one');
     expect(r.stdout).not.toContain('\u001b');
   });
 
-  it('a Gate line wins over a fresh file with the marker', () => {
+  it('a Gate line wins over a fresh file with the marker and prints the question', () => {
     fake(`${WRITE}; echo "Gate: pick one"`);
-    expect(run(['-Status', '248'], true).status).toBe(2);
-  });
-
-  it('exits 1 on a stale file even when the output has the marker', () => {
-    fs.mkdirSync(path.join(dir, '.agents'));
-    fs.writeFileSync(statusFile(), 'old\n');
-    const past = new Date(Date.now() - 3600_000);
-    fs.utimesSync(statusFile(), past, past);
-    fake('echo "Status: .agents/status-248.md"');
     const r = run(['-Status', '248'], true);
-    expect(r.status).toBe(1);
-    expect(r.stdout).toContain('stale');
+    expect(r.status).toBe(2);
+    expect(r.stdout).toContain('Gate on status #248: Gate: pick one');
   });
 
   it('clears AGENTS_LEDGER for the child and leaves the caller environment alone', () => {
