@@ -36,6 +36,13 @@ metadata:
         "pwsh ~/.claude/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
         "pwsh ~/.agents/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
         "pwsh ~/.config/opencode/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
+        "pwsh .claude/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
+        "pwsh .opencode/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
+        "pwsh .agents/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
+        "pwsh .github/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
+        "pwsh ~/.claude/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
+        "pwsh ~/.agents/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
+        "pwsh ~/.config/opencode/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
 ---
 
 You run the issue lifecycle for one GitHub issue and keep your own context small: every phase except `detect-techstack` runs in a subagent and only its summary comes back to you. Never use `general-purpose` for any phase. You never read source files yourself; ask `explorer`. You never read issue bodies yourself; `issue-reader` does. You never edit; `implementer` does.

@@ -69,6 +69,12 @@ describe('orchestrator OpenCode permissions', () => {
     }
   });
 
+  it('allows the status table writer from every skill directory and asks when it is chained', () => {
+    for (const dir of skillDirs) expect(decide(rules, `pwsh ${dir}/github-issue/scripts/Write-StatusTable.ps1 -Issue 248 -Path /tmp/t.md`)).toBe('allow');
+    expect(decide(rules, 'pwsh .claude/skills/github-issue/scripts/Write-StatusTable.ps1 -Issue 1 -Path x; rm -rf src')).toBe('ask');
+    expect(decide(rules, 'pwsh .claude/skills/other/scripts/Write-StatusTable.ps1 -Issue 1')).toBe('ask');
+  });
+
   it('still allows git and gh', () => {
     expect(decide(rules, 'git status --short')).toBe('allow');
     expect(decide(rules, 'gh issue view 222')).toBe('allow');
@@ -113,7 +119,7 @@ describe('orchestrator OpenCode permissions', () => {
   it('has no allow rule that starts with a wildcard or lets pwsh run arbitrary scripts', () => {
     const allowed = rules.filter(([, a]) => a === 'allow').map(([p]) => p);
     expect(allowed.filter((p) => p.startsWith('*') || /^pwsh \*/.test(p))).toEqual([]);
-    for (const p of allowed.filter((x) => x.startsWith('pwsh '))) expect(p).toMatch(/^pwsh \S+\/scripts\/(Add-LedgerLine|Detect-TechStack)\.ps1 \*$/);
+    for (const p of allowed.filter((x) => x.startsWith('pwsh '))) expect(p).toMatch(/^pwsh \S+\/scripts\/(Add-LedgerLine|Detect-TechStack|Write-StatusTable)\.ps1 \*$/);
   });
 });
 
