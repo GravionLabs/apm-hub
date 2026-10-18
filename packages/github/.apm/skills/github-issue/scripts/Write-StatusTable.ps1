@@ -7,7 +7,7 @@
   The only shell command the orchestrator is allowed to use for the status table on OpenCode: the agent permission
   map cannot restrict a shell redirect target, so the path is validated here. -Issue must be a positive integer
   without leading zeros; the target is <current directory>/.agents/status-<issue>.md and a symlinked .agents/ or
-  target is refused. The content comes from -Path (a file) or, without -Path, from stdin. The write is atomic:
+  target is refused. Control characters and escape sequences are stripped from the content. The content comes from -Path (a file) or, without -Path, from stdin. The write is atomic:
   a temp file in .agents/ is moved over the target.
 .PARAMETER Issue Feature or Epic number.
 .PARAMETER Path  File that holds the table. Without it the table is read from stdin.
@@ -25,6 +25,10 @@ $text = if ($PSBoundParameters.ContainsKey('Path')) {
   Get-Content -LiteralPath $Path -Raw
 } else { [Console]::In.ReadToEnd() }
 if ([string]::IsNullOrWhiteSpace($text)) { throw 'No content: pass -Path or pipe the table on stdin.' }
+# Issue titles are untrusted data: strip CSI, OSC (BEL or ST terminated), other ESC sequences and control characters
+# (C0 except tab and newline, DEL, C1). Small duplicate of Remove-ControlChar in the queue runner: skills do not share code.
+$text = [regex]::Replace($text, '\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(\x07|\x1b\\)|\x1b.?', '')
+$text = [regex]::Replace($text, '[\x00-\x08\x0b-\x1f\x7f-\x9f]', '')
 $text = $text.TrimEnd("`r", "`n") + "`n"
 $base = [IO.Path]::GetFullPath((Join-Path (Get-Location).Path '.agents'))
 $file = [IO.Path]::GetFullPath((Join-Path $base "status-$Issue.md"))

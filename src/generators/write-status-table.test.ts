@@ -106,4 +106,10 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
     expect(r.stderr + r.stdout).toMatch(/symlinked/);
     expect(fs.existsSync(missing)).toBe(false);
   });
+
+  it('strips escape sequences and control characters but keeps tabs and newlines', () => {
+    const dirty = '#1 a\tb \x1b[31mred\x1b[0m\n#2 \x1b]0;pwn\x07x \x1b]8;;u\x1b\\y\x1bZ z\x01\x7f\x85\r\nNext PBI: #3\n';
+    expect(run(['-Issue', '5', '-Path', withFile(dirty)]).status).toBe(0);
+    expect(fs.readFileSync(target('5'), 'utf8')).toBe('#1 a\tb red\n#2 x y z\nNext PBI: #3\n');
+  });
 });
