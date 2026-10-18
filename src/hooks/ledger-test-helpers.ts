@@ -43,6 +43,13 @@ export const MARKERS_MALFORMED = [
   '9 loop-5\0',
   'loop-5 9\n',
   '12345678901 loop-5\n',
+  '9 loop-5 012\n',
+  '9 loop-5 x\n',
+  '9 loop-5 12 \n',
+  '9 loop-5  12\n',
+  '9 loop-5 12 13\n',
+  '9 loop-5 0\n',
+  '9 loop-5 12345678901\n',
 ];
 
 /** Loop ledger contents for which a marker is stale (the loop stopped) or still live (running or resumed). The live ones
@@ -50,12 +57,16 @@ export const MARKERS_MALFORMED = [
 export const LOOP_LEDGERS_STALE = [
   '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\nLoop: stopped — user stop\n',
   '# loop\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\nLoop: PBI #9 done — https://x/pr/9\nLoop: stopped — nothing selectable\n',
+  '# loop\r\nLoop: PBI #7 done\r\nLoop: PBI #9 started\r\nLoop: stopped — user stop\r\n',
+  '# loop\r\nLoop: PBI #7 done\r\nLoop: PBI #9 started\r\nLoop: stopped\r\n',
 ];
 export const LOOP_LEDGERS_LIVE = [
   '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\n',
   '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: stopped — pbi cap\nLoop: PBI #9 started\n',
   '# loop\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\nSome note mentioning Loop: stopped later\n',
   '# loop\nLoop: PBI #7 done\n',
+  '# loop\r\nLoop: PBI #7 done — https://x/pr/7\r\nLoop: PBI #9 started\r\n',
+  '# loop\r\nLoop: PBI #7 done\r\nLoop: PBI #9 started\r\n',
 ];
 
 /** Loop ledgers that do not record the branch issue 7 as done: on `fix/7-x` the marker for PBI 9 is ignored. */
@@ -65,4 +76,6 @@ export const LOOP_LEDGERS_FOREIGN_BRANCH = [
   '# loop\nLoop: PBI #70 done — https://x/pr/70\nLoop: PBI #9 started\n',
   '# loop\nLoop: PBI #17 done — https://x/pr/17\nLoop: PBI #9 started\n',
   '# loop\nNote: Loop: PBI #7 done\nLoop: PBI #9 started\n',
+  '# loop\nLoop: PBI #7 donezo\nLoop: PBI #9 started\n',
+  '# loop\nLoop: PBI #7 done-ish\nLoop: PBI #9 started\n',
 ];

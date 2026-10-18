@@ -854,6 +854,70 @@ describe('subagent-ledger hook', () => {
       expect(fs.existsSync(path.join(dir, '.agents', '7', '.ledger-seen'))).toBe(false);
     });
 
+    it('writes nothing with a live marker when real git cannot read the repository (corrupt HEAD)', () => {
+      const { l7, l9, lp } = scenario();
+      marker();
+      fs.writeFileSync(path.join(dir, '.git', 'HEAD'), 'garbage\n');
+      stop();
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(l7)).toBe('# 7\n');
+      expect(read(lp)).toBe(LOOP);
+    });
+
+    it('writes nothing with a live marker when git fails inside a repository', () => {
+      const { l7, l9 } = scenario();
+      marker();
+      const bin = path.join(dir, 'broken-bin');
+      fs.mkdirSync(bin, { recursive: true });
+      fs.writeFileSync(path.join(bin, 'git'), '#!/bin/sh\nexit 128\n', { mode: 0o755 });
+      expect(stop('issue-reader', { AGENTS_LEDGER: '', PATH: `${bin}${path.delimiter}${process.env.PATH ?? ''}` }).status).toBe(0);
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it.each(BRANCHES_UNBOUND)('honours a live marker on the branch %s without an issue number', (b) => {
+      repo(b);
+      const l9 = mk('9', '# 9\n', OLD);
+      const l7 = mk('7');
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker();
+      stop();
+      expect(read(l9)).toBe('# 9\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('honours the marker on the branch recorded at -Bind (first PBI bound from an unrelated issue branch)', () => {
+      repo('fix/12-x');
+      const l12 = mk('12');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12\n');
+      stop();
+      expect(read(l9)).toBe('# 9\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l12)).toBe('# 12\n');
+    });
+
+    it('still treats another issue branch as foreign when the marker recorded a different one', () => {
+      repo('fix/13-x');
+      const l13 = mk('13');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12\n');
+      stop();
+      expect(read(l13)).toBe('# 13\nSubagent issue-reader: stopped — ok\n');
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('accepts the recorded-branch marker without a trailing newline', () => {
+      repo('fix/12-x');
+      mk('12');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12');
+      stop();
+      expect(read(l9)).toBe('# 9\nSubagent issue-reader: stopped — ok\n');
+    });
+
     it.each(['general-purpose', 'Explore', 'subagent'])('writes nothing for the foreign agent %s with a valid marker', (t) => {
       const { l7, l9, lp } = scenario();
       marker();

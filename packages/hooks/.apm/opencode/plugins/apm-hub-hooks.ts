@@ -61,21 +61,22 @@ function isRegularIn(p: string): boolean {
   }
 }
 
-/** Ledger of the PBI named by the loop marker .agents/current (`<pbi> loop-<nr>`, one line), or "" when the marker is
- * missing, not a regular file, malformed, stale (loop ledger missing or its last `Loop: ` line is `Loop: stopped`), the
- * branch names another issue the loop has not recorded as `Loop: PBI #<nr> done`, or its PBI ledger is missing (#375). */
+/** Ledger of the PBI named by the loop marker .agents/current (`<pbi> loop-<nr>[ <origin>]`, one line; <origin> is the
+ * issue number of the branch -Bind ran on), or "" when the marker is missing, not a regular file, malformed, stale (loop
+ * ledger missing or its last `Loop: ` line is `Loop: stopped`), the branch names another issue that is neither <origin>
+ * nor recorded as `Loop: PBI #<nr> done`, or its PBI ledger is missing (#375). */
 function boundLedger(dir: string, branchNr: string): string {
   try {
     const marker = join(dir, ".agents", "current");
     if (!isRegular(marker)) return "";
-    const m = /^([1-9][0-9]{0,9}) (loop-[1-9][0-9]{0,9})\n?$/.exec(readFileSync(marker, "latin1"));
+    const m = /^([1-9][0-9]{0,9}) (loop-[1-9][0-9]{0,9})(?: ([1-9][0-9]{0,9}))?\n?$/.exec(readFileSync(marker, "latin1"));
     if (!m) return "";
     const loop = join(dir, ".agents", m[2], "progress.md");
     if (!isRegularIn(loop)) return "";
     const lines = readFileSync(loop, "utf8").split(/\r?\n/).filter((l) => l.startsWith("Loop: "));
     if ((lines[lines.length - 1] ?? "").startsWith("Loop: stopped")) return "";
-    // a branch naming another issue wins unless the loop finished that issue (the previous PBI still checked out)
-    if (branchNr && branchNr !== m[1] && !lines.some((l) => l === `Loop: PBI #${branchNr} done` || l.startsWith(`Loop: PBI #${branchNr} done `))) return "";
+    // a branch naming another issue wins unless -Bind ran on it or the loop finished it (the previous PBI still checked out)
+    if (branchNr && branchNr !== m[1] && branchNr !== m[3] && !lines.some((l) => l === `Loop: PBI #${branchNr} done` || l.startsWith(`Loop: PBI #${branchNr} done `))) return "";
     const own = join(dir, ".agents", m[1], "progress.md");
     return isRegularIn(own) ? own : "";
   } catch {
@@ -89,9 +90,9 @@ function findLedger(dir: string, override?: string): string {
     if (override) return isRegular(override) ? override : "";
     if (lstatSync(join(dir, ".agents")).isSymbolicLink()) return ""; // never write through a symlinked .agents
     const nr = branchIssue(dir);
-    const bound = boundLedger(dir, nr ?? "");
+    if (nr === null) return ""; // git failing inside a repository: no write, not even through the loop marker
+    const bound = boundLedger(dir, nr);
     if (bound) return bound;
-    if (nr === null) return "";
     if (nr) {
       const own = join(dir, ".agents", nr, "progress.md");
       return isRegular(own) && !lstatSync(join(dir, ".agents", nr)).isSymbolicLink() ? own : "";

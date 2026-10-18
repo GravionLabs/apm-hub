@@ -840,6 +840,71 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read(l7)).toBe('# 7\n');
     });
 
+    it('writes nothing with a live marker when real git cannot read the repository (corrupt HEAD)', async () => {
+      const { l7, l9, lp } = scenario();
+      marker();
+      fs.writeFileSync(path.join(dir, '.git', 'HEAD'), 'garbage\n');
+      await stop();
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(l7)).toBe('# 7\n');
+      expect(read(lp)).toBe(LOOP);
+    });
+
+    it('writes nothing with a live marker when git fails inside a repository', async () => {
+      const { l7, l9 } = scenario();
+      marker();
+      const bin = path.join(dir, 'broken-bin');
+      fs.mkdirSync(bin, { recursive: true });
+      fs.writeFileSync(path.join(bin, 'git'), '#!/bin/sh\nexit 128\n', { mode: 0o755 });
+      process.env.PATH = `${bin}${path.delimiter}${process.env.PATH ?? ''}`;
+      await stop();
+      expect(read(l9)).toBe('# 9\n');
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it.each(BRANCHES_UNBOUND)('honours a live marker on the branch %s without an issue number', async (b) => {
+      repo(b);
+      const l9 = mk('9', '# 9\n', OLD);
+      const l7 = mk('7');
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker();
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('honours the marker on the branch recorded at -Bind (first PBI bound from an unrelated issue branch)', async () => {
+      repo('fix/12-x');
+      const l12 = mk('12');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12\n');
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l12)).toBe('# 12\n');
+    });
+
+    it('still treats another issue branch as foreign when the marker recorded a different one', async () => {
+      repo('fix/13-x');
+      const l13 = mk('13');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12\n');
+      await stop();
+      expect(read(l13)).toBe(`# 13\n${LINE}`);
+      expect(read(l9)).toBe('# 9\n');
+    });
+
+    it('accepts the recorded-branch marker without a trailing newline', async () => {
+      repo('fix/12-x');
+      mk('12');
+      const l9 = mk('9', '# 9\n', OLD);
+      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+      marker('9 loop-5 12');
+      await stop();
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+    });
+
     it.each(['general', 'subagent', 'build-helper'])('writes nothing for the foreign agent %s with a valid marker', async (t) => {
       const { l7, l9, lp } = scenario();
       marker();
