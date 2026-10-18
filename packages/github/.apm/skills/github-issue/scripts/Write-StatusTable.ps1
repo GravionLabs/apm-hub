@@ -25,9 +25,10 @@ $text = if ($PSBoundParameters.ContainsKey('Path')) {
   Get-Content -LiteralPath $Path -Raw
 } else { [Console]::In.ReadToEnd() }
 if ([string]::IsNullOrWhiteSpace($text)) { throw 'No content: pass -Path or pipe the table on stdin.' }
-# Issue titles are untrusted data: strip CSI, OSC (BEL or ST terminated), other ESC sequences and control characters
-# (C0 except tab and newline, DEL, C1). Small duplicate of Remove-ControlChar in the queue runner: skills do not share code.
-$text = [regex]::Replace($text, '\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(\x07|\x1b\\)|\x1b.?', '')
+# Issue titles are untrusted data: strip CSI, OSC (BEL or ST terminated, payload limited to one line so an unterminated
+# OSC cannot swallow later rows), other ESC sequences and control characters (C0 except tab and newline, DEL, C1).
+# Same patterns as Remove-ControlChar in delivery/skills/queue/scripts/Invoke-OrchestratorQueue.ps1: skills do not share code.
+$text = [regex]::Replace($text, '\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b\r\n]*(\x07|\x1b\\)|\x1b.?', '')
 $text = [regex]::Replace($text, '[\x00-\x08\x0b-\x1f\x7f-\x9f]', '')
 $text = $text.TrimEnd("`r", "`n") + "`n"
 $base = [IO.Path]::GetFullPath((Join-Path (Get-Location).Path '.agents'))

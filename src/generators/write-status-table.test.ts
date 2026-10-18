@@ -112,4 +112,10 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
     expect(run(['-Issue', '5', '-Path', withFile(dirty)]).status).toBe(0);
     expect(fs.readFileSync(target('5'), 'utf8')).toBe('#1 a\tb red\n#2 x y z\nNext PBI: #3\n');
   });
+
+  it('keeps the following rows when one title has an unterminated OSC', () => {
+    const dirty = '#1 \x1b]0;open title\n#2 second\n#3 third \x1b]0;t\x07end\n';
+    expect(run(['-Issue', '6', '-Path', withFile(dirty)]).status).toBe(0);
+    expect(fs.readFileSync(target('6'), 'utf8')).toBe('#1 0;open title\n#2 second\n#3 third end\n');
+  });
 });
