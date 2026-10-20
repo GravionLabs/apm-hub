@@ -22,4 +22,4 @@ Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]` (direct path
 
 ## Detection mapping
 
-detect-techstack emits `ts`, `js`, `py`, `dotnet`: `ts` and `js` map to `ts`, `py` to `py`, `dotnet` to `dotnet`. angular framework: `ng` (next to `ts`).
+detect-techstack emits `ts`, `js`, `py`, `dotnet`, `rust`: `ts` and `js` map to `ts`, `py` to `py`, `dotnet` to `dotnet`, `rust` to package `rust` (no such package exists yet: tell the user, install nothing). angular framework: `ng` (next to `ts`). tauri framework: informational, no package; a Tauri project reports `rust` and usually `ts`.
