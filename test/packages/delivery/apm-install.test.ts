@@ -186,6 +186,14 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     expect(notes(real)).not.toContain('After install');
   });
 
+  it('accepts -Packages rust and lets all and core cover members', () => {
+    fakeApm();
+    expect(run(['-Packages', 'rust', '-DryRun']).json.wouldInstall).toContain('rust');
+    const r = run(['-Packages', 'all,rust', '-DryRun']);
+    expect(r.json.wouldInstall).not.toContain('rust');
+    expect(notes(r)).toContain('rust is covered by all');
+  });
+
   it('skips packages listed in apm.yml, ignoring comments, and accepts the @apm-hub form', () => {
     fakeApm();
     globalBase();

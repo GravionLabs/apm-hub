@@ -110,6 +110,13 @@ describe('checkTestDuplicates', () => {
     for (const p of TEST_DUPLICATE_PATTERNS) expect(covered).toContain(p.name);
   });
 
+  describe('cargo test pattern', () => {
+    it('does not flag unrelated cargo commands', () => {
+      const v = checkTestDuplicates([skill('# X\n\nRun `cargo build` and `cargo clippy`.\n')]);
+      expect(v.some((x) => x.pattern === 'cargo test')).toBe(false);
+    });
+  });
+
   describe('pointer handling', () => {
     const flagged = (line: string, pattern?: string) => {
       const v = checkTestDuplicates([skill(`# X\n\n${line}\n`)]);

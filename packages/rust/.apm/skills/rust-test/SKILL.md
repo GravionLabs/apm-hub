@@ -1,6 +1,6 @@
 ---
 name: rust-test
-description: 'Rust test rules: cargo test, nextest, mockall, proptest.'
+description: 'Write and run Rust tests: unit and tests/ integration, cargo test, mockall, proptest.'
 ---
 
 ## Prerequisites

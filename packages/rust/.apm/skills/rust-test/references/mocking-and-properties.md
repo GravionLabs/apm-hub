@@ -5,6 +5,8 @@
 Add `mockall` as a dev-dependency. Put `#[automock]` on a trait that is a real boundary (HTTP, DB, clock).
 
 ```rust
+use mockall::predicate::eq;
+
 #[cfg_attr(test, mockall::automock)]
 pub trait Clock {
     fn now(&self) -> u64;
@@ -19,7 +21,7 @@ fn expired_token_is_rejected() {
 ```
 
 - `.times(n)` verifies call counts; `.with(eq(x))` verifies arguments
-- Async traits: `#[automock]` works together with `#[async_trait]`
+- Async traits: put `#[async_trait]` above `#[automock]` (attribute order matters)
 
 ## Async tests
 
