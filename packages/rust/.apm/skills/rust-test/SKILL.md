@@ -29,6 +29,7 @@ description: 'Write and run Rust tests: unit and tests/ integration, cargo test,
 3. Choose type: pure logic as unit test in-module; cross-module or I/O flows in `tests/`
 4. Write one scenario per `#[test]`; assert on `Result` values, not on panics, where possible
 5. Verify with `cargo test`
+6. Tauri: keep command logic in pure functions and test those; `tauri::test` (mock runtime) is optional for the command wiring; delegate the frontend to `ts-test`
 
 Reference files (load when needed):
 - `references/mocking-and-properties.md` - `mockall` traits, async tests, `proptest`

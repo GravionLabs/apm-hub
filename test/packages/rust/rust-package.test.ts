@@ -70,4 +70,19 @@ describe('rust package', () => {
     expect(read('apm.yml')).toMatch(/- name: rust\n[\s\S]*?source: \.\/packages\/rust/);
     expect(read('packages/all/apm.yml')).toContain('GravionLabs/apm-hub/packages/rust');
   });
+
+  it('Tauri conventions: reference, conditional load, test strategy, verify-project', () => {
+    const impl = read('packages/rust/.apm/skills/rust-implementation/SKILL.md');
+    expect(impl).toMatch(/only when `detect-techstack` reports `frameworks: \["tauri"\]`.*`references\/tauri\.md`/);
+    expect(impl.match(/references\/tauri\.md/g)).toHaveLength(1);
+    const ref = read('packages/rust/.apm/skills/rust-implementation/references/tauri.md');
+    for (const w of ['#[tauri::command]', 'Serialize', 'tauri::State', 'Events vs commands', 'capabilities', 'plugin', 'src-tauri', 'Tauri 1 vs 2'])
+      expect(ref).toContain(w);
+    const t = read('packages/rust/.apm/skills/rust-test/SKILL.md');
+    expect(t).toContain('tauri::test');
+    expect(t).toContain('ts-test');
+    const v = read('packages/delivery/.apm/skills/verify-project/SKILL.md');
+    expect(v).toContain('src-tauri/');
+    expect(v).toContain('`pnpm tauri build`');
+  });
 });

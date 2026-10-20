@@ -9,6 +9,7 @@ description: 'Rust implementation rules (clippy, rustfmt) extending `implementat
 - **Format**: `cargo fmt --all` (rustfmt; CI uses `cargo fmt --all -- --check`)
 - **Lint**: `cargo clippy --all-targets --all-features -- -D warnings` is mandatory; fix warnings, never silence them blindly
 - **Modules, errors, unsafe, async**: read `references/conventions.md` (relative to this skill's directory)
+- **Tauri**: only when `detect-techstack` reports `frameworks: ["tauri"]`, read `references/tauri.md`
 
 ## Conventions
 
