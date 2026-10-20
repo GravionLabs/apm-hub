@@ -41,6 +41,9 @@ marketplace:
   - name: py
     description: "Python skills: implementation conventions and review rules, pytest testing with markers and pytest-mock, uv project scaffolding, curated uv CLI reference."
     source: ./packages/py
+  - name: rust
+    description: "Rust skills: implementation conventions and review rules (thiserror/anyhow, clippy, rustfmt, unsafe, tokio), cargo test and nextest testing with mockall and proptest."
+    source: ./packages/rust
   - name: shared
     description: "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), severity-rated code review (code-review), bug diagnosis (diagnose)."
     source: ./packages/shared
