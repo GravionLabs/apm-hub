@@ -10,6 +10,7 @@ Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]` (direct path
 | `agents` | `orchestrator` launcher skill and the nine agents (needs `apmw sanitize`) | project or `-g` |
 | `hooks` | Claude Code hooks (ledger, context warning, git guardrails), OpenCode plugin | project or `-g` |
 | `ts`, `py` | `<lang>-implementation`, `<lang>-test`, project scaffolding | per project |
+| `rust` | `rust-implementation`, `rust-test` | per project |
 | `ng` | Angular skills; depends on `angular/skills` (`angular-developer`) | per project |
 | `dotnet` | .NET skills; depends on `dotnet/skills` (`dotnet` plugin) | per project |
 
@@ -22,4 +23,4 @@ Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]` (direct path
 
 ## Detection mapping
 
-detect-techstack emits `ts`, `js`, `py`, `dotnet`, `rust`: `ts` and `js` map to `ts`, `py` to `py`, `dotnet` to `dotnet`, `rust` to package `rust` (no such package exists yet: tell the user, install nothing). angular framework: `ng` (next to `ts`). tauri framework: informational, no package; a Tauri project reports `rust` and usually `ts`.
+detect-techstack emits `ts`, `js`, `py`, `dotnet`, `rust`: `ts` and `js` map to `ts`, `py` to `py`, `dotnet` to `dotnet`, `rust` to `rust`. angular framework: `ng` (next to `ts`). tauri framework: informational, no package; a Tauri project reports `rust` and usually `ts`, so both packages are proposed.

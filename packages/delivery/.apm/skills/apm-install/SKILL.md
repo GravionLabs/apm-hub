@@ -18,7 +18,7 @@ otherwise). Run from the project root.
 `/apm-install` (detect and propose), `/apm-install ts py` (named packages, no detection), `/apm-install core -g`
 (user-wide), `/apm-install dry-run ...` (print the commands only). Mapping: `dry-run` is `-DryRun`, `-g` is `-Global`,
 remaining words are `-Packages` (comma-separated on the command line: `-Packages ts,py`). Valid packages: `shared`,
-`github`, `delivery`, `agents`, `hooks`, `core`, `all`, `ts`, `py`, `ng`, `dotnet`; anything else makes the script exit 1.
+`github`, `delivery`, `agents`, `hooks`, `core`, `all`, `ts`, `py`, `ng`, `dotnet`, `rust`; anything else makes the script exit 1.
 The contributor tooling package is not offered. What each package brings: [packages](references/packages.md).
 
 ## Steps
@@ -43,7 +43,7 @@ The contributor tooling package is not offered. What each package brings: [packa
 - Detection runs a script: without `-Packages` it runs `detect-techstack`, even under `-DryRun`. It looks in your home
   skill directories first. A copy found only in the project is repository code and is not run unless you pass
   `-TrustProject`; ask the user before doing so in a repository they do not trust.
-- The report maps `ts`/`js` to `ts`, `py` to `py`, `dotnet` to `dotnet`, and the `angular` framework to `ng`.
+- The report maps `ts`/`js` to `ts`, `py` to `py`, `dotnet` to `dotnet`, `rust` to `rust`, and the `angular` framework to `ng`.
 - `detect-techstack` missing, failing or printing invalid output: the missing ones of `shared`, `github`, `delivery` and a note
   asking for `-Packages`. Ask the user which stack packages they want.
 - `-Global` without `-Packages` proposes only the base packages, with no stack detection; stack packages need `-Packages`.

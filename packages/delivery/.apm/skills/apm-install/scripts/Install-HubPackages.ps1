@@ -53,7 +53,7 @@ if (-not (Get-Command apm -ErrorAction SilentlyContinue)) {
 }
 
 # pwsh -File passes "ts,ng" as one string: split on commas, then validate
-$valid = 'shared', 'github', 'delivery', 'agents', 'hooks', 'core', 'all', 'ts', 'py', 'ng', 'dotnet'
+$valid = 'shared', 'github', 'delivery', 'agents', 'hooks', 'core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust'
 if ($PSBoundParameters.ContainsKey('Packages')) {
   $Packages = @($Packages | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
   if ($Packages.Count -eq 0) {
@@ -78,7 +78,7 @@ $homeDirs = '.claude/skills', '.config/opencode/skills', '.copilot/skills', '.ag
 $notes = [System.Collections.Generic.List[string]]::new()
 $hubPath = 'GravionLabs/apm-hub/packages'
 $coreMembers = 'shared', 'github', 'delivery', 'agents', 'hooks'
-$allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet')
+$allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust')
 $provides = @{
   shared   = 'skills: implementation, detect-techstack, diagnose, code-review'
   github   = 'skills: github-issue, github-pull-request, github-release'
@@ -89,6 +89,7 @@ $provides = @{
   all      = 'every package except apm-tooling'
   ts       = 'skills: ts-implementation, ts-test, ts-create-project, ts-mcp-server-generator, ts-pnpm-workflow, setup-prettier-eslint-husky'
   py       = 'skills: py-implementation, py-test, py-create-project'
+  rust     = 'skills: rust-implementation, rust-test'
   ng       = 'skills: ng-implementation, ng-test, ng-create-project, ng-ag-grid-developer'
   dotnet   = 'skills: dotnet-implementation, dotnet-test, dotnet-create-solution, dotnet-mcp-server-generator'
 }
@@ -123,7 +124,7 @@ function Find-Detect {
   return $null
 }
 
-$langMap = @{ ts = 'ts'; js = 'ts'; typescript = 'ts'; javascript = 'ts'; py = 'py'; python = 'py'; dotnet = 'dotnet'; csharp = 'dotnet' }
+$langMap = @{ ts = 'ts'; js = 'ts'; typescript = 'ts'; javascript = 'ts'; py = 'py'; python = 'py'; dotnet = 'dotnet'; csharp = 'dotnet'; rust = 'rust' }
 $wanted = [System.Collections.Generic.List[string]]::new()
 $missingBase = Get-MissingBase
 if ($Packages) {

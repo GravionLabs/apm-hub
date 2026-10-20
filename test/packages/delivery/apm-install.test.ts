@@ -73,6 +73,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     [{ languages: ['dotnet'], frameworks: ['dotnet'] }, ['dotnet']],
     [{ languages: ['ts'], frameworks: ['angular'] }, ['ts', 'ng']],
     [{ languages: ['ts', 'py', 'dotnet'], frameworks: [] }, ['ts', 'py', 'dotnet']],
+    [{ languages: ['rust'], frameworks: [] }, ['rust']],
+    [{ languages: ['ts', 'rust'], frameworks: ['tauri'] }, ['ts', 'rust']],
     [{ languages: ['typescript'], frameworks: [] }, ['ts']],
     [{ languages: ['csharp'], frameworks: [] }, ['dotnet']],
     [{ languages: ['go'], frameworks: [] }, []],
@@ -182,6 +184,14 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     expect(notes(dry)).toContain('After install: OpenCode: copy');
     const real = run(['-Packages', 'core']);
     expect(notes(real)).not.toContain('After install');
+  });
+
+  it('accepts -Packages rust and lets all and core cover members', () => {
+    fakeApm();
+    expect(run(['-Packages', 'rust', '-DryRun']).json.wouldInstall).toContain('rust');
+    const r = run(['-Packages', 'all,rust', '-DryRun']);
+    expect(r.json.wouldInstall).not.toContain('rust');
+    expect(notes(r)).toContain('rust is covered by all');
   });
 
   it('skips packages listed in apm.yml, ignoring comments, and accepts the @apm-hub form', () => {

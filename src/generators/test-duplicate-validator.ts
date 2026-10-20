@@ -24,6 +24,7 @@ export const TEST_DUPLICATE_PATTERNS: TestDuplicatePattern[] = [
     allowPointer: true,
   },
   { name: 'dotnet test', regex: /\bdotnet\s+test\b/i },
+  { name: 'cargo test', regex: /\bcargo\s+(test|nextest)\b/i },
   { name: 'package test command', regex: /\b(npm|pnpm|yarn)\s+(run\s+)?test\b|\bng\s+test\b/i },
   {
     name: 'runner config',
@@ -51,7 +52,7 @@ export interface TestDuplicateViolation {
 }
 
 /** A pointer names a `<lang>-test` skill or a `references/<file>` path, in backticks. */
-const POINTER = /`(ts|ng|py|dotnet)-test`|`references\/[^`\s]+`/;
+const POINTER = /`(ts|ng|py|dotnet|rust)-test`|`references\/[^`\s]+`/;
 /** Command-like tokens: flags, package runners, `run`. A line with these is a command, not a pointer. */
 const COMMAND_LIKE = /(^|\s)-{1,2}\w|\b(npx|pnpm|run)\b/i;
 
