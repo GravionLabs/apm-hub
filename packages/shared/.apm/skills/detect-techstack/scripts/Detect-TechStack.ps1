@@ -185,7 +185,9 @@ if ($csprojFiles -or $slnFiles -or $slnxFiles) {
 }
 
 # --- Rust (+ Tauri 1 and 2) ---
-if (Get-IndicatorFile -Path $rootFull -Filter "Cargo.toml" -Depth 5) {
+# build output and vendored crates carry their own Cargo.toml; they do not make the project Rust
+if (Get-IndicatorFile -Path $rootFull -Filter "Cargo.toml" -Depth 5 |
+    Where-Object { [System.IO.Path]::GetRelativePath($rootFull, $_.FullName) -notmatch '(^|[\\/])(target|vendor)[\\/]' }) {
   $languages.Add("rust")
 }
 foreach ($tauriConf in 'tauri.conf.json', 'tauri.conf.json5') {

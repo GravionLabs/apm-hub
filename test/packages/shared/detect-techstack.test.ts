@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -76,9 +77,34 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     expect(detect().languages).not.toContain('rust');
   });
 
-  it('invalidates a techstack-v2 cache', () => {
+  it('detects tauri when both tauri.conf.json and tauri.conf.json5 exist, once', () => {
+    write('src-tauri/Cargo.toml', '[package]\n');
+    write('src-tauri/tauri.conf.json', '{}');
+    write('src-tauri/tauri.conf.json5', '{}');
+    expect(detect().frameworks).toEqual(['tauri']);
+  });
+
+  it('detects tauri with src-tauri but no package.json', () => {
+    write('src-tauri/Cargo.toml', '[package]\n');
+    write('src-tauri/tauri.conf.json', '{}');
+    const r = detect();
+    expect(r.languages).toEqual(['rust']);
+    expect(r.frameworks).toEqual(['tauri']);
+    expect(r.packageManager).toEqual(['cargo']);
+  });
+
+  it.each(['target', 'vendor', 'node_modules'])('ignores a Cargo.toml under %s/', (d) => {
+    write('package.json', '{}');
+    write(`${d}/dep/Cargo.toml`, '[package]\n');
+    expect(detect().languages).not.toContain('rust');
+  });
+
+  it('recomputes a cache written under the techstack-v2 schema', () => {
     write('Cargo.toml', '[package]\n');
-    write('.agents/techstack.json', JSON.stringify({ languages: ['x'], test: ['x'], implementation: ['x'], manifest_hash: 'old' }));
+    // the hash the v2 script would have stored for this exact project
+    const fileHash = crypto.createHash('sha256').update(fs.readFileSync(path.join(dir, 'Cargo.toml'))).digest('hex').toUpperCase();
+    const v2Hash = crypto.createHash('sha256').update(`techstack-v2\nCargo.toml:${fileHash}`).digest('hex');
+    write('.agents/techstack.json', JSON.stringify({ languages: ['stale'], test: ['stale-test'], implementation: ['stale-implementation'], manifest_hash: v2Hash }));
     const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-ProjectRoot', dir], { encoding: 'utf8' });
     expect(JSON.parse(r.stdout).languages).toEqual(['rust']);
   });
