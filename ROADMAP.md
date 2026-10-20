@@ -22,6 +22,17 @@ Closing: Feature #248 and Epic #300 once #251 is merged. Then `github-release` f
 
 Feature #385 closes with #386.
 
+### 2.5.0 — Epic #411, Feature #412: Rust stack package with Tauri
+
+| Order | Issue | Title | Size | Depends on |
+| --- | --- | --- | --- | --- |
+| 1 | #414 | ROADMAP.md schedules Epic #411 | S | — |
+| 2 | #415 | `detect-techstack` detects Rust and Tauri | S | — |
+| 3 | #416 | `rust` package with `rust-implementation` and `rust-test` | M | #415 |
+| 4 | #417 | Tauri conventions in `rust-implementation` | S | #416 |
+
+Feature #412 closes with #417. The stack PBIs share no files with the orchestrator PBIs of this release (`detect-techstack`, new `packages/<lang>/`, README and AGENTS.md tables) and may run in parallel to #383 and #386.
+
 ## 2.6.0 — Epic #387, Feature #388: dromos MVP
 
 | Order | Issue | Title | Size | Depends on |
@@ -29,6 +40,17 @@ Feature #385 closes with #386.
 | 1 | #389 | `SubagentStop` hook sends `progress` to `$DROMOS_URL/ingest` | M | #375; `POST /ingest` in `GravionLabs/dromos` |
 
 Opt-in through `DROMOS_URL`; without it nothing changes.
+
+### 2.6.0 — Epic #411, Feature #413: Go, JVM and Swift packages, frontend detection
+
+| Order | Issue | Title | Size | Depends on |
+| --- | --- | --- | --- | --- |
+| 1 | #418 | `detect-techstack` reports react, vue, svelte and next as frameworks | S | #415 (serial edits of `detect-techstack`) |
+| 2 | #419 | `go` package, detection via `go.mod` | M | #418 |
+| 3 | #420 | `jvm` package for Java and Kotlin, detection via build files | M | #419; `needs-decision`: one `jvm` package or `java` + `kotlin` |
+| 4 | #421 | `swift` package, detection via `Package.swift` | M | #420 |
+
+Feature #413 closes with #421, Epic #411 with it. These PBIs share no files with #389 and may run in parallel to it.
 
 ## 2.7.0 — Feature #390: attention, queue, usage, `/dromos-mux`
 
