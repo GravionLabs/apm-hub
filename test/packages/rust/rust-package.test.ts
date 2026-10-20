@@ -70,4 +70,48 @@ describe('rust package', () => {
     expect(read('apm.yml')).toMatch(/- name: rust\n[\s\S]*?source: \.\/packages\/rust/);
     expect(read('packages/all/apm.yml')).toContain('GravionLabs/apm-hub/packages/rust');
   });
+
+  describe('Tauri conventions', () => {
+    const impl = () => read('packages/rust/.apm/skills/rust-implementation/SKILL.md');
+    const ref = () => read('packages/rust/.apm/skills/rust-implementation/references/tauri.md');
+
+    it('rust-implementation loads the reference only for framework tauri', () => {
+      const line = impl().split('\n').find((l) => l.includes('references/tauri.md'))!;
+      expect(line).toContain('frameworks: ["tauri"]');
+      expect(line).toContain('`references/tauri.md`');
+      expect(impl().match(/references\/tauri\.md/g)).toHaveLength(1);
+    });
+
+    it('detect-techstack reports tauri as a framework', () => {
+      const dt = read('packages/shared/.apm/skills/detect-techstack/SKILL.md')
+        + fs.readdirSync(path.join(root, 'packages/shared/.apm/skills/detect-techstack'), { recursive: true })
+          .filter((f) => String(f).endsWith('.md')).map((f) => read(`packages/shared/.apm/skills/detect-techstack/${f}`)).join('');
+      expect(dt).toContain('tauri');
+    });
+
+    it('tauri.md has a section per required topic', () => {
+      for (const h of [/^## Commands$/m, /^## Events vs commands$/m, /^## Capabilities and permissions/m, /^## Plugins$/m, /^## Layout and separation$/m, /^## Tauri 1 vs 2$/m])
+        expect(ref()).toMatch(h);
+      expect(ref()).toContain('tauri::State');
+      expect(ref()).toContain('thiserror');
+      expect(ref()).toContain('src-tauri/capabilities');
+      expect(ref()).toContain('untrusted');
+    });
+
+    it('rust-test names the command strategy conditionally and delegates frontend to ts-test', () => {
+      const t = read('packages/rust/.apm/skills/rust-test/SKILL.md');
+      const line = t.split('\n').find((l) => l.includes('tauri::test'))!;
+      expect(line).toContain('frameworks: ["tauri"]');
+      expect(line).toContain('pure functions');
+      expect(line).toContain('`ts-test`');
+    });
+
+    it('verify-project step 5 runs cargo in src-tauri and builds with tauri build', () => {
+      const line = read('packages/delivery/.apm/skills/verify-project/SKILL.md').split('\n').find((l) => l.startsWith('5. Rust'))!;
+      expect(line).toContain('src-tauri/');
+      expect(line).toContain('`pnpm tauri build`');
+      expect(line).toContain('packageManager');
+      expect(line).not.toContain('cargo test');
+    });
+  });
 });

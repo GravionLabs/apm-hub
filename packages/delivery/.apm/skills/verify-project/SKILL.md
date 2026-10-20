@@ -12,7 +12,7 @@ Phase: verify. Run checks on project. On Claude Code this skill runs in a forked
 2. Run the build with the detected package manager
 3. For each skill in `test`, load it and run its test command; skill not installed → use the package manager's `test` script and put "install `<stack>@apm-hub`" in `summary`
 4. Run lint/format per project conventions
-5. Rust: build with `cargo build`; tests via `rust-test`; lint with `cargo clippy --all-targets --all-features -- -D warnings` and `cargo fmt --all -- --check` (as in `rust-implementation`)
+5. Rust: build with `cargo build`; tests via `rust-test`; lint with `cargo clippy --all-targets --all-features -- -D warnings` and `cargo fmt --all -- --check` (as in `rust-implementation`); Tauri: run the cargo commands in `src-tauri/` (the dir with `Cargo.toml` and `tauri.conf.json`) and, with the detected `packageManager` (`pnpm` shown), `pnpm tauri build` as the overall build (use `--no-bundle` for a faster check)
 
 ## Output (JSON only)
 
