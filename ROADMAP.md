@@ -22,7 +22,7 @@ Closing: Feature #248 and Epic #300 once #251 is merged. Then `github-release` f
 
 Feature #385 closes with #386.
 
-### Epic #411, Feature #412: Rust stack package with Tauri
+### 2.5.0 — Epic #411, Feature #412: Rust stack package with Tauri
 
 | Order | Issue | Title | Size | Depends on |
 | --- | --- | --- | --- | --- |
@@ -41,7 +41,7 @@ Feature #412 closes with #417. The stack PBIs share no files with the orchestrat
 
 Opt-in through `DROMOS_URL`; without it nothing changes.
 
-### Epic #411, Feature #413: Go, JVM and Swift packages, frontend detection
+### 2.6.0 — Epic #411, Feature #413: Go, JVM and Swift packages, frontend detection
 
 | Order | Issue | Title | Size | Depends on |
 | --- | --- | --- | --- | --- |
