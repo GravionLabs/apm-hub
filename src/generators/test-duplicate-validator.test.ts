@@ -63,6 +63,8 @@ describe('checkTestDuplicates', () => {
     ['runner name', 'Use Jasmine here.'],
     ['runner name', 'Run karma in CI.'],
     ['dotnet test', '`dotnet test --no-build`'],
+    ['cargo test', 'Run `cargo test --all`.'],
+    ['cargo test', 'Use cargo nextest run in CI.'],
     ['package test command', 'Run `npm test` before commit.'],
     ['package test command', 'Run `pnpm test`.'],
     ['package test command', 'Run `yarn test`.'],
@@ -117,6 +119,7 @@ describe('checkTestDuplicates', () => {
     it('allows a bare runner name on a backticked <lang>-test pointer', () => {
       expect(flagged('Vitest, see `ts-test`')).toBe(false);
       expect(flagged('pytest conventions: `py-test`')).toBe(false);
+      expect(flagged('pytest, see `rust-test`')).toBe(false);
     });
 
     it('allows a bare runner name on a backticked references/ pointer', () => {

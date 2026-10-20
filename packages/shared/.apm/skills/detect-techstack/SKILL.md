@@ -52,5 +52,5 @@ If `pwsh` is not available → infer the stack from this table (search recursive
 ## Gotchas
 
 - Monorepos report several languages (e.g. Angular frontend + .NET backend); load every listed skill.
-- A skill named in `test` or `implementation` that is not installed (stacks are installed per project): report "install `<stack>@apm-hub` in this project's `apm.yml` or run `/apm-install`" (`ts`, `py`, `dotnet`; `ng` for `angular`; no `rust` package exists yet), never fail silently.
+- A skill named in `test` or `implementation` that is not installed (stacks are installed per project): report "install `<stack>@apm-hub` in this project's `apm.yml` or run `/apm-install`" (`ts`, `py`, `dotnet`; `ng` for `angular`, `rust`), never fail silently.
 - `js` has no `js-test`/`js-implementation` skill in this hub; treat it like `ts` without type rules.

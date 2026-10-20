@@ -73,6 +73,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     [{ languages: ['dotnet'], frameworks: ['dotnet'] }, ['dotnet']],
     [{ languages: ['ts'], frameworks: ['angular'] }, ['ts', 'ng']],
     [{ languages: ['ts', 'py', 'dotnet'], frameworks: [] }, ['ts', 'py', 'dotnet']],
+    [{ languages: ['rust'], frameworks: [] }, ['rust']],
+    [{ languages: ['ts', 'rust'], frameworks: ['tauri'] }, ['ts', 'rust']],
     [{ languages: ['typescript'], frameworks: [] }, ['ts']],
     [{ languages: ['csharp'], frameworks: [] }, ['dotnet']],
     [{ languages: ['go'], frameworks: [] }, []],

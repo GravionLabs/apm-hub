@@ -20,6 +20,7 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                               |
+| `rust`        | `rust-implementation`, `rust-test`                                                                                                |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                       |
 | `agents`      | `orchestrator` (primary agent) plus the `explorer`, `planner`, `reviewer` and `implementer` subagents                             |
 | `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails), `context-statusline` skill; OpenCode plugin                          |
