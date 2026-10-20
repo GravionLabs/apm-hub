@@ -63,7 +63,7 @@ $manifestEntries = foreach ($f in $manifestFilters) {
     "${rel}:$((Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash)"
   }
 }
-$schemaVersion = 'techstack-v2'
+$schemaVersion = 'techstack-v3'
 $manifestList = $schemaVersion + "`n" + ((@($manifestEntries) | Sort-Object -Unique -CaseSensitive) -join "`n")
 $sha = [System.Security.Cryptography.SHA256]::Create()
 $manifestHash = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestList))) -replace '-', '').ToLowerInvariant()
@@ -184,11 +184,26 @@ if ($csprojFiles -or $slnFiles -or $slnxFiles) {
   $frameworks.Add("dotnet")
 }
 
+# --- Rust (+ Tauri 1 and 2) ---
+# build output and vendored crates carry their own Cargo.toml; they do not make the project Rust
+if (Get-IndicatorFile -Path $rootFull -Filter "Cargo.toml" -Depth 5 |
+    Where-Object { [System.IO.Path]::GetRelativePath($rootFull, $_.FullName) -notmatch '(^|[\\/])(target|vendor)[\\/]' }) {
+  $languages.Add("rust")
+}
+foreach ($tauriConf in 'tauri.conf.json', 'tauri.conf.json5') {
+  $tauriFound = Get-IndicatorFile -Path $rootFull -Filter $tauriConf -Depth 5 |
+    Where-Object { $_.Directory.Name -eq 'src-tauri' }
+  if ($tauriFound -and -not $frameworks.Contains("tauri")) {
+    $frameworks.Add("tauri")
+  }
+}
+
 $langPrefixMap = @{
   typescript = "ts"
   python     = "py"
   csharp     = "dotnet"
   javascript = "js"
+  rust       = "rust"
 }
 
 for ($i = 0; $i -lt $languages.Count; $i++) {
