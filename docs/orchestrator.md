@@ -167,7 +167,7 @@ A bug (label `bug`, type `Bug` or a `fix` title prefix) makes the implementer lo
 
 `review-fanout` classifies the diff mechanically, then dispatches one `reviewer` per dimension in a single parallel batch: `correctness`, `security`, `conventions`, `tests` and `spec`. A second pass tries to disprove each CRITICAL or HIGH finding. The diff goes to a package file on disk and never enters the orchestrator's context.
 
-Where a subagent may start subagents (Claude Code, see [Clients](#clients)) the orchestrator dispatches `review-lead` (sonnet) with the range, the issue number and the path of `context.md`. It runs `review-fanout` in its own context and replies with JSON only: `verdict`, `incomplete`, a `findings` list and the paths of the package and of `review.json`. The review summary is built from `findings`. On Copilot CLI, OpenCode and VS Code Copilot, where nesting is not documented or off by default, and in the inline `/orchestrator` command, the orchestrator runs `review-fanout` itself as before. Fix rounds hand the implementer the findings list and the `review.json` path, never the package. The advisory choice, `--no-review-summary` and `--fix-advisories` behave the same either way.
+Where a subagent may start subagents (Claude Code, see [Clients](#clients)) the orchestrator dispatches `review-lead` (sonnet) with the range, the issue number and the path of `context.md`. It runs `review-fanout` in its own context and replies with JSON only: `verdict`, `incomplete`, a `findings` list and the paths of the package and of `review.json`. The review summary is built from `findings`. On Copilot CLI, OpenCode and VS Code Copilot, where nesting is not documented or off by default, and in the inline `/orchestrator` command, the orchestrator runs `review-fanout` itself as before. Fix rounds hand the implementer the findings list, the files of the findings and the `review.json` path, never the package, and name the targeted test rule: no full suite in a fix round. The re-review covers `<last review HEAD>..HEAD` with the dimensions that had blocking or selected findings plus `correctness`; `review-lead` passes range and dimension list to `review-fanout`. Final-Verify runs once after the last fix round. The advisory choice, `--no-review-summary` and `--fix-advisories` behave the same either way.
 
 ```mermaid
 flowchart TD
@@ -215,7 +215,7 @@ The orchestrator writes `<state>/<issue>/progress.md`, with the first line `# or
 ```text
 Phase Plan: complete — plan.json
 Task #201: DONE — 3f2a9c1 — model sonnet
-Fix round 1 (#201): 2 blocking fixed — model sonnet
+Fix round 1 (#201): 2 blocking fixed — model sonnet — tests 18/18
 Phase verify: ok — tests 412/412
 Ruling: used sonnet for the docs task — prose only — slower retries
 Phase Pull request: complete — https://github.com/<owner>/<repo>/pull/210

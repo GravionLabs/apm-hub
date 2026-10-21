@@ -26,7 +26,7 @@ describe.skipIf(!hasPwsh)('ledger format agreement with Get-RunMetrics', () => {
   it('parses the exact Task and Fix round lines the pipeline spec documents', () => {
     const spec = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
     const taskFmt = /`(Task #<nr>: <status> — <sha> — model <name>)`/.exec(spec)?.[1];
-    const fixFmt = /`(Fix round <r> \(#<task>\): <result> — model <name>)`/.exec(spec)?.[1];
+    const fixFmt = /`(Fix round <r> \(#<task>\): <result> — model <name> — tests <n>\/<m>)`/.exec(spec)?.[1];
     expect(taskFmt).toBeDefined();
     expect(fixFmt).toBeDefined();
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-fmt-'));
@@ -34,7 +34,7 @@ describe.skipIf(!hasPwsh)('ledger format agreement with Get-RunMetrics', () => {
       const t = path.join(dir, 't.jsonl');
       fs.writeFileSync(t, '');
       const l = path.join(dir, 'progress.md');
-      const values: Record<string, string> = { nr: '7', status: 'DONE', sha: 'abc1234', task: '7', r: '1', result: 'DONE', name: 'opus' };
+      const values: Record<string, string> = { nr: '7', status: 'DONE', sha: 'abc1234', task: '7', r: '1', result: 'DONE', name: 'opus', n: '3', m: '3' };
       const fill = (f: string) => f.replace(/<(\w+)>/g, (m, k) => values[k] ?? m);
       fs.writeFileSync(l, [fill(taskFmt!), fill(fixFmt!)].join('\n') + '\n');
       const script = path.join(pk, 'delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1');
