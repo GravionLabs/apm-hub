@@ -8,7 +8,7 @@ Phase: verify. Run checks on project. On Claude Code this skill runs in a forked
 
 ## Steps
 
-1. Load `detect-techstack`; use `packageManager` for the build command and `test` for the test skills
+1. Load `detect-techstack`; use `packageManager` for the build command and `test` for the test skills. Then run `pwsh <detect-techstack dir>/scripts/Enable-Worktrees.ps1 -Check` (stack JSON as `-TechStack`): exit 1 means `.worktrees/` is not ignored somewhere; report its drift JSON as the first error (`status: fail`, `summary` names `Enable-Worktrees.ps1`)
 2. Run the build with the detected package manager
 3. For each skill in `test`, load it and run its test command; skill not installed → use the package manager's `test` script and put "install `<stack>@apm-hub`" in `summary`
 4. Run lint/format per project conventions

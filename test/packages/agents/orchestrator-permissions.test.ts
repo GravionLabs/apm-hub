@@ -119,7 +119,7 @@ describe('orchestrator OpenCode permissions', () => {
   it('has no allow rule that starts with a wildcard or lets pwsh run arbitrary scripts', () => {
     const allowed = rules.filter(([, a]) => a === 'allow').map(([p]) => p);
     expect(allowed.filter((p) => p.startsWith('*') || /^pwsh \*/.test(p))).toEqual([]);
-    for (const p of allowed.filter((x) => x.startsWith('pwsh '))) expect(p).toMatch(/^pwsh \S+\/scripts\/(Add-LedgerLine|Detect-TechStack|Write-StatusTable)\.ps1 \*$/);
+    for (const p of allowed.filter((x) => x.startsWith('pwsh '))) expect(p).toMatch(/^pwsh \S+\/scripts\/(Add-LedgerLine|Detect-TechStack|Write-StatusTable|Enter-Checkout|Exit-Checkout)\.ps1 \*$/);
   });
 });
 

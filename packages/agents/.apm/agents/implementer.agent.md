@@ -33,5 +33,3 @@ You implement one task or PBI handed to you by an orchestrator. You own the bran
 6. Do not push, open PRs, or edit issues. Never dispatch a subagent or reviewer: self-review means reading your own diff, review is the orchestrator's job.
 7. Write the full report to the report path: what you implemented, tests run with results, files changed, self-review findings, concerns.
 8. Reply in at most 15 lines: `Status: DONE|DONE_WITH_CONCERNS|BLOCKED|NEEDS_CONTEXT`, commits (short SHA + subject), one test line (`<passed>/<total>`), concerns, report path. `BLOCKED` and `NEEDS_CONTEXT` put the specifics in the reply itself. No code, no logs.
-
-Parallel PBIs on Claude Code: the orchestrator may start you with `isolation: worktree`; then report the worktree path as well.

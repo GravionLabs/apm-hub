@@ -77,6 +77,53 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Issue', () => {
     expect(r.stderr + r.stdout).toMatch(/symlinked/);
     expect(readLedger(target)).toBe('secret\n');
   });
+
+  describe('checkout lease heartbeat', () => {
+    const leases = () => path.join(dir, '.agents', 'leases');
+    const plant = (name: string, issue: number) => {
+      fs.mkdirSync(leases(), { recursive: true });
+      const old = '2026-01-01T00:00:00Z';
+      const body = JSON.stringify({ path: `/r/${name}`, issue, branch: `feat/${issue}`, host: 'h', started: old, heartbeat: old });
+      fs.writeFileSync(path.join(leases(), `${name}.json`), body);
+      return body;
+    };
+    const read = (name: string) => JSON.parse(fs.readFileSync(path.join(leases(), `${name}.json`), 'utf8'));
+
+    it('renews the heartbeat of the lease held by -Issue and leaves the others and the other fields alone', () => {
+      plant('aaaaaaaaaaaaaaaa', 42);
+      const other = plant('bbbbbbbbbbbbbbbb', 43);
+      const before = Date.now();
+      expect(run('42', 'x').status).toBe(0);
+      const l = read('aaaaaaaaaaaaaaaa');
+      expect(Date.parse(l.heartbeat)).toBeGreaterThan(before - 5000);
+      expect(l).toMatchObject({ path: '/r/aaaaaaaaaaaaaaaa', issue: 42, branch: 'feat/42', host: 'h', started: '2026-01-01T00:00:00Z' });
+      expect(fs.readFileSync(path.join(leases(), 'bbbbbbbbbbbbbbbb.json'), 'utf8')).toBe(other);
+      expect(fs.readdirSync(leases()).sort()).toEqual(['aaaaaaaaaaaaaaaa.json', 'bbbbbbbbbbbbbbbb.json']);
+    });
+
+    it('does nothing without a lease and without a -Line', () => {
+      expect(run('42', 'x').status).toBe(0);
+      expect(fs.existsSync(leases())).toBe(false);
+      plant('aaaaaaaaaaaaaaaa', 42);
+      expect(run('42').status).toBe(0);
+      expect(read('aaaaaaaaaaaaaaaa').heartbeat).toBe('2026-01-01T00:00:00Z');
+    });
+
+    it('ignores a lease of another issue and non-numeric issues', () => {
+      plant('aaaaaaaaaaaaaaaa', 43);
+      expect(run('42', 'x').status).toBe(0);
+      expect(run('loop-43', 'x').status).toBe(0);
+      expect(read('aaaaaaaaaaaaaaaa').heartbeat).toBe('2026-01-01T00:00:00Z');
+    });
+
+    it('survives an unreadable lease file', () => {
+      fs.mkdirSync(leases(), { recursive: true });
+      fs.writeFileSync(path.join(leases(), 'broken.json'), '{not json');
+      const r = run('42', 'x');
+      expect(r.status).toBe(0);
+      expect(readLedger(ledger('42')).trim()).toBe('x');
+    });
+  });
 });
 
 describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375)', () => {

@@ -37,6 +37,10 @@
   checks so CLEAN means reviewed and tested). The reviewed commit is not recorded by the orchestrator; if the PBI
   branch exists locally its tip must equal the PR head, else the tip on origin (git ls-remote) must; unverifiable -> no merge.
   UNKNOWN mergeability is polled up to 3 times (QUEUE_POLL_SECONDS, default 5); an empty check list is skipped ('no checks reported').
+  Issue-list mode inside a repository: per issue Enter-Checkout.ps1 (github-issue/scripts) chooses the working directory of the child (the main
+  checkout when no live lease of another issue holds it and no tracked file is modified, else .worktrees/<nr>) and Exit-Checkout.ps1 releases it after the
+  ledger verdict (a clean worktree is removed, a dirty one kept). A gate keeps lease and worktree and prints the path to resume in. Outside a repository
+  (DROMOS_STATE_DIR only) the child runs in the current directory. -Feature/-Epic and -Status do not use leases.
   QUEUE_CALLER_CWD (set by the launcher) is the directory a relative -IssueFile is resolved against. Never after a gate, a block or a failure.
 .PARAMETER Issue           Issue numbers (positional), '#12' or '12'.
 .PARAMETER IssueFile       Text file with one issue number per line.
@@ -51,6 +55,7 @@
 .PARAMETER ContinueOnError Continue with the next issue after a failed run.
 .PARAMETER FixAdvisories Optional advisory policy (none, medium, all; optionally `:dim,dim`) passed to the orchestrator as `--fix-advisories <policy>` before the mode word.
 .PARAMETER AllowAll        Opt in to the harness' unrestricted permission mode (default: narrow set).
+.PARAMETER Base            Issue-list mode: integration branch on origin that Enter-Checkout.ps1 starts the run branch feat/<nr> from (default: release/next when origin has it, else the default branch of origin, else main).
 .PARAMETER DryRun          Print the exact commands and run nothing.
 #>
 [CmdletBinding()]
@@ -69,6 +74,7 @@ param(
   [switch]$ContinueOnError,
   [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
   [switch]$AllowAll,
+  [ValidatePattern('\A[A-Za-z0-9][A-Za-z0-9._/-]{0,199}\z')][string]$Base,
   [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
@@ -403,6 +409,28 @@ if (-not $DryRun) {
   if (-not (Get-Command $probe.Executable -CommandType Application -ErrorAction SilentlyContinue)) { throw "'$($probe.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
   Test-NotSymlink (Get-StateDir)
 }
+# Run directory per issue: Enter-Checkout.ps1 / Exit-Checkout.ps1 of the github package (installed beside this skill, or the repository layout).
+function Get-CheckoutScript([string]$Name) {
+  foreach ($d in @((Join-Path $PSScriptRoot '../../github-issue/scripts'), (Join-Path $PSScriptRoot '../../../../../github/.apm/skills/github-issue/scripts'))) {
+    $f = Join-Path $d $Name
+    if (Test-Path -LiteralPath $f -PathType Leaf) { return (Resolve-Path -LiteralPath $f).Path }
+  }
+  throw "$Name not found (install the github package beside the delivery package)."
+}
+$useCheckout = $false
+$checkoutBase = $Base
+if (-not $DryRun) {
+  & git rev-parse --git-common-dir *> $null
+  $useCheckout = $LASTEXITCODE -eq 0
+}
+if ($useCheckout -and -not $checkoutBase) {
+  & git rev-parse --verify --quiet refs/remotes/origin/release/next *> $null
+  if ($LASTEXITCODE -eq 0) { $checkoutBase = 'release/next' }
+  else {
+    $head = "$(& git symbolic-ref --short refs/remotes/origin/HEAD 2>$null)".Trim() -replace '\Aorigin/', ''
+    $checkoutBase = if ($LASTEXITCODE -eq 0 -and $head) { $head } else { 'main' }
+  }
+}
 $results = [ordered]@{}
 $exit = 0
 $stopped = $false
@@ -422,12 +450,30 @@ foreach ($n in $queue) {
   New-Item -ItemType Directory -Path $dir -Force | Out-Null
   $log = Join-Path $dir 'run.log'
   Test-NotSymlink $log
+  $workDir = (Get-Location).Path
+  if ($useCheckout) {
+    try {
+      $co = & (Get-CheckoutScript 'Enter-Checkout.ps1') -Issue $n -Branch "feat/$n" -Base $checkoutBase | Select-Object -Last 1 | ConvertFrom-Json
+      $workDir = "$($co.path)"
+      Write-Host "[checkout] #${n}: $workDir$(if ($co.worktree) { ' (worktree)' })"
+    } catch {
+      Write-Host "Checkout for #${n} failed: $($_.Exception.Message)"
+      $results[$n] = 'failed'
+      if ($exit -eq 0) { $exit = 1 }
+      if (-not $ContinueOnError) { $stopped = $true }
+      continue
+    }
+  }
   Write-Host "[run] #${n}: $envText"
   Add-Content -LiteralPath $log -Value "=== $(Get-Date -Format o) $envText" -Encoding utf8
   $saved = @{}
   foreach ($k in $envVars.Keys) { $saved[$k] = [Environment]::GetEnvironmentVariable($k); [Environment]::SetEnvironmentVariable($k, [string]$envVars[$k]) }
+  # a relative DROMOS_STATE_DIR would resolve against the worktree: hand the child the resolved directory
+  $savedState = $env:DROMOS_STATE_DIR
+  if ($savedState) { $env:DROMOS_STATE_DIR = Get-StateDir }
+  Push-Location -LiteralPath $workDir
   try { & $bin.Source @($cmd.Arguments) 2>&1 | Tee-Object -FilePath $log -Append | Out-Host; $code = $LASTEXITCODE }
-  finally { foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) } }
+  finally { Pop-Location; $env:DROMOS_STATE_DIR = $savedState; foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) } }
   Add-Content -LiteralPath $log -Value "=== exit code $code" -Encoding utf8
   $after = Get-LedgerLines $n
   $gates = @(Get-Gates $after)
@@ -435,11 +481,18 @@ foreach ($n in $queue) {
   elseif ($gates.Count -gt $gatesBefore) {
     $results[$n] = 'gate'
     Write-Host "Gate on #${n}, queue stopped (answer it, then run the queue again): $($gates[-1])"
+    if ($useCheckout) { Write-Host "Checkout of #${n} kept for the answer: $workDir" }
     $exit = 2; $stopped = $true
   } else {
     $results[$n] = 'failed'
     if ($exit -eq 0) { $exit = 1 }
     if (-not $ContinueOnError) { $stopped = $true }
+  }
+  if ($useCheckout -and $results[$n] -ne 'gate') {
+    try {
+      $rel = & (Get-CheckoutScript 'Exit-Checkout.ps1') -Issue $n | Select-Object -Last 1 | ConvertFrom-Json
+      if ($rel.kept) { Write-Host "Worktree of #${n} has local changes and was kept: $($rel.kept)" }
+    } catch { Write-Host "Releasing the checkout of #${n} failed: $($_.Exception.Message)" }
   }
 }
 foreach ($k in $results.Keys) { Write-Host "#$k $($results[$k])" }

@@ -35,6 +35,20 @@ metadata:
         "pwsh ~/.claude/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
         "pwsh ~/.agents/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
         "pwsh ~/.config/opencode/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
+        "pwsh .claude/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh .opencode/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh .agents/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh .github/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh ~/.claude/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh ~/.agents/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh ~/.config/opencode/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh .claude/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh .opencode/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh .agents/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh .github/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh ~/.claude/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh ~/.agents/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh ~/.config/opencode/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
 ---
 
 You run one PBI for the `orchestrator` loop and keep your own context small. You orchestrate only: every phase runs in a subagent, you never read source files or issue bodies and never edit. You have no question tool and never ask the user.
