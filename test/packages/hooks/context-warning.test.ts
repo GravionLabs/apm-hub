@@ -239,7 +239,7 @@ describe('context-warning hook', () => {
       expect(r.code).toBe(0);
       const out = JSON.parse(r.out);
       expect(out.additionalContext).toBe(
-        'Context is 28k tokens (limit 25k). Finish the current step, append the hand-off to .agents/<issue>/progress.md, then /clear and resume.',
+        'Context is 28k tokens (limit 25k). Finish the current step, append the hand-off to <state dir>/<issue>/progress.md, then /clear and resume.',
       );
       expect(out.hookSpecificOutput.hookEventName).toBe('PostToolUse');
       expect(out.hookSpecificOutput.additionalContext).toBe(out.additionalContext);

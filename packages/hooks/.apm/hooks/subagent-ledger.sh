@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # SubagentStop hook: append one line per finished subagent to the issue ledger
-# (.agents/<issue>/progress.md written by the orchestrator agent). Claude Code and Copilot CLI payloads.
+# (<state>/<issue>/progress.md written by the orchestrator agent). <state> is DROMOS_STATE_DIR, else
+# <git common dir>/agents (shared by all worktrees of a repository); neither: no write. Claude Code and Copilot CLI payloads.
 # Writes only for the orchestrator's subagents. Target: AGENTS_LEDGER; else the PBI of a live loop marker
-# .agents/current (`<pbi> loop-<nr>`, regular file, its loop ledger present without a final `Loop: stopped`, the PBI
+# <state>/current (`<pbi> loop-<nr>`, regular file, its loop ledger present without a final `Loop: stopped`, the PBI
 # ledger present, the branch number absent, equal to <pbi> or to the marker's recorded branch, or recorded as
 # `Loop: PBI #<nr> done`); else
-# .agents/<nr>/progress.md of the issue number in the git branch (<type>/[<scope>/]<nr>[-<slug>]); no ledger,
-# no write. Branch without a number, detached HEAD, no git or no repository: newest PBI ledger; git failing inside a
+# <state>/<nr>/progress.md of the issue number in the git branch (<type>/[<scope>/]<nr>[-<slug>]); no ledger,
+# no write. Branch without a number, detached HEAD, no git: newest PBI ledger of <state> (DROMOS_STATE_DIR set); git failing inside a
 # repository: no write.
 # SubagentStop fires at every depth (pbi-runner and its children) and again on a SendMessage resume, so the
 # stop is deduplicated per agent_id and payload hash (sidecar .ledger-seen next to the ledger, regular file only):
@@ -49,9 +50,22 @@ case "$base" in
   *) exit 0 ;;
 esac
 
+# BEGIN state_dir (identical in every hook that defines it; test/repo/state-dir-resolver.test.ts)
+state_dir() { # state_dir <cwd>: DROMOS_STATE_DIR, else <git common dir>/agents, else nothing
+  local c
+  if [ -n "${DROMOS_STATE_DIR:-}" ]; then
+    case "$DROMOS_STATE_DIR" in /*) printf '%s' "$DROMOS_STATE_DIR" ;; *) printf '%s/%s' "$1" "$DROMOS_STATE_DIR" ;; esac
+    return 0
+  fi
+  c="$(GIT_OPTIONAL_LOCKS=0 git --no-optional-locks -C "$1" -c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || return 0
+  [ -n "$c" ] && printf '%s/agents' "$c"
+  return 0
+}
+# END state_dir
+
 regular() { [ -f "$1" ] && [ ! -L "$1" ] && [ ! -L "$(dirname "$1")" ]; } # regular file, neither it nor its dir a symlink
-bound_ledger() { # bound_ledger <branch nr>: ledger of the PBI named by the loop marker .agents/current, else nothing
-  local m="$cwd/.agents/current" c="" re pbi loop origin loop_ledger last cr=$'\r'
+bound_ledger() { # bound_ledger <branch nr>: ledger of the PBI named by the loop marker <state>/current, else nothing
+  local m="$state/current" c="" re pbi loop origin loop_ledger last cr=$'\r'
   [ -f "$m" ] && [ ! -L "$m" ] || return 0
   IFS= read -r -d '' c < "$m" 2>/dev/null
   # strict format: one line `<pbi> loop-<nr>[ <origin>]`, optional trailing newline (ASCII only, so length = bytes);
@@ -62,7 +76,7 @@ bound_ledger() { # bound_ledger <branch nr>: ledger of the PBI named by the loop
   # nothing after a NUL byte: the file size must equal what was read
   [ "$(wc -c < "$m" 2>/dev/null | tr -d ' ')" = "${#c}" ] || return 0
   # stale guard: the loop ledger exists and its last `Loop: ` line is not a `Loop: stopped` line
-  loop_ledger="$cwd/.agents/$loop/progress.md"
+  loop_ledger="$state/$loop/progress.md"
   regular "$loop_ledger" || return 0
   last="$(grep -a '^Loop: ' "$loop_ledger" 2>/dev/null | tail -n 1)"
   case "$last" in 'Loop: stopped'*) return 0 ;; esac
@@ -71,13 +85,15 @@ bound_ledger() { # bound_ledger <branch nr>: ledger of the PBI named by the loop
   if [ -n "$1" ] && [ "$1" != "$pbi" ] && [ "$1" != "$origin" ]; then
     grep -aEq "^Loop: PBI #$1 done( |$cr?\$)" "$loop_ledger" 2>/dev/null || return 0
   fi
-  regular "$cwd/.agents/$pbi/progress.md" && printf '%s' "$cwd/.agents/$pbi/progress.md"
+  regular "$state/$pbi/progress.md" && printf '%s' "$state/$pbi/progress.md"
 }
 
 ledger="${AGENTS_LEDGER:-}"
 if [ -z "$ledger" ]; then
-  # a symlinked .agents is never written through
-  [ ! -L "$cwd/.agents" ] || exit 0
+  state="$(state_dir "$cwd")"
+  [ -n "$state" ] || exit 0
+  # a symlinked state directory is never written through
+  [ ! -L "$state" ] || exit 0
   # issue number of the current branch (<type>/[<scope>/]<nr>[-<slug>]), read without fsmonitor and repository hooks
   branch=""; git_failed=""
   if command -v git >/dev/null 2>&1; then
@@ -99,10 +115,10 @@ if [ -z "$ledger" ]; then
   if [ -z "$ledger" ]; then
     if [ -n "$nr" ]; then
       # 3. the branch issue's ledger or nothing
-      ledger="$cwd/.agents/$nr/progress.md"
+      ledger="$state/$nr/progress.md"
     else
-      # 4. no number, detached HEAD ("HEAD"), no git or no repository: newest .agents/<issue>/progress.md under the working tree, loop-<nr> ledgers excluded (loop-x is a PBI ledger)
-      ledger="$(ls -t "$cwd"/.agents/*/progress.md 2>/dev/null | grep -v '/\.agents/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"
+      # 4. no number, detached HEAD ("HEAD"), no git or no repository: newest <state>/<issue>/progress.md, loop-<nr> ledgers excluded (loop-x is a PBI ledger)
+      ledger="$(ls -t "$state"/*/progress.md 2>/dev/null | grep -v '/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"
     fi
   fi
 fi
@@ -151,7 +167,7 @@ fi
 if [ -z "$summary" ] && [ "$agent" = "implementer" ]; then
   # only the implementer writes task reports; accept a report touched in the last 10 minutes
   report="$(find "$(dirname "$ledger")" -maxdepth 1 -name 'task-*-report.md' -mmin -10 -exec ls -t {} + 2>/dev/null | head -n 1)"
-  [ -n "$report" ] && summary="report: ${report#"$cwd"/}"
+  [ -n "$report" ] && summary="report: ${report#"$(dirname "$(dirname "$ledger")")"/}"
 fi
 
 if [ -n "$summary" ]; then

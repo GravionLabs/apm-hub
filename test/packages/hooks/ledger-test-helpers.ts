@@ -21,7 +21,7 @@ export const BRANCHES_BOUND = [
 /** Branch names that carry no issue number: the newest-ledger fallback applies. */
 export const BRANCHES_UNBOUND = ['main', 'release/next', 'release/2', 'renovate/3-major', 'fix/7x-y', 'fix/x7-y', 'fix/7/slug', 'feat/x'];
 
-/** Contents of .agents/current that break the strict `<pbi> loop-<nr>` format: the marker is ignored (branch rule applies). */
+/** Contents of <state>/current that break the strict `<pbi> loop-<nr>` format: the marker is ignored (branch rule applies). */
 export const MARKERS_MALFORMED = [
   '',
   '\n',

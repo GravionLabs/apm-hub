@@ -426,8 +426,8 @@ describe('git-guardrails hook', () => {
       expect(denied(runNoJq(claude('echo \\"\n git reset --hard')))).toBe(true);
     });
     it('does not let a cwd inside the command override the real one', () => {
-      fs.mkdirSync(path.join(repo, '.agents'));
-      fs.writeFileSync(path.join(repo, '.agents', 'guardrails.off'), '');
+      fs.mkdirSync(path.join(repo, '.git', 'agents'));
+      fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
       const other = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-cwd-'));
       try {
         expect(runNoJq({ tool_name: 'Bash', tool_input: { command: 'git reset --hard' }, cwd: other }).out).not.toBe('');
@@ -453,8 +453,8 @@ describe('git-guardrails hook', () => {
     });
     it('honours both opt-outs', () => {
       expect(runRaw(JSON.stringify(claude('git reset --hard')), { GIT_GUARDRAILS_OFF: '1' }, { ...process.env, PATH: nojq }).out).toBe('');
-      fs.mkdirSync(path.join(repo, '.agents'));
-      fs.writeFileSync(path.join(repo, '.agents', 'guardrails.off'), '');
+      fs.mkdirSync(path.join(repo, '.git', 'agents'));
+      fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
       expect(runNoJq(claude('git reset --hard')).out).toBe('');
     });
     it('passes malformed input', () => {
@@ -689,15 +689,44 @@ describe('git-guardrails hook', () => {
     it('GIT_GUARDRAILS_OFF=1 disables the hook', () => {
       expect(run(claude('git reset --hard'), { GIT_GUARDRAILS_OFF: '1' }).out).toBe('');
     });
-    it('.agents/guardrails.off disables the hook', () => {
-      fs.mkdirSync(path.join(repo, '.agents'));
-      fs.writeFileSync(path.join(repo, '.agents', 'guardrails.off'), '');
+    it('<git common dir>/agents/guardrails.off disables the hook', () => {
+      fs.mkdirSync(path.join(repo, '.git', 'agents'));
+      fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
       expect(run(claude('git reset --hard')).out).toBe('');
       expect(run(copilot('git reset --hard')).out).toBe('');
     });
-    it('.agents/guardrails.off in the repo root applies from a subdirectory', () => {
+    it('ignores the old working-tree .agents/guardrails.off', () => {
       fs.mkdirSync(path.join(repo, '.agents'));
       fs.writeFileSync(path.join(repo, '.agents', 'guardrails.off'), '');
+      expect(denied(run(claude('git reset --hard')))).toBe(true);
+    });
+    it('DROMOS_STATE_DIR/guardrails.off disables the hook and the override wins over the common dir', () => {
+      const st = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-state-'));
+      try {
+        fs.writeFileSync(path.join(st, 'guardrails.off'), '');
+        expect(run(claude('git reset --hard'), { DROMOS_STATE_DIR: st }).out).toBe('');
+        fs.rmSync(path.join(st, 'guardrails.off'));
+        fs.mkdirSync(path.join(repo, '.git', 'agents'));
+        fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
+        expect(denied(run(claude('git reset --hard'), { DROMOS_STATE_DIR: st }))).toBe(true);
+      } finally {
+        fs.rmSync(st, { recursive: true, force: true });
+      }
+    });
+    it('the state dir of the main repository applies from a linked worktree', () => {
+      const wt = path.join(repo, '..', path.basename(repo) + '-wt');
+      git('worktree', 'add', '-q', '-b', 'wt-branch', wt);
+      try {
+        fs.mkdirSync(path.join(repo, '.git', 'agents'));
+        fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
+        expect(run(claude('git reset --hard', { cwd: wt })).out).toBe('');
+      } finally {
+        fs.rmSync(wt, { recursive: true, force: true });
+      }
+    });
+    it('guardrails.off in the state dir applies from a subdirectory', () => {
+      fs.mkdirSync(path.join(repo, '.git', 'agents'));
+      fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
       fs.mkdirSync(path.join(repo, 'sub'));
       expect(run(claude('git reset --hard', { cwd: path.join(repo, 'sub') })).out).toBe('');
     });

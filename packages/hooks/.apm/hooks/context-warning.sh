@@ -106,7 +106,7 @@ fi
 
 printf '%s' "$ctx" > "$state" 2>/dev/null
 
-msg="$(printf 'Context is %sk tokens (limit %sk). Finish the current step, append the hand-off to .agents/<issue>/progress.md, then /clear and resume.' "$(( ctx / 1000 ))" "$(( threshold / 1000 ))")"
+msg="$(printf 'Context is %sk tokens (limit %sk). Finish the current step, append the hand-off to <state dir>/<issue>/progress.md, then /clear and resume.' "$(( ctx / 1000 ))" "$(( threshold / 1000 ))")"
 if [ "$host" = copilot ]; then
   printf '{"additionalContext":"%s","hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"%s"}}\n' "$msg" "$msg"
 else
