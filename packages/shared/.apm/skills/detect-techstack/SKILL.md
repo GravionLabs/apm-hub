@@ -29,10 +29,13 @@ Run it with a shell in the caller's context. Output not a JSON object with a `la
   "packageManager": ["pnpm", "dotnet"],
   "test": ["ts-test", "py-test", "dotnet-test"],
   "implementation": ["ts-implementation", "py-implementation", "dotnet-implementation"],
+  "tools": ["vitest", "biome", "cargo"],
   "manifest_hash": "<sha256>",
   "state_dir": "/abs/repo/.git/agents"
 }
 ```
+
+`tools` is found by config files in the project root: `vitest` (`vitest.config.*`, `vite.config.*` with a `test` block, or `vitest` in `package.json`), `biome` (`biome.json[c]`), `eslint` (`eslint.config.*`, `.eslintrc*`), `prettier` (`.prettierrc*`, `prettier.config.*`), `jest` (`jest.config.*`), `pytest` (`pytest.ini`, `[tool.pytest` in `pyproject.toml`), `cargo` (`Cargo.toml`). It is part of the cache hash.
 
 `state_dir` is the absolute `<state>` path the other skills and agents use (defined here); the script no longer edits `.git/info/exclude`. On failure the script exits non-zero with the error on stderr. No stack detected → all arrays empty.
 

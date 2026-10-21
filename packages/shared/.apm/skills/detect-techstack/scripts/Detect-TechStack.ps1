@@ -83,8 +83,40 @@ $manifestEntries = foreach ($f in $manifestFilters) {
     "${rel}:$((Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash)"
   }
 }
-$schemaVersion = 'techstack-v3'
-$manifestList = $schemaVersion + "`n" + ((@($manifestEntries) | Sort-Object -Unique -CaseSensitive) -join "`n")
+# --- tools: config files in the project root (part of the cache hash) ---
+function Test-RootFile([string]$Pattern) {
+  [bool](Get-ChildItem -LiteralPath $rootFull -File -Filter $Pattern -Force -ErrorAction SilentlyContinue | Select-Object -First 1)
+}
+function Test-RootMatch([string]$Pattern, [string]$Regex) {
+  foreach ($f in (Get-ChildItem -LiteralPath $rootFull -File -Filter $Pattern -Force -ErrorAction SilentlyContinue)) {
+    if ((Get-Content -LiteralPath $f.FullName -Raw) -match $Regex) { return $true }
+  }
+  $false
+}
+$rootPkg = $null
+if (Test-Path -LiteralPath (Join-Path $rootFull 'package.json') -PathType Leaf) {
+  try { $rootPkg = Get-Content -LiteralPath (Join-Path $rootFull 'package.json') -Raw | ConvertFrom-Json -ErrorAction Stop } catch { $rootPkg = $null }
+}
+function Test-RootDependency([string]$Name) {
+  if ($null -eq $rootPkg) { return $false }
+  foreach ($section in 'dependencies', 'devDependencies') {
+    if (@($rootPkg.PSObject.Properties | ForEach-Object { $_.Name }) -contains $section) {
+      if (@($rootPkg.$section.PSObject.Properties | ForEach-Object { $_.Name }) -contains $Name) { return $true }
+    }
+  }
+  $false
+}
+$tools = [System.Collections.Generic.List[string]]::new()
+if ((Test-RootFile 'vitest.config.*') -or (Test-RootMatch 'vite.config.*' '\btest\s*:') -or (Test-RootDependency 'vitest')) { $tools.Add('vitest') }
+if ((Test-RootFile 'biome.json') -or (Test-RootFile 'biome.jsonc')) { $tools.Add('biome') }
+if ((Test-RootFile 'eslint.config.*') -or (Test-RootFile '.eslintrc*')) { $tools.Add('eslint') }
+if ((Test-RootFile '.prettierrc*') -or (Test-RootFile 'prettier.config.*')) { $tools.Add('prettier') }
+if (Test-RootFile 'jest.config.*') { $tools.Add('jest') }
+if ((Test-RootFile 'pytest.ini') -or (Test-RootMatch 'pyproject.toml' '(?m)^\[tool\.pytest')) { $tools.Add('pytest') }
+if (Test-RootFile 'Cargo.toml') { $tools.Add('cargo') }
+
+$schemaVersion = 'techstack-v4'
+$manifestList = $schemaVersion + "`n" + ((@($manifestEntries) | Sort-Object -Unique -CaseSensitive) -join "`n") + "`ntools:" + ($tools -join ',')
 $sha = [System.Security.Cryptography.SHA256]::Create()
 $manifestHash = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestList))) -replace '-', '').ToLowerInvariant()
 
@@ -96,7 +128,7 @@ if (-not $NoCache -and $agentsUsable -and (Test-Path $cacheFile -PathType Leaf))
     foreach ($key in 'languages', 'test', 'implementation') {
       if (-not ($names -contains $key) -or -not (Test-CacheEntry $cached.$key)) { $shapeOk = $false }
     }
-    foreach ($key in 'frameworks', 'packageManager') {
+    foreach ($key in 'frameworks', 'packageManager', 'tools') {
       if (($names -contains $key) -and -not (Test-CacheEntry $cached.$key)) { $shapeOk = $false }
     }
     if ($shapeOk -and $cached.manifest_hash -eq $manifestHash) {
@@ -239,6 +271,7 @@ $report = [ordered]@{
   languages       = @($languages)
   frameworks      = @($frameworks)
   packageManager  = @($packageManagers)
+  tools           = @($tools)
   test            = @($test)
   implementation  = @($implementation)
   manifest_hash   = $manifestHash

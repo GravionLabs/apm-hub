@@ -123,7 +123,7 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
   let dir: string;
   const run = (...extra: string[]) => {
     const out = execFileSync('pwsh', ['-NoProfile', '-File', script, '-ProjectRoot', dir, ...extra], { encoding: 'utf-8' });
-    return JSON.parse(out) as { languages: string[]; manifest_hash: string };
+    return JSON.parse(out) as { languages: string[]; tools: string[]; manifest_hash: string };
   };
   const cacheFile = () => path.join(dir, '.git/agents/techstack.json');
   const excludeFile = () => path.join(dir, '.git/info/exclude');
@@ -183,6 +183,17 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
     expect(removed.languages).not.toContain('py');
   });
 
+  it('recomputes when a tool config file appears', { timeout: T }, () => {
+    const first = run();
+    expect(first.tools).toEqual([]);
+    fs.writeFileSync(path.join(dir, 'biome.json'), '{}');
+    poison();
+    const added = run();
+    expect(added.tools).toEqual(['biome']);
+    expect(added.manifest_hash).not.toBe(first.manifest_hash);
+    expect(JSON.parse(fs.readFileSync(cacheFile(), 'utf-8')).tools).toEqual(['biome']);
+  });
+
   it('ignores a cache with the wrong shape or hash', { timeout: T }, () => {
     const first = run();
     const cur = JSON.parse(fs.readFileSync(cacheFile(), 'utf-8'));
@@ -219,6 +230,7 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
     ['non-string entry', { languages: [1] }],
     ['scalar instead of array', { test: 'ts-test' }],
     ['bad packageManager', { packageManager: ['pnpm; x'] }],
+    ['bad tools', { tools: ['Vitest; x'] }],
   ])('recomputes and rewrites a cache with an invalid value (%s)', { timeout: T }, (_n, bad) => {
     const first = run();
     poison(bad);

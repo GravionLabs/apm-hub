@@ -38,6 +38,29 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     expect(r.frameworks).toEqual([]);
   });
 
+  it('reports tools by config file presence in the project root', () => {
+    expect(detect().tools).toEqual([]);
+    write('Cargo.toml', '[package]\n');
+    write('biome.jsonc', '{}');
+    write('eslint.config.mjs');
+    write('.prettierrc.json');
+    write('jest.config.js');
+    write('pytest.ini');
+    write('vitest.config.ts');
+    expect(detect().tools).toEqual(['vitest', 'biome', 'eslint', 'prettier', 'jest', 'pytest', 'cargo']);
+  });
+
+  it('detects vitest via vite.config test block, devDependencies, and pytest via pyproject', () => {
+    write('vite.config.ts', 'export default { plugins: [] };');
+    expect(detect().tools).toEqual([]);
+    write('vite.config.ts', 'export default { test: { globals: true } };');
+    expect(detect().tools).toEqual(['vitest']);
+    fs.rmSync(path.join(dir, 'vite.config.ts'));
+    write('package.json', '{"devDependencies":{"vitest":"^2"}}');
+    write('pyproject.toml', '[tool.pytest.ini_options]\n');
+    expect(detect().tools).toEqual(['vitest', 'pytest']);
+  });
+
   it('reports Tauri next to the TS frontend (Tauri 2, json)', () => {
     write('package.json', '{"packageManager":"pnpm@9.0.0"}');
     write('tsconfig.json', '{}');

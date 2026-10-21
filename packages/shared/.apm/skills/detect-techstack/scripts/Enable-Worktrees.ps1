@@ -53,6 +53,7 @@ function Test-StackTool([string]$Name) {
   if ($null -eq $stack) { return $false }
   $props = @(Get-PropName $stack)
   if ($props -contains $Name) { return [bool]$stack.$Name }
+  # `tools` is what Detect-TechStack.ps1 reports; the other lists stay as fallbacks
   foreach ($list in 'tools', 'frameworks', 'test') {
     if ($props -contains $list -and @($stack.$list) -contains $Name) { return $true }
   }
