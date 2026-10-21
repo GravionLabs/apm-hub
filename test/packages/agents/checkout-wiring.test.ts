@@ -43,7 +43,7 @@ describe('isolation: worktree is gone', () => {
 describe('docs and references name the scripts', () => {
   it.each(['loop-mode.md', 'pbi-pipeline.md'])('%s names Enter-Checkout.ps1 and Exit-Checkout.ps1', (f) => {
     const text = read(`packages/github/.apm/skills/github-issue/references/${f}`);
-    expect(text).toContain('Enter-Checkout.ps1 -Issue <pbi> -Branch <branch> -Base <integration branch>');
+    expect(text).toContain('Enter-Checkout.ps1 -Issue <pbi> -Branch <type>/<pbi>-<slug> -Base <integration branch>');
     expect(text).toContain('Exit-Checkout.ps1 -Issue <pbi>');
   });
 
