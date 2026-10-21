@@ -228,6 +228,34 @@ A run keeps its state on disk and on GitHub, never in the model's memory, so a `
 
 `<state>` is resolved the same way by the scripts, the hooks and the OpenCode plugin: the environment variable `DROMOS_STATE_DIR` when set (a relative path is resolved against the working directory), else `<git-common-dir>/agents/`, with the common directory from `git rev-parse --path-format=absolute --git-common-dir` (Git 2.31 or newer). In a plain clone that is `.git/agents/`; in a linked worktree it is the main repository's `.git/agents/`. Outside a repository without the override the scripts stop with an error and the hooks write nothing. `detect-techstack` reports the resolved path as `state_dir`.
 
+#### Verification of the state directory
+
+Results of the manual checklist of [#410](https://github.com/GravionLabs/apm-hub/issues/410), run 2026-10-21 on macOS (Apple Git 2.54, pwsh 7). Only `claude` was installed (2.1.306); `copilot` and `opencode` were not, and no live headless smoke was run (it consumes model usage). `verified <date>` means run by hand that day; `not verified` means no run exists.
+
+| Subject | Write under `.git/agents/` | Worktree common dir (outside the worktree) | Windows (pwsh 7 + Git for Windows) |
+|:--|:--|:--|:--|
+| `Add-LedgerLine.ps1`, `Write-StatusTable.ps1`, `Detect-TechStack.ps1` | verified 2026-10-21 | verified 2026-10-21 (run from a linked worktree, files land in the main `.git/agents/`, `git status` stays clean) | not verified |
+| `subagent-ledger.sh`, `git-guardrails.sh` (`guardrails.off`) | verified 2026-10-21 | verified 2026-10-21 | not verified (a `C:/…` common dir in Git Bash may need a `cygpath -u` branch in the resolver) |
+| Claude Code (Bash, Write/Edit of subagents) | not verified (the issue notes a Linux check, undated) | not verified | not verified |
+| Copilot CLI | not verified (not installed) | not verified | not verified |
+| OpenCode (`OPENCODE_PERMISSION` map, plugin) | not verified (not installed) | not verified | not verified |
+| VS Code Copilot (`runSubagent`) | not verified | not verified | not verified |
+
+Every `not verified` cell is a gap, not a known failure. A client that cannot write under `.git/` (or outside the project directory) works with `DROMOS_STATE_DIR` set to a directory it may write, for example `$HOME/.dromos-state`; scripts, hooks and the plugin then use it instead of `<git-common-dir>/agents/`. Commands to run later, in a linked worktree (`git worktree add ../wt`) of a repository with the packages installed:
+
+```powershell
+# Windows: path form and scripts (expect C:/…/.git, then files under <common-dir>/agents/)
+git rev-parse --path-format=absolute --git-common-dir
+pwsh scripts/Add-LedgerLine.ps1 -Issue 1 -Line "Phase: check"
+'{"agent_type":"implementer","agent_id":"a1"}' | bash packages/hooks/.apm/hooks/subagent-ledger.sh
+# Claude Code, Copilot CLI, OpenCode: headless smoke, stages ledger and plan (uses model quota)
+pwsh scripts/Invoke-HeadlessSmoke.ps1 -Client claude    # copilot | opencode
+# Same with the workaround
+$env:DROMOS_STATE_DIR = "$HOME/.dromos-state"; pwsh scripts/Invoke-HeadlessSmoke.ps1 -Client copilot
+```
+
+For VS Code Copilot run the orchestrator from the agent picker on a throwaway issue and check that `<git-common-dir>/agents/<issue>/` appears. No follow-up issues were opened for these gaps; record each result by replacing its cell with `verified <date>` or `limit`.
+
 #### Migrating from `.agents/`
 
 Ledgers and plans of earlier versions in `.agents/` are not read and not migrated. To keep a running issue, move them once:
