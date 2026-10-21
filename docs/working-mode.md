@@ -141,13 +141,16 @@ by the helper and still prompt, which a headless OpenCode run auto-rejects, or e
 Prefer an interactive or pre-prepared setup for description input and the issue overview.
 
 The `planner` (`mkdir -p`, `cat >` for `plan.json`/`plan.md`) and `issue-reader` (`mkdir -p`, `gh issue view … >` for `issue.md`) write
-rules are rooted on the cwd-relative default state dir `.git/agents/`, the same shape as the former `.agents/` rules; no allow
-rule starts with `*`, because `*` matches any characters including `/` and `..` and would unpin the location. The absolute
-`<state>` is only known at runtime, so these rules do not cover a linked worktree (its common dir is outside the working tree),
-a `DROMOS_STATE_DIR` override or a model that writes the absolute path: those writes prompt (headless: auto-rejected; see
-[#424](https://github.com/GravionLabs/apm-hub/issues/424)). Neither are they a write boundary: `[0-9]` is literal and a redirect is
-not matched (spike below), so `gh issue view *` alone decides the `issue.md` write and the `cat >` rules match no real command.
-The boundary is the agent rule (only `<state>/<nr>/`, no `..`, no chaining).
+rules are rooted on the cwd-relative default state dir `.git/agents/` (`mkdir -p .git/agents/*`, `cat > .git/agents/*/plan.json`,
+`gh issue view * > .git/agents/*/issue.md`). The orchestrator therefore passes these two agents `<state>` cwd-relative when it lies
+under the cwd (a normal checkout: `.git/agents`), so their commands (`mkdir -p .git/agents/402`, `cat > .git/agents/402/plan.json`)
+match; every other subagent gets the absolute path. No allow rule starts with `*`, because `*` matches any characters including
+`/` and `..`; rules after the allows (the last match wins) deny a `..` or a second argument behind the root. The rules do not cover
+a linked worktree (its common dir is outside the working tree), a `DROMOS_STATE_DIR` override outside the cwd or a model that
+writes the absolute path: those writes prompt (headless: auto-rejected; see [#424](https://github.com/GravionLabs/apm-hub/issues/424)).
+Neither are they a write boundary: a redirect is not part of the matched command (spike below), so `gh issue view *` alone decides
+the `issue.md` write, and `cat > …` is then matched as a bare `cat`, which no rule allows: on OpenCode the planner's `plan.json`
+write still prompts (not checked live; a validating writer like `Add-LedgerLine.ps1` would close it). The boundary is the agent rule (only `<state>/<nr>/`, no `..`, no chaining).
 
 It cannot answer a gate either: at a blocked review or a twice-red suite it appends `Gate: <question>` to
 `<state>/<issue>/progress.md`, reports it and stops. Answer in an interactive `orchestrator` session, which

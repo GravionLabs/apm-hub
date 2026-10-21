@@ -37,6 +37,11 @@ list-form `tools` and a non-hex `color` at load time; Claude Code needs its own 
 `apmw sanitize -p <platform>` strips the fields the platform does not read, injects the lines
 under `metadata.<platform>` as top-level keys, and removes `metadata` from every output.
 
+A YAML comment line inside `metadata.opencode.permission` is allowed (planner, issue-reader: why the state rules are
+rooted). Checked with `apmw sanitize` 1.1.0 on a copy of the installed agents: the OpenCode output keeps the comment
+line in the injected `permission` block, the Claude and Copilot outputs drop it with `metadata`. Keep comments on
+their own line, never after a key, and repeat nothing there that the docs do not already say.
+
 ```yaml
 metadata:
   claude:

@@ -403,7 +403,7 @@ describe('agent prose: worktree-shared state directory (#402)', () => {
     const pipeline = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
     expect(pipeline).toContain('its `state_dir` (`<state>`');
     expect(pipeline).toContain('with `<issue>`, `<state>` and');
-    expect(issueReader).toContain('the absolute `<state>` directory');
+    expect(issueReader).toContain('the `<state>` directory (cwd-relative such as `.git/agents` when it lies under the cwd, else absolute');
   });
 
   it('no longer mentions the .git/info/exclude step in agents or references', () => {
