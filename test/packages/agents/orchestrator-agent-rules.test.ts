@@ -15,6 +15,9 @@ describe('orchestrator agent rules', () => {
     for (const line of lines) {
       for (const match of line.matchAll(/general-purpose/g)) {
         const before = line.slice(Math.max(0, match.index - 40), match.index);
+        // the only exception: the Final-Verify command runner (verify-project in a forked general-purpose context)
+        const verifyContext = line.slice(Math.max(0, match.index - 120), match.index);
+        if (/verify-project/.test(verifyContext)) continue;
         if (!/\b(never|not|no)\b/i.test(before)) offenders.push(line.trim().slice(0, 120));
       }
     }
