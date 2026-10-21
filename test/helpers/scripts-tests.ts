@@ -17,6 +17,7 @@ export const scriptsTests = [
   'test/packages/github/remove-worktree.test.ts',
   'test/packages/github/set-project-standard.test.ts',
   'test/packages/github/write-status-table.test.ts',
+  'test/packages/hooks/checkout-binding.test.ts',
   'test/packages/hooks/context-warning.test.ts',
   'test/packages/hooks/git-guardrails.test.ts',
   'test/packages/hooks/opencode-plugin.test.ts',

@@ -3,12 +3,16 @@
 # (<state>/<issue>/progress.md written by the orchestrator agent). <state> is DROMOS_STATE_DIR, else
 # <git common dir>/agents (shared by all worktrees of a repository); neither: no write. Claude Code and Copilot CLI payloads.
 # Writes only for the orchestrator's subagents. Target: AGENTS_LEDGER; else the PBI of a live loop marker
-# <state>/current (`<pbi> loop-<nr>`, regular file, its loop ledger present without a final `Loop: stopped`, the PBI
+# of the payload's checkout, <state>/current.d/<key> (<key> = first 16 hex of the SHA-256 of the git top level of `cwd`, the lease key
+# of Enter-Checkout.ps1; content `<pbi> loop-<nr>`, regular file, its loop ledger present without a final `Loop: stopped`, the PBI
 # ledger present, the branch number absent, equal to <pbi> or to the marker's recorded branch, or recorded as
-# `Loop: PBI #<nr> done`); else
+# `Loop: PBI #<nr> done`). No marker for that key: when `cwd` lies in no live leased checkout, the one marker whose PBI holds a live
+# lease (<state>/leases/*.json, heartbeat within 120 min) is used; when `cwd` lies in a leased checkout, the one marker of that lease's issue
+# (the SubagentStop `cwd` after a subagent's `cd` into a worktree is not verified, #466); several candidates: none. The old
+# single marker <state>/current is read only while <state>/current.d/ does not exist (legacy, see CONTRIBUTING.md). Else
 # <state>/<nr>/progress.md of the issue number in the git branch (<type>/[<scope>/]<nr>[-<slug>]); no ledger,
-# no write. Branch without a number, detached HEAD, no git: newest PBI ledger of <state> (DROMOS_STATE_DIR set); git failing inside a
-# repository: no write.
+# no write. Branch without a number, detached HEAD, no git: newest PBI ledger of <state> (DROMOS_STATE_DIR set), but only while at most
+# one live lease exists (with more, the newest ledger may belong to another run: no write); git failing inside a repository: no write.
 # SubagentStop fires at every depth (pbi-runner and its children) and again on a SendMessage resume, so the
 # stop is deduplicated per agent_id and payload hash (sidecar .ledger-seen next to the ledger, regular file only):
 # the same stop fired twice is written once, a resumed agent with a new reply (even the same `GATE review`) again.
@@ -67,9 +71,79 @@ state_dir() { # state_dir <cwd>: DROMOS_STATE_DIR, else <git common dir>/agents,
 TS_RE='[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z '
 untimed() { sed -E "s/^$TS_RE//"; } # a ledger line without its optional timestamp prefix
 regular() { [ -f "$1" ] && [ ! -L "$1" ] && [ ! -L "$(dirname "$1")" ]; } # regular file, neither it nor its dir a symlink
-bound_ledger() { # bound_ledger <branch nr>: ledger of the PBI named by the loop marker <state>/current, else nothing
-  local m="$state/current" c="" re pbi loop origin loop_ledger last cr=$'\r'
-  [ -f "$m" ] && [ ! -L "$m" ] || return 0
+LEASE_TTL_MIN=120 # same TTL as Enter-Checkout.ps1 -LeaseTtlMinutes
+sha16() { # first 16 hex of the SHA-256 of stdin
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum
+  elif command -v shasum >/dev/null 2>&1; then shasum -a 256
+  elif command -v openssl >/dev/null 2>&1; then openssl dgst -sha256 | sed 's/^.* //'
+  fi | cut -c1-16
+}
+checkout_key() { # checkout_key <dir>: lease key of the checkout (git top level) of <dir>; the dir itself outside a repository
+  local top
+  top="$(GIT_OPTIONAL_LOCKS=0 git --no-optional-locks -C "$1" -c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse --show-toplevel 2>/dev/null)" || top=""
+  [ -n "$top" ] || top="$1"
+  top="${top%/}"
+  printf '%s' "$top" | sha16
+}
+iso_epoch() { # iso_epoch 2026-10-21T15:19:46Z: seconds since 1970 (UTC), fails on any other format
+  local re='^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z$' y m d era yoe doy doe
+  [[ "$1" =~ $re ]] || return 1
+  y=$((10#${BASH_REMATCH[1]})); m=$((10#${BASH_REMATCH[2]})); d=$((10#${BASH_REMATCH[3]}))
+  [ "$m" -le 2 ] && y=$((y - 1))
+  era=$((y / 400)); yoe=$((y - era * 400))
+  if [ "$m" -gt 2 ]; then doy=$(((153 * (m - 3) + 2) / 5 + d - 1)); else doy=$(((153 * (m + 9) + 2) / 5 + d - 1)); fi
+  doe=$((yoe * 365 + yoe / 4 - yoe / 100 + doy))
+  echo $(((era * 146097 + doe - 719468) * 86400 + 10#${BASH_REMATCH[4]} * 3600 + 10#${BASH_REMATCH[5]} * 60 + 10#${BASH_REMATCH[6]}))
+}
+live_leases() { # one line `<checkout path><TAB><issue>` per live lease of <state>/leases (heartbeat within the TTL)
+  local f now hb ep p i
+  [ -d "$state/leases" ] && [ ! -L "$state/leases" ] || return 0
+  now="$(date +%s 2>/dev/null)"; [ -n "$now" ] || return 0
+  for f in "$state"/leases/*.json; do
+    regular "$f" || continue
+    hb="$(sed -n 's/.*"heartbeat"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$f" 2>/dev/null | head -n 1)"
+    ep="$(iso_epoch "$hb")" || continue
+    [ $((now - ep)) -lt $((LEASE_TTL_MIN * 60)) ] || continue
+    p="$(sed -n 's/.*"path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$f" 2>/dev/null | head -n 1)"
+    i="$(sed -n 's/.*"issue"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$f" 2>/dev/null | head -n 1)"
+    [ -n "$p" ] && [ -n "$i" ] && printf '%s\t%s\n' "$p" "$i"
+  done
+  return 0
+}
+marker_pbi() { # marker_pbi <marker file>: the PBI of a well-formed marker (first field), else fails
+  local c="" re=$'^([1-9][0-9]{0,9}) (loop-[1-9][0-9]{0,9})( ([1-9][0-9]{0,9}))?\n?$'
+  [ -f "$1" ] && [ ! -L "$1" ] || return 1
+  IFS= read -r -d '' c < "$1" 2>/dev/null
+  [[ "$c" =~ $re ]] && printf '%s' "${BASH_REMATCH[1]}"
+}
+marker_file() { # marker_file <cwd>: loop marker of the checkout of <cwd>, else nothing
+  local d="$state/current.d" m leases own_issue="" best=0 lp li pbi bound="" count=0 real
+  real="$(cd "$1" 2>/dev/null && pwd -P)" || real="$1" # the lease paths are real paths (git resolves symlinks)
+  # legacy: the single marker <state>/current counts only while no current.d/ exists
+  if [ ! -e "$d" ] && [ ! -L "$d" ]; then printf '%s' "$state/current"; return 0; fi
+  [ -d "$d" ] && [ ! -L "$d" ] || return 0
+  m="$d/$(checkout_key "$1")"
+  if [ -f "$m" ] && [ ! -L "$m" ]; then printf '%s' "$m"; return 0; fi
+  # no marker for this checkout: resolve it through the lease of the bound PBI. cwd inside a leased checkout: the marker of that
+  # lease's issue; cwd in no leased checkout (e.g. the session directory): the marker whose PBI holds a live lease. Exactly one, else none.
+  leases="$(live_leases)"
+  while IFS=$'\t' read -r lp li; do
+    [ -n "$lp" ] || continue
+    case "${real%/}/" in "$lp"/*) [ "${#lp}" -gt "$best" ] && { best="${#lp}"; own_issue="$li"; } ;; esac
+  done <<< "$leases"
+  for m in "$d"/*; do
+    pbi="$(marker_pbi "$m")" || continue
+    if [ -n "$own_issue" ]; then [ "$pbi" = "$own_issue" ] || continue
+    else printf '%s\n' "$leases" | cut -f2 | grep -qx "$pbi" || continue; fi
+    bound="$m"; count=$((count + 1))
+  done
+  [ "$count" -eq 1 ] && printf '%s' "$bound"
+  return 0
+}
+bound_ledger() { # bound_ledger <branch nr>: ledger of the PBI named by the loop marker of the payload's checkout, else nothing
+  local m c="" re pbi loop origin loop_ledger last cr=$'\r'
+  m="$(marker_file "$cwd")"
+  [ -n "$m" ] && [ -f "$m" ] && [ ! -L "$m" ] || return 0
   IFS= read -r -d '' c < "$m" 2>/dev/null
   # strict format: one line `<pbi> loop-<nr>[ <origin>]`, optional trailing newline (ASCII only, so length = bytes);
   # <origin> is the issue number of the branch -Bind ran on
@@ -120,8 +194,11 @@ if [ -z "$ledger" ]; then
       # 3. the branch issue's ledger or nothing
       ledger="$state/$nr/progress.md"
     else
-      # 4. no number, detached HEAD ("HEAD"), no git or no repository: newest <state>/<issue>/progress.md, loop-<nr> ledgers excluded (loop-x is a PBI ledger)
-      ledger="$(ls -t "$state"/*/progress.md 2>/dev/null | grep -v '/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"
+      # 4. no number, detached HEAD ("HEAD"), no git or no repository: newest <state>/<issue>/progress.md, loop-<nr> ledgers excluded
+      # (loop-x is a PBI ledger); with more than one live lease the newest ledger may be a foreign run's: no write (#466)
+      if [ "$(live_leases | grep -c .)" -le 1 ]; then
+        ledger="$(ls -t "$state"/*/progress.md 2>/dev/null | grep -v '/loop-[1-9][0-9]*/progress\.md$' | head -n 1)"
+      fi
     fi
   fi
 fi
