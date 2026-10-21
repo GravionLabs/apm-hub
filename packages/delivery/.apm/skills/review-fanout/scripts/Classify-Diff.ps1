@@ -230,7 +230,6 @@ try {
   $paths = @()
   $kindOf = [ordered]@{}
   $scanFiles = @()
-  $entries = @()
   for ($i = 0; $i -lt $raw.Count; $i++) {
     $parts = $raw[$i] -split "`t"
     $meta = @(($parts[0].TrimStart(':')) -split ' ')
@@ -287,7 +286,6 @@ try {
     }
     $kindOf[$path] = $kind
     $scanFiles += $files
-    $entries += , $files
   }
   if ($lines -gt $MaxLines) { Exit-WithFull "$lines changed lines exceed threshold $MaxLines" }
 
@@ -295,11 +293,8 @@ try {
   $hits = @{}
   $diffs = @{}
   if ($scanFiles.Count -gt 0) {
-    $d = @()
-    foreach ($e in $entries) {
-      $d += @(git -c core.quotepath=off --literal-pathspecs diff --ignore-submodules=none -M -U0 --no-color $Range -- @e 2>$null)
-      if ($LASTEXITCODE -ne 0) { Exit-WithFull 'git diff failed' }
-    }
+    $d = @(git -c core.quotepath=off --literal-pathspecs diff --ignore-submodules=none -M -U0 --no-color $Range -- @($scanFiles | Select-Object -Unique) 2>$null)
+    if ($LASTEXITCODE -ne 0) { Exit-WithFull 'git diff failed' }
     $diffs = Read-Diff $d
     foreach ($p in $kindOf.Keys) {
       if (-not $diffs.ContainsKey($p)) { continue }
