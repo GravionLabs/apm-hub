@@ -7,7 +7,7 @@ Read-only: never edit or commit.
 
 ## Steps
 
-1. **Input** — write ONE package file instead of pasting the diff: `.agents/<issue>/review-<n>.diff` (else a unique file in `$TMPDIR`) with `git log --oneline <base>..<head>`, `git diff --stat <base>..<head>` and `git diff -U10 <base>..<head>`; no range given → `git diff HEAD`. PR: `gh pr view <nr> --json commits,files` + `gh pr diff <nr>` (`<nr>` must be an integer). Redirect into the file so nothing enters your context. Empty diff → stop. Before any dispatch (step 2 and step 4) check the package file exists and is non-empty; otherwise stop, report `incomplete: true` and dispatch nothing. Drop binary/generated files. Optional issue number (argument, branch `<type>/<nr>-<slug>`, or `Closes #n` in the range): append issue title, body and Task sub-issue bodies to the package file, see `references/spec-dimension.md`; none found → `spec` reports "no spec available" as advisory.
+1. **Input** — write ONE package file instead of pasting the diff: `<state>/<issue>/review-<n>.diff` (else a unique file in `$TMPDIR`) with `git log --oneline <base>..<head>`, `git diff --stat <base>..<head>` and `git diff -U10 <base>..<head>`; no range given → `git diff HEAD`. PR: `gh pr view <nr> --json commits,files` + `gh pr diff <nr>` (`<nr>` must be an integer). Redirect into the file so nothing enters your context. Empty diff → stop. Before any dispatch (step 2 and step 4) check the package file exists and is non-empty; otherwise stop, report `incomplete: true` and dispatch nothing. Drop binary/generated files. Optional issue number (argument, branch `<type>/<nr>-<slug>`, or `Closes #n` in the range): append issue title, body and Task sub-issue bodies to the package file, see `references/spec-dimension.md`; none found → `spec` reports "no spec available" as advisory.
 2. **Fan out**
    - **Classify** first, only for a local range or the working tree (PR number without a resolvable local `<base>..<head>`: `full`, do not run it).
    - Run it only when every ref matches `^[A-Za-z0-9._/@~^-]+$` and none starts with `-`; any other ref is `full` without running it (refs may contain shell metacharacters).
@@ -25,7 +25,7 @@ Read-only: never edit or commit.
 3. **Dedupe** by file + normalized evidence; keep highest severity. Never merge `spec` with `conventions` findings.
 4. **Verify** — a sub-agent (given the package path, not the diff) tries to disprove each CRITICAL/HIGH finding: `confirmed`, `refuted` (→ advisory), `unverifiable` (stays blocking).
 
-## Output (JSON returned to the caller; a machine-readable copy for the caller goes to `.agents/<issue>/review.json`, else next to the package file in `$TMPDIR`)
+## Output (JSON returned to the caller; a machine-readable copy for the caller goes to `<state>/<issue>/review.json`, else next to the package file in `$TMPDIR`)
 
 `{"mode":"mechanical|full","dimensions":[],"verdict":"APPROVE|CHANGES_REQUESTED","incomplete":false,"failedDimensions":[],"blocking":[{file,line,severity,issue,evidence}],"advisory":[]}`
 

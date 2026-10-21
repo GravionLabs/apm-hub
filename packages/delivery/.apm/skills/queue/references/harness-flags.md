@@ -25,7 +25,7 @@ Client recognition (checked against `orchestrator.agent.md` and `github-issue/re
 
 - The narrow set limits accidents, it does not stop prompt injection: `gh api`, `pwsh` and the build tools can still do
   a lot, and issue text (especially via `-Label`) reaches the model. Run on collaborator-authored issues. `-TrustedOnly` filters only the issue author for `-Label`, not comments; positional issue numbers and `-IssueFile` are not filtered.
-- OpenCode denies edits under `.git/`; `.agents/` stays writable because the subagents write their reports there.
+- OpenCode denies edits under `.git/`; the state dir (`<state>`, outside the working tree) stays writable because the subagents write their reports there.
 
 - Narrow: the model cannot run commands outside the list (no `rm`, `curl`, `sudo`), at the price of stalls
   or failures when a project needs another tool. Extend the list in the adapter or fall back to `-AllowAll`.
@@ -52,6 +52,6 @@ no live headless run exists yet:
 - OpenCode: the keys `edit`, `task`, `skill`, `bash` and the `"git *"` patterns are from the docs, not exercised
 - multi-word prefixes (`shell(git status:*)`, `Bash(git status:*)`, `"git status *"`) and the OpenCode `edit` path rules are from the docs, not exercised
 - queue mode parses the run output (`Next PBI: #<n>`, `Gate:`, `Nothing selectable`, `<Feature|Epic> #<n> is done.`, `Verdict: APPROVE`) case-sensitively and the PBI ledger line `Phase pull-request: complete — <url>`
-- `-Status <nr>` runs `status <nr>` once and parses `Gate:` and the line `Status: .agents/status-<nr>.md` (case-sensitive); it also needs `.agents/status-<nr>.md` written during the run, and reads no ledger
+- `-Status <nr>` runs `status <nr>` once and parses `Gate:` and the line `Status: <state>/status-<nr>.md` (case-sensitive); it also needs `<state>/status-<nr>.md` written during the run, and reads no ledger
 
 Report a working or broken flag set as an issue so the adapter and this table can be corrected.

@@ -10,7 +10,7 @@ Retrospective on a finished run. You improve the agent **environment** (steering
 
 ## Input
 
-Issue number (`retro 197`), session id, or nothing = the newest ledger `.agents/<issue>/progress.md`. Ledger lines used: `Ruling:`, `Fix round`, `Gate:`, `Subagent <role>: stopped`.
+Issue number (`retro 197`), session id, or nothing = the newest ledger `<state>/<issue>/progress.md`. Ledger lines used: `Ruling:`, `Fix round`, `Gate:`, `Subagent <role>: stopped`.
 
 ## Steps
 
@@ -20,7 +20,7 @@ Issue number (`retro 197`), session id, or nothing = the newest ledger `.agents/
 
 ```powershell
 pwsh scripts/Get-RunMetrics.ps1 -Issue 197                       # newest transcript of this project
-pwsh scripts/Get-RunMetrics.ps1 -Transcript <session>.jsonl -Ledger .agents/197/progress.md
+pwsh scripts/Get-RunMetrics.ps1 -Transcript <session>.jsonl -Ledger <state>/197/progress.md
 ```
 
    The script dedupes usage by `message.id`, reads `<session>/subagents/*.meta.json` and prints JSON. Copilot or OpenCode sessions: use the ledger lines and say that cost and context are not measured.
