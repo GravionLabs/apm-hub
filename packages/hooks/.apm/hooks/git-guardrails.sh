@@ -2,7 +2,7 @@
 # PreToolUse hook: deny destructive git commands before they run. Claude Code (tool_name Bash,
 # tool_input.command) and Copilot CLI (toolName, toolArgs) payloads. Everything else passes (exit 0, no output).
 # Adapted from mattpocock/skills git-guardrails-claude-code (MIT, https://github.com/mattpocock/skills).
-# Opt-out per repo: GIT_GUARDRAILS_OFF=1, or an (empty) file guardrails.off in the state directory (DROMOS_STATE_DIR, else <git common dir>/agents).
+# Opt-out per repo: GIT_GUARDRAILS_OFF=1, or an (empty) file guardrails.off in the state directory (DROMOS_STATE_DIR, else <git common dir>/agents). The state dir is shared by all worktrees: the file disables the guard in every worktree of the repository.
 #
 # This hook is a guardrail against accidents, NOT a security boundary. It catches the destructive git commands
 # an agent writes by mistake; a command built to evade it (or a repo that opts out) gets through.
@@ -124,7 +124,7 @@ deny() {
   printf '{"permissionDecision":"deny","permissionDecisionReason":"%s","hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' "$r" "$r"
   exit 0
 }
-OPTOUT="set GIT_GUARDRAILS_OFF=1 or create <state dir>/guardrails.off to allow"
+OPTOUT="set GIT_GUARDRAILS_OFF=1 or create <state dir>/guardrails.off (shared by all worktrees) to allow"
 # the pre-state-dir opt-out file is no longer read: keep denying, but say where the file belongs now
 if [ -n "$top" ] && [ -f "$top/.agents/guardrails.off" ]; then
   OPTOUT="$OPTOUT (the legacy .agents/guardrails.off is no longer read; move it to ${state:-the state directory}/guardrails.off)"

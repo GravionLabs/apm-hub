@@ -7,7 +7,7 @@ Order of work and release assignment for the open issues. Created 2026-10-18, la
 | Order | Issue | Title | Size | Note |
 | --- | --- | --- | --- | --- |
 | 1 | #375 | loop-mode ledger lines before the PBI branch exists | S | merged; before #402 and #389: same hook file |
-| 2 | #402 | worktree-shared state directory (git common dir, `DROMOS_STATE_DIR`) | L | Tasks #403–#410; after #375 (same hook files), before #386 and #389, which build on the path; #379 is already merged, so `Write-StatusTable.ps1` is adapted in #403; `.agents/` → `.dromos/` stays at 3.0.0 (dromos#70); client follow-ups in Feature #432 (#422–#426) are not part of this release |
+| 2 | #402 | worktree-shared state directory (git common dir, `DROMOS_STATE_DIR`) | L | Tasks #403–#410; after #375 (same hook files), before #386 and #389, which build on the path; #379 is already merged, so `Write-StatusTable.ps1` is adapted in #403; `.agents/` → `.dromos/` stays at 3.0.0 (dromos#70); client verification follow-ups (Windows #422, VS Code Copilot #423, OpenCode #424, Copilot CLI #425, Claude Code #450) are linked from the results table in docs/orchestrator.md; #410 stays open until they are done; Feature #432 (#422–#426) is not part of this release |
 | 3 | #367 | git-guardrails scanner quadratic on bash 3.2 | S | independent |
 | 4 | #252 | `github-release` refuses an already released branch | S | protects this very release; do before cutting |
 | 5 | #251 | model policy, opus in `plan.json`, escalation at fix round 2 | M | `needs-decision`: decide first, otherwise it moves to 2.5.0 |

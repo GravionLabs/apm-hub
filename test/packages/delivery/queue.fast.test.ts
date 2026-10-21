@@ -201,6 +201,39 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       }
     });
 
+    describe.skipIf(!hasPwsh)('opencode harness edit allow entry for the state directory', () => {
+      const adapter = path.resolve(path.dirname(SCRIPT), 'harness/opencode.ps1');
+      const perm = (cwd: string, override?: string) => {
+        const env = { ...process.env };
+        delete env.DROMOS_STATE_DIR;
+        if (override !== undefined) env.DROMOS_STATE_DIR = override;
+        return spawnSync('pwsh', ['-NoProfile', '-Command', `& '${adapter}' -Issue 1 | ForEach-Object { $_.Environment.OPENCODE_PERMISSION }`], { encoding: 'utf8', cwd, env });
+      };
+      it.each(['/tmp/st*', '/tmp/a?b', '/tmp/{x,y}', '/tmp/[ab]', '/'])('refuses the override %s', (o) => {
+        const r = perm(os.tmpdir(), o);
+        expect(r.status).not.toBe(0);
+        expect(r.stdout + r.stderr).toContain('Refusing the edit allow entry');
+      });
+      it('accepts a plain override and keeps its trailing slash out of the glob', () => {
+        const r = perm(os.tmpdir(), '/tmp/plain-state/');
+        expect(r.status).toBe(0);
+        expect(JSON.parse(r.stdout.trim()).edit['/tmp/plain-state/**']).toBe('allow');
+      });
+      it('does not refuse the default state dir of a repository whose path has glob characters', () => {
+        const base = fs.mkdtempSync(path.join(os.tmpdir(), 'oc-glob-'));
+        try {
+          const repo = path.join(base, 'a[1]{x}');
+          fs.mkdirSync(repo);
+          spawnSync('git', ['init', '-q'], { cwd: repo });
+          const r = perm(repo);
+          expect(r.status, r.stderr).toBe(0);
+          expect(Object.keys(JSON.parse(r.stdout.trim()).edit).pop()).toMatch(/a\[1\]\{x\}\/\.git\/agents\/\*\*$/);
+        } finally {
+          fs.rmSync(base, { recursive: true, force: true });
+        }
+      });
+    });
+
     it.each(['copilot', 'opencode'])('does not report "No adapter" for %s', (h) => {
       const r = R[`adapter ${h}`];
       expect(r.status).toBe(0);

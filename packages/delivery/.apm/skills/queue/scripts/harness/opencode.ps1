@@ -38,9 +38,9 @@ else {
     try { $common = "$(& git -C (Get-Location).Path rev-parse --path-format=absolute --git-common-dir 2>$null)".Trim() } catch { $common = $null }
     if ($LASTEXITCODE -eq 0 -and $common) { $stateDir = [IO.Path]::GetFullPath((Join-Path $common 'agents')) }
   }
-  # the allow glob must be one concrete directory: no wildcard characters, never the filesystem root
+  # the allow glob must be one concrete directory: a user-supplied override must not hold wildcard characters or be a filesystem root
   if ($stateDir) { $stateDir = [IO.Path]::TrimEndingDirectorySeparator($stateDir) }
-  if ($stateDir -and ($stateDir -match '[*?\[\]{}]' -or $stateDir -eq [IO.Path]::GetPathRoot($stateDir))) { throw "Refusing the edit allow entry for state directory '$stateDir': wildcard characters or a filesystem root." }
+  if ($env:DROMOS_STATE_DIR -and $stateDir -and ($stateDir -match '[*?\[\]{}]' -or $stateDir -eq [IO.Path]::GetPathRoot($stateDir))) { throw "Refusing the edit allow entry for DROMOS_STATE_DIR '$stateDir': wildcard characters or a filesystem root." }
   if ($stateDir) { $edit[($stateDir.TrimEnd('/', '\') -replace '\\', '/') + '/**'] = 'allow' }
   $envVars['OPENCODE_PERMISSION'] = [ordered]@{ edit = $edit; task = 'allow'; skill = 'allow'; bash = $bash } | ConvertTo-Json -Compress -Depth 5
 }
