@@ -146,6 +146,13 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1 state directory (#402)', () => 
     expect(fs.readFileSync(path.join(main, '.git', 'agents', 'status-5.md'), 'utf8')).toBe('#1 merged A\n');
   });
 
+  it('honours DROMOS_STATE_DIR, also with a trailing slash', () => {
+    const st = path.join(root, 'state');
+    const r = run(root, { DROMOS_STATE_DIR: st + '/' });
+    expect(r.status, r.stderr).toBe(0);
+    expect(fs.readFileSync(path.join(st, 'status-5.md'), 'utf8')).toBe('#1 merged A\n');
+  });
+
   it('exits 1 with a message outside a repository', () => {
     const r = run(root, {});
     expect(r.status).toBe(1);

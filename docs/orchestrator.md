@@ -241,6 +241,8 @@ Results of the manual checklist of [#410](https://github.com/GravionLabs/apm-hub
 | OpenCode (`OPENCODE_PERMISSION` map, plugin) | not verified (not installed) | not verified | not verified |
 | VS Code Copilot (`runSubagent`) | not verified | not verified | not verified |
 
+What this table does not show: no client (Claude Code, Copilot CLI, OpenCode, VS Code Copilot) was run against the state directory, no live headless smoke ran, and nothing was run on Windows. The verified rows cover the scripts and hooks only, by hand on macOS; the automated tests cover the same on macOS/Linux with pwsh. The acceptance criteria that require a client check are therefore open, tracked in [#410](https://github.com/GravionLabs/apm-hub/issues/410).
+
 Every `not verified` cell is a gap, not a known failure. A client that cannot write under `.git/` (or outside the project directory) works with `DROMOS_STATE_DIR` set to a directory it may write, for example `$HOME/.dromos-state`; scripts, hooks and the plugin then use it instead of `<git-common-dir>/agents/`. Commands to run later, in a linked worktree (`git worktree add ../wt`) of a repository with the packages installed:
 
 ```powershell

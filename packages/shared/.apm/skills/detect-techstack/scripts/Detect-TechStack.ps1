@@ -38,7 +38,7 @@ function Get-IndicatorFile {
 $rootFull = (Resolve-Path $ProjectRoot).Path
 # BEGIN Resolve-StateDir (identical in every script that defines it; test/repo/state-dir-resolver.test.ts)
 function Resolve-StateDir {
-  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path) }
+  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path)) }
   $common = $null
   try { $common = "$(& git -C (Get-Location).Path rev-parse --path-format=absolute --git-common-dir 2>$null)".Trim() } catch { $common = $null }
   if ($LASTEXITCODE -ne 0 -or -not $common) { throw 'No state directory: not inside a git repository (set DROMOS_STATE_DIR)' }

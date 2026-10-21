@@ -27,6 +27,15 @@ param(
   [switch]$Keep
 )
 $ErrorActionPreference = 'Stop'
+# BEGIN Resolve-StateDir (identical in every script that defines it; test/repo/state-dir-resolver.test.ts)
+function Resolve-StateDir {
+  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path)) }
+  $common = $null
+  try { $common = "$(& git -C (Get-Location).Path rev-parse --path-format=absolute --git-common-dir 2>$null)".Trim() } catch { $common = $null }
+  if ($LASTEXITCODE -ne 0 -or -not $common) { throw 'No state directory: not inside a git repository (set DROMOS_STATE_DIR)' }
+  [IO.Path]::GetFullPath((Join-Path $common 'agents'))
+}
+# END Resolve-StateDir
 $root = Split-Path $PSScriptRoot -Parent
 $helper = Join-Path $root 'packages/github/.apm/skills/github-issue/scripts/Add-LedgerLine.ps1'
 $header = "# orchestrator ledger — issue #$Issue — branch main"
@@ -104,7 +113,8 @@ foreach ($c in $clients) {
     $ran++
     $problems = @()
     # The fixture is a git repo: its state dir is <git common dir>/agents unless DROMOS_STATE_DIR is set (relative: against the fixture).
-    $stateDir = $env:DROMOS_STATE_DIR ? [IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, $dir) : (Join-Path (& git -C $dir rev-parse --path-format=absolute --git-common-dir).Trim() 'agents')
+    Push-Location -LiteralPath $dir
+    try { $stateDir = Resolve-StateDir } finally { Pop-Location }
     $dirs = @(Get-ChildItem $stateDir -Directory -ErrorAction SilentlyContinue)
     $ledgerFile = $full ? ($dirs | ForEach-Object { Join-Path $_.FullName 'progress.md' } | Where-Object { Test-Path $_ } | Select-Object -First 1) : (Join-Path $stateDir "$Issue/progress.md")
     $ledgerText = ($ledgerFile -and (Test-Path $ledgerFile)) ? (Get-Content $ledgerFile -Raw) : ''

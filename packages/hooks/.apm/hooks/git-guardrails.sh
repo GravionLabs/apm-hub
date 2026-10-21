@@ -125,6 +125,10 @@ deny() {
   exit 0
 }
 OPTOUT="set GIT_GUARDRAILS_OFF=1 or create <state dir>/guardrails.off to allow"
+# the pre-state-dir opt-out file is no longer read: keep denying, but say where the file belongs now
+if [ -n "$top" ] && [ -f "$top/.agents/guardrails.off" ]; then
+  OPTOUT="$OPTOUT (the legacy .agents/guardrails.off is no longer read; move it to ${state:-the state directory}/guardrails.off)"
+fi
 UNKNOWN="(unknown branch)"
 PTOP=""; AWD=""; AFOR=""; NOTE=""
 

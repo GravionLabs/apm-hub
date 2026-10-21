@@ -131,6 +131,9 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
       'Status: .agents/status-248.md.bak',
       'Status: .agents/status-248.mdx',
       'Status: .agents/status-24.md',
+      'Status: /elsewhere/status-248.md',
+      'Status: ../other/status-248.md',
+      'Status: other/status-248.md',
     ])('rejects %s', (line) => {
       const r = marker(line);
       expect(r.status).toBe(1);

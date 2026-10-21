@@ -9,6 +9,7 @@ const PWSH_FILES = [
   'packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1',
   'packages/delivery/.apm/skills/queue/scripts/Invoke-OrchestratorQueue.ps1',
   'packages/delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1',
+  'scripts/Invoke-HeadlessSmoke.ps1',
 ];
 
 const extract = (rel: string): string => {

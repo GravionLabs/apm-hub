@@ -57,6 +57,7 @@ sh "${dir}/steps/$c"
         path.join(bin, 'gh'),
         `#!/bin/sh
 echo "$@" >> "${dir}/gh.log"
+echo "$AGENTS_LEDGER" >> "${dir}/gh-env.log"
 case "$1 $2" in
   "pr list") ${o.listFails ? 'echo "boom" >&2; exit 1' : `cat "${dir}/gh-list.json"`} ;;
   "pr view") cat "${dir}/gh-view.json" ;;
@@ -111,6 +112,55 @@ exit 0
       const r = run(['-Feature', '10'], true);
       expect(r.status).toBe(1);
       expect(queue().state).toBe('failed');
+    });
+
+    describe('state directory resolution (no hermetic .agents override)', () => {
+      const runWith = (cwd: string, env: Record<string, string | undefined>) => {
+        const e: NodeJS.ProcessEnv = { ...process.env, QUEUE_POLL_SECONDS: '0', PATH: `${bin}${path.delimiter}${process.env.PATH}`, ...env };
+        for (const k of Object.keys(e)) if (e[k] === undefined) delete e[k];
+        return spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Feature', '10'], { encoding: 'utf8', cwd, env: e });
+      };
+      const git = (cwd: string, ...a: string[]) => {
+        const r = spawnSync('git', ['-c', 'commit.gpgsign=false', '-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd, encoding: 'utf8', env: { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' } });
+        expect(r.status, `git ${a.join(' ')}: ${r.stderr}`).toBe(0);
+      };
+      const step = (n: number, root: string) => `mkdir -p "${root}/${n}"; echo "Next PBI: #${n} T"; echo "Ledger complete." >> "${root}/${n}/progress.md"`;
+
+      it('honours an absolute DROMOS_STATE_DIR with a trailing slash outside the repository', () => {
+        const other = fs.mkdtempSync(path.join(os.tmpdir(), 'queue-state-'));
+        try {
+          fakeQueue([step(11, other), doneStep]);
+          const r = runWith(dir, { DROMOS_STATE_DIR: other + '/' });
+          expect(r.status, r.stdout + r.stderr).toBe(0);
+          const q = JSON.parse(fs.readFileSync(path.join(other, 'queue-10.json'), 'utf8'));
+          expect(q.pbis[0].ledger).toBe(path.join(other, '11', 'progress.md'));
+          expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
+        } finally {
+          fs.rmSync(other, { recursive: true, force: true });
+        }
+      });
+
+      it('shares <git common dir>/agents between the main checkout and a linked worktree', () => {
+        git(dir, 'init', '-q', '-b', 'main');
+        git(dir, 'commit', '-q', '--allow-empty', '-m', 'x');
+        const wt = path.join(dir, 'wt');
+        git(dir, 'worktree', 'add', '-q', wt, '-b', 'side');
+        const common = path.join(fs.realpathSync(dir), '.git', 'agents');
+        fakeQueue([step(11, common), doneStep]);
+        const r = runWith(wt, { DROMOS_STATE_DIR: undefined });
+        expect(r.status, r.stdout + r.stderr).toBe(0);
+        expect(fs.existsSync(path.join(common, 'queue-10.json'))).toBe(true);
+        expect(fs.existsSync(path.join(wt, '.agents'))).toBe(false);
+        expect(fs.existsSync(path.join(wt, '.git', 'agents'))).toBe(false);
+      });
+
+      it('fails with the state directory error outside a git repository without an override', () => {
+        fakeQueue([doneStep]);
+        const r = runWith(dir, { DROMOS_STATE_DIR: undefined, GIT_CEILING_DIRECTORIES: path.dirname(fs.realpathSync(dir)) });
+        expect(r.status).not.toBe(0);
+        expect(r.stdout + r.stderr).toContain('No state directory: not inside a git repository (set DROMOS_STATE_DIR)');
+        expect(calls()).toHaveLength(0);
+      });
     });
 
     it('clears AGENTS_LEDGER before every child, also an inherited value, and restores nothing into children', () => {
@@ -349,6 +399,15 @@ exit 0
         expect(run(['-Feature', '10'], true).status).toBe(0);
         expect(ghCalls()).toBe('');
         expect(outcomes()).toEqual([[11, 'done']]);
+      });
+
+      it('exposes the PBI ledger as one absolute path to runner-side tools (no cwd prefix on an absolute state dir)', () => {
+        ghFake();
+        fakeQueue([pbiRun(11, { pr: 101, out: approve }), doneStep]);
+        expect(run(['-Feature', '10', '-MergeApproved'], true).status).toBe(0);
+        const seen = [...new Set(fs.readFileSync(path.join(dir, 'gh-env.log'), 'utf8').trim().split('\n'))];
+        expect(seen).toEqual([path.join(fs.realpathSync(dir), '.agents', '11', 'progress.md')]);
+        expect(fs.existsSync(seen[0])).toBe(true);
       });
 
       it('squash-merges the PBI PR pinned to its head commit', () => {

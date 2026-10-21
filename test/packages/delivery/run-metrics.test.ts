@@ -110,6 +110,47 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     expect(run(['-Transcript', transcript, '-Issue', '7'], dir, null).json.fixRounds).toBe(2);
   });
 
+  it('finds the ledger from a linked worktree via the shared <git common dir>/agents', () => {
+    const { transcript } = fixture();
+    const g = (cwd: string, ...a: string[]) => expect(spawnSync('git', ['-c', 'commit.gpgsign=false', '-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd, env: { ...process.env, GIT_CONFIG_GLOBAL: os.devNull, GIT_CONFIG_NOSYSTEM: '1' } }).status).toBe(0);
+    g(dir, 'init', '-q', '-b', 'main');
+    g(dir, 'commit', '-q', '--allow-empty', '-m', 'x');
+    const wt = path.join(dir, 'wt');
+    g(dir, 'worktree', 'add', '-q', wt, '-b', 'side');
+    fs.mkdirSync(path.join(dir, '.git', 'agents', '5'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.git', 'agents', '5', 'progress.md'), 'Fix round 1: x\n');
+    const r = run(['-Transcript', transcript, '-Issue', '5'], wt, null);
+    expect(r.json.fixRounds).toBe(1);
+    expect(r.json.ledger).toMatch(/\.git[\/\\]agents[\/\\]5[\/\\]progress\.md$/);
+  });
+
+  it('honours DROMOS_STATE_DIR, also an absolute one with a trailing slash outside the repository', () => {
+    const { transcript } = fixture();
+    const other = fs.mkdtempSync(path.join(os.tmpdir(), 'metrics-state-'));
+    try {
+      fs.mkdirSync(path.join(other, '3'));
+      fs.writeFileSync(path.join(other, '3', 'progress.md'), 'Fix round 1: x\nFix round 2: y\nFix round 3: z\n');
+      const r = run(['-Transcript', transcript, '-Issue', '3'], dir, other + path.sep);
+      expect(r.json.fixRounds).toBe(3);
+      expect(r.json.ledger).toBe(path.join(other, '3', 'progress.md'));
+    } finally {
+      fs.rmSync(other, { recursive: true, force: true });
+    }
+  });
+
+  it.skipIf(process.platform === 'win32')('reads (never writes) through a symlinked state directory', () => {
+    const { transcript } = fixture();
+    const real = path.join(dir, 'real');
+    fs.mkdirSync(path.join(real, '4'), { recursive: true });
+    fs.writeFileSync(path.join(real, '4', 'progress.md'), 'Fix round 1: x\n');
+    const link = path.join(dir, 'linked');
+    fs.symlinkSync(real, link);
+    const r = run(['-Transcript', transcript, '-Issue', '4'], dir, link);
+    expect(r.status).toBe(0);
+    expect(r.json.fixRounds).toBe(1);
+    expect(fs.readdirSync(real)).toEqual(['4']);
+  });
+
   it('reports no ledger outside a git repository without DROMOS_STATE_DIR', () => {
     const { transcript } = fixture();
     const r = run(['-Transcript', transcript, '-Issue', '7'], dir, null);

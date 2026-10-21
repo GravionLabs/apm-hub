@@ -81,7 +81,7 @@ if ($IssueFile -and $callerCwd -and -not [IO.Path]::IsPathRooted($IssueFile)) { 
 
 # BEGIN Resolve-StateDir (identical in every script that defines it; test/repo/state-dir-resolver.test.ts)
 function Resolve-StateDir {
-  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path) }
+  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path)) }
   $common = $null
   try { $common = "$(& git -C (Get-Location).Path rev-parse --path-format=absolute --git-common-dir 2>$null)".Trim() } catch { $common = $null }
   if ($LASTEXITCODE -ne 0 -or -not $common) { throw 'No state directory: not inside a git repository (set DROMOS_STATE_DIR)' }
@@ -165,7 +165,14 @@ if ($Status) {
   if ($gateLine) { Write-Host "Gate on status #${nr}: $gateLine"; exit 2 }
   Test-NotSymlink $statusFile
   $fi = Get-Item -LiteralPath $statusFile -Force -ErrorAction SilentlyContinue
-  $marker = @($trimmed | Where-Object { $_ -cmatch ($MarkerStart + 'Status' + $MarkerEnd + '[\s*`_]*' + "(?:[^*`\r\n]*[/\\])?status-$nr\.md(?![\w./-])") }).Count -gt 0
+  # the announced path must name this run's status file: absolute, relative to the cwd, a trailing part of it, or the bare file name
+  $markerRx = $MarkerStart + 'Status' + $MarkerEnd + '[\s*`_]*' + "(?<p>(?:[^*`\r\n]*[/\\])?status-$nr\.md)(?![\w./-])"
+  $wantFull = $statusFile -replace '\\', '/'
+  $marker = @($trimmed | Where-Object {
+      if ($_ -cnotmatch $markerRx) { return $false }
+      $mp = $Matches['p'] -replace '\\', '/'
+      $mp -ceq "status-$nr.md" -or ($mp.StartsWith('/') ? $mp -ceq $wantFull : ($wantFull -ceq ([IO.Path]::GetFullPath($mp, (Get-Location).Path) -replace '\\', '/') -or $wantFull.EndsWith('/' + $mp.TrimStart('.', '/'), [StringComparison]::Ordinal)))
+    }).Count -gt 0
   $why = if ($code -ne 0) { "child exit code $code" }
     elseif (-not $fi) { "no status file $statusFile" }
     elseif ($fi.LastWriteTime -lt $start) { "status file $statusFile is stale (not written by this run)" }
@@ -274,7 +281,7 @@ if ($Feature -or $Epic) {
       New-Item -ItemType Directory -Path $pbiDir -Force | Out-Null
       Test-NotSymlink (Join-Path $pbiDir 'run.log')
       Add-Content -LiteralPath (Join-Path $pbiDir 'run.log') -Value (@("=== $iterStart $envText") + $out + $trailer) -Encoding utf8
-      $env:AGENTS_LEDGER = Join-Path (Get-Location) (Join-Path $pbiDir 'progress.md')
+      $env:AGENTS_LEDGER = Join-Path $pbiDir "progress.md"
       $after = Get-LedgerLines $pbi
       $newGate = @(Get-Gates $after).Count -gt [int]$gatesBefore[$pbi]
       $gate = if ($gm) { $gm } elseif ($newGate) { @(Get-Gates $after)[-1] } else { $null }

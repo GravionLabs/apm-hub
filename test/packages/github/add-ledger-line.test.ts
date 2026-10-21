@@ -385,6 +385,14 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 state directory (#402)', () => {
     expect(fs.existsSync(path.join(main, '.git', 'agents'))).toBe(false);
   });
 
+  it('accepts DROMOS_STATE_DIR with a trailing slash', () => {
+    initRepo();
+    const abs = path.join(root, 'state');
+    const r = run(main, { DROMOS_STATE_DIR: abs + '/' });
+    expect(r.status, r.stderr).toBe(0);
+    expect(fs.readFileSync(path.join(abs, '7', 'progress.md'), 'utf8')).toBe('x\n');
+  });
+
   it('exits 1 with a message outside a repository without DROMOS_STATE_DIR', () => {
     const r = run(main);
     expect(r.status).toBe(1);

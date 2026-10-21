@@ -700,6 +700,13 @@ describe('git-guardrails hook', () => {
       fs.writeFileSync(path.join(repo, '.agents', 'guardrails.off'), '');
       expect(denied(run(claude('git reset --hard')))).toBe(true);
     });
+    it('names the legacy .agents/guardrails.off in the deny reason and still denies', () => {
+      fs.mkdirSync(path.join(repo, '.agents'));
+      fs.writeFileSync(path.join(repo, '.agents', 'guardrails.off'), '');
+      const r = run(claude('git reset --hard'));
+      expect(denied(r)).toBe(true);
+      expect(r.out).toContain('legacy .agents/guardrails.off is no longer read');
+    });
     it('DROMOS_STATE_DIR/guardrails.off disables the hook and the override wins over the common dir', () => {
       const st = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-state-'));
       try {
