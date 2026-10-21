@@ -37,11 +37,12 @@ metadata:
         "gh api*graphql*": deny
         "pwsh scripts/Detect-TechStack.ps1 *": allow
         "pwsh */scripts/Detect-TechStack.ps1 *": allow
-        "mkdir -p */agents/[0-9]*": allow
-        "mkdir -p */agents/adhoc": allow
-        "cat > */agents/[0-9]*/plan.json": allow
-        "cat > */agents/[0-9]*/plan.md": allow
-        "cat > */agents/adhoc/plan.*": allow
+        # rooted on the cwd-relative default state dir, never a leading `*`; trade-off: docs/working-mode.md (Limits)
+        "mkdir -p .git/agents/[0-9]*": allow
+        "mkdir -p .git/agents/adhoc": allow
+        "cat > .git/agents/[0-9]*/plan.json": allow
+        "cat > .git/agents/[0-9]*/plan.md": allow
+        "cat > .git/agents/adhoc/plan.*": allow
 ---
 
 You plan one GitHub issue for an orchestrator that keeps its own context small. You never edit source files, never write to GitHub and never commit.

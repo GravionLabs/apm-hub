@@ -6,7 +6,7 @@
 .DESCRIPTION
   Creates a throwaway git repo (no remote, so nothing is written to GitHub) per client and stage and starts the
   orchestrator headless. Stage 'ledger': append the ledger header with Add-LedgerLine.ps1; asserts the header line in
-  .agents/<issue>/progress.md and no permission prompt. Stage 'plan': `plan <description>` with the full agent body;
+  <state>/<issue>/progress.md (the fixture's state dir, <git common dir>/agents) and no permission prompt. Stage 'plan': `plan <description>` with the full agent body;
   asserts no permission prompt and a ledger with a `Gate:` line or a completed phase (opt-in, model-dependent). A client whose CLI is
   missing is skipped. Exits 1 on any failure and 2 when every client was skipped. Not run in CI (needs the CLIs, a model and the agent
   installed: apm install). OpenCode runs the agent from the project fixture (permission map taken from

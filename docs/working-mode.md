@@ -140,6 +140,15 @@ by the helper and still prompt, which a headless OpenCode run auto-rejects, or e
 `<state>/adhoc/description.txt`, moving `<state>/adhoc` to `<state>/<issue>/`.
 Prefer an interactive or pre-prepared setup for description input and the issue overview.
 
+The `planner` (`mkdir -p`, `cat >` for `plan.json`/`plan.md`) and `issue-reader` (`mkdir -p`, `gh issue view … >` for `issue.md`) write
+rules are rooted on the cwd-relative default state dir `.git/agents/`, the same shape as the former `.agents/` rules; no allow
+rule starts with `*`, because `*` matches any characters including `/` and `..` and would unpin the location. The absolute
+`<state>` is only known at runtime, so these rules do not cover a linked worktree (its common dir is outside the working tree),
+a `DROMOS_STATE_DIR` override or a model that writes the absolute path: those writes prompt (headless: auto-rejected; see
+[#424](https://github.com/GravionLabs/apm-hub/issues/424)). Neither are they a write boundary: `[0-9]` is literal and a redirect is
+not matched (spike below), so `gh issue view *` alone decides the `issue.md` write and the `cat >` rules match no real command.
+The boundary is the agent rule (only `<state>/<nr>/`, no `..`, no chaining).
+
 It cannot answer a gate either: at a blocked review or a twice-red suite it appends `Gate: <question>` to
 `<state>/<issue>/progress.md`, reports it and stops. Answer in an interactive `orchestrator` session, which
 resumes from the ledger.

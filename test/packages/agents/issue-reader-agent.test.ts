@@ -47,10 +47,10 @@ describe('issue-reader agent contract', () => {
   it('saves the issue body through a gh redirect and allows only that write path', () => {
     expect(body).toContain(`gh issue view <nr> --json title,body --jq '"# "+.title+"\\n\\n"+.body' > <state>/<nr>/issue.md`);
     expect(body).toMatch(/never retyped/);
-    expect(frontmatter).toContain('"gh issue view * > */agents/[0-9]*/issue.md": allow');
-    expect(frontmatter).toContain('"mkdir -p */agents/[0-9]*": allow');
+    expect(frontmatter).toContain('"gh issue view * > .git/agents/[0-9]*/issue.md": allow');
+    expect(frontmatter).toContain('"mkdir -p .git/agents/[0-9]*": allow');
     const writes = [...frontmatter.matchAll(/"([^"]*>[^"]*)": allow/g)].map((m) => m[1]);
-    expect(writes).toEqual(['gh issue view * > */agents/[0-9]*/issue.md']);
+    expect(writes).toEqual(['gh issue view * > .git/agents/[0-9]*/issue.md']);
   });
 
   it('keeps the description within 200 characters', () => {

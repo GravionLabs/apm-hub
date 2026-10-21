@@ -214,6 +214,60 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
         expect(r.status).not.toBe(0);
         expect(r.stdout + r.stderr).toContain('Refusing the edit allow entry');
       });
+      describe('refuses an override that equals or contains the repository, HOME or the git dir', () => {
+        let base: string;
+        let repo: string;
+        let home: string;
+        const permIn = (override: string) => {
+          const env = { ...process.env, HOME: home, DROMOS_STATE_DIR: override };
+          return spawnSync('pwsh', ['-NoProfile', '-Command', `& '${adapter}' -Issue 1 | ForEach-Object { $_.Environment.OPENCODE_PERMISSION }`], { encoding: 'utf8', cwd: repo, env });
+        };
+        beforeAll(() => {
+          base = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'oc-guard-')));
+          home = path.join(base, 'home');
+          repo = path.join(home, 'src', 'repo');
+          fs.mkdirSync(repo, { recursive: true });
+          spawnSync('git', ['init', '-q'], { cwd: repo });
+          fs.symlinkSync(repo, path.join(base, 'link'));
+        });
+        afterAll(() => fs.rmSync(base, { recursive: true, force: true }));
+        it.each([
+          ['the repository', () => repo],
+          ['a parent of the repository', () => path.join(home, 'src') + '/'],
+          ['HOME', () => home],
+          ['the git dir', () => path.join(repo, '.git')],
+          ['the repository through a symlink', () => path.join(base, 'link')],
+          ['a relative parent of the repository', () => '..'],
+        ])('%s', (_label, override) => {
+          const r = permIn(override());
+          expect(r.status).not.toBe(0);
+          expect(r.stdout + r.stderr).toContain('equals or contains');
+        });
+        it('accepts a subdirectory of the git dir and one next to the repository', () => {
+          for (const o of [path.join(repo, '.git', 'agents'), path.join(home, 'src', 'state')]) {
+            const r = permIn(o);
+            expect(r.status, r.stderr).toBe(0);
+            expect(JSON.parse(r.stdout.trim()).edit[`${o}/**`]).toBe('allow');
+          }
+        });
+      });
+      it('gives the default state dir no allow entry when its path holds * or ?', () => {
+        const base = fs.mkdtempSync(path.join(os.tmpdir(), 'oc-star-'));
+        try {
+          const repo = path.join(base, 'a*b');
+          fs.mkdirSync(repo);
+          spawnSync('git', ['init', '-q'], { cwd: repo });
+          const r = perm(repo);
+          expect(r.status, r.stderr).toBe(0);
+          expect(r.stdout + r.stderr).toContain("No edit allow entry for the state dir");
+          expect(Object.entries(JSON.parse(r.stdout.trim().split('\n').pop()!).edit)).toEqual([
+            ['*', 'allow'],
+            ['.git/**', 'deny'],
+          ]);
+        } finally {
+          fs.rmSync(base, { recursive: true, force: true });
+        }
+      });
       it('accepts a plain override and keeps its trailing slash out of the glob', () => {
         const r = perm(os.tmpdir(), '/tmp/plain-state/');
         expect(r.status).toBe(0);
