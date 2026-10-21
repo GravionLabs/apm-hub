@@ -135,7 +135,7 @@ six subagents each have their own model and tool set:
 | `orchestrator` | `plan\|implement\|full\|next\|loop <issue>` (or `/orchestrator`): plan → implement → review → PR; gates stay with you |
 | `issue-reader` | read-only `gh` and `git` (haiku), resolves issue type, integration branch, digest and Task merged state as one JSON   |
 | `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                                                |
-| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary      |
+| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `<state>/<issue>/plan.json`, returns path + summary      |
 | `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                                            |
 | `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |
 | `pr-writer`    | git and `gh` only, runs `github-pull-request` for the PBI's one PR, returns `{number, url}` as JSON                   |

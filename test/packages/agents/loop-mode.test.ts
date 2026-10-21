@@ -250,7 +250,7 @@ describe('loop mode: sibling references', () => {
 
 describe('loop mode: docs agree with agent and reference', () => {
   it('use the same ledger path, line formats and stop reasons', () => {
-    for (const text of [docs, workingMode]) expect(text).toContain(LEDGER.replace("<state>/", ".agents/")); // docs follow in the docs task
+    for (const text of [docs, workingMode]) expect(text).toContain(LEDGER);
     expect(docs).toContain(HEADER);
     expect(docs).toContain(DONE_LINE);
     expect(docs).toContain(STOP_LINE);

@@ -27,8 +27,8 @@ herdr integration status
 | Pane | Command | Purpose |
 |:--|:--|:--|
 | orchestrator | `claude --agent orchestrator "loop <feature>"` | the run; shows `blocked` at every gate |
-| ledger | `tail -f .agents/loop-<feature>/progress.md` | one line per finished PBI and the stop reason |
-| PBI ledger | `tail -F .agents/<pbi>/progress.md` | phases, tasks, fix rounds, subagent stops (with the `hooks` package) |
+| ledger | `tail -f <state>/loop-<feature>/progress.md` | one line per finished PBI and the stop reason |
+| PBI ledger | `tail -F <state>/<pbi>/progress.md` | phases, tasks, fix rounds, subagent stops (with the `hooks` package) |
 | shell | your shell | `git log`, `gh pr list`, `gh issue view` checks |
 
 Use `next <feature>` instead of `loop` for one PBI per session, `implement <nr>` or `full <nr>` for a single issue. Flags belong to the first message, not to the `claude` command line: start `claude --agent orchestrator` and send `--fix-advisories medium loop 302` to answer the review summary up front.
