@@ -48,7 +48,7 @@ The repo uses pnpm (`pnpm-lock.yaml`) only. `test/integration` is the exception:
 
 ## Public surface and renames
 
-Public surface is everything a consumer can depend on: package names (install names in `apm.yml` and the marketplace), skill names, agent names, entry points (`orchestrator`; `/orch` is deprecated and removed in 3.0.0), ledger and state paths (`<state>/<issue>/progress.md`, `plan.json`; `<state>` is `DROMOS_STATE_DIR` or `<git-common-dir>/agents`) and ledger headers.
+Public surface is everything a consumer can depend on: package names (install names in `apm.yml` and the marketplace), skill names, agent names, entry points (`orchestrator`; `/orch` is deprecated and removed in 3.0.0), ledger and state paths (`<state>/<issue>/progress.md`, `plan.json`; `<state>` is `DROMOS_STATE_DIR` or `<git-common-dir>/agents`), the worktree location `<repo-root>/.worktrees/<nr>` and the checkout leases `<state>/leases/<key>.json` (`Enter-Checkout.ps1`, `Exit-Checkout.ps1`, `New-Worktree.ps1`, `Remove-Worktree.ps1`) and ledger headers.
 
 - Announce every rename in the PR body and in the release notes.
 - Where an alias or compat path is cheap, add it and announce it as deprecated in the PR body and release notes. It lives at most until the next major, and gets a removal version in the legacy table below at the moment it is added.

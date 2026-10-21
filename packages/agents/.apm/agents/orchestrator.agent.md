@@ -36,6 +36,20 @@ metadata:
         "pwsh ~/.claude/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
         "pwsh ~/.agents/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
         "pwsh ~/.config/opencode/skills/github-issue/scripts/Add-LedgerLine.ps1 *": allow
+        "pwsh .claude/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh .opencode/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh .agents/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh .github/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh ~/.claude/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh ~/.agents/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh ~/.config/opencode/skills/github-issue/scripts/Enter-Checkout.ps1 *": allow
+        "pwsh .claude/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh .opencode/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh .agents/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh .github/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh ~/.claude/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh ~/.agents/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
+        "pwsh ~/.config/opencode/skills/github-issue/scripts/Exit-Checkout.ps1 *": allow
         "pwsh .claude/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
         "pwsh .opencode/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
         "pwsh .agents/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow

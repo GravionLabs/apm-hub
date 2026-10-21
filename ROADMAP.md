@@ -20,6 +20,7 @@ Closing: Feature #248 and Epic #300 once #402 and #251 are merged. Then `github-
 | --- | --- | --- | --- | --- |
 | 1 | #383 | format changed sources as a fixed implementer step | M | — |
 | 2 | #386 | per-project override in `.agents/format.json` | S | #383 |
+| 3 | #442 | worktrees on demand under `.worktrees/<nr>`, checkout lease, queue wiring | L | #402 (Tasks #443 #444 #465 #445) |
 
 Feature #385 closes with #386.
 
