@@ -9,6 +9,8 @@ export const scriptsTests = [
   'test/packages/delivery/review-fanout-classify.test.ts',
   'test/packages/delivery/run-metrics.test.ts',
   'test/packages/github/add-ledger-line.test.ts',
+  'test/packages/github/new-worktree.test.ts',
+  'test/packages/github/remove-worktree.test.ts',
   'test/packages/github/set-project-standard.test.ts',
   'test/packages/github/write-status-table.test.ts',
   'test/packages/hooks/context-warning.test.ts',
