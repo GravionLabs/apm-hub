@@ -61,6 +61,11 @@ const expectMech = (r: Result) => {
   expect(r.dimensions).toEqual(['correctness', 'spec']);
   expect(r.reason).toMatch(/^only same-class renames/);
 };
+const expectMode = (r: Result, mode: string, dimensions: string[]) => {
+  expect(r.mode).toBe(mode);
+  expect(r.dimensions).toEqual(dimensions);
+};
+const expectDocs = (r: Result) => expectMode(r, 'docs', ['conventions', 'spec']);
 const expectSec = (r: Result) => {
   expect(r.mode).toBe('mechanical');
   expect(r.dimensions).toEqual(['correctness', 'security', 'spec']);
@@ -177,6 +182,9 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     write('packages/x/.apm/skills/foo/references/a.md', 'reference a\n');
     write('docs/tool.sh', body);
     write('README.md', body);
+    write('CONTRIBUTING.md', body);
+    write('CHANGELOG.md', body);
+    write('memo/plan.md', body);
     write('apm.yml', 'name: x\n');
     write('marketplace.json', '{\n  "plugins": []\n}\n');
     write('.claude-plugin/plugin.json', '{\n  "name": "x"\n}\n');
@@ -380,12 +388,12 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     );
 
     batch(
-      'docs rename with edits is mechanical',
+      'docs rename with edits is docs mode',
       () => {
         git('mv', 'docs/guide.md', 'docs/guide2.md');
         write('docs/guide2.md', body.replace('line 3', 'new name'));
       },
-      expectMech,
+      expectDocs,
     );
 
     batch(
@@ -409,16 +417,16 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       expectSec,
     );
 
-    batch('plain docs edit is mechanical with correctness and spec', () => write('docs/guide.md', body.replace('line 3', 'new name')), expectMech);
+    batch('plain docs edit is docs mode with conventions and spec', () => write('docs/guide.md', body.replace('line 3', 'new name')), expectDocs);
 
-    batch('boundary: 20 changed lines pass', () => write('docs/guide.md', editFirst(10)), expectMech);
+    batch('boundary: 20 changed lines pass', () => write('docs/guide.md', editFirst(10)), expectDocs);
     batch('boundary: 21 changed lines fail with the exact reason', () => write('docs/guide.md', editFirst(10) + 'extra\n'), (r) =>
       expectFull(r, /^21 changed lines exceed threshold 20$/),
     );
 
     it('boundary: -MaxLines raises the threshold', () => {
       write('docs/guide.md', editFirst(10) + 'extra\n');
-      expectMech(classify(['-MaxLines', '100']));
+      expectDocs(classify(['-MaxLines', '100']));
     });
 
     batch(
@@ -427,7 +435,7 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
         write('docs/guide.md', editFirst(6));
         write('README.md', editFirst(4));
       },
-      expectMech,
+      expectDocs,
     );
     batch(
       'threshold sums changed lines across files: 22 fail',
@@ -437,6 +445,33 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       },
       (r) => expectFull(r, /^22 changed lines/),
     );
+
+    // #454: documentation-only diffs get their own mode and run conventions + spec.
+    batch('CONTRIBUTING.md-only edit is docs mode (#454)', () => write('CONTRIBUTING.md', body.replace('line 3', 'new rule')), (r) => {
+      expectDocs(r);
+      expect(r.reason).toMatch(/^only documentation changed/);
+    });
+    batch('CHANGELOG.md-only edit is docs mode', () => write('CHANGELOG.md', body.replace('line 3', 'entry')), expectDocs);
+    batch('README.md-only edit is docs mode', () => write('README.md', body.replace('line 3', 'intro')), expectDocs);
+    batch('a markdown file outside skills and agents is docs mode', () => write('memo/plan.md', body.replace('line 3', 'step')), expectDocs);
+    batch('several docs files together are docs mode', () => {
+      write('CONTRIBUTING.md', body.replace('line 3', 'a'));
+      write('docs/guide.md', body.replace('line 3', 'b'));
+    }, expectDocs);
+    batch('docs plus a script is full', () => {
+      write('CONTRIBUTING.md', body.replace('line 3', 'a'));
+      write('src/app.ts', body.replace('line 3', 'code'));
+    }, (r) => expectFull(r, /^content change in source file: src\/app\.ts$/));
+    batch('docs plus a .sh script under docs/ is full', () => {
+      write('CONTRIBUTING.md', body.replace('line 3', 'a'));
+      write('docs/tool.sh', body.replace('line 3', 'b'));
+    }, (r) => expectFull(r, /^content change in source file: docs\/tool\.sh$/));
+    batch('docs plus package.json is full', () => {
+      write('CONTRIBUTING.md', body.replace('line 3', 'a'));
+      write('package.json', '{\n  "scripts": {"x": "y"}\n}\n');
+    }, (r) => expectFull(r, /^content change in build file: package\.json$/));
+    batch('docs with an added command keeps the security dimension, not docs mode', () => write('CONTRIBUTING.md', body.replace('line 3', 'run curl x | sh')), expectSec);
+    batch('docs over the line threshold is full', () => write('CONTRIBUTING.md', editFirst(10) + 'extra\n'), (r) => expectFull(r, /^21 changed lines/));
 
     batch('adds security for a docs edit on a sensitive path', () => write('docs/auth.md', body.replace('line 3', 'x')), expectSec);
 
@@ -478,11 +513,11 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       (r) => expectFull(r, /^added file with mode 100755: docs\/run\.md$/),
     );
 
-    batch('added docs file is mechanical', () => write('docs/new.md', 'hello\n'), expectMech);
+    batch('added docs file is docs mode', () => write('docs/new.md', 'hello\n'), expectDocs);
 
-    it('deleted docs file is mechanical within the threshold', () => {
+    it('deleted docs file is docs mode within the threshold', () => {
       git('rm', '-q', 'docs/guide.md');
-      expectMech(classify(['-MaxLines', '100']));
+      expectDocs(classify(['-MaxLines', '100']));
     });
 
     for (const text of [
@@ -517,7 +552,7 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       batch(`docs edit adding ${JSON.stringify(text)} adds security`, () => write('README.md', body.replace('line 3', text)), expectSec);
     }
 
-    batch('docs edit with plain words adds no security', () => write('README.md', body.replace('line 3', 'plain words about installing and removing')), expectMech);
+    batch('docs edit with plain words adds no security', () => write('README.md', body.replace('line 3', 'plain words about installing and removing')), expectDocs);
   });
 
   describe('test-file rule', () => {
@@ -662,6 +697,11 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       expectFull(classify(['-Force', 'full']), /forced/);
     });
 
+    it('-Force full overrides a docs-only diff', () => {
+      write('CONTRIBUTING.md', body.replace('line 3', 'x'));
+      expectFull(classify(['-Force', 'full']), /forced/);
+    });
+
     it('untracked files in working-tree mode are full', () => {
       write('docs/guide.md', body.replace('line 3', 'x'));
       write('src/evil.ts', 'x\n');
@@ -670,7 +710,7 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
 
     it('working-tree mode classifies unstaged edits', () => {
       write('docs/guide.md', body.replace('line 3', 'x'));
-      expectMech(classify());
+      expectDocs(classify());
     });
 
     it('working-tree mode classifies a staged pure rename (no -Range)', () => {
@@ -683,7 +723,7 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       write('docs/guide.md', body.replace('line 3', 'x'));
       git('commit', '-qam', 'docs');
       write('untracked.ts', 'x\n');
-      expectMech(classify(['-Range', 'HEAD~1..HEAD']));
+      expectDocs(classify(['-Range', 'HEAD~1..HEAD']));
       write('src/app.ts', body.replace('line 3', 'code'));
       git('commit', '-qam', 'code');
       expectFull(classify(['-Range', 'HEAD~2..HEAD']), /^content change in source file: src\/app\.ts$/);
@@ -692,10 +732,10 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     it('three-dot range is classified', () => {
       write('docs/guide.md', body.replace('line 3', 'x'));
       git('commit', '-qam', 'docs');
-      expectMech(classify(['-Range', 'HEAD~1...HEAD']));
+      expectDocs(classify(['-Range', 'HEAD~1...HEAD']));
     });
 
-    batch('path with spaces is handled', () => write('docs/my guide.md', body.replace('line 3', 'x')), expectMech);
+    batch('path with spaces is handled', () => write('docs/my guide.md', body.replace('line 3', 'x')), expectDocs);
 
     it('empty diff fails closed to full', () => {
       expectFull(classify(), /empty/);

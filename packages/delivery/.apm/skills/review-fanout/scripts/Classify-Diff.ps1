@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-  Classify a diff as "mechanical" or "full" for review-fanout. Fails closed: any doubt -> full.
+  Classify a diff as "mechanical", "docs" or "full" for review-fanout. Fails closed: any doubt -> full.
 .PARAMETER Range
   Git range or ref passed to `git diff` (e.g. main..HEAD). Default: HEAD (working tree vs HEAD).
   Must not start with `-`; every ref must be verified by git, else full.
 .PARAMETER Force
   `full` skips classification and returns full.
 .PARAMETER MaxLines
-  Max changed lines (added + deleted) allowed in docs, manifests and test files. Default 20.
+  Max changed lines (added + deleted) allowed in docs, manifests and renamed-identifier test files. Default 20.
 .OUTPUTS
   JSON {"mode","dimensions","reason"}; always exit code 0 once parameters are bound.
 .NOTES
@@ -37,14 +37,17 @@ $classes = [ordered]@{
   # Build, dependency and test configuration, entry points.
   build       = '(^|/)(package\.json|package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|yarn\.lock|bun\.lockb?|deno\.jsonc?|[jt]sconfig[^/]*\.json|babel\.config[^/]*|pyproject\.toml|setup\.py|setup\.cfg|conftest\.py|requirements[^/]*\.(txt|in)|constraints[^/]*\.txt|Pipfile(\.lock)?|poetry\.lock|uv\.lock|tox\.ini|noxfile\.py|pytest\.ini|manage\.py|__init__\.py|__main__\.py|Cargo\.(toml|lock)|build\.rs|lib\.rs|mod\.rs|go\.(mod|sum|work)|Gemfile(\.lock)?|Rakefile|[^/]+\.gemspec|pom\.xml|(build|settings)\.gradle(\.kts)?|gradle\.properties|gradlew(\.bat)?|CMakeLists\.txt|[^/]+\.(csproj|fsproj|vbproj|sln|slnx|props|targets)|global\.json|[Nn]u[Gg]et\.config|Program\.cs|Startup\.cs)$|(^|/)\.[^/]*rc(\.[^/]*)?$|(^|/)[^/]+\.config\.[cm]?[jt]s$|(^|/)[^/]*setup[^/]*\.[cm]?[jt]sx?$|(^|/)(index|main)\.([cm]?[jt]sx?|py|go|rs|rb|php|ps1|sh)$|(^|/)bin/'
   # Agent/skill instruction files and skill content steer agents: code-like, never docs.
-  instruction = '(^|/)(SKILL|AGENTS|CLAUDE|GEMINI|COPILOT|copilot-instructions)\.md$|\.(agent|prompt|instructions|chatmode)\.md$|(^|/)\.apm/|(^|/)skills/'
+  instruction = '(^|/)(SKILL|AGENTS|CLAUDE|GEMINI|COPILOT|copilot-instructions)\.md$|\.(agent|prompt|instructions|chatmode)\.md$|(^|/)\.apm/|(^|/)skills/|(^|/)agents/'
   manifest    = '(^|/)(apm\.yml|marketplace\.json|plugin\.json)$'
-  docs        = '(^|/)(README|CHANGELOG)[^/]*\.(md|mdx|txt)$|(^|/)docs/.+\.(md|mdx)$'
+  docs        = '(^|/)(README|CHANGELOG|CONTRIBUTING)[^/]*\.(md|mdx|txt)$|(^|/)docs/.+\.(md|mdx)$|\.md$'
   test        = '(^|/)(tests?|__tests__)/|\.(test|spec)\.[a-z]+$|(^|/)test_[^/]+$|_test\.[a-z]+$'
   source      = '\.(c|cc|cpp|cs|cts|css|cjs|fs|go|h|hpp|html?|java|jsx?|kt|lua|mjs|mts|php|pl|ps1|psm1|psd1|py|r|rb|rs|scala|scss|sh|bash|zsh|svelte|swift|tsx?|vb|vue)$'
 }
 # Added lines that look like commands, installs or remote fetches add the security dimension.
-$risky = '\b(curl|wget|eval|iex|iwr|irm|chmod|chown|sudo|ssh|scp|sftp|rsync|nc|ncat|netcat|socat|telnet|npx|pnpx|bunx|uvx|base64|certutil|Invoke-Expression|Invoke-WebRequest|Invoke-RestMethod|DownloadString|FromBase64String)\b|\b[a-z][a-z0-9+.-]*://|\bgit@[\w.-]+:|\bgit\s+clone\b|\b(npm|pnpm|yarn|bun)\s+(i|install|add|dlx|exec|x)\b|\b(pip[0-9.]*|pipx|gem|cargo|uv\s+pip|uv\s+tool)\s+install\b|\bgo\s+(install|get)\b|\s-(enc\w*|ec)\b|\b(pwsh|powershell)(\.exe)?\b.*\s-e\b|\b(python[0-9.]*|py)\s+-c\b|\b(node|perl|ruby)\s+-e\b|\b(sh|bash|zsh)\s+(-c\b|<\()|\brm\s+(-\w+\s+)*-\w*[rf]|\|\s*(sh|bash|zsh|pwsh|powershell|python[0-9.]*|node|perl|ruby|iex)\b|<script|^\+\s*(import|export)\s|\brequire\(|\bchild_process\b|\bprocess\.env\b|\bfs\.(write|unlink|rm)'
+$riskyCore = '\b(curl|wget|eval|iex|iwr|irm|chmod|chown|sudo|ssh|scp|sftp|rsync|nc|ncat|netcat|socat|telnet|npx|pnpx|bunx|uvx|base64|certutil|Invoke-Expression|Invoke-WebRequest|Invoke-RestMethod|DownloadString|FromBase64String)\b|\b[a-z][a-z0-9+.-]*://|\bgit@[\w.-]+:|\bgit\s+clone\b|\b(npm|pnpm|yarn|bun)\s+(i|install|add|dlx|exec|x)\b|\b(pip[0-9.]*|pipx|gem|cargo|uv\s+pip|uv\s+tool)\s+install\b|\bgo\s+(install|get)\b|\s-(enc\w*|ec)\b|\b(pwsh|powershell)(\.exe)?\b.*\s-e\b|\b(python[0-9.]*|py)\s+-c\b|\b(node|perl|ruby)\s+-e\b|\b(sh|bash|zsh)\s+(-c\b|<\()|\brm\s+(-\w+\s+)*-\w*[rf]|\|\s*(sh|bash|zsh|pwsh|powershell|python[0-9.]*|node|perl|ruby|iex)\b|<script|\brequire\(|\bchild_process\b|\bprocess\.env\b|\bfs\.(write|unlink|rm)'
+# ESM import/export lines only look like code in .mdx pages; test files and skill text carry them legitimately.
+$riskyEsm = '^\+\s*(import|export)\s'
+$risky = "$riskyCore|$riskyEsm"
 $sensitive = 'auth|crypt|password|secret|token|oauth|login|http|network|socket|sql|query|database|jwt|session|cookie|permission|rbac|acl|cert|tls|ssl|cors|csrf|hash|api[-_]?key|\.github/workflows|hook|dockerfile|husky|\.mcp|makefile|\.npmrc|\.vscode|setup\.py|conftest|\.env|migration|(^|/)public/'
 
 function Get-LocationClass([string]$p) {
@@ -144,6 +147,32 @@ function Test-RenameOnly([string[]]$pathspec) {
   return ($map.Count -gt 0)
 }
 
+# Splits one multi-file `git diff` into path -> { Lines (hunk lines with prefix), Start (lowest hunk start) }.
+# The path is the destination (rename target); quoted paths never get here (rejected earlier).
+function Read-Diff([string[]]$d) {
+  $res = @{}
+  $cur = $null; $inHunk = $false; $rn = $null; $from = $null; $to = $null
+  foreach ($l in $d) {
+    if ($l.StartsWith('diff --git ')) { $inHunk = $false; $cur = $null; $rn = $null; $from = $null; $to = $null; continue }
+    if ($l.StartsWith('@@')) {
+      if (-not $inHunk) {
+        $cur = if ($rn) { $rn } elseif ($to) { $to } else { $from }
+        if (-not $cur) { throw 'diff hunk without a path' }
+        if (-not $res.ContainsKey($cur)) { $res[$cur] = [pscustomobject]@{ Lines = [System.Collections.Generic.List[string]]::new(); Start = [int]::MaxValue } }
+        $inHunk = $true
+      }
+      $h = [regex]::Match($l, '^@@ -(\d+)(?:,\d+)? \+(\d+)')
+      if ($h.Success) { $res[$cur].Start = [Math]::Min($res[$cur].Start, [Math]::Min([int]$h.Groups[1].Value, [int]$h.Groups[2].Value)) }
+      continue
+    }
+    if ($inHunk) { $res[$cur].Lines.Add($l); continue }
+    if ($l.StartsWith('rename to ')) { $rn = $l.Substring(10) }
+    elseif ($l.StartsWith('--- a/')) { $from = $l.Substring(6) -replace "`t.*$", '' }
+    elseif ($l.StartsWith('+++ b/')) { $to = $l.Substring(6) -replace "`t.*$", '' }
+  }
+  return $res
+}
+
 try {
   if ($Force -eq 'full') { Exit-WithFull 'forced full by caller' }
 
@@ -174,8 +203,10 @@ try {
   if ($raw.Count -ne $num.Count) { Exit-WithFull 'unparseable diff' }
 
   $lines = 0
-  $risk = $false
   $paths = @()
+  $kindOf = [ordered]@{}
+  $scanFiles = @()
+  $entries = @()
   for ($i = 0; $i -lt $raw.Count; $i++) {
     $parts = $raw[$i] -split "`t"
     $meta = @(($parts[0].TrimStart(':')) -split ' ')
@@ -211,24 +242,52 @@ try {
       continue
     }
     if ($cls1.Count -ne 1) { Exit-WithFull "rename with edits changes location class ($flow)" }
-    if ($renamed -and $cls1[0] -eq 'test') { Exit-WithFull "test file renamed to another file name ($flow)" }
-    if ($cls1[0] -notin @('docs', 'manifest', 'test')) { Exit-WithFull "content change in $($cls1[0]) file: $path" }
-    if ($cls1[0] -eq 'test') {
-      if ($code -eq 'A' -or $code -eq 'D' -or -not (Test-RenameOnly $files)) {
+    $c = $cls1[0]
+    if ($renamed -and $c -in @('test', 'instruction')) { Exit-WithFull "$c file renamed to another file name ($flow)" }
+    if ($c -in @('docs', 'manifest')) {
+      $kind = $c
+      $lines += $changed
+    } elseif ($c -eq 'test') {
+      if ($code -ne 'A' -and $code -ne 'D' -and (Test-RenameOnly $files)) {
+        $kind = 'mechtest'
+        $lines += $changed
+      } else {
         Exit-WithFull "test file change is not a pure rename of local identifiers: $path"
       }
+    } else {
+      Exit-WithFull "content change in $c file: $path"
     }
-    $lines += $changed
-    $added = @(git -c core.quotepath=off --literal-pathspecs diff --ignore-submodules=none -M -U0 --no-color $Range -- @files 2>$null)
-    if ($LASTEXITCODE -ne 0) { Exit-WithFull "git diff failed for $path" }
-    if (@($added | Where-Object { $_.StartsWith('+') -and -not $_.StartsWith('+++') -and $_ -imatch $risky }).Count -gt 0) {
-      $risk = $true
-    }
+    $kindOf[$path] = $kind
+    $scanFiles += $files
+    $entries += , $files
   }
   if ($lines -gt $MaxLines) { Exit-WithFull "$lines changed lines exceed threshold $MaxLines" }
 
+  # ONE diff over all content files: added lines are scanned per file kind.
+  $hits = @{}
+  $diffs = @{}
+  if ($scanFiles.Count -gt 0) {
+    $d = @()
+    foreach ($e in $entries) {
+      $d += @(git -c core.quotepath=off --literal-pathspecs diff --ignore-submodules=none -M -U0 --no-color $Range -- @e 2>$null)
+      if ($LASTEXITCODE -ne 0) { Exit-WithFull 'git diff failed' }
+    }
+    $diffs = Read-Diff $d
+    foreach ($p in $kindOf.Keys) {
+      if (-not $diffs.ContainsKey($p)) { continue }
+      $re = $risky
+      if (@($diffs[$p].Lines | Where-Object { $_.StartsWith('+') -and $_ -imatch $re }).Count -gt 0) { $hits[$p] = $true }
+    }
+  }
+  $kinds = @($kindOf.Values | Select-Object -Unique)
+  $sens = @($paths | Where-Object { $_ -imatch $sensitive })
+
   $dims = @('correctness', 'spec')
-  if ($risk -or ($paths | Where-Object { $_ -imatch $sensitive -or $_ -imatch $classes['manifest'] })) { $dims = @('correctness', 'security', 'spec') }
+  $secure = ($hits.Count -gt 0) -or ($sens.Count -gt 0) -or ($kinds -contains 'manifest')
+  if (-not $secure -and $kinds.Count -eq 1 -and $kinds[0] -eq 'docs') {
+    Exit-WithResult 'docs' @('conventions', 'spec') "only documentation changed ($lines changed lines, limit $MaxLines)"
+  }
+  if ($secure) { $dims = @('correctness', 'security', 'spec') }
   Exit-WithResult 'mechanical' $dims "only same-class renames and $lines changed lines (limit $MaxLines) in docs/manifests/tests (test files: local identifier renames only)"
 } catch {
   Exit-WithFull "script error: $($_.Exception.Message)"
