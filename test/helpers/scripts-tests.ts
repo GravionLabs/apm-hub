@@ -1,0 +1,20 @@
+/** test/packages files that spawn processes; every other test/packages file is `unit`. */
+export const scriptsTests = [
+  'test/packages/agents/next-modes.test.ts',
+  'test/packages/agents/orchestrator-permissions.test.ts',
+  'test/packages/agents/orchestrator-state.test.ts',
+  'test/packages/agents/task-flow.test.ts',
+  'test/packages/delivery/apm-install.test.ts',
+  'test/packages/delivery/queue.fast.test.ts',
+  'test/packages/delivery/review-fanout-classify.test.ts',
+  'test/packages/delivery/run-metrics.test.ts',
+  'test/packages/github/add-ledger-line.test.ts',
+  'test/packages/github/set-project-standard.test.ts',
+  'test/packages/github/write-status-table.test.ts',
+  'test/packages/hooks/context-warning.test.ts',
+  'test/packages/hooks/git-guardrails.test.ts',
+  'test/packages/hooks/opencode-plugin.test.ts',
+  'test/packages/hooks/statusline.test.ts',
+  'test/packages/hooks/subagent-ledger.test.ts',
+  'test/packages/shared/detect-techstack.test.ts',
+];

@@ -1,11 +1,14 @@
 import { defineConfig } from 'vitest/config';
+import { scriptsTests } from './test/helpers/scripts-tests';
 
-// Unit tests of the TypeScript tools sit next to their code (src/**/*.test.ts); tests of package content
-// (skills, agents, scripts, hooks) live in test/packages/<domain>/, repository checks in test/repo/.
-// Two projects: `fast` (all of those) and `integration` (pwsh-heavy queue tests with fake harness binaries
-// and the launcher installer in test/integration/queue/, split over several files so they run in parallel).
-// `vitest run` runs both; `pnpm run test:fast` runs only `fast`. test/integration/skills/ is the separate
-// Copilot SDK harness (`pnpm run test:integration`, own package.json) and is not part of either project.
+// Three projects:
+//  - `unit`: src/**/*.test.ts, test/repo and the test/packages files that spawn no process (`pnpm run test:unit`).
+//  - `scripts`: the test/packages files that spawn pwsh, bash or other processes (explicit list in test/helpers/scripts-tests.ts).
+//  - `integration`: pwsh-heavy queue tests with fake harness binaries and the launcher installer in test/integration/queue/,
+//    split over several files so they run in parallel.
+// `pnpm test` runs unit + scripts, `pnpm run test:all` (and `vitest run`) runs all three. A new test/packages file is `unit`
+// unless it is listed in test/helpers/scripts-tests.ts; test/repo/vitest-projects.test.ts fails when a unit file spawns a process.
+// test/integration/skills/ is the separate Copilot SDK harness (`pnpm run test:integration`, own package.json), not a project.
 const shared = { globals: true, environment: 'node' } as const;
 
 export default defineConfig({
@@ -21,9 +24,17 @@ export default defineConfig({
         extends: false,
         test: {
           ...shared,
-          name: 'fast',
-          include: ['src/**/*.test.ts', 'test/packages/**/*.test.ts', 'test/repo/**/*.test.ts'],
-          exclude: ['**/node_modules/**', '**/*.integration.test.ts'],
+          name: 'unit',
+          include: ['src/**/*.test.ts', 'test/repo/**/*.test.ts', 'test/packages/**/*.test.ts'],
+          exclude: ['**/node_modules/**', '**/*.integration.test.ts', ...scriptsTests],
+        },
+      },
+      {
+        extends: false,
+        test: {
+          ...shared,
+          name: 'scripts',
+          include: scriptsTests,
         },
       },
       {
