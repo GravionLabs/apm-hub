@@ -29,12 +29,26 @@ Run it with a shell in the caller's context. Output not a JSON object with a `la
   "packageManager": ["pnpm", "dotnet"],
   "test": ["ts-test", "py-test", "dotnet-test"],
   "implementation": ["ts-implementation", "py-implementation", "dotnet-implementation"],
+  "tools": ["vitest", "biome", "cargo"],
   "manifest_hash": "<sha256>",
   "state_dir": "/abs/repo/.git/agents"
 }
 ```
 
+`tools` is found by config files in the project root: `vitest` (`vitest.config.*`, `vite.config.*` with a `test` block, or `vitest` in `package.json`), `biome` (`biome.json[c]`), `eslint` (`eslint.config.*`, `.eslintrc*`), `prettier` (`.prettierrc*`, `prettier.config.*`), `jest` (`jest.config.*`), `pytest` (`pytest.ini`, `[tool.pytest` in `pyproject.toml`), `cargo` (`Cargo.toml`). It is part of the cache hash.
+
 `state_dir` is the absolute `<state>` path the other skills and agents use (defined here); the script no longer edits `.git/info/exclude`. On failure the script exits non-zero with the error on stderr. No stack detected → all arrays empty.
+
+## Worktree onboarding
+
+`scripts/Enable-Worktrees.ps1` makes a repository ignore `.worktrees/` (one-time, idempotent, changes go into a normal PR). It takes the tech-stack JSON above (`-TechStack` path or object, never re-detects) and `-Root` (default: git top level).
+
+```powershell
+pwsh scripts/Enable-Worktrees.ps1 -TechStack stack.json          # apply
+pwsh scripts/Enable-Worktrees.ps1 -TechStack stack.json -Check   # no writes, exit 1 on drift
+```
+
+Rules: `.gitignore` and `.dockerignore` get `.worktrees/`; `biome.json` gets `vcs` (`enabled`, `clientKind: git`, `useIgnoreFile`) and is formatted; a Vitest probe under `.worktrees/__probe__` (removed afterwards) decides whether a `hints` entry with the `exclude` snippet is needed; `eslint.config.*` yields a hint only. Output: `{ root, changed: [path], hints: [{file, message, snippet}], ok }`; check mode exits 1 when a change or hint is pending.
 
 ## Fallback without PowerShell
 
