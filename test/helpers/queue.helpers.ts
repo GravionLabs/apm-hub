@@ -1,4 +1,4 @@
-import { spawnSync } from 'child_process';
+import { execFile, spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -31,7 +31,8 @@ export const isolatedEnv = (home: string, extra: Record<string, string> = {}): N
   return e;
 };
 
-export type BatchCase = { key: string; args: string[]; cwd: string; path?: string };
+// env: per-case variables set for this case only (a string sets, null removes); restored before the next case.
+export type BatchCase = { key: string; args: string[]; cwd: string; path?: string; env?: Record<string, string | null> };
 export type BatchResult = { status: number; stdout: string; stderr: string };
 
 // Runs all cases in one pwsh process (see queue-batch.ps1); results are in case order.
@@ -52,6 +53,43 @@ export const runBatch = (cases: BatchCase[]): BatchResult[] => {
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
+};
+
+// Same as runBatch, but asynchronous: the cases are dealt round-robin to `groups` pwsh processes that run concurrently
+// (one process per group instead of one per case). For files whose cases are too slow for one sequential process;
+// results are in case order. Cases must be independent (own cwd and files), as they are in every batch.
+export const runBatchParallel = async (cases: BatchCase[], groups = 6): Promise<BatchResult[]> => {
+  const n = Math.max(1, Math.min(groups, cases.length));
+  const slots = Array.from({ length: n }, () => [] as number[]);
+  cases.forEach((_, i) => slots[i % n].push(i));
+  const results = new Array<BatchResult>(cases.length);
+  await Promise.all(
+    slots.map(async (idx) => {
+      const mine = idx.map((i) => cases[i]);
+      const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'queue-batch-'));
+      try {
+        const spec = path.join(tmp, 'cases.json');
+        const out = path.join(tmp, 'results.json');
+        fs.writeFileSync(spec, JSON.stringify(mine));
+        const home = path.join(tmp, 'home');
+        fs.mkdirSync(home);
+        const failure = await new Promise<string | null>((resolve) => {
+          execFile(
+            'pwsh',
+            ['-NoProfile', '-File', path.join(__dirname, 'queue-batch.ps1'), SCRIPT, spec, out],
+            { encoding: 'utf8', env: isolatedEnv(home), maxBuffer: 64 * 1024 * 1024 },
+            (err, stdout, stderr) => resolve(err || !fs.existsSync(out) ? `${stderr}${stdout}` : null),
+          );
+        });
+        if (failure !== null) throw new Error(`batch wrapper failed (cases: ${mine.map((c) => c.key).join(', ')}): ${failure}`);
+        const parsed = JSON.parse(fs.readFileSync(out, 'utf8').replace(/^﻿/, '')) as BatchResult[];
+        idx.forEach((i, j) => (results[i] = parsed[j]));
+      } finally {
+        fs.rmSync(tmp, { recursive: true, force: true });
+      }
+    }),
+  );
+  return results;
 };
 
 // Per-test helpers of the integration files; dir/bin are the current test's temp dir and fake-binary dir.
