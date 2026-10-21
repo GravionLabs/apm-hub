@@ -530,6 +530,16 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       expect(d.fixRounds).toEqual([{ round: 1, task: 2, seconds: null }]);
     });
 
+    it('reads Phase verify: ok|fail lines with the tests part as the verify phase', () => {
+      const d = metrics([
+        '2026-10-21T10:00:00Z # h',
+        '2026-10-21T10:01:00Z Phase verify: fail — tests 3/5',
+        '2026-10-21T10:01:30Z Fix round 1 (#1): x — model sonnet — tests 5/5',
+        '2026-10-21T10:03:00Z Phase verify: ok — tests 5/5',
+      ]).durations;
+      expect(d.phases.verify).toBe(180);
+    });
+
     it('still parses the tasks of a prefixed ledger', () => {
       const json = metrics(FIXTURE);
       expect(json.tasks.map((t: { task: number; status: string }) => [t.task, t.status])).toEqual([[11, 'DONE'], [12, 'DONE']]);

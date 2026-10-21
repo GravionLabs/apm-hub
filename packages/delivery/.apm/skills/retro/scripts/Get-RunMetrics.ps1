@@ -17,7 +17,7 @@
   escalationShare, rulings, gates, durations.
   durations: {total, phases: {read, explore, plan, implement, verify, review, pr}, tasks: [{task, seconds}], fixRounds: [{round, task, seconds}]}
   in seconds, from the optional ISO-8601 UTC prefix of ledger lines ('2026-10-21T15:19:46Z <text>'; lines without it are still read). A phase ends at its
-  'Phase <name>: complete' line and starts at the previous such line (the first timestamped line for the first phase); a Task or Fix round ends at its own line and
+  'Phase <name>: complete' line (verify: 'Phase verify: ok|fail — tests <n>/<m>') and starts at the previous such line (the first timestamped line for the first phase); a Task or Fix round ends at its own line and
   starts at the previous Phase-complete, Task or Fix round line. A missing timestamp, phase or a negative span gives null, never an error.
 #>
 [CmdletBinding()]
@@ -187,7 +187,7 @@ if ($Ledger -and (Test-Path $Ledger)) {
     # the first ledger line (the header) is the origin of the first phase and task, but only when it is timestamped itself
     if ($isFirst) { $isFirst = $false; if ($ts) { $prevMark = $ts; $prevPhaseTs = $ts } }
     if ($ts) { if ($null -eq $firstTs) { $firstTs = $ts }; $lastTs = $ts }
-    if ($line -match '^\s*(?:[-*]\s+)?Phase\s+([A-Za-z][A-Za-z _-]*?)\s*:\s*complete\b') {
+    if ($line -match '^\s*(?:[-*]\s+)?Phase\s+([A-Za-z][A-Za-z _-]*?)\s*:\s*(?:complete|ok|fail)\b') {
       $pk = Get-PhaseKey $Matches[1]
       if ($pk) { $phaseSec[$pk] = Add-Sec $phaseSec[$pk] (Get-Span $prevPhaseTs $ts) }
       $prevPhaseTs = $ts; $prevMark = $ts
