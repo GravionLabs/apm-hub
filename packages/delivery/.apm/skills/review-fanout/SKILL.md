@@ -21,6 +21,7 @@ Read-only: never edit or commit.
      - `spec`: issue criteria missing, partial or wrong, and scope creep; brief and severities in `references/spec-dimension.md`
 
    Each returns `[{file,line,severity: CRITICAL|HIGH|MEDIUM|LOW,evidence,issue}]`. A finding with empty or missing `file` or a `line` below 1 is invalid, never advisory: drop it and mark its dimension failed. Advisories without a natural location (`spec` "no spec available", `conventions` "install `<stack>@apm-hub`") use the placeholder `file` = the package path, `line` = 1. A reply `[]` plus a `NO_PACKAGE:` line also marks the dimension failed.
+   **No active waiting**: dispatch all reviewers in ONE message, then wait for their replies. Never run `sleep` or `Start-Sleep`, never poll files, ledgers or `review.json` for reviewer completion. The calls return the results: Claude Code `Agent` returns the reply, OpenCode `task()` awaits it, Copilot `runSubagent` returns it.
    Claude: `Agent` calls with `subagent_type: reviewer` in one message · OpenCode: parallel `task()` with agent `reviewer` · VS Code Copilot: `#runSubagent` with agent `reviewer` · otherwise run inline sequentially.
 3. **Dedupe** by file + normalized evidence; keep highest severity. Never merge `spec` with `conventions` findings.
 4. **Verify** — a sub-agent (given the package path, not the diff) tries to disprove each CRITICAL/HIGH finding: `confirmed`, `refuted` (→ advisory), `unverifiable` (stays blocking).
