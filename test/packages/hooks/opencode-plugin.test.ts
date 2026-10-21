@@ -35,6 +35,7 @@ describe('opencode plugin apm-hub-hooks', () => {
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'oc-plugin-'));
     delete process.env.AGENTS_LEDGER;
+    process.env.DROMOS_STATE_DIR = path.join(dir, '.agents'); // default fixture state; the no-override block deletes it
     delete process.env.CONTEXT_WARN_TOKENS;
     delete process.env.CONTEXT_WARN_STEP;
     process.env = gitCleanEnv(process.env);
@@ -537,37 +538,6 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read('12')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
     });
 
-    it('resolves .agents under ctx.directory: a plugin opened in a repo subdirectory does not reach the root ledger', async () => {
-      repo('fix/12-x');
-      withLedger('12');
-      const sub = path.join(dir, 'src', 'deep');
-      fs.mkdirSync(sub, { recursive: true });
-      const mod = await import(/* @vite-ignore */ PLUGIN);
-      const h: Hooks = await mod.ApmHubHooks({ directory: sub });
-      await expect(h['tool.execute.after'](...task('reviewer', result('ok')))).resolves.toBeUndefined();
-      expect(read('12')).toBe('# ledger\n');
-      expect(fs.existsSync(path.join(sub, '.agents'))).toBe(false);
-    });
-
-    it('binds a subdirectory ctx.directory to the branch issue ledger under that subdirectory', async () => {
-      repo('fix/12-x');
-      withLedger('12');
-      const sub = path.join(dir, 'pkg');
-      const own = path.join(sub, '.agents', '12', 'progress.md');
-      const newer = path.join(sub, '.agents', '99', 'progress.md');
-      for (const f of [own, newer]) {
-        fs.mkdirSync(path.dirname(f), { recursive: true });
-        fs.writeFileSync(f, '# sub\n');
-      }
-      fs.utimesSync(own, new Date(2020, 1, 1), new Date(2020, 1, 1));
-      const mod = await import(/* @vite-ignore */ PLUGIN);
-      const h: Hooks = await mod.ApmHubHooks({ directory: sub });
-      await h['tool.execute.after'](...task('reviewer', result('ok')));
-      expect(fs.readFileSync(own, 'utf8')).toBe('# sub\nSubagent reviewer: stopped — ok\n');
-      expect(fs.readFileSync(newer, 'utf8')).toBe('# sub\n');
-      expect(read('12')).toBe('# ledger\n');
-    });
-
     it('AGENTS_LEDGER wins over the branch binding', async () => {
       repo('fix/12-thing');
       withLedger('12');
@@ -577,6 +547,134 @@ describe('opencode plugin apm-hub-hooks', () => {
       await run('reviewer');
       expect(fs.readFileSync(other, 'utf8')).toBe('Subagent reviewer: stopped — ok\n');
       expect(read('12')).toBe('# ledger\n');
+    });
+  });
+
+  describe('state dir without override (#402)', () => {
+    const git = (cwd: string, ...a: string[]) => execFileSync('git', ['-C', cwd, '-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...a], { stdio: 'ignore' });
+    const repo = (branch: string) => {
+      git(dir, 'init', '-q');
+      git(dir, 'symbolic-ref', 'HEAD', `refs/heads/${branch}`);
+      git(dir, 'commit', '-q', '--allow-empty', '-m', 'init');
+    };
+    const common = () => fs.realpathSync(path.join(dir, '.git'));
+    const seed = (base: string, nr: string) => {
+      const f = path.join(base, 'agents', nr, 'progress.md');
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, '# ledger\n');
+      return f;
+    };
+    const stop = async (directory = dir) => {
+      const mod = await import(/* @vite-ignore */ PLUGIN);
+      const h: Hooks = await mod.ApmHubHooks({ directory });
+      await h['tool.execute.after'](...task('reviewer', result('ok')));
+    };
+    beforeEach(() => {
+      delete process.env.DROMOS_STATE_DIR;
+    });
+
+    it('appends to <git dir>/agents/<nr>/progress.md of the branch issue', async () => {
+      repo('feat/7-x');
+      const f = seed(common(), '7');
+      await stop();
+      expect(fs.readFileSync(f, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
+    });
+
+    it('ignores a ledger in the working tree .agents', async () => {
+      repo('feat/7-x');
+      const old = withLedger('7');
+      await stop();
+      expect(fs.readFileSync(old, 'utf8')).toBe('# ledger\n');
+    });
+
+    it('from a worktree appends to the main repository state dir', async () => {
+      repo('main');
+      const f = seed(common(), '7');
+      const wt = path.join(dir, 'wt');
+      git(dir, 'worktree', 'add', '-q', '-b', 'feat/7-x', wt);
+      await stop(wt);
+      expect(fs.readFileSync(f, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(fs.existsSync(path.join(wt, '.agents'))).toBe(false);
+    });
+
+    it('from a subdirectory of the repository uses the same state dir', async () => {
+      repo('feat/7-x');
+      const f = seed(common(), '7');
+      const sub = path.join(dir, 'src', 'deep');
+      fs.mkdirSync(sub, { recursive: true });
+      await stop(sub);
+      expect(fs.readFileSync(f, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+    });
+
+    it('binds a live loop marker in the state dir', async () => {
+      repo('feat/7-x');
+      const base = path.join(common(), 'agents');
+      const own = seed(common(), '9');
+      seed(common(), 'loop-5');
+      fs.writeFileSync(path.join(base, 'current'), '9 loop-5\n');
+      await stop();
+      expect(fs.readFileSync(own, 'utf8')).toBe('# ledger\n');
+    });
+
+    it('falls back to the newest ledger when the branch has no number', async () => {
+      repo('main');
+      seed(common(), '3');
+      const f = seed(common(), '4');
+      fs.utimesSync(path.join(common(), 'agents', '3', 'progress.md'), new Date(2020, 1, 1), new Date(2020, 1, 1));
+      await stop();
+      expect(fs.readFileSync(f, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+    });
+
+    it('writes nothing without a repository and without override', async () => {
+      const f = withLedger('7');
+      await stop();
+      expect(fs.readFileSync(f, 'utf8')).toBe('# ledger\n');
+    });
+
+    it('DROMOS_STATE_DIR wins over the git common dir', async () => {
+      repo('feat/7-x');
+      const gitLedger = seed(common(), '7');
+      const alt = path.join(dir, 'alt');
+      const f = path.join(alt, '7', 'progress.md');
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, '# alt\n');
+      process.env.DROMOS_STATE_DIR = alt;
+      await stop();
+      expect(fs.readFileSync(f, 'utf8')).toBe('# alt\nSubagent reviewer: stopped — ok\n');
+      expect(fs.readFileSync(gitLedger, 'utf8')).toBe('# ledger\n');
+    });
+
+    it('resolves a relative DROMOS_STATE_DIR against the project directory', async () => {
+      const f = path.join(dir, 'rel', '7', 'progress.md');
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, '# rel\n');
+      repo('feat/7-x');
+      process.env.DROMOS_STATE_DIR = 'rel';
+      await stop();
+      expect(fs.readFileSync(f, 'utf8')).toBe('# rel\nSubagent reviewer: stopped — ok\n');
+    });
+
+    it('AGENTS_LEDGER wins over both', async () => {
+      repo('feat/7-x');
+      const gitLedger = seed(common(), '7');
+      const other = path.join(dir, 'other.md');
+      fs.writeFileSync(other, '');
+      process.env.AGENTS_LEDGER = other;
+      await stop();
+      expect(fs.readFileSync(other, 'utf8')).toBe('Subagent reviewer: stopped — ok\n');
+      expect(fs.readFileSync(gitLedger, 'utf8')).toBe('# ledger\n');
+    });
+
+    it('writes nothing through a symlinked state dir', async () => {
+      repo('feat/7-x');
+      const real = path.join(dir, 'real');
+      const f = path.join(real, '7', 'progress.md');
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, '# real\n');
+      fs.symlinkSync(real, path.join(common(), 'agents'));
+      await stop();
+      expect(fs.readFileSync(f, 'utf8')).toBe('# real\n');
     });
   });
 
