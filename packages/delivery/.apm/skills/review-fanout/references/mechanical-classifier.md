@@ -1,6 +1,6 @@
 # Mechanical vs full classification
 
-`pwsh -NoProfile -File scripts/Classify-Diff.ps1 [-Range "<base>..<head>"] [-Force full] [-MaxLines 20]` prints `{"mode","dimensions","reason"}` (`mode` is `mechanical`, `docs` or `full`) and exits 0. No `-Range`: working tree vs `HEAD`. Use `dimensions` as the fan-out list. Script fails, prints nothing or invalid JSON: `full`. The script is authoritative: its regexes are the complete lists; the names below are what they cover.
+`pwsh -NoProfile -File scripts/Classify-Diff.ps1 [-Range "<base>..<head>"] [-Force full] [-MaxLines 20]` prints `{"mode","dimensions","reason"}` (`mode` is `mechanical`, `docs`, `text` or `full`) and exits 0. No `-Range`: working tree vs `HEAD`. Use `dimensions` as the fan-out list. Script fails, prints nothing or invalid JSON: `full`. The script is authoritative: its regexes are the complete lists; the names below are what they cover.
 
 **Ref safety**: run it only when both refs match `^[A-Za-z0-9._/@~^-]+$` and do not start with `-`; else `full` without running it. The script also rejects a range starting with `-`, containing whitespace, or with a side `git rev-parse --verify` rejects, and returns `full` outside a git work tree or when any git call fails. Git runs with `--literal-pathspecs` and `--` before pathspecs. Working-tree mode: any untracked file is `full` (`git diff` cannot see it). A PR number without a local range is always `full`.
 
@@ -93,7 +93,16 @@ packages/x/.apm/skills/foo/scripts/run.ps1
 
 ## Docs mode
 
-A diff whose content changes (modified, added, deleted, or renamed with edits) are all in **docs** files, such as a `CONTRIBUTING.md`-only change, gets mode `docs` with dimensions `conventions` and `spec`. Pure renames next to them do not matter. The `-MaxLines` threshold applies, so does the security scan below. The diff stays `mechanical` (with `security`) when an added line matches a command or remote pattern, a path is security-sensitive, or a manifest changes; any other file kind (script, build file, instruction text, non-rename test edit) is not docs: see its own rule or `full`.
+A diff whose content changes (modified, added, deleted, or renamed with edits) are all in **docs** files, such as a `CONTRIBUTING.md`-only change, gets mode `docs` with dimensions `conventions` and `spec`. Pure renames next to them do not matter. The `-MaxLines` threshold applies, so does the security scan below. The diff stays `mechanical` (with `security`) when an added line matches a command or remote pattern, a path is security-sensitive, or a manifest changes; any other file kind (script, build file) is not docs: see its own rule, Text mode or `full`.
+
+## Text mode
+
+Two content classes, checked on the changed paths after the location class (renames keep the rules above). Mode `text`; the dimensions of all classes in the diff are united (order `correctness`, `security`, `conventions`, `tests`, `spec`). No line threshold.
+
+- **skilltext** (`correctness`, `conventions`, `spec`): `SKILL.md`, `AGENTS.md`, `CLAUDE.md`, `*.agent.md`, `*.prompt.md`, `.md` files under `references/`, `templates/` and `assets/`. Added, deleted, modified or renamed with edits (same file name). Frontmatter: only `name`, `description` and `license` may change; any other changed key (`tools`, `permission`, `metadata`, `user-invocable`, ...) or delimiter is `full`.
+- **tests** (`correctness`, `tests`, `spec`): `*.test.ts` and everything under `test/`: added, deleted, modified or renamed with edits (same file name). A pure identifier rename stays `mechanical`; any other edit is `tests` instead of `full`.
+
+Security triggers stay authoritative and make the whole diff `full` (reason `security trigger in added lines`): an added line in a skilltext file matching the command patterns of the Dimensions section, or `rm`/`del`/`rmdir`/`Remove-Item` commands, `git push --force`/`-f`/`--force-with-lease`, `git reset --hard`, `git clean -f`, `git branch -D`, a credential assignment (`password`, `secret`, `token`, `api_key`, `credentials`, `private_key`, `bearer`, `authorization` followed by `:` or `=`), a private key header or a token prefix (`ghp_`, `github_pat`, `sk-`, `AKIA`). Test files use the command patterns except the `import`/`export` line rule. A security-sensitive path (Dimensions) or a manifest next to skilltext or tests is `full` too. Scripts (`scripts/*.ps1`, hooks, `*.sh`, `*.mjs`, `*.ts` outside `test/`, `.github/`) and build files are `full` as before, also next to text. `-Force full` still forces `full`.
 
 ## Dimensions
 

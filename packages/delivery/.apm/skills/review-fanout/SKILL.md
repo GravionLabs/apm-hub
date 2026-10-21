@@ -12,7 +12,7 @@ Read-only: never edit or commit.
    - **Classify** first, only for a local range or the working tree (PR number without a resolvable local `<base>..<head>`: `full`, do not run it).
    - Run it only when every ref matches `^[A-Za-z0-9._/@~^-]+$` and none starts with `-`; any other ref is `full` without running it (refs may contain shell metacharacters).
    - Range: `pwsh -NoProfile -File scripts/Classify-Diff.ps1 -Range "<base>..<head>"`; working tree (no range): the same without `-Range`. The caller's `--full` or "review full" maps to `-Force full`.
-   - It prints `{mode,dimensions,reason}`: run only those `dimensions` (a dimension list given by the caller replaces them); script error, no output or invalid JSON is `full`. Location classes, rules and security triggers (the script is authoritative): `references/mechanical-classifier.md`.
+   - It prints `{mode,dimensions,reason}`: run only those `dimensions` (a dimension list given by the caller replaces them); script error, no output or invalid JSON is `full`. Location classes, rules and security triggers (the script is authoritative): `references/mechanical-classifier.md`. `docs` and `text` run the listed dimensions.
    - **Dispatch**: load `detect-techstack`. Spawn one fresh `reviewer` agent per dimension of the chosen mode in a single parallel batch (a generic read-only sub-agent when `reviewer` is not installed), each given only the package path, the dimension and its brief (`reviewer` is dispatched only from `review-fanout`, wherever it runs: inline or inside the `review-lead` agent):
      - `correctness`: bugs, edge cases, error handling, races
      - `security`: injection, authz, secrets, unsafe input (always when auth/crypto/network/SQL files changed)
@@ -29,6 +29,6 @@ Read-only: never edit or commit.
 
 ## Output (JSON returned to the caller; a machine-readable copy for the caller goes to `<state>/<issue>/review.json`, else next to the package file in `$TMPDIR`)
 
-`{"mode":"mechanical|full","dimensions":[],"verdict":"APPROVE|CHANGES_REQUESTED","incomplete":false,"failedDimensions":[],"blocking":[{file,line,severity,issue,evidence}],"advisory":[]}`
+`{"mode":"mechanical|docs|text|full","dimensions":[],"verdict":"APPROVE|CHANGES_REQUESTED","incomplete":false,"failedDimensions":[],"blocking":[{file,line,severity,issue,evidence}],"advisory":[]}`
 
 Fail closed: a failed dimension (including invalid findings or `NO_PACKAGE`) → `incomplete: true` and `CHANGES_REQUESTED`. Any blocking finding → `CHANGES_REQUESTED`.
