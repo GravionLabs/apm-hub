@@ -36,6 +36,17 @@ Run it with a shell in the caller's context. Output not a JSON object with a `la
 
 `state_dir` is the absolute `<state>` path the other skills and agents use (defined here); the script no longer edits `.git/info/exclude`. On failure the script exits non-zero with the error on stderr. No stack detected → all arrays empty.
 
+## Worktree onboarding
+
+`scripts/Enable-Worktrees.ps1` makes a repository ignore `.worktrees/` (one-time, idempotent, changes go into a normal PR). It takes the tech-stack JSON above (`-TechStack` path or object, never re-detects) and `-Root` (default: git top level).
+
+```powershell
+pwsh scripts/Enable-Worktrees.ps1 -TechStack stack.json          # apply
+pwsh scripts/Enable-Worktrees.ps1 -TechStack stack.json -Check   # no writes, exit 1 on drift
+```
+
+Rules: `.gitignore` and `.dockerignore` get `.worktrees/`; `biome.json` gets `vcs` (`enabled`, `clientKind: git`, `useIgnoreFile`) and is formatted; a Vitest probe under `.worktrees/__probe__` (removed afterwards) decides whether a `hints` entry with the `exclude` snippet is needed; `eslint.config.*` yields a hint only. Output: `{ root, changed: [path], hints: [{file, message, snippet}], ok }`; check mode exits 1 when a change or hint is pending.
+
 ## Fallback without PowerShell
 
 If `pwsh` is not available → infer the stack from this table (search recursively, depth 5) and build the same JSON by hand:
