@@ -48,7 +48,7 @@ describe('review-lead agent contract', () => {
       expect(body).toContain(key);
     }
     expect(body).toContain('"APPROVE"|"CHANGES_REQUESTED"');
-    expect(body).toContain('.agents/<issue>/review.json');
+    expect(body).toContain('<state>/<issue>/review.json');
     expect(body).toMatch(/one JSON object and nothing else, at most 300 words/);
     expect(body).toMatch(/"error"/);
   });

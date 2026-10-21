@@ -32,14 +32,14 @@ describe('orchestrator description input', () => {
     expect(body).toContain('`<mode> <description>`');
     for (const ref of ['`#123`', '`issue 123`', '/issues/123']) expect(body).toContain(ref);
     expect(body).toMatch(/`next` takes none/);
-    expect(body).toContain('`.agents/adhoc/`');
+    expect(body).toContain('`<state>/adhoc/`');
   });
 
   it('agent creates the PBI with github-issue at the plan gate, then moves the state and continues as full', () => {
     expect(body).toContain('`github-issue` skill');
     expectOrder(body, 'after grilling and before publish', 'create the PBI');
     expectOrder(body, 'create the PBI', 'PBI created: #<nr>');
-    expectOrder(body, 'PBI created: #<nr>', 'to `.agents/<issue>/`');
+    expectOrder(body, 'PBI created: #<nr>', 'to `<state>/<issue>/`');
     expect(body).toContain('continue as **full**');
   });
 
@@ -57,7 +57,7 @@ describe('orchestrator description input', () => {
     expect(desc).toMatch(/never `mv` into an existing directory/);
     expect(desc).toMatch(/no PBI is created without approval/);
     expectOrder(desc, 'Plan gate', 'gh issue create');
-    expectOrder(desc, 'gh issue create', 'mv .agents/adhoc .agents/<issue>');
+    expectOrder(desc, 'gh issue create', 'mv <state>/adhoc <state>/<issue>');
     expect(desc).toContain('`input_type` to `pbi`');
   });
 

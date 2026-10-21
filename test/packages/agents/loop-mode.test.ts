@@ -21,7 +21,7 @@ const report = body.slice(body.indexOf('Report at the end'));
 const section = (text: string, heading: string) => text.split(`## ${heading}`)[1].split(/^## /m)[0];
 
 // the vocabulary shared by agent, reference and docs: one place to change it
-const LEDGER = '.agents/loop-<nr>/progress.md';
+const LEDGER = '<state>/loop-<nr>/progress.md';
 const HEADER = '# orchestrator ledger — loop #<nr> — branch <branch>';
 const DONE_LINE = 'Loop: PBI #<nr> done — <pr>';
 const STOP_LINE = 'Loop: stopped — <reason>';
@@ -75,7 +75,7 @@ describe('loop-mode reference', () => {
     expect(ledger).toContain(LEDGER);
     expect(ledger).toContain('-Issue loop-<nr>');
     expect(ledger).toContain(HEADER);
-    expect(ledger).toMatch(/only when `\.agents\/loop-<nr>\/progress\.md` does not exist yet/);
+    expect(ledger).toMatch(/only when `<state>\/loop-<nr>\/progress\.md` does not exist yet/);
     expect(ledger).toMatch(/`Add-LedgerLine` writes no headers/);
     expect(ledger).toContain(DONE_LINE);
     expect(ledger).toContain(STOP_LINE);
@@ -96,7 +96,7 @@ describe('loop-mode reference', () => {
     const ledger = section(reference, 'Loop ledger');
     expect(ledger).toContain('Add-LedgerLine.ps1 -Issue <pbi> -Bind loop-<nr>');
     expect(ledger).toContain('`Loop: PBI #<pbi> started`');
-    expect(ledger).toContain('`.agents/current` (`<pbi> loop-<nr>`, plus the issue number of the branch it ran on');
+    expect(ledger).toContain('`<state>/current` (`<pbi> loop-<nr>`, plus the issue number of the branch it ran on');
     expect(ledger).toMatch(/last `Loop: ` line is not a `Loop: stopped` line/);
     expect(ledger).not.toMatch(/prefer the marker over the branch number/);
     expect(ledger).toMatch(/a `Loop: PBI #<nr> done` line; any other issue branch wins/);
@@ -250,7 +250,7 @@ describe('loop mode: sibling references', () => {
 
 describe('loop mode: docs agree with agent and reference', () => {
   it('use the same ledger path, line formats and stop reasons', () => {
-    for (const text of [docs, workingMode]) expect(text).toContain(LEDGER);
+    for (const text of [docs, workingMode]) expect(text).toContain(LEDGER.replace("<state>/", ".agents/")); // docs follow in the docs task
     expect(docs).toContain(HEADER);
     expect(docs).toContain(DONE_LINE);
     expect(docs).toContain(STOP_LINE);

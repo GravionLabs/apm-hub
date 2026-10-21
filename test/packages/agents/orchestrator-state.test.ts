@@ -350,8 +350,8 @@ describe('orchestrator flags: overview and review summary', () => {
   });
 
   it('headless overview uses a ledger path without an issue directory', () => {
-    expect(gates).toContain('`.agents/overview.md`');
-    expect(gates).toContain('.git/info/exclude');
+    expect(gates).toContain('`<state>/overview.md`');
+    expect(gates).not.toContain('info/exclude');
   });
 
   it('reference reuses the merged-task rule and lists findings by severity', () => {
@@ -381,5 +381,41 @@ describe('orchestrator flags: overview and review summary', () => {
 
   it('github-issue links the gates reference', () => {
     expect(read('github/.apm/skills/github-issue/SKILL.md')).toContain('references/orchestrator-gates.md');
+  });
+});
+
+describe('agent prose: worktree-shared state directory (#402)', () => {
+  const agentsDir = path.join(pk, 'agents/.apm/agents');
+  const refsDir = path.join(pk, 'github/.apm/skills/github-issue/references');
+  const proseFiles = [
+    ...fs.readdirSync(agentsDir).map((f) => path.join(agentsDir, f)),
+    ...fs.readdirSync(refsDir).map((f) => path.join(refsDir, f)),
+  ];
+
+  it('defines <state> once in the orchestrator as state_dir with the override and passes it to subagents', () => {
+    expect(orchestratorAgent).toContain('`state_dir` of the `detect-techstack` JSON');
+    expect(orchestratorAgent).toContain('`<git-common-dir>/agents/`');
+    expect(orchestratorAgent).toContain('`DROMOS_STATE_DIR`');
+    expect(orchestratorAgent).toContain('absolute `<state>`');
+  });
+
+  it('keeps state_dir from step 0 and hands it to issue-reader', () => {
+    const pipeline = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
+    expect(pipeline).toContain('its `state_dir` (`<state>`');
+    expect(pipeline).toContain('with `<issue>`, `<state>` and');
+    expect(issueReader).toContain('the absolute `<state>` directory');
+  });
+
+  it('no longer mentions the .git/info/exclude step in agents or references', () => {
+    for (const file of proseFiles) {
+      expect(fs.readFileSync(file, 'utf-8'), file).not.toContain('info/exclude');
+    }
+  });
+
+  it('references the working-tree .agents/ directory only as an install path (.agents/skills)', () => {
+    for (const file of proseFiles) {
+      const stray = fs.readFileSync(file, 'utf-8').replace(/\.agents\/skills/g, '').match(/\.agents\b/);
+      expect(stray, file).toBeNull();
+    }
   });
 });
