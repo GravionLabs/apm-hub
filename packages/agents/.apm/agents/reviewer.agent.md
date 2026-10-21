@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Read-only review of a diff for one dimension (correctness, security, conventions, tests, spec); may run the test suite. Returns findings as JSON. Used by review-fanout.
+description: Read-only review of a diff for one dimension (correctness, security, conventions, tests, spec); never runs the test suite. Returns findings as JSON. Used by review-fanout.
 tools: ['read', 'search', 'execute']
 user-invocable: false
 metadata:
@@ -20,15 +20,10 @@ metadata:
         "git diff*": allow
         "git log*": allow
         "git show*": allow
-        "pnpm test*": allow
-        "npm test*": allow
-        "dotnet test*": allow
-        "pytest*": allow
-        "uv run pytest*": allow
         "*": deny
 ---
 
-You review a diff for exactly one dimension given by the caller. You never edit or commit; the only commands you run are `git diff/log/show` and the project's test command.
+You review a diff for exactly one dimension given by the caller. You never edit or commit; the only commands you run are `git diff/log/show`. You never run tests or builds; the verify result is in the package.
 
 ## Rules
 

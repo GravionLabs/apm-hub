@@ -71,7 +71,7 @@ flowchart TD
     G1 -->|"plan mode"| STOP([Stop: Next /clear, then orchestrator implement])
     G1 -->|"approved"| PUB["Create Task sub-issues<br/>2 or more tasks"]
     PUB --> S4["4. Implement<br/>implementer, one per Task"]
-    S4 --> S5["5. Review<br/>review-fanout on BASE..HEAD"]
+    S4 --> FV["5a. Final-Verify<br/>verify-project, haiku"] --> S5["5b. Review<br/>review-fanout on BASE..HEAD"]
     S5 --> V{"Verdict"}
     V -->|"APPROVE"| S6["6. Pull request<br/>github-pull-request"]
     V -->|"CHANGES_REQUESTED"| FIX["Fix rounds"] --> S5
@@ -82,7 +82,7 @@ flowchart TD
 2. **Explore.** The `explorer` gets the title and digest and summarizes the affected code in 300 words or less; the summary is appended to `context.md`.
 3. **Plan.** The `planner` runs `issue-planning` and writes `<state>/<issue>/plan.json`. Only the path, a summary and the open question count enter the orchestrator's context. You approve at the plan gate. Existing Task sub-issues are used as they are, with no planner and no `plan.json`.
 4. **Implement.** One `implementer` per task, in blocking order, all on the PBI's single branch. Each gets the task, the branch and the path of `context.md`, not the pasted stack and exploration text, so a run with five tasks and two fix rounds emits them once instead of seven times.
-5. **Review.** One `review-fanout` over everything the run changed. On Claude Code the orchestrator dispatches `review-lead`, which runs `review-fanout` in its own context and returns the verdict and a findings list; elsewhere the orchestrator runs `review-fanout` inline.
+5. **Final-Verify, then review.** After the last task one `verify-project` run (forked general-purpose context, haiku, it only runs commands) writes `<state>/<pbi>/verify.json` `{status, summary, tests}` and the ledger gets `Phase verify: <ok|fail> — tests <n>/<m>`. Red: a fix round with the failure list, then Final-Verify again; red twice is a gate. It runs once more after the last fix round, never per fix round, and the review verdict plus a green `verify.json` gate the pull request. Then one `review-fanout` over everything the run changed. On Claude Code the orchestrator dispatches `review-lead`, which runs `review-fanout` in its own context and returns the verdict and a findings list; elsewhere the orchestrator runs `review-fanout` inline.
 6. **Pull request.** The `pr-writer` runs `github-pull-request` in its own context, into the integration branch, and returns the PR number and URL as JSON; the orchestrator records the URL and never merges. Before this the PR phase ran inline, at the moment the context was largest.
 
 What enters the orchestrator's context: the stack JSON and the explorer summary once each, the reader's JSON (digest and `task` sub-issue numbers, never the issue body), the plan path and summary, each implementer's reply, the review verdict and finding lines, and the PR URL. What stays outside: files read, `context.md` once written, `plan.json`, the diff, logs, task reports and the review package. Step wording: [orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md); planning: [issue-planning](../packages/delivery/.apm/skills/issue-planning/SKILL.md); review: [review-fanout](../packages/delivery/.apm/skills/review-fanout/SKILL.md); branch choice: [release-branches.md](../packages/github/.apm/skills/github-issue/references/release-branches.md).
@@ -167,7 +167,7 @@ A bug (label `bug`, type `Bug` or a `fix` title prefix) makes the implementer lo
 
 `review-fanout` classifies the diff mechanically, then dispatches one `reviewer` per dimension in a single parallel batch: `correctness`, `security`, `conventions`, `tests` and `spec`. A second pass tries to disprove each CRITICAL or HIGH finding. The diff goes to a package file on disk and never enters the orchestrator's context.
 
-Where a subagent may start subagents (Claude Code, see [Clients](#clients)) the orchestrator dispatches `review-lead` (sonnet) with the range, the issue number and the path of `context.md`. It runs `review-fanout` in its own context and replies with JSON only: `verdict`, `incomplete`, a `findings` list and the paths of the package and of `review.json`. The review summary is built from `findings`. On Copilot CLI, OpenCode and VS Code Copilot, where nesting is not documented or off by default, and in the inline `/orchestrator` command, the orchestrator runs `review-fanout` itself as before. Fix rounds hand the implementer the findings list and the `review.json` path, never the package. The advisory choice, `--no-review-summary` and `--fix-advisories` behave the same either way.
+Where a subagent may start subagents (Claude Code, see [Clients](#clients)) the orchestrator dispatches `review-lead` (sonnet) with the range, the issue number and the path of `context.md`. It runs `review-fanout` in its own context and replies with JSON only: `verdict`, `incomplete`, a `findings` list and the paths of the package and of `review.json`. The review summary is built from `findings`. On Copilot CLI, OpenCode and VS Code Copilot, where nesting is not documented or off by default, and in the inline `/orchestrator` command, the orchestrator runs `review-fanout` itself as before. Fix rounds hand the implementer the findings list, the files of the findings and the `review.json` path, never the package, and name the targeted test rule: no full suite in a fix round. The re-review covers `<last review HEAD>..HEAD` with the dimensions that had blocking or selected findings plus `correctness`; `review-lead` passes range and dimension list to `review-fanout`. Final-Verify runs once after the last fix round. The advisory choice, `--no-review-summary` and `--fix-advisories` behave the same either way.
 
 ```mermaid
 flowchart TD
@@ -197,7 +197,7 @@ These always go to you; the orchestrator never decides them itself.
 | Open questions | grilling per `issue-planning` |
 | Advisories | after the review summary, unless `--fix-advisories` sets the policy |
 | Blocked review | fix round 3 still blocked |
-| Failed tests | the suite is red twice |
+| Failed tests | the suite is red twice on a task, or Final-Verify is red twice |
 
 A gate and a ruling look alike but differ:
 
@@ -215,7 +215,8 @@ The orchestrator writes `<state>/<issue>/progress.md`, with the first line `# or
 ```text
 Phase Plan: complete — plan.json
 Task #201: DONE — 3f2a9c1 — model sonnet
-Fix round 1 (#201): 2 blocking fixed — model sonnet
+Fix round 1 (#201): 2 blocking fixed — model sonnet — tests 18/18
+Phase verify: ok — tests 412/412
 Ruling: used sonnet for the docs task — prose only — slower retries
 Phase Pull request: complete — https://github.com/<owner>/<repo>/pull/210
 ```
@@ -364,7 +365,7 @@ flowchart TD
 - Interactive gates (plan gate, review summary, `CHANGES_REQUESTED`, red suite twice) pause the loop and it continues after your answer. Headless, the gate is recorded and the loop stops.
 - Loop ledger `<state>/loop-<nr>/progress.md`: header `# orchestrator ledger — loop #<nr> — branch <branch>` (written once, when the file does not exist yet), one `Loop: PBI #<nr> done — <pr>` line per PBI and `Loop: stopped — <reason>` at the end. Per-PBI ledgers and `Ruling:` lines stay in `<state>/<pbi>/progress.md`. At each PBI boundary the orchestrator creates `<state>/<pbi>/progress.md` with its header and binds the loop to it before dispatching `issue-reader` (`Add-LedgerLine.ps1 -Issue <pbi> -Bind loop-<nr>`: the line `Loop: PBI #<pbi> started` in the loop ledger plus the marker `<state>/current`), so the hook's `Subagent` lines of the new PBI land in its own ledger although its branch does not exist yet. Every stop removes the marker again (`-Unbind`).
 - Runner mode (Claude Code, with `Agent` and `SendMessage`): the primary stays thin. Per PBI it dispatches the `pbi-runner` subagent with `{pbi, loop, flags}` (`--fix-advisories` and `--no-review-summary` forwarded verbatim) and keeps only its JSON. A `GATE` reply is asked with `AskUserQuestion` and the answer goes back with `SendMessage` to the runner until it returns `DONE`, `BLOCKED` or `FAILED`; the runner records the `Ruling:`. `BLOCKED` and `FAILED` stop the loop with the reasons `runner blocked` and `runner failed`. The cap is 10 PBIs in runner mode and 3 inline; Copilot CLI and OpenCode keep the inline loop.
-- Primary model in runner mode: not yet measured. By design the primary only selects, dispatches the runner, asks gates and writes `Loop:` lines, and every model-heavy phase runs in a subagent: the runner is pinned to sonnet, `planner` and the verify phase to opus. The primary may therefore run on haiku or sonnet; opus is not needed for it. Whether haiku relays gates and keeps the ledger reliably over ten PBIs has not been measured, so start with sonnet.
+- Primary model in runner mode: not yet measured. By design the primary only selects, dispatches the runner, asks gates and writes `Loop:` lines, and every model-heavy phase runs in a subagent: the runner is pinned to sonnet, `planner` to opus and the verify phase to haiku. The primary may therefore run on haiku or sonnet; opus is not needed for it. Whether haiku relays gates and keeps the ledger reliably over ten PBIs has not been measured, so start with sonnet.
 - Depth: runner mode needs `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` of at least 3 (runner, then review-lead, then reviewer, once [#307](https://github.com/GravionLabs/apm-hub/issues/307) lands). Depth 3 dispatch was verified in [#340](#runner-checks-claude-code); a depth-3 agent has no `Agent` tool. The default allows 3 levels; `1` turns nesting off and breaks runner mode.
 - Measurement (not yet measured, no numbers recorded): run `orchestrator loop <feature>` over three small planned PBIs on Claude Code, then run the `retro` skill's `scripts/Get-RunMetrics.ps1` on the session and read the primary's context growth per PBI. Target: under 3k tokens of primary growth per PBI. If a PBI exceeds it, name the biggest contributor and open a follow-up issue. Record the primary model with the numbers. Tracked in [#345](https://github.com/GravionLabs/apm-hub/issues/345).
 - Rerun `orchestrator loop <nr>` after `/clear` to resume: the orchestrator re-reads the Feature or Epic via the loop target number and runs the selection again; finished PBIs drop out by their PR state, not by the ledger. The report of a stopped loop ends with one `Next:` line: `Next: #<nr> <title> — orchestrator loop <feature> after /clear` when a PBI is still selectable or paused, otherwise the `next` variants (what blocks the rest, or the Feature is done).
@@ -432,7 +433,7 @@ The last line is a fixed closing line saying the ledger is complete and that the
 ## Models and cost
 
 - Claude Code passes `model` on every `Agent` call. `issue-reader` and `explorer` run on haiku, `planner` inherits, `implementer` defaults to sonnet and gets `inherit` or stronger for integration and design tasks, `review-lead` and `reviewer` run on sonnet.
-- Runner mode (Claude Code loop): `pbi-runner` is pinned to sonnet, `planner` and verify run on opus, so the primary may run on haiku or sonnet. Primary growth per PBI is not yet measured; target under 3k tokens, procedure and the `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` requirement (3) in [Looping with `loop`](#looping-with-loop).
+- Runner mode (Claude Code loop): `pbi-runner` is pinned to sonnet, `planner` runs on opus and verify on haiku, so the primary may run on haiku or sonnet. Primary growth per PBI is not yet measured; target under 3k tokens, procedure and the `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` requirement (3) in [Looping with `loop`](#looping-with-loop).
 - A cheaper model that needs two or three times the turns costs more. Sonnet is the floor for prose-only tasks.
 - OpenCode reads the model from the agent file; Copilot has no override.
 - `plan` mode ends with `Next: /clear, then orchestrator implement <issue>`. Planning fills the context, and after an idle gap the prompt cache is rewritten at a cost that grows with it. In `full` mode above 100k tokens the orchestrator offers the same stop once.

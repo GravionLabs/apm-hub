@@ -15,7 +15,8 @@ Test behavior through the public interface, never internals; expected values com
 
 - [ ] Tests for every new or modified function
 - [ ] Tests follow the good-tests rules (no internals coupling, no tautological assertions)
-- [ ] Typecheck/build passes; tests pass (happy + edge + error)
+- [ ] Build passes when the stack compiles and compiled sources changed; targeted tests pass (test files of the changed paths and direct neighbours, `<lang>-test` "Targeted run"; unknown mapping: the fast/unit group, never the full suite); the full run is the PBI Final-Verify
+- [ ] Never commit red
 - [ ] No debug output left in code
 
 ## Language dispatch

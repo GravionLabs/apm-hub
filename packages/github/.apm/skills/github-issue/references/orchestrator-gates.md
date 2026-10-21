@@ -38,6 +38,10 @@ Decides up front which advisories join the fix round, so no question is asked. F
 
 Headless (no question tool): append `Gate: <question>` to the ledger, report it and stop; the review summary is exempt when `--fix-advisories` is set (policy ruling instead). Ledger lines are appended with `pwsh scripts/Add-LedgerLine.ps1 -Issue <issue|adhoc> -Line '<text>'` (path-validated; OpenCode's permission map allows only this command for ledger writes; `<state>/overview.md`, `description.txt`, and the `mv` of `<state>/adhoc` are not covered and prompt, so a headless OpenCode run stops there). In `loop` mode an interactive gate pauses the loop and the run continues after the answer; a headless gate stops the loop (`loop-mode.md`).
 
+## Final-Verify red twice (gate)
+
+Final-Verify (`pbi-pipeline.md` step 5) writes `<state>/<pbi>/verify.json`. `status: fail` → one fix round with the failure list, then Final-Verify again. Red a second time: stop, show `summary` and `tests` and ask how to proceed (fix by hand, change scope, abandon); headless: append `Gate: Final-Verify red twice — <summary>` and stop. Never open the PR without a green `verify.json`.
+
 ## Clear before implement (closing line after a plan)
 
 Why: after an idle gap the prompt cache is rewritten, and that cost grows with the context. Planning (exploration, grilling, `AskUserQuestion`) fills it; the implement run needs only `<state>/<issue>/plan.json` and the Task issues.

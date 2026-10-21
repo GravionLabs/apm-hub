@@ -15,6 +15,7 @@ description: >
 - **Framework**: NUnit · **Mocking**: NSubstitute · **Assertions**: Shouldly
 - **Run all**: `dotnet test`
 - **Run single**: `dotnet test --filter "FullyQualifiedName~Namespace.Tests.ClassName"`
+- **Targeted run** (per commit): `dotnet test --filter "FullyQualifiedName~<Name>"` for the test classes of the changed code (`--no-build` after an own build); unknown mapping: the unit group (`--filter "TestCategory=Unit"`), never the full suite
 - **Coverage**: `dotnet test --collect:"XPlat Code Coverage"` writes `coverage.cobertura.xml` to `TestResults/`; convert with `reportgenerator`
 
 ## Conventions

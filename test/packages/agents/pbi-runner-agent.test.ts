@@ -49,7 +49,7 @@ describe('pbi-runner agent contract', () => {
       'issue-reader` haiku',
       'explorer` haiku',
       'planner` opus',
-      'final verify opus',
+      'final verify haiku',
       'implementer` sonnet',
       'fix round 3 opus',
       'review-lead` sonnet',

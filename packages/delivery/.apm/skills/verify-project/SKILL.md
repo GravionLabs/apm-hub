@@ -20,13 +20,16 @@ Phase: verify. Run checks on project. On Claude Code this skill runs in a forked
 {
   "phase": "verify",
   "status": "ok" | "fail",
-  "summary": "pass | first error line if fail"
+  "summary": "pass | first error line if fail",
+  "tests": "<passed>/<total>"
 }
 ```
 
+`tests` is the count of the full test run (`0/0` when no test ran). When the caller passes an output path (the PBI Final-Verify passes `<state>/<pbi>/verify.json`), the same JSON is also written to that file.
+
 ## Constraints
 
-- Read-only verification: no edits, no fixes — report only.
+- Read-only verification: no edits, no fixes — report only (the only write is the JSON to a caller-given output path).
 - Run commands in project root.
 - Step fails? Stop, report first error.
 - Output JSON only.
