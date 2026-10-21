@@ -2,7 +2,7 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { AGENT, INSTALLER, hasPwsh, isolatedEnv, posix, runBatch, type BatchCase, type BatchResult } from '../../helpers/queue.helpers';
+import { AGENT, INSTALLER, SCRIPT, hasPwsh, isolatedEnv, posix, runBatch, type BatchCase, type BatchResult } from '../../helpers/queue.helpers';
 
 // Fast project: validation, -DryRun, launcher text and the agent file. The -DryRun/validation cases of
 // Invoke-OrchestratorQueue.ps1 run batched in ONE pwsh process (queue-batch.ps1), each case in its own
@@ -173,10 +173,32 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       expect(narrow).toContain('\\"git status *\\":\\"allow\\"');
       expect(narrow).toContain('\\"*\\":\\"deny\\"');
       expect(narrow).not.toContain('--auto');
+      // DROMOS_STATE_DIR=.agents (test helper) resolves against the case dir: absolute allow entry next to the .git deny
+      expect(narrow).toMatch(/\\"\.git\/\*\*\\":\\"deny\\",\\"[^"\\]*\/\.agents\/\*\*\\":\\"allow\\"/);
       const all = R.opencodeAll;
       expect(all.status).toBe(0);
       expect(all.stdout).toContain('[dry-run] #12: opencode run --agent orchestrator --auto "implement 12"\n');
       expect(all.stdout).not.toContain('OPENCODE_PERMISSION');
+    });
+
+    it.skipIf(!hasPwsh)('opencode harness allows <git common dir>/agents/** (absolute) after the .git deny when no override is set', () => {
+      const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'oc-perm-'));
+      try {
+        spawnSync('git', ['init', '-q'], { cwd: repo });
+        const adapter = path.resolve(path.dirname(SCRIPT), 'harness/opencode.ps1');
+        const env = { ...process.env };
+        delete env.DROMOS_STATE_DIR;
+        const r = spawnSync('pwsh', ['-NoProfile', '-Command', `& '${adapter}' -Issue 1 | ForEach-Object { $_.Environment.OPENCODE_PERMISSION }`], { encoding: 'utf8', cwd: repo, env });
+        expect(r.status).toBe(0);
+        const edit = JSON.parse(r.stdout.trim()).edit;
+        expect(Object.entries(edit)).toEqual([
+          ['*', 'allow'],
+          ['.git/**', 'deny'],
+          [`${fs.realpathSync(repo)}/.git/agents/**`, 'allow'],
+        ]);
+      } finally {
+        fs.rmSync(repo, { recursive: true, force: true });
+      }
     });
 
     it.each(['copilot', 'opencode'])('does not report "No adapter" for %s', (h) => {

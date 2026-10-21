@@ -81,7 +81,7 @@ exit 0
       expect(outcomes()).toEqual([[11, 'done'], [12, 'done']]);
       expect(q.pbis[0].pr).toBe(101);
       expect(q.pbis[1].pr).toBeNull();
-      expect(q.pbis[0].ledger).toBe('.agents/11/progress.md');
+      expect(q.pbis[0].ledger).toBe(path.join(fs.realpathSync(dir), '.agents', '11', 'progress.md'));
       expect(Date.parse(q.started)).not.toBeNaN();
       expect(Date.parse(q.ended)).not.toBeNaN();
       expect(r.stdout).toContain('Feature #10 is done.');
@@ -286,6 +286,18 @@ exit 0
       expect(queue()).toMatchObject({ state: 'failed', exitCode: 1 });
       expect(queue().pbis.at(-1).note).toContain('runner error');
       expect(calls()).toHaveLength(1);
+    });
+
+    it('writes queue-<nr>.json and the log under <git common dir>/agents when DROMOS_STATE_DIR is unset', () => {
+      spawnSync('git', ['init', '-q'], { cwd: dir });
+      fakeQueue([doneStep]);
+      const env = { ...process.env, QUEUE_POLL_SECONDS: '0', PATH: `${bin}${path.delimiter}${process.env.PATH}` };
+      delete env.DROMOS_STATE_DIR;
+      const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Feature', '10'], { encoding: 'utf8', cwd: dir, env });
+      expect(r.status).toBe(0);
+      expect(JSON.parse(fs.readFileSync(path.join(dir, '.git', 'agents', 'queue-10.json'), 'utf8')).queue).toBe(10);
+      expect(fs.existsSync(path.join(dir, '.git', 'agents', 'queue-10.log'))).toBe(true);
+      expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
     });
 
     it('refuses a dangling symlinked .agents/', () => {

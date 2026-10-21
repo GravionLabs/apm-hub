@@ -21,8 +21,8 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
   });
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-  const run = (args: string[]) => {
-    const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { encoding: 'utf8', cwd: dir });
+  const run = (args: string[], cwd = dir, stateDir: string | null = path.join(dir, '.agents')) => {
+    const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { encoding: 'utf8', cwd, env: { ...process.env, DROMOS_STATE_DIR: stateDir ?? '' } });
     return { ...r, json: r.status === 0 ? JSON.parse(r.stdout) : null };
   };
 
@@ -97,6 +97,24 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     const none = run(['-Transcript', transcript, '-Issue', '404']).json;
     expect(none.ledger).toBeNull();
     expect(none.fixRounds).toBe(0);
+  });
+
+  it('finds the newest ledger under <git common dir>/agents without -Ledger or -Issue', () => {
+    const { transcript } = fixture();
+    spawnSync('git', ['init', '-q'], { cwd: dir });
+    fs.mkdirSync(path.join(dir, '.git', 'agents', '7'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.git', 'agents', '7', 'progress.md'), 'Fix round 1: x\nFix round 2: y\n');
+    const viaCommon = run(['-Transcript', transcript], dir, null);
+    expect(viaCommon.json.fixRounds).toBe(2);
+    expect(viaCommon.json.ledger).toMatch(/agents[\/]7[\/]progress\.md$/);
+    expect(run(['-Transcript', transcript, '-Issue', '7'], dir, null).json.fixRounds).toBe(2);
+  });
+
+  it('reports no ledger outside a git repository without DROMOS_STATE_DIR', () => {
+    const { transcript } = fixture();
+    const r = run(['-Transcript', transcript, '-Issue', '7'], dir, null);
+    expect(r.status).toBe(0);
+    expect(r.json.ledger).toBeNull();
   });
 
   it('works without subagents', () => {

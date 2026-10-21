@@ -5,7 +5,7 @@
 .PARAMETER Transcript
   Main-thread transcript JSONL. Default: newest session of the current project under ~/.claude/projects.
 .PARAMETER Issue
-  Issue number; reads .agents/<issue>/progress.md. Without it the newest .agents/*/progress.md is used.
+  Issue number; reads <state>/<issue>/progress.md (state dir: DROMOS_STATE_DIR, else <git common dir>/agents). Without it the newest progress.md under the state dir is used.
 .PARAMETER Ledger
   Explicit ledger path (overrides -Issue).
 .PARAMETER SubagentsDir
@@ -114,9 +114,19 @@ if (-not $Transcript) {
 if (-not (Test-Path $Transcript)) { throw "Transcript not found: $Transcript" }
 if (-not $SubagentsDir) { $SubagentsDir = Join-Path (Split-Path $Transcript) ([IO.Path]::GetFileNameWithoutExtension($Transcript) + '/subagents') }
 if (-not $Ledger) {
-  if ($Issue) { $Ledger = ".agents/$Issue/progress.md" }
-  elseif (Test-Path .agents) {
-    $l = Get-ChildItem .agents -Recurse -Filter progress.md | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+# BEGIN Resolve-StateDir (identical in every script that defines it; test/repo/state-dir-resolver.test.ts)
+function Resolve-StateDir {
+  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path) }
+  $common = $null
+  try { $common = "$(& git -C (Get-Location).Path rev-parse --path-format=absolute --git-common-dir 2>$null)".Trim() } catch { $common = $null }
+  if ($LASTEXITCODE -ne 0 -or -not $common) { throw 'No state directory: not inside a git repository (set DROMOS_STATE_DIR)' }
+  [IO.Path]::GetFullPath((Join-Path $common 'agents'))
+}
+# END Resolve-StateDir
+  $state = try { Resolve-StateDir } catch { $null }
+  if ($Issue -and $state) { $Ledger = Join-Path $state "$Issue/progress.md" }
+  elseif (-not $Issue -and $state -and (Test-Path -LiteralPath $state)) {
+    $l = Get-ChildItem -LiteralPath $state -Recurse -Filter progress.md | Sort-Object LastWriteTime -Descending | Select-Object -First 1
     if ($l) { $Ledger = $l.FullName }
   }
 }

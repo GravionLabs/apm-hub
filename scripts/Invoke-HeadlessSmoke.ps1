@@ -103,8 +103,10 @@ foreach ($c in $clients) {
     if ($null -eq $out) { Write-Host "SKIP $c/$st (CLI not found)"; Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue; continue }
     $ran++
     $problems = @()
-    $dirs = @(Get-ChildItem (Join-Path $dir '.agents') -Directory -ErrorAction SilentlyContinue)
-    $ledgerFile = $full ? ($dirs | ForEach-Object { Join-Path $_.FullName 'progress.md' } | Where-Object { Test-Path $_ } | Select-Object -First 1) : (Join-Path $dir ".agents/$Issue/progress.md")
+    # The fixture is a git repo: its state dir is <git common dir>/agents unless DROMOS_STATE_DIR is set (relative: against the fixture).
+    $stateDir = $env:DROMOS_STATE_DIR ? [IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, $dir) : (Join-Path (& git -C $dir rev-parse --path-format=absolute --git-common-dir).Trim() 'agents')
+    $dirs = @(Get-ChildItem $stateDir -Directory -ErrorAction SilentlyContinue)
+    $ledgerFile = $full ? ($dirs | ForEach-Object { Join-Path $_.FullName 'progress.md' } | Where-Object { Test-Path $_ } | Select-Object -First 1) : (Join-Path $stateDir "$Issue/progress.md")
     $ledgerText = ($ledgerFile -and (Test-Path $ledgerFile)) ? (Get-Content $ledgerFile -Raw) : ''
     if ($out -eq 'TIMEOUT') { $problems += "no result within ${TimeoutSec}s" }
     elseif ($out -match $promptRx) { $problems += 'permission prompt in output' }

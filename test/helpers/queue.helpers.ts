@@ -18,6 +18,10 @@ export const posix = process.platform !== 'win32';
 export const GATE_ACCEPT = ['Gate: x', '**Gate:** x', '**Gate**: x', '`Gate:` x', '> Gate: x'];
 export const GATE_REJECT = ['See Gate: x', 'xGate: x', 'gate: x'];
 
+// Hermetic state dir: a relative DROMOS_STATE_DIR resolves against the cwd of every run, so each test's temp dir keeps its
+// own `.agents/` and nothing lands in the real repository's git common dir (spawned children inherit process.env).
+process.env.DROMOS_STATE_DIR = '.agents';
+
 if (!hasPwsh && process.env.CI) throw new Error('CI is set but pwsh did not start: the queue tests need pwsh and must not be skipped silently in CI');
 
 // HOME points into `home`; every other variable the scripts could read a home or a runner from is removed.
