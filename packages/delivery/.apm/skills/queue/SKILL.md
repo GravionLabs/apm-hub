@@ -96,4 +96,4 @@ A `Gate:` line in the output stops the queue even without a new ledger gate. Nev
 - The narrow permission set limits accidents; it does not stop prompt injection (an allowed `gh api` or `pwsh` can
   do a lot, including `gh pr merge` via `gh api`). `-Label` feeds issue text to the model: use collaborator-authored
   issues; `-TrustedOnly` filters only the issue author (not comments); positional and `-IssueFile` issues are unfiltered.
-- The runner refuses a symlinked state dir. Check `/queue status <nr>` or `<state>/<nr>/progress.md` before and after a run. Sequential only (`-Parallel` is a follow-up).
+- The runner refuses a symlinked state dir. Check `/queue status <nr>` or `<state>/<nr>/progress.md` before and after a run. Sequential only (`-Parallel` is a follow-up). Issue-list mode inside a repository picks each run directory with `Enter-Checkout.ps1` (main checkout when no live lease `<state>/leases/` and no modified tracked file holds it, else `.worktrees/<nr>`; branch `feat/<nr>` from `-Base`, default `release/next`) and releases it with `Exit-Checkout.ps1` after the verdict; a gate keeps lease and worktree and prints the path to resume in.

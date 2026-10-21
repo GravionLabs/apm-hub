@@ -13,6 +13,7 @@
   loop ledger <state>/loop-<nr>/progress.md (the PBI ledger must exist or be created by -Line) and writes the marker <state>/current ('<issue> loop-<nr>',
   plus ' <nr>' when the current branch carries another issue number: the hooks do not treat that branch as foreign); the SubagentStop
   hook and the OpenCode plugin then bind subagent lines to that PBI's ledger until the loop ledger records 'Loop: stopped'.
+  After a successful append with an integer -Issue the 'heartbeat' of the checkout lease held by that issue (<state>/leases/*.json, Enter-Checkout.ps1) is renewed; no lease: nothing.
   -Unbind (alone) removes the marker; no marker is a no-op. A symlinked marker or loop ledger is refused.
 .PARAMETER Issue  Issue number, 'adhoc' or 'loop-<nr>'.
 .PARAMETER Line   One line of text (no line breaks).
@@ -79,7 +80,26 @@ New-Item -ItemType Directory -Path $dir -Force | Out-Null
 $file = Join-Path $dir 'progress.md'
 # A symlinked progress.md is refused as well (it could point outside the project).
 if ((Test-Path -LiteralPath $file) -and (Get-Item -LiteralPath $file -Force).LinkTarget) { throw "Refusing symlinked path: $file" }
-if ($PSBoundParameters.ContainsKey('Line')) { Add-Content -LiteralPath $file -Value (Add-Timestamp $Line) -Encoding utf8 }
+if ($PSBoundParameters.ContainsKey('Line')) {
+  Add-Content -LiteralPath $file -Value (Add-Timestamp $Line) -Encoding utf8
+  # Renew the heartbeat of the checkout lease held by this issue (<state>/leases/*.json, written by Enter-Checkout.ps1); no lease: nothing.
+  # Best effort and cheap: the ledger line is already written, a symlinked or unreadable lease is skipped.
+  $leaseDir = Join-Path $base 'leases'
+  if ($Issue -match '\A[0-9]+\z' -and (Test-Path -LiteralPath $leaseDir -PathType Container) -and -not (Test-Link $leaseDir)) {
+    foreach ($lf in @(Get-ChildItem -LiteralPath $leaseDir -Filter '*.json' -File -Force)) {
+      try {
+        if (Test-Link $lf.FullName) { continue }
+        $raw = Get-Content -LiteralPath $lf.FullName -Raw
+        if ("$(($raw | ConvertFrom-Json).issue)" -ne $Issue) { continue }
+        $stamp = [DateTime]::UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", [cultureinfo]::InvariantCulture)
+        $tmp = "$($lf.FullName).$PID.tmp"
+        if (Test-Link $tmp) { continue }
+        [IO.File]::WriteAllText($tmp, ($raw -replace '("heartbeat"\s*:\s*)"[^"]*"', "`$1`"$stamp`""))
+        Move-Item -LiteralPath $tmp -Destination $lf.FullName -Force
+      } catch { continue }
+    }
+  }
+}
 if ($binding) {
   # the start line first: a marker is live only while the last 'Loop: ' line is not 'Loop: stopped'
   Add-Content -LiteralPath $loopFile -Value (Add-Timestamp "Loop: PBI #$Issue started") -Encoding utf8

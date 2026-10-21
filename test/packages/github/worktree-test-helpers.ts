@@ -1,4 +1,5 @@
 import { spawnSync } from 'child_process';
+import { createHash } from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -42,3 +43,29 @@ export const run = (script: string, args: string[], cwd: string, env: Record<str
   });
 
 export const json = (r: { stdout: string }) => JSON.parse(r.stdout.trim());
+
+/** First 16 hex of the SHA-256 of the checkout path: the lease file name. */
+export const leaseKey = (checkout: string): string => createHash('sha256').update(checkout, 'utf8').digest('hex').slice(0, 16);
+
+const stamp = (d = new Date()) => d.toISOString().replace(/\.\d+Z$/, 'Z');
+
+export type Lease = { path: string; issue: number; branch: string; host: string; started: string; heartbeat: string };
+
+/** Plants a lease file; heartbeat and started default to now. */
+export const plantLease = (state: string, l: Partial<Lease> & { path: string; issue: number }): string => {
+  const dir = path.join(state, 'leases');
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `${leaseKey(l.path)}.json`);
+  const now = stamp();
+  fs.writeFileSync(file, JSON.stringify({ branch: `feat/${l.issue}`, host: 'other-host', started: now, heartbeat: now, ...l }));
+  return file;
+};
+
+export const readLeases = (state: string): Lease[] => {
+  const dir = path.join(state, 'leases');
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((n) => n.endsWith('.json'))
+    .map((n) => JSON.parse(fs.readFileSync(path.join(dir, n), 'utf8')) as Lease);
+};
