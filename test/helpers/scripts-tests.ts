@@ -9,6 +9,8 @@ export const scriptsTests = [
   'test/packages/delivery/review-fanout-classify.test.ts',
   'test/packages/delivery/run-metrics.test.ts',
   'test/packages/github/add-ledger-line.test.ts',
+  'test/packages/github/checkout-marker.test.ts',
+  'test/packages/github/checkout-race.test.ts',
   'test/packages/github/enter-checkout.test.ts',
   'test/packages/github/exit-checkout.test.ts',
   'test/packages/github/new-worktree.test.ts',
