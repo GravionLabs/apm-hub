@@ -1,4 +1,4 @@
-import { spawnSync } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -17,7 +17,9 @@ const hermetic = (home: string, base: NodeJS.ProcessEnv = process.env): NodeJS.P
 };
 
 describe('git-guardrails hook', () => {
-  let repo: string;
+  let repo: string; // the repository the current test works on: the shared fixture, or a fresh copy
+  let shared: string;
+  let fresh: string | undefined;
   let home: string;
 
   const git = (...args: string[]) => spawnSync('git', args, { cwd: repo, encoding: 'utf8', env: hermetic(home) });
@@ -27,14 +29,27 @@ describe('git-guardrails hook', () => {
   });
   afterAll(() => fs.rmSync(home, { recursive: true, force: true }));
 
-  beforeEach(() => {
-    repo = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-'));
+  // One clean committed fixture repo for the whole describe (one `git init` + commit). A test that changes the repository
+  // (dirty(), untracked(), branch switches, files in .git, worktrees, new directories) calls withFreshRepo() first: it
+  // copies the fixture (no git process) and the afterEach below removes the copy and points `repo` back at the fixture.
+  beforeAll(() => {
+    shared = repo = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-'));
     git('init', '-q', '-b', 'feature');
     fs.writeFileSync(path.join(repo, 'a.txt'), 'base');
     git('add', 'a.txt');
     git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'init');
   });
-  afterEach(() => fs.rmSync(repo, { recursive: true, force: true }));
+  afterAll(() => fs.rmSync(shared, { recursive: true, force: true }));
+  const withFreshRepo = () => {
+    fresh = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-'));
+    fs.cpSync(shared, fresh, { recursive: true });
+    repo = fresh;
+  };
+  afterEach(() => {
+    if (fresh) fs.rmSync(fresh, { recursive: true, force: true });
+    fresh = undefined;
+    repo = shared;
+  });
 
   const claude = (command: string, extra: object = {}) => ({
     tool_name: 'Bash',
@@ -244,12 +259,39 @@ describe('git-guardrails hook', () => {
     'git -C . push -f',
   ];
 
-  describe.each([
+  // The runs of the two tables are independent of each other and of the repository state (clean fixture): run them once,
+  // concurrently, in a beforeAll; every `it` below asserts on the result of its own command.
+  const payloads = [
     ['Claude', claude],
     ['Copilot', copilot],
-  ] as const)('%s payload', (_n, mk) => {
+  ] as const;
+  const tableRuns = new Map<string, { code: number | null; out: string }>();
+  const runAsync = (payload: unknown) =>
+    new Promise<{ code: number | null; out: string }>((resolve) => {
+      const clean = hermetic(home);
+      delete clean.GIT_GUARDRAILS_OFF;
+      const child = spawn('bash', [SCRIPT], { env: clean });
+      let out = '';
+      child.stdout.on('data', (d) => (out += d));
+      child.on('close', (code) => resolve({ code, out: out.trim() }));
+      child.stdin.end(JSON.stringify(payload));
+    });
+  beforeAll(async () => {
+    const jobs = payloads.flatMap(([n, mk]) => [...blocked, ...allowed].map((c) => [`${n}\0${c}`, mk(c)] as const));
+    let next = 0;
+    await Promise.all(
+      Array.from({ length: 8 }, async () => {
+        while (next < jobs.length) {
+          const [k, payload] = jobs[next++];
+          tableRuns.set(k, await runAsync(payload));
+        }
+      }),
+    );
+  }, 60000);
+
+  describe.each(payloads)('%s payload', (n) => {
     it.each(blocked)('denies %s', (c) => {
-      const r = run(mk(c));
+      const r = tableRuns.get(`${n}\0${c}`)!;
       expect(r.code).toBe(0);
       const j = JSON.parse(r.out);
       expect(j.permissionDecision).toBe('deny');
@@ -258,12 +300,13 @@ describe('git-guardrails hook', () => {
       expect(j.permissionDecisionReason).not.toContain('\n');
     });
     it.each(allowed)('passes %s', (c) => {
-      const r = run(mk(c));
+      const r = tableRuns.get(`${n}\0${c}`)!;
       expect(r).toEqual({ code: 0, out: '' });
     });
   });
 
   it('denies a bare force push while on main', () => {
+    withFreshRepo();
     git('checkout', '-q', '-b', 'main');
     expect(JSON.parse(run(claude('git push --force')).out).permissionDecision).toBe('deny');
     expect(JSON.parse(run(claude('git push -f origin')).out).permissionDecision).toBe('deny');
@@ -285,6 +328,7 @@ describe('git-guardrails hook', () => {
   ])(
     'denies %s only with uncommitted changes',
     (c) => {
+      withFreshRepo();
       expect(run(claude(c)).out).toBe('');
       dirty();
       expect(JSON.parse(run(claude(c)).out).permissionDecision).toBe('deny');
@@ -292,6 +336,7 @@ describe('git-guardrails hook', () => {
     },
   );
   it('allows restore --staged . even when dirty', () => {
+    withFreshRepo();
     dirty();
     expect(run(claude('git restore --staged .')).out).toBe('');
   });
@@ -317,6 +362,7 @@ describe('git-guardrails hook', () => {
     expect(run(claude('git -c')).out).toBe('');
   });
   it('resolves HEAD to the current protected branch', () => {
+    withFreshRepo();
     git('checkout', '-q', '-b', 'release/2.0');
     expect(denied(run(claude('git push -f origin HEAD')))).toBe(true);
     expect(denied(run(claude('git push --force-with-lease origin HEAD')))).toBe(true);
@@ -326,6 +372,7 @@ describe('git-guardrails hook', () => {
     expect(run(claude('git push -f origin HEAD:feature')).out).toBe('');
   });
   it('deleting HEAD on the remote is allowed only on release/next', () => {
+    withFreshRepo();
     git('checkout', '-q', '-b', 'release/next');
     expect(run(claude('git push --delete origin HEAD')).out).toBe('');
     git('checkout', '-q', '-b', 'release/2.1');
@@ -355,6 +402,7 @@ describe('git-guardrails hook', () => {
       expect(run(claude(`git -C ${other} status`)).out).toBe('');
     });
     it('checks the session repository itself for -C . and -C <subdir>', () => {
+      withFreshRepo();
       fs.mkdirSync(path.join(repo, 'sub'));
       expect(run(claude('git -C . checkout .')).out).toBe('');
       expect(run(claude(`git -C ${repo} checkout .`)).out).toBe('');
@@ -363,6 +411,7 @@ describe('git-guardrails hook', () => {
       expect(denied(run(claude('git -C sub checkout .')))).toBe(true);
     });
     it('treats a nested repository inside the session repo as another repository', () => {
+      withFreshRepo();
       const nested = path.join(repo, 'nested');
       fs.mkdirSync(nested);
       initRepo(nested);
@@ -382,6 +431,7 @@ describe('git-guardrails hook', () => {
     });
   });
   it('explains the reason and escapes quotes in the deny JSON', () => {
+    withFreshRepo();
     expect(JSON.parse(run(claude('git reset --hard')).out).permissionDecisionReason).toContain('git reset --hard');
     expect(JSON.parse(run(claude('git clean -fd')).out).permissionDecisionReason).toContain('git clean -f');
     git('checkout', '-q', '-b', 'release/a"b');
@@ -389,6 +439,7 @@ describe('git-guardrails hook', () => {
     expect(JSON.parse(r.out).permissionDecisionReason).toContain('release/a"b');
   });
   it('denies a dirty checkout inside a wrapper and a chain', () => {
+    withFreshRepo();
     dirty();
     expect(denied(run(claude("bash -c 'git checkout .'")))).toBe(true);
     expect(denied(run(claude('echo a; env X=1 git restore .')))).toBe(true);
@@ -426,6 +477,7 @@ describe('git-guardrails hook', () => {
       expect(denied(runNoJq(claude('echo \\"\n git reset --hard')))).toBe(true);
     });
     it('does not let a cwd inside the command override the real one', () => {
+      withFreshRepo();
       fs.mkdirSync(path.join(repo, '.git', 'agents'));
       fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
       const other = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-cwd-'));
@@ -442,16 +494,19 @@ describe('git-guardrails hook', () => {
         expect(denied(runNoJq(claude(c)))).toBe(true);
     });
     it('resolves HEAD to the current protected branch', () => {
+      withFreshRepo();
       git('checkout', '-q', '-b', 'release/2.0');
       expect(denied(runNoJq(claude('git push -f origin HEAD')))).toBe(true);
       expect(runNoJq(claude('git push origin HEAD')).out).toBe('');
     });
     it('denies a dirty checkout only when dirty', () => {
+      withFreshRepo();
       expect(runNoJq(claude('git checkout .')).out).toBe('');
       dirty();
       expect(denied(runNoJq(claude('git checkout .')))).toBe(true);
     });
     it('honours both opt-outs', () => {
+      withFreshRepo();
       expect(runRaw(JSON.stringify(claude('git reset --hard')), { GIT_GUARDRAILS_OFF: '1' }, { ...process.env, PATH: nojq }).out).toBe('');
       fs.mkdirSync(path.join(repo, '.git', 'agents'));
       fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
@@ -584,6 +639,7 @@ describe('git-guardrails hook', () => {
       const bare = () => path.join(repo, 'bare.git');
       const stale = () => fs.utimesSync(path.join(wt, 'f'), new Date('2000-01-01'), new Date('2000-01-01'));
       beforeEach(() => {
+        withFreshRepo();
         // a git dir (no .git entry) inside the cwd whose config points at a work tree and defines a clean filter
         wt = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-barewt-'));
         marker = path.join(wt, 'PWNED');
@@ -641,6 +697,7 @@ describe('git-guardrails hook', () => {
       });
     });
     it('runs its own git hardened and never inside another repository', () => {
+      withFreshRepo();
       const shim = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-shim-'));
       const other = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-foreign-'));
       const log = path.join(shim, 'log');
@@ -669,6 +726,7 @@ describe('git-guardrails hook', () => {
       }
     });
     it('ignores untracked files for the checkout . dirty check', () => {
+      withFreshRepo();
       untracked();
       expect(run(claude('git checkout .')).out).toBe('');
     });
@@ -690,17 +748,20 @@ describe('git-guardrails hook', () => {
       expect(run(claude('git reset --hard'), { GIT_GUARDRAILS_OFF: '1' }).out).toBe('');
     });
     it('<git common dir>/agents/guardrails.off disables the hook', () => {
+      withFreshRepo();
       fs.mkdirSync(path.join(repo, '.git', 'agents'));
       fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
       expect(run(claude('git reset --hard')).out).toBe('');
       expect(run(copilot('git reset --hard')).out).toBe('');
     });
     it('ignores the old working-tree .agents/guardrails.off', () => {
+      withFreshRepo();
       fs.mkdirSync(path.join(repo, '.agents'));
       fs.writeFileSync(path.join(repo, '.agents', 'guardrails.off'), '');
       expect(denied(run(claude('git reset --hard')))).toBe(true);
     });
     it('names the legacy .agents/guardrails.off in the deny reason and still denies', () => {
+      withFreshRepo();
       fs.mkdirSync(path.join(repo, '.agents'));
       fs.writeFileSync(path.join(repo, '.agents', 'guardrails.off'), '');
       const r = run(claude('git reset --hard'));
@@ -708,6 +769,7 @@ describe('git-guardrails hook', () => {
       expect(r.out).toContain('legacy .agents/guardrails.off is no longer read');
     });
     it('DROMOS_STATE_DIR/guardrails.off disables the hook and the override wins over the common dir', () => {
+      withFreshRepo();
       const st = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-state-'));
       try {
         fs.writeFileSync(path.join(st, 'guardrails.off'), '');
@@ -721,6 +783,7 @@ describe('git-guardrails hook', () => {
       }
     });
     it('the state dir of the main repository applies from a linked worktree', () => {
+      withFreshRepo();
       const wt = path.join(repo, '..', path.basename(repo) + '-wt');
       git('worktree', 'add', '-q', '-b', 'wt-branch', wt);
       try {
@@ -732,6 +795,7 @@ describe('git-guardrails hook', () => {
       }
     });
     it('guardrails.off in the state dir applies from a subdirectory', () => {
+      withFreshRepo();
       fs.mkdirSync(path.join(repo, '.git', 'agents'));
       fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
       fs.mkdirSync(path.join(repo, 'sub'));
