@@ -7,9 +7,10 @@ Order of work and release assignment for the open issues. Created 2026-10-18, la
 | Order | Issue | Title | Size | Note |
 | --- | --- | --- | --- | --- |
 | 1 | #375 | loop-mode ledger lines before the PBI branch exists | S | before #389: same hook file |
-| 2 | #367 | git-guardrails scanner quadratic on bash 3.2 | S | independent |
-| 3 | #252 | `github-release` refuses an already released branch | S | protects this very release; do before cutting |
-| 4 | #251 | model policy, opus in `plan.json`, escalation at fix round 2 | M | `needs-decision`: decide first, otherwise it moves to 2.5.0 |
+| 2 | #402 | orchestrator state moves to `<git-common-dir>/agents/` (`DROMOS_STATE_DIR` override) | L | Tasks #403–#410; after #375 (same hook files), before #379 #386 #389 which build on the path; `needs-decision` on #403/#404 (resolver sharing) |
+| 3 | #367 | git-guardrails scanner quadratic on bash 3.2 | S | independent |
+| 4 | #252 | `github-release` refuses an already released branch | S | protects this very release; do before cutting |
+| 5 | #251 | model policy, opus in `plan.json`, escalation at fix round 2 | M | `needs-decision`: decide first, otherwise it moves to 2.5.0 |
 
 Closing: Feature #248 and Epic #300 once #251 is merged. Then `github-release` finish.
 
