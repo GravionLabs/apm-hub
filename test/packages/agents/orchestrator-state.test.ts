@@ -125,7 +125,7 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
     const out = execFileSync('pwsh', ['-NoProfile', '-File', script, '-ProjectRoot', dir, ...extra], { encoding: 'utf-8' });
     return JSON.parse(out) as { languages: string[]; manifest_hash: string };
   };
-  const cacheFile = () => path.join(dir, '.agents/techstack.json');
+  const cacheFile = () => path.join(dir, '.git/agents/techstack.json');
   const excludeFile = () => path.join(dir, '.git/info/exclude');
   const poison = (extra: object = {}) => {
     const cur = JSON.parse(fs.readFileSync(cacheFile(), 'utf-8'));
@@ -140,12 +140,12 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
   });
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-  it('writes the cache, excludes .agents/ and reuses it while manifests are unchanged', { timeout: T }, () => {
+  it('writes the cache under the git dir, leaves the exclude file alone and reuses it while manifests are unchanged', { timeout: T }, () => {
     const first = run();
     expect(first.languages).toEqual(['ts']);
     expect(first.manifest_hash).toMatch(/^[0-9a-f]{64}$/);
     expect(JSON.parse(fs.readFileSync(cacheFile(), 'utf-8')).manifest_hash).toBe(first.manifest_hash);
-    expect(fs.readFileSync(excludeFile(), 'utf-8')).toContain('.agents/');
+    expect(fs.readFileSync(excludeFile(), 'utf-8')).not.toContain('.agents');
     poison();
     expect(run().languages).toEqual(['cached']);
   });
@@ -228,10 +228,10 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
     expect(rewritten.manifest_hash).toBe(first.manifest_hash);
   });
 
-  it.skipIf(process.platform === 'win32')('does not read or write through a symlinked .agents/ directory', { timeout: T }, () => {
+  it.skipIf(process.platform === 'win32')('does not read or write through a symlinked state directory', { timeout: T }, () => {
     const target = fs.mkdtempSync(path.join(os.tmpdir(), 'agents-target-'));
     try {
-      fs.symlinkSync(target, path.join(dir, '.agents'));
+      fs.symlinkSync(target, path.join(dir, '.git/agents'));
       expect(run().languages).toEqual(['ts']);
       expect(fs.readdirSync(target)).toEqual([]);
       fs.writeFileSync(path.join(target, 'techstack.json'), JSON.stringify({ languages: ['cached'], test: [], implementation: [], manifest_hash: 'x' }));
@@ -242,51 +242,10 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
     }
   });
 
-  it.skipIf(process.platform === 'win32')('does not write the exclude through a symlinked .git/info directory', { timeout: T }, () => {
-    const target = fs.mkdtempSync(path.join(os.tmpdir(), 'info-target-'));
-    try {
-      fs.rmSync(path.join(dir, '.git/info'), { recursive: true, force: true });
-      fs.symlinkSync(target, path.join(dir, '.git/info'));
-      expect(run().languages).toEqual(['ts']);
-      expect(fs.readdirSync(target)).toEqual([]);
-      expect(fs.existsSync(cacheFile())).toBe(true);
-    } finally {
-      fs.rmSync(target, { recursive: true, force: true });
-    }
-  });
-
-  it('adds .agents/ to the exclude file once, also after a last line without newline', { timeout: T }, () => {
-    fs.mkdirSync(path.dirname(excludeFile()), { recursive: true });
-    fs.writeFileSync(excludeFile(), '*.log');
-    run();
-    run('-NoCache');
-    const lines = fs.readFileSync(excludeFile(), 'utf-8').split('\n');
-    expect(lines).toContain('*.log');
-    expect(lines.filter((l) => l === '.agents/')).toHaveLength(1);
-  });
-
-  it('does not touch an exclude file that already lists .agents', { timeout: T }, () => {
-    fs.mkdirSync(path.dirname(excludeFile()), { recursive: true });
-    fs.writeFileSync(excludeFile(), '/.agents\n');
-    run();
-    expect(fs.readFileSync(excludeFile(), 'utf-8')).toBe('/.agents\n');
-  });
-
-  it.skipIf(process.platform === 'win32')('does not write through a symlinked exclude file and leaves no *.tmp', { timeout: T }, () => {
-    const target = path.join(dir, 'target-exclude');
-    fs.writeFileSync(target, '*.log\n');
-    fs.mkdirSync(path.dirname(excludeFile()), { recursive: true });
-    fs.rmSync(excludeFile(), { force: true });
-    fs.symlinkSync(target, excludeFile());
-    run();
-    expect(fs.readFileSync(target, 'utf-8')).toBe('*.log\n');
-    expect(fs.readdirSync(path.join(dir, '.agents')).filter((f) => f.endsWith('.tmp'))).toEqual([]);
-  });
-
   it('recovers from a corrupt cache and reports an empty stack as arrays', { timeout: T }, () => {
     fs.rmSync(path.join(dir, 'package.json'));
     fs.rmSync(path.join(dir, 'tsconfig.json'));
-    fs.mkdirSync(path.join(dir, '.agents'));
+    fs.mkdirSync(path.join(dir, '.git/agents'));
     fs.writeFileSync(cacheFile(), 'not json');
     const r = run();
     expect(r.languages).toEqual([]);
@@ -391,8 +350,8 @@ describe('orchestrator flags: overview and review summary', () => {
   });
 
   it('headless overview uses a ledger path without an issue directory', () => {
-    expect(gates).toContain('`.agents/overview.md`');
-    expect(gates).toContain('.git/info/exclude');
+    expect(gates).toContain('`<state>/overview.md`');
+    expect(gates).not.toContain('info/exclude');
   });
 
   it('reference reuses the merged-task rule and lists findings by severity', () => {
@@ -422,5 +381,41 @@ describe('orchestrator flags: overview and review summary', () => {
 
   it('github-issue links the gates reference', () => {
     expect(read('github/.apm/skills/github-issue/SKILL.md')).toContain('references/orchestrator-gates.md');
+  });
+});
+
+describe('agent prose: worktree-shared state directory (#402)', () => {
+  const agentsDir = path.join(pk, 'agents/.apm/agents');
+  const refsDir = path.join(pk, 'github/.apm/skills/github-issue/references');
+  const proseFiles = [
+    ...fs.readdirSync(agentsDir).map((f) => path.join(agentsDir, f)),
+    ...fs.readdirSync(refsDir).map((f) => path.join(refsDir, f)),
+  ];
+
+  it('defines <state> once in the orchestrator as state_dir with the override and passes it to subagents', () => {
+    expect(orchestratorAgent).toContain('`state_dir` of the `detect-techstack` JSON');
+    expect(orchestratorAgent).toContain('`<git-common-dir>/agents/`');
+    expect(orchestratorAgent).toContain('`DROMOS_STATE_DIR`');
+    expect(orchestratorAgent).toContain('absolute `<state>`');
+  });
+
+  it('keeps state_dir from step 0 and hands it to issue-reader', () => {
+    const pipeline = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
+    expect(pipeline).toContain('its `state_dir` (`<state>`');
+    expect(pipeline).toContain('with `<issue>`, `<state>` and');
+    expect(issueReader).toContain('the `<state>` directory (cwd-relative such as `.git/agents` when it lies under the cwd, else absolute');
+  });
+
+  it('no longer mentions the .git/info/exclude step in agents or references', () => {
+    for (const file of proseFiles) {
+      expect(fs.readFileSync(file, 'utf-8'), file).not.toContain('info/exclude');
+    }
+  });
+
+  it('references the working-tree .agents/ directory only as an install path (.agents/skills)', () => {
+    for (const file of proseFiles) {
+      const stray = fs.readFileSync(file, 'utf-8').replace(/\.agents\/skills/g, '').match(/\.agents\b/);
+      expect(stray, file).toBeNull();
+    }
   });
 });

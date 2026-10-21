@@ -9,7 +9,7 @@ Adapted from the `grilling` skill of [mattpocock/skills](https://github.com/matt
 1. Read `questions[]`. A round is all unanswered questions at once. Questions are independent in the schema (no question-to-question dependency), so the frontier is all open questions; dependent ones only appear after a `planner` re-dispatch and form the next round.
 2. Facts are never asked. Anything the repo can answer goes to `explorer` or `planner`; only product, scope and risk choices reach the user.
 3. Ask the round as numbered questions: question, options, the `recommended` option first, worded so "yes" accepts it.
-4. Per answer, append `Ruling: <question> — user — <answer, cost if wrong>` to the ledger `.agents/<issue>/progress.md`. The orchestrator then edits `plan.json` per `plan-schema.md` (answered, dropped or deferred; it edits the items listed in `blocks`).
+4. Per answer, append `Ruling: <question> — user — <answer, cost if wrong>` to the ledger `<state>/<issue>/progress.md`. The orchestrator then edits `plan.json` per `plan-schema.md` (answered, dropped or deferred; it edits the items listed in `blocks`).
 5. Re-dispatch `planner` only when an answer changes item structure (split, merge, new item). Pass the answers in its prompt as final input; it keeps answered questions removed and may add new ones. Then start the next round.
 6. Repeat until no unanswered question is left. Then the final round: the user approves `plan.md` (granularity, blocking edges, merge or split, which items to publish). With zero questions this final approval still runs. Only then run `publish.md`.
 
@@ -17,7 +17,7 @@ Adapted from the `grilling` skill of [mattpocock/skills](https://github.com/matt
 
 - Claude Code: `AskUserQuestion`, at most 4 questions per call; split a larger round into several calls of the same round.
 - No question tool: ask the same numbered round in plain text.
-- Headless: append one `Gate: <question>` line per open question to `.agents/<issue>/progress.md` and stop.
+- Headless: append one `Gate: <question>` line per open question to `<state>/<issue>/progress.md` and stop.
 
 ## Deferred decisions
 

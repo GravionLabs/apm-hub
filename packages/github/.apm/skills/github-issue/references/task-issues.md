@@ -31,7 +31,7 @@ Blocked by #<task>, or none (also set as native blocked-by link)
 ## Rules
 
 - Native sub-issue link to the PBI and native blocked-by links in plan order (`sub-issues.md`); the body lines only document them.
-- The Task issues are the source of truth; `.agents/<pbi>/plan.json` is a local cache of their numbers. A plan change during implementation edits the Task issue body (`gh issue edit`) or adds a new Task issue, then the cache.
+- The Task issues are the source of truth; `<state>/<pbi>/plan.json` is a local cache of their numbers. A plan change during implementation edits the Task issue body (`gh issue edit`) or adds a new Task issue, then the cache.
 - Commits on the PBI branch carry `Refs #<task>`, never `Closes`: the PBI's PR closes `#<pbi>` and the release closes the open sub-issues.
 - Task sub-issues of a PBI never become separate branches or PRs. Existing hand-made Task sub-issues are used as they are, without re-planning.
 

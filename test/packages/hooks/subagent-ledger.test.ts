@@ -6,7 +6,11 @@ import { BRANCHES_BOUND, BRANCHES_UNBOUND, LOOP_LEDGERS_FOREIGN_BRANCH, LOOP_LED
 
 const SCRIPT = path.resolve(__dirname, '../../../packages/hooks/.apm/hooks/subagent-ledger.sh');
 
-const cleanEnv = (extra: Record<string, string> = {}): NodeJS.ProcessEnv => gitCleanEnv(process.env, extra);
+/** State directory of the fixtures: most cases use the DROMOS_STATE_DIR override pointing at <dir>/.agents; the
+ * `git common dir` describe block clears it (DROMOS_STATE_DIR: '') to exercise the real resolver. */
+let fixtureState = '';
+const cleanEnv = (extra: Record<string, string> = {}): NodeJS.ProcessEnv =>
+  gitCleanEnv(process.env, { DROMOS_STATE_DIR: fixtureState, ...extra });
 
 describe('subagent-ledger hook', () => {
   let dir: string;
@@ -14,6 +18,7 @@ describe('subagent-ledger hook', () => {
 
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-'));
+    fixtureState = path.join(dir, '.agents');
   });
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
@@ -168,7 +173,7 @@ describe('subagent-ledger hook', () => {
     fs.writeFileSync(path.join(dir, '.agents', '7', 'task-1-report.md'), 'x');
     run({ cwd: dir, agent_type: 'implementer', agent_transcript_path: path.join(dir, 'missing.jsonl') });
     expect(fs.readFileSync(ledger, 'utf8')).toBe(
-      '# ledger\nSubagent implementer: stopped — report: .agents/7/task-1-report.md\n',
+      '# ledger\nSubagent implementer: stopped — report: 7/task-1-report.md\n',
     );
   });
 
@@ -541,34 +546,6 @@ describe('subagent-ledger hook', () => {
       expect(r.status).toBe(0);
       expect(fs.readFileSync(log, 'utf8')).toContain('-c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse');
       expect(read(l7)).toBe('# 7\nSubagent reviewer: stopped — ok\n');
-    });
-
-    it('resolves .agents under the payload cwd: a stop from a repo subdirectory does not reach the root ledger', () => {
-      repo('fix/7-x');
-      const l7 = mk('7');
-      const sub = path.join(dir, 'src', 'deep');
-      fs.mkdirSync(sub, { recursive: true });
-      const r = run({ cwd: sub, agent_type: 'reviewer', last_assistant_message: 'ok' });
-      expect(r.status).toBe(0);
-      expect(read(l7)).toBe('# 7\n');
-      expect(fs.existsSync(path.join(sub, '.agents'))).toBe(false);
-    });
-
-    it('binds a subdirectory cwd to the branch issue ledger under that subdirectory', () => {
-      repo('fix/7-x');
-      const l7 = mk('7');
-      const sub = path.join(dir, 'pkg');
-      const own = path.join(sub, '.agents', '7', 'progress.md');
-      const newer = path.join(sub, '.agents', '9', 'progress.md');
-      for (const f of [own, newer]) {
-        fs.mkdirSync(path.dirname(f), { recursive: true });
-        fs.writeFileSync(f, '# sub\n');
-      }
-      fs.utimesSync(own, new Date(2020, 1, 1), new Date(2020, 1, 1));
-      run({ cwd: sub, agent_type: 'reviewer', last_assistant_message: 'ok' });
-      expect(read(own)).toBe('# sub\nSubagent reviewer: stopped — ok\n');
-      expect(read(newer)).toBe('# sub\n');
-      expect(read(l7)).toBe('# 7\n');
     });
 
     it('lets AGENTS_LEDGER win over the branch binding', () => {
@@ -1138,5 +1115,133 @@ describe('subagent-ledger hook', () => {
 
   it('exits 0 on an empty payload', () => {
     expect(run('').status).toBe(0);
+  });
+
+  describe('state dir resolver (git common dir, DROMOS_STATE_DIR)', () => {
+    const git = (cwd: string, ...args: string[]) =>
+      spawnSync('git', ['-C', cwd, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...args], { encoding: 'utf8', env: gitCleanEnv(process.env) });
+    const repo = (branch: string) => {
+      for (const a of [['init', '-q'], ['checkout', '-q', '-b', branch], ['commit', '-q', '--allow-empty', '-m', 'init']]) {
+        const r = git(dir, ...a);
+        if (r.status !== 0) throw new Error(`git ${a.join(' ')} failed: ${r.stderr}`);
+      }
+    };
+    const mkLedger = (state: string, nr: string) => {
+      const f = path.join(state, nr, 'progress.md');
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, `# ${nr}\n`);
+      return f;
+    };
+    const stop = (cwd: string, env: Record<string, string> = {}) =>
+      spawnSync('bash', [SCRIPT], {
+        input: JSON.stringify({ cwd, agent_type: 'reviewer', last_assistant_message: 'ok' }),
+        encoding: 'utf8',
+        env: cleanEnv({ AGENTS_LEDGER: '', DROMOS_STATE_DIR: '', ...env }),
+      });
+    const read = (f: string) => fs.readFileSync(f, 'utf8');
+    const LINE = 'Subagent reviewer: stopped — ok\n';
+
+    it('writes to <git dir>/agents/<nr> for the branch issue', () => {
+      repo('feat/7-x');
+      const l7 = mkLedger(path.join(dir, '.git', 'agents'), '7');
+      expect(stop(dir).status).toBe(0);
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+    });
+
+    it('ignores a ledger in the working-tree .agents', () => {
+      repo('feat/7-x');
+      const old = mkLedger(path.join(dir, '.agents'), '7');
+      stop(dir);
+      expect(read(old)).toBe('# 7\n');
+    });
+
+    it('a linked worktree on feat/7-x writes to the main .git/agents', () => {
+      repo('main');
+      const state = path.join(dir, '.git', 'agents');
+      const l7 = mkLedger(state, '7');
+      const wt = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-wt-'));
+      try {
+        expect(git(dir, 'worktree', 'add', '-q', '-b', 'feat/7-x', path.join(wt, 'w')).status).toBe(0);
+        expect(stop(path.join(wt, 'w')).status).toBe(0);
+        expect(read(l7)).toBe(`# 7\n${LINE}`);
+        expect(fs.existsSync(path.join(wt, 'w', '.agents'))).toBe(false);
+      } finally {
+        fs.rmSync(wt, { recursive: true, force: true });
+      }
+    });
+
+    it('binds the loop marker <state>/current as before', () => {
+      repo('main');
+      const state = path.join(dir, '.git', 'agents');
+      const l9 = mkLedger(state, '9');
+      const l7 = mkLedger(state, '7');
+      mkLedger(state, 'loop-5');
+      fs.writeFileSync(path.join(state, 'current'), '9 loop-5\n');
+      stop(dir);
+      expect(read(l9)).toBe(`# 9\n${LINE}`);
+      expect(read(l7)).toBe('# 7\n');
+    });
+
+    it('falls back to the newest ledger of the state dir on a branch without a number', () => {
+      repo('main');
+      const state = path.join(dir, '.git', 'agents');
+      const old = mkLedger(state, '7');
+      fs.utimesSync(old, new Date(2020, 1, 1), new Date(2020, 1, 1));
+      const fresh = mkLedger(state, '9');
+      stop(dir);
+      expect(read(fresh)).toBe(`# 9\n${LINE}`);
+      expect(read(old)).toBe('# 7\n');
+    });
+
+    it('writes nothing outside a repository without an override', () => {
+      mkLedger(path.join(dir, '.agents'), '7');
+      const r = stop(dir);
+      expect(r.status).toBe(0);
+      expect(fs.readdirSync(dir)).toEqual(['.agents']);
+      expect(read(path.join(dir, '.agents', '7', 'progress.md'))).toBe('# 7\n');
+    });
+
+    it('lets DROMOS_STATE_DIR win over the git common dir', () => {
+      repo('feat/7-x');
+      const inGit = mkLedger(path.join(dir, '.git', 'agents'), '7');
+      const other = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-state-'));
+      try {
+        const over = mkLedger(other, '7');
+        stop(dir, { DROMOS_STATE_DIR: other });
+        expect(read(over)).toBe(`# 7\n${LINE}`);
+        expect(read(inGit)).toBe('# 7\n');
+      } finally {
+        fs.rmSync(other, { recursive: true, force: true });
+      }
+    });
+
+    it('resolves a relative DROMOS_STATE_DIR against the payload cwd', () => {
+      const l7 = mkLedger(path.join(dir, 'st'), '7');
+      stop(dir, { DROMOS_STATE_DIR: 'st' });
+      expect(read(l7)).toBe(`# 7\n${LINE}`);
+    });
+
+    it('lets AGENTS_LEDGER win over the override and the common dir', () => {
+      repo('feat/7-x');
+      const inGit = mkLedger(path.join(dir, '.git', 'agents'), '7');
+      const target = mkLedger(path.join(dir, 'elsewhere'), '3');
+      const overState = path.join(dir, 'ov');
+      mkLedger(overState, '7');
+      stop(dir, { AGENTS_LEDGER: target, DROMOS_STATE_DIR: overState });
+      expect(read(target)).toBe(`# 3\n${LINE}`);
+      expect(read(inGit)).toBe('# 7\n');
+    });
+
+    it('does not write through a symlinked state dir', () => {
+      const real = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-real-'));
+      try {
+        const l7 = mkLedger(real, '7');
+        fs.symlinkSync(real, path.join(dir, 'st'));
+        stop(dir, { DROMOS_STATE_DIR: path.join(dir, 'st') });
+        expect(read(l7)).toBe('# 7\n');
+      } finally {
+        fs.rmSync(real, { recursive: true, force: true });
+      }
+    });
   });
 });

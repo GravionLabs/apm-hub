@@ -21,7 +21,7 @@ pwsh scripts/Invoke-OrchestratorQueue.ps1 -Mode implement -IssueFile todo.txt   
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Mode implement -Label ready          # open issues with a label, ascending
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Feature 227                  # loop "next 227" until the Feature is done
 pwsh scripts/Invoke-OrchestratorQueue.ps1 -Epic 300 -Harness opencode -ContinueOnError   # same for an Epic
-pwsh scripts/Invoke-OrchestratorQueue.ps1 -Status 248                   # one-shot headless status, prints .agents/status-248.md
+pwsh scripts/Invoke-OrchestratorQueue.ps1 -Status 248                   # one-shot headless status, prints <state>/status-248.md
 ```
 
 Start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`
@@ -62,12 +62,12 @@ before a non-default `-Dir`. Details: [launcher and shell function](references/s
 
 ## The ledger is the truth, not the exit code
 
-Per issue the runner reads `.agents/<issue>/progress.md`:
+Per issue the runner reads `<state>/<issue>/progress.md` (`<state>`: `DROMOS_STATE_DIR`, else `<git common dir>/agents`):
 
 - last line `Ledger complete.` is done (found before the run: skipped, nothing is started)
 - a new `Gate: <question>` line is a gate: exit 2, the runner never answers it. Answer it in an interactive
   session (`claude --agent orchestrator "implement <nr>"`), then rerun the queue; finished issues are skipped
-- neither is a failure: exit 1, the first error is in `.agents/<issue>/run.log`
+- neither is a failure: exit 1, the first error is in `<state>/<issue>/run.log`
 
 The orchestrator appends `Ledger complete.` only after a successful run, never after a gate or failure.
 
@@ -77,8 +77,8 @@ The orchestrator appends `Ledger complete.` only after a successful run, never a
 orchestrator (`github-issue/references/next-selection.md`). It stops on `Feature #<nr> is done`, a gate (exit 2), a
 failure (exit 1), `Nothing selectable` (exit 3) or when the same PBI is selected twice in a row; `-ContinueOnError`
 continues after a failed PBI only if `next` then picks a different one. Epics end on `Epic #<nr> is done.`. A complete
-PBI ledger wins over a `Gate:` line, as in list mode. State is cached in `.agents/queue-<nr>.json`
-(GitHub stays the source of truth), output in `.agents/queue-<nr>.log`. It does not use the orchestrator `loop` mode.
+PBI ledger wins over a `Gate:` line, as in list mode. State is cached in `<state>/queue-<nr>.json`
+(GitHub stays the source of truth), output in `<state>/queue-<nr>.log`. It does not use the orchestrator `loop` mode.
 
 `-MergeApproved` (default off) merges the PR of a done PBI when the last `Verdict:` line of the run is exactly
 `APPROVE` (the whole line, no suffix) and the child exited 0. The PR comes from the ledger line `Phase pull-request: complete — <url>` and `gh pr list`, its head branch must
@@ -96,4 +96,4 @@ A `Gate:` line in the output stops the queue even without a new ledger gate. Nev
 - The narrow permission set limits accidents; it does not stop prompt injection (an allowed `gh api` or `pwsh` can
   do a lot, including `gh pr merge` via `gh api`). `-Label` feeds issue text to the model: use collaborator-authored
   issues; `-TrustedOnly` filters only the issue author (not comments); positional and `-IssueFile` issues are unfiltered.
-- The runner refuses a symlinked `.agents/`. Check `/queue status <nr>` or `.agents/<nr>/progress.md` before and after a run. Sequential only (`-Parallel` is a follow-up).
+- The runner refuses a symlinked state dir. Check `/queue status <nr>` or `<state>/<nr>/progress.md` before and after a run. Sequential only (`-Parallel` is a follow-up).

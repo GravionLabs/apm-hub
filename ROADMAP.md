@@ -6,13 +6,13 @@ Order of work and release assignment for the open issues. Created 2026-10-18, la
 
 | Order | Issue | Title | Size | Note |
 | --- | --- | --- | --- | --- |
-| 1 | #375 | loop-mode ledger lines before the PBI branch exists | S | before #389: same hook file |
-| 2 | #402 | orchestrator state moves to `<git-common-dir>/agents/` (`DROMOS_STATE_DIR` override) | L | Tasks #403–#410; after #375 (same hook files), before #379 #386 #389 which build on the path; `needs-decision` on #403/#404 (resolver sharing) |
+| 1 | #375 | loop-mode ledger lines before the PBI branch exists | S | merged; before #402 and #389: same hook file |
+| 2 | #402 | worktree-shared state directory (git common dir, `DROMOS_STATE_DIR`) | L | Tasks #403–#410; after #375 (same hook files), before #386 and #389, which build on the path; #379 is already merged, so `Write-StatusTable.ps1` is adapted in #403; `.agents/` → `.dromos/` stays at 3.0.0 (dromos#70); client verification follow-ups (Windows #422, VS Code Copilot #423, OpenCode #424, Copilot CLI #425, Claude Code #450) are linked from the results table in docs/orchestrator.md; #410 stays open until they are done; Feature #432 (#422–#426) is not part of this release |
 | 3 | #367 | git-guardrails scanner quadratic on bash 3.2 | S | independent |
 | 4 | #252 | `github-release` refuses an already released branch | S | protects this very release; do before cutting |
 | 5 | #251 | model policy, opus in `plan.json`, escalation at fix round 2 | M | `needs-decision`: decide first, otherwise it moves to 2.5.0 |
 
-Closing: Feature #248 and Epic #300 once #251 is merged. Then `github-release` finish.
+Closing: Feature #248 and Epic #300 once #402 and #251 are merged. Then `github-release` finish.
 
 ## 2.5.0 — Epic #384: format changed sources
 
@@ -87,3 +87,4 @@ PBIs for #398 are planned when #65 is released (`orchestrator plan 398`).
 - #398 depends on the session API in dromos#61; until then the local executor stays the only one.
 - 2.6.0 and 2.7.0 depend on the dromos repository (ingest endpoint, dromos-mux); if it lags, those releases shift, nothing else does.
 - 2.5.0 and 2.6.0 can swap without harm; 2.4.0 comes first because it is nearly done.
+- #402 touches the same files as #386 and #389 (`Add-LedgerLine.ps1`, `subagent-ledger.sh`, the OpenCode plugin, the agents); if it slips, those two move behind it, not in front of it.

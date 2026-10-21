@@ -132,7 +132,7 @@ describe.skipIf(!pwshAvailable)('Add-LedgerLine.ps1', () => {
   });
   afterEach(() => fs.rmSync(cwd, { recursive: true, force: true }));
   const run = (...args: string[]) =>
-    spawnSync('pwsh', ['-NoProfile', '-File', scriptPath, ...args], { cwd, encoding: 'utf-8' });
+    spawnSync('pwsh', ['-NoProfile', '-File', scriptPath, ...args], { cwd, encoding: 'utf-8', env: { ...process.env, DROMOS_STATE_DIR: path.join(cwd, '.agents') } });
 
   it('creates the directory and appends lines', () => {
     expect(run('-Issue', '222', '-Line', '# header').status).toBe(0);

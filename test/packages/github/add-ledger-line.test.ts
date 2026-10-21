@@ -22,6 +22,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Issue', () => {
     spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Issue', issue, ...(line === undefined ? [] : ['-Line', line])], {
       cwd: dir,
       encoding: 'utf8',
+      env: { ...process.env, DROMOS_STATE_DIR: path.join(dir, '.agents') },
     });
   const ledger = (issue: string) => path.join(dir, '.agents', issue, 'progress.md');
 
@@ -67,7 +68,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   });
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-  const run = (...args: string[]) => spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { cwd: dir, encoding: 'utf8', env: gitCleanEnv(process.env) });
+  const run = (...args: string[]) => spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { cwd: dir, encoding: 'utf8', env: gitCleanEnv(process.env, { DROMOS_STATE_DIR: path.join(dir, '.agents') }) });
   const marker = () => path.join(dir, '.agents', 'current');
   const repo = (branch: string) => {
     for (const a of [['init', '-q'], ['symbolic-ref', 'HEAD', `refs/heads/${branch}`], ['commit', '-q', '--allow-empty', '-m', 'init']]) {
@@ -265,7 +266,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     const pwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '(Get-Process -Id $PID).Path'], { encoding: 'utf8' }).stdout.trim();
     const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'addledger-nogit-'));
     try {
-      const env = { ...gitCleanEnv(process.env), PATH: bin };
+      const env = { ...gitCleanEnv(process.env, { DROMOS_STATE_DIR: path.join(dir, '.agents') }), PATH: bin };
       expect(spawnSync(pwsh, ['-NoProfile', '-Command', 'if (Get-Command git -ErrorAction Ignore) { exit 1 }'], { env }).status).toBe(0);
       const r = spawnSync(pwsh, ['-NoProfile', '-File', SCRIPT, '-Issue', '9', '-Bind', 'loop-5'], { cwd: dir, encoding: 'utf8', env });
       expect(r.status).toBe(0);
@@ -324,5 +325,88 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     expect(run('-Unbind', '-Issue', '9').status).not.toBe(0);
     expect(run('-Unbind', '-Bind', 'loop-5').status).not.toBe(0);
     expect(fs.readFileSync(marker(), 'utf8')).toBe('9 loop-5\n');
+  });
+});
+
+describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 state directory (#402)', () => {
+  let root: string;
+  let main: string;
+  const cleanEnv = (extra: Record<string, string> = {}) => {
+    const env = gitCleanEnv(process.env, extra);
+    if (!('DROMOS_STATE_DIR' in extra)) delete env.DROMOS_STATE_DIR;
+    return env;
+  };
+  const git = (cwd: string, ...a: string[]) => {
+    const r = spawnSync('git', ['-C', cwd, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a], { encoding: 'utf8', env: cleanEnv() });
+    if (r.status !== 0) throw new Error(`git ${a.join(' ')} failed: ${r.stderr}`);
+  };
+  const run = (cwd: string, extra: Record<string, string> = {}, ...args: string[]) =>
+    spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Issue', '7', '-Line', 'x', ...args], { cwd, encoding: 'utf8', env: cleanEnv(extra) });
+  beforeEach(() => {
+    root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'addledger-state-')));
+    main = path.join(root, 'main');
+    fs.mkdirSync(main);
+  });
+  afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
+  const initRepo = () => {
+    git(main, 'init', '-q');
+    git(main, 'commit', '-q', '--allow-empty', '-m', 'init');
+  };
+
+  it('writes into <git common dir>/agents and prints the ledger path', () => {
+    initRepo();
+    const r = run(main);
+    const expected = path.join(main, '.git', 'agents', '7', 'progress.md');
+    expect(r.status).toBe(0);
+    expect(r.stdout.trim()).toBe(expected);
+    expect(fs.readFileSync(expected, 'utf8')).toBe('x\n');
+    expect(fs.existsSync(path.join(main, '.agents'))).toBe(false);
+  });
+
+  it('a linked worktree writes into the main checkout git dir', () => {
+    initRepo();
+    const wt = path.join(root, 'wt');
+    git(main, 'worktree', 'add', '-q', '-b', 'feat/7-x', wt);
+    const r = run(wt);
+    const expected = path.join(main, '.git', 'agents', '7', 'progress.md');
+    expect(r.status).toBe(0);
+    expect(r.stdout.trim()).toBe(expected);
+    expect(fs.readFileSync(expected, 'utf8')).toBe('x\n');
+    expect(fs.existsSync(path.join(wt, '.agents'))).toBe(false);
+  });
+
+  it('DROMOS_STATE_DIR overrides the git location, relative paths resolve against the cwd', () => {
+    initRepo();
+    const abs = path.join(root, 'state');
+    expect(run(main, { DROMOS_STATE_DIR: abs }).status).toBe(0);
+    expect(fs.readFileSync(path.join(abs, '7', 'progress.md'), 'utf8')).toBe('x\n');
+    expect(run(main, { DROMOS_STATE_DIR: 'rel/state' }).status).toBe(0);
+    expect(fs.existsSync(path.join(main, 'rel', 'state', '7', 'progress.md'))).toBe(true);
+    expect(fs.existsSync(path.join(main, '.git', 'agents'))).toBe(false);
+  });
+
+  it('accepts DROMOS_STATE_DIR with a trailing slash', () => {
+    initRepo();
+    const abs = path.join(root, 'state');
+    const r = run(main, { DROMOS_STATE_DIR: abs + '/' });
+    expect(r.status, r.stderr).toBe(0);
+    expect(fs.readFileSync(path.join(abs, '7', 'progress.md'), 'utf8')).toBe('x\n');
+  });
+
+  it('exits 1 with a message outside a repository without DROMOS_STATE_DIR', () => {
+    const r = run(main);
+    expect(r.status).toBe(1);
+    expect(r.stderr + r.stdout).toMatch(/No state directory: not inside a git repository \(set DROMOS_STATE_DIR\)/);
+  });
+
+  it('refuses a symlinked state directory', () => {
+    const real = path.join(root, 'real');
+    fs.mkdirSync(real);
+    const link = path.join(root, 'link');
+    fs.symlinkSync(real, link);
+    const r = run(main, { DROMOS_STATE_DIR: link });
+    expect(r.status).not.toBe(0);
+    expect(r.stderr + r.stdout).toMatch(/symlinked/);
+    expect(fs.readdirSync(real)).toEqual([]);
   });
 });

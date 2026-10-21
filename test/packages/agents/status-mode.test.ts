@@ -32,13 +32,13 @@ describe('status.md: status table rules', () => {
 
   it('names the headless output file and the Status line', () => {
     const out = section(status, 'Output');
-    expect(out).toContain('.agents/status-<nr>.md');
-    expect(out).toContain('Status: .agents/status-<nr>.md');
+    expect(out).toContain('<state>/status-<nr>.md');
+    expect(out).toContain('Status: <state>/status-<nr>.md');
   });
 
   it('creates no state file and writes no ledger', () => {
     expect(section(status, 'Sources')).toMatch(/No new state file/);
-    expect(section(status, 'Sources')).toMatch(/never creates `\.agents\/<nr>\/progress\.md`/);
+    expect(section(status, 'Sources')).toMatch(/never creates `<state>\/<nr>\/progress\.md`/);
   });
 
   it('is linked from SKILL.md and the overview defers to it', () => {
@@ -70,9 +70,9 @@ describe('status mode word: orchestrator agent', () => {
   });
 
   it('names the headless file, the writer script and the Status line', () => {
-    expect(statusRule).toContain('.agents/status-<nr>.md');
+    expect(statusRule).toContain('<state>/status-<nr>.md');
     expect(statusRule).toContain('Write-StatusTable.ps1');
-    expect(statusRule).toContain('Status: .agents/status-<nr>.md');
+    expect(statusRule).toContain('Status: <state>/status-<nr>.md');
     expect(statusRule).toMatch(/interactive: show the table and ask which mode to start/);
   });
 

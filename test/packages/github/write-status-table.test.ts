@@ -18,7 +18,7 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
   const table = '#12 merged First\n#13 pr-open #40 Second\nNext PBI: #14 Third\n';
-  const run = (args: string[], input?: string) => spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { cwd: dir, encoding: 'utf8', input });
+  const run = (args: string[], input?: string) => spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { cwd: dir, encoding: 'utf8', input, env: { ...process.env, DROMOS_STATE_DIR: path.join(dir, '.agents') } });
   const target = (issue: string) => path.join(dir, '.agents', `status-${issue}.md`);
   const withFile = (content: string) => {
     const f = path.join(dir, 'in.md');
@@ -117,5 +117,54 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
     const dirty = '#1 \x1b]0;open title\n#2 second\n#3 third \x1b]0;t\x07end\n';
     expect(run(['-Issue', '6', '-Path', withFile(dirty)]).status).toBe(0);
     expect(fs.readFileSync(target('6'), 'utf8')).toBe('#1 0;open title\n#2 second\n#3 third end\n');
+  });
+});
+
+describe.skipIf(!hasPwsh)('Write-StatusTable.ps1 state directory (#402)', () => {
+  let root: string;
+  beforeEach(() => {
+    root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'statustable-state-')));
+  });
+  afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
+  const run = (cwd: string, env: Record<string, string | undefined>) => {
+    fs.writeFileSync(path.join(cwd, 't'), '#1 merged A\n');
+    const e = { ...process.env, ...env };
+    for (const k of Object.keys(e)) if (k.startsWith('GIT_')) delete e[k];
+    if (env.DROMOS_STATE_DIR === undefined) delete e.DROMOS_STATE_DIR;
+    return spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Issue', '5', '-Path', 't'], { cwd, encoding: 'utf8', env: e });
+  };
+
+  it('writes <git common dir>/agents/status-5.md from a linked worktree', () => {
+    const main = path.join(root, 'main');
+    fs.mkdirSync(main);
+    const g = (cwd: string, ...a: string[]) => spawnSync('git', ['-C', cwd, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a], { encoding: 'utf8' });
+    g(main, 'init', '-q');
+    g(main, 'commit', '-q', '--allow-empty', '-m', 'init');
+    const wt = path.join(root, 'wt');
+    expect(g(main, 'worktree', 'add', '-q', '-b', 'feat/5-x', wt).status).toBe(0);
+    expect(run(wt, {}).status).toBe(0);
+    expect(fs.readFileSync(path.join(main, '.git', 'agents', 'status-5.md'), 'utf8')).toBe('#1 merged A\n');
+  });
+
+  it('honours DROMOS_STATE_DIR, also with a trailing slash', () => {
+    const st = path.join(root, 'state');
+    const r = run(root, { DROMOS_STATE_DIR: st + '/' });
+    expect(r.status, r.stderr).toBe(0);
+    expect(fs.readFileSync(path.join(st, 'status-5.md'), 'utf8')).toBe('#1 merged A\n');
+  });
+
+  it('exits 1 with a message outside a repository', () => {
+    const r = run(root, {});
+    expect(r.status).toBe(1);
+    expect(r.stderr + r.stdout).toMatch(/No state directory/);
+  });
+
+  it('refuses a symlinked state directory', () => {
+    const real = path.join(root, 'real');
+    fs.mkdirSync(real);
+    fs.symlinkSync(real, path.join(root, 'link'));
+    const r = run(root, { DROMOS_STATE_DIR: path.join(root, 'link') });
+    expect(r.status).not.toBe(0);
+    expect(r.stderr + r.stdout).toMatch(/symlinked/);
   });
 });

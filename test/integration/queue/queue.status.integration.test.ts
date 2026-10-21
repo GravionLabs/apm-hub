@@ -33,6 +33,26 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
     expect(fs.readFileSync(path.join(dir, '.agents', 'status-248.log'), 'utf8').match(/=== exit code 0/g)).toHaveLength(2);
   });
 
+  describe('state dir without DROMOS_STATE_DIR', () => {
+    // a git repo, no override: the state dir is <git common dir>/agents and the marker may be absolute
+    const runGit = (args: string[], absolute: boolean) => {
+      spawnSync('git', ['init', '-q'], { cwd: dir });
+      const sd = path.join(fs.realpathSync(dir), '.git', 'agents');
+      const marker = absolute ? sd + '/status-248.md' : 'status-248.md';
+      fake(`mkdir -p "${sd}"; printf "| #1 | merged |\\n" > "${sd}/status-248.md"; echo "Status: ${marker}"`);
+      const env = { ...process.env, QUEUE_POLL_SECONDS: '0', PATH: `${bin}${path.delimiter}${process.env.PATH}` };
+      delete env.DROMOS_STATE_DIR;
+      return { r: spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { encoding: 'utf8', cwd: dir, env }), sd };
+    };
+    it.each([true, false])('reads the table from .git/agents (absolute marker: %s)', (absolute) => {
+      const { r, sd } = runGit(['-Status', '248'], absolute);
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain('| #1 | merged |');
+      expect(fs.existsSync(path.join(sd, 'status-248.log'))).toBe(true);
+      expect(fs.existsSync(path.join(dir, '.agents', 'status-248.md'))).toBe(false);
+    });
+  });
+
   it('creates no ledger', () => {
     fake(WRITE);
     run(['-Status', '248'], true);
@@ -55,14 +75,14 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
     const r = run(['-Status', '248'], true);
     expect(r.status).toBe(1);
     expect(r.stdout).toContain('stale');
-    expect(r.stdout).not.toContain('old');
+    expect(r.stdout).not.toMatch(/^old$/m);
   });
 
   it('exits 1 without the Status line or on a child failure', () => {
     fake('echo "x" > .agents/status-248.md');
     const noLine = run(['-Status', '248'], true);
     expect(noLine.status).toBe(1);
-    expect(noLine.stdout).toContain("no 'Status: .agents/status-248.md' line");
+    expect(noLine.stdout).toContain("no 'Status: <path>/status-248.md' line");
     fake(`${WRITE}; exit 3`);
     const r = run(['-Status', '248'], true);
     expect(r.status).toBe(1);
@@ -111,10 +131,13 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
       'Status: .agents/status-248.md.bak',
       'Status: .agents/status-248.mdx',
       'Status: .agents/status-24.md',
+      'Status: /elsewhere/status-248.md',
+      'Status: ../other/status-248.md',
+      'Status: other/status-248.md',
     ])('rejects %s', (line) => {
       const r = marker(line);
       expect(r.status).toBe(1);
-      expect(r.stdout).toContain("no 'Status: .agents/status-248.md' line");
+      expect(r.stdout).toContain("no 'Status: <path>/status-248.md' line");
     });
   });
 

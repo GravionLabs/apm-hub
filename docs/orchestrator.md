@@ -78,9 +78,9 @@ flowchart TD
     S6 --> END([PR URL, ledger complete])
 ```
 
-1. **Tech stack and issue.** `detect-techstack` runs inline and returns JSON naming the language skills. The `issue-reader` then resolves the issue reference in its own context: it returns one JSON object with the type, title, a digest of 100 words or less, the integration branch, the parent, a bug flag, the `task` sub-issues with their open or closed state and whether a `Refs #<task>` commit is already on the integration branch, and whether a ledger exists. The orchestrator closes and skips the merged tasks from those flags, and never runs `gh issue view`, the sub-issue query or the branch resolution itself. The reader also saves the title and body verbatim to `.agents/<issue>/issue.md`, through a `gh` redirect so the model never retypes it. Step 1 writes the branch, the title, the digest, that path and the stack JSON to the context file `.agents/<issue>/context.md`; every later prompt references those paths instead of carrying the text, and a subagent that needs the full body reads `issue.md` instead of calling `gh`. A description run dispatches the reader without an issue and gets only the branch back.
+1. **Tech stack and issue.** `detect-techstack` runs inline and returns JSON naming the language skills. The `issue-reader` then resolves the issue reference in its own context: it returns one JSON object with the type, title, a digest of 100 words or less, the integration branch, the parent, a bug flag, the `task` sub-issues with their open or closed state and whether a `Refs #<task>` commit is already on the integration branch, and whether a ledger exists. The orchestrator closes and skips the merged tasks from those flags, and never runs `gh issue view`, the sub-issue query or the branch resolution itself. The reader also saves the title and body verbatim to `<state>/<issue>/issue.md`, through a `gh` redirect so the model never retypes it. Step 1 writes the branch, the title, the digest, that path and the stack JSON to the context file `<state>/<issue>/context.md`; every later prompt references those paths instead of carrying the text, and a subagent that needs the full body reads `issue.md` instead of calling `gh`. A description run dispatches the reader without an issue and gets only the branch back.
 2. **Explore.** The `explorer` gets the title and digest and summarizes the affected code in 300 words or less; the summary is appended to `context.md`.
-3. **Plan.** The `planner` runs `issue-planning` and writes `.agents/<issue>/plan.json`. Only the path, a summary and the open question count enter the orchestrator's context. You approve at the plan gate. Existing Task sub-issues are used as they are, with no planner and no `plan.json`.
+3. **Plan.** The `planner` runs `issue-planning` and writes `<state>/<issue>/plan.json`. Only the path, a summary and the open question count enter the orchestrator's context. You approve at the plan gate. Existing Task sub-issues are used as they are, with no planner and no `plan.json`.
 4. **Implement.** One `implementer` per task, in blocking order, all on the PBI's single branch. Each gets the task, the branch and the path of `context.md`, not the pasted stack and exploration text, so a run with five tasks and two fix rounds emits them once instead of seven times.
 5. **Review.** One `review-fanout` over everything the run changed. On Claude Code the orchestrator dispatches `review-lead`, which runs `review-fanout` in its own context and returns the verdict and a findings list; elsewhere the orchestrator runs `review-fanout` inline.
 6. **Pull request.** The `pr-writer` runs `github-pull-request` in its own context, into the integration branch, and returns the PR number and URL as JSON; the orchestrator records the URL and never merges. Before this the PR phase ran inline, at the moment the context was largest.
@@ -104,7 +104,7 @@ sequenceDiagram
     O->>O: detect-techstack
     O->>D: issue reference
     D-->>O: JSON: type, branch, digest, tasks with merged state
-    O->>O: close merged tasks, create .agents/123, write context.md
+    O->>O: close merged tasks, create <state>/123, write context.md
     O->>E: title, digest, path of context.md
     E-->>O: summary, 300 words or less
     O->>P: issue, path of context.md
@@ -210,7 +210,7 @@ Clearing before implementation is a recommendation, not a gate: a `plan` run alw
 
 ## Ledger and resume
 
-The orchestrator writes `.agents/<issue>/progress.md`, with the first line `# orchestrator ledger — issue #<issue> — branch <branch>`:
+The orchestrator writes `<state>/<issue>/progress.md`, with the first line `# orchestrator ledger — issue #<issue> — branch <branch>`:
 
 ```text
 Phase Plan: complete — plan.json
@@ -224,7 +224,49 @@ Started again on the same issue, it resumes at the first phase without `complete
 
 ### State on disk
 
-A run keeps its state on disk and on GitHub, never in the model's memory, so a `/clear`, a compaction or a crash loses nothing that matters. Everything lives under `.agents/<issue>/` (added to `.git/info/exclude` when not ignored).
+A run keeps its state on disk and on GitHub, never in the model's memory, so a `/clear`, a compaction or a crash loses nothing that matters. Everything lives under `<state>/<issue>/`, outside the working tree, so it is shared by all worktrees of the repository and never shows up in `git status`.
+
+`<state>` is resolved the same way by the scripts, the hooks and the OpenCode plugin: the environment variable `DROMOS_STATE_DIR` when set (a relative path is resolved against the working directory), else `<git-common-dir>/agents/`, with the common directory from `git rev-parse --path-format=absolute --git-common-dir` (Git 2.31 or newer). In a plain clone that is `.git/agents/`; in a linked worktree it is the main repository's `.git/agents/`. Outside a repository without the override the scripts stop with an error and the hooks write nothing. `detect-techstack` reports the resolved path as `state_dir`.
+
+#### Verification of the state directory
+
+Results of the manual checklist of [#410](https://github.com/GravionLabs/apm-hub/issues/410), run 2026-10-21 on macOS (Apple Git 2.54, pwsh 7). Only `claude` was installed (2.1.306); `copilot` and `opencode` were not, and no live headless smoke was run (it consumes model usage). `verified <date>` means run by hand that day; `not verified` means no run exists.
+
+| Subject | Write under `.git/agents/` | Worktree common dir (outside the worktree) | Windows (pwsh 7 + Git for Windows) |
+|:--|:--|:--|:--|
+| `Add-LedgerLine.ps1`, `Write-StatusTable.ps1`, `Detect-TechStack.ps1` | verified 2026-10-21 | verified 2026-10-21 (run from a linked worktree, files land in the main `.git/agents/`, `git status` stays clean) | not verified ([#422](https://github.com/GravionLabs/apm-hub/issues/422)) |
+| `subagent-ledger.sh`, `git-guardrails.sh` (`guardrails.off`) | verified 2026-10-21 | verified 2026-10-21 | not verified (a `C:/…` common dir in Git Bash may need a `cygpath -u` branch in the resolver; [#422](https://github.com/GravionLabs/apm-hub/issues/422)) |
+| Claude Code (Bash, Write/Edit of subagents) | not verified (the issue notes a Linux check, undated; [#450](https://github.com/GravionLabs/apm-hub/issues/450)) | not verified ([#450](https://github.com/GravionLabs/apm-hub/issues/450)) | not verified ([#422](https://github.com/GravionLabs/apm-hub/issues/422)) |
+| Copilot CLI | not verified (not installed; [#425](https://github.com/GravionLabs/apm-hub/issues/425)) | not verified ([#425](https://github.com/GravionLabs/apm-hub/issues/425)) | not verified ([#422](https://github.com/GravionLabs/apm-hub/issues/422)) |
+| OpenCode (`OPENCODE_PERMISSION` map, plugin) | not verified (not installed; [#424](https://github.com/GravionLabs/apm-hub/issues/424)) | not verified ([#424](https://github.com/GravionLabs/apm-hub/issues/424)) | not verified ([#422](https://github.com/GravionLabs/apm-hub/issues/422)) |
+| VS Code Copilot (`runSubagent`) | not verified ([#423](https://github.com/GravionLabs/apm-hub/issues/423)) | not verified ([#423](https://github.com/GravionLabs/apm-hub/issues/423)) | not verified ([#422](https://github.com/GravionLabs/apm-hub/issues/422)) |
+
+What this table does not show: no client (Claude Code, Copilot CLI, OpenCode, VS Code Copilot) was run against the state directory, no live headless smoke ran, and nothing was run on Windows. The verified rows cover the scripts and hooks only, by hand on macOS; the automated tests cover the same on macOS/Linux with pwsh. The acceptance criteria that require a client check are therefore open: [#410](https://github.com/GravionLabs/apm-hub/issues/410) stays open, and each gap has its own follow-up issue linked in its cells (Windows [#422](https://github.com/GravionLabs/apm-hub/issues/422), VS Code Copilot [#423](https://github.com/GravionLabs/apm-hub/issues/423), OpenCode [#424](https://github.com/GravionLabs/apm-hub/issues/424), Copilot CLI [#425](https://github.com/GravionLabs/apm-hub/issues/425), Claude Code [#450](https://github.com/GravionLabs/apm-hub/issues/450)).
+
+Every `not verified` cell is a gap, not a known failure. A client that cannot write under `.git/` (or outside the project directory) works with `DROMOS_STATE_DIR` set to a directory it may write, for example `$HOME/.dromos-state`; scripts, hooks and the plugin then use it instead of `<git-common-dir>/agents/`. Commands to run later, in a linked worktree (`git worktree add ../wt`) of a repository with the packages installed:
+
+```powershell
+# Windows: path form and scripts (expect C:/…/.git, then files under <common-dir>/agents/)
+git rev-parse --path-format=absolute --git-common-dir
+pwsh scripts/Add-LedgerLine.ps1 -Issue 1 -Line "Phase: check"
+'{"agent_type":"implementer","agent_id":"a1"}' | bash packages/hooks/.apm/hooks/subagent-ledger.sh
+# Claude Code, Copilot CLI, OpenCode: headless smoke, stages ledger and plan (uses model quota)
+pwsh scripts/Invoke-HeadlessSmoke.ps1 -Client claude    # copilot | opencode
+# Same with the workaround
+$env:DROMOS_STATE_DIR = "$HOME/.dromos-state"; pwsh scripts/Invoke-HeadlessSmoke.ps1 -Client copilot
+```
+
+For VS Code Copilot run the orchestrator from the agent picker on a throwaway issue and check that `<git-common-dir>/agents/<issue>/` appears. Record each result in the linked follow-up issue and by replacing its cell with `verified <date>` or `limit`.
+
+#### Migrating from `.agents/`
+
+Ledgers and plans of earlier versions in `.agents/` are not read and not migrated. To keep a running issue, move them once:
+
+```powershell
+mv .agents/* "$(git rev-parse --path-format=absolute --git-common-dir)/agents/"
+```
+
+Then remove the `.agents/` line from `.git/info/exclude` (apm-hub no longer adds it) and delete the empty `.agents/` directory. `.agents/skills`, an install directory of some clients, is unrelated and stays.
 
 | File | Written by | Purpose |
 |:--|:--|:--|
@@ -245,7 +287,7 @@ The Task issues are the source of truth and `plan.json` is a local cache of thei
 ```mermaid
 stateDiagram-v2
     [*] --> NoLedger
-    NoLedger --> Running: create .agents/issue/ and ledger header
+    NoLedger --> Running: create <state>/issue/ and ledger header
     Running --> Running: append Phase / Task / Fix round / Ruling line
     Running --> Gated: question tool missing at a gate
     Gated --> Running: you answer and rerun
@@ -256,19 +298,19 @@ stateDiagram-v2
     Complete --> [*]
 ```
 
-The diagram shows the life of a ledger, including the resume path described above. A ledger of another issue stays untouched. Description input (`plan "add dark mode"`) keeps its state in `.agents/adhoc/` until the PBI exists, then moves it to `.agents/<issue>/` ([orchestrator-gates.md](../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md)).
+The diagram shows the life of a ledger, including the resume path described above. A ledger of another issue stays untouched. Description input (`plan "add dark mode"`) keeps its state in `<state>/adhoc/` until the PBI exists, then moves it to `<state>/<issue>/` ([orchestrator-gates.md](../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md)).
 
 ## Starting from a description
 
-`orchestrator plan "add a dark mode toggle"` takes free text instead of an issue number. The text is data and is never run as instructions. State lives in `.agents/adhoc/` until a PBI exists.
+`orchestrator plan "add a dark mode toggle"` takes free text instead of an issue number. The text is data and is never run as instructions. State lives in `<state>/adhoc/` until a PBI exists.
 
 ```mermaid
 flowchart TD
-    A["Description"] --> B["State in .agents/adhoc/<br/>description.txt, progress.md"]
+    A["Description"] --> B["State in <state>/adhoc/<br/>description.txt, progress.md"]
     B --> C["explorer and planner<br/>get the description"]
     C --> D{{"Plan gate<br/>PBI title and body shown"}}
     D -->|"approved"| E["Create the PBI<br/>label pbi, ledger: PBI created"]
-    E --> F["Move .agents/adhoc to .agents/PBI"]
+    E --> F["Move <state>/adhoc to <state>/PBI"]
     F --> G{"Mode"}
     G -->|"plan"| H(["Stop after PBI and plan"])
     G -->|"full"| I["Continue as full on the new PBI"]
@@ -276,7 +318,7 @@ flowchart TD
 
 ## Checking state with `status`
 
-`orchestrator status <feature or epic>` is the first command after `/clear`: one line per PBI (recursive for an Epic) with its state (`merged`, `pr-open`, `needs-decision`, `blocked by`, `in progress`, `open`) and the line `next` would pick. It uses `gh`, `git` and existing ledgers only, writes no ledger and starts no work. Headless, the table goes to `.agents/status-<nr>.md` and the reply ends with `Status: .agents/status-<nr>.md`; interactive, it is shown and you are asked which mode to start. For a headless run use `/queue status <nr>`. A PBI or a description is rejected. State definitions and precedence: [status.md](../packages/github/.apm/skills/github-issue/references/status.md).
+`orchestrator status <feature or epic>` is the first command after `/clear`: one line per PBI (recursive for an Epic) with its state (`merged`, `pr-open`, `needs-decision`, `blocked by`, `in progress`, `open`) and the line `next` would pick. It uses `gh`, `git` and existing ledgers only, writes no ledger and starts no work. Headless, the table goes to `<state>/status-<nr>.md` and the reply ends with `Status: <state>/status-<nr>.md`; interactive, it is shown and you are asked which mode to start. For a headless run use `/queue status <nr>`. A PBI or a description is rejected. State definitions and precedence: [status.md](../packages/github/.apm/skills/github-issue/references/status.md).
 
 ## Picking work with `next`
 
@@ -320,7 +362,7 @@ flowchart TD
 - The selection is the one of `next`, run by the orchestrator itself with `gh` on the loop target. It never reads the `Loop: … done` lines: the finished PBI drops out because its PR is open (`waiting for merge`) or merged (`merged, closes at release`); a PBI whose PR was closed without merge is selected again. The loop never merges a PR; a PBI blocked by another PBI of the loop stays blocked until that PR is merged, so a blocked-by chain inside one Feature ends the loop after the first PBI of the chain: the normal `nothing selectable` stop, not an error.
 - Stop conditions, checked before every reselection: the context warning of the `hooks` package appeared in the session; 3 PBIs finished in this run (the PBI cap); nothing selectable. The warning cannot fire mid-loop on every client: Copilot CLI injects it after any tool call (`postToolUse`), Claude Code (`UserPromptSubmit`) and OpenCode (`chat.message`) only with a user message, so there it appears at the earliest when you answer a gate. The cap is the fallback for those clients; the `hooks` package improves it. Stop reasons in the ledger: `nothing selectable`, `headless gate: <question>`, `context warning`, `pbi cap`, `user stop`.
 - Interactive gates (plan gate, review summary, `CHANGES_REQUESTED`, red suite twice) pause the loop and it continues after your answer. Headless, the gate is recorded and the loop stops.
-- Loop ledger `.agents/loop-<nr>/progress.md`: header `# orchestrator ledger — loop #<nr> — branch <branch>` (written once, when the file does not exist yet), one `Loop: PBI #<nr> done — <pr>` line per PBI and `Loop: stopped — <reason>` at the end. Per-PBI ledgers and `Ruling:` lines stay in `.agents/<pbi>/progress.md`. At each PBI boundary the orchestrator creates `.agents/<pbi>/progress.md` with its header and binds the loop to it before dispatching `issue-reader` (`Add-LedgerLine.ps1 -Issue <pbi> -Bind loop-<nr>`: the line `Loop: PBI #<pbi> started` in the loop ledger plus the marker `.agents/current`), so the hook's `Subagent` lines of the new PBI land in its own ledger although its branch does not exist yet. Every stop removes the marker again (`-Unbind`).
+- Loop ledger `<state>/loop-<nr>/progress.md`: header `# orchestrator ledger — loop #<nr> — branch <branch>` (written once, when the file does not exist yet), one `Loop: PBI #<nr> done — <pr>` line per PBI and `Loop: stopped — <reason>` at the end. Per-PBI ledgers and `Ruling:` lines stay in `<state>/<pbi>/progress.md`. At each PBI boundary the orchestrator creates `<state>/<pbi>/progress.md` with its header and binds the loop to it before dispatching `issue-reader` (`Add-LedgerLine.ps1 -Issue <pbi> -Bind loop-<nr>`: the line `Loop: PBI #<pbi> started` in the loop ledger plus the marker `<state>/current`), so the hook's `Subagent` lines of the new PBI land in its own ledger although its branch does not exist yet. Every stop removes the marker again (`-Unbind`).
 - Runner mode (Claude Code, with `Agent` and `SendMessage`): the primary stays thin. Per PBI it dispatches the `pbi-runner` subagent with `{pbi, loop, flags}` (`--fix-advisories` and `--no-review-summary` forwarded verbatim) and keeps only its JSON. A `GATE` reply is asked with `AskUserQuestion` and the answer goes back with `SendMessage` to the runner until it returns `DONE`, `BLOCKED` or `FAILED`; the runner records the `Ruling:`. `BLOCKED` and `FAILED` stop the loop with the reasons `runner blocked` and `runner failed`. The cap is 10 PBIs in runner mode and 3 inline; Copilot CLI and OpenCode keep the inline loop.
 - Primary model in runner mode: not yet measured. By design the primary only selects, dispatches the runner, asks gates and writes `Loop:` lines, and every model-heavy phase runs in a subagent: the runner is pinned to sonnet, `planner` and the verify phase to opus. The primary may therefore run on haiku or sonnet; opus is not needed for it. Whether haiku relays gates and keeps the ledger reliably over ten PBIs has not been measured, so start with sonnet.
 - Depth: runner mode needs `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` of at least 3 (runner, then review-lead, then reviewer, once [#307](https://github.com/GravionLabs/apm-hub/issues/307) lands). Depth 3 dispatch was verified in [#340](#runner-checks-claude-code); a depth-3 agent has no `Agent` tool. The default allows 3 levels; `1` turns nesting off and breaks runner mode.
@@ -333,9 +375,9 @@ The `hooks` package adds three hooks around the orchestrator. They are plain bas
 
 | Hook | Event | Reads from the payload | Writes or blocks | Opt-out |
 |:--|:--|:--|:--|:--|
-| [`subagent-ledger.sh`](../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path`, `agent_id` | appends `Subagent <name>: stopped — <first line, 120 chars>` for the orchestrator's own subagents to the ledger of the PBI bound by a running loop, else of the branch issue (allowlist, marker, branch and fallback rules below); only when that ledger exists, which the orchestrator creates. Agent name and `agent_id` are sanitised; a `pbi-runner` stop is summarised from the `status` of its JSON reply (`GATE <phase>`, `DONE <pr>`, `BLOCKED`, `FAILED`; needs `jq`). Dedupe per `agent_id` and payload in the sidecar `.agents/<issue>/.ledger-seen` (a regular file, never a symlink), so the stop events of nested agents and of a `SendMessage` resume are written once | none |
+| [`subagent-ledger.sh`](../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path`, `agent_id` | appends `Subagent <name>: stopped — <first line, 120 chars>` for the orchestrator's own subagents to the ledger of the PBI bound by a running loop, else of the branch issue (allowlist, marker, branch and fallback rules below); only when that ledger exists, which the orchestrator creates. Agent name and `agent_id` are sanitised; a `pbi-runner` stop is summarised from the `status` of its JSON reply (`GATE <phase>`, `DONE <pr>`, `BLOCKED`, `FAILED`; needs `jq`). Dedupe per `agent_id` and payload in the sidecar `<state>/<issue>/.ledger-seen` (a regular file, never a symlink), so the stop events of nested agents and of a `SendMessage` resume are written once | none |
 | [`context-warning.sh`](../packages/hooks/.apm/hooks/context-warning.sh) | `UserPromptSubmit` | `transcript_path`, `session_id` | injects an `additionalContext` warning once the last request has at least 150k tokens (`CONTEXT_WARN_TOKENS`), again after +100k (`CONTEXT_WARN_STEP`) | none; raise `CONTEXT_WARN_TOKENS` to silence it |
-| [`git-guardrails.sh`](../packages/hooks/.apm/hooks/git-guardrails.sh) | `PreToolUse`, matcher `Bash` | `tool_name`, `cwd`, `tool_input.command` | prints a `permissionDecision: deny` JSON with the reason; nothing for allowed commands | `GIT_GUARDRAILS_OFF=1` or `.agents/guardrails.off` |
+| [`git-guardrails.sh`](../packages/hooks/.apm/hooks/git-guardrails.sh) | `PreToolUse`, matcher `Bash` | `tool_name`, `cwd`, `tool_input.command` | prints a `permissionDecision: deny` JSON with the reason; nothing for allowed commands | `GIT_GUARDRAILS_OFF=1` or `<state>/guardrails.off` |
 
 ```mermaid
 sequenceDiagram
@@ -359,10 +401,10 @@ The diagram shows where each hook fires: the guard sits in front of every Bash c
 
 Behaviour you should know about, verified against the scripts:
 
-- **The ledger hook binds to the loop's PBI or to the branch, not to the run.** It writes only for the orchestrator's subagents (`issue-reader`, `explorer`, `planner`, `reviewer`, `review-lead`, `implementer`, `pr-writer`, `pbi-runner`; a namespaced name such as `plugin:reviewer` counts by its last part after `:`, `/` or `.`); stops of other agents (`general-purpose`, `Explore`, ...) are ignored. It appends to `$AGENTS_LEDGER` when set; otherwise to the PBI ledger named by the loop marker `.agents/current`; otherwise to `.agents/<nr>/progress.md` for the number `<nr>` in the current branch name (`<type>/[<scope>/]<nr>[-<slug>]` with a conventional type such as `feat` or `fix`, read with `git rev-parse` in `cwd` without the repository's fsmonitor and hooks; `.agents` is looked up in `cwd` itself, not the repository root; `release/2` or `renovate/3-major` carry no number). If that ledger does not exist, nothing is written. Only a branch without a number, a detached HEAD, a missing `git` or a directory outside a repository falls back to the most recently modified `.agents/*/progress.md` (loop ledgers excluded). When `git` is installed and `cwd` is inside a repository (a `.git` in it or a parent) but the branch cannot be read (git error, unborn branch, corrupt repository, the plugin's 2 s timeout), nothing is written. The marker (written by `Add-LedgerLine.ps1 -Bind` in `loop` mode) counts only when all of these hold, else the branch rule applies unchanged: `.agents/current` is a regular file (not a symlink) holding exactly one line `<pbi> loop-<nr>` or `<pbi> loop-<nr> <origin>` (digits without leading zero; `-Bind` adds `<origin>`, the issue number of the branch it ran on, when that is another issue, and a marker without it stays valid); `.agents/loop-<nr>/progress.md` exists, is not a symlink and its last `Loop: ` line is not a `Loop: stopped` line (so a marker left behind by a stopped loop whose `-Unbind` did not run is ignored); `.agents/<pbi>/progress.md` exists and neither it nor its directory is a symlink; and the current branch carries no issue number, carries `<pbi>` itself, carries `<origin>` (the first PBI of a loop started from an unrelated issue branch), or carries the number of a PBI the loop ledger records as `Loop: PBI #<nr> done` (the previous PBI, whose branch is still checked out at the boundary; a CRLF ledger is read the same). When `git` fails inside a repository nothing is written, marker or not. So the marker also wins on the integration branch or a detached HEAD, where the newest-ledger fallback would pick a foreign ledger, while the stale marker of a killed loop (no `Loop: stopped`, no `-Unbind`) yields to the branch of any issue that loop neither bound nor finished. It still captures a later run on the branch of its `<origin>` issue, on the branch of a PBI that loop finished, on its own PBI's branch, and on a branch without a number or a detached HEAD: those lines land in the marker's PBI ledger. `Add-LedgerLine.ps1 -Unbind` (or a `Loop: stopped` line in the loop ledger) clears it; run it after a killed loop. Known limit: two runs on the same branch in one checkout cannot be told apart; use one worktree per run ([working-mode.md](working-mode.md) §2). The same limit for description runs is noted in [orchestrator-gates.md](../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md).
-- The orchestrator writes its own lines and is not on the allowlist, so its stops are never recorded. It does not append the same stop twice: with a valid `agent_id` it keeps a hash per agent in `.agents/<issue>/.ledger-seen` (a repeated `GATE review` of a resumed runner is still written), without one it skips an identical last line. When the payload has no summary it falls back to the last line of the subagent transcript and, for the `implementer`, to the path of a task report touched in the last 10 minutes.
+- **The ledger hook binds to the loop's PBI or to the branch, not to the run.** It writes only for the orchestrator's subagents (`issue-reader`, `explorer`, `planner`, `reviewer`, `review-lead`, `implementer`, `pr-writer`, `pbi-runner`; a namespaced name such as `plugin:reviewer` counts by its last part after `:`, `/` or `.`); stops of other agents (`general-purpose`, `Explore`, ...) are ignored. It appends to `$AGENTS_LEDGER` when set; otherwise to the PBI ledger named by the loop marker `<state>/current`; otherwise to `<state>/<nr>/progress.md` for the number `<nr>` in the current branch name (`<type>/[<scope>/]<nr>[-<slug>]` with a conventional type such as `feat` or `fix`, read with `git rev-parse` in `cwd` without the repository's fsmonitor and hooks; `<state>` does not depend on `cwd`, all worktrees share it; `release/2` or `renovate/3-major` carry no number). If that ledger does not exist, nothing is written. Only a branch without a number, a detached HEAD, a missing `git` or a directory outside a repository falls back to the most recently modified `<state>/*/progress.md` (loop ledgers excluded). When `git` is installed and `cwd` is inside a repository (a `.git` in it or a parent) but the branch cannot be read (git error, unborn branch, corrupt repository, the plugin's 2 s timeout), nothing is written. The marker (written by `Add-LedgerLine.ps1 -Bind` in `loop` mode) counts only when all of these hold, else the branch rule applies unchanged: `<state>/current` is a regular file (not a symlink) holding exactly one line `<pbi> loop-<nr>` or `<pbi> loop-<nr> <origin>` (digits without leading zero; `-Bind` adds `<origin>`, the issue number of the branch it ran on, when that is another issue, and a marker without it stays valid); `<state>/loop-<nr>/progress.md` exists, is not a symlink and its last `Loop: ` line is not a `Loop: stopped` line (so a marker left behind by a stopped loop whose `-Unbind` did not run is ignored); `<state>/<pbi>/progress.md` exists and neither it nor its directory is a symlink; and the current branch carries no issue number, carries `<pbi>` itself, carries `<origin>` (the first PBI of a loop started from an unrelated issue branch), or carries the number of a PBI the loop ledger records as `Loop: PBI #<nr> done` (the previous PBI, whose branch is still checked out at the boundary; a CRLF ledger is read the same). When `git` fails inside a repository nothing is written, marker or not. So the marker also wins on the integration branch or a detached HEAD, where the newest-ledger fallback would pick a foreign ledger, while the stale marker of a killed loop (no `Loop: stopped`, no `-Unbind`) yields to the branch of any issue that loop neither bound nor finished. It still captures a later run on the branch of its `<origin>` issue, on the branch of a PBI that loop finished, on its own PBI's branch, and on a branch without a number or a detached HEAD: those lines land in the marker's PBI ledger. `Add-LedgerLine.ps1 -Unbind` (or a `Loop: stopped` line in the loop ledger) clears it; run it after a killed loop. Known limit: two runs on the same branch in one checkout cannot be told apart; use one worktree per run ([working-mode.md](working-mode.md) §2). The same limit for description runs is noted in [orchestrator-gates.md](../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md).
+- The orchestrator writes its own lines and is not on the allowlist, so its stops are never recorded. It does not append the same stop twice: with a valid `agent_id` it keeps a hash per agent in `<state>/<issue>/.ledger-seen` (a repeated `GATE review` of a resumed runner is still written), without one it skips an identical last line. When the payload has no summary it falls back to the last line of the subagent transcript and, for the `implementer`, to the path of a task report touched in the last 10 minutes.
 - **The guardrails deny** force pushes to `main` or `release/*`, remote deletes of protected branches, `git reset --hard`, `git clean -f` (not `-n`), `git branch -D`, and `git checkout .` or `git restore .` when the tree is dirty. The exact rules are in [git-guardrails.sh](../packages/hooks/.apm/hooks/git-guardrails.sh). It is a guard against accidents, not a security boundary: it fails open on an empty or unparseable payload and on commands above 24 KB.
-- **Opt-out** is global, not per command: `GIT_GUARDRAILS_OFF=1` in the environment, or an empty file `.agents/guardrails.off` in the working directory or the repository root. It stays active until the variable is unset or the file is deleted.
+- **Opt-out** is global, not per command: `GIT_GUARDRAILS_OFF=1` in the environment, or an empty file `<state>/guardrails.off`. The state directory is shared by all worktrees of the repository, so that file disables the guard in every worktree at once, not only the current one. A `.agents/guardrails.off` is no longer read. It stays active until the variable is unset or the file is deleted.
 
 Per client:
 
@@ -372,7 +414,7 @@ Per client:
 | Copilot CLI | `subagentStop` | `postToolUse` (reads `session-state/<id>/events.jsonl`) | `preToolUse` | manual, see [Copilot CLI hooks](usage/copilot-hooks.md) |
 | OpenCode | plugin, after a `task` tool call | plugin, on a new user message | none | copy the plugin [apm-hub-hooks.ts](../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts) to `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (global) |
 
-The OpenCode plugin writes the same ledger line format and applies the same allowlist, branch and fallback rules (above), with `.agents` looked up in the OpenCode project directory. It has no equivalent of the git guardrails; on OpenCode the `permission` block of the agent files and your own bash rules are the only guard.
+The OpenCode plugin writes the same ledger line format and applies the same allowlist, branch and fallback rules (above), with `<state>` resolved from the OpenCode project directory. It has no equivalent of the git guardrails; on OpenCode the `permission` block of the agent files and your own bash rules are the only guard.
 
 ## End of run
 

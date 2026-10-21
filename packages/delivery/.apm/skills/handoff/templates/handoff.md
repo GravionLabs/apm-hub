@@ -6,7 +6,7 @@
 ## State
 | Issue / PR | State (one line) | Where |
 | :-- | :-- | :-- |
-| [#123 title](url) | <phase done, branch, PR open/merged> | `.agents/123/progress.md` |
+| [#123 title](url) | <phase done, branch, PR open/merged> | `<state>/123/progress.md` |
 
 ## Open gates and decisions
 - <question> - decided by <user | reviewer | owner>; recorded in <ledger line or issue comment>

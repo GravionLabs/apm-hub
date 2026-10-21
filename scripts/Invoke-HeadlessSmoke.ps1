@@ -6,7 +6,7 @@
 .DESCRIPTION
   Creates a throwaway git repo (no remote, so nothing is written to GitHub) per client and stage and starts the
   orchestrator headless. Stage 'ledger': append the ledger header with Add-LedgerLine.ps1; asserts the header line in
-  .agents/<issue>/progress.md and no permission prompt. Stage 'plan': `plan <description>` with the full agent body;
+  <state>/<issue>/progress.md (the fixture's state dir, <git common dir>/agents) and no permission prompt. Stage 'plan': `plan <description>` with the full agent body;
   asserts no permission prompt and a ledger with a `Gate:` line or a completed phase (opt-in, model-dependent). A client whose CLI is
   missing is skipped. Exits 1 on any failure and 2 when every client was skipped. Not run in CI (needs the CLIs, a model and the agent
   installed: apm install). OpenCode runs the agent from the project fixture (permission map taken from
@@ -27,6 +27,15 @@ param(
   [switch]$Keep
 )
 $ErrorActionPreference = 'Stop'
+# BEGIN Resolve-StateDir (identical in every script that defines it; test/repo/state-dir-resolver.test.ts)
+function Resolve-StateDir {
+  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path)) }
+  $common = $null
+  try { $common = "$(& git -C (Get-Location).Path rev-parse --path-format=absolute --git-common-dir 2>$null)".Trim() } catch { $common = $null }
+  if ($LASTEXITCODE -ne 0 -or -not $common) { throw 'No state directory: not inside a git repository (set DROMOS_STATE_DIR)' }
+  [IO.Path]::GetFullPath((Join-Path $common 'agents'))
+}
+# END Resolve-StateDir
 $root = Split-Path $PSScriptRoot -Parent
 $helper = Join-Path $root 'packages/github/.apm/skills/github-issue/scripts/Add-LedgerLine.ps1'
 $header = "# orchestrator ledger — issue #$Issue — branch main"
@@ -103,8 +112,11 @@ foreach ($c in $clients) {
     if ($null -eq $out) { Write-Host "SKIP $c/$st (CLI not found)"; Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue; continue }
     $ran++
     $problems = @()
-    $dirs = @(Get-ChildItem (Join-Path $dir '.agents') -Directory -ErrorAction SilentlyContinue)
-    $ledgerFile = $full ? ($dirs | ForEach-Object { Join-Path $_.FullName 'progress.md' } | Where-Object { Test-Path $_ } | Select-Object -First 1) : (Join-Path $dir ".agents/$Issue/progress.md")
+    # The fixture is a git repo: its state dir is <git common dir>/agents unless DROMOS_STATE_DIR is set (relative: against the fixture).
+    Push-Location -LiteralPath $dir
+    try { $stateDir = Resolve-StateDir } finally { Pop-Location }
+    $dirs = @(Get-ChildItem $stateDir -Directory -ErrorAction SilentlyContinue)
+    $ledgerFile = $full ? ($dirs | ForEach-Object { Join-Path $_.FullName 'progress.md' } | Where-Object { Test-Path $_ } | Select-Object -First 1) : (Join-Path $stateDir "$Issue/progress.md")
     $ledgerText = ($ledgerFile -and (Test-Path $ledgerFile)) ? (Get-Content $ledgerFile -Raw) : ''
     if ($out -eq 'TIMEOUT') { $problems += "no result within ${TimeoutSec}s" }
     elseif ($out -match $promptRx) { $problems += 'permission prompt in output' }

@@ -18,7 +18,7 @@ describe('grilling reference', () => {
     expect(grilling).toMatch(/MIT License, Copyright \(c\) Matt Pocock/);
   });
 
-  it.each(['AskUserQuestion', 'Gate:', 'Ruling:', 'publish.md', '.agents/<issue>/progress.md'])(
+  it.each(['AskUserQuestion', 'Gate:', 'Ruling:', 'publish.md', '<state>/<issue>/progress.md'])(
     'covers %s',
     (term) => expect(grilling).toContain(term),
   );

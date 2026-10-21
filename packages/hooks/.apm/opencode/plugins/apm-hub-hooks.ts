@@ -1,6 +1,8 @@
 // OpenCode plugin: ports of the apm-hub hooks that OpenCode cannot run as shell hooks.
+// State dir (same as state_dir() in subagent-ledger.sh): DROMOS_STATE_DIR (relative: against the project dir), else
+// <git common dir>/agents (shared by all worktrees), else none (nothing is written). Below, ".agents" means that dir.
 //  - subagent ledger: after a `task` tool call of an orchestrator subagent (allowlist), append
-//    `Subagent <name>: stopped — <first line>` to the ledger of the PBI named by a live loop marker .agents/current
+//    `Subagent <name>: stopped — <first line>` to the ledger of the PBI named by a live loop marker <state>/current
 //    (`<pbi> loop-<nr>[ <origin>]`) unless the branch names another issue that is not the PBI, the origin or a
 //    `Loop: PBI #<nr> done` PBI, else to .agents/<nr>/progress.md of the issue number in the git branch
 //    (<type>/[<scope>/]<nr>[-<slug>]); nothing when that ledger is missing or git fails inside a repository; the newest
@@ -11,7 +13,7 @@
 // OpenCode calls every function export as a plugin and fails to load the file on non-function exports.
 import { appendFileSync, existsSync, lstatSync, readdirSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 const text = (v: unknown): string => (typeof v === "string" ? v : "");
 const int = (v: string | undefined, d: number): number => {
@@ -33,6 +35,18 @@ const CONTROL = /[\x00-\x1f\x7f\x85\u2028\u2029]/g;
 let partSeq = 0;
 
 const AGENTS = new Set(["issue-reader", "explorer", "planner", "reviewer", "review-lead", "implementer", "pr-writer", "pbi-runner"]);
+
+/** State dir: DROMOS_STATE_DIR (resolved against dir), else <git common dir>/agents, else "" (no write). */
+function stateDir(dir: string): string {
+  try {
+    const o = process.env.DROMOS_STATE_DIR;
+    if (o) return resolve(dir, o);
+    const common = execFileSync("git", ["-C", dir, "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "rev-parse", "--path-format=absolute", "--git-common-dir"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000 }).trim();
+    return common ? join(common, "agents") : "";
+  } catch {
+    return "";
+  }
+}
 
 /** True when dir or a parent holds a .git entry (checked without git). */
 function inRepo(dir: string): boolean {
@@ -66,19 +80,19 @@ function isRegularIn(p: string): boolean {
  * issue number of the branch -Bind ran on), or "" when the marker is missing, not a regular file, malformed, stale (loop
  * ledger missing or its last `Loop: ` line is `Loop: stopped`), the branch names another issue that is neither <origin>
  * nor recorded as `Loop: PBI #<nr> done`, or its PBI ledger is missing (#375). */
-function boundLedger(dir: string, branchNr: string): string {
+function boundLedger(base: string, branchNr: string): string {
   try {
-    const marker = join(dir, ".agents", "current");
+    const marker = join(base, "current");
     if (!isRegular(marker)) return "";
     const m = /^([1-9][0-9]{0,9}) (loop-[1-9][0-9]{0,9})(?: ([1-9][0-9]{0,9}))?\n?$/.exec(readFileSync(marker, "latin1"));
     if (!m) return "";
-    const loop = join(dir, ".agents", m[2], "progress.md");
+    const loop = join(base, m[2], "progress.md");
     if (!isRegularIn(loop)) return "";
     const lines = readFileSync(loop, "utf8").split(/\r?\n/).filter((l) => l.startsWith("Loop: "));
     if ((lines[lines.length - 1] ?? "").startsWith("Loop: stopped")) return "";
     // a branch naming another issue wins unless -Bind ran on it or the loop finished it (the previous PBI still checked out)
     if (branchNr && branchNr !== m[1] && branchNr !== m[3] && !lines.some((l) => l === `Loop: PBI #${branchNr} done` || l.startsWith(`Loop: PBI #${branchNr} done `))) return "";
-    const own = join(dir, ".agents", m[1], "progress.md");
+    const own = join(base, m[1], "progress.md");
     return isRegularIn(own) ? own : "";
   } catch {
     return "";
@@ -89,21 +103,22 @@ function boundLedger(dir: string, branchNr: string): string {
 function findLedger(dir: string, override?: string): string {
   try {
     if (override) return isRegular(override) ? override : "";
-    if (lstatSync(join(dir, ".agents")).isSymbolicLink()) return ""; // never write through a symlinked .agents
+    const base = stateDir(dir);
+    if (!base) return ""; // no override and no repository: nothing to write
+    if (lstatSync(base).isSymbolicLink()) return ""; // never write through a symlinked state dir
     const nr = branchIssue(dir);
     if (nr === null) return ""; // git failing inside a repository: no write, not even through the loop marker
-    const bound = boundLedger(dir, nr);
+    const bound = boundLedger(base, nr);
     if (bound) return bound;
     if (nr) {
-      const own = join(dir, ".agents", nr, "progress.md");
-      return isRegular(own) && !lstatSync(join(dir, ".agents", nr)).isSymbolicLink() ? own : "";
+      const own = join(base, nr, "progress.md");
+      return isRegular(own) && !lstatSync(join(base, nr)).isSymbolicLink() ? own : "";
     }
-    const root = join(dir, ".agents");
     let best = "";
     let bestTime = -1;
-    for (const e of readdirSync(root, { withFileTypes: true })) {
+    for (const e of readdirSync(base, { withFileTypes: true })) {
       if (!e.isDirectory() || e.isSymbolicLink() || /^loop-[1-9]\d*$/.test(e.name)) continue;
-      const p = join(root, e.name, "progress.md");
+      const p = join(base, e.name, "progress.md");
       if (!isRegular(p)) continue;
       const t = lstatSync(p).mtimeMs;
       if (t > bestTime) {
@@ -162,7 +177,7 @@ function contextTokens(info: any): number {
 function warningFor(ctx: number, lastWarned: number, threshold: number, step: number): string {
   if (ctx < threshold) return "";
   if (lastWarned > 0 && ctx < lastWarned + step) return "";
-  return `Context is ${Math.round(ctx / 1000)}k tokens (limit ${Math.round(threshold / 1000)}k). Finish the current step, append the hand-off to .agents/<issue>/progress.md, then start a new session and resume.`;
+  return `Context is ${Math.round(ctx / 1000)}k tokens (limit ${Math.round(threshold / 1000)}k). Finish the current step, append the hand-off to <state dir>/<issue>/progress.md, then start a new session and resume.`;
 }
 
 export const ApmHubHooks = async (ctx: any) => {
