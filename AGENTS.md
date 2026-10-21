@@ -19,6 +19,7 @@ test/packages/<domain>/               # Vitest tests of package content (skills,
 test/repo/ test/helpers/              # repository checks (workflows), shared test helpers
 test/integration/queue/               # pwsh-heavy *.integration.test.ts (Vitest project `integration`)
 test/integration/skills/              # Copilot SDK harness, own package.json (`pnpm run test:integration`)
+scripts/related-tests.mjs             # changed paths → test files (`pnpm run test:related`)
 scripts/check-manifests.mjs           # apm.yml skills list ⇄ directories on disk
 site/                                 # VitePress docs site: renders docs/ in place, README as home via docs/index.md (see site/README.md)
 apm.yml                               # marketplace: lists all packages
@@ -68,7 +69,9 @@ Every language package provides `<lang>-implementation` (conventions + `## Revie
 - Code in `src/`: unit test next to it as `<name>.test.ts`.
 - Package content (skills, agents, scripts, hooks): `test/packages/<domain>/<topic>.test.ts`, `<domain>` is the package of the file under test; a flow across several packages around the orchestrator goes to `agents`.
 - Repository files outside `packages/` (workflows, `.github/`): `test/repo/`. Helpers shared by several test directories: `test/helpers/` (no `.test.ts` suffix).
-- pwsh-heavy tests (many processes, fake binaries): `*.integration.test.ts` in `test/integration/queue/`; elsewhere the `fast` project skips them. Batch cases into one pwsh process with `test/helpers/queue-batch.ps1`.
+- pwsh-heavy tests (many processes, fake binaries): `*.integration.test.ts` in `test/integration/queue/`; elsewhere the `unit` and `scripts` projects skip them. Batch cases into one pwsh process with `test/helpers/queue-batch.ps1`.
+- Vitest projects: `unit` (`src/`, `test/repo/`, `test/packages/` files that spawn no process), `scripts` (`test/packages/` files that spawn pwsh, bash or git, listed in `test/helpers/scripts-tests.ts`; add a new spawning test there, `test/repo/vitest-projects.test.ts` enforces it), `integration`. `pnpm test` = unit + scripts, `test:unit` = unit, `test:all` = all three, `test:ci` = all three with coverage.
+- Targeted run: `pnpm run test:related -- <paths|--staged|--range a..b>` runs only the tests mapped by `scripts/related-tests.mjs` (the script alone prints the list; `ALL` means run `pnpm test`).
 - Resolve repo files from `__dirname` (`path.resolve(__dirname, '../../../packages/...')` in `test/packages/<domain>/`).
 - `test/integration/skills/` is the Copilot SDK harness with its own `package.json`; no repo tests there.
 
@@ -76,7 +79,10 @@ Every language package provides `<lang>-implementation` (conventions + `## Revie
 
 ```powershell
 pnpm install
-pnpm run build; pnpm test                 # generators + unit tests (includes the skill size check)
+pnpm run build; pnpm test                 # projects unit + scripts (includes the skill size check)
+pnpm run test:unit                        # unit project only
+pnpm run test:all                         # unit + scripts + integration
+pnpm run test:related -- <paths|--staged> # only the tests related to the changed paths
 node scripts/check-manifests.mjs --fix    # sync apm.yml skills lists after adding/removing skills
 pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .   # sizes, dangling refs, duplicates
 ```
