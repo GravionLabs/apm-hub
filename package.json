@@ -14,6 +14,7 @@
     "test": "vitest run --project unit --project scripts",
     "test:all": "vitest run",
     "test:unit": "vitest run --project unit",
+    "test:related": "node scripts/run-related-tests.mjs",
     "test:ci": "vitest run --coverage",
     "test:integration": "cd test/integration && npm install --silent && vitest run",
     "test:watch": "vitest",
