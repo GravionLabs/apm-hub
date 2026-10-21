@@ -23,8 +23,9 @@ Read-only: never edit or commit.
    Each returns `[{file,line,severity: CRITICAL|HIGH|MEDIUM|LOW,evidence,issue}]`. A finding with empty or missing `file` or a `line` below 1 is invalid, never advisory: drop it and mark its dimension failed. Advisories without a natural location (`spec` "no spec available", `conventions` "install `<stack>@apm-hub`") use the placeholder `file` = the package path, `line` = 1. A reply `[]` plus a `NO_PACKAGE:` line also marks the dimension failed.
    **No active waiting**: dispatch all reviewers in ONE message, then wait for their replies. Never run `sleep` or `Start-Sleep`, never poll files, ledgers or `review.json` for reviewer completion. The calls return the results: Claude Code `Agent` returns the reply, OpenCode `task()` awaits it, Copilot `runSubagent` returns it.
    Claude: `Agent` calls with `subagent_type: reviewer` in one message · OpenCode: parallel `task()` with agent `reviewer` · VS Code Copilot: `#runSubagent` with agent `reviewer` · otherwise run inline sequentially.
-3. **Dedupe** by file + normalized evidence; keep highest severity. Never merge `spec` with `conventions` findings.
+3. **Dedupe** by file + normalized evidence; keep highest severity. Never merge `spec` with `conventions` findings. It runs after all dimensions reported and applies the verify results already known: a finding refuted in early verify stays refuted (advisory) when deduped.
 4. **Verify** — a sub-agent (given the package path, not the diff) tries to disprove each CRITICAL/HIGH finding: `confirmed`, `refuted` (→ advisory), `unverifiable` (stays blocking).
+   **Early verify**: start it for a dimension as soon as its result contains a CRITICAL or HIGH finding, while other dimensions still run; one verify batch (a single message) per arriving dimension, no waiting for the rest. The verdict waits for all dimensions and all verify results. Fail-closed rules apply unchanged: a verify that fails or returns nothing leaves the finding `unverifiable` (blocking).
 
 ## Output (JSON returned to the caller; a machine-readable copy for the caller goes to `<state>/<issue>/review.json`, else next to the package file in `$TMPDIR`)
 

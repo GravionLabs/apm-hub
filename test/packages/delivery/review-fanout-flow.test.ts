@@ -19,3 +19,28 @@ describe('review-fanout: no active waiting (#451)', () => {
     expect(lead).toMatch(/Never run `sleep` or `Start-Sleep`, never poll/);
   });
 });
+
+describe('review-fanout: early verify (#452)', () => {
+  it('SKILL.md starts verify per arriving dimension and keeps the verdict behind all results', () => {
+    expect(fanout).toMatch(/Early verify/);
+    expect(fanout).toMatch(/as soon as its result contains a CRITICAL or HIGH finding, while other dimensions still run/);
+    expect(fanout).toMatch(/one verify batch \(a single message\) per arriving dimension/);
+    expect(fanout).toMatch(/verdict waits for all dimensions and all verify results/);
+  });
+
+  it('dedupe stays after all dimensions and keeps early refutations', () => {
+    expect(fanout).toMatch(/runs after all dimensions reported/);
+    expect(fanout).toMatch(/refuted in early verify stays refuted/);
+  });
+
+  it('keeps the fail-closed rules', () => {
+    expect(fanout).toMatch(/`unverifiable` \(stays blocking\)/);
+    expect(fanout).toMatch(/Fail closed: a failed dimension/);
+  });
+
+  it('review-lead follows the same flow', () => {
+    expect(lead).toMatch(/Early verify/);
+    expect(lead).toMatch(/CRITICAL or HIGH finding, dispatch its verify batch at once while other dimensions still run/);
+    expect(lead).toMatch(/wait for all dimensions and all verify results, a finding refuted early stays refuted/);
+  });
+});
