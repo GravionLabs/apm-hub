@@ -11,7 +11,7 @@
   Path to the project root directory.
 
 .PARAMETER NoCache
-  Ignore `.agents/techstack.json`: recompute the report and rewrite the cache.
+  Ignore `<state>/techstack.json`: recompute the report and rewrite the cache.
 
 .OUTPUTS
   JSON string to stdout. Non-zero exit code on failure.
@@ -34,13 +34,33 @@ function Get-IndicatorFile {
     Where-Object { $_.FullName -notmatch '[\\/]node_modules[\\/]' -and $_.FullName -notmatch '[\\/]\.git[\\/]' -and $_.FullName -notmatch '[\\/]\.opencode[\\/]' }
 }
 
-# --- cache: .agents/techstack.json = report + manifest_hash ---
+# --- cache: <state>/techstack.json = report + manifest_hash ---
 $rootFull = (Resolve-Path $ProjectRoot).Path
-$agentsDir = Join-Path $rootFull '.agents'
-$cacheFile = Join-Path $agentsDir 'techstack.json'
-# a symlinked .agents/ is never read from or written through; the report is printed without caching
-$agentsItem = Get-Item -LiteralPath $agentsDir -Force -ErrorAction SilentlyContinue
+# BEGIN Resolve-StateDir (identical in every script that defines it; test/repo/state-dir-resolver.test.ts)
+function Resolve-StateDir {
+  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path) }
+  $common = $null
+  try { $common = "$(& git -C (Get-Location).Path rev-parse --path-format=absolute --git-common-dir 2>$null)".Trim() } catch { $common = $null }
+  if ($LASTEXITCODE -ne 0 -or -not $common) { throw 'No state directory: not inside a git repository (set DROMOS_STATE_DIR)' }
+  [IO.Path]::GetFullPath((Join-Path $common 'agents'))
+}
+# END Resolve-StateDir
+# the state directory of the project (git common dir, shared by worktrees); outside a repository detection still works, without cache
+$agentsDir = $null
+Push-Location -LiteralPath $rootFull
+try { $agentsDir = Resolve-StateDir } catch { $agentsDir = $null } finally { Pop-Location }
+$cacheFile = if ($agentsDir) { Join-Path $agentsDir 'techstack.json' } else { $null }
+# a symlinked state directory is never read from or written through; the report is printed without caching
+$agentsItem = if ($agentsDir) { Get-Item -LiteralPath $agentsDir -Force -ErrorAction SilentlyContinue } else { $null }
 $agentsLinked = [bool]($agentsItem -and $agentsItem.LinkType)
+$agentsUsable = [bool]($agentsDir -and -not $agentsLinked)
+
+function Out-Report([string]$Json) {
+  # state_dir is added on output (cache hit or not); the cache file itself does not store it
+  $o = $Json | ConvertFrom-Json
+  $o | Add-Member -NotePropertyName state_dir -NotePropertyValue $agentsDir -Force
+  $o | ConvertTo-Json -Compress
+}
 
 function Test-CacheEntry {
   # every entry must be a lowercase token like the script itself produces (ts, ts-test, pnpm, ...)
@@ -68,7 +88,7 @@ $manifestList = $schemaVersion + "`n" + ((@($manifestEntries) | Sort-Object -Uni
 $sha = [System.Security.Cryptography.SHA256]::Create()
 $manifestHash = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestList))) -replace '-', '').ToLowerInvariant()
 
-if (-not $NoCache -and -not $agentsLinked -and (Test-Path $cacheFile -PathType Leaf)) {
+if (-not $NoCache -and $agentsUsable -and (Test-Path $cacheFile -PathType Leaf)) {
   try {
     $cached = Get-Content $cacheFile -Raw | ConvertFrom-Json -ErrorAction Stop
     $names = @($cached.PSObject.Properties.Name)
@@ -80,7 +100,7 @@ if (-not $NoCache -and -not $agentsLinked -and (Test-Path $cacheFile -PathType L
       if (($names -contains $key) -and -not (Test-CacheEntry $cached.$key)) { $shapeOk = $false }
     }
     if ($shapeOk -and $cached.manifest_hash -eq $manifestHash) {
-      (Get-Content $cacheFile -Raw).Trim()
+      Out-Report (Get-Content $cacheFile -Raw).Trim()
       exit 0
     }
   } catch { }
@@ -228,40 +248,16 @@ $json = $report | ConvertTo-Json -Compress
 
 $tmp = $null
 try {
-  if (-not $agentsLinked) {
+  if ($agentsUsable) {
     New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
     $tmp = Join-Path $agentsDir ("techstack." + [guid]::NewGuid().ToString('N') + ".tmp")
     Set-Content -Path $tmp -Value $json -Encoding utf8NoBOM
     Move-Item -Path $tmp -Destination $cacheFile -Force
-    # keep .agents/ out of git when it is not already ignored
-    $null = git -C $rootFull rev-parse --is-inside-work-tree 2>$null
-    if ($LASTEXITCODE -eq 0) {
-      git -C $rootFull check-ignore -q .agents/techstack.json 2>$null
-      if ($LASTEXITCODE -ne 0) {
-        # --git-path resolves a symlinked exclude file to its target; build the path from the git dir so the link check sees it
-        $commonDir = git -C $rootFull rev-parse --path-format=absolute --git-common-dir 2>$null
-        $infoDir = if ($commonDir) { Join-Path $commonDir 'info' } else { $null }
-        $infoItem = if ($infoDir) { Get-Item -LiteralPath $infoDir -Force -ErrorAction SilentlyContinue } else { $null }
-        if ($infoDir -and -not ($infoItem -and $infoItem.LinkType)) {
-          $exclude = Join-Path $infoDir 'exclude'
-          New-Item -ItemType Directory -Path $infoDir -Force | Out-Null
-          $item = Get-Item -LiteralPath $exclude -Force -ErrorAction SilentlyContinue
-          $isLink = $item -and $item.LinkType
-          $lines = if ($item) { @(Get-Content -LiteralPath $exclude) } else { @() }
-          $listed = @($lines | Where-Object { $_.Trim() -in @('.agents/', '.agents', '/.agents/', '/.agents') }).Count -gt 0
-          if (-not $isLink -and -not $listed) {
-            $raw = if ($item) { Get-Content -LiteralPath $exclude -Raw } else { '' }
-            $prefix = if ($raw -and -not $raw.EndsWith("`n")) { "`n" } else { '' }
-            [System.IO.File]::AppendAllText($exclude, "$prefix.agents/`n")
-          }
-        }
-      }
-    }
   }
 } catch {
   if ($tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
   # the cache is an optimisation; never fail detection because of it
 }
 
-$json
+Out-Report $json
 exit 0
