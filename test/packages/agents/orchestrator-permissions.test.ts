@@ -137,7 +137,9 @@ describe.skipIf(!pwshAvailable)('Add-LedgerLine.ps1', () => {
   it('creates the directory and appends lines', () => {
     expect(run('-Issue', '222', '-Line', '# header').status).toBe(0);
     expect(run('-Issue', '222', '-Line', 'Phase plan: complete').status).toBe(0);
-    expect(fs.readFileSync(path.join(cwd, '.agents/222/progress.md'), 'utf-8')).toBe('# header\nPhase plan: complete\n');
+    const text = fs.readFileSync(path.join(cwd, '.agents/222/progress.md'), 'utf-8');
+    expect(text.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z /gm, '')).toBe('# header\nPhase plan: complete\n');
+    expect(text).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z # header\n/);
   });
 
   it('accepts adhoc and creates only the directory without -Line', () => {

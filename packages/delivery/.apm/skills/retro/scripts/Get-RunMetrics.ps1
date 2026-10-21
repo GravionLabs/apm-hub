@@ -14,7 +14,11 @@
   JSON: transcript, ledger, warnings, main, subagents, fixRounds (all Fix round lines), unattributedFixRounds (the part of
   fixRounds no task could be charged with: unknown task id or no Task line above; fixRounds minus the tasks[] sum),
   tasks[] (task = issue number or plan id such as "p1", model, status, fixRounds, escalated, escalatedTo, reviewRounds),
-  escalationShare, rulings, gates.
+  escalationShare, rulings, gates, durations.
+  durations: {total, phases: {read, explore, plan, implement, verify, review, pr}, tasks: [{task, seconds}], fixRounds: [{round, task, seconds}]}
+  in seconds, from the optional ISO-8601 UTC prefix of ledger lines ('2026-10-21T15:19:46Z <text>'; lines without it are still read). A phase ends at its
+  'Phase <name>: complete' line (verify: 'Phase verify: ok|fail — tests <n>/<m>') and starts at the previous such line (the first timestamped line for the first phase); a Task or Fix round ends at its own line and
+  starts at the previous Phase-complete, Task or Fix round line. A missing timestamp, phase or a negative span gives null, never an error.
 #>
 [CmdletBinding()]
 param(
@@ -155,14 +159,43 @@ function Sum-Of($items, [string]$prop) { $t = 0.0; foreach ($i in $items) { $t +
 # --- ledger
 $fix = 0; $rulings = @(); $gates = @(); $ledgerOut = $null
 $taskMap = [ordered]@{}; $lastTask = $null; $reviewPasses = 0; $unattributed = 0
+$phaseNames = 'read', 'explore', 'plan', 'implement', 'verify', 'review', 'pr'
+$phaseSec = [ordered]@{}; foreach ($p in $phaseNames) { $phaseSec[$p] = $null }
+$taskSec = [ordered]@{}; $fixList = [System.Collections.Generic.List[object]]::new()
+$isFirst = $true; $firstTs = $null; $lastTs = $null; $prevPhaseTs = $null; $prevMark = $null
+$tsRe = '^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s+(.*)$'
+function Get-Span($from, $to) { if ($null -eq $from -or $null -eq $to) { return $null }; $d = ($to - $from).TotalSeconds; if ($d -lt 0) { return $null }; return [int][math]::Round($d) }
+function Add-Sec($sum, $add) { if ($null -eq $add) { return $sum }; if ($null -eq $sum) { return $add }; return $sum + $add }
+function Get-PhaseKey([string]$name) {
+  $k = ($name.ToLowerInvariant() -replace '[\s_-]+', '')
+  if ($k -in 'pullrequest', 'pr') { return 'pr' }
+  if ($k -in 'read', 'explore', 'plan', 'implement', 'verify', 'review') { return $k }
+  return $null
+}
 # Optional ' — model <name>' suffix (older ledgers have none): null when absent.
 function Get-LedgerModel([string]$line) { if ($line -match '(?i)(?:^|\s)model\s+([A-Za-z0-9_.:/-]+)\s*$') { return Hide-Secrets $Matches[1] } return $null }
 if ($Ledger -and (Test-Path $Ledger)) {
   $ledgerOut = Hide-Path (Resolve-Path $Ledger).Path
-  foreach ($line in Get-Content $Ledger) {
+  foreach ($rawLine in Get-Content $Ledger) {
+    # optional timestamp prefix (older ledgers have none): $ts is $null without it or when unparsable
+    $line = $rawLine; $ts = $null
+    if ($rawLine -match $tsRe) {
+      $line = $Matches[2]
+      $parsed = [DateTimeOffset]::MinValue
+      if ([DateTimeOffset]::TryParse($Matches[1], [cultureinfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeUniversal, [ref]$parsed)) { $ts = $parsed }
+    }
+    # the first ledger line (the header) is the origin of the first phase and task, but only when it is timestamped itself
+    if ($isFirst) { $isFirst = $false; if ($ts) { $prevMark = $ts; $prevPhaseTs = $ts } }
+    if ($ts) { if ($null -eq $firstTs) { $firstTs = $ts }; $lastTs = $ts }
+    if ($line -match '^\s*(?:[-*]\s+)?Phase\s+([A-Za-z][A-Za-z _-]*?)\s*:\s*(?:complete|ok|fail)\b') {
+      $pk = Get-PhaseKey $Matches[1]
+      if ($pk) { $phaseSec[$pk] = Add-Sec $phaseSec[$pk] (Get-Span $prevPhaseTs $ts) }
+      $prevPhaseTs = $ts; $prevMark = $ts
+    }
     # Task id: the Task issue number, or the plan id (p1) of a single task without issue.
     if ($line -match '^\s*(?:[-*]\s+)?Task\s+#(\d{1,9}|p\d{1,9}):\s*([A-Za-z_]+)') {
       $n = $Matches[1]; $st = $Matches[2]; $lastTask = $n
+      $taskSec[$n] = Add-Sec $taskSec[$n] (Get-Span $prevMark $ts); $prevMark = $ts
       if ($taskMap.Contains($n)) {  # repeated line: latest status wins, a model is never replaced by null, counters stay
         $nm = Get-LedgerModel $line
         if ($nm) { $taskMap[$n].model = $nm }
@@ -172,11 +205,13 @@ if ($Ledger -and (Test-Path $Ledger)) {
     }
     elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\s+(\d{1,9})(?:\s*\(#(\w+)\))?') {
       $round = [int]$Matches[1]; $fix++
+      $fixSpan = Get-Span $prevMark $ts; $prevMark = $ts
       # `Fix round <r> (#<task>): ...` names its task and counts only for a known Task line; an unknown id stays unattributed.
       # A legacy line without `(#...)` is attributed to the last Task line above it (old ledgers); none above: unattributed.
       $target = $null
       if ($Matches[2]) { if ($taskMap.Contains($Matches[2])) { $target = $Matches[2] } }
       else { $target = $lastTask }
+      $fixList.Add([ordered]@{ round = $round; task = $(if ($target -and $target -match '^\d+$') { [int]$target } else { $target }); seconds = $fixSpan })
       if (-not $target) { $unattributed++ }
       else {
         $t = $taskMap[$target]; $t.fixRounds++
@@ -186,7 +221,7 @@ if ($Ledger -and (Test-Path $Ledger)) {
         if ($round -ge 3 -or ($named -and $fm -ne $t.model)) { $t.escalated = $true; if ($fm -and $fm -ne 'inherit') { $t.escalatedTo = $fm } }
       }
     }
-    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++; $unattributed++ }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++; $unattributed++; $fixList.Add([ordered]@{ round = $null; task = $null; seconds = (Get-Span $prevMark $ts) }); $prevMark = $ts }
     elseif ($line -match '^\s*(?:[-*]\s+)?Phase review\b') { $reviewPasses++ }
     elseif ($line -match '^\s*(?:[-*]\s+)?Ruling:\s*(.*)$') { $rulings += Hide-Secrets $Matches[1] }
     elseif ($line -match '^\s*(?:[-*]\s+)?Gate:\s*(.*)$') { $gates += Hide-Secrets $Matches[1] }
@@ -200,6 +235,12 @@ if ($Ledger -and (Test-Path $Ledger)) {
 $taskList = @($taskMap.Values | ForEach-Object {
   [ordered]@{ task = $_.n; model = $_.model; status = $_.status; fixRounds = $_.fixRounds; escalated = $_.escalated; escalatedTo = $_.escalatedTo; reviewRounds = $reviewPasses }
 })
+$durations = [ordered]@{
+  total = Get-Span $firstTs $lastTs
+  phases = $phaseSec
+  tasks = @($taskSec.Keys | ForEach-Object { [ordered]@{ task = $(if ($_ -match '^\d+$') { [int]$_ } else { $_ }); seconds = $taskSec[$_] } })
+  fixRounds = @($fixList)
+}
 $escalated = @($taskMap.Values | Where-Object { $_.escalated }).Count
 $escalationShare = if ($taskMap.Count -gt 0) { [math]::Round($escalated / $taskMap.Count, 4) } else { 0 }
 
@@ -221,4 +262,5 @@ $escalationShare = if ($taskMap.Count -gt 0) { [math]::Round($escalated / $taskM
   escalationShare = $escalationShare
   rulings = [ordered]@{ count = $rulings.Count; items = @($rulings) }
   gates = [ordered]@{ count = $gates.Count; items = @($gates) }
+  durations = $durations
 } | ConvertTo-Json -Depth 8

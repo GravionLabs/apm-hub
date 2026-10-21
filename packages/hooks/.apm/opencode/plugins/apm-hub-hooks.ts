@@ -76,6 +76,11 @@ function isRegularIn(p: string): boolean {
   }
 }
 
+/** Optional ISO-8601 UTC prefix of a ledger line (`2026-10-21T15:19:46Z `); readers accept lines with and without it. */
+const TS_PREFIX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z /;
+const untimed = (l: string): string => l.replace(TS_PREFIX, "");
+const nowStamp = (): string => new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+
 /** Ledger of the PBI named by the loop marker .agents/current (`<pbi> loop-<nr>[ <origin>]`, one line; <origin> is the
  * issue number of the branch -Bind ran on), or "" when the marker is missing, not a regular file, malformed, stale (loop
  * ledger missing or its last `Loop: ` line is `Loop: stopped`), the branch names another issue that is neither <origin>
@@ -88,7 +93,7 @@ function boundLedger(base: string, branchNr: string): string {
     if (!m) return "";
     const loop = join(base, m[2], "progress.md");
     if (!isRegularIn(loop)) return "";
-    const lines = readFileSync(loop, "utf8").split(/\r?\n/).filter((l) => l.startsWith("Loop: "));
+    const lines = readFileSync(loop, "utf8").split(/\r?\n/).map(untimed).filter((l) => l.startsWith("Loop: "));
     if ((lines[lines.length - 1] ?? "").startsWith("Loop: stopped")) return "";
     // a branch naming another issue wins unless -Bind ran on it or the loop finished it (the previous PBI still checked out)
     if (branchNr && branchNr !== m[1] && branchNr !== m[3] && !lines.some((l) => l === `Loop: PBI #${branchNr} done` || l.startsWith(`Loop: PBI #${branchNr} done `))) return "";
@@ -156,9 +161,9 @@ function appendLedger(dir: string, line: string, env: Record<string, string | un
     if (!line) return false;
     const ledger = findLedger(dir, env.AGENTS_LEDGER);
     if (!ledger || !isRegular(ledger)) return false;
-    const last = readFileSync(ledger, "utf8").trimEnd().split("\n").pop();
+    const last = untimed(readFileSync(ledger, "utf8").trimEnd().split("\n").pop() ?? "");
     if (last === line) return false;
-    appendFileSync(ledger, line + "\n");
+    appendFileSync(ledger, `${nowStamp()} ${line}\n`);
     return true;
   } catch {
     return false;

@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { execFileSync } from 'child_process';
-import { BRANCHES_BOUND, BRANCHES_UNBOUND, LOOP_LEDGERS_FOREIGN_BRANCH, LOOP_LEDGERS_LIVE, LOOP_LEDGERS_STALE, MARKERS_MALFORMED, gitCleanEnv } from './ledger-test-helpers';
+import { readLedger, BRANCHES_BOUND, BRANCHES_UNBOUND, LOOP_LEDGERS_FOREIGN_BRANCH, LOOP_LEDGERS_LIVE, LOOP_LEDGERS_STALE, MARKERS_MALFORMED, gitCleanEnv } from './ledger-test-helpers';
 
 const PLUGIN = path.resolve(__dirname, '../../../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts');
 
@@ -84,21 +84,39 @@ describe('opencode plugin apm-hub-hooks', () => {
       withLedger();
       const h = await load();
       await h['tool.execute.after'](...task('implementer', result('Status: DONE\nmore')));
-      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent implementer: stopped — Status: DONE\n');
+      expect(readLedger(ledger)).toBe('# ledger\nSubagent implementer: stopped — Status: DONE\n');
+    });
+
+    it('prefixes the line with an ISO-8601 UTC timestamp (same format as the shell hook)', async () => {
+      withLedger();
+      const h = await load();
+      const before = Date.now();
+      await h['tool.execute.after'](...task('implementer', result('Status: DONE')));
+      const lines = fs.readFileSync(ledger, 'utf8').trimEnd().split('\n');
+      expect(lines[1]).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z Subagent implementer: stopped — Status: DONE$/);
+      expect(Math.abs(Date.parse(lines[1].slice(0, 20)) - before)).toBeLessThan(10_000);
+    });
+
+    it('skips an identical last line whether or not it carries a timestamp', async () => {
+      withLedger();
+      fs.appendFileSync(ledger, '2026-10-21T15:19:46Z Subagent reviewer: stopped — APPROVE\n');
+      const h = await load();
+      await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
+      expect(fs.readFileSync(ledger, 'utf8').trimEnd().split('\n')).toHaveLength(2);
     });
 
     it('truncates the summary to 120 characters', async () => {
       withLedger();
       const h = await load();
       await h['tool.execute.after'](...task('explorer', result('x'.repeat(300))));
-      expect(fs.readFileSync(ledger, 'utf8').split('\n')[1]).toBe(`Subagent explorer: stopped — ${'x'.repeat(120)}`);
+      expect(readLedger(ledger).split('\n')[1]).toBe(`Subagent explorer: stopped — ${'x'.repeat(120)}`);
     });
 
     it('writes the bare line without a result', async () => {
       withLedger();
       const h = await load();
       await h['tool.execute.after'](...task('planner', ''));
-      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent planner: stopped\n');
+      expect(readLedger(ledger)).toBe('# ledger\nSubagent planner: stopped\n');
     });
 
     it('uses the newest ledger', async () => {
@@ -107,8 +125,8 @@ describe('opencode plugin apm-hub-hooks', () => {
       const fresh = withLedger('2');
       const h = await load();
       await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
-      expect(fs.readFileSync(old, 'utf8')).toBe('# ledger\n');
-      expect(fs.readFileSync(fresh, 'utf8')).toContain('Subagent reviewer: stopped — APPROVE');
+      expect(readLedger(old)).toBe('# ledger\n');
+      expect(readLedger(fresh)).toContain('Subagent reviewer: stopped — APPROVE');
     });
 
     it('ignores a newer loop-<nr> ledger and writes to the newest PBI ledger', async () => {
@@ -117,22 +135,22 @@ describe('opencode plugin apm-hub-hooks', () => {
       const loop = withLedger('loop-7');
       const h = await load();
       await h['tool.execute.after'](...task('issue-reader', result('ok')));
-      expect(fs.readFileSync(pbi, 'utf8')).toContain('Subagent issue-reader: stopped — ok');
-      expect(fs.readFileSync(loop, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(pbi)).toContain('Subagent issue-reader: stopped — ok');
+      expect(readLedger(loop)).toBe('# ledger\n');
     });
 
     it('is a no-op when only loop ledgers exist', async () => {
       const loop = withLedger('loop-7');
       const h = await load();
       await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
-      expect(fs.readFileSync(loop, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(loop)).toBe('# ledger\n');
     });
 
     it('treats a non-numeric loop-x directory as a PBI ledger', async () => {
       const odd = withLedger('loop-x');
       const h = await load();
       await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
-      expect(fs.readFileSync(odd, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — APPROVE\n');
+      expect(readLedger(odd)).toBe('# ledger\nSubagent reviewer: stopped — APPROVE\n');
     });
 
     it('honours an AGENTS_LEDGER override pointing at a loop ledger', async () => {
@@ -141,8 +159,8 @@ describe('opencode plugin apm-hub-hooks', () => {
       process.env.AGENTS_LEDGER = loop;
       const h = await load();
       await h['tool.execute.after'](...task('reviewer', result('ok')));
-      expect(fs.readFileSync(loop, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
-      expect(fs.readFileSync(pbi, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(loop)).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(readLedger(pbi)).toBe('# ledger\n');
     });
 
     it('honours AGENTS_LEDGER', async () => {
@@ -152,8 +170,8 @@ describe('opencode plugin apm-hub-hooks', () => {
       process.env.AGENTS_LEDGER = other;
       const h = await load();
       await h['tool.execute.after'](...task('reviewer', result('ok')));
-      expect(fs.readFileSync(other, 'utf8')).toBe('Subagent reviewer: stopped — ok\n');
-      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(other)).toBe('Subagent reviewer: stopped — ok\n');
+      expect(readLedger(ledger)).toBe('# ledger\n');
     });
 
     it('skips the orchestrator in any case or namespace', async () => {
@@ -162,14 +180,14 @@ describe('opencode plugin apm-hub-hooks', () => {
       for (const n of ['orchestrator', 'Orchestrator', 'apm-hub:orchestrator', 'agents/orchestrator']) {
         await h['tool.execute.after'](...task(n, result('x')));
       }
-      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(ledger)).toBe('# ledger\n');
     });
 
     it('ignores other tools', async () => {
       withLedger();
       const h = await load();
       await h['tool.execute.after']({ tool: 'bash', args: { subagent_type: 'x' } }, { output: 'y' });
-      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(ledger)).toBe('# ledger\n');
     });
 
     it('skips an identical last line', async () => {
@@ -177,7 +195,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       const h = await load();
       await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
       await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
-      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — APPROVE\n');
+      expect(readLedger(ledger)).toBe('# ledger\nSubagent reviewer: stopped — APPROVE\n');
     });
 
     it('is a no-op without a ledger', async () => {
@@ -194,7 +212,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       const fits = 'a'.repeat(55) + ':reviewer'; // exactly 64
       await h['tool.execute.after'](...task('a'.repeat(56) + ':reviewer', result('ok'))); // 65: cut to ":reviewe"
       await h['tool.execute.after'](...task(fits, result('ok')));
-      const lines = fs.readFileSync(ledger, 'utf8').split('\n');
+      const lines = readLedger(ledger).split('\n');
       expect(lines).toEqual(['# ledger', 'Subagent evil-forgedlinex:reviewer: stopped — ok', `Subagent ${fits}: stopped — ok`, '']);
     });
 
@@ -202,14 +220,14 @@ describe('opencode plugin apm-hub-hooks', () => {
       withLedger();
       const h = await load();
       await h['tool.execute.after'](...task('explorer', result('a\x00b\x1bc\x7fd\u2028e')));
-      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent explorer: stopped — a b c d e\n');
+      expect(readLedger(ledger)).toBe('# ledger\nSubagent explorer: stopped — a b c d e\n');
     });
 
     it('skips task_id header lines when there is no task_result wrapper', async () => {
       withLedger();
       const h = await load();
       await h['tool.execute.after'](...task('explorer', 'task_id: ses_abc\n\nStatus: DONE'));
-      expect(fs.readFileSync(ledger, 'utf8')).toBe('# ledger\nSubagent explorer: stopped — Status: DONE\n');
+      expect(readLedger(ledger)).toBe('# ledger\nSubagent explorer: stopped — Status: DONE\n');
     });
 
     it('does not write through a symlinked progress.md', async () => {
@@ -220,13 +238,13 @@ describe('opencode plugin apm-hub-hooks', () => {
       fs.symlinkSync(target, link);
       const h = await load();
       await expect(h['tool.execute.after'](...task('reviewer', result('APPROVE')))).resolves.toBeUndefined();
-      expect(fs.readFileSync(target, 'utf8')).toBe('secret\n');
+      expect(readLedger(target)).toBe('secret\n');
       expect(fs.readdirSync(path.join(dir, '.agents', '7'))).toEqual(['progress.md']);
       // control: the same call writes once the link is a regular file, so the symlink is the reason for the refusal
       fs.rmSync(link);
       fs.writeFileSync(link, '# ledger\n');
       await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
-      expect(fs.readFileSync(link, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — APPROVE\n');
+      expect(readLedger(link)).toBe('# ledger\nSubagent reviewer: stopped — APPROVE\n');
     });
 
     it('does not write through a symlinked AGENTS_LEDGER', async () => {
@@ -237,7 +255,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       process.env.AGENTS_LEDGER = link;
       const h = await load();
       await h['tool.execute.after'](...task('reviewer', result('APPROVE')));
-      expect(fs.readFileSync(target, 'utf8')).toBe('secret\n');
+      expect(readLedger(target)).toBe('secret\n');
     });
 
     it('never throws on malformed input', async () => {
@@ -268,7 +286,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       const head = execFileSync('git', ['-C', dir, 'rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8' }).trim();
       expect(head).toBe(branch);
     };
-    const read = (issue: string) => fs.readFileSync(path.join(dir, '.agents', issue, 'progress.md'), 'utf8');
+    const read = (issue: string) => readLedger(path.join(dir, '.agents', issue, 'progress.md'));
     const run = async (name: unknown) => (await load())['tool.execute.after'](...task(name, result('ok')));
 
     it.each(['issue-reader', 'explorer', 'planner', 'reviewer', 'review-lead', 'implementer', 'pr-writer', 'pbi-runner'])(
@@ -377,7 +395,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       fs.writeFileSync(path.join(real, '12', 'progress.md'), 'secret\n');
       fs.symlinkSync(real, path.join(dir, '.agents'));
       await expect(run('reviewer')).resolves.toBeUndefined();
-      expect(fs.readFileSync(path.join(real, '12', 'progress.md'), 'utf8')).toBe('secret\n');
+      expect(readLedger(path.join(real, '12', 'progress.md'))).toBe('secret\n');
       expect(fs.readdirSync(path.join(real, '12'))).toEqual(['progress.md']);
       // control: the same tree as a real directory is written, so the symlink is the reason for the refusal
       fs.rmSync(path.join(dir, '.agents'));
@@ -408,7 +426,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       fs.symlinkSync(real, path.join(dir, '.agents', '12'));
       withLedger('99'); // newer fallback candidate: a refusal must not fall back to it
       await expect(run('reviewer')).resolves.toBeUndefined();
-      expect(fs.readFileSync(path.join(real, 'progress.md'), 'utf8')).toBe('secret\n');
+      expect(readLedger(path.join(real, 'progress.md'))).toBe('secret\n');
       expect(fs.readdirSync(real)).toEqual(['progress.md']);
       expect(read('99')).toBe('# ledger\n');
       // control: the same ledger in a real directory is written
@@ -503,7 +521,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       const mod = await import(/* @vite-ignore */ PLUGIN);
       const h: Hooks = await mod.ApmHubHooks({ directory: sub });
       await h['tool.execute.after'](...task('reviewer', result('ok')));
-      expect(fs.readFileSync(l3, 'utf8')).toBe('# 3\n');
+      expect(readLedger(l3)).toBe('# 3\n');
     });
 
     it('writes nothing when real git cannot read the repository (corrupt HEAD)', async () => {
@@ -534,7 +552,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       fs.writeFileSync(path.join(bin, 'git'), `#!/bin/sh\nprintf '%s ' "$@" >> '${log}'\nexec '${realGit}' "$@"\n`, { mode: 0o755 });
       process.env.PATH = `${bin}${path.delimiter}${process.env.PATH ?? ''}`;
       await run('reviewer');
-      expect(fs.readFileSync(log, 'utf8')).toContain('-c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse');
+      expect(readLedger(log)).toContain('-c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse');
       expect(read('12')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
     });
 
@@ -545,7 +563,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       fs.writeFileSync(other, '');
       process.env.AGENTS_LEDGER = other;
       await run('reviewer');
-      expect(fs.readFileSync(other, 'utf8')).toBe('Subagent reviewer: stopped — ok\n');
+      expect(readLedger(other)).toBe('Subagent reviewer: stopped — ok\n');
       expect(read('12')).toBe('# ledger\n');
     });
   });
@@ -577,7 +595,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       repo('feat/7-x');
       const f = seed(common(), '7');
       await stop();
-      expect(fs.readFileSync(f, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(readLedger(f)).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
       expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
     });
 
@@ -585,7 +603,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       repo('feat/7-x');
       const old = withLedger('7');
       await stop();
-      expect(fs.readFileSync(old, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(old)).toBe('# ledger\n');
     });
 
     it('from a worktree appends to the main repository state dir', async () => {
@@ -594,7 +612,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       const wt = path.join(dir, 'wt');
       git(dir, 'worktree', 'add', '-q', '-b', 'feat/7-x', wt);
       await stop(wt);
-      expect(fs.readFileSync(f, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(readLedger(f)).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
       expect(fs.existsSync(path.join(wt, '.agents'))).toBe(false);
     });
 
@@ -604,7 +622,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       const sub = path.join(dir, 'src', 'deep');
       fs.mkdirSync(sub, { recursive: true });
       await stop(sub);
-      expect(fs.readFileSync(f, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(readLedger(f)).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
     });
 
     it('binds a live loop marker in the state dir', async () => {
@@ -614,7 +632,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       seed(common(), 'loop-5');
       fs.writeFileSync(path.join(base, 'current'), '9 loop-5\n');
       await stop();
-      expect(fs.readFileSync(own, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(own)).toBe('# ledger\n');
     });
 
     it('falls back to the newest ledger when the branch has no number', async () => {
@@ -623,13 +641,13 @@ describe('opencode plugin apm-hub-hooks', () => {
       const f = seed(common(), '4');
       fs.utimesSync(path.join(common(), 'agents', '3', 'progress.md'), new Date(2020, 1, 1), new Date(2020, 1, 1));
       await stop();
-      expect(fs.readFileSync(f, 'utf8')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      expect(readLedger(f)).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
     });
 
     it('writes nothing without a repository and without override', async () => {
       const f = withLedger('7');
       await stop();
-      expect(fs.readFileSync(f, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(f)).toBe('# ledger\n');
     });
 
     it('DROMOS_STATE_DIR wins over the git common dir', async () => {
@@ -641,8 +659,8 @@ describe('opencode plugin apm-hub-hooks', () => {
       fs.writeFileSync(f, '# alt\n');
       process.env.DROMOS_STATE_DIR = alt;
       await stop();
-      expect(fs.readFileSync(f, 'utf8')).toBe('# alt\nSubagent reviewer: stopped — ok\n');
-      expect(fs.readFileSync(gitLedger, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(f)).toBe('# alt\nSubagent reviewer: stopped — ok\n');
+      expect(readLedger(gitLedger)).toBe('# ledger\n');
     });
 
     it('resolves a relative DROMOS_STATE_DIR against the project directory', async () => {
@@ -652,7 +670,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       repo('feat/7-x');
       process.env.DROMOS_STATE_DIR = 'rel';
       await stop();
-      expect(fs.readFileSync(f, 'utf8')).toBe('# rel\nSubagent reviewer: stopped — ok\n');
+      expect(readLedger(f)).toBe('# rel\nSubagent reviewer: stopped — ok\n');
     });
 
     it('AGENTS_LEDGER wins over both', async () => {
@@ -662,8 +680,8 @@ describe('opencode plugin apm-hub-hooks', () => {
       fs.writeFileSync(other, '');
       process.env.AGENTS_LEDGER = other;
       await stop();
-      expect(fs.readFileSync(other, 'utf8')).toBe('Subagent reviewer: stopped — ok\n');
-      expect(fs.readFileSync(gitLedger, 'utf8')).toBe('# ledger\n');
+      expect(readLedger(other)).toBe('Subagent reviewer: stopped — ok\n');
+      expect(readLedger(gitLedger)).toBe('# ledger\n');
     });
 
     it('writes nothing through a symlinked state dir', async () => {
@@ -674,7 +692,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       fs.writeFileSync(f, '# real\n');
       fs.symlinkSync(real, path.join(common(), 'agents'));
       await stop();
-      expect(fs.readFileSync(f, 'utf8')).toBe('# real\n');
+      expect(readLedger(f)).toBe('# real\n');
     });
   });
 
@@ -692,7 +710,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       if (mtime) fs.utimesSync(f, mtime, mtime);
       return f;
     };
-    const read = (f: string) => fs.readFileSync(f, 'utf8');
+    const read = (f: string) => readLedger(f);
     const marker = (content = '9 loop-5\n') => fs.writeFileSync(path.join(dir, '.agents', 'current'), content);
     const stop = async (name = 'issue-reader') => (await load())['tool.execute.after'](...task(name, result('ok')));
     const OLD = new Date(2020, 1, 1);
@@ -806,7 +824,7 @@ describe('opencode plugin apm-hub-hooks', () => {
       await stop();
       expect(read(l7)).toBe(`# 7\n${LINE}`);
       expect(read(l9)).toBe('# 9\n');
-      expect(read(lp)).toBe(l);
+      expect(fs.readFileSync(lp, 'utf8')).toBe(l);
     });
 
     it.each(LOOP_LEDGERS_LIVE.map((l) => [JSON.stringify(l), l]))('honours the marker while the loop ledger is %s', async (_, l) => {

@@ -10,7 +10,7 @@ Retrospective on a finished run. You improve the agent **environment** (steering
 
 ## Input
 
-Issue number (`retro 197`), session id, or nothing = the newest ledger `<state>/<issue>/progress.md`. Ledger lines used: `Ruling:`, `Fix round`, `Gate:`, `Subagent <role>: stopped`.
+Issue number (`retro 197`), session id, or nothing = the newest ledger `<state>/<issue>/progress.md`. Ledger lines used: `Ruling:`, `Fix round`, `Gate:`, `Subagent <role>: stopped`, `Phase <name>: complete`, `Task #<nr>:`. Each may start with an ISO-8601 UTC timestamp (`2026-10-21T15:19:46Z `); older ledgers have none.
 
 ## Steps
 
@@ -24,6 +24,7 @@ pwsh scripts/Get-RunMetrics.ps1 -Transcript <session>.jsonl -Ledger <state>/197/
 ```
 
    The script dedupes usage by `message.id`, reads `<session>/subagents/*.meta.json` and prints JSON. Copilot or OpenCode sessions: use the ledger lines and say that cost and context are not measured.
+   **Durations.** `durations` in the JSON (seconds; `null` = no timestamp): `total`, `phases` (read, explore, plan, implement, verify, review, pr), `tasks[]` and `fixRounds[]`. Show a table of phase, seconds and share of `total`, then name the longest phase (and the longest Task and fix round) in one line: that is where the wall-clock time goes. Ledger without timestamps: say that no durations exist, do not estimate them.
 2. **Read primary sources.** The ledger, `task-<n>-report.md` files, the review findings and the relevant transcript turns. Search only for what a metric flags (a peak, a costly role, a ruling); do not read whole transcripts.
 3. **Find candidates** in the categories of `references/categories.md`. Each needs evidence (ledger line, turn, metric). Drop candidates without evidence.
 4. **Report**, at most 40 lines: a metrics table, then candidates ranked by severity (cost or rework caused), one line each: category, evidence, proposed change.

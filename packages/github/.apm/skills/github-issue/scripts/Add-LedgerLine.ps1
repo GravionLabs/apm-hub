@@ -4,6 +4,8 @@
 .SYNOPSIS
   Creates <state directory>/<issue>/ and appends one line to its progress.md (the orchestrator ledger); binds or unbinds the loop marker.
 .DESCRIPTION
+  Every appended line gets an ISO-8601 UTC prefix: '2026-10-21T15:19:46Z <text>' (the hooks write the same format; readers accept lines
+  with and without it, so older ledgers stay valid; a -Line that already starts with the prefix is not prefixed twice).
   The only shell command the orchestrator is allowed to use for ledger writes on OpenCode: the agent permission
   map cannot restrict a shell redirect target, so the path is validated here. -Issue must be a positive integer,
   'adhoc' or 'loop-<nr>' (the loop ledger); the resolved path must stay under the state directory (DROMOS_STATE_DIR, else <git common dir>/agents, shared by all worktrees; outside a repository without it the script fails) and a symlinked state directory, issue directory or progress.md is refused. Without -Line only the directory is created.
@@ -37,6 +39,12 @@ function Resolve-StateDir {
 }
 # END Resolve-StateDir
 $base = Resolve-StateDir
+# BEGIN Add-Timestamp (same prefix as subagent-ledger.sh and apm-hub-hooks.ts)
+function Add-Timestamp([string]$Text) {
+  if ($Text -match '\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z ') { return $Text }
+  "$([DateTime]::UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", [cultureinfo]::InvariantCulture)) $Text"
+}
+# END Add-Timestamp
 $marker = Join-Path $base 'current'
 if ($Unbind) {
   if ($PSBoundParameters.Keys | Where-Object { $_ -in 'Issue', 'Line', 'Bind' }) { throw 'Invalid -Unbind: use it alone.' }
@@ -71,10 +79,10 @@ New-Item -ItemType Directory -Path $dir -Force | Out-Null
 $file = Join-Path $dir 'progress.md'
 # A symlinked progress.md is refused as well (it could point outside the project).
 if ((Test-Path -LiteralPath $file) -and (Get-Item -LiteralPath $file -Force).LinkTarget) { throw "Refusing symlinked path: $file" }
-if ($PSBoundParameters.ContainsKey('Line')) { Add-Content -LiteralPath $file -Value $Line -Encoding utf8 }
+if ($PSBoundParameters.ContainsKey('Line')) { Add-Content -LiteralPath $file -Value (Add-Timestamp $Line) -Encoding utf8 }
 if ($binding) {
   # the start line first: a marker is live only while the last 'Loop: ' line is not 'Loop: stopped'
-  Add-Content -LiteralPath $loopFile -Value "Loop: PBI #$Issue started" -Encoding utf8
+  Add-Content -LiteralPath $loopFile -Value (Add-Timestamp "Loop: PBI #$Issue started") -Encoding utf8
   # third field: the issue number of the branch this runs on (the hooks do not treat that branch as foreign)
   $origin = ''
   try {

@@ -469,4 +469,104 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       expect(json.tasks.map((t: { reviewRounds: number }) => t.reviewRounds)).toEqual([2, 2]);
     });
   });
+
+  describe('durations from ledger timestamps', () => {
+    const metrics = (lines: string[]) => {
+      const t = path.join(dir, 't.jsonl');
+      fs.writeFileSync(t, '');
+      const l = path.join(dir, 'dur.md');
+      fs.writeFileSync(l, lines.join('\n') + '\n');
+      return run(['-Transcript', t, '-Ledger', l]).json;
+    };
+
+    const FIXTURE = [
+      '2026-10-21T10:00:00Z # orchestrator ledger — issue #1 — branch feat/1-x',
+      '2026-10-21T10:00:10Z Phase read: complete — n/a',
+      '2026-10-21T10:00:40Z Phase explore: complete — n/a',
+      '2026-10-21T10:01:10Z Phase Plan: complete — plan.json',
+      '2026-10-21T10:05:10Z Task #11: DONE — abc1234 — model sonnet',
+      '2026-10-21T10:05:11Z Subagent implementer: stopped — ok',
+      '2026-10-21T10:06:10Z Fix round 1 (#11): 1 fixed — model sonnet',
+      '2026-10-21T10:08:10Z Task #12: DONE — def5678 — model sonnet',
+      '2026-10-21T10:09:00Z Phase implement: complete — abc1234',
+      '2026-10-21T10:09:30Z Phase verify: complete — n/a',
+      '2026-10-21T10:11:30Z Phase review: complete — n/a',
+      '2026-10-21T10:11:50Z Fix round 2 (#12): 1 fixed — model sonnet',
+      '2026-10-21T10:12:50Z Phase Pull request: complete — https://example.com/o/r/pull/3',
+    ];
+
+    it('computes total, phases, tasks and fix rounds from consecutive timestamps', () => {
+      const d = metrics(FIXTURE).durations;
+      expect(d.total).toBe(770);
+      expect(d.phases).toEqual({ read: 10, explore: 30, plan: 30, implement: 470, verify: 30, review: 120, pr: 80 });
+      // a Task ends at its line and starts at the previous Phase-complete, Task or Fix round line
+      expect(d.tasks).toEqual([
+        { task: 11, seconds: 240 },
+        { task: 12, seconds: 120 },
+      ]);
+      expect(d.fixRounds).toEqual([
+        { round: 1, task: 11, seconds: 60 },
+        { round: 2, task: 12, seconds: 20 },
+      ]);
+    });
+
+    it('accepts lines with and without the prefix; untimed spans and absent phases are null', () => {
+      const d = metrics([
+        '# orchestrator ledger',
+        'Phase read: complete — n/a',
+        '2026-10-21T10:00:00Z Phase plan: complete — plan.json',
+        '2026-10-21T10:00:30Z Task #1: DONE — abc — model sonnet',
+        'Task #2: DONE — def — model sonnet',
+        '2026-10-21T10:01:00Z Fix round 1 (#2): x',
+      ]).durations;
+      expect(d.total).toBe(60);
+      expect(d.phases.read).toBeNull();
+      expect(d.phases.plan).toBeNull(); // starts at the untimed read line
+      expect(d.phases.pr).toBeNull();
+      expect(d.tasks).toEqual([
+        { task: 1, seconds: 30 },
+        { task: 2, seconds: null },
+      ]);
+      expect(d.fixRounds).toEqual([{ round: 1, task: 2, seconds: null }]);
+    });
+
+    it('reads Phase verify: ok|fail lines with the tests part as the verify phase', () => {
+      const d = metrics([
+        '2026-10-21T10:00:00Z # h',
+        '2026-10-21T10:01:00Z Phase verify: fail — tests 3/5',
+        '2026-10-21T10:01:30Z Fix round 1 (#1): x — model sonnet — tests 5/5',
+        '2026-10-21T10:03:00Z Phase verify: ok — tests 5/5',
+      ]).durations;
+      expect(d.phases.verify).toBe(180);
+    });
+
+    it('still parses the tasks of a prefixed ledger', () => {
+      const json = metrics(FIXTURE);
+      expect(json.tasks.map((t: { task: number; status: string }) => [t.task, t.status])).toEqual([[11, 'DONE'], [12, 'DONE']]);
+      expect(json.fixRounds).toBe(2);
+    });
+
+    it('gives null everywhere for a ledger without timestamps, never an error', () => {
+      const json = metrics(['# ledger', 'Phase read: complete — n/a', 'Task #5: DONE — abc', 'Fix round 1 (#5): x', 'Phase review: complete — n/a']);
+      expect(json.durations.total).toBeNull();
+      expect(Object.values(json.durations.phases).every((v) => v === null)).toBe(true);
+      expect(Object.keys(json.durations.phases)).toEqual(['read', 'explore', 'plan', 'implement', 'verify', 'review', 'pr']);
+      expect(json.durations.tasks).toEqual([{ task: 5, seconds: null }]);
+      expect(json.durations.fixRounds).toEqual([{ round: 1, task: 5, seconds: null }]);
+    });
+
+    it('reports an empty durations block without a ledger', () => {
+      const t = path.join(dir, 't.jsonl');
+      fs.writeFileSync(t, '');
+      const json = run(['-Transcript', t, '-Ledger', path.join(dir, 'missing.md')]).json;
+      expect(json.durations.total).toBeNull();
+      expect(json.durations.tasks).toEqual([]);
+      expect(json.durations.fixRounds).toEqual([]);
+    });
+
+    it('treats a clock going backwards as null', () => {
+      const d = metrics(['2026-10-21T10:10:00Z # h', '2026-10-21T10:05:00Z Phase read: complete — n/a']).durations;
+      expect(d.phases.read).toBeNull();
+    });
+  });
 });

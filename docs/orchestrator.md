@@ -213,13 +213,15 @@ Clearing before implementation is a recommendation, not a gate: a `plan` run alw
 The orchestrator writes `<state>/<issue>/progress.md`, with the first line `# orchestrator ledger — issue #<issue> — branch <branch>`:
 
 ```text
-Phase Plan: complete — plan.json
-Task #201: DONE — 3f2a9c1 — model sonnet
-Fix round 1 (#201): 2 blocking fixed — model sonnet — tests 18/18
-Phase verify: ok — tests 412/412
-Ruling: used sonnet for the docs task — prose only — slower retries
-Phase Pull request: complete — https://github.com/<owner>/<repo>/pull/210
+2026-10-21T15:19:46Z Phase Plan: complete — plan.json
+2026-10-21T15:31:02Z Task #201: DONE — 3f2a9c1 — model sonnet
+2026-10-21T15:36:40Z Fix round 1 (#201): 2 blocking fixed — model sonnet — tests 18/18
+2026-10-21T15:38:05Z Phase verify: ok — tests 412/412
+2026-10-21T15:38:06Z Ruling: used sonnet for the docs task — prose only — slower retries
+2026-10-21T15:40:12Z Phase Pull request: complete — https://github.com/<owner>/<repo>/pull/210
 ```
+
+Every line starts with an ISO-8601 UTC timestamp (written by `Add-LedgerLine.ps1` and the hooks); readers accept lines with and without it, so older ledgers stay valid. The `retro` skill turns the timestamps into durations per phase, Task and fix round.
 
 Started again on the same issue, it resumes at the first phase without `complete`, skips tasks already `DONE` (cross-checked against `git log` for `Refs #<task>`) and says so in one line. After a context compaction it trusts the ledger and git over memory. The `hooks` package appends a line for every finished subagent.
 

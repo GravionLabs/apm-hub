@@ -34,6 +34,9 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     }
     add('skipped', ['12', '13', '-DryRun'], ledger(12, '# orchestrator ledger', 'Ledger complete.'));
     add('notLast', ['12', '-DryRun'], ledger(12, 'Ledger complete.', 'Fix round 1: x'));
+    // timestamp-prefixed lines (Add-LedgerLine.ps1 format) are read like the plain ones
+    add('skippedTs', ['12', '13', '-DryRun'], ledger(12, '2026-10-21T15:19:46Z # orchestrator ledger', '2026-10-21T15:20:46Z Ledger complete.'));
+    add('notLastTs', ['12', '-DryRun'], ledger(12, '2026-10-21T15:19:46Z Ledger complete.', '2026-10-21T15:20:46Z Fix round 1: x'));
     for (const a of [['abc'], ['0'], ['1;rm'], []]) add(`invalid ${JSON.stringify(a)}`, [...a, '-DryRun']);
     add('badLine', ['-IssueFile', 'q.txt', '-DryRun'], file('q.txt', '7\nfoo\n'));
     add('missingFile', ['-IssueFile', 'none.txt', '-DryRun']);
@@ -135,6 +138,16 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       expect(r.stdout).not.toContain('-p "full 12"');
       expect(r.stdout).toContain('-p "full 13"');
       expect(r.stdout).toMatch(/^#12 skipped$/m);
+    });
+
+    it('skips a complete ledger whose lines carry a timestamp prefix', () => {
+      expect(R.skippedTs.stdout).not.toContain('-p "full 12"');
+      expect(R.skippedTs.stdout).toContain('-p "full 13"');
+      expect(R.skippedTs.stdout).toMatch(/^#12 skipped$/m);
+    });
+
+    it('does not skip a timestamped ledger whose last line is not Ledger complete.', () => {
+      expect(R.notLastTs.stdout).toContain('-p "full 12"');
     });
 
     it('does not skip when Ledger complete. is not the last line', () => {
