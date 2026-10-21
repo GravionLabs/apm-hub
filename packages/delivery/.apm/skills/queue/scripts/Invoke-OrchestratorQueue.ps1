@@ -98,7 +98,8 @@ function ConvertTo-IssueNumber([string]$Text, [string]$Where) {
 function Format-Arg([string]$a) { if ($a -match '[\s"''()]' -or $a -eq '') { '"' + ($a -replace '"', '\"') + '"' } else { $a } }
 function Get-LedgerLines([string]$n) {
   $f = Join-Path (Join-Path (Get-StateDir) $n) 'progress.md'
-  if (Test-Path -LiteralPath $f) { @(Get-Content -LiteralPath $f | Where-Object { $_.Trim() }) } else { @() }
+  # the optional ISO-8601 UTC prefix of a ledger line ('2026-10-21T15:19:46Z <text>') is dropped: older ledgers have none
+  if (Test-Path -LiteralPath $f) { @(Get-Content -LiteralPath $f | Where-Object { $_.Trim() } | ForEach-Object { $_ -replace '\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z ', '' }) } else { @() }
 }
 function Test-Complete([string[]]$Lines) { $Lines.Count -gt 0 -and $Lines[-1].Trim() -eq 'Ledger complete.' }
 function Test-NotSymlink([string]$Path) {

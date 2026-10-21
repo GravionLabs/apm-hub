@@ -122,7 +122,7 @@ foreach ($c in $clients) {
     elseif ($out -match $promptRx) { $problems += 'permission prompt in output' }
     if (-not $ledgerText) { $problems += 'no ledger written' }
     elseif (-not $full -and $ledgerText -notmatch [regex]::Escape($header)) { $problems += 'ledger lacks the header line' }
-    elseif ($full -and $ledgerText -notmatch '(?m)^(Gate: .+|Phase \S+: complete — .+)$') { $problems += 'ledger has neither a Gate: line nor a completed phase' }
+    elseif ($full -and $ledgerText -notmatch '(?m)^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z )?(Gate: .+|Phase \S+: complete — .+)$') { $problems += 'ledger has neither a Gate: line nor a completed phase' }
     if ($problems) {
       $failed++; Write-Host "FAIL $c/$st : $($problems -join '; ')"
       $flat = "$out" -replace '\s+', ' '; Write-Host ('  output tail: ' + $flat.Substring([Math]::Max(0, $flat.Length - 400)))

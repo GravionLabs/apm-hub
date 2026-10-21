@@ -1,4 +1,12 @@
+import * as fs from 'fs';
 import * as os from 'os';
+
+/** Optional ISO-8601 UTC prefix of a ledger line (`2026-10-21T15:19:46Z `). */
+export const TS_PREFIX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z /;
+
+/** Reads a file and drops the optional timestamp prefix of every line, so format-agnostic assertions stay readable. */
+export const readLedger = (file: string): string =>
+  fs.readFileSync(file, 'utf8').split('\n').map((l) => l.replace(TS_PREFIX, '')).join('\n');
 
 /** Env without inherited GIT_* (e.g. GIT_DIR when run from a git hook) and without user/system git config. */
 export const gitCleanEnv = (base: NodeJS.ProcessEnv, extra: Record<string, string> = {}): NodeJS.ProcessEnv => {
@@ -54,13 +62,13 @@ export const MARKERS_MALFORMED = [
 
 /** Loop ledger contents for which a marker is stale (the loop stopped) or still live (running or resumed). The live ones
  * record PBI 7 (the branch `fix/7-x` of the scenario) as done, which the foreign-branch guard requires. */
-export const LOOP_LEDGERS_STALE = [
+const LOOP_LEDGERS_STALE_PLAIN = [
   '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\nLoop: stopped — user stop\n',
   '# loop\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\nLoop: PBI #9 done — https://x/pr/9\nLoop: stopped — nothing selectable\n',
   '# loop\r\nLoop: PBI #7 done\r\nLoop: PBI #9 started\r\nLoop: stopped — user stop\r\n',
   '# loop\r\nLoop: PBI #7 done\r\nLoop: PBI #9 started\r\nLoop: stopped\r\n',
 ];
-export const LOOP_LEDGERS_LIVE = [
+const LOOP_LEDGERS_LIVE_PLAIN = [
   '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\n',
   '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: stopped — pbi cap\nLoop: PBI #9 started\n',
   '# loop\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\nSome note mentioning Loop: stopped later\n',
@@ -70,7 +78,7 @@ export const LOOP_LEDGERS_LIVE = [
 ];
 
 /** Loop ledgers that do not record the branch issue 7 as done: on `fix/7-x` the marker for PBI 9 is ignored. */
-export const LOOP_LEDGERS_FOREIGN_BRANCH = [
+const LOOP_LEDGERS_FOREIGN_BRANCH_PLAIN = [
   '# loop\nLoop: PBI #9 started\n',
   '# loop\nLoop: PBI #7 started\nLoop: PBI #9 started\n',
   '# loop\nLoop: PBI #70 done — https://x/pr/70\nLoop: PBI #9 started\n',
@@ -79,3 +87,9 @@ export const LOOP_LEDGERS_FOREIGN_BRANCH = [
   '# loop\nLoop: PBI #7 donezo\nLoop: PBI #9 started\n',
   '# loop\nLoop: PBI #7 done-ish\nLoop: PBI #9 started\n',
 ];
+
+/** Same ledgers with the timestamp prefix on every `Loop: ` line: readers must accept both formats. */
+const stamped = (l: string): string => l.replace(/^Loop: /gm, '2026-10-21T15:19:46Z Loop: ');
+export const LOOP_LEDGERS_STALE = [...LOOP_LEDGERS_STALE_PLAIN, ...LOOP_LEDGERS_STALE_PLAIN.map(stamped)];
+export const LOOP_LEDGERS_LIVE = [...LOOP_LEDGERS_LIVE_PLAIN, ...LOOP_LEDGERS_LIVE_PLAIN.map(stamped)];
+export const LOOP_LEDGERS_FOREIGN_BRANCH = [...LOOP_LEDGERS_FOREIGN_BRANCH_PLAIN, ...LOOP_LEDGERS_FOREIGN_BRANCH_PLAIN.map(stamped)];

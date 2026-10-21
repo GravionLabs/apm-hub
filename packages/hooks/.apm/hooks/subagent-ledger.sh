@@ -14,6 +14,7 @@
 # the same stop fired twice is written once, a resumed agent with a new reply (even the same `GATE review`) again.
 # pbi-runner stops are summarised from the status of its JSON reply (needs jq): `GATE <phase>`, `DONE <pr>`,
 # `BLOCKED`, `FAILED`.
+# Every line gets an ISO-8601 UTC prefix `2026-10-21T15:19:46Z ` (same as Add-LedgerLine.ps1); readers accept lines with and without it.
 # Never blocks: every path exits 0. Writes nothing when no ledger exists.
 
 payload="$(cat 2>/dev/null || true)"
@@ -63,6 +64,8 @@ state_dir() { # state_dir <cwd>: DROMOS_STATE_DIR, else <git common dir>/agents,
 }
 # END state_dir
 
+TS_RE='[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z '
+untimed() { sed -E "s/^$TS_RE//"; } # a ledger line without its optional timestamp prefix
 regular() { [ -f "$1" ] && [ ! -L "$1" ] && [ ! -L "$(dirname "$1")" ]; } # regular file, neither it nor its dir a symlink
 bound_ledger() { # bound_ledger <branch nr>: ledger of the PBI named by the loop marker <state>/current, else nothing
   local m="$state/current" c="" re pbi loop origin loop_ledger last cr=$'\r'
@@ -78,12 +81,12 @@ bound_ledger() { # bound_ledger <branch nr>: ledger of the PBI named by the loop
   # stale guard: the loop ledger exists and its last `Loop: ` line is not a `Loop: stopped` line
   loop_ledger="$state/$loop/progress.md"
   regular "$loop_ledger" || return 0
-  last="$(grep -a '^Loop: ' "$loop_ledger" 2>/dev/null | tail -n 1)"
+  last="$(grep -aE "^($TS_RE)?Loop: " "$loop_ledger" 2>/dev/null | tail -n 1 | untimed)"
   case "$last" in 'Loop: stopped'*) return 0 ;; esac
   # foreign-branch guard: a branch naming another issue wins unless it is the branch -Bind ran on or the loop
   # finished that issue (its previous PBI); a trailing CR (CRLF ledger) is accepted
   if [ -n "$1" ] && [ "$1" != "$pbi" ] && [ "$1" != "$origin" ]; then
-    grep -aEq "^Loop: PBI #$1 done( |$cr?\$)" "$loop_ledger" 2>/dev/null || return 0
+    grep -aEq "^($TS_RE)?Loop: PBI #$1 done( |$cr?\$)" "$loop_ledger" 2>/dev/null || return 0
   fi
   regular "$state/$pbi/progress.md" && printf '%s' "$state/$pbi/progress.md"
 }
@@ -185,8 +188,10 @@ if [ -n "$agent_id" ] && command -v cksum >/dev/null 2>&1 && [ ! -L "$seen" ] &&
   grep -qxF -- "$key" "$seen" 2>/dev/null && exit 0
 else
   # no usable agent_id: Copilot CLI may fire both event casings; skip when the last line is identical
-  [ "$(tail -n 1 "$ledger" 2>/dev/null)" = "$line" ] && exit 0
+  [ "$(tail -n 1 "$ledger" 2>/dev/null | untimed)" = "$line" ] && exit 0
 fi
+ts="$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null)" # no date command: the line is written without the (optional) prefix
+case "$ts" in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]Z) line="$ts $line" ;; esac
 printf '%s\n' "$line" >> "$ledger" 2>/dev/null || true
 [ -n "$key" ] && { printf '%s\n' "$key" >> "$seen" 2>/dev/null || true; }
 exit 0
