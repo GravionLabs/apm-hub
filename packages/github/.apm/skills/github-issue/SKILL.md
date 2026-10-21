@@ -59,6 +59,6 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
 - Branch name `<type>/<nr>-<slug>` per `references/conventional-commits.md`; `<slug>` from the issue title (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
 - One logical change per commit; commit format per `references/conventional-commits.md`.
 - Commit and PR titles reference the issue: `<type>: <description> (#<nr>)`; the PR body contains `Closes #<nr>` for every issue it completes (only partly delivered: `Refs #<nr>` and `## Not delivered`, see `github-pull-request`).
-- Verify before every commit: run build + full test suite (load the `detect-techstack` skill if the project's commands are unknown). Never commit or move on with a red suite.
+- Two-stage verify (load the `detect-techstack` skill if the project's commands are unknown): per Task or commit run the build only when the stack compiles and compiled sources changed, plus targeted tests (test files of the changed paths and their direct neighbours; unknown mapping: the project's fast/unit group, never the full suite). Per PBI ONE full run (Final-Verify) after the last Task and again after the last fix round, before the review and before the PR. Never commit or move on with a red run.
 - Never merge a PR with failing checks.
 - Closing a child is all that's needed — the native sub-issue link updates the parent's progress automatically. There is no checklist to tick. If a child turns out not to be linked to its parent, link it (`references/sub-issues.md`) instead of adding a checklist.
