@@ -104,6 +104,13 @@ describe('statusline.mjs', () => {
     });
   });
 
+  it.each([[0, '32'], [49, '32'], [50, '33'], [79, '33'], [80, '31'], [100, '31']])('colours a %i% rate limit with code %s', (used, code) => {
+    const r = run(STATUS, JSON.stringify({ workspace: { current_dir: tmp }, rate_limits: { five_hour: { used_percentage: used }, seven_day: { used_percentage: used } } }));
+    expect(r.stdout).toContain(`\x1b[${code}m5h:${used}%`);
+    expect(r.stdout).toContain(`\x1b[${code}m7d:${used}%`);
+    expect(r.stdout).not.toContain('\x1b[90m');
+  });
+
   it('shows only the 7d limit when 5h is missing', () => {
     const out = strip(run(STATUS, JSON.stringify({ workspace: { current_dir: tmp }, rate_limits: { seven_day: { used_percentage: 7 } } })).stdout);
     expect(out).toMatch(/ 7d:7%$/);
