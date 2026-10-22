@@ -20,6 +20,7 @@ interface Item {
   level?: string;
   status?: string;
   sprint?: string;
+  blockedBy?: { repo: string; number: number; state: string }[];
 }
 let n = 0;
 const item = (repo: string, o: Partial<Item> = {}): Item => ({ id: `I-${++n}`, repo, number: n, state: 'OPEN', level: 'PBI', status: 'Todo', ...o });
@@ -115,6 +116,46 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
       const a = item('o/a');
       expect(types(run([item('o/a', { sprint: W43 }), a], [ref(a)], '-MaxPerRepo', '1'))).toEqual(['RepoFull']);
       expect(types(run([item('o/a', { sprint: W43 }), a], [ref(a)], '-MaxPerSprint', '1'))).toEqual(['SprintFull']);
+    });
+  });
+
+  // Native blocked-by links; the live run reads them per target, the state file carries them as items[].blockedBy.
+  describe('dependency order', () => {
+    const blockedBy = (...blockers: Item[]) => blockers.map((b) => ({ repo: b.repo, number: b.number, state: b.state }));
+
+    it('refuses a PBI whose open blocker is in no sprint and names the blocker', () => {
+      const blocker = item('o/a');
+      const a = item('o/a', { blockedBy: blockedBy(blocker) });
+      const r = run([blocker, a], [ref(a)]);
+      expect(r.status).toBe(1);
+      expect(types(r)).toEqual(['Blocked']);
+      expect(r.out.violations[0]).toMatchObject({ issue: ref(a), blocker: ref(blocker) });
+      expect(r.out.violations[0].message).toContain('no sprint');
+    });
+
+    it('refuses a blocker planned for a later sprint', () => {
+      const blocker = item('o/a', { sprint: '2026-W44' });
+      const a = item('o/a', { blockedBy: blockedBy(blocker) });
+      const r = run([blocker, a], [ref(a)]);
+      expect(types(r)).toEqual(['Blocked']);
+      expect(r.out.violations[0].message).toContain('sprint 2026-W44');
+    });
+
+    it('allows blockers in the same or an earlier sprint, assigned in the same run, closed, or of another repository', () => {
+      const same = item('o/a', { sprint: W43 });
+      const earlier = item('o/a', { sprint: '2026-W42' });
+      const together = item('o/a');
+      const closed = item('o/a', { state: 'CLOSED' });
+      const foreign = item('o/b', { sprint: W43 });
+      const a = item('o/a', { blockedBy: blockedBy(same, earlier, together, closed, foreign) });
+      const r = run([same, earlier, together, closed, foreign, a], [ref(a), ref(together)]);
+      expect(r.status, r.err).toBe(0);
+      expect(r.out.assign.map((x: any) => x.issue)).toEqual([ref(a), ref(together)]);
+    });
+
+    it('a blocker that is no project item still blocks (REST state is lower case)', () => {
+      const a = item('o/a', { blockedBy: [{ repo: 'o/a', number: 999, state: 'open' }] });
+      expect(types(run([a], [ref(a)]))).toEqual(['Blocked']);
     });
   });
 
