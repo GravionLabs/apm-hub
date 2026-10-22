@@ -11,6 +11,7 @@
 .PARAMETER Issue    Issue number.
 .PARAMETER Mode     plan, implement, full, next or status.
 .PARAMETER FixAdvisories Optional advisory policy (none, medium, all; optionally `:dim,dim`) passed to the orchestrator as `--fix-advisories <policy>` before the mode word.
+.PARAMETER PbiParallel Optional 1-4, passed as `--pbi-parallel <m>` before the mode word (after `--fix-advisories`).
 .PARAMETER AllowAll Auto-approve permissions.
 .OUTPUTS PSCustomObject with Executable, Arguments and Environment (hashtable, may be empty).
 #>
@@ -19,10 +20,11 @@ param(
   [Parameter(Mandatory)][ValidatePattern('\A[1-9][0-9]{0,9}\z')][string]$Issue,
   [ValidateSet('plan', 'implement', 'full', 'next', 'status')][string]$Mode = 'full',
   [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
+  [ValidateRange(1, 4)][int]$PbiParallel,
   [switch]$AllowAll
 )
 $ErrorActionPreference = 'Stop'
-$prompt = ($FixAdvisories ? "--fix-advisories $FixAdvisories " : '') + "$Mode $Issue"
+$prompt = ($FixAdvisories ? "--fix-advisories $FixAdvisories " : '') + ($PbiParallel ? "--pbi-parallel $PbiParallel " : '') + "$Mode $Issue"
 $cliArgs = @('run', '--agent', 'orchestrator')
 $envVars = @{}
 if ($AllowAll) { $cliArgs += '--auto' }

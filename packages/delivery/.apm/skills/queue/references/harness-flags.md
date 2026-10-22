@@ -19,6 +19,8 @@ build tools run arbitrary code.
 
 `-FixAdvisories <policy>` (`none|medium|all[:dim,dim]`, only when given) is spliced into the same prompt string as its own token before the mode word: `-p "--fix-advisories medium full 101"` (claude, copilot) and the `opencode run` message; in `-Feature`/`-Epic` runs it precedes `next`. Without it the command is unchanged. CRITICAL and HIGH findings always block; the policy only decides which advisories (MEDIUM, LOW) join the fix round.
 
+`-PbiParallel <m>` (1-4, only with `-Feature`/`-Epic`, only when given) is spliced the same way after `--fix-advisories`: `-p "--fix-advisories medium --pbi-parallel 2 next 10"`. The queue itself runs `next`, one PBI per process; the orchestrator reads the flag in `loop` mode (`loop-mode.md` Runner mode) and ignores it otherwise.
+
 Client recognition (checked against `orchestrator.agent.md` and `github-issue/references/orchestrator-gates.md`, not live): the flag handling is in the agent body, so it is the same on Claude Code, Copilot CLI and OpenCode. The orchestrator takes flags as separate unquoted tokens of the first message, in any position, removes them before reading the mode word and takes the next token as the value, so `--fix-advisories medium full 101` is recognized and the review summary is answered without a `Gate:`. The orchestrator accepts only lowercase dimensions (`^(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?$`), the runner pattern is wider: an uppercase dimension passes the runner and then ends in a `Gate:` (exit 2).
 
 ## Trade-offs
