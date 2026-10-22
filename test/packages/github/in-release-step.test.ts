@@ -31,6 +31,7 @@ case "$all" in
     echo "MUTATION $(tr '\\n' ' ' <<<"$all")" >> "$GH_LOG"; echo '{}' ;;
   *projectItems*)
     [ "$FAIL" = items ] && exit 1
+    [ "$FAIL" = scope ] && { echo "gh: Resource not accessible by personal access token" >&2; exit 1; }
     issue=$(grep -oE 'issue=[0-9]+' <<<"$all" | head -1 | cut -d= -f2)
     var="STATUS_$issue"; status="\${!var-__none}"
     opts='[{"id":"o1","name":"Todo"},{"id":"o2","name":"In release"}]'
@@ -131,6 +132,16 @@ describe('In release status step behavior (#489)', () => {
       const r = runStep({ CLOSING: '[11]', STATUS_11: 'Todo', FAIL: fail });
       expect(r.status).toBe(0);
       expect(r.stdout).toMatch(warning);
+    });
+
+    it('a token without scope project warns once, keeps the gh error and stops instead of one warning per issue', () => {
+      const r = runStep({ CLOSING: '[11, 12]', STATUS_11: 'Todo', STATUS_12: 'Todo', FAIL: 'scope' });
+      expect(r.status).toBe(0);
+      expect(r.stdout).toMatch(/::warning::token cannot access the project \(classic PAT with scope project needed; fine-grained tokens cannot access user-owned projects\)/);
+      expect(r.stderr).toMatch(/Resource not accessible by personal access token/);
+      expect(r.stdout).not.toMatch(/cannot read project items/);
+      expect(r.calls.filter((c) => /-F issue=/.test(c))).toHaveLength(1);
+      expect(r.mutations).toEqual([]);
     });
 
     it('closing-reference failure still handles keyword-named issues', () => {
