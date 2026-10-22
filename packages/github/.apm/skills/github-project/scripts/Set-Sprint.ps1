@@ -99,7 +99,7 @@ $StateQuery = @'
 query($login: String!, $n: Int!) { repositoryOwner(login: $login) { ... on ProjectV2Owner { projectV2(number: $n) {
   id
   fields(first: 50) { nodes { __typename
-    ... on ProjectV2IterationField { id name configuration { iterations { id title } completedIterations { id title } } } } } } } }
+    ... on ProjectV2IterationField { id name configuration { iterations { id title } completedIterations { id title } } } } } } } } }
 '@
 $ItemsQuery = @'
 query($id: ID!, $cursor: String) { node(id: $id) { ... on ProjectV2 { items(first: 100, after: $cursor) {
