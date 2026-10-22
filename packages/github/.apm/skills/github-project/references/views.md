@@ -10,6 +10,15 @@ Views are matched by name. `Set-ProjectStandard.ps1` creates missing ones via RE
 | Backlog | table | `is:open -status:"In release" -label:epic,feature` | rows: Parent issue | Title, Level, Status, Labels, Sub-issues progress | Open work not yet merged, grouped by its PBI or Feature. |
 | Recently closed | table | `is:closed` | none (sort by Closed descending in the UI) | Title, Level, Parent issue, Linked pull requests | Audit trail of what was done lately. |
 
+## Sprint views (opt-in `-Sprints`)
+
+Not part of the five, so `-RemoveDefaultViews` ignores them. Field `Sprint` is an iteration field named by ISO week (`2026-W43`).
+
+| View | Layout | Filter | Group | Why |
+|:--|:--|:--|:--|:--|
+| Sprint | board | `sprint:@current -level:Epic,Feature,Task` | columns: Status, rows: Repository | The week at a glance over all repositories: Todo, In release, Done. |
+| Sprint planning | table | `is:open no:sprint -level:Epic,Feature,Task` | rows: Repository | PBIs and Bugs not yet in a sprint; pick from here for `Set-Sprint.ps1`. |
+
 `-RemoveDefaultViews` deletes `View <n>` and `Probe` through GraphQL `deleteProjectV2View`, only when all five views above exist.
 
 ## Why `In release` mirrors `merged`

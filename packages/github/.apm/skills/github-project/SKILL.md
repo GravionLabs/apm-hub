@@ -19,6 +19,8 @@ One reproducible project standard for all GravionLabs repos. Paths are relative 
 | `apply <project-nr>` | Status gets `In release` before `Done`; field `Level`; the five standard views. |
 | `sync <project-nr>` | `apply` plus label sync (Level, `merged` ⇄ `In release`). |
 | `new <repo>` | Copy the template project, link it to the repo, run `sync`. |
+| `sprints <project-nr>` | `apply` plus the weekly iteration field `Sprint` and the views `Sprint` and `Sprint planning` (opt-in, `-Sprints`). |
+| `sprint <project-nr> <owner/repo#n>...` | Put PBIs of any repository into a sprint and check the limits. |
 
 ## apply / sync
 
@@ -38,6 +40,25 @@ Always run `-DryRun` first, show the actions to the user, then run without it. `
 - A second run reports `No changes.`
 
 Finish by telling the user the printed manual UI steps (no API): "Show hierarchy" in Hierarchy, sort Recently closed by Closed descending, enable the workflow "Item closed → Done".
+
+## sprints
+
+One project for all repositories, one weekly sprint for all of them. Titles are ISO weeks `YYYY-Www` (`2026-W43`; the ISO year, so 2027-01-01 is `2026-W53`). `-Sprints` creates 12 iterations from this week (Monday start, 7 days) and the views `Sprint` (board, `sprint:@current`, no Epic/Feature/Task, rows per repository) and `Sprint planning` (open PBIs without a sprint). An existing field or view is never touched; more iterations are added in the project settings.
+
+```powershell
+pwsh scripts/Set-ProjectStandard.ps1 -Owner <login> -Number <n> -Sprints -DryRun
+pwsh scripts/Set-Sprint.ps1 -Owner <login> -Number <n> -Issue 'org/a#12,org/b#7' [-Sprint 2026-W44] [-DryRun] [-Force]
+```
+
+`Set-Sprint.ps1` is all or nothing (exit 1, nothing assigned) and counts open PBIs and Bugs only:
+
+| Limit | Default | Parameter |
+|:--|:--|:--|
+| per sprint, all repositories | 10 | `-MaxPerSprint` |
+| per sprint and repository | 5 | `-MaxPerRepo` |
+| `In release` per repository, any sprint | 5 | `-MaxInRelease` (full: cut the release first, `github-release`) |
+
+The issues must already be items of the project with Level PBI or Bug (`sync` sets it). `-Force` assigns despite a violation and still reports it.
 
 ## new
 

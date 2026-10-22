@@ -181,6 +181,48 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
     });
   });
 
+  describe('-Sprints', () => {
+    const SPRINT = { id: 'F-Sprint', name: 'Sprint', databaseId: 99, dataType: 'ITERATION' };
+    const sprints = (s: unknown) => plan(s, '-Sprints', '-Today', '2026-10-22');
+
+    it('creates 12 weekly iterations titled by ISO week, starting on this Monday', () => {
+      const [a] = ofType(sprints(state()), 'CreateIterationField');
+      expect(a).toMatchObject({ name: 'Sprint', startDate: '2026-10-19', duration: 7 });
+      expect(a.iterations).toHaveLength(12);
+      expect(a.iterations[0]).toEqual({ title: '2026-W43', startDate: '2026-10-19', duration: 7 });
+      expect(a.iterations[10].title).toBe('2026-W53');
+      expect(a.iterations[11].title).toBe('2027-W01');
+    });
+
+    it('titles by ISO week-year across New Year', () => {
+      const file = path.join(dir, 'ny.json');
+      fs.writeFileSync(file, JSON.stringify({ projectId: 'P', ownerType: 'User', ...state() }));
+      const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-StateFile', file, '-Sprints', '-Today', '2027-01-01', '-Json'], { encoding: 'utf8' });
+      const [a] = ofType(JSON.parse(r.stdout).actions, 'CreateIterationField');
+      expect(a.iterations.slice(0, 2).map((i: any) => i.title)).toEqual(['2026-W53', '2027-W01']);
+    });
+
+    it('adds the Sprint board (by repository, PBIs only) and the planning table, behind the field', () => {
+      const a = sprints(state());
+      const creates = ofType(a, 'CreateView');
+      expect(creates.map((c) => c.name)).toEqual(['Sprint', 'Sprint planning']);
+      expect(creates[0]).toMatchObject({ layout: 'board', filter: 'sprint:@current -level:Epic,Feature,Task', groupBy: 'Repository', verticalGroupBy: 'Status' });
+      expect(creates[1]).toMatchObject({ layout: 'table', filter: 'is:open no:sprint -level:Epic,Feature,Task', groupBy: 'Repository' });
+      expect(a.findIndex((x) => x.type === 'CreateIterationField')).toBeLessThan(a.findIndex((x) => x.type === 'CreateView'));
+    });
+
+    it('is idempotent and leaves an existing Sprint field and views alone', () => {
+      const views = [...STANDARD_VIEWS, { id: 'V-s', name: 'Sprint' }, { id: 'V-p', name: 'Sprint planning' }];
+      expect(sprints(state({ status: [opt('Todo'), opt('In release'), opt('Done')], fields: [SPRINT], views }))).toEqual([]);
+    });
+
+    it('adds nothing without the flag', () => {
+      const a = plan(state());
+      expect(ofType(a, 'CreateIterationField')).toHaveLength(0);
+      expect(ofType(a, 'CreateView').map((c) => c.name)).not.toContain('Sprint');
+    });
+  });
+
   it('is idempotent: a standard state yields no actions', () => {
     const items = [
       item(1, { labels: ['pbi'], status: 'Todo', level: 'PBI' }),
