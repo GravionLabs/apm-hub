@@ -8,7 +8,7 @@ import { hostname, userInfo } from 'node:os';
 
 const c = (code, s) => `\x1b[${code}m${s}\x1b[00m`;
 const pct = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
-const tok = (n) => (n >= 1e6 ? `${Math.floor((n + 5e4) / 1e5) / 10}M`.replace('.0M', 'M') : `${Math.floor((n + 500) / 1000)}k`);
+const tok = (n) => (n >= 999500 ? `${Math.floor((n + 5e4) / 1e5) / 10}M`.replace('.0M', 'M') : `${Math.floor((n + 500) / 1000)}k`);
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
 // Tokens in the context: sum of current_usage input fields (matches the percentage), else derived from pct * size.
 function usedTokens(cw, ctx, size) {

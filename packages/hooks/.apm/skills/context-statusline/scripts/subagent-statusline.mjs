@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 
 const E = '\x1b';
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
-const tok = (n) => (n >= 1e6 ? `${Math.floor((n + 5e4) / 1e5) / 10}M`.replace('.0M', 'M') : `${Math.floor((n + 500) / 1000)}k`);
+const tok = (n) => (n >= 999500 ? `${Math.floor((n + 5e4) / 1e5) / 10}M`.replace('.0M', 'M') : `${Math.floor((n + 500) / 1000)}k`);
 const str = (v) => (typeof v === 'string' ? v : '');
 
 function row(t) {

@@ -62,6 +62,23 @@ describe('statusline.mjs', () => {
       expect(out).toContain('ctx:42% (84k/200k)');
     });
 
+    it('uses the sum of current_usage, not the percentage', () => {
+      const cu = { input_tokens: 4000, cache_creation_input_tokens: 20000, cache_read_input_tokens: 30000 };
+      expect(ctxOf({ used_percentage: 42, context_window_size: 200000, current_usage: cu })).toContain('ctx:42% (54k/200k)');
+    });
+
+    it('sums a partial current_usage', () => {
+      expect(ctxOf({ used_percentage: 42, context_window_size: 200000, current_usage: { input_tokens: 10000 } })).toContain('(10k/200k)');
+    });
+
+    it.each([{}, { input_tokens: 'x' }, 'str', 5])('falls back to pct * size for current_usage %j', (cu) => {
+      expect(ctxOf({ used_percentage: 25, context_window_size: 200000, current_usage: cu })).toContain('ctx:25% (50k/200k)');
+    });
+
+    it.each([[999499, '999k'], [999500, '1M'], [1500000, '1.5M']])('formats %i tokens as %s', (n, want) => {
+      expect(ctxOf({ used_percentage: 100, context_window_size: n })).toContain(`/${want})`);
+    });
+
     it('derives used tokens from the percentage without current_usage', () => {
       expect(ctxOf({ used_percentage: 25, context_window_size: 200000 })).toContain('ctx:25% (50k/200k)');
       expect(ctxOf({ used_percentage: 25, context_window_size: 200000, current_usage: null })).toContain('ctx:25% (50k/200k)');
@@ -133,6 +150,11 @@ describe('subagent-statusline.mjs', () => {
       const [row] = rows(run(SUB, JSON.stringify({ tasks: [task({ tokenCount: tokens, contextWindowSize: 200000 })] })).stdout);
       expect(row.content).toContain(`\x1b[${code}mctx:`);
     });
+
+  it.each([[999499, '999k'], [999500, '1M'], [1500000, '1.5M']])('formats %i tokens as %s', (n, want) => {
+    const [row] = rows(run(SUB, JSON.stringify({ tasks: [task({ tokenCount: n, contextWindowSize: 2000000 })] })).stdout);
+    expect(strip(row.content)).toContain(`(${want}/2M)`);
+  });
 
   it('renders a 1,000,000 window as 1M', () => {
     const [row] = rows(run(SUB, JSON.stringify({ tasks: [task({ tokenCount: 250000, contextWindowSize: 1000000 })] })).stdout);

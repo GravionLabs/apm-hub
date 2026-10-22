@@ -12,8 +12,7 @@ explorer haiku-4-5 ctx:18% (36k/200k) · scan the hooks package               # 
 Subagent rows show `ctx:<pct>% (<k>k/<size>k)` (only `<k>k` without a window size; fields `tokenCount`, `contextWindowSize`). Colours: green below 50 %, yellow below 80 %, red above. The main line shows `ctx:<pct>% (<used>k/<size>k)` (`1M` for a 1,000,000 window); without a window size only `ctx:<pct>%`.
 Used tokens are the sum of `context_window.current_usage` input and cache fields, else derived from percent and size. Fields are
 from the [official statusLine docs](https://code.claude.com/docs/en/statusline) (`context_window.context_window_size`,
-`used_percentage`, `current_usage`), verified 2026-10-22. Without `contextWindowSize` only the token
-count (`36k`) is shown.
+`used_percentage`, `current_usage`), verified 2026-10-22. The subagent fields `tokenCount` and `contextWindowSize` come from the same page.
 
 ## Install
 
