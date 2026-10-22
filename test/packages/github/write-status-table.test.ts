@@ -168,3 +168,62 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1 state directory (#402)', () => 
     expect(r.stderr + r.stdout).toMatch(/symlinked/);
   });
 });
+
+describe.skipIf(!hasPwsh)('Write-StatusTable.ps1 live runners (#468)', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'statustable-lease-'));
+  });
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const state = () => path.join(dir, '.agents');
+  const run = (args: string[], input?: string) => spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { cwd: dir, encoding: 'utf8', input, env: { ...process.env, DROMOS_STATE_DIR: state() } });
+  const lease = (key: string, issue: number, minutesAgo: number) => {
+    fs.mkdirSync(path.join(state(), 'leases'), { recursive: true });
+    const beat = new Date(Date.now() - minutesAgo * 60000).toISOString().replace(/\.\d+Z$/, 'Z');
+    fs.writeFileSync(path.join(state(), 'leases', `${key}.json`), JSON.stringify({ path: `/w/${key}`, issue, branch: `feat/${issue}-x`, host: 'h', started: beat, heartbeat: beat }) + '\n');
+  };
+  const table = '#12 merged First\n#13 open Second\n#14 in progress (Phase plan: complete) Third\n#15 open Fourth\n#16 pr-open #40 Fifth\n#17 blocked by #3 Sixth\nNext PBI: #13 Second\n';
+  const out = () => fs.readFileSync(path.join(state(), 'status-9.md'), 'utf8');
+
+  it('marks open and in-progress rows of a PBI with a live lease as in progress (runner); a stale lease does not count', () => {
+    lease('aaaa', 13, 5);
+    lease('bbbb', 14, 119);
+    lease('cccc', 15, 121);
+    expect(run(['-Issue', '9'], table).status).toBe(0);
+    expect(out()).toBe(
+      '#12 merged First\n#13 in progress (runner) Second\n#14 in progress (runner) Third\n#15 open Fourth\n#16 pr-open #40 Fifth\n#17 blocked by #3 Sixth\nNext PBI: #13 Second\n'
+    );
+  });
+
+  it('keeps merged, pr-open and blocked rows even with a live lease, and never touches the title text', () => {
+    lease('aaaa', 12, 1);
+    lease('bbbb', 16, 1);
+    lease('cccc', 17, 1);
+    const t = table + '#18 open open #13 again\n';
+    expect(run(['-Issue', '9'], t).status).toBe(0);
+    expect(out()).toBe(t);
+  });
+
+  it('leaves the table unchanged with an unreadable lease', () => {
+    fs.mkdirSync(path.join(state(), 'leases'), { recursive: true });
+    fs.writeFileSync(path.join(state(), 'leases', 'bad.json'), '{not json');
+    expect(run(['-Issue', '9'], table).status).toBe(0);
+    expect(out()).toBe(table);
+  });
+
+  it('-Live prints the issues of the live leases only and writes no file', () => {
+    lease('aaaa', 13, 5);
+    lease('bbbb', 14, 300);
+    lease('cccc', 15, 60);
+    const r = run(['-Live']);
+    expect(r.status).toBe(0);
+    expect(r.stdout.split(/\r?\n/).filter(Boolean).sort()).toEqual(['13', '15']);
+    expect(fs.existsSync(path.join(state(), 'status-9.md'))).toBe(false);
+  });
+
+  it('-Live prints nothing without a leases directory', () => {
+    const r = run(['-Live']);
+    expect(r.status).toBe(0);
+    expect(r.stdout.trim()).toBe('');
+  });
+});
