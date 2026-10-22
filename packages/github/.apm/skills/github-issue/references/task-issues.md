@@ -13,6 +13,9 @@ Parent PBI: #<pbi>
 ## Implementation Notes
 <how and where; exact files and symbols>
 
+## Invariants
+<optional: only for async, persistence or state-machine Tasks, written by `issue-planning`>
+
 <!-- agent-ready:start -->
 ## Context
 <what the implementer must know that the PBI does not say>

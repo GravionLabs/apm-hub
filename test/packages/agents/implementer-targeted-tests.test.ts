@@ -26,6 +26,12 @@ describe('targeted test rule for the implementer (#448)', () => {
     expect(section).toMatch(/Never commit red/);
   });
 
+  it('implementation checklist requires a test per Invariants item (#484)', () => {
+    const skill = read('shared/.apm/skills/implementation/SKILL.md');
+    const section = skill.split('## Before commit')[1].split('## ')[0];
+    expect(section).toMatch(/Invariants section.*has a test that exercises it/);
+  });
+
   it.each([
     ['ts/.apm/skills/ts-test/SKILL.md', 'npx vitest run <path>'],
     ['dotnet/.apm/skills/dotnet-test/SKILL.md', 'dotnet test --filter "FullyQualifiedName~<Name>"'],
