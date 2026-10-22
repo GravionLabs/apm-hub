@@ -31,6 +31,69 @@ describe.each(Object.entries(files))('merged-label %s (#358)', (_name, rel) => {
   });
 });
 
+describe.each(Object.entries(files))('In release status step %s (#489)', (_name, rel) => {
+  const wf = parse(fs.readFileSync(path.join(root, rel), 'utf-8'));
+  const all = wf.jobs['release-pr'].steps as { uses?: string; id?: string; name?: string; run?: string; env?: Record<string, string>; 'continue-on-error'?: boolean }[];
+  const idx = all.findIndex((s) => s.id === 'in-release');
+  const step = all[idx];
+
+  it('is a run step after mark-merged-issues', () => {
+    expect(idx).toBeGreaterThan(-1);
+    expect(all[idx - 1].uses).toBe('GravionLabs/ci/versioning/mark-merged-issues@main');
+    expect(step.uses).toBeUndefined();
+    expect(step.name).toBe('Set project status In release');
+  });
+
+  it('never fails the job and reads PROJECT_TOKEN || GH_PAT', () => {
+    expect(step['continue-on-error']).toBe(true);
+    expect(step.env?.GH_TOKEN).toBe('${{ secrets.PROJECT_TOKEN || secrets.GH_PAT }}');
+  });
+
+  it('warns and exits 0 without a token', () => {
+    const run = step.run ?? '';
+    const guard = run.indexOf('[ -z "${GH_TOKEN:-}" ]');
+    expect(guard).toBeGreaterThan(-1);
+    const block = run.slice(guard, run.indexOf('fi', guard));
+    expect(block).toContain('::warning::no token with scope project');
+    expect(block).toContain('exit 0');
+  });
+
+  it('sets the In release option and skips Done and items without a project', () => {
+    const run = step.run ?? '';
+    expect(run).toContain('updateProjectV2ItemFieldValue');
+    expect(run).toContain('select(.name == "In release")');
+    expect(run).toContain('[ "$status" = "Done" ]');
+    expect(run).toContain('has no project item; skipped');
+    expect(run).toContain("has no Status option 'In release'");
+  });
+});
+
+describe('release workflow and template stay identical (#489)', () => {
+  it('are byte-identical', () => {
+    const a = fs.readFileSync(path.join(root, files.workflow));
+    const b = fs.readFileSync(path.join(root, files.template));
+    expect(a.equals(b)).toBe(true);
+  });
+});
+
+describe('In release status docs (#489)', () => {
+  const read = (p: string) => fs.readFileSync(path.join(root, 'packages/github/.apm/skills', p), 'utf-8');
+
+  it('merged-label.md documents PROJECT_TOKEN, scope project and the release/next limit', () => {
+    const doc = read('github-release/references/merged-label.md');
+    expect(doc).toContain('PROJECT_TOKEN');
+    expect(doc).toContain('scope `project`');
+    expect(doc).toContain('release/next');
+    expect(doc).toContain('GravionLabs/ci#55');
+  });
+
+  it('views.md no longer says CI never writes the project', () => {
+    const doc = read('github-project/references/views.md');
+    expect(doc).not.toMatch(/CI never writes/i);
+    expect(doc).toContain('Set project status In release');
+  });
+});
+
 describe('github-release skill (#358)', () => {
   it('cut checks for mark-merged-issues and never adds the template silently', () => {
     const skill = fs.readFileSync(path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'), 'utf-8');
