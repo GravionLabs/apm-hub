@@ -1,6 +1,6 @@
 # Invariants for async and stateful items
 
-Background: both blocking findings on dromos#16 were error-path invariants (state update and side effect not atomic, a failing result handler left the run in an intermediate state). A plan that copies "catch every error" without naming the cases passes them on to the implementer.
+Background: error-path invariants (non-atomic state and side effect, a failing result handler leaving an intermediate state) are what a plan that only says "catch every error" leaves unnamed.
 
 ## Trigger
 

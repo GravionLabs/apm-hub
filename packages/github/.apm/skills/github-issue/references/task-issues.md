@@ -14,7 +14,7 @@ Parent PBI: #<pbi>
 <how and where; exact files and symbols>
 
 ## Invariants
-<optional: only for async, persistence or state-machine Tasks, written by `issue-planning`>
+<optional: only for async, persistence or state-machine Tasks, written by `issue-planning`; omit this heading when no invariant applies>
 
 <!-- agent-ready:start -->
 ## Context

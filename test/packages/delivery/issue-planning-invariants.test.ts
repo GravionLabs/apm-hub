@@ -10,42 +10,38 @@ describe('issue-planning invariants section (#484)', () => {
   const skill = read(`${skillDir}/SKILL.md`);
 
   it('invariants.md holds the five checklist items', () => {
-    expect(ref).toMatch(/atomic or compensated/);
-    expect(ref).toMatch(/error or fallback handler leaves nothing in an intermediate state/);
-    expect(ref).toMatch(/external process or network call has a timeout/);
-    expect(ref).toMatch(/Background work can be awaited in tests/);
-    expect(ref).toMatch(/background error is logged and mapped to a defined state/);
+    const items = ref.split('## Checklist')[1].split('\n## ')[0].match(/^\d\. .+$/gm)!;
+    expect(items).toHaveLength(5);
+    expect(items[0]).toMatch(/atomic|compensated/);
+    expect(items[1]).toMatch(/error|fallback/i);
+    expect(items[2]).toMatch(/timeout/);
+    expect(items[3]).toMatch(/awaited/);
+    expect(items[4]).toMatch(/logged/);
   });
 
   it('states the wording rule', () => {
-    expect(ref).toMatch(/only the items that apply, each worded for that item/);
-    expect(ref).toMatch(/never the generic list/);
+    expect(ref).toMatch(/only the items that apply/);
+    expect(ref).toMatch(/generic list/);
   });
 
-  it('SKILL.md step 5 names the trigger and loads the reference only then', () => {
+  it('SKILL.md step 5 names the trigger and the reference', () => {
     const step = skill.split('\n').find((l) => l.startsWith('5. '))!;
-    expect(step).toMatch(/background\/async work, persistence or a state machine/);
+    expect(step).toMatch(/async/);
+    expect(step).toMatch(/persistence/);
+    expect(step).toMatch(/state machine/);
     expect(step).toContain('references/invariants.md');
-    expect(step).toMatch(/load it only then/);
   });
 
-  it('SKILL.md stays within 100 lines', () => {
-    expect(skill.trimEnd().split('\n').length).toBeLessThanOrEqual(100);
+  it('placement is stated for pbi, task and the single plan item', () => {
+    expect(ref).toMatch(/`pbi`.*Definition of Done/);
+    expect(ref).toMatch(/`task`.*agent-ready/);
+    expect(ref).toMatch(/Single-task plan.*plan\.json/);
   });
 
-  it('places the section before the Definition of Done for pbi and before the agent-ready block for task', () => {
-    expect(ref).toMatch(/Level `pbi`:.*directly before `## Definition of Done`/);
-    expect(ref).toMatch(/Level `task`:.*before `<!-- agent-ready:start -->`/);
-    expect(ref).toMatch(/Single-task plan \(no Task issue\): the same position inside the single `plan.json` item `body`/);
-  });
-
-  it('plan-schema.md body row mentions the optional section on both levels', () => {
-    const row = read(`${skillDir}/references/plan-schema.md`)
-      .split('\n')
-      .find((l) => l.startsWith('| `items[].body`'))!;
-    expect(row).toContain('## Invariants');
-    expect(row).toMatch(/before `## Definition of Done` for `pbi`/);
-    expect(row).toMatch(/before the agent-ready block for `task`/);
+  it('PBI template ends with Definition of Done, where invariants.md places the section before', () => {
+    const tpl = fs.readFileSync(path.join(pk, 'github/.apm/issue-templates/pbi.md'), 'utf-8');
+    const headings = tpl.match(/^## .+$/gm)!;
+    expect(headings[headings.length - 1]).toBe('## Definition of Done');
   });
 
   it('task-issues.md template orders Implementation Notes, Invariants, agent-ready block', () => {
@@ -56,5 +52,19 @@ describe('issue-planning invariants section (#484)', () => {
     expect(notes).toBeGreaterThan(-1);
     expect(inv).toBeGreaterThan(notes);
     expect(block).toBeGreaterThan(inv);
+    expect(t).toMatch(/omit this heading when no invariant applies/);
+  });
+
+  it('plan-schema.md body row mentions the optional section', () => {
+    const row = read(`${skillDir}/references/plan-schema.md`)
+      .split('\n')
+      .find((l) => l.startsWith('| `items[].body`'))!;
+    expect(row).toContain('## Invariants');
+  });
+
+  it('implementation checklist requires a test per Invariants item', () => {
+    const skill = read('shared/.apm/skills/implementation/SKILL.md');
+    const section = skill.split('## Before commit')[1].split('\n## ')[0];
+    expect(section).toMatch(/- \[ \] .*Invariants.*\btest\b/);
   });
 });

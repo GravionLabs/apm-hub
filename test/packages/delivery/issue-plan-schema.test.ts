@@ -183,10 +183,5 @@ describe('plan.json schema', () => {
       expect(doc).toMatch(/single task or a description creates none/);
       expect(doc).toMatch(/Never a mix of null and numbers after publish/);
     });
-
-    it('plan-schema.md items[].body row mentions the optional Invariants section', () => {
-      const row = doc.split('\n').find((l) => l.startsWith('| `items[].body`'))!;
-      expect(row).toContain('## Invariants');
-    });
   });
 });
