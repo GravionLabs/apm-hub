@@ -2,18 +2,22 @@
 // State dir (same as state_dir() in subagent-ledger.sh): DROMOS_STATE_DIR (relative: against the project dir), else
 // <git common dir>/agents (shared by all worktrees), else none (nothing is written). Below, ".agents" means that dir.
 //  - subagent ledger: after a `task` tool call of an orchestrator subagent (allowlist), append
-//    `Subagent <name>: stopped — <first line>` to the ledger of the PBI named by a live loop marker <state>/current
-//    (`<pbi> loop-<nr>[ <origin>]`) unless the branch names another issue that is not the PBI, the origin or a
+//    `Subagent <name>: stopped — <first line>` to the ledger of the PBI named by a live loop marker of the project's checkout,
+//    <state>/current.d/<key> (<key>: first 16 hex of the SHA-256 of the git top level, the lease key of Enter-Checkout.ps1;
+//    `<pbi> loop-<nr>[ <origin>]`; the old single <state>/current only while current.d/ does not exist; no marker for the key:
+//    the one marker resolved through the live lease of the bound PBI, see markerFile) unless the branch names another issue that is not the PBI, the origin or a
 //    `Loop: PBI #<nr> done` PBI, else to .agents/<nr>/progress.md of the issue number in the git branch
 //    (<type>/[<scope>/]<nr>[-<slug>]); nothing when that ledger is missing or git fails inside a repository; the newest
-//    non-loop ledger only without a number (also detached HEAD), without git or outside a repository. Same rules and format as subagent-ledger.sh; AGENTS_LEDGER overrides.
+//    non-loop ledger only without a number (also detached HEAD), without git or outside a repository, and only while at most one live
+//    lease (<state>/leases, heartbeat within 120 min) exists. Same rules and format as subagent-ledger.sh; AGENTS_LEDGER overrides.
 //  - context warning: on a new user message, warn once the last request passed CONTEXT_WARN_TOKENS (default
 //    150000), again after another CONTEXT_WARN_STEP (default 100000). Same logic as context-warning.sh.
 // Never throws: every hook swallows errors. Keep this file self-contained and export ONLY the plugin function:
 // OpenCode calls every function export as a plugin and fails to load the file on non-function exports.
-import { appendFileSync, existsSync, lstatSync, readdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { appendFileSync, existsSync, lstatSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 
 const text = (v: unknown): string => (typeof v === "string" ? v : "");
 const int = (v: string | undefined, d: number): number => {
@@ -81,15 +85,94 @@ const TS_PREFIX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z /;
 const untimed = (l: string): string => l.replace(TS_PREFIX, "");
 const nowStamp = (): string => new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 
-/** Ledger of the PBI named by the loop marker .agents/current (`<pbi> loop-<nr>[ <origin>]`, one line; <origin> is the
+const LEASE_TTL_MS = 120 * 60 * 1000; // same TTL as Enter-Checkout.ps1 -LeaseTtlMinutes
+
+/** Lease key of the checkout of dir: first 16 hex of the SHA-256 of its git top level (the dir itself outside a repository). */
+function checkoutKey(dir: string): string {
+  let top = "";
+  try {
+    top = execFileSync("git", ["-C", dir, "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "rev-parse", "--show-toplevel"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000 }).trim();
+  } catch {
+    top = "";
+  }
+  return createHash("sha256").update((top || dir).replace(/[\\/]+$/, ""), "utf8").digest("hex").slice(0, 16);
+}
+
+/** Live leases of <state>/leases (heartbeat within the TTL): checkout path and issue. */
+function liveLeases(base: string): { path: string; issue: string }[] {
+  const out: { path: string; issue: string }[] = [];
+  try {
+    const dir = join(base, "leases");
+    if (lstatSync(dir).isSymbolicLink()) return out;
+    for (const name of readdirSync(dir)) {
+      if (!name.endsWith(".json")) continue;
+      try {
+        const file = join(dir, name);
+        if (!isRegular(file)) continue;
+        const o = JSON.parse(readFileSync(file, "utf8"));
+        const beat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(text(o?.heartbeat)) ? Date.parse(o.heartbeat) : NaN;
+        if (!(Date.now() - beat < LEASE_TTL_MS) || typeof o.path !== "string" || !/^[0-9]+$/.test(String(o.issue))) continue;
+        out.push({ path: o.path, issue: String(o.issue) });
+      } catch {
+        /* unreadable lease: ignored */
+      }
+    }
+  } catch {
+    /* no leases directory */
+  }
+  return out;
+}
+
+const MARKER_RE = /^([1-9][0-9]{0,9}) (loop-[1-9][0-9]{0,9})(?: ([1-9][0-9]{0,9}))?\n?$/;
+
+/** The loop marker of the checkout of dir: <state>/current.d/<key>; the old <state>/current only while current.d/ does not exist.
+ * No marker for the key: through the live leases, cwd in a leased checkout (longest path) → the one marker of that lease's issue,
+ * cwd in no leased checkout → the one marker whose PBI holds a live lease; several candidates or none: "". */
+function markerFile(base: string, dir: string): string {
+  const d = join(base, "current.d");
+  let st;
+  try {
+    st = lstatSync(d);
+  } catch {
+    return join(base, "current"); // no current.d/: legacy marker
+  }
+  if (!st.isDirectory() || st.isSymbolicLink()) return "";
+  const own = join(d, checkoutKey(dir));
+  if (isRegular(own)) return own;
+  let real = dir;
+  try {
+    real = realpathSync(dir); // lease paths are real paths
+  } catch {
+    /* keep dir */
+  }
+  const leases = liveLeases(base);
+  let inside: { path: string; issue: string } | undefined;
+  for (const l of leases) if ((real === l.path || real.startsWith(l.path.replace(/[\\/]+$/, "") + sep)) && (!inside || l.path.length > inside.path.length)) inside = l;
+  const found: string[] = [];
+  for (const name of readdirSync(d)) {
+    const file = join(d, name);
+    try {
+      if (!isRegular(file)) continue;
+      const m = MARKER_RE.exec(readFileSync(file, "latin1"));
+      if (!m) continue;
+      if (inside ? m[1] !== inside.issue : !leases.some((l) => l.issue === m[1])) continue;
+      found.push(file);
+    } catch {
+      /* unreadable marker */
+    }
+  }
+  return found.length === 1 ? found[0] : "";
+}
+
+/** Ledger of the PBI named by the loop marker of the checkout of dir (`<pbi> loop-<nr>[ <origin>]`, one line; <origin> is the
  * issue number of the branch -Bind ran on), or "" when the marker is missing, not a regular file, malformed, stale (loop
  * ledger missing or its last `Loop: ` line is `Loop: stopped`), the branch names another issue that is neither <origin>
  * nor recorded as `Loop: PBI #<nr> done`, or its PBI ledger is missing (#375). */
-function boundLedger(base: string, branchNr: string): string {
+function boundLedger(base: string, branchNr: string, dir: string): string {
   try {
-    const marker = join(base, "current");
-    if (!isRegular(marker)) return "";
-    const m = /^([1-9][0-9]{0,9}) (loop-[1-9][0-9]{0,9})(?: ([1-9][0-9]{0,9}))?\n?$/.exec(readFileSync(marker, "latin1"));
+    const marker = markerFile(base, dir);
+    if (!marker || !isRegular(marker)) return "";
+    const m = MARKER_RE.exec(readFileSync(marker, "latin1"));
     if (!m) return "";
     const loop = join(base, m[2], "progress.md");
     if (!isRegularIn(loop)) return "";
@@ -113,12 +196,14 @@ function findLedger(dir: string, override?: string): string {
     if (lstatSync(base).isSymbolicLink()) return ""; // never write through a symlinked state dir
     const nr = branchIssue(dir);
     if (nr === null) return ""; // git failing inside a repository: no write, not even through the loop marker
-    const bound = boundLedger(base, nr);
+    const bound = boundLedger(base, nr, dir);
     if (bound) return bound;
     if (nr) {
       const own = join(base, nr, "progress.md");
       return isRegular(own) && !lstatSync(join(base, nr)).isSymbolicLink() ? own : "";
     }
+    // more than one live lease: the newest ledger may belong to another run, write nothing (#466)
+    if (liveLeases(base).length > 1) return "";
     let best = "";
     let bestTime = -1;
     for (const e of readdirSync(base, { withFileTypes: true })) {

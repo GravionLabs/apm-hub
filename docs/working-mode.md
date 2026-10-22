@@ -191,7 +191,7 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
   (a live lease of another issue in `<state>/leases/`, or a modified tracked file). `Enter-Checkout.ps1 -Issue <nr> -Branch <name> -Base <ref>`
   (`github-issue/scripts/`, works on Claude Code, Copilot CLI and OpenCode) decides, writes the lease and prints `{path, worktree, branch, base, lease}`;
   `Add-LedgerLine.ps1` renews its heartbeat, `Exit-Checkout.ps1` releases it and removes a clean worktree (a dirty one is kept and reported);
-  a lease older than 120 minutes is taken over. The queue runner does this per issue. Once per repository run `Enable-Worktrees.ps1`
+  a lease older than 120 minutes is taken over. The orchestrator does this in pipeline step 1b (and releases the checkout after `Ledger complete.`; a gate keeps it), the queue runner per issue. Once per repository run `Enable-Worktrees.ps1`
   (`detect-techstack/scripts/`; `apm-install` runs it, `verify-project` checks it) so `.gitignore` and the stack configs ignore `.worktrees/`.
   Never run `git clean -ffdx` in the main checkout: it deletes the nested worktrees.
 - `.claude/worktrees/` is Claude Code's own location for manual `claude --worktree <name>` sessions; the `implementer` no longer takes `isolation: worktree`.

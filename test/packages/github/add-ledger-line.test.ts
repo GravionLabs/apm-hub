@@ -1,4 +1,5 @@
 import { spawnSync } from 'child_process';
+import { createHash } from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -134,7 +135,14 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
   const run = (...args: string[]) => spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { cwd: dir, encoding: 'utf8', env: gitCleanEnv(process.env, { DROMOS_STATE_DIR: path.join(dir, '.agents') }) });
-  const marker = () => path.join(dir, '.agents', 'current');
+  /** Marker of this checkout: <state>/current.d/<first 16 hex of the SHA-256 of the checkout path> (same key as the lease). */
+  const keyOf = (checkout: string) => createHash('sha256').update(checkout, 'utf8').digest('hex').slice(0, 16);
+  const marker = () => path.join(dir, '.agents', 'current.d', keyOf(fs.realpathSync(dir)));
+  const legacyMarker = () => path.join(dir, '.agents', 'current');
+  const plant = (content: string) => {
+    fs.mkdirSync(path.dirname(marker()), { recursive: true });
+    fs.writeFileSync(marker(), content);
+  };
   const repo = (branch: string) => {
     for (const a of [['init', '-q'], ['symbolic-ref', 'HEAD', `refs/heads/${branch}`], ['commit', '-q', '--allow-empty', '-m', 'init']]) {
       const r = spawnSync('git', ['-C', dir, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a], { encoding: 'utf8', env: gitCleanEnv(process.env) });
@@ -171,7 +179,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
 
   it('replaces the marker of the previous PBI at the next boundary (also after a resumed stop)', () => {
     withLoop('# loop\nLoop: PBI #8 started\nLoop: stopped — pbi cap\n');
-    fs.writeFileSync(marker(), '8 loop-5\n');
+    plant('8 loop-5\n');
     expect(run('-Issue', '9', '-Bind', 'loop-5').status).toBe(0);
     expect(readLedger(marker())).toBe('9 loop-5\n');
     expect(readLedger(loopLedger()).trimEnd().split('\n').pop()).toBe('Loop: PBI #9 started');
@@ -203,6 +211,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     withLoop();
     const target = path.join(dir, 'target');
     fs.writeFileSync(target, 'secret\n');
+    fs.mkdirSync(path.dirname(marker()), { recursive: true });
     fs.symlinkSync(target, marker());
     const r = run('-Issue', '9', '-Bind', 'loop-5');
     expect(r.status).not.toBe(0);
@@ -229,7 +238,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     fs.symlinkSync(real, path.join(dir, '.agents'));
     const r = run('-Issue', '9', '-Bind', 'loop-5');
     expect(r.status).not.toBe(0);
-    expect(fs.existsSync(path.join(real, 'current'))).toBe(false);
+    expect(fs.existsSync(path.join(real, 'current.d'))).toBe(false);
   });
 
   it('fails without a PBI ledger and writes nothing (no marker, no start line, no PBI directory)', () => {
@@ -260,6 +269,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     withLoop();
     const target = path.join(dir, 'target');
     fs.writeFileSync(target, 'secret\n');
+    fs.mkdirSync(path.dirname(marker()), { recursive: true });
     fs.symlinkSync(target, marker());
     expect(run('-Issue', '9', '-Line', 'more', '-Bind', 'loop-5').status).not.toBe(0);
     expect(readLedger(pbiLedger())).toBe('# 9\n');
@@ -269,7 +279,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
 
   it('a failing -Bind with -Line leaves the PBI ledger unchanged when the marker is a directory', () => {
     withLoop();
-    fs.mkdirSync(marker());
+    fs.mkdirSync(marker(), { recursive: true });
     const r = run('-Issue', '9', '-Line', 'more', '-Bind', 'loop-5');
     expect(r.status).not.toBe(0);
     expect(readLedger(pbiLedger())).toBe('# 9\n');
@@ -279,7 +289,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
 
   it('-Bind refuses a directory marker without -Line too', () => {
     withLoop();
-    fs.mkdirSync(marker());
+    fs.mkdirSync(marker(), { recursive: true });
     expect(run('-Issue', '9', '-Bind', 'loop-5').status).not.toBe(0);
     expect(readLedger(loopLedger())).toBe('# loop\n');
   });
@@ -287,12 +297,13 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   it('-Unbind refuses a symlinked .agents and keeps the marker behind it', () => {
     const real = path.join(dir, 'real');
     fs.mkdirSync(real);
-    fs.writeFileSync(path.join(real, 'current'), '9 loop-5\n');
+    fs.mkdirSync(path.join(real, 'current.d'));
+    fs.writeFileSync(path.join(real, 'current.d', keyOf(fs.realpathSync(dir))), '9 loop-5\n');
     fs.symlinkSync(real, path.join(dir, '.agents'));
     const r = run('-Unbind');
     expect(r.status).not.toBe(0);
     expect(r.stderr + r.stdout).toMatch(/symlinked/);
-    expect(readLedger(path.join(real, 'current'))).toBe('9 loop-5\n');
+    expect(readLedger(path.join(real, 'current.d', keyOf(fs.realpathSync(dir))))).toBe('9 loop-5\n');
   });
 
   it('-Unbind leaves a directory named current alone and exits 0', () => {
@@ -363,9 +374,11 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
 
   it('-Unbind removes the marker', () => {
     withLoop();
-    fs.writeFileSync(marker(), '9 loop-5\n');
+    plant('9 loop-5\n');
+    fs.writeFileSync(legacyMarker(), '9 loop-5\n');
     expect(run('-Unbind').status).toBe(0);
     expect(fs.existsSync(marker())).toBe(false);
+    expect(fs.existsSync(legacyMarker())).toBe(false);
     expect(readLedger(loopLedger())).toBe('# loop\n');
   });
 
@@ -378,6 +391,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     fs.mkdirSync(path.join(dir, '.agents'));
     const target = path.join(dir, 'target');
     fs.writeFileSync(target, 'secret\n');
+    fs.mkdirSync(path.dirname(marker()), { recursive: true });
     fs.symlinkSync(target, marker());
     const r = run('-Unbind');
     expect(r.status).not.toBe(0);
@@ -386,7 +400,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
 
   it('-Unbind cannot be combined with -Issue, -Line or -Bind', () => {
     withLoop();
-    fs.writeFileSync(marker(), '9 loop-5\n');
+    plant('9 loop-5\n');
     expect(run('-Unbind', '-Issue', '9').status).not.toBe(0);
     expect(run('-Unbind', '-Bind', 'loop-5').status).not.toBe(0);
     expect(readLedger(marker())).toBe('9 loop-5\n');
