@@ -5,11 +5,14 @@ of the main session and per subagent in the agent panel. It keeps the [working m
 context grow before the 150k warning fires.
 
 ```text
-jk@laptop:/repo Opus 4 ctx:42% (feat/354-statusline) 5h:12% 7d:30%     # statusLine
+jk@laptop:/repo Opus 4 ctx:42% (84k/200k) (feat/354-statusline) 5h:12% 7d:30%     # statusLine
 explorer haiku-4-5 ctx:18% (36k) · scan the hooks package               # subagentStatusLine, one row per subagent
 ```
 
-Colours of the subagent rows: green below 50 %, yellow below 80 %, red above. Without `contextWindowSize` only the token
+Colours of the subagent rows: green below 50 %, yellow below 80 %, red above. The main line shows `ctx:<pct>% (<used>k/<size>k)` (`1M` for a 1,000,000 window); without a window size only `ctx:<pct>%`.
+Used tokens are the sum of `context_window.current_usage` input and cache fields, else derived from percent and size. Fields are
+from the [official statusLine docs](https://code.claude.com/docs/en/statusline) (`context_window.context_window_size`,
+`used_percentage`, `current_usage`), verified 2026-10-22. Without `contextWindowSize` only the token
 count (`36k`) is shown.
 
 ## Install
@@ -34,8 +37,8 @@ Copilot CLI has an experimental `statusLine` and no subagent equivalent. `Instal
 - same backup, idempotency, `-Force` and `-WhatIf` rules as for Claude Code; `-Uninstall` removes the entry and script but leaves the `STATUS_LINE` flag (another status line may rely on it)
 
 The script prefers `context_window.current_context_used_percentage` (matches `/context`) over `used_percentage`. Copilot sends no
-`rate_limits`, so `5h`/`7d` is omitted. The Copilot payload fields (`cwd`, `session_id`, `model.id`, `model.display_name`,
-`workspace.current_dir`, `context_window.*`, `cost.total_premium_requests`) are taken from community guides, not from official
+`rate_limits`, so `5h`/`7d` is omitted; the size part appears only if Copilot sends `context_window_size`. The Copilot payload fields (`cwd`, `session_id`, `model.id`, `model.display_name`,
+`workspace.current_dir`, `context_window.*` incl. `context_window_size`, `cost.total_premium_requests`) are taken from community guides, not from official
 documentation, and may change while the feature is experimental.
 
 ## Requirements and behaviour

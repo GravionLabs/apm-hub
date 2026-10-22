@@ -1,11 +1,22 @@
 #!/usr/bin/env node
-// Claude Code statusLine: user@host:dir, model, ctx:<pct>%, git branch, 5h/7d rate limits. Never fails (exit 0), no network.
+// Claude Code statusLine: user@host:dir, model, ctx:<pct>% (<used>k/<size>k), git branch, 5h/7d rate limits. Never fails (exit 0), no network.
+// Payload fields: https://code.claude.com/docs/en/statusline (context_window.context_window_size, .used_percentage, .current_usage.*; verified
+// 2026-10-22). Copilot CLI fields come from community guides (unverified); without a size only ctx:<pct>% is shown.
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { hostname, userInfo } from 'node:os';
 
 const c = (code, s) => `\x1b[${code}m${s}\x1b[00m`;
 const pct = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
+const tok = (n) => (n >= 1e6 ? `${Math.floor((n + 5e4) / 1e5) / 10}M`.replace('.0M', 'M') : `${Math.floor((n + 500) / 1000)}k`);
+const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+// Tokens in the context: sum of current_usage input fields (matches the percentage), else derived from pct * size.
+function usedTokens(cw, ctx, size) {
+  const u = cw?.current_usage;
+  const parts = u && typeof u === 'object' ? [u.input_tokens, u.cache_creation_input_tokens, u.cache_read_input_tokens].map(num) : [];
+  if (parts.some((p) => p !== null)) return parts.reduce((a, p) => a + (p ?? 0), 0);
+  return Math.round((ctx * size) / 100);
+}
 const str = (v) => (typeof v === 'string' && v ? v : null);
 const git = (dir, args) => {
   const r = spawnSync('git', ['-C', dir, '--no-optional-locks', ...args], { encoding: 'utf8', timeout: 1000, windowsHide: true });
@@ -22,8 +33,13 @@ function render(input) {
   const model = str(input.model?.display_name);
   if (model) out += ` ${c('36', model)}`;
   // Copilot CLI: current_context_used_percentage matches /context, so it wins when present.
-  const ctx = pct(input.context_window?.current_context_used_percentage) ?? pct(input.context_window?.used_percentage);
-  if (ctx !== null) out += ` ${c('33', `ctx:${ctx}%`)}`;
+  const rawCtx = num(input.context_window?.current_context_used_percentage) ?? num(input.context_window?.used_percentage);
+  const ctx = rawCtx === null ? null : Math.round(rawCtx);
+  if (ctx !== null) {
+    const size = num(input.context_window?.context_window_size);
+    const detail = size ? ` (${tok(usedTokens(input.context_window, rawCtx, size))}/${tok(size)})` : '';
+    out += ` ${c('33', `ctx:${ctx}%${detail}`)}`;
+  }
 
   if (existsSync(dir)) {
     const branch = git(dir, ['symbolic-ref', '--short', '-q', 'HEAD']) || git(dir, ['rev-parse', '--short', 'HEAD']);

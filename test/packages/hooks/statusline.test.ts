@@ -53,6 +53,40 @@ describe('statusline.mjs', () => {
     expect(strip(run(STATUS, JSON.stringify({ workspace: { current_dir: tmp }, context_window: { used_percentage: 30, current_context_used_percentage: null } })).stdout)).toContain('ctx:30%');
   });
 
+  describe('context window size', () => {
+    const ctxOf = (cw: unknown, extra: Record<string, unknown> = {}) =>
+      strip(run(STATUS, JSON.stringify({ workspace: { current_dir: tmp }, context_window: cw, ...extra })).stdout);
+
+    it('shows used and size from current_usage', () => {
+      const out = ctxOf({ used_percentage: 42, context_window_size: 200000, current_usage: { input_tokens: 4000, cache_creation_input_tokens: 20000, cache_read_input_tokens: 60000, output_tokens: 9 } });
+      expect(out).toContain('ctx:42% (84k/200k)');
+    });
+
+    it('derives used tokens from the percentage without current_usage', () => {
+      expect(ctxOf({ used_percentage: 25, context_window_size: 200000 })).toContain('ctx:25% (50k/200k)');
+      expect(ctxOf({ used_percentage: 25, context_window_size: 200000, current_usage: null })).toContain('ctx:25% (50k/200k)');
+    });
+
+    it('renders a 1M window as 1M', () => {
+      expect(ctxOf({ used_percentage: 10, context_window_size: 1000000 })).toContain('ctx:10% (100k/1M)');
+    });
+
+    it.each([undefined, 0, null, -5, 'big'])('omits the size part for size %j', (size) => {
+      const out = ctxOf({ used_percentage: 42, context_window_size: size });
+      expect(out).toContain('ctx:42%');
+      expect(out).not.toContain('ctx:42% (');
+    });
+
+    it('works with the Copilot percentage and a size', () => {
+      const out = ctxOf({ used_percentage: 30, current_context_used_percentage: 12.4, context_window_size: 128000 }, { model: { display_name: 'GPT-5' } });
+      expect(out).toContain('GPT-5 ctx:12% (16k/128k)');
+    });
+
+    it('shows no ctx part without a percentage even with a size', () => {
+      expect(ctxOf({ context_window_size: 200000 })).not.toContain('ctx:');
+    });
+  });
+
   it('shows only the 7d limit when 5h is missing', () => {
     const out = strip(run(STATUS, JSON.stringify({ workspace: { current_dir: tmp }, rate_limits: { seven_day: { used_percentage: 7 } } })).stdout);
     expect(out).toMatch(/ 7d:7%$/);

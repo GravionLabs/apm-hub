@@ -36,7 +36,7 @@ Restart Claude Code (or open a new session) to see the lines.
 
 | Script | Output |
 |:--|:--|
-| `statusline.mjs` | `user@host:dir`, model, `ctx:<pct>%`, `(git branch)`, `5h:<pct>% 7d:<pct>%`. Fields that are null or missing are skipped |
+| `statusline.mjs` | `user@host:dir`, model, `ctx:<pct>% (<used>k/<size>k)` (no size part without a window size), `(git branch)`, `5h:<pct>% 7d:<pct>%`. Fields that are null or missing are skipped |
 | `subagent-statusline.mjs` | one row per subagent: `<agentType> <model> ctx:<pct>% (<k>k) · <label>`; green below 50 %, yellow below 80 %, red above; only `<k>k` when the context window size is unknown |
 
 Both scripts run on every refresh tick: no network, git with `--no-optional-locks` and a 1 s timeout, always exit 0;
