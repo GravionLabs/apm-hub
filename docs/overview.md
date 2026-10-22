@@ -1,7 +1,7 @@
 # Overview
 
 <!-- AUTO:start version -->
-Welcome to **apm-hub** v2.3.0 👋
+Welcome to **apm-hub** v2.3.1 👋
 <!-- AUTO:end version -->
 
 apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The one `agents` package adds the `orchestrator` primary agent and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to. The entry point beyond skill names is the `orchestrator` agent (`/orch` is deprecated and removed in 3.0.0).
@@ -23,7 +23,7 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                       |
 | `agents`      | `orchestrator` (primary agent) plus the `explorer`, `planner`, `reviewer` and `implementer` subagents                             |
-| `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails), `context-statusline` skill; OpenCode plugin                          |
+| `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails), `context-statusline` skill; OpenCode plugin |
 | `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                          |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not in `all`)                                    |
 | `all`         | every package except `apm-tooling`                                                                                                |
