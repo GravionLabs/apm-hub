@@ -60,6 +60,8 @@ pwsh scripts/Set-Sprint.ps1 -Owner <login> -Number <n> -Issue 'org/a#12,org/b#7'
 
 The issues must already be items of the project with Level PBI or Bug (`sync` sets it). `-Force` assigns despite a violation and still reports it.
 
+Dependency order: a PBI with an open native blocked-by link (the links `orchestrator next` reads) enters only when the blocker is already in this sprint or an earlier one, or is assigned in the same run (violation `Blocked`). A `Blocked by #n` line in the body alone is not seen: set the native link (`issue-planning` `references/publish.md` § 3).
+
 ## new
 
 1. Copy the template (`references/project-template.md`): GraphQL `copyProjectV2` with `includeDraftIssues: false`.
