@@ -22,8 +22,9 @@ jobs:
       - uses: GravionLabs/ci/versioning/mark-merged-issues@main
         with:
           token: ${{ secrets.GH_PAT || github.token }}
-      # Sets the project Status of the issues those PRs close or reference to `In release`. Needs a token with
-      # scope `project` (secret PROJECT_TOKEN, else GH_PAT); without one only the label is set. Never fails the job.
+      # Sets the project Status of the issues those PRs close or reference to `In release`. Needs a classic PAT with
+      # scope `project` (secret PROJECT_TOKEN, else GH_PAT); fine-grained tokens cannot access user-owned projects.
+      # Without a token only the label is set. Never fails the job.
       - name: Set project status In release
         id: in-release
         if: ${{ !cancelled() }}
@@ -59,6 +60,7 @@ jobs:
             named=$(printf '%s\n%s\n' "$body" "$commits" | grep -ioE "$ref" | grep -oE '[0-9]+') || named=""
             issues="$issues $closing $named"
           done
+          err=$(mktemp)
           for issue in $(printf '%s\n' $issues | sort -un); do
             items=$(gh api graphql --paginate -f owner="$owner" -f repo="$repo" -F issue="$issue" -f query='
               query($owner:String!,$repo:String!,$issue:Int!,$endCursor:String){repository(owner:$owner,name:$repo){issue(number:$issue){
@@ -66,7 +68,14 @@ jobs:
                   field(name:"Status"){... on ProjectV2SingleSelectField{id options{id name}}}}
                   fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}}
                   pageInfo{hasNextPage endCursor}}}}}' \
-              --jq '.data.repository.issue.projectItems.nodes[] | tojson') || {
+              --jq '.data.repository.issue.projectItems.nodes[] | tojson' 2>"$err") || {
+              cat "$err" >&2
+              # Every issue fails the same way: the token has no scope `project` (or is fine-grained; those cannot
+              # access user-owned projects). Say so once instead of one warning per issue.
+              if grep -q 'Resource not accessible' "$err"; then
+                echo "::warning::token cannot access the project (classic PAT with scope project needed; fine-grained tokens cannot access user-owned projects); project status not set"
+                exit 0
+              fi
               echo "::warning::cannot read project items of #$issue"
               continue
             }

@@ -1,5 +1,7 @@
 # Adds new issues and pull requests to the GravionLabs project (https://github.com/users/GravionLabs/projects/17).
-# GH_PAT is a classic PAT with the scopes `project` and `repo`; the GITHUB_TOKEN cannot write to a user-owned project.
+# GH_PAT is a classic PAT with the scopes `repo`, `workflow` and `project` (`workflow` for ci.yml and release-pr.yml, which
+# push workflow files). It must be classic: the GITHUB_TOKEN cannot write to a user-owned project and fine-grained tokens
+# have no Projects permission for user accounts (only for organizations), so they fail with "Resource not accessible".
 # pull_request_target: Dependabot and fork PRs get the secret too; the job never checks out PR code.
 name: Add to project
 

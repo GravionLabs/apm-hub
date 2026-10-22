@@ -71,6 +71,10 @@ describe('In release status docs (#489)', () => {
     expect(doc).toMatch(/scope `project`/);
     expect(doc).toMatch(/GH_PAT[\s\S]*read access to the repository/);
     expect(doc).not.toMatch(/only needs the project scope/);
+    // Fine-grained tokens have no Projects permission for user accounts; the doc must not offer them as an option.
+    expect(doc).toMatch(/classic PAT with scope `project`/);
+    expect(doc).not.toMatch(/or fine-grained with Projects/);
+    expect(doc).toMatch(/fine-grained token does not work for a user-owned project/);
     expect(doc).toMatch(/release\/next[\s\S]*GravionLabs\/ci#55/);
     expect(doc).toMatch(/Checked \d{4}-\d{2}-\d{2}: GravionLabs\/ci#55 is \w+/);
     expect(doc).toMatch(/gh issue view 55 -R GravionLabs\/ci/);
