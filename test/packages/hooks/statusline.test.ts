@@ -124,8 +124,8 @@ describe('subagent-statusline.mjs', () => {
     expect(r.status).toBe(0);
     const [a, b] = rows(r.stdout);
     expect(a.id).toBe('t1');
-    expect(strip(a.content)).toBe('explorer haiku-4-5 ctx:18% (36k) · scan');
-    expect(strip(b.content)).toBe('planner opus ctx:50% (100k) · plan it');
+    expect(strip(a.content)).toBe('explorer haiku-4-5 ctx:18% (36k/200k) · scan');
+    expect(strip(b.content)).toBe('planner opus ctx:50% (100k/200k) · plan it');
   });
 
   it.each([[10000, '32'], [99999, '32'], [100000, '33'], [159999, '33'], [160000, '31'], [250000, '31']])(
@@ -133,6 +133,11 @@ describe('subagent-statusline.mjs', () => {
       const [row] = rows(run(SUB, JSON.stringify({ tasks: [task({ tokenCount: tokens, contextWindowSize: 200000 })] })).stdout);
       expect(row.content).toContain(`\x1b[${code}mctx:`);
     });
+
+  it('renders a 1,000,000 window as 1M', () => {
+    const [row] = rows(run(SUB, JSON.stringify({ tasks: [task({ tokenCount: 250000, contextWindowSize: 1000000 })] })).stdout);
+    expect(strip(row.content)).toBe('explorer ctx:25% (250k/1M) · scan');
+  });
 
   it('shows only the token count when contextWindowSize is missing or zero', () => {
     for (const size of [undefined, 0, null]) {

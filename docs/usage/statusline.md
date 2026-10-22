@@ -6,10 +6,10 @@ context grow before the 150k warning fires.
 
 ```text
 jk@laptop:/repo Opus 4 ctx:42% (84k/200k) (feat/354-statusline) 5h:12% 7d:30%     # statusLine
-explorer haiku-4-5 ctx:18% (36k) · scan the hooks package               # subagentStatusLine, one row per subagent
+explorer haiku-4-5 ctx:18% (36k/200k) · scan the hooks package               # subagentStatusLine, one row per subagent
 ```
 
-Colours of the subagent rows: green below 50 %, yellow below 80 %, red above. The main line shows `ctx:<pct>% (<used>k/<size>k)` (`1M` for a 1,000,000 window); without a window size only `ctx:<pct>%`.
+Subagent rows show `ctx:<pct>% (<k>k/<size>k)` (only `<k>k` without a window size; fields `tokenCount`, `contextWindowSize`). Colours: green below 50 %, yellow below 80 %, red above. The main line shows `ctx:<pct>% (<used>k/<size>k)` (`1M` for a 1,000,000 window); without a window size only `ctx:<pct>%`.
 Used tokens are the sum of `context_window.current_usage` input and cache fields, else derived from percent and size. Fields are
 from the [official statusLine docs](https://code.claude.com/docs/en/statusline) (`context_window.context_window_size`,
 `used_percentage`, `current_usage`), verified 2026-10-22. Without `contextWindowSize` only the token
