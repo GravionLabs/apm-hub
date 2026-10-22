@@ -148,3 +148,22 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
     });
   });
 });
+
+describe('GraphQL here-strings in the project scripts', () => {
+  const dir = path.resolve(__dirname, '../../../packages/github/.apm/skills/github-project/scripts');
+  const queries = ['Set-Sprint.ps1', 'Set-ProjectStandard.ps1'].flatMap((file) => {
+    const text = fs.readFileSync(path.join(dir, file), 'utf8');
+    return [...text.matchAll(/\$(\w+) = @'\r?\n([\s\S]*?)\r?\n'@/g)].map((m) => [`${file} $${m[1]}`, m[2]] as const);
+  });
+
+  it('finds the queries', () => {
+    expect(queries.length).toBeGreaterThanOrEqual(4);
+  });
+
+  // The live queries never run offline (-StateFile): an unbalanced brace only fails against GitHub (#507).
+  it.each(queries)('%s has balanced braces and parentheses', (_name, query) => {
+    const count = (c: string) => query.split(c).length - 1;
+    expect(count('{')).toBe(count('}'));
+    expect(count('(')).toBe(count(')'));
+  });
+});
