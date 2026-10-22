@@ -35,6 +35,9 @@ export default defineConfig({
           ...shared,
           name: 'scripts',
           include: scriptsTests,
+          // every file spawns pwsh, bash or git worktree: under full-suite load a single case can exceed the 5 s default
+          testTimeout: 30000,
+          hookTimeout: 30000,
         },
       },
       {
