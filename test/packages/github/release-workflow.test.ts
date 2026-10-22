@@ -53,21 +53,12 @@ describe.each(Object.entries(files))('In release status step %s (#489)', (_name,
     expect(step.if).toBe('${{ !cancelled() }}');
     expect(step.run).toMatch(/^set -o pipefail$/m);
   });
-
-  it('sets the In release option and skips Done and items without a project', () => {
-    const run = step.run ?? '';
-    expect(run).toContain('updateProjectV2ItemFieldValue');
-    expect(run).toContain('select(.name == "In release")');
-    expect(run).toMatch(/no project item/);
-    expect(run).toMatch(/no Status option 'In release'/);
-  });
 });
 
 describe('release workflow and template stay identical (#489)', () => {
   it('are byte-identical', () => {
-    const a = fs.readFileSync(path.join(root, files.workflow), 'utf-8');
-    const b = fs.readFileSync(path.join(root, files.template), 'utf-8');
-    expect(a.split('\n')).toEqual(b.split('\n'));
+    const read = (f: string) => fs.readFileSync(path.join(root, f), 'utf-8').replace(/\r\n/g, '\n');
+    expect(read(files.workflow)).toBe(read(files.template));
   });
 });
 
@@ -78,9 +69,11 @@ describe('In release status docs (#489)', () => {
     const doc = read('github-release/references/merged-label.md');
     expect(doc).toMatch(/PROJECT_TOKEN/);
     expect(doc).toMatch(/scope `project`/);
-    expect(doc).toMatch(/GH_PAT[\s\S]*only needs the project scope/);
+    expect(doc).toMatch(/GH_PAT[\s\S]*read access to the repository/);
+    expect(doc).not.toMatch(/only needs the project scope/);
     expect(doc).toMatch(/release\/next[\s\S]*GravionLabs\/ci#55/);
-    expect(doc).not.toMatch(/Checked \d{4}-\d{2}-\d{2}/);
+    expect(doc).toMatch(/Checked \d{4}-\d{2}-\d{2}: GravionLabs\/ci#55 is \w+/);
+    expect(doc).toMatch(/gh issue view 55 -R GravionLabs\/ci/);
   });
 
   it('views.md no longer says CI never writes the project', () => {

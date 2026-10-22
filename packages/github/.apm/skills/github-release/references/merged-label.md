@@ -20,9 +20,9 @@ One PR per repo: copy `templates/release-branch.yml` to `.github/workflows/relea
 
 - The workflow needs `contents: read`, `issues: write`, `pull-requests: write` (`release-pr`; `mark-merged-issues` itself needs `pull-requests: read`).
 - `secrets.GH_PAT || github.token`: a PAT is needed so PRs created by CI trigger the required checks; labelling works with `github.token`.
-- Project status: the `Set project status In release` step needs a token with scope `project` (classic PAT `project`, or fine-grained with Projects read/write) in secret `PROJECT_TOKEN`, else `GH_PAT`. The fallback PAT only needs the project scope (`project`); no extra repository scope is required for this step. Without it the job sets only the label and emits a warning. Issues without a project entry or already `Done`/`In release` are skipped; failures per issue are warnings and never fail the job.
+- Project status: the `Set project status In release` step needs a token with scope `project` (classic PAT `project`, or fine-grained with Projects read/write) in secret `PROJECT_TOKEN`, else `GH_PAT`. The token also needs read access to the repository (pull requests and issues) besides scope `project`; a fallback `GH_PAT` that already serves `release-pr` has it. Without it the job sets only the label and emits a warning. Issues without a project entry or already `Done`/`In release` are skipped; failures per issue are warnings and never fail the job.
 - The action is used `@main`, so fixes arrive centrally without touching the repos.
 
 ## Known limit
 
-`release-pr` accepts only `release/<x.y>` and ignores `release/next` (GravionLabs/ci#55). The labelling step is a separate action and is not affected. Check the issue for the current state. The status step is inline in the template and independent of `release-pr`.
+`release-pr` accepts only `release/<x.y>` and ignores `release/next` (GravionLabs/ci#55). The labelling step is a separate action and is not affected. Checked 2026-10-22: GravionLabs/ci#55 is OPEN (current state: `gh issue view 55 -R GravionLabs/ci --json state`). The status step is inline in the template and independent of `release-pr`.
