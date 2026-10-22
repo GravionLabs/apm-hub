@@ -38,6 +38,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **agents**: Document --fix-advisories in launcher skill and docs (#324)
 - Add orch-queue skill and queue runner docs (#227)
 - Align queue skill docs, slash mapping and exit codes (#227)
+- Update CHANGELOG.md for v2.3.0 [skip ci]
 
 
 ### Features
