@@ -35,9 +35,9 @@ describe('Task waves wiring (#467)', () => {
     expect(inline).toMatch(/--parallel <1-4>/);
   });
 
-  it('loop runner mode forwards --parallel verbatim and says the implementer budget is shared', () => {
-    expect(loop).toMatch(/forwards `--fix-advisories` and `--no-review-summary` verbatim \(also `--parallel`\)/);
-    expect(loop).toMatch(/budget of 4 `implementer` subagents per repository is shared/);
+  it('loop mode shares the budget of 4 implementers and points to task-waves.md', () => {
+    expect(loop).toMatch(/at most 4 `implementer` subagents run at once over all runners/);
+    expect(loop).toContain('`task-waves.md`');
   });
 
   it('pipeline step 4 points to task-waves.md and keeps BASE and task commit rules', () => {
