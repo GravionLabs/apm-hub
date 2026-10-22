@@ -13,12 +13,14 @@
 .PARAMETER Issue   Issue number, 'loop-<nr>' or '<nr>-t<nr>'.
 .PARAMETER Branch  New branch name (default: feat/<Issue>).
 .PARAMETER Base    Branch on origin to start from (required: the caller passes the integration branch, there is no guessing).
+.PARAMETER From    Local ref (branch or SHA) to start from instead of origin/<Base>, e.g. the current PBI HEAD for a Task worktree (task-waves.md); nothing is fetched. -Base is still required and printed.
 #>
 [CmdletBinding()]
 param(
   [string]$Issue,
   [string]$Branch,
-  [string]$Base
+  [string]$Base,
+  [string]$From
 )
 # No Mandatory: a headless run must exit non-zero with a message instead of prompting.
 Set-StrictMode -Version Latest
@@ -54,6 +56,12 @@ if ($LASTEXITCODE -ne 0) { throw "'.worktrees/' is not ignored in $root. Run Ena
 & git -C $root show-ref --verify --quiet "refs/heads/$Branch"
 if ($LASTEXITCODE -eq 0) { throw "Branch already exists: $Branch" }
 
-Invoke-Git $root @('fetch', 'origin', $Base)
-Invoke-Git $root @('worktree', 'add', '-b', $Branch, $target, "origin/$Base")
+$start = "origin/$Base"
+if ($From) {
+  if ($From -notmatch '\A[A-Za-z0-9][A-Za-z0-9._/-]{0,199}\z' -or $From -match '\.\.|//') { throw "Invalid -From '$From'." }
+  & git -C $root rev-parse --verify --quiet "$From^{commit}" *> $null
+  if ($LASTEXITCODE -ne 0) { throw "Unknown -From ref '$From'." }
+  $start = $From
+} else { Invoke-Git $root @('fetch', 'origin', $Base) }
+Invoke-Git $root @('worktree', 'add', '-b', $Branch, $target, $start)
 [ordered]@{ path = $target; branch = $Branch; base = $Base } | ConvertTo-Json -Compress

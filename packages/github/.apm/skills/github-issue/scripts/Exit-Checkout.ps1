@@ -30,7 +30,7 @@ function Write-Result($Released, $CheckoutPath, $IsWorktree, $Removed, $Kept) {
   [ordered]@{ released = $Released; path = $CheckoutPath; worktree = $IsWorktree; removed = $Removed; kept = $Kept } | ConvertTo-Json -Compress
 }
 
-if ($Issue -notmatch '\A[0-9]{1,10}\z') { throw "Invalid -Issue '$Issue': expected the issue number." }
+if ($Issue -notmatch '\A[0-9]{1,10}(-t[0-9]{1,10})?\z') { throw "Invalid -Issue '$Issue': expected the issue number or '<pbi>-t<task>'." }
 $state = Resolve-StateDir
 $leaseDir = [IO.Path]::GetFullPath((Join-Path $state 'leases'))
 if (-not $leaseDir.StartsWith($state + [IO.Path]::DirectorySeparatorChar)) { throw "Path escapes the state directory: $leaseDir" }
