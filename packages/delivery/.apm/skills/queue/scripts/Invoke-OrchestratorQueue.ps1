@@ -55,6 +55,7 @@
 .PARAMETER ContinueOnError Continue with the next issue after a failed run.
 .PARAMETER FixAdvisories Optional advisory policy (none, medium, all; optionally `:dim,dim`) passed to the orchestrator as `--fix-advisories <policy>` before the mode word.
 .PARAMETER PbiParallel     -Feature/-Epic only: 1-4, forwarded as `--pbi-parallel <m>` before the mode word (the orchestrator's loop mode reads it; 'next' ignores it).
+.PARAMETER Parallel Optional Task-wave width 1-4, passed to the orchestrator as `--parallel <n>` after `--fix-advisories`; 0 = not given.
 .PARAMETER AllowAll        Opt in to the harness' unrestricted permission mode (default: narrow set).
 .PARAMETER Base            Issue-list mode: integration branch on origin that Enter-Checkout.ps1 starts the run branch feat/<nr> from (default: release/next when origin has it, else the default branch of origin, else main).
 .PARAMETER DryRun          Print the exact commands and run nothing.
@@ -75,13 +76,16 @@ param(
   [switch]$ContinueOnError,
   [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
   [ValidateRange(1, 4)][int]$PbiParallel,
+  [ValidateRange(1, 4)][int]$Parallel = 0,
   [switch]$AllowAll,
   [ValidatePattern('\A[A-Za-z0-9][A-Za-z0-9._/-]{0,199}\z')][string]$Base,
   [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
-$adv = $FixAdvisories ? @{ FixAdvisories = $FixAdvisories } : @{}
+$adv = @{}
+if ($FixAdvisories) { $adv.FixAdvisories = $FixAdvisories }
 if ($PSBoundParameters.ContainsKey('PbiParallel')) { $adv.PbiParallel = $PbiParallel }
+if ($Parallel) { $adv.Parallel = $Parallel }
 # The queue launcher cd's to the git toplevel and passes the caller's directory here, so a relative -IssueFile still
 # resolves against where the user typed it. Not inherited by the children.
 $callerCwd = $env:QUEUE_CALLER_CWD
@@ -140,7 +144,7 @@ function Get-Gates([string[]]$Lines) { @($Lines | ForEach-Object { "$_".Trim() }
 
 if ($Status) {
   $bad = [ordered]@{ 'issue numbers' = ($Issue.Count -gt 0); '-IssueFile' = [bool]$IssueFile; '-Label' = [bool]$Label; '-Feature/-Epic' = [bool]($Feature -or $Epic)
-    '-Mode' = $PSBoundParameters.ContainsKey('Mode'); '-MergeApproved' = [bool]$MergeApproved; '-ContinueOnError' = [bool]$ContinueOnError; '-FixAdvisories' = [bool]$FixAdvisories; '-PbiParallel' = $PSBoundParameters.ContainsKey('PbiParallel'); '-TrustedOnly' = [bool]$TrustedOnly }
+    '-Mode' = $PSBoundParameters.ContainsKey('Mode'); '-MergeApproved' = [bool]$MergeApproved; '-ContinueOnError' = [bool]$ContinueOnError; '-FixAdvisories' = [bool]$FixAdvisories; '-PbiParallel' = $PSBoundParameters.ContainsKey('PbiParallel'); '-Parallel' = [bool]$Parallel; '-TrustedOnly' = [bool]$TrustedOnly }
   $bad = @($bad.Keys | Where-Object { $bad[$_] })
   if ($bad) { throw "-Status cannot be combined with $($bad -join ', ')." }
   $nr = ConvertTo-IssueNumber $Status 'status'
