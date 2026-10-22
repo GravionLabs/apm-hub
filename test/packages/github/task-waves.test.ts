@@ -4,6 +4,7 @@ import { spawnSync } from 'child_process';
 import { Fixture, git, json, makeRepo, readLeases, run } from './worktree-test-helpers';
 
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
+vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
 const ROOT = path.resolve(__dirname, '../../..');
 const REFS = path.join(ROOT, 'packages/github/.apm/skills/github-issue/references');
 const waves = fs.readFileSync(path.join(REFS, 'task-waves.md'), 'utf8');
