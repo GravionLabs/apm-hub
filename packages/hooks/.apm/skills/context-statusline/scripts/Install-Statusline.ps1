@@ -4,43 +4,77 @@
 .SYNOPSIS
   Installs (or removes) the apm-hub status line for Claude Code and/or GitHub Copilot CLI.
 .DESCRIPTION
-  -Client claude (default): copies statusline.mjs and subagent-statusline.mjs to ~/.claude/apm-hub/statusline/ and sets
-  'statusLine' and 'subagentStatusLine' in ~/.claude/settings.json to: node ~/.claude/apm-hub/statusline/<file>.mjs.
-  -Client copilot: copies statusline.mjs to <copilot home>/apm-hub/statusline/ and sets 'statusLine' (with padding 1) in
-  <copilot home>/settings.json plus the feature flag STATUS_LINE in feature_flags.enabled (added once, other flags kept).
-  <copilot home> is $COPILOT_HOME when set (then the command carries the absolute path), else ~/.copilot. Copilot CLI has
-  no subagent status line. -Client all does both.
+  The settings entries point at the scripts of the installed skill, so 'apm update' refreshes them; nothing is copied.
+  The script directory is derived from the installer's own location ($PSScriptRoot). When it lies in a
+  <root>/.claude/skills/ or <root>/.agents/skills/ deployment, the client gets its own deployment: Claude Code
+  <root>/.claude/skills/context-statusline/scripts, Copilot CLI <root>/.agents/skills/context-statusline/scripts.
+  Any other location (project checkout, custom path) is used as is. The installer refuses when the target script does not
+  exist, for example when the skill was deployed for the other client only. Paths under $HOME are written as ~/...
+  -Client claude (default): sets 'statusLine' and 'subagentStatusLine' in ~/.claude/settings.json to
+  node <scripts>/statusline.mjs and node <scripts>/subagent-statusline.mjs.
+  -Client copilot: sets 'statusLine' (with padding 1) in <copilot home>/settings.json plus the feature flag STATUS_LINE
+  in feature_flags.enabled (added once, other flags kept). <copilot home> is $COPILOT_HOME when set, else ~/.copilot.
+  Copilot CLI has no subagent status line. -Client all does both.
   Every other key is kept (order and values). A backup settings.json.bak-<timestamp> is written before any change.
-  Idempotent. An entry that does not point at apm-hub/statusline/ is foreign and only replaced with -Force.
-  -Uninstall removes only our entries and our two files per client; the STATUS_LINE flag is left in place (it may be
-  wanted by another status line). Supports -WhatIf and -Confirm.
+  Idempotent. Entries of older versions (node <client home>/apm-hub/statusline/<file>.mjs) are migrated and their copies
+  removed. An entry that is neither is foreign and only replaced with -Force.
+  -Uninstall removes only our entries and the copies of older versions; the STATUS_LINE flag is left in place (it may be
+  wanted by another status line). The skill files are never touched. Supports -WhatIf and -Confirm.
 .PARAMETER Client     claude (default), copilot or all.
 .PARAMETER Force      Replace foreign statusLine / subagentStatusLine entries.
-.PARAMETER Uninstall  Remove our entries and copied scripts.
+.PARAMETER Uninstall  Remove our entries and the copies of older versions.
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param([ValidateSet('claude', 'copilot', 'all')][string]$Client = 'claude', [switch]$Force, [switch]$Uninstall)
 $ErrorActionPreference = 'Stop'
 
+$script:SkillRel = 'skills/context-statusline/scripts'
+
+function ConvertTo-Slash([string]$p) { ($p -replace '\\', '/').TrimEnd('/') }
+
+# Script directory for a client: the client's own deployment next to this one, else this directory.
+function Get-ScriptDir([string]$clientDir) {
+  $here = ConvertTo-Slash $PSScriptRoot
+  if ($here -match "^(.*)/(\.claude|\.agents)/$([regex]::Escape($script:SkillRel))$") { return "$($Matches[1])/$clientDir/$script:SkillRel" }
+  $here
+}
+
+# Command path: ~/... under $HOME, else absolute; quoted when it contains whitespace (then always absolute).
+function Get-CommandPath([string]$dir) {
+  $home2 = ConvertTo-Slash $HOME
+  $cmp = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
+  if ($dir -match '\s') { return '"' + $dir + '"' }
+  if ($home2 -and $dir.StartsWith("$home2/", $cmp)) { return '~' + $dir.Substring($home2.Length) }
+  $dir
+}
+
 function Get-Cfg([string]$name) {
   if ($name -eq 'claude') {
-    @{ Name = 'claude'; Dir = (Join-Path $HOME '.claude'); Base = '~/.claude/apm-hub/statusline'; Padding = $false
+    @{ Name = 'claude'; Dir = (Join-Path $HOME '.claude'); Scripts = (Get-ScriptDir '.claude'); Padding = $false
        Keys = [ordered]@{ statusLine = 'statusline.mjs'; subagentStatusLine = 'subagent-statusline.mjs' } }
   } else {
     $dir = if ($env:COPILOT_HOME) { $env:COPILOT_HOME } else { Join-Path $HOME '.copilot' }
-    $base = if ($env:COPILOT_HOME) { ($dir -replace '\\', '/').TrimEnd('/') + '/apm-hub/statusline' } else { '~/.copilot/apm-hub/statusline' }
-    @{ Name = 'copilot'; Dir = $dir; Base = $base; Padding = $true; Keys = [ordered]@{ statusLine = 'statusline.mjs' } }
+    @{ Name = 'copilot'; Dir = $dir; Scripts = (Get-ScriptDir '.agents'); Padding = $true; Keys = [ordered]@{ statusLine = 'statusline.mjs' } }
   }
 }
 
 function Install-Client($cfg) {
 $keys = $cfg.Keys
 $files = @($keys.Values)
-$claude = $cfg.Dir
-$settings = Join-Path $claude 'settings.json'
-$destDir = Join-Path $claude 'apm-hub/statusline'
+$clientDir = $cfg.Dir
+$settings = Join-Path $clientDir 'settings.json'
+$oldDir = Join-Path $clientDir 'apm-hub/statusline'
+$cmdPath = Get-CommandPath $cfg.Scripts
 $isOurs = { param($node)
-  try { $cmd = $node['command'].GetValue[string](); $cmd -match 'apm-hub/statusline/(statusline|subagent-statusline)\.mjs\s*$' } catch { $false } }
+  try { $cmd = $node['command'].GetValue[string](); $cmd -match '(apm-hub/statusline|context-statusline/scripts)/(statusline|subagent-statusline)\.mjs"?\s*$' } catch { $false } }
+
+if (-not $Uninstall) {
+  foreach ($f in $files) {
+    if (-not (Test-Path -LiteralPath (Join-Path $cfg.Scripts $f))) {
+      throw "[$($cfg.Name)] $($cfg.Scripts)/$f not found. The context-statusline skill is not installed for this client (deployed for another target only?). Install it with apm for $($cfg.Name) and run the installer from that copy."
+    }
+  }
+}
 
 $jsonNode = [System.Text.Json.Nodes.JsonNode]
 $docOpts = [System.Text.Json.JsonDocumentOptions]::new()
@@ -72,7 +106,7 @@ if ($Uninstall) {
   foreach ($k in $keys.Keys) {
     $o = [System.Text.Json.Nodes.JsonObject]::new()
     $o['type'] = 'command'
-    $o['command'] = "node $($cfg.Base)/$($keys[$k])"
+    $o['command'] = "node $cmdPath/$($keys[$k])"
     if ($cfg.Padding) { $o['padding'] = 1 }
     $root[$k] = $o
   }
@@ -88,23 +122,13 @@ if (-not $Uninstall -and $cfg.Name -eq 'copilot') {
 }
 $settingsChanged = $root.ToJsonString() -cne $before
 
-# Scripts
-$srcDir = $PSScriptRoot
-$copy = @()
-if (-not $Uninstall) {
-  foreach ($f in $files) {
-    $dst = Join-Path $destDir $f
-    if (-not (Test-Path -LiteralPath $dst) -or ([IO.File]::ReadAllText($dst) -cne [IO.File]::ReadAllText((Join-Path $srcDir $f)))) { $copy += $f }
-  }
-}
-
 if ($settingsChanged) {
   $so = [System.Text.Json.JsonSerializerOptions]::new()
   $so.WriteIndented = $true
   $so.Encoder = [System.Text.Encodings.Web.JavaScriptEncoder]::UnsafeRelaxedJsonEscaping
   $out = $root.ToJsonString($so) + "`n"
   if ($PSCmdlet.ShouldProcess($settings, 'Update statusLine / subagentStatusLine')) {
-    New-Item -ItemType Directory -Path $claude -Force | Out-Null
+    New-Item -ItemType Directory -Path $clientDir -Force | Out-Null
     if (Test-Path -LiteralPath $settings) {
       $bak = "$settings.bak-$([DateTime]::UtcNow.ToString('yyyyMMddHHmmssfff'))"
       Copy-Item -LiteralPath $settings -Destination $bak
@@ -115,25 +139,16 @@ if ($settingsChanged) {
   }
 }
 
-if ($Uninstall) {
-  foreach ($f in $files) {
-    $dst = Join-Path $destDir $f
-    if ((Test-Path -LiteralPath $dst) -and $PSCmdlet.ShouldProcess($dst, 'Remove script')) { Remove-Item -LiteralPath $dst; Write-Host "Removed $dst" }
-  }
-  if ((Test-Path -LiteralPath $destDir) -and -not (Get-ChildItem -LiteralPath $destDir -Force) -and $PSCmdlet.ShouldProcess($destDir, 'Remove empty directory')) {
-    Remove-Item -LiteralPath $destDir
-  }
-} else {
-  foreach ($f in $copy) {
-    $dst = Join-Path $destDir $f
-    if ($PSCmdlet.ShouldProcess($dst, 'Copy script')) {
-      New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-      Copy-Item -LiteralPath (Join-Path $srcDir $f) -Destination $dst -Force
-      Write-Host "Installed $dst"
-    }
-  }
+# Copies of older versions (install and uninstall): only our two file names, the directory when empty afterwards.
+$removed = 0
+foreach ($f in 'statusline.mjs', 'subagent-statusline.mjs') {
+  $old = Join-Path $oldDir $f
+  if ((Test-Path -LiteralPath $old) -and $PSCmdlet.ShouldProcess($old, 'Remove old copy')) { Remove-Item -LiteralPath $old; Write-Host "Removed old copy $old"; $removed++ }
 }
-if (-not $settingsChanged -and -not $copy) { Write-Host "Up to date ($($cfg.Name)): nothing to do." }
+foreach ($d in $oldDir, (Split-Path $oldDir -Parent)) {
+  if ((Test-Path -LiteralPath $d) -and -not (Get-ChildItem -LiteralPath $d -Force) -and $PSCmdlet.ShouldProcess($d, 'Remove empty directory')) { Remove-Item -LiteralPath $d }
+}
+if (-not $settingsChanged -and -not $removed) { Write-Host "Up to date ($($cfg.Name)): nothing to do." }
 }
 
 foreach ($n in $(if ($Client -eq 'all') { 'claude', 'copilot' } else { $Client })) { Install-Client (Get-Cfg $n) }

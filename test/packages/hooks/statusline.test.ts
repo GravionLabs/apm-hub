@@ -195,16 +195,27 @@ describe('subagent-statusline.mjs', () => {
   });
 });
 
+
+/** Command path as the installer writes it: quoted when it contains whitespace, else as is (absolute outside HOME). */
+const cmdPath = (dir: string) => (/\s/.test(dir) ? `"${dir}"` : dir);
+/** Copies the skill scripts to <root>/<client dir>/skills/context-statusline/scripts and returns the installer path there. */
+const deploy = (root: string, clientDir: string) => {
+  const dst = path.join(root, clientDir, 'skills', 'context-statusline', 'scripts');
+  fs.mkdirSync(dst, { recursive: true });
+  for (const f of ['statusline.mjs', 'subagent-statusline.mjs', 'Install-Statusline.ps1']) fs.copyFileSync(path.join(DIR, f), path.join(dst, f));
+  return path.join(dst, 'Install-Statusline.ps1');
+};
+
 describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1', () => {
   let tmp: string;
   let home: string;
   let settings: string;
-  let dest: string;
+  let oldCopy: string;
   beforeEach(() => {
     tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'slinst-'));
     home = path.join(tmp, 'home');
     settings = path.join(home, '.claude', 'settings.json');
-    dest = path.join(home, '.claude', 'apm-hub', 'statusline');
+    oldCopy = path.join(home, '.claude', 'apm-hub', 'statusline');
     fs.mkdirSync(path.join(home, '.claude'), { recursive: true });
   });
   afterEach(() => fs.rmSync(tmp, { recursive: true, force: true }));
@@ -216,17 +227,43 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1', () => {
   };
   const read = () => JSON.parse(fs.readFileSync(settings, 'utf8'));
   const backups = () => fs.readdirSync(path.dirname(settings)).filter((f) => f.startsWith('settings.json.bak-'));
-  const ours = (f: string) => ({ type: 'command', command: `node ~/.claude/apm-hub/statusline/${f}` });
+  const ours = (f: string) => ({ type: 'command', command: `node ${cmdPath(DIR)}/${f}` });
+  const old = (f: string) => ({ type: 'command', command: `node ~/.claude/apm-hub/statusline/${f}` });
 
-  it('installs into a fresh HOME without settings.json', () => {
+  it('installs into a fresh HOME without settings.json, pointing at the skill scripts, no copy', () => {
     fs.rmSync(path.dirname(settings), { recursive: true });
     const r = install();
     expect(r.status).toBe(0);
     expect(read()).toEqual({ statusLine: ours('statusline.mjs'), subagentStatusLine: ours('subagent-statusline.mjs') });
-    for (const f of ['statusline.mjs', 'subagent-statusline.mjs']) {
-      expect(fs.readFileSync(path.join(dest, f), 'utf8')).toBe(fs.readFileSync(path.join(DIR, f), 'utf8'));
-    }
+    expect(fs.existsSync(oldCopy)).toBe(false);
+    expect(fs.readdirSync(path.join(home, '.claude'))).toEqual(['settings.json']);
     expect(fs.readFileSync(settings, 'utf8')).toContain('\n  "statusLine": {');
+  });
+
+  it('writes a ~/ command when the skill is deployed under HOME', () => {
+    const inst = deploy(home, '.claude');
+    const env: NodeJS.ProcessEnv = { ...process.env, HOME: home };
+    delete env.USERPROFILE;
+    const r = spawnSync('pwsh', ['-NoProfile', '-File', inst], { encoding: 'utf8', cwd: tmp, env });
+    expect(r.status).toBe(0);
+    expect(read()).toEqual({
+      statusLine: { type: 'command', command: 'node ~/.claude/skills/context-statusline/scripts/statusline.mjs' },
+      subagentStatusLine: { type: 'command', command: 'node ~/.claude/skills/context-statusline/scripts/subagent-statusline.mjs' },
+    });
+  });
+
+  it('refuses when the target script is missing and leaves settings.json untouched', () => {
+    fs.writeFileSync(settings, '{"a":1}');
+    const inst = path.join(tmp, 'alone', 'Install-Statusline.ps1');
+    fs.mkdirSync(path.dirname(inst));
+    fs.copyFileSync(INSTALLER, inst);
+    const env: NodeJS.ProcessEnv = { ...process.env, HOME: home };
+    delete env.USERPROFILE;
+    const r = spawnSync('pwsh', ['-NoProfile', '-File', inst], { encoding: 'utf8', cwd: tmp, env });
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toContain('statusline.mjs not found');
+    expect(fs.readFileSync(settings, 'utf8')).toBe('{"a":1}');
+    expect(backups()).toHaveLength(0);
   });
 
   it('keeps other keys and their order, and writes a backup', () => {
@@ -250,11 +287,16 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1', () => {
     expect(backups()).toHaveLength(0);
   });
 
-  it('refreshes a stale copied script', () => {
-    install();
-    fs.writeFileSync(path.join(dest, 'statusline.mjs'), 'old');
-    expect(install().status).toBe(0);
-    expect(fs.readFileSync(path.join(dest, 'statusline.mjs'), 'utf8')).toBe(fs.readFileSync(STATUS, 'utf8'));
+  it('migrates entries of an older version without -Force and removes its copies', () => {
+    fs.writeFileSync(settings, JSON.stringify({ statusLine: old('statusline.mjs'), x: 1, subagentStatusLine: old('subagent-statusline.mjs') }));
+    fs.mkdirSync(oldCopy, { recursive: true });
+    fs.writeFileSync(path.join(oldCopy, 'statusline.mjs'), 'old');
+    fs.writeFileSync(path.join(oldCopy, 'subagent-statusline.mjs'), 'old');
+    const r = install();
+    expect(r.status).toBe(0);
+    expect(read()).toEqual({ statusLine: ours('statusline.mjs'), x: 1, subagentStatusLine: ours('subagent-statusline.mjs') });
+    expect(fs.existsSync(oldCopy)).toBe(false);
+    expect(install().stdout).toContain('Up to date');
   });
 
   it('refuses a foreign statusLine without -Force and leaves everything untouched', () => {
@@ -264,7 +306,6 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1', () => {
     expect(r.status).not.toBe(0);
     expect(r.stderr).toContain('-Force');
     expect(fs.readFileSync(settings, 'utf8')).toBe(orig);
-    expect(fs.existsSync(dest)).toBe(false);
   });
 
   it('replaces a foreign statusLine with -Force', () => {
@@ -283,18 +324,30 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1', () => {
 
   it('-WhatIf changes nothing', () => {
     fs.writeFileSync(settings, '{"a":1}');
+    fs.mkdirSync(oldCopy, { recursive: true });
+    fs.writeFileSync(path.join(oldCopy, 'statusline.mjs'), 'old');
     expect(install('-WhatIf').status).toBe(0);
     expect(fs.readFileSync(settings, 'utf8')).toBe('{"a":1}');
-    expect(fs.existsSync(dest)).toBe(false);
+    expect(fs.existsSync(path.join(oldCopy, 'statusline.mjs'))).toBe(true);
     expect(backups()).toHaveLength(0);
   });
 
-  it('-Uninstall removes only our entries and files', () => {
+  it('-Uninstall removes only our entries and the copies of older versions, never the skill files', () => {
     fs.writeFileSync(settings, JSON.stringify({ keep: true }));
     install();
+    fs.mkdirSync(oldCopy, { recursive: true });
+    fs.writeFileSync(path.join(oldCopy, 'statusline.mjs'), 'old');
     expect(install('-Uninstall').status).toBe(0);
     expect(read()).toEqual({ keep: true });
-    expect(fs.existsSync(dest)).toBe(false);
+    expect(fs.existsSync(oldCopy)).toBe(false);
+    expect(fs.existsSync(STATUS)).toBe(true);
+    expect(fs.existsSync(SUB)).toBe(true);
+  });
+
+  it('-Uninstall removes entries of an older version', () => {
+    fs.writeFileSync(settings, JSON.stringify({ statusLine: old('statusline.mjs'), subagentStatusLine: old('subagent-statusline.mjs') }));
+    expect(install('-Uninstall').status).toBe(0);
+    expect(read()).toEqual({});
   });
 
   it('-Uninstall leaves a foreign statusLine alone', () => {
@@ -322,30 +375,42 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1 -Client copilot', ()
   });
   afterEach(() => fs.rmSync(tmp, { recursive: true, force: true }));
 
-  const install = (env2: Record<string, string>, ...args: string[]) => {
+  const spawn = (installer: string, env2: Record<string, string>, ...args: string[]) => {
     const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, ...env2 };
     delete env.USERPROFILE;
     if (!('COPILOT_HOME' in env2)) delete env.COPILOT_HOME;
-    return spawnSync('pwsh', ['-NoProfile', '-File', INSTALLER, '-Client', 'copilot', ...args], { encoding: 'utf8', cwd: tmp, env });
+    return spawnSync('pwsh', ['-NoProfile', '-File', installer, ...args], { encoding: 'utf8', cwd: tmp, env });
   };
+  const install = (env2: Record<string, string>, ...args: string[]) => spawn(INSTALLER, env2, '-Client', 'copilot', ...args);
   const sp = (base: string) => path.join(base, 'settings.json');
   const read = (base: string) => JSON.parse(fs.readFileSync(sp(base), 'utf8'));
-  const entry = (base: string) => ({ type: 'command', command: `node ${base}/apm-hub/statusline/statusline.mjs`, padding: 1 });
+  const entry = { type: 'command', command: `node ${cmdPath(DIR)}/statusline.mjs`, padding: 1 };
 
-  it('installs under ~/.copilot with the feature flag and no subagent entry', () => {
+  it('installs under ~/.copilot with the feature flag, no subagent entry and no copy', () => {
     const r = install({});
     expect(r.status).toBe(0);
     const base = path.join(home, '.copilot');
-    expect(read(base)).toEqual({ statusLine: entry('~/.copilot'), feature_flags: { enabled: ['STATUS_LINE'] } });
-    expect(fs.readFileSync(path.join(base, 'apm-hub/statusline/statusline.mjs'), 'utf8')).toBe(fs.readFileSync(STATUS, 'utf8'));
-    expect(fs.existsSync(path.join(base, 'apm-hub/statusline/subagent-statusline.mjs'))).toBe(false);
+    expect(read(base)).toEqual({ statusLine: entry, feature_flags: { enabled: ['STATUS_LINE'] } });
+    expect(fs.readdirSync(base)).toEqual(['settings.json']);
     expect(fs.existsSync(path.join(home, '.claude'))).toBe(false);
   });
 
-  it('uses COPILOT_HOME with an absolute command path', () => {
+  it('uses COPILOT_HOME for settings.json', () => {
     expect(install({ COPILOT_HOME: chome }).status).toBe(0);
-    expect(read(chome).statusLine).toEqual(entry(chome));
+    expect(read(chome).statusLine).toEqual(entry);
     expect(fs.existsSync(path.join(home, '.copilot'))).toBe(false);
+  });
+
+  it('points at the ~/.agents deployment when run from the ~/.claude one, refuses without it', () => {
+    const inst = deploy(home, '.claude');
+    const r1 = spawn(inst, { COPILOT_HOME: chome }, '-Client', 'copilot');
+    expect(r1.status).not.toBe(0);
+    expect(r1.stderr).toContain('.agents/skills/context-statusline/scripts/statusline.mjs not found');
+    expect(fs.existsSync(chome)).toBe(false);
+    deploy(home, '.agents');
+    const r2 = spawn(inst, { COPILOT_HOME: chome }, '-Client', 'copilot');
+    expect(r2.status).toBe(0);
+    expect(read(chome).statusLine).toEqual({ type: 'command', command: 'node ~/.agents/skills/context-statusline/scripts/statusline.mjs', padding: 1 });
   });
 
   it('keeps existing flags and keys, adds the flag once, is idempotent', () => {
@@ -353,7 +418,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1 -Client copilot', ()
     fs.writeFileSync(sp(chome), JSON.stringify({ model: 'x', feature_flags: { enabled: ['OTHER'], disabled: ['D'] } }));
     expect(install({ COPILOT_HOME: chome }).status).toBe(0);
     const once = fs.readFileSync(sp(chome), 'utf8');
-    expect(read(chome)).toEqual({ model: 'x', feature_flags: { enabled: ['OTHER', 'STATUS_LINE'], disabled: ['D'] }, statusLine: entry(chome) });
+    expect(read(chome)).toEqual({ model: 'x', feature_flags: { enabled: ['OTHER', 'STATUS_LINE'], disabled: ['D'] }, statusLine: entry });
     const r = install({ COPILOT_HOME: chome });
     expect(r.stdout).toContain('Up to date');
     expect(fs.readFileSync(sp(chome), 'utf8')).toBe(once);
@@ -367,6 +432,15 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1 -Client copilot', ()
     expect(read(chome).feature_flags.enabled).toEqual(['STATUS_LINE']);
   });
 
+  it('migrates an older entry with the absolute COPILOT_HOME copy path and removes the copy', () => {
+    fs.mkdirSync(path.join(chome, 'apm-hub', 'statusline'), { recursive: true });
+    fs.writeFileSync(path.join(chome, 'apm-hub', 'statusline', 'statusline.mjs'), 'old');
+    fs.writeFileSync(sp(chome), JSON.stringify({ statusLine: { type: 'command', command: `node ${chome}/apm-hub/statusline/statusline.mjs`, padding: 1 } }));
+    expect(install({ COPILOT_HOME: chome }).status).toBe(0);
+    expect(read(chome).statusLine).toEqual(entry);
+    expect(fs.existsSync(path.join(chome, 'apm-hub'))).toBe(false);
+  });
+
   it('refuses a foreign statusLine without -Force, replaces it with -Force', () => {
     fs.mkdirSync(chome);
     const orig = JSON.stringify({ statusLine: { type: 'command', command: 'mine' } });
@@ -376,7 +450,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1 -Client copilot', ()
     expect(r.stderr).toContain('-Force');
     expect(fs.readFileSync(sp(chome), 'utf8')).toBe(orig);
     expect(install({ COPILOT_HOME: chome }, '-Force').status).toBe(0);
-    expect(read(chome).statusLine).toEqual(entry(chome));
+    expect(read(chome).statusLine).toEqual(entry);
   });
 
   it('-WhatIf changes nothing', () => {
@@ -384,21 +458,32 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1 -Client copilot', ()
     expect(fs.existsSync(chome)).toBe(false);
   });
 
-  it('-Uninstall removes entry and script, leaves the flag and other keys', () => {
-    fs.mkdirSync(chome);
+  it('-Uninstall removes the entry and an old copy, leaves the flag and other keys', () => {
+    fs.mkdirSync(path.join(chome, 'apm-hub', 'statusline'), { recursive: true });
+    fs.writeFileSync(path.join(chome, 'apm-hub', 'statusline', 'statusline.mjs'), 'old');
     fs.writeFileSync(sp(chome), JSON.stringify({ keep: 1 }));
     install({ COPILOT_HOME: chome });
     expect(install({ COPILOT_HOME: chome }, '-Uninstall').status).toBe(0);
     expect(read(chome)).toEqual({ keep: 1, feature_flags: { enabled: ['STATUS_LINE'] } });
-    expect(fs.existsSync(path.join(chome, 'apm-hub/statusline'))).toBe(false);
+    expect(fs.existsSync(path.join(chome, 'apm-hub'))).toBe(false);
   });
 
   it('-Client all installs both', () => {
-    const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, COPILOT_HOME: chome };
-    delete env.USERPROFILE;
-    const r = spawnSync('pwsh', ['-NoProfile', '-File', INSTALLER, '-Client', 'all'], { encoding: 'utf8', cwd: tmp, env });
+    const r = spawn(INSTALLER, { COPILOT_HOME: chome }, '-Client', 'all');
     expect(r.status).toBe(0);
-    expect(Object.keys(read(path.join(home, '.claude')))).toEqual(['statusLine', 'subagentStatusLine']);
-    expect(read(chome).statusLine).toEqual(entry(chome));
+    expect(read(path.join(home, '.claude'))).toEqual({
+      statusLine: { type: 'command', command: `node ${cmdPath(DIR)}/statusline.mjs` },
+      subagentStatusLine: { type: 'command', command: `node ${cmdPath(DIR)}/subagent-statusline.mjs` },
+    });
+    expect(read(chome).statusLine).toEqual(entry);
+  });
+
+  it('-Client all from a ~/.claude deployment uses each client\'s own deployment', () => {
+    const inst = deploy(home, '.claude');
+    deploy(home, '.agents');
+    const r = spawn(inst, { COPILOT_HOME: chome }, '-Client', 'all');
+    expect(r.status).toBe(0);
+    expect(read(path.join(home, '.claude')).statusLine.command).toBe('node ~/.claude/skills/context-statusline/scripts/statusline.mjs');
+    expect(read(chome).statusLine.command).toBe('node ~/.agents/skills/context-statusline/scripts/statusline.mjs');
   });
 });
