@@ -29,7 +29,7 @@ Read that file and follow everything below its frontmatter as your instructions 
 
 ## 3. Input
 
-`$ARGUMENTS`: optional flags (`--no-overview`, `--no-review-summary`, `--fix-advisories none|medium|all[:dim,dim]`: answers the advisory question up front, no `Gate:` for the review summary), the mode `plan|implement|full|next|loop|status` and the issue number (or a description for `plan|implement|full`; `next`, `loop` and `status` take no description). If empty, ask for the mode and the issue.
+`$ARGUMENTS`: optional flags (`--no-overview`, `--no-review-summary`, `--parallel <1-4>`: Tasks per wave, `--fix-advisories none|medium|all[:dim,dim]`: answers the advisory question up front, no `Gate:` for the review summary), the mode `plan|implement|full|next|loop|status` and the issue number (or a description for `plan|implement|full`; `next`, `loop` and `status` take no description). If empty, ask for the mode and the issue.
 
 ## Differences from the primary agent
 

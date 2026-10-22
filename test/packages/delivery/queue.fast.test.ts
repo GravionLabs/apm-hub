@@ -88,6 +88,17 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     add('pbiIssue', ['12', '-PbiParallel', '2', '-DryRun']);
     add('pbiStatus', ['-Status', '248', '-PbiParallel', '2', '-DryRun']);
     for (const v of ['0', '5', '-1', 'x']) add(`pbiBad${v}`, ['-Feature', '10', '-PbiParallel', v, '-DryRun']);
+    add('parClaude', ['12', '-Parallel', '2', '-DryRun']);
+    add('parCopilot', ['12', '-Harness', 'copilot', '-Parallel', '4', '-DryRun']);
+    add('parOpencode', ['12', '-Harness', 'opencode', '-Parallel', '1', '-DryRun']);
+    add('parFeature', ['-Feature', '10', '-Parallel', '3', '-DryRun']);
+    add('parEpicOpencode', ['-Epic', '11', '-Harness', 'opencode', '-Parallel', '2', '-DryRun']);
+    add('parWithAdv', ['12', '-FixAdvisories', 'medium', '-Parallel', '2', '-DryRun']);
+    add('parTwoIssues', ['12', '13', '-Parallel', '2', '-DryRun']);
+    add('parZero', ['12', '-Parallel', '0', '-DryRun']);
+    add('parFive', ['12', '-Parallel', '5', '-DryRun']);
+    add('parWord', ['12', '-Parallel', 'x', '-DryRun']);
+    add('parStatus', ['-Status', '248', '-Parallel', '2', '-DryRun']);
 
     const keys = Object.keys(defs);
     dirOf = {};
@@ -393,6 +404,39 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     it.each(['0', '5', '-1', 'x'])('rejects the value %s (1-4 only)', (v) => {
       expect(R[`pbiBad${v}`].status).not.toBe(0);
       expect(R[`pbiBad${v}`].stderr).toContain('PbiParallel');
+    });
+  });
+
+  describe('-Parallel', () => {
+    it('puts --parallel <n> before the mode word for every harness', () => {
+      expect(R.parClaude.stdout).toContain('-p "--parallel 2 full 12"');
+      expect(R.parCopilot.stdout).toContain('-p "--parallel 4 full 12"');
+      expect(R.parOpencode.stdout).toContain('"--parallel 1 full 12"');
+    });
+
+    it('puts the flag before next in -Feature and -Epic mode', () => {
+      expect(R.parFeature.stdout).toContain('-p "--parallel 3 next 10"');
+      expect(R.parEpicOpencode.stdout).toContain('"--parallel 2 next 11"');
+    });
+
+    it('comes after --fix-advisories and applies to every issue', () => {
+      expect(R.parWithAdv.stdout).toContain('-p "--fix-advisories medium --parallel 2 full 12"');
+      expect(R.parTwoIssues.stdout).toContain('-p "--parallel 2 full 12"');
+      expect(R.parTwoIssues.stdout).toContain('-p "--parallel 2 full 13"');
+    });
+
+    it('leaves the command line unchanged without the parameter', () => {
+      expect(R.default.stdout).not.toContain('--parallel');
+    });
+
+    it.each(['parZero', 'parFive', 'parWord'])('rejects an invalid width (%s)', (k) => {
+      expect(R[k].status).not.toBe(0);
+      expect(R[k].stderr).toContain(`parameter 'Parallel'`);
+    });
+
+    it('cannot be combined with -Status', () => {
+      expect(R.parStatus.status).not.toBe(0);
+      expect(R.parStatus.stderr).toContain('-Status cannot be combined with -Parallel');
     });
   });
 

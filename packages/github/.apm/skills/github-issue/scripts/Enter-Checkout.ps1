@@ -21,6 +21,7 @@
 .PARAMETER Issue           Issue number.
 .PARAMETER Branch          Branch of the run.
 .PARAMETER Base            Integration branch on origin the branch starts from.
+.PARAMETER From            Local ref (branch or SHA) a Task worktree starts from, the current PBI HEAD (task-waves.md). With -From the main checkout is never used: a worktree .worktrees/<pbi>-t<task> on -Branch is created or resumed (-Issue is then '<pbi>-t<task>', also the lease issue).
 .PARAMETER LeaseTtlMinutes Heartbeat age after which a lease is stale (default 120).
 #>
 [CmdletBinding()]
@@ -28,6 +29,7 @@ param(
   [string]$Issue,
   [string]$Branch,
   [string]$Base,
+  [string]$From,
   [ValidateRange(1, 525600)][int]$LeaseTtlMinutes = 120
 )
 # No Mandatory: a headless run must exit non-zero with a message instead of prompting.
@@ -74,7 +76,7 @@ function Test-Same([string]$A, [string]$B) {
   [string]::Equals([IO.Path]::TrimEndingDirectorySeparator($A), [IO.Path]::TrimEndingDirectorySeparator($B), $cmp)
 }
 
-if ($Issue -notmatch '\A[0-9]{1,10}\z') { throw "Invalid -Issue '$Issue': expected the issue number." }
+if ($Issue -notmatch '\A[0-9]{1,10}(-t[0-9]{1,10})?\z') { throw "Invalid -Issue '$Issue': expected the issue number or '<pbi>-t<task>'." }
 if (-not $Base) { throw 'Missing -Base: pass the integration branch (no default is guessed).' }
 if ($Base -notmatch '\A[A-Za-z0-9][A-Za-z0-9._/-]{0,199}\z' -or $Base -match '\.\.|//|\.lock\z|/\z') { throw "Invalid -Base '$Base': expected a branch name on origin." }
 if (-not $Branch) { throw 'Missing -Branch.' }
@@ -114,7 +116,7 @@ function Save-Lease([string]$CheckoutPath, [string]$LeaseBranch, $Existing, [swi
   $file = Join-Path $leaseDir ((Get-LeaseKey $CheckoutPath) + '.json')
   $stamp = Get-Stamp
   $started = if ($Existing -and $Existing.PSObject.Properties['started'] -and $Existing.started) { (ConvertTo-Utc $Existing.started).ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", [cultureinfo]::InvariantCulture) } else { $stamp }
-  $created = Write-Lease $file ([ordered]@{ path = $CheckoutPath; issue = [long]$Issue; branch = $LeaseBranch; host = [Environment]::MachineName; started = $started; heartbeat = $stamp }) -Exclusive:$Exclusive
+  $created = Write-Lease $file ([ordered]@{ path = $CheckoutPath; issue = $(if ($Issue -match '\A[0-9]+\z') { [long]$Issue } else { $Issue }); branch = $LeaseBranch; host = [Environment]::MachineName; started = $started; heartbeat = $stamp }) -Exclusive:$Exclusive
   if (-not $created) { return $null }
   $file
 }
@@ -137,7 +139,7 @@ foreach ($l in @($leases | Where-Object { $_.Issue -eq $Issue })) {
 # The lease is claimed first (exclusive create), then the tree is checked and the branch checked out: a concurrent run sees the live lease.
 $rootFile = Join-Path $leaseDir ((Get-LeaseKey $root) + '.json')
 $claimed = $null
-for ($attempt = 0; $attempt -lt 5 -and -not $claimed; $attempt++) {
+for ($attempt = 0; $attempt -lt 5 -and -not $claimed -and -not $From; $attempt++) {
   if ($attempt -gt 0) { $leases = Get-Leases }
   $onRoot = @($leases | Where-Object { Test-Same $_.Path $root })
   if (@($onRoot | Where-Object { $_.Live -and $_.Issue -ne $Issue }).Count -gt 0) { break } # busy
@@ -195,7 +197,7 @@ if ($registered -contains $target) {
   $wtBranch = "$(& git -C $target rev-parse --abbrev-ref HEAD 2>$null)".Trim()
   if (-not $wtBranch) { $wtBranch = $Branch }
 } else {
-  $created = & (Join-Path $PSScriptRoot 'New-Worktree.ps1') -Issue $Issue -Branch $Branch -Base $Base | Select-Object -Last 1 | ConvertFrom-Json
+  $created = & (Join-Path $PSScriptRoot 'New-Worktree.ps1') -Issue $Issue -Branch $Branch -Base $Base -From $From | Select-Object -Last 1 | ConvertFrom-Json
   $target = "$($created.path)"
   $wtBranch = "$($created.branch)"
 }
