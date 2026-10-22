@@ -27,7 +27,7 @@ pwsh scripts/Invoke-OrchestratorQueue.ps1 -Status 248                   # one-sh
 Start with `-DryRun`. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`
 (not with `-Feature`/`-Epic`: the mode is always `next`, the adapters forward it as `next <nr>`), `-ContinueOnError`,
 `-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved` (opt-in, otherwise the runner never merges), `-TrustedOnly` (with `-Label`),
-`-Status <nr>` (alone: no other selector or option), `-FixAdvisories none|medium|all[:dim,dim]` (lowercase dimensions; forwarded as `--fix-advisories <policy>`, no review-summary gate; CRITICAL/HIGH always block).
+`-Status <nr>` (alone: no other selector or option), `-FixAdvisories none|medium|all[:dim,dim]` (lowercase dimensions; forwarded as `--fix-advisories <policy>`, no review-summary gate; CRITICAL/HIGH always block), `-PbiParallel 1-4` (only with `-Feature`/`-Epic`; forwarded as `--pbi-parallel <m>`, read by the orchestrator `loop` mode).
 
 ## Slash usage
 

@@ -66,8 +66,8 @@ describe('orchestrator agent: loop mode', () => {
 });
 
 describe('loop-mode reference', () => {
-  it('stays within 60 lines', () => {
-    expect(reference.trimEnd().split('\n').length).toBeLessThanOrEqual(60);
+  it('stays within 70 lines', () => {
+    expect(reference.trimEnd().split('\n').length).toBeLessThanOrEqual(70);
   });
 
   it('defines the loop ledger: path, header once, done and stop lines, rulings elsewhere', () => {

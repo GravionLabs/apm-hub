@@ -81,6 +81,13 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     for (const [i, v] of ['medium:', 'medium:a,', 'medium:a b', 'all --no-review', 'medium:a;b', 'none:$(x)', 'critical'].entries()) {
       add(`advBad${i}`, ['12', '-FixAdvisories', v, '-DryRun']);
     }
+    add('pbiFeature', ['-Feature', '10', '-PbiParallel', '3', '-DryRun']);
+    add('pbiEpicCopilot', ['-Epic', '11', '-Harness', 'copilot', '-PbiParallel', '1', '-DryRun']);
+    add('pbiFeatureOpencode', ['-Feature', '10', '-Harness', 'opencode', '-PbiParallel', '4', '-DryRun']);
+    add('pbiWithFix', ['-Feature', '10', '-FixAdvisories', 'medium', '-PbiParallel', '2', '-DryRun']);
+    add('pbiIssue', ['12', '-PbiParallel', '2', '-DryRun']);
+    add('pbiStatus', ['-Status', '248', '-PbiParallel', '2', '-DryRun']);
+    for (const v of ['0', '5', '-1', 'x']) add(`pbiBad${v}`, ['-Feature', '10', '-PbiParallel', v, '-DryRun']);
 
     const keys = Object.keys(defs);
     dirOf = {};
@@ -361,6 +368,31 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
     it.each(['advBad', 'advBadPolicy', 'advBadUpper', 'advBadDimCase', 'advBadDimUnderscore', 'advBadDimDigit'])('rejects invalid value (%s)', (k) => {
       expect(R[k].status).not.toBe(0);
       expect(R[k].stderr).toContain(`Cannot validate argument on parameter 'FixAdvisories'`);
+    });
+  });
+
+  describe('-PbiParallel (#468)', () => {
+    it('splices --pbi-parallel before the mode word on every harness', () => {
+      expect(R.pbiFeature.stdout).toContain('-p "--pbi-parallel 3 next 10"');
+      expect(R.pbiEpicCopilot.stdout).toContain('--pbi-parallel 1 next 11');
+      expect(R.pbiFeatureOpencode.stdout).toContain('--pbi-parallel 4 next 10');
+    });
+
+    it('puts it after --fix-advisories and leaves the command unchanged without it', () => {
+      expect(R.pbiWithFix.stdout).toContain('-p "--fix-advisories medium --pbi-parallel 2 next 10"');
+      expect(R.advFeature.stdout).not.toContain('--pbi-parallel');
+    });
+
+    it('needs -Feature or -Epic and cannot be combined with -Status', () => {
+      expect(R.pbiIssue.status).not.toBe(0);
+      expect(R.pbiIssue.stderr).toContain('-PbiParallel needs -Feature or -Epic');
+      expect(R.pbiStatus.status).not.toBe(0);
+      expect(R.pbiStatus.stderr).toContain('-Status cannot be combined with -PbiParallel');
+    });
+
+    it.each(['0', '5', '-1', 'x'])('rejects the value %s (1-4 only)', (v) => {
+      expect(R[`pbiBad${v}`].status).not.toBe(0);
+      expect(R[`pbiBad${v}`].stderr).toContain('PbiParallel');
     });
   });
 
