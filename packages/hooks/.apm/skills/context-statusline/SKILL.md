@@ -9,7 +9,7 @@ metadata:
 # context-statusline
 
 Claude Code (status line and subagent line) and GitHub Copilot CLI (status line only, experimental). Two Node scripts (Node >= 22, no dependencies, same on Linux, macOS and Windows) and an installer
-that wires them into `~/.claude/settings.json`. PowerShell 7+ is needed for the installer only.
+that points `~/.claude/settings.json` at them. PowerShell 7+ is needed for the installer only.
 
 ## Install
 
@@ -18,17 +18,16 @@ pwsh scripts/Install-Statusline.ps1 -WhatIf     # show what would change
 pwsh scripts/Install-Statusline.ps1             # install for Claude Code (default)
 pwsh scripts/Install-Statusline.ps1 -Client copilot   # or: all
 pwsh scripts/Install-Statusline.ps1 -Force      # replace a statusLine / subagentStatusLine you set yourself
-pwsh scripts/Install-Statusline.ps1 -Uninstall  # remove only our entries and files
+pwsh scripts/Install-Statusline.ps1 -Uninstall  # remove only our entries (and copies of older versions)
 ```
 
 The installer:
 
-- copies `statusline.mjs` and `subagent-statusline.mjs` to `~/.claude/apm-hub/statusline/`
-- sets `statusLine` and `subagentStatusLine` to `{"type":"command","command":"node ~/.claude/apm-hub/statusline/<file>.mjs"}`
+- makes no copy: `statusLine` and `subagentStatusLine` become `{"type":"command","command":"node <scripts>/<file>.mjs"}` with `<scripts>` the skill's own `scripts/` directory (written as `~/...` under `$HOME`), so `apm update` refreshes the status line
+- derives `<scripts>` from where it runs: in a `~/.claude/skills/` or `~/.agents/skills/` deployment each client gets its own copy (Claude Code `~/.claude/skills/context-statusline/scripts`, Copilot CLI `~/.agents/skills/context-statusline/scripts`); anywhere else (project checkout) the directory it runs from. It refuses when that script is missing (skill deployed for the other client only)
 - keeps every other settings key, writes `settings.json.bak-<timestamp>` before changing, uses 2-space indent
-- is idempotent; a foreign entry (not pointing at `apm-hub/statusline/`) is refused without `-Force`
-- `-Client copilot` writes `$COPILOT_HOME` (else `~/.copilot`) `settings.json`: only `statusLine` (padding 1) and `STATUS_LINE` added to `feature_flags.enabled`; it has its own script copy under `apm-hub/statusline/` there. `-Uninstall` leaves the flag in place
-- re-run it after `apm update` to refresh the copied scripts
+- is idempotent; entries of older versions (`apm-hub/statusline/` copies) are migrated and their copies removed; a foreign entry is refused without `-Force`
+- `-Client copilot` writes `$COPILOT_HOME` (else `~/.copilot`) `settings.json`: only `statusLine` (padding 1) and `STATUS_LINE` added to `feature_flags.enabled`. `-Uninstall` leaves the flag in place and never touches the skill files
 
 Restart Claude Code (or open a new session) to see the lines.
 
