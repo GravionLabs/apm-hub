@@ -22,3 +22,58 @@ jobs:
       - uses: GravionLabs/ci/versioning/mark-merged-issues@main
         with:
           token: ${{ secrets.GH_PAT || github.token }}
+      # Sets the project Status of those issues to `In release`. Needs a token with scope `project`
+      # (secret PROJECT_TOKEN, else GH_PAT); without one only the label is set. Never fails the job.
+      - name: Set project status In release
+        id: in-release
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN || secrets.GH_PAT }}
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::no token with scope project (secret PROJECT_TOKEN or GH_PAT); label only"
+            exit 0
+          fi
+          owner="${GITHUB_REPOSITORY%%/*}"; repo="${GITHUB_REPOSITORY##*/}"
+          prs=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[].number') || {
+            echo "::warning::cannot list pull requests of $GITHUB_SHA; project status not set"
+            exit 0
+          }
+          for pr in $prs; do
+            issues=$(gh api graphql -f owner="$owner" -f repo="$repo" -F pr="$pr" -f query='
+              query($owner:String!,$repo:String!,$pr:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$pr){
+                closingIssuesReferences(first:50){nodes{number}}}}}' \
+              --jq '.data.repository.pullRequest.closingIssuesReferences.nodes[].number') || {
+              echo "::warning::cannot read issues linked to PR #$pr"
+              continue
+            }
+            for issue in $issues; do
+              items=$(gh api graphql -f owner="$owner" -f repo="$repo" -F issue="$issue" -f query='
+                query($owner:String!,$repo:String!,$issue:Int!){repository(owner:$owner,name:$repo){issue(number:$issue){
+                  projectItems(first:20){nodes{id project{id number owner{... on Organization{login} ... on User{login}}
+                    field(name:"Status"){... on ProjectV2SingleSelectField{id options{id name}}}}
+                    fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name optionId}}}}}}}' \
+                --jq '.data.repository.issue.projectItems.nodes[]' | jq -c .) || {
+                echo "::warning::cannot read project items of #$issue"
+                continue
+              }
+              if [ -z "$items" ]; then echo "::notice::#$issue has no project item; skipped"; continue; fi
+              while IFS= read -r item; do
+                number=$(jq -r '.project.number' <<<"$item")
+                status=$(jq -r '.fieldValueByName.name // ""' <<<"$item")
+                if [ "$status" = "Done" ] || [ "$status" = "In release" ]; then
+                  echo "::notice::#$issue in project $number is already '$status'; skipped"; continue
+                fi
+                option=$(jq -r '[.project.field.options[]? | select(.name == "In release") | .id][0] // ""' <<<"$item")
+                if [ -z "$option" ]; then
+                  echo "::warning::project $number has no Status option 'In release'; #$issue skipped"; continue
+                fi
+                gh api graphql -f project="$(jq -r '.project.id' <<<"$item")" -f item="$(jq -r '.id' <<<"$item")" \
+                  -f field="$(jq -r '.project.field.id' <<<"$item")" -f option="$option" -f query='
+                  mutation($project:ID!,$item:ID!,$field:ID!,$option:String!){updateProjectV2ItemFieldValue(input:{
+                    projectId:$project,itemId:$item,fieldId:$field,value:{singleSelectOptionId:$option}}){projectV2Item{id}}}' >/dev/null \
+                  && echo "#$issue in project $number set to In release" \
+                  || echo "::warning::could not set Status of #$issue in project $number"
+              done <<<"$items"
+            done
+          done

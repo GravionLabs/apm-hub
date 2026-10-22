@@ -11,7 +11,8 @@ const files = {
 describe.each(Object.entries(files))('merged-label %s (#358)', (_name, rel) => {
   const text = fs.readFileSync(path.join(root, rel), 'utf-8');
   const wf = parse(text);
-  const steps = wf.jobs['release-pr'].steps as { uses: string; with: { token: string } }[];
+  const allSteps = wf.jobs['release-pr'].steps as { uses?: string; with: { token: string } }[];
+  const steps = allSteps.filter((s) => s.uses);
 
   it('is valid YAML triggered by release branches', () => {
     expect(wf.on.push.branches).toEqual(['release/**']);
