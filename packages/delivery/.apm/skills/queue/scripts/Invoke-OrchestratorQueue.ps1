@@ -5,12 +5,16 @@
   Works through issues one by one, starting a fresh headless orchestrator process per issue.
 .DESCRIPTION
   Issues come from positional arguments, -IssueFile (one number per line) or -Label (open issues via gh api GET).
-  The ledger .agents/<issue>/progress.md is the source of truth, not the exit code:
+  Files live in the state dir (DROMOS_STATE_DIR, else <git common dir>/agents, shared by all worktrees), shown as <state>/.
+  The ledger <state>/<issue>/progress.md is the source of truth, not the exit code:
     last line 'Ledger complete.'        -> done (before the run: skipped, nothing is started)
     new 'Gate: <question>' line         -> gate: the queue stops, the question is printed, exit 2
     neither                             -> failed: the queue stops (exit 1) unless -ContinueOnError
-  Output of every run is appended to .agents/<issue>/run.log. The runner never merges (unless the opt-in -MergeApproved is given) and never answers a gate.
+  Output of every run is appended to <state>/<issue>/run.log. The runner never merges (unless the opt-in -MergeApproved is given) and never answers a gate.
   Run it from the repository root. Exit codes: 0 all done/skipped, 1 failed, 2 gate, 3 nothing selectable (queue mode only).
+
+  -Status <nr>: one-shot 'status <nr>' (no loop, no ledger); prints <state>/status-<nr>.md. Exit 0: file written during this run and
+  'Status: <path>/status-<nr>.md' in the output (matched on the basename); 2: 'Gate:' line; 1: otherwise. Output in <state>/status-<nr>.log. Not combinable with other selectors. Output and the table are printed with control characters stripped; the marker may be markdown-wrapped.
 
   -Feature <nr> / -Epic <nr> (queue mode): loops '<harness> --agent orchestrator -p "next <nr>"', one fresh process per
   iteration (selection stays in the orchestrator, github-issue/references/next-selection.md). Stops on:
@@ -21,11 +25,11 @@
     a failed run, or the same PBI selected twice in a row without progress -> state failed, exit 1
   -ContinueOnError continues after a failed PBI only if the next iteration selects a different PBI; the same PBI again
   stops the run. This is a process-level loop; it does NOT use the orchestrator 'loop' mode and its ledger
-  .agents/loop-<nr>/progress.md. State is cached in .agents/queue-<nr>.json (GitHub stays the source of truth),
-  output in .agents/queue-<nr>.log and per PBI in .agents/<pbi>/run.log.
+  <state>/loop-<nr>/progress.md. State is cached in <state>/queue-<nr>.json (GitHub stays the source of truth),
+  output in <state>/queue-<nr>.log and per PBI in <state>/<pbi>/run.log.
   AGENTS_LEDGER is cleared before every child (also an inherited value) and set to the PBI ledger only in the runner after
   'Next PBI: #<n>' is parsed (a running child cannot be changed); the caller's value is restored at the end.
-  A 'Gate:' line in the output stops the queue even when the ledger has no new gate (the question must reach a human).
+  A 'Gate:' line (at line start, may be markdown-wrapped: '**Gate**:', '> Gate:'; case-sensitive) in the output stops the queue even when the ledger has no new gate (the question must reach a human).
   -MergeApproved: after a done PBI (child exit 0) whose last 'Verdict:' line is exactly 'Verdict: APPROVE', merge the PBI's open PR (found via the ledger
   line 'Phase pull-request: complete - <url>' and 'gh pr list', head branch must contain '/<pbi>-') with
   'gh pr merge <pr> --squash --match-head-commit <sha>'. Base must be release/*, head must not be release/*
@@ -33,6 +37,10 @@
   checks so CLEAN means reviewed and tested). The reviewed commit is not recorded by the orchestrator; if the PBI
   branch exists locally its tip must equal the PR head, else the tip on origin (git ls-remote) must; unverifiable -> no merge.
   UNKNOWN mergeability is polled up to 3 times (QUEUE_POLL_SECONDS, default 5); an empty check list is skipped ('no checks reported').
+  Issue-list mode inside a repository: per issue Enter-Checkout.ps1 (github-issue/scripts) chooses the working directory of the child (the main
+  checkout when no live lease of another issue holds it and no tracked file is modified, else .worktrees/<nr>) and Exit-Checkout.ps1 releases it after the
+  ledger verdict (a clean worktree is removed, a dirty one kept). A gate keeps lease and worktree and prints the path to resume in. Outside a repository
+  (DROMOS_STATE_DIR only) the child runs in the current directory. -Feature/-Epic and -Status do not use leases.
   QUEUE_CALLER_CWD (set by the launcher) is the directory a relative -IssueFile is resolved against. Never after a gate, a block or a failure.
 .PARAMETER Issue           Issue numbers (positional), '#12' or '12'.
 .PARAMETER IssueFile       Text file with one issue number per line.
@@ -41,10 +49,15 @@
 .PARAMETER Harness         Adapter in harness/<name>.ps1.
 .PARAMETER Feature         Queue mode: loop 'next <nr>' for this Feature.
 .PARAMETER Epic            Queue mode: same for an Epic.
+.PARAMETER Status          One-shot: run 'status <nr>' headless and print <state>/status-<nr>.md. Exit 0 written, 1 missing or stale, 2 gate. No ledger.
 .PARAMETER MergeApproved   Queue mode: squash-merge the PBI's open PR on an APPROVE verdict (default off).
 .PARAMETER TrustedOnly     With -Label: only issues authored by OWNER, MEMBER or COLLABORATOR (issue text is untrusted input).
 .PARAMETER ContinueOnError Continue with the next issue after a failed run.
+.PARAMETER FixAdvisories Optional advisory policy (none, medium, all; optionally `:dim,dim`) passed to the orchestrator as `--fix-advisories <policy>` before the mode word.
+.PARAMETER PbiParallel     -Feature/-Epic only: 1-4, forwarded as `--pbi-parallel <m>` before the mode word (the orchestrator's loop mode reads it; 'next' ignores it).
+.PARAMETER Parallel Optional Task-wave width 1-4, passed to the orchestrator as `--parallel <n>` after `--fix-advisories`; 0 = not given.
 .PARAMETER AllowAll        Opt in to the harness' unrestricted permission mode (default: narrow set).
+.PARAMETER Base            Issue-list mode: integration branch on origin that Enter-Checkout.ps1 starts the run branch feat/<nr> from (default: release/next when origin has it, else the default branch of origin, else main).
 .PARAMETER DryRun          Print the exact commands and run nothing.
 #>
 [CmdletBinding()]
@@ -56,20 +69,40 @@ param(
   [ValidateSet('plan', 'implement', 'full')][string]$Mode = 'full',
   [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string]$Feature,
   [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string]$Epic,
+  [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string]$Status,
   [switch]$MergeApproved,
   [switch]$TrustedOnly,
   [ValidatePattern('\A[a-z]{1,20}\z')][string]$Harness = 'claude',
   [switch]$ContinueOnError,
+  [ValidatePattern('(?-i)\A(none|medium|all)(:[a-z][a-z-]*(,[a-z][a-z-]*)*)?\z')][string]$FixAdvisories = '',
+  [ValidateRange(1, 4)][int]$PbiParallel,
+  [ValidateRange(1, 4)][int]$Parallel = 0,
   [switch]$AllowAll,
+  [ValidatePattern('\A[A-Za-z0-9][A-Za-z0-9._/-]{0,199}\z')][string]$Base,
   [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
+$adv = @{}
+if ($FixAdvisories) { $adv.FixAdvisories = $FixAdvisories }
+if ($PSBoundParameters.ContainsKey('PbiParallel')) { $adv.PbiParallel = $PbiParallel }
+if ($Parallel) { $adv.Parallel = $Parallel }
 # The queue launcher cd's to the git toplevel and passes the caller's directory here, so a relative -IssueFile still
 # resolves against where the user typed it. Not inherited by the children.
 $callerCwd = $env:QUEUE_CALLER_CWD
 [Environment]::SetEnvironmentVariable('QUEUE_CALLER_CWD', $null)
 if ($IssueFile -and $callerCwd -and -not [IO.Path]::IsPathRooted($IssueFile)) { $IssueFile = Join-Path $callerCwd $IssueFile }
 
+# BEGIN Resolve-StateDir (identical in every script that defines it; test/repo/state-dir-resolver.test.ts)
+function Resolve-StateDir {
+  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path)) }
+  $common = $null
+  try { $common = "$(& git -C (Get-Location).Path rev-parse --path-format=absolute --git-common-dir 2>$null)".Trim() } catch { $common = $null }
+  if ($LASTEXITCODE -ne 0 -or -not $common) { throw 'No state directory: not inside a git repository (set DROMOS_STATE_DIR)' }
+  [IO.Path]::GetFullPath((Join-Path $common 'agents'))
+}
+# END Resolve-StateDir
+# Resolved on first use (after argument validation) and cached: DROMOS_STATE_DIR, else <git common dir>/agents.
+function Get-StateDir { if (-not $script:StateDirCache) { $script:StateDirCache = Resolve-StateDir }; $script:StateDirCache }
 function ConvertTo-IssueNumber([string]$Text, [string]$Where) {
   $t = $Text.Trim() -replace '\A#', ''
   if ($t -notmatch '\A[1-9][0-9]{0,9}\z') { throw "Invalid issue number '$Text' ($Where)." }
@@ -77,8 +110,9 @@ function ConvertTo-IssueNumber([string]$Text, [string]$Where) {
 }
 function Format-Arg([string]$a) { if ($a -match '[\s"''()]' -or $a -eq '') { '"' + ($a -replace '"', '\"') + '"' } else { $a } }
 function Get-LedgerLines([string]$n) {
-  $f = Join-Path (Join-Path '.agents' $n) 'progress.md'
-  if (Test-Path -LiteralPath $f) { @(Get-Content -LiteralPath $f | Where-Object { $_.Trim() }) } else { @() }
+  $f = Join-Path (Join-Path (Get-StateDir) $n) 'progress.md'
+  # the optional ISO-8601 UTC prefix of a ledger line ('2026-10-21T15:19:46Z <text>') is dropped: older ledgers have none
+  if (Test-Path -LiteralPath $f) { @(Get-Content -LiteralPath $f | Where-Object { $_.Trim() } | ForEach-Object { $_ -replace '\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z ', '' }) } else { @() }
 }
 function Test-Complete([string[]]$Lines) { $Lines.Count -gt 0 -and $Lines[-1].Trim() -eq 'Ledger complete.' }
 function Test-NotSymlink([string]$Path) {
@@ -86,30 +120,101 @@ function Test-NotSymlink([string]$Path) {
   $i = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
   if ($i -and $i.LinkTarget) { throw "Refusing symlinked path: $Path" }
 }
-function Get-Gates([string[]]$Lines) { @($Lines | Where-Object { $_ -match '\AGate:' }) }
+function Get-HarnessInvocation([string]$Nr, [string]$HarnessMode, [hashtable]$Extra) {
+  $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
+  if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
+  $cmd = & $adapter -Issue $Nr -Mode $HarnessMode -AllowAll:$AllowAll @Extra
+  $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
+  $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
+  $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
+  @{ Cmd = $cmd; EnvVars = $envVars; EnvText = $envText }
+}
+# Untrusted text (issue titles, model output) must not reach the terminal with escape sequences: strip CSI, OSC (payload
+# limited to one line) and other control characters. Same patterns as github-issue/scripts/Write-StatusTable.ps1: skills do not share code.
+function Remove-ControlChar([string]$Text) {
+  $t = [regex]::Replace($Text, '\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b\r\n]*(\x07|\x1b\\)|\x1b.?', '')
+  [regex]::Replace($t, '[\x00-\x08\x0b-\x1f\x7f-\x9f]', '')
+}
+# Line markers may be markdown-wrapped: opening wrappers (spaces, list dash, quote, bold, code) before the word,
+# closing wrappers between the word and the colon ('**Gate**:'). Case-sensitive, never mid-line ('See Gate:').
+$MarkerStart = '\A[\s*`>_-]*'
+$MarkerEnd = '[*`_]*:'
+$GatePattern = $MarkerStart + 'Gate' + $MarkerEnd
+function Get-Gates([string[]]$Lines) { @($Lines | ForEach-Object { "$_".Trim() } | Where-Object { $_ -cmatch $GatePattern }) }
 
+if ($Status) {
+  $bad = [ordered]@{ 'issue numbers' = ($Issue.Count -gt 0); '-IssueFile' = [bool]$IssueFile; '-Label' = [bool]$Label; '-Feature/-Epic' = [bool]($Feature -or $Epic)
+    '-Mode' = $PSBoundParameters.ContainsKey('Mode'); '-MergeApproved' = [bool]$MergeApproved; '-ContinueOnError' = [bool]$ContinueOnError; '-FixAdvisories' = [bool]$FixAdvisories; '-PbiParallel' = $PSBoundParameters.ContainsKey('PbiParallel'); '-Parallel' = [bool]$Parallel; '-TrustedOnly' = [bool]$TrustedOnly }
+  $bad = @($bad.Keys | Where-Object { $bad[$_] })
+  if ($bad) { throw "-Status cannot be combined with $($bad -join ', ')." }
+  $nr = ConvertTo-IssueNumber $Status 'status'
+  $inv = Get-HarnessInvocation $nr 'status' @{}
+  $cmd = $inv.Cmd; $envVars = $inv.EnvVars; $envText = $inv.EnvText
+  if ($DryRun) { Write-Host "[dry-run] Status #${nr}: $envText"; exit 0 }
+  $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+  if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
+  Test-NotSymlink (Get-StateDir)
+  New-Item -ItemType Directory -Path (Get-StateDir) -Force | Out-Null
+  $statusFile = Join-Path (Get-StateDir) "status-$nr.md"
+  $log = Join-Path (Get-StateDir) "status-$nr.log"
+  Test-NotSymlink $statusFile
+  Test-NotSymlink $log
+  $start = Get-Date
+  Write-Host "[run] Status #${nr}: $envText"
+  Add-Content -LiteralPath $log -Value "=== $($start.ToString('o')) $envText" -Encoding utf8
+  $callerLedger = $env:AGENTS_LEDGER
+  $saved = @{}
+  foreach ($k in $envVars.Keys) { $saved[$k] = [Environment]::GetEnvironmentVariable($k); [Environment]::SetEnvironmentVariable($k, [string]$envVars[$k]) }
+  [Environment]::SetEnvironmentVariable('AGENTS_LEDGER', $null)
+  try { $out = @(& $bin.Source @($cmd.Arguments) 2>&1 | ForEach-Object { "$_" }); $code = $LASTEXITCODE }
+  finally {
+    foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) }
+    [Environment]::SetEnvironmentVariable('AGENTS_LEDGER', $callerLedger)
+  }
+  $out = @($out | ForEach-Object { Remove-ControlChar $_ })
+  $out | Out-Host
+  Add-Content -LiteralPath $log -Value ($out + "=== exit code $code") -Encoding utf8
+  $trimmed = @($out | ForEach-Object { $_.Trim() })
+  $gateLine = @(Get-Gates $trimmed) | Select-Object -Last 1
+  if ($gateLine) { Write-Host "Gate on status #${nr}: $gateLine"; exit 2 }
+  Test-NotSymlink $statusFile
+  $fi = Get-Item -LiteralPath $statusFile -Force -ErrorAction SilentlyContinue
+  # the announced path must name this run's status file: absolute, relative to the cwd, a trailing part of it, or the bare file name
+  $markerRx = $MarkerStart + 'Status' + $MarkerEnd + '[\s*`_]*' + "(?<p>(?:[^*`\r\n]*[/\\])?status-$nr\.md)(?![\w./-])"
+  $wantFull = $statusFile -replace '\\', '/'
+  $marker = @($trimmed | Where-Object {
+      if ($_ -cnotmatch $markerRx) { return $false }
+      $mp = $Matches['p'] -replace '\\', '/'
+      $mp -ceq "status-$nr.md" -or ($mp.StartsWith('/') ? $mp -ceq $wantFull : ($wantFull -ceq ([IO.Path]::GetFullPath($mp, (Get-Location).Path) -replace '\\', '/') -or $wantFull.EndsWith('/' + $mp.TrimStart('.', '/'), [StringComparison]::Ordinal)))
+    }).Count -gt 0
+  $why = if ($code -ne 0) { "child exit code $code" }
+    elseif (-not $fi) { "no status file $statusFile" }
+    elseif ($fi.LastWriteTime -lt $start) { "status file $statusFile is stale (not written by this run)" }
+    elseif (-not $marker) { "no 'Status: <path>/status-$nr.md' line in the output" }
+  if ($why) { Write-Host "Status #${nr} failed: $why"; exit 1 }
+  Get-Content -LiteralPath $statusFile | ForEach-Object { Remove-ControlChar $_ } | Out-Host
+  exit 0
+}
+
+if ($PbiParallel -and -not ($Feature -or $Epic)) { throw '-PbiParallel needs -Feature or -Epic.' }
 if ($Feature -or $Epic) {
   if ($Feature -and $Epic) { throw 'Pass either -Feature or -Epic, not both.' }
   if ($Issue -or $IssueFile -or $Label) { throw '-Feature/-Epic cannot be combined with issue numbers, -IssueFile or -Label.' }
   if ($PSBoundParameters.ContainsKey('Mode')) { throw '-Mode cannot be combined with -Feature/-Epic (the mode is always next).' }
   $nr = ConvertTo-IssueNumber ($Feature ? $Feature : $Epic) 'queue'
   $kind = $Feature ? 'Feature' : 'Epic'
-  $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
-  if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
-  $cmd = & $adapter -Issue $nr -Mode next -AllowAll:$AllowAll
-  $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
-  $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
-  $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
+  $inv = Get-HarnessInvocation $nr 'next' $adv
+  $cmd = $inv.Cmd; $envVars = $inv.EnvVars; $envText = $inv.EnvText
   if ($DryRun) { Write-Host "[dry-run] ${kind} #${nr}: $envText"; exit 0 }
   $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
   if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
   if ($MergeApproved -and -not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)) { throw "'gh' not found on PATH (needed for -MergeApproved)." }
 
-  Test-NotSymlink '.agents'
-  New-Item -ItemType Directory -Path '.agents' -Force | Out-Null
-  $queueFile = Join-Path '.agents' "queue-$nr.json"
+  Test-NotSymlink (Get-StateDir)
+  New-Item -ItemType Directory -Path (Get-StateDir) -Force | Out-Null
+  $queueFile = Join-Path (Get-StateDir) "queue-$nr.json"
   Test-NotSymlink $queueFile
-  $log = Join-Path '.agents' "queue-$nr.log"
+  $log = Join-Path (Get-StateDir) "queue-$nr.log"
   Test-NotSymlink $log
   $started = Get-Date -Format o
   $pbis = [System.Collections.Generic.List[object]]::new()
@@ -159,7 +264,7 @@ if ($Feature -or $Epic) {
     $iterStart = Get-Date -Format o
     $gatesBefore = @{}
     $completeBefore = [System.Collections.Generic.List[string]]::new()
-    foreach ($d in @(Get-ChildItem -LiteralPath '.agents' -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '\A[0-9]+\z' })) {
+    foreach ($d in @(Get-ChildItem -LiteralPath (Get-StateDir) -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '\A[0-9]+\z' })) {
       $ll = Get-LedgerLines $d.Name
       $gatesBefore[$d.Name] = @(Get-Gates $ll).Count
       if (Test-Complete $ll) { $completeBefore.Add($d.Name) }
@@ -181,23 +286,23 @@ if ($Feature -or $Epic) {
     if ($ml) { $mergedListed = @([regex]::Matches($ml.Groups[1].Value, '#(\d+)') | ForEach-Object { $_.Groups[1].Value }) }
     $np = Get-LastMatch $out '\A\W*Next PBI: #([0-9]{1,10})\b'
     $pbi = if ($np) { $np.Groups[1].Value } else { $null }
-    $gm = Get-LastMatch @($out | ForEach-Object { $_.Trim() }) '\AGate:.*'
+    $gm = @(Get-Gates $out) | Select-Object -Last 1
     $blockedLine = Get-LastMatch @($out | ForEach-Object { $_.Trim() }) '\A\W*Nothing selectable\b.*'
     $stop = $false
 
     if ($pbi) {
-      $pbiDir = Join-Path '.agents' $pbi
+      $pbiDir = Join-Path (Get-StateDir) $pbi
       Test-NotSymlink $pbiDir
       New-Item -ItemType Directory -Path $pbiDir -Force | Out-Null
       Test-NotSymlink (Join-Path $pbiDir 'run.log')
       Add-Content -LiteralPath (Join-Path $pbiDir 'run.log') -Value (@("=== $iterStart $envText") + $out + $trailer) -Encoding utf8
-      $env:AGENTS_LEDGER = Join-Path (Get-Location) (Join-Path $pbiDir 'progress.md')
+      $env:AGENTS_LEDGER = Join-Path $pbiDir "progress.md"
       $after = Get-LedgerLines $pbi
       $newGate = @(Get-Gates $after).Count -gt [int]$gatesBefore[$pbi]
-      $gate = if ($gm) { $gm.Value } elseif ($newGate) { @(Get-Gates $after)[-1] } else { $null }
+      $gate = if ($gm) { $gm } elseif ($newGate) { @(Get-Gates $after)[-1] } else { $null }
       $lp = Get-LastMatch $after '\APhase pull-request: complete\b.*?/pull/(\d+)'
       $pr = if ($lp) { [long]$lp.Groups[1].Value } else { $null }
-      $entry = [ordered]@{ number = [long]$pbi; outcome = 'failed'; pr = $pr; ledger = ".agents/$pbi/progress.md"; gate = $gate; started = $iterStart; ended = $null; note = $null }
+      $entry = [ordered]@{ number = [long]$pbi; outcome = 'failed'; pr = $pr; ledger = (Join-Path (Join-Path (Get-StateDir) $pbi) 'progress.md'); gate = $gate; started = $iterStart; ended = $null; note = $null }
       if ($prev -eq $pbi) { $entry.note = 'selected twice in a row without progress; stopped'; $stop = $true; $exit = 1 }
       elseif (Test-Complete $after) { $entry.outcome = if ($completeBefore -contains $pbi) { 'skipped' } else { 'done' }; $entry.gate = $null }
       elseif ($gate) { $entry.outcome = 'gate'; $stop = $true; $exit = 2 }
@@ -252,7 +357,7 @@ if ($Feature -or $Epic) {
         if (-not $ContinueOnError) { $stop = $true }
       }
     } elseif (-not $featureDone) {
-      $gate = if ($gm) { $gm.Value } else { $null }
+      $gate = if ($gm) { $gm } else { $null }
       $blocked = (-not $gate) -and $blockedLine -and $code -eq 0
       $pbis.Add([pscustomobject][ordered]@{ number = $null; outcome = $(if ($gate) { 'gate' } elseif ($blocked) { 'blocked' } else { 'failed' }); pr = $null; ledger = $null; gate = $gate
         started = $iterStart; ended = (Get-Date -Format o)
@@ -308,9 +413,31 @@ $adapter = Join-Path $PSScriptRoot "harness/$Harness.ps1"
 if (-not (Test-Path -LiteralPath $adapter)) { throw "No adapter for harness '$Harness' (expected $adapter)." }
 
 if (-not $DryRun) {
-  $probe = & $adapter -Issue $queue[0] -Mode $Mode -AllowAll:$AllowAll
+  $probe = & $adapter -Issue $queue[0] -Mode $Mode -AllowAll:$AllowAll @adv
   if (-not (Get-Command $probe.Executable -CommandType Application -ErrorAction SilentlyContinue)) { throw "'$($probe.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
-  Test-NotSymlink '.agents'
+  Test-NotSymlink (Get-StateDir)
+}
+# Run directory per issue: Enter-Checkout.ps1 / Exit-Checkout.ps1 of the github package (installed beside this skill, or the repository layout).
+function Get-CheckoutScript([string]$Name) {
+  foreach ($d in @((Join-Path $PSScriptRoot '../../github-issue/scripts'), (Join-Path $PSScriptRoot '../../../../../github/.apm/skills/github-issue/scripts'))) {
+    $f = Join-Path $d $Name
+    if (Test-Path -LiteralPath $f -PathType Leaf) { return (Resolve-Path -LiteralPath $f).Path }
+  }
+  throw "$Name not found (install the github package beside the delivery package)."
+}
+$useCheckout = $false
+$checkoutBase = $Base
+if (-not $DryRun) {
+  & git rev-parse --git-common-dir *> $null
+  $useCheckout = $LASTEXITCODE -eq 0
+}
+if ($useCheckout -and -not $checkoutBase) {
+  & git rev-parse --verify --quiet refs/remotes/origin/release/next *> $null
+  if ($LASTEXITCODE -eq 0) { $checkoutBase = 'release/next' }
+  else {
+    $head = "$(& git symbolic-ref --short refs/remotes/origin/HEAD 2>$null)".Trim() -replace '\Aorigin/', ''
+    $checkoutBase = if ($LASTEXITCODE -eq 0 -and $head) { $head } else { 'main' }
+  }
 }
 $results = [ordered]@{}
 $exit = 0
@@ -318,7 +445,7 @@ $stopped = $false
 foreach ($n in $queue) {
   if ($stopped) { $results[$n] = 'not-run'; continue }
   if (Test-Complete (Get-LedgerLines $n)) { $results[$n] = 'skipped'; continue }
-  $cmd = & $adapter -Issue $n -Mode $Mode -AllowAll:$AllowAll
+  $cmd = & $adapter -Issue $n -Mode $Mode -AllowAll:$AllowAll @adv
   $line = (@($cmd.Executable) + @($cmd.Arguments) | ForEach-Object { Format-Arg $_ }) -join ' '
   $envVars = if ($cmd.PSObject.Properties['Environment'] -and $cmd.Environment) { $cmd.Environment } else { @{} }
   $envText = (@($envVars.Keys | Sort-Object | ForEach-Object { "$_=$(Format-Arg $envVars[$_])" }) + $line) -join ' '
@@ -326,17 +453,35 @@ foreach ($n in $queue) {
   $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
   if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
   $gatesBefore = @(Get-Gates (Get-LedgerLines $n)).Count
-  $dir = Join-Path '.agents' $n
+  $dir = Join-Path (Get-StateDir) $n
   Test-NotSymlink $dir
   New-Item -ItemType Directory -Path $dir -Force | Out-Null
   $log = Join-Path $dir 'run.log'
   Test-NotSymlink $log
+  $workDir = (Get-Location).Path
+  if ($useCheckout) {
+    try {
+      $co = & (Get-CheckoutScript 'Enter-Checkout.ps1') -Issue $n -Branch "feat/$n" -Base $checkoutBase | Select-Object -Last 1 | ConvertFrom-Json
+      $workDir = "$($co.path)"
+      Write-Host "[checkout] #${n}: $workDir$(if ($co.worktree) { ' (worktree)' })"
+    } catch {
+      Write-Host "Checkout for #${n} failed: $($_.Exception.Message)"
+      $results[$n] = 'failed'
+      if ($exit -eq 0) { $exit = 1 }
+      if (-not $ContinueOnError) { $stopped = $true }
+      continue
+    }
+  }
   Write-Host "[run] #${n}: $envText"
   Add-Content -LiteralPath $log -Value "=== $(Get-Date -Format o) $envText" -Encoding utf8
   $saved = @{}
   foreach ($k in $envVars.Keys) { $saved[$k] = [Environment]::GetEnvironmentVariable($k); [Environment]::SetEnvironmentVariable($k, [string]$envVars[$k]) }
+  # a relative DROMOS_STATE_DIR would resolve against the worktree: hand the child the resolved directory
+  $savedState = $env:DROMOS_STATE_DIR
+  if ($savedState) { $env:DROMOS_STATE_DIR = Get-StateDir }
+  Push-Location -LiteralPath $workDir
   try { & $bin.Source @($cmd.Arguments) 2>&1 | Tee-Object -FilePath $log -Append | Out-Host; $code = $LASTEXITCODE }
-  finally { foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) } }
+  finally { Pop-Location; $env:DROMOS_STATE_DIR = $savedState; foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) } }
   Add-Content -LiteralPath $log -Value "=== exit code $code" -Encoding utf8
   $after = Get-LedgerLines $n
   $gates = @(Get-Gates $after)
@@ -344,11 +489,18 @@ foreach ($n in $queue) {
   elseif ($gates.Count -gt $gatesBefore) {
     $results[$n] = 'gate'
     Write-Host "Gate on #${n}, queue stopped (answer it, then run the queue again): $($gates[-1])"
+    if ($useCheckout) { Write-Host "Checkout of #${n} kept for the answer: $workDir" }
     $exit = 2; $stopped = $true
   } else {
     $results[$n] = 'failed'
     if ($exit -eq 0) { $exit = 1 }
     if (-not $ContinueOnError) { $stopped = $true }
+  }
+  if ($useCheckout -and $results[$n] -ne 'gate') {
+    try {
+      $rel = & (Get-CheckoutScript 'Exit-Checkout.ps1') -Issue $n | Select-Object -Last 1 | ConvertFrom-Json
+      if ($rel.kept) { Write-Host "Worktree of #${n} has local changes and was kept: $($rel.kept)" }
+    } catch { Write-Host "Releasing the checkout of #${n} failed: $($_.Exception.Message)" }
   }
 }
 foreach ($k in $results.Keys) { Write-Host "#$k $($results[$k])" }

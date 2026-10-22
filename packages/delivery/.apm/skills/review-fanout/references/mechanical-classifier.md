@@ -1,6 +1,6 @@
 # Mechanical vs full classification
 
-`pwsh -NoProfile -File scripts/Classify-Diff.ps1 [-Range "<base>..<head>"] [-Force full] [-MaxLines 20]` prints `{"mode","dimensions","reason"}` and exits 0. No `-Range`: working tree vs `HEAD`. Use `dimensions` as the fan-out list. Script fails, prints nothing or invalid JSON: `full`. The script is authoritative: its regexes are the complete lists; the names below are what they cover.
+`pwsh -NoProfile -File scripts/Classify-Diff.ps1 [-Range "<base>..<head>"] [-Force full] [-MaxLines 20]` prints `{"mode","dimensions","reason"}` (`mode` is `mechanical`, `docs`, `text` or `full`) and exits 0. No `-Range`: working tree vs `HEAD`. Use `dimensions` as the fan-out list. Script fails, prints nothing or invalid JSON: `full`. The script is authoritative: its regexes are the complete lists; the names below are what they cover.
 
 **Ref safety**: run it only when both refs match `^[A-Za-z0-9._/@~^-]+$` and do not start with `-`; else `full` without running it. The script also rejects a range starting with `-`, containing whitespace, or with a side `git rev-parse --verify` rejects, and returns `full` outside a git work tree or when any git call fails. Git runs with `--literal-pathspecs` and `--` before pathspecs. Working-tree mode: any untracked file is `full` (`git diff` cannot see it). A PR number without a local range is always `full`.
 
@@ -10,9 +10,9 @@ Every path (rename source and destination) gets one class, first match wins:
 
 1. **exec** (run by tools, hooks or CI): `.github/`, `.husky/`, `.claude/`, `.opencode/`, `.cursor/`, `.vscode/`, `.devcontainer/`, `.circleci/`, `.gitlab/`, `.githooks/`, any `hooks/` or `hook/` directory, `.mcp.json`, `.npmrc`, `.yarnrc*`, `.pre-commit-config.yaml`, `.envrc`, `.env*`, `.gitattributes`, `.gitmodules`, `.gitignore`, CI files (`.gitlab-ci.yml`, `.travis.yml`, `azure-pipelines.yml`, `Jenkinsfile`), `Makefile`, `Dockerfile*`, `Containerfile`, `docker-compose*`, `compose.yml`, `Procfile`, `Justfile`, `Taskfile.yml`, `*.pth`, `sitecustomize.py`, `usercustomize.py`.
 2. **build** (build, dependency and test config, entry points): `package.json`, lockfiles, `pnpm-workspace.yaml`, `tsconfig*.json`, `*.config.{js,ts,mjs,cjs,...}`, any `.*rc*` dotfile (`.eslintrc.js`, `.prettierrc`), `babel.config*`, `*setup*.{js,ts,...}`, `pyproject.toml`, `setup.py`, `setup.cfg`, `conftest.py`, `requirements*.txt`, `Pipfile`, `tox.ini`, `noxfile.py`, `pytest.ini`, `manage.py`, `__init__.py`, `__main__.py`, `Cargo.toml`, `build.rs`, `lib.rs`, `mod.rs`, `go.mod`, `Gemfile`, `Rakefile`, `*.gemspec`, `pom.xml`, Gradle files, `CMakeLists.txt`, `*.csproj`/`*.sln`/`*.props`/`*.targets`, `global.json`, `NuGet.config`, `Program.cs`, `Startup.cs`, `index.*`/`main.*` code files, anything under `bin/`.
-3. **instruction** (steers agents): `SKILL.md`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `COPILOT.md`, `copilot-instructions.md`, `*.agent.md`, `*.prompt.md`, `*.instructions.md`, `*.chatmode.md`, anything under `.apm/` or `skills/`.
+3. **instruction** (steers agents): `SKILL.md`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `COPILOT.md`, `copilot-instructions.md`, `*.agent.md`, `*.prompt.md`, `*.instructions.md`, `*.chatmode.md`, anything under `.apm/`, `skills/` or `agents/`.
 4. **manifest**: `apm.yml`, `marketplace.json`, `plugin.json`.
-5. **docs**: `README*`/`CHANGELOG*` (`.md`, `.mdx`, `.txt`), `docs/**/*.md|mdx`.
+5. **docs**: `README*`/`CHANGELOG*`/`CONTRIBUTING*` (`.md`, `.mdx`, `.txt`), `docs/**/*.md|mdx`, any other `*.md` that is not instruction text (classes 1 to 3 win).
 6. **test**: `tests/`, `test/`, `__tests__/`, `*.test.*`, `*.spec.*`, `test_*`, `*_test.*`.
 7. **source**: code extensions (`.ts`, `.js`, `.py`, `.ps1`, `.sh`, `.cs`, `.go`, `.rs`, ...). 8. **other**: the rest.
 
@@ -90,6 +90,19 @@ packages/x/.apm/skills/foo/scripts/run.ps1
 ```
 
 **Test-file rule** (`git diff -U100000`): removed and added lines pair one to one and differ only by identifier tokens; each old token maps to one new token (injective). Every old name must be **declared** as a local binding in the removed lines: `const`/`let`/`var`/`function`/`class`/`def`/`type`/`interface`/`enum`, default, namespace or aliased import, array destructuring, function/arrow/lambda parameter, `catch`, `for ... in`, `with`/`except ... as`. Named imports and object destructuring change what is read: full. Never renamed: tokens after `.` or `?.` (members, methods, matchers), object keys and shorthand properties, keyword arguments and default parameters, keywords, builtins and globals (`NaN`, `Infinity`, `undefined`, `Math`, `JSON`, `Object`, `Array`, `process`, `globalThis`, `require`, `this`, `self`, ...), matcher names (`to*`, `assert*`, ...). A new token must not appear in the removed or unchanged lines (no merges, no `toBe(expected)` → `toBe(x)` tautology); an old token must not remain. Numbers, operators, string literals and comments must not change; block comments, JSDoc and multi-line strings are full; pure deletions and additions are full. Cannot prove it: full.
+
+## Docs mode
+
+A diff whose content changes (modified, added, deleted, or renamed with edits) are all in **docs** files, such as a `CONTRIBUTING.md`-only change, gets mode `docs` with dimensions `conventions` and `spec`. Pure renames next to them do not matter. The `-MaxLines` threshold applies, so does the security scan below. The diff stays `mechanical` (with `security`) when an added line matches a command or remote pattern, a path is security-sensitive, or a manifest changes; any other file kind (script, build file) is not docs: see its own rule, Text mode or `full`.
+
+## Text mode
+
+Two content classes, checked on the changed paths after the location class (renames keep the rules above). Mode `text`; the dimensions of all classes in the diff are united (order `correctness`, `security`, `conventions`, `tests`, `spec`). No line threshold.
+
+- **skilltext** (`correctness`, `conventions`, `spec`): `SKILL.md`, `AGENTS.md`, `CLAUDE.md`, `*.agent.md`, `*.prompt.md`, `.md` files under `references/`, `templates/` and `assets/`. Added, deleted, modified or renamed with edits (same file name). Frontmatter: only `name`, `description` and `license` may change; any other changed key (`tools`, `permission`, `metadata`, `user-invocable`, ...) or delimiter is `full`.
+- **tests** (`correctness`, `tests`, `spec`): `*.test.ts` and everything under `test/`: added, deleted, modified or renamed with edits (same file name). A pure identifier rename stays `mechanical`; any other edit is `tests` instead of `full`.
+
+Security triggers stay authoritative and make the whole diff `full` (reason `security trigger in added lines`): an added line in a skilltext file matching the command patterns of the Dimensions section, or `rm`/`del`/`rmdir`/`Remove-Item` commands, `git push --force`/`-f`/`--force-with-lease`, `git reset --hard`, `git clean -f`, `git branch -D`, a credential assignment (`password`, `secret`, `token`, `api_key`, `credentials`, `private_key`, `bearer`, `authorization` followed by `:` or `=`), a private key header or a token prefix (`ghp_`, `github_pat`, `sk-`, `AKIA`). Test files use the command patterns except the `import`/`export` line rule. A security-sensitive path (Dimensions) or a manifest next to skilltext or tests is `full` too. Scripts (`scripts/*.ps1`, hooks, `*.sh`, `*.mjs`, `*.ts` outside `test/`, `.github/`) and build files are `full` as before, also next to text. `-Force full` still forces `full`.
 
 ## Dimensions
 

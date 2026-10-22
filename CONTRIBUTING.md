@@ -33,7 +33,8 @@ The repo uses pnpm (`pnpm-lock.yaml`) only. `test/integration` is the exception:
    pnpm run build; pnpm test
    pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .
    ```
-   Vitest has two projects: `fast` (every test of the repo except `*.integration.test.ts`, about 1 minute) and `integration` (the pwsh-heavy queue tests with fake `claude`/`gh` binaries and the launcher installer; runs after `fast` with at most 2 workers, 30 s timeout set in `vitest.config.ts`). `pnpm run test:fast` runs only `fast`; for just the queue validation tests use `pnpm vitest run src/hooks/queue.fast.test.ts`. `pnpm test` and `pnpm run test:ci` (CI, with coverage) run the full suite. Name a new pwsh-heavy test `*.integration.test.ts` (it then gets the integration timeout), and batch validation or `-DryRun` cases into one pwsh process (`src/hooks/queue-batch.ps1`) instead of spawning one per case.
+   Tests live in three places: unit tests of the TypeScript tools next to their code (`src/**/*.test.ts`), tests of package content (skills, agents, scripts, hooks) in `test/packages/<domain>/` (repository checks in `test/repo/`, shared helpers in `test/helpers/`), and pwsh-heavy tests in `test/integration/queue/`.
+   Vitest has three projects: `unit` (`src/**/*.test.ts`, `test/repo/` and the `test/packages/` files that spawn no process; seconds), `scripts` (the `test/packages/` files that spawn pwsh, bash or git; explicit list in `test/helpers/scripts-tests.ts`) and `integration` (the pwsh-heavy queue tests with fake `claude`/`gh` binaries and the launcher installer; 30 s timeout set in `vitest.config.ts`). `pnpm test` runs `unit` + `scripts`, `pnpm run test:unit` only `unit`, `pnpm run test:all` all three (run it before a PR that touches queue code) and `pnpm run test:ci` all three with coverage (CI). A new `test/packages/` test that spawns a process must be added to `scripts-tests.ts` (`test/repo/vitest-projects.test.ts` fails otherwise). For the tests related to a change run `pnpm run test:related -- <paths>` (or `--staged`, `--range a..b`); `node scripts/related-tests.mjs <paths>` only prints the list (`ALL` means run `pnpm test`). For just the queue validation tests use `pnpm vitest run test/packages/delivery/queue.fast.test.ts`. Name a new pwsh-heavy test `*.integration.test.ts` and put it in `test/integration/queue/` (it then gets the integration timeout), and batch validation or `-DryRun` cases into one pwsh process (`test/helpers/queue-batch.ps1`) instead of spawning one per case.
 5. Update the package `description` in `packages/<domain>/apm.yml` and the root `apm.yml` when the package scope changed, and the skill table in AGENTS.md.
 6. Open a PR with a conventional-commit title (`feat(py): …`, `fix(github): …`). The changelog is generated from commit messages with git-cliff.
 
@@ -47,7 +48,7 @@ The repo uses pnpm (`pnpm-lock.yaml`) only. `test/integration` is the exception:
 
 ## Public surface and renames
 
-Public surface is everything a consumer can depend on: package names (install names in `apm.yml` and the marketplace), skill names, agent names, entry points (`orchestrator`; `/orch` is deprecated and removed in 3.0.0), ledger and state paths (`.agents/<issue>/progress.md`, `plan.json`) and ledger headers.
+Public surface is everything a consumer can depend on: package names (install names in `apm.yml` and the marketplace), skill names, agent names, entry points (`orchestrator`; `/orch` is deprecated and removed in 3.0.0), ledger and state paths (`<state>/<issue>/progress.md`, `plan.json`; `<state>` is `DROMOS_STATE_DIR` or `<git-common-dir>/agents`), the worktree location `<repo-root>/.worktrees/<nr>` the loop markers `<state>/current.d/<key>`, and the checkout leases `<state>/leases/<key>.json` (`Enter-Checkout.ps1`, `Exit-Checkout.ps1`, `New-Worktree.ps1`, `Remove-Worktree.ps1`) and ledger headers.
 
 - Announce every rename in the PR body and in the release notes.
 - Where an alias or compat path is cheap, add it and announce it as deprecated in the PR body and release notes. It lives at most until the next major, and gets a removal version in the legacy table below at the moment it is added.
@@ -61,6 +62,8 @@ Legacy names kept for compatibility:
 | `# dev-workflow ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | next major (currently expected as 3.0.0) |
 | `orch-pipeline` skill | deprecated stub in `packages/delivery` | 3.0.0 (follow-up #280) |
 | `/orch` prompt | `orch.prompt.md` in `packages/delivery`, deprecated | 3.0.0 (follow-up #280) |
+| `<state>/current` (one loop marker per repository) | still read by `subagent-ledger.sh`, the Copilot CLI hook and the OpenCode plugin while `<state>/current.d/` does not exist; `Add-LedgerLine.ps1 -Unbind` removes it; `-Bind` writes `<state>/current.d/<key>` since #466 | 3.0.0 |
+| `.agents/<issue>/` (working-tree state dir) | replaced by `<git-common-dir>/agents/` in 2.4.0, not read, manual move ([orchestrator.md](docs/orchestrator.md#state-on-disk)) | none kept (cut-over) |
 
 The `development-workflow` package was a clean rename with no alias (#178, released in 2.2.0), a record of a past decision, so there is nothing to remove; the note in `README.md` stays for searchability.
 

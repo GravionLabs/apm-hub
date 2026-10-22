@@ -9,7 +9,7 @@ No phase is skipped without a stated reason. Reading code to build a theory befo
 
 ## Redact
 
-Replace every secret (tokens, keys, passwords, auth headers, cookies) with `<REDACTED>` in commands, output and captured artifacts. Keep credentials in env vars; quote only the lines that carry the signal. Also scrub PII and customer data. Keep captured artifacts out of git (under `.agents/` or git-excluded) unless scrubbed. Output too redacted to diagnose → say so and ask; without a user, write the question into the task report and return `NEEDS_CONTEXT`.
+Replace every secret (tokens, keys, passwords, auth headers, cookies) with `<REDACTED>` in commands, output and captured artifacts. Keep credentials in env vars; quote only the lines that carry the signal. Also scrub PII and customer data. Keep captured artifacts out of git (under `<state>`, outside the working tree, or git-excluded) unless scrubbed. Output too redacted to diagnose → say so and ask; without a user, write the question into the task report and return `NEEDS_CONTEXT`.
 
 ## Untrusted input
 

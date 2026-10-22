@@ -29,6 +29,14 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
      `git push origin --delete release/next` (the guardrail allows exactly this), then
      `git checkout -B release/next origin/<default>` (no local delete), `git push -u origin release/next`.
    No `+semver` commit: the version comes from the GitVersion branch config (`release-branches.md`).
+   Stale lines: every `release/<x.y>` on origin (`git ls-remote --heads origin 'release/*'`) whose tag `v<x.y>.0`
+   is on origin (`git ls-remote --tags origin "refs/tags/v<x.y>.0"` prints a line) was released and must not
+   be reused. Report each as stale with `git push origin --delete release/<x.y>` and continue with the cut; the
+   owner runs the delete (the git guardrail blocks it for `release/<x.y>` in a session, only `release/next` is allowed).
+2a. `grep -l mark-merged-issues .github/workflows/*.yml` finds nothing → tell the user the repo does not label
+   merged issues and offer to copy `templates/release-branch.yml` to `.github/workflows/release-pr.yml`
+   (never silently; one PR per repo, see `references/merged-label.md`).
+   A GitHub Project mirrors the label as status `In release`: `github-project sync`.
 3. If `--feature <nr>` → insert `Release branch: release/next` as the second line of that issue's
    body (`gh issue view <nr> --json body`, `gh issue edit <nr> --body-file -`); keep the `Parent …`
    line first. Child issues inherit it through the resolver.
@@ -37,10 +45,20 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
 
 4. Branch: the argument, else the current branch if it is `release/*`, else the resolver result (step 4 in
    `release-branches.md`). It must match `^release/(next|[0-9]+\.[0-9]+)$`, else stop.
-   `git checkout "$branch" --; git pull --ff-only`.
-5. Refuse (stop and report) when `git merge-base --is-ancestor origin/<default> HEAD` fails (branch behind
-   `<default>`: merge it in first) or `git merge-base --is-ancestor HEAD origin/<default>` succeeds (head equals
-   `<default>` or already merged: nothing to release, no commits ahead; run `cut` if released).
+   `git checkout "$branch" --; git pull --ff-only; git fetch origin --tags`.
+5. Refuse (stop and report), in this order, never open or point at a PR:
+   - `git merge-base --is-ancestor HEAD origin/<default>` succeeds: nothing to release. Head equals `<default>`:
+     fresh, stop. Else → "already released; cut a new release branch" (merged, or no own commits while `<default>`
+     moved on). Its tip is the second parent of a merge on `<default>`
+     (`git log --merges --first-parent origin/<default> --format=%P | grep -q " $(git rev-parse HEAD)$"`)
+     and no open PR targets it (`gh pr list --base <branch> --state open` is empty; deleting would close them) →
+     delete `release/next` (`git push origin --delete release/next`); otherwise, and for `release/<x.y>`, name the command.
+   - Released and continued → "already released; cut a new release branch": a `release/<x.y>` whose tag `v<x.y>.0`
+     is on origin (`git ls-remote --tags origin "refs/tags/v<x.y>.0"` prints a line), or (`release/next` carries
+     no `<x.y>`) a release tag whose merge commit is not in HEAD while its second parent is, i.e.
+     `for t in $(git tag -l 'v*'); do p=$(git rev-parse -q --verify "$t^2" 2>/dev/null) && git merge-base --is-ancestor "$p" HEAD && ! git merge-base --is-ancestor "$t" HEAD && echo "$t"; done`
+     prints a tag. Checked before the next guard: such a branch is also behind `<default>`, merging would hide it.
+   - `git merge-base --is-ancestor origin/<default> HEAD` fails: branch behind `<default>`, merge it in first.
 6. Open work must be merged first: `gh pr list --base <branch> --state open` must be empty;
    otherwise stop and list the PRs.
 7. Bump: `minor` by default, `major` only when the argument `major` is given (or the user answered major
@@ -57,14 +75,20 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
    release job on `main` regenerates it with git-cliff, tags, publishes the GitHub Release and closes
    every issue the release's PRs reference with `Closes #n` (GravionLabs/ci `gh-release`).
 9. Report the PR URL and `gh pr merge <nr> --merge`; the owner merges with a merge commit, never squash.
+   The report also names the cleanup `git push origin --delete <branch>` (a merged release branch is never
+   continued). When the user confirms the merge in the session, verify it on that PR
+   (`gh pr view <nr> --json merged --jq .merged` prints `true`) and delete `release/next` yourself; for
+   `release/<x.y>` name the command (guardrail, see cut). A later `finish` on the merged branch deletes it in step 5.
 
 ## Gotchas
 
 - Never merge the release PR yourself; the push to `main` builds and publishes the platform matrix, regenerates the changelog and closes the delivered issues.
+- The `merged` label lifecycle and rollout: `references/merged-label.md`.
 - A repo without `cliff.toml` gets no changelog from CI: follow `references/cliff-setup.md` once.
 - Hotfixes bypass this skill (`fix/<nr>-<slug>` from `main`); afterwards merge `main` into
   `release/next` so the fix is not lost.
-- `release/next` is never continued after its merge: the next `cut` resets it to `main`.
+- A release branch is never continued after its merge: `finish` refuses it (step 5), `cut` reports a stale
+  `release/<x.y>` and resets `release/next` to `main`; the resolver in `release-branches.md` skips a `release/<x.y>` whose `.0` tag exists.
 - The CI release PR title may show the branch name, not the computed version (`release-branches.md`).
 
 Report: mode, branch, PR URL (finish) or the Feature issue updated (cut).

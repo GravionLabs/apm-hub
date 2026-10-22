@@ -10,9 +10,11 @@
     "generate:root-apm": "node dist/index.js --root-apm",
     "generate:ci": "node dist/index.js --aggregate",
     "generate:all": "npm run build && npm run generate:ci",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "test": "vitest run",
-    "test:fast": "vitest run --project fast",
+    "format": "prettier --write \"{src,test}/**/*.ts\"",
+    "test": "vitest run --project unit --project scripts",
+    "test:all": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:related": "node scripts/run-related-tests.mjs",
     "test:ci": "vitest run --coverage",
     "test:integration": "cd test/integration && npm install --silent && vitest run",
     "test:watch": "vitest",
@@ -26,7 +28,7 @@
     "@vitest/coverage-v8": "^4.1.2",
     "ajv": "^8.20.0",
     "prettier": "^3.8.1",
-    "typescript": "^6.0.2",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.2"
   }
 }

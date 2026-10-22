@@ -1,6 +1,6 @@
 # plan.json schema
 
-Written to `.agents/<issue>/plan.json` by the planning step, read by the primary agent. Publishing follows `publish.md`. `plan.md` is the human view of the same data. Machine-checkable form: `plan.schema.json` (structure); graph invariants are listed under Validity.
+Written to `<state>/<issue>/plan.json` by the planning step, read by the primary agent. Publishing follows `publish.md`. `plan.md` is the human view of the same data. Machine-checkable form: `plan.schema.json` (structure); graph invariants are listed under Validity.
 
 ```json
 {

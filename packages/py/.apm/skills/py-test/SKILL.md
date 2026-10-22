@@ -16,6 +16,7 @@ description: >
 - **Config**: `[tool.pytest.ini_options]` in `pyproject.toml`
 - **Run all**: `uv run pytest`
 - **Run single file**: `uv run pytest tests/test_file.py`
+- **Targeted run** (per commit): `uv run pytest <path>` (plain `pytest <path>` without uv) for the test files of the changed code; unknown mapping: `uv run pytest -m unit`, never the full suite
 - **Coverage**: `uv run pytest --cov=src --cov-report=term-missing` (needs `pytest-cov` as a dev dependency)
 - uv flags for CI vs. local runs: see `py-implementation/references/uv-cli.md`
 

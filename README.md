@@ -51,6 +51,8 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    apm marketplace add GravionLabs/apm-hub
    ```
 
+   Or let the `/apm-install` skill detect your stack and install the matching packages.
+
 3. Install individual packages:
    ```bash
    apm install ng@apm-hub
@@ -112,6 +114,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`) |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`              |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
+| `rust`        | `rust-implementation`, `rust-test`                                                                                                             |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
 | `agents`      | `orchestrator`, `issue-reader`, `explorer`, `planner`, `reviewer`, `implementer`, `pr-writer` (subagents), `/orchestrator` skill — see below   |
 | `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails); OpenCode plugin                                          |
@@ -132,8 +135,8 @@ six subagents each have their own model and tool set:
 | `orchestrator` | `plan\|implement\|full\|next\|loop <issue>` (or `/orchestrator`): plan → implement → review → PR; gates stay with you |
 | `issue-reader` | read-only `gh` and `git` (haiku), resolves issue type, integration branch, digest and Task merged state as one JSON   |
 | `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                                                |
-| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `.agents/<issue>/plan.json`, returns path + summary      |
-| `reviewer`     | read-only plus the test command, returns the `review-fanout` findings JSON                                            |
+| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `<state>/<issue>/plan.json`, returns path + summary      |
+| `reviewer`     | read-only (diff, log and show only, never the test suite), returns the `review-fanout` findings JSON                                            |
 | `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |
 | `pr-writer`    | git and `gh` only, runs `github-pull-request` for the PBI's one PR, returns `{number, url}` as JSON                   |
 

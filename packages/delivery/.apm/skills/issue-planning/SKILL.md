@@ -3,7 +3,7 @@ name: issue-planning
 description: 'Plan an issue one level down with blockers and sizes; writes plan.json. Use for "plan issue #N".'
 ---
 
-Planning only: no source edits, no issue creation, no questions to the user (the primary agent grills them per `references/grilling.md`). The executing agent needs write access to `.agents/<issue>/` only. Creating issues is `references/publish.md`, run by the primary agent after the grilling rounds and approval.
+Planning only: no source edits, no issue creation, no questions to the user (the primary agent grills them per `references/grilling.md`). The executing agent needs write access to `<state>/<issue>/` only (`<state>` = `state_dir` of `detect-techstack`). Creating issues is `references/publish.md`, run by the primary agent after the grilling rounds and approval.
 
 ## Depth (exploration budget)
 
@@ -36,7 +36,7 @@ The input type decides it (`labels`, else title prefix):
 4. Explore per the depth through the `explorer` agent: one call per affected area with the file budget and the question; keep only its ≤ 300-word summaries (Claude Code `Agent` with `subagent_type: explorer`, OpenCode `task`, VS Code Copilot `runSubagent`). A runner that cannot spawn agents (a subagent) explores inline with Read/Grep/Glob under the same budget; dispatching `explorer` is then the caller's job.
 5. Slice per `references/slicing.md`. Per item set `blocked_by`, `size` (S/M/L), `model` (haiku/sonnet/inherit, rule below) and `files`.
 6. Collect open decisions as `questions[]`. Answers given in the prompt are final: keep those questions removed and plan accordingly. Resolve anything the repo can answer yourself; keep only real choices (product, scope, risk) with options, a `recommended` option and the item ids it `blocks`.
-7. Write `.agents/<issue>/plan.json` (schema: `references/plan-schema.md`) and `plan.md` (human view: table of items, blocker order, questions). Create the directory; use `.agents/adhoc/` without an issue number.
+7. Write `<state>/<issue>/plan.json` (schema: `references/plan-schema.md`) and `plan.md` (human view: table of items, blocker order, questions). Create the directory; use `<state>/adhoc/` without an issue number.
 
 ## Model hint
 

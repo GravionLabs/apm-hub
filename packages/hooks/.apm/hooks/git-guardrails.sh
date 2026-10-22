@@ -2,7 +2,7 @@
 # PreToolUse hook: deny destructive git commands before they run. Claude Code (tool_name Bash,
 # tool_input.command) and Copilot CLI (toolName, toolArgs) payloads. Everything else passes (exit 0, no output).
 # Adapted from mattpocock/skills git-guardrails-claude-code (MIT, https://github.com/mattpocock/skills).
-# Opt-out per repo: GIT_GUARDRAILS_OFF=1, or an (empty) file .agents/guardrails.off in the working tree.
+# Opt-out per repo: GIT_GUARDRAILS_OFF=1, or an (empty) file guardrails.off in the state directory (DROMOS_STATE_DIR, else <git common dir>/agents). The state dir is shared by all worktrees: the file disables the guard in every worktree of the repository.
 #
 # This hook is a guardrail against accidents, NOT a security boundary. It catches the destructive git commands
 # an agent writes by mistake; a command built to evade it (or a repo that opts out) gets through.
@@ -101,9 +101,21 @@ case "$plain" in *git*) ;; *) exit 0 ;; esac
 
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
 hgit() { GIT_OPTIONAL_LOCKS=0 GIT_ATTR_NOSYSTEM=1 git --no-optional-locks -c core.fsmonitor=false -c core.hooksPath=/dev/null "$@"; }
+# BEGIN state_dir (identical in every hook that defines it; test/repo/state-dir-resolver.test.ts)
+state_dir() { # state_dir <cwd>: DROMOS_STATE_DIR, else <git common dir>/agents, else nothing
+  local c
+  if [ -n "${DROMOS_STATE_DIR:-}" ]; then
+    case "$DROMOS_STATE_DIR" in /*) printf '%s' "$DROMOS_STATE_DIR" ;; *) printf '%s/%s' "$1" "$DROMOS_STATE_DIR" ;; esac
+    return 0
+  fi
+  c="$(GIT_OPTIONAL_LOCKS=0 git --no-optional-locks -C "$1" -c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || return 0
+  [ -n "$c" ] && printf '%s/agents' "$c"
+  return 0
+}
+# END state_dir
 top="$(hgit -C "$cwd" rev-parse --show-toplevel 2>/dev/null)"
-[ -f "$cwd/.agents/guardrails.off" ] && exit 0
-[ -n "$top" ] && [ -f "$top/.agents/guardrails.off" ] && exit 0
+state="$(state_dir "$cwd")"
+[ -n "$state" ] && [ -f "$state/guardrails.off" ] && exit 0
 
 deny() {
   local r
@@ -112,7 +124,11 @@ deny() {
   printf '{"permissionDecision":"deny","permissionDecisionReason":"%s","hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' "$r" "$r"
   exit 0
 }
-OPTOUT="set GIT_GUARDRAILS_OFF=1 or create .agents/guardrails.off to allow"
+OPTOUT="set GIT_GUARDRAILS_OFF=1 or create <state dir>/guardrails.off (shared by all worktrees) to allow"
+# the pre-state-dir opt-out file is no longer read: keep denying, but say where the file belongs now
+if [ -n "$top" ] && [ -f "$top/.agents/guardrails.off" ]; then
+  OPTOUT="$OPTOUT (the legacy .agents/guardrails.off is no longer read; move it to ${state:-the state directory}/guardrails.off)"
+fi
 UNKNOWN="(unknown branch)"
 PTOP=""; AWD=""; AFOR=""; NOTE=""
 
@@ -198,7 +214,7 @@ check() { # check <tokens...> of one git invocation (after the word git)
     [ $# -gt 0 ] && printf -v q ' %q' "$@"
     for a in "${al[@]}"; do
       v="${a#*=}"; d="${a%%=*}"; d="${d#*.}"; pf=""
-      [ "${d,,}" = "${sub,,}" ] && pf="$q"
+      [ "$(printf %s "$d" | tr '[:upper:]' '[:lower:]')" = "$(printf %s "$sub" | tr '[:upper:]' '[:lower:]')" ] && pf="$q" # bash 3.2 (macOS) has no ${var,,}
       case "$v" in
         !*) analyze "${v#!}$pf" ;;
         *) AWD="$wd" AFOR="$foreign" analyze "git $v$pf" ;;

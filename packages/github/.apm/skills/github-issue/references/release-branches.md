@@ -26,7 +26,11 @@ merge the branch is reset by the next `cut`, never continued, so it can never be
   `Release branch:` line. GitVersion's Minor increment applies only to `release/next`, so `finish` on a
   `release/<x.y>` adds `+semver: minor|major` itself when `origin/<default>..HEAD` has none.
 - **`finish` guards:** refuses when `release/next` is behind `main`, when its head is an ancestor of
-  `main` (equal to it too: a fresh branch has nothing to release), or when open PRs target it.
+  `main` (equal to it too: a fresh branch has nothing to release), when the branch was already released
+  (tag `v<x.y>.0` on origin, or a release tag's merge commit is missing from HEAD while its second parent is
+  in it: the branch was continued after its merge; "cut a new release branch"), or when open PRs target it.
+  After the merge the branch is deleted (`finish` names `git push origin --delete <branch>` and deletes
+  `release/next` itself once the merge is confirmed and no open PR targets it), never continued.
 - **Known limitation:** GravionLabs/ci `versioning/release-pr` may title the release PR with the branch name
   (`release/next`) rather than the computed version; the tag and GitHub Release carry the real version.
 
@@ -39,8 +43,9 @@ first hit:
 2. A `Release branch: release/next` (or `release/<x.y>`) line in the issue body, else in the body of its parent (follow
    `Parent Feature: #N` / `Parent Epic: #N` lines, one level at a time).
 3. The current branch, if it is `release/*`.
-4. `release/next` on origin if it exists, else the highest `release/<x.y>` (other `release/*` names are legacy, ignore them):
-   `h=$(git ls-remote --heads origin 'release/*' | sed 's|.*refs/heads/||'); printf '%s\n' "$h" | grep -x 'release/next' || printf '%s\n' "$h" | grep -E '^release/[0-9]+\.[0-9]+$' | sort -V | tail -1`
+4. `release/next` on origin if it exists, else the highest `release/<x.y>` whose tag `v<x.y>.0` is not on origin
+   (released, the branch is stale: `github-release cut` reports it; other `release/*` names are legacy, ignore them):
+   `h=$(git ls-remote --heads origin 'release/*' | sed 's|.*refs/heads/||'); t=$(git ls-remote --tags origin 'v*' | sed 's|.*refs/tags/||;s|\^{}$||'); printf '%s\n' "$h" | grep -x 'release/next' || for b in $(printf '%s\n' "$h" | grep -E '^release/[0-9]+\.[0-9]+$' | sort -V); do printf '%s\n' "$t" | grep -Fqx "v${b#release/}.0" || echo "$b"; done | tail -1`
    A `release/next` whose head is an ancestor of `main` but not equal to it (released, not yet reset:
    `git merge-base --is-ancestor origin/release/next origin/main` succeeds and the two SHAs differ) must not
    receive new work: run `github-release cut` first. A head equal to `main` is fresh and usable.
@@ -52,3 +57,5 @@ for a hotfix: stop and report instead of creating it.
 
 `<default>` (the repo default branch, `git symbolic-ref refs/remotes/origin/HEAD --short` minus
 `origin/`, fallback `main`) is only used by `github-release` itself.
+
+Issues merged into a release branch carry the label `merged` until the release closes them (`github-release` `references/merged-label.md`).

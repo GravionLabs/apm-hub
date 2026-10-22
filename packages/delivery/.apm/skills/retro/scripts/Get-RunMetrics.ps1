@@ -5,11 +5,20 @@
 .PARAMETER Transcript
   Main-thread transcript JSONL. Default: newest session of the current project under ~/.claude/projects.
 .PARAMETER Issue
-  Issue number; reads .agents/<issue>/progress.md. Without it the newest .agents/*/progress.md is used.
+  Issue number; reads <state>/<issue>/progress.md (state dir: DROMOS_STATE_DIR, else <git common dir>/agents). Without it the newest progress.md under the state dir is used.
 .PARAMETER Ledger
   Explicit ledger path (overrides -Issue).
 .PARAMETER SubagentsDir
   Default: <transcript without .jsonl>/subagents.
+.OUTPUTS
+  JSON: transcript, ledger, warnings, main, subagents, fixRounds (all Fix round lines), unattributedFixRounds (the part of
+  fixRounds no task could be charged with: unknown task id or no Task line above; fixRounds minus the tasks[] sum),
+  tasks[] (task = issue number or plan id such as "p1", model, status, fixRounds, escalated, escalatedTo, reviewRounds),
+  escalationShare, rulings, gates, durations.
+  durations: {total, phases: {read, explore, plan, implement, verify, review, pr}, tasks: [{task, seconds}], fixRounds: [{round, task, seconds}]}
+  in seconds, from the optional ISO-8601 UTC prefix of ledger lines ('2026-10-21T15:19:46Z <text>'; lines without it are still read). A phase ends at its
+  'Phase <name>: complete' line (verify: 'Phase verify: ok|fail — tests <n>/<m>') and starts at the previous such line (the first timestamped line for the first phase); a Task or Fix round ends at its own line and
+  starts at the previous Phase-complete, Task or Fix round line. A missing timestamp, phase or a negative span gives null, never an error.
 #>
 [CmdletBinding()]
 param(
@@ -109,9 +118,19 @@ if (-not $Transcript) {
 if (-not (Test-Path $Transcript)) { throw "Transcript not found: $Transcript" }
 if (-not $SubagentsDir) { $SubagentsDir = Join-Path (Split-Path $Transcript) ([IO.Path]::GetFileNameWithoutExtension($Transcript) + '/subagents') }
 if (-not $Ledger) {
-  if ($Issue) { $Ledger = ".agents/$Issue/progress.md" }
-  elseif (Test-Path .agents) {
-    $l = Get-ChildItem .agents -Recurse -Filter progress.md | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+# BEGIN Resolve-StateDir (identical in every script that defines it; test/repo/state-dir-resolver.test.ts)
+function Resolve-StateDir {
+  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path)) }
+  $common = $null
+  try { $common = "$(& git -C (Get-Location).Path rev-parse --path-format=absolute --git-common-dir 2>$null)".Trim() } catch { $common = $null }
+  if ($LASTEXITCODE -ne 0 -or -not $common) { throw 'No state directory: not inside a git repository (set DROMOS_STATE_DIR)' }
+  [IO.Path]::GetFullPath((Join-Path $common 'agents'))
+}
+# END Resolve-StateDir
+  $state = try { Resolve-StateDir } catch { $null }
+  if ($Issue -and $state) { $Ledger = Join-Path $state "$Issue/progress.md" }
+  elseif (-not $Issue -and $state -and (Test-Path -LiteralPath $state)) {
+    $l = Get-ChildItem -LiteralPath $state -Recurse -Filter progress.md | Sort-Object LastWriteTime -Descending | Select-Object -First 1
     if ($l) { $Ledger = $l.FullName }
   }
 }
@@ -139,16 +158,91 @@ function Sum-Of($items, [string]$prop) { $t = 0.0; foreach ($i in $items) { $t +
 
 # --- ledger
 $fix = 0; $rulings = @(); $gates = @(); $ledgerOut = $null
+$taskMap = [ordered]@{}; $lastTask = $null; $reviewPasses = 0; $unattributed = 0
+$phaseNames = 'read', 'explore', 'plan', 'implement', 'verify', 'review', 'pr'
+$phaseSec = [ordered]@{}; foreach ($p in $phaseNames) { $phaseSec[$p] = $null }
+$taskSec = [ordered]@{}; $fixList = [System.Collections.Generic.List[object]]::new()
+$isFirst = $true; $firstTs = $null; $lastTs = $null; $prevPhaseTs = $null; $prevMark = $null
+$tsRe = '^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s+(.*)$'
+function Get-Span($from, $to) { if ($null -eq $from -or $null -eq $to) { return $null }; $d = ($to - $from).TotalSeconds; if ($d -lt 0) { return $null }; return [int][math]::Round($d) }
+function Add-Sec($sum, $add) { if ($null -eq $add) { return $sum }; if ($null -eq $sum) { return $add }; return $sum + $add }
+function Get-PhaseKey([string]$name) {
+  $k = ($name.ToLowerInvariant() -replace '[\s_-]+', '')
+  if ($k -in 'pullrequest', 'pr') { return 'pr' }
+  if ($k -in 'read', 'explore', 'plan', 'implement', 'verify', 'review') { return $k }
+  return $null
+}
+# Optional ' — model <name>' suffix (older ledgers have none): null when absent.
+function Get-LedgerModel([string]$line) { if ($line -match '(?i)(?:^|\s)model\s+([A-Za-z0-9_.:/-]+)\s*$') { return Hide-Secrets $Matches[1] } return $null }
 if ($Ledger -and (Test-Path $Ledger)) {
   $ledgerOut = Hide-Path (Resolve-Path $Ledger).Path
-  foreach ($line in Get-Content $Ledger) {
-    if ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++ }
+  foreach ($rawLine in Get-Content $Ledger) {
+    # optional timestamp prefix (older ledgers have none): $ts is $null without it or when unparsable
+    $line = $rawLine; $ts = $null
+    if ($rawLine -match $tsRe) {
+      $line = $Matches[2]
+      $parsed = [DateTimeOffset]::MinValue
+      if ([DateTimeOffset]::TryParse($Matches[1], [cultureinfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeUniversal, [ref]$parsed)) { $ts = $parsed }
+    }
+    # the first ledger line (the header) is the origin of the first phase and task, but only when it is timestamped itself
+    if ($isFirst) { $isFirst = $false; if ($ts) { $prevMark = $ts; $prevPhaseTs = $ts } }
+    if ($ts) { if ($null -eq $firstTs) { $firstTs = $ts }; $lastTs = $ts }
+    if ($line -match '^\s*(?:[-*]\s+)?Phase\s+([A-Za-z][A-Za-z _-]*?)\s*:\s*(?:complete|ok|fail)\b') {
+      $pk = Get-PhaseKey $Matches[1]
+      if ($pk) { $phaseSec[$pk] = Add-Sec $phaseSec[$pk] (Get-Span $prevPhaseTs $ts) }
+      $prevPhaseTs = $ts; $prevMark = $ts
+    }
+    # Task id: the Task issue number, or the plan id (p1) of a single task without issue.
+    if ($line -match '^\s*(?:[-*]\s+)?Task\s+#(\d{1,9}|p\d{1,9}):\s*([A-Za-z_]+)') {
+      $n = $Matches[1]; $st = $Matches[2]; $lastTask = $n
+      $taskSec[$n] = Add-Sec $taskSec[$n] (Get-Span $prevMark $ts); $prevMark = $ts
+      if ($taskMap.Contains($n)) {  # repeated line: latest status wins, a model is never replaced by null, counters stay
+        $nm = Get-LedgerModel $line
+        if ($nm) { $taskMap[$n].model = $nm }
+        $taskMap[$n].status = $st
+      }
+      else { $taskMap[$n] = [pscustomobject]@{ n = $(if ($n -match '^\d+$') { [int]$n } else { $n }); model = (Get-LedgerModel $line); status = $st; fixRounds = 0; escalated = $false; escalatedTo = $null } }
+    }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\s+(\d{1,9})(?:\s*\(#(\w+)\))?') {
+      $round = [int]$Matches[1]; $fix++
+      $fixSpan = Get-Span $prevMark $ts; $prevMark = $ts
+      # `Fix round <r> (#<task>): ...` names its task and counts only for a known Task line; an unknown id stays unattributed.
+      # A legacy line without `(#...)` is attributed to the last Task line above it (old ledgers); none above: unattributed.
+      $target = $null
+      if ($Matches[2]) { if ($taskMap.Contains($Matches[2])) { $target = $Matches[2] } }
+      else { $target = $lastTask }
+      $fixList.Add([ordered]@{ round = $round; task = $(if ($target -and $target -match '^\d+$') { [int]$target } else { $target }); seconds = $fixSpan })
+      if (-not $target) { $unattributed++ }
+      else {
+        $t = $taskMap[$target]; $t.fixRounds++
+        $fm = Get-LedgerModel $line
+        # Escalation: a fix round on a different named model than the Task line (`inherit` is not a model name), or fix round >= 3 (fresh implementer one tier up).
+        $named = $fm -and $t.model -and $fm -ne 'inherit' -and $t.model -ne 'inherit'
+        if ($round -ge 3 -or ($named -and $fm -ne $t.model)) { $t.escalated = $true; if ($fm -and $fm -ne 'inherit') { $t.escalatedTo = $fm } }
+      }
+    }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++; $unattributed++; $fixList.Add([ordered]@{ round = $null; task = $null; seconds = (Get-Span $prevMark $ts) }); $prevMark = $ts }
+    elseif ($line -match '^\s*(?:[-*]\s+)?Phase review\b') { $reviewPasses++ }
     elseif ($line -match '^\s*(?:[-*]\s+)?Ruling:\s*(.*)$') { $rulings += Hide-Secrets $Matches[1] }
     elseif ($line -match '^\s*(?:[-*]\s+)?Gate:\s*(.*)$') { $gates += Hide-Secrets $Matches[1] }
   }
 } else {
   $warnings.Add('Ledger not found; fixRounds, rulings and gates are 0.')
 }
+
+# reviewRounds is run-wide by design: review runs once over the whole PBI range, not per task.
+# Review passes cover the whole PBI range, so every task reports the run's count.
+$taskList = @($taskMap.Values | ForEach-Object {
+  [ordered]@{ task = $_.n; model = $_.model; status = $_.status; fixRounds = $_.fixRounds; escalated = $_.escalated; escalatedTo = $_.escalatedTo; reviewRounds = $reviewPasses }
+})
+$durations = [ordered]@{
+  total = Get-Span $firstTs $lastTs
+  phases = $phaseSec
+  tasks = @($taskSec.Keys | ForEach-Object { [ordered]@{ task = $(if ($_ -match '^\d+$') { [int]$_ } else { $_ }); seconds = $taskSec[$_] } })
+  fixRounds = @($fixList)
+}
+$escalated = @($taskMap.Values | Where-Object { $_.escalated }).Count
+$escalationShare = if ($taskMap.Count -gt 0) { [math]::Round($escalated / $taskMap.Count, 4) } else { 0 }
 
 [ordered]@{
   transcript = Hide-Path (Resolve-Path $Transcript).Path
@@ -163,6 +257,10 @@ if ($Ledger -and (Test-Path $Ledger)) {
     byRole = $roleList
   }
   fixRounds = $fix
+  unattributedFixRounds = $unattributed
+  tasks = $taskList
+  escalationShare = $escalationShare
   rulings = [ordered]@{ count = $rulings.Count; items = @($rulings) }
   gates = [ordered]@{ count = $gates.Count; items = @($gates) }
+  durations = $durations
 } | ConvertTo-Json -Depth 8
