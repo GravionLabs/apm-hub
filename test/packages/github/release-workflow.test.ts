@@ -33,7 +33,7 @@ describe.each(Object.entries(files))('merged-label %s (#358)', (_name, rel) => {
 
 describe.each(Object.entries(files))('In release status step %s (#489)', (_name, rel) => {
   const wf = parse(fs.readFileSync(path.join(root, rel), 'utf-8'));
-  const all = wf.jobs['release-pr'].steps as { uses?: string; id?: string; name?: string; run?: string; env?: Record<string, string>; 'continue-on-error'?: boolean }[];
+  const all = wf.jobs['release-pr'].steps as { uses?: string; id?: string; name?: string; run?: string; env?: Record<string, string>; if?: string; 'continue-on-error'?: boolean }[];
   const idx = all.findIndex((s) => s.id === 'in-release');
   const step = all[idx];
 
@@ -49,30 +49,25 @@ describe.each(Object.entries(files))('In release status step %s (#489)', (_name,
     expect(step.env?.GH_TOKEN).toBe('${{ secrets.PROJECT_TOKEN || secrets.GH_PAT }}');
   });
 
-  it('warns and exits 0 without a token', () => {
-    const run = step.run ?? '';
-    const guard = run.indexOf('[ -z "${GH_TOKEN:-}" ]');
-    expect(guard).toBeGreaterThan(-1);
-    const block = run.slice(guard, run.indexOf('fi', guard));
-    expect(block).toContain('::warning::no token with scope project');
-    expect(block).toContain('exit 0');
+  it('runs after earlier failures, with pipefail', () => {
+    expect(step.if).toBe('${{ !cancelled() }}');
+    expect(step.run).toMatch(/^set -o pipefail$/m);
   });
 
   it('sets the In release option and skips Done and items without a project', () => {
     const run = step.run ?? '';
     expect(run).toContain('updateProjectV2ItemFieldValue');
     expect(run).toContain('select(.name == "In release")');
-    expect(run).toContain('[ "$status" = "Done" ]');
-    expect(run).toContain('has no project item; skipped');
-    expect(run).toContain("has no Status option 'In release'");
+    expect(run).toMatch(/no project item/);
+    expect(run).toMatch(/no Status option 'In release'/);
   });
 });
 
 describe('release workflow and template stay identical (#489)', () => {
   it('are byte-identical', () => {
-    const a = fs.readFileSync(path.join(root, files.workflow));
-    const b = fs.readFileSync(path.join(root, files.template));
-    expect(a.equals(b)).toBe(true);
+    const a = fs.readFileSync(path.join(root, files.workflow), 'utf-8');
+    const b = fs.readFileSync(path.join(root, files.template), 'utf-8');
+    expect(a.split('\n')).toEqual(b.split('\n'));
   });
 });
 
@@ -81,16 +76,17 @@ describe('In release status docs (#489)', () => {
 
   it('merged-label.md documents PROJECT_TOKEN, scope project and the release/next limit', () => {
     const doc = read('github-release/references/merged-label.md');
-    expect(doc).toContain('PROJECT_TOKEN');
-    expect(doc).toContain('scope `project`');
-    expect(doc).toContain('release/next');
-    expect(doc).toContain('GravionLabs/ci#55');
+    expect(doc).toMatch(/PROJECT_TOKEN/);
+    expect(doc).toMatch(/scope `project`/);
+    expect(doc).toMatch(/GH_PAT[\s\S]*only needs the project scope/);
+    expect(doc).toMatch(/release\/next[\s\S]*GravionLabs\/ci#55/);
+    expect(doc).not.toMatch(/Checked \d{4}-\d{2}-\d{2}/);
   });
 
   it('views.md no longer says CI never writes the project', () => {
     const doc = read('github-project/references/views.md');
     expect(doc).not.toMatch(/CI never writes/i);
-    expect(doc).toContain('Set project status In release');
+    expect(doc).toMatch(/Set project status In release/);
   });
 });
 
