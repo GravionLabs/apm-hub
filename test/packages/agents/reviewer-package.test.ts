@@ -12,6 +12,7 @@ const orchestrator = orchestratorAgent + '\n' + read('github/.apm/skills/github-
 const pipeline = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
 const verify = read('delivery/.apm/skills/verify-project/SKILL.md');
 const specDim = read('delivery/.apm/skills/review-fanout/references/spec-dimension.md');
+const correctnessDim = read('delivery/.apm/skills/review-fanout/references/correctness-dimension.md');
 
 describe('reviewer without a review package (#233)', () => {
   it('reviewer returns [] plus a NO_PACKAGE line and has no git diff fallback', () => {
@@ -81,5 +82,17 @@ describe('reviewer without a review package (#233)', () => {
     expect(front).not.toBe('');
     expect(front).toContain('context: fork');
     expect(front).not.toMatch(/agent:\s*reviewer/);
+  });
+});
+
+describe('correctness brief checks invariants (#485)', () => {
+  it('fanout brief and reference mention invariants, HIGH and the plan section', () => {
+    expect(fanout).toMatch(/`correctness`:[^\n]*invariant[^\n]*HIGH/);
+    expect(correctnessDim).toContain('## Invariants (plan)');
+    expect(correctnessDim).toMatch(/violated invariant is HIGH/);
+  });
+
+  it('reviewer agent stays generic: the brief comes from review-fanout', () => {
+    expect(reviewer).not.toMatch(/Invariants/);
   });
 });

@@ -228,7 +228,9 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
 - Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
 - Reviews read a package file (`<state>/<issue>/review-<n>.diff`: commit list, stat, diff with context)
   written by `review-fanout`; the diff is never pasted into a prompt, so it does not repeat per dimension.
-- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec`. `spec` compares
+- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec`. `correctness`
+  also checks each `## Invariants` entry of the PBI, its Tasks and plan items without a Task issue (appended under
+  `## Invariants (plan)`); a violated invariant is HIGH, quoted in `evidence`, and goes through verify. `spec` compares
   the diff with the originating issue: the number comes from the argument, the branch `<type>/<nr>-<slug>` or
   `Closes #n` in the range, and the issue body plus its Task sub-issue bodies are appended to the same package
   file. It reports missing, partial or wrong criteria (HIGH) and scope creep (MEDIUM), never merged with
