@@ -1267,25 +1267,39 @@ describe('subagent-ledger hook', () => {
   describe('DROMOS_URL ingest', () => {
     let bin: string;
     let calls: string;
+    let snapshot: string;
     beforeEach(() => {
       bin = path.join(dir, 'bin');
       calls = path.join(dir, 'curl.log');
+      snapshot = path.join(dir, 'ledger.at-post');
       fs.mkdirSync(bin);
-      // fake curl: log the arguments and the body, exit with FAKE_CURL_EXIT
+      // fake curl: log "ARGS <args>" and "BODY <stdin>" per call, snapshot the ledger (LEDGER_PROBE), exit FAKE_CURL_EXIT
       fs.writeFileSync(
         path.join(bin, 'curl'),
-        `#!/bin/sh\nprintf '%s\\n' "$*" >> "${calls}"\ncat >> "${calls}"\nprintf '\\n' >> "${calls}"\nexit "\${FAKE_CURL_EXIT:-0}"\n`,
+        `#!/bin/sh\nprintf 'ARGS %s\\n' "$*" >> "${calls}"\nprintf 'BODY ' >> "${calls}"\ncat >> "${calls}"\nprintf '\\n' >> "${calls}"\n[ -n "$LEDGER_PROBE" ] && cp "$LEDGER_PROBE" "${snapshot}"\nexit "\${FAKE_CURL_EXIT:-0}"\n`,
         { mode: 0o755 }
       );
     });
-    const runWith = (payload: unknown, env: Record<string, string>) =>
+    const runWith = (payload: unknown, env: Record<string, string>, pathValue?: string) =>
       spawnSync('bash', [SCRIPT], {
         input: JSON.stringify(payload),
         encoding: 'utf8',
-        env: cleanEnv({ AGENTS_LEDGER: '', PATH: `${bin}:${process.env.PATH}`, ...env }),
+        env: cleanEnv({
+          AGENTS_LEDGER: '',
+          PATH: pathValue ?? `${bin}:${process.env.PATH}`,
+          ...env,
+        }),
       });
-    const posts = () =>
-      fs.existsSync(calls) ? fs.readFileSync(calls, 'utf8').trim().split('\n') : [];
+    /** One entry per curl call: the argument line and the parsed JSON body. */
+    const posts = (): { args: string; body: any }[] => {
+      if (!fs.existsSync(calls)) return [];
+      const lines = fs.readFileSync(calls, 'utf8').trim().split('\n');
+      const out: { args: string; body: any }[] = [];
+      for (let k = 0; k + 1 < lines.length; k += 2)
+        out.push({ args: lines[k].slice(5), body: JSON.parse(lines[k + 1].slice(5)) });
+      return out;
+    };
+    const URL = { DROMOS_URL: 'http://localhost:9' };
 
     it('makes no network call when DROMOS_URL is unset', () => {
       withLedger();
@@ -1295,56 +1309,114 @@ describe('subagent-ledger hook', () => {
       expect(readLedger(ledger)).toContain('Subagent implementer: stopped');
     });
 
-    it('posts the appended line to DROMOS_URL/ingest after the ledger write', () => {
+    it('posts the appended line to DROMOS_URL/ingest as a JSON POST', () => {
       withLedger();
       const r = runWith(
         { cwd: dir, agent_type: 'implementer', last_assistant_message: 'say "hi"' },
         { DROMOS_URL: 'http://localhost:9/', DROMOS_AGENT_ID: 'agent-1' }
       );
       expect(r.status).toBe(0);
-      const [args, body] = posts();
-      expect(args).toContain('--max-time 0.5');
-      expect(args).toContain('http://localhost:9/ingest');
-      const msg = JSON.parse(body);
-      expect(msg).toMatchObject({
+      const [call] = posts();
+      expect(call.args).toContain('--max-time 0.5');
+      expect(call.args).toContain('-X POST');
+      expect(call.args).toContain('Content-Type: application/json');
+      expect(call.args).toContain('http://localhost:9/ingest');
+      expect(call.body).toMatchObject({
         type: 'progress',
         source: 'apm-hub/subagent-stop',
         issue: 7,
         agentId: 'agent-1',
       });
-      expect(msg.data.agent).toBe('implementer');
-      expect(msg.data.line).toMatch(
+      expect(call.body.data.agent).toBe('implementer');
+      expect(call.body.data.line).toMatch(
         /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z Subagent implementer: stopped — say "hi"$/
       );
-      expect(fs.readFileSync(ledger, 'utf8')).toContain(msg.data.line);
+      expect(fs.readFileSync(ledger, 'utf8')).toContain(call.body.data.line);
+    });
+
+    it('posts after the ledger write', () => {
+      withLedger();
+      runWith({ cwd: dir, agent_type: 'planner' }, { ...URL, LEDGER_PROBE: path.join(dir, '.agents', '7', 'progress.md') });
+      expect(fs.readFileSync(snapshot, 'utf8')).toContain('Subagent planner: stopped');
+    });
+
+    it('escapes backslash, quote and tab so the body stays valid JSON', () => {
+      withLedger();
+      runWith({ cwd: dir, agent_type: 'implementer', last_assistant_message: 'a\\b\t"c"' }, URL);
+      expect(posts()[0].body.data.line).toMatch(/ Subagent implementer: stopped — a\\b\t"c"$/);
+    });
+
+    it('sends agentId null when neither DROMOS_AGENT_ID nor the payload has one', () => {
+      withLedger();
+      runWith({ cwd: dir, agent_type: 'implementer' }, { ...URL, DROMOS_AGENT_ID: '' });
+      expect(posts()[0].body.agentId).toBeNull();
+    });
+
+    it('falls back to the payload agent_id when DROMOS_AGENT_ID is empty', () => {
+      withLedger();
+      runWith({ cwd: dir, agent_type: 'implementer', agent_id: 'abc-1' }, { ...URL, DROMOS_AGENT_ID: '' });
+      expect(posts()[0].body.agentId).toBe('abc-1');
+    });
+
+    it('sanitises DROMOS_AGENT_ID', () => {
+      withLedger();
+      runWith({ cwd: dir, agent_type: 'implementer' }, { ...URL, DROMOS_AGENT_ID: 'a"b c;$(x)' });
+      expect(posts()[0].body.agentId).toBe('abcx');
+    });
+
+    it('sends issue null when the ledger directory is not an issue number', () => {
+      fs.mkdirSync(path.join(dir, 'led'), { recursive: true });
+      fs.writeFileSync(path.join(dir, 'led', 'progress.md'), '# ledger\n');
+      runWith({ cwd: dir, agent_type: 'implementer' }, { ...URL, AGENTS_LEDGER: path.join(dir, 'led', 'progress.md') });
+      expect(posts()[0].body.issue).toBeNull();
+    });
+
+    it('sends a leading-zero issue directory as a valid JSON number', () => {
+      fs.mkdirSync(path.join(dir, '.agents', '007'), { recursive: true });
+      fs.writeFileSync(path.join(dir, '.agents', '007', 'progress.md'), '# ledger\n');
+      runWith({ cwd: dir, agent_type: 'implementer' }, { ...URL, AGENTS_LEDGER: path.join(dir, '.agents', '007', 'progress.md') });
+      expect(posts()[0].body.issue).toBe(7);
+    });
+
+    it.each(['ftp://h', '-oX', 'localhost:9', 'http://a b'])('ignores DROMOS_URL %s', (url) => {
+      withLedger();
+      const r = runWith({ cwd: dir, agent_type: 'implementer' }, { DROMOS_URL: url });
+      expect(r.status).toBe(0);
+      expect(posts()).toHaveLength(0);
+      expect(readLedger(ledger)).toContain('Subagent implementer: stopped');
     });
 
     it('posts a duplicate stop once', () => {
       withLedger();
-      const payload = {
-        cwd: dir,
-        agent_type: 'reviewer',
-        agent_id: 'a1',
-        last_assistant_message: 'ok',
-      };
-      runWith(payload, { DROMOS_URL: 'http://localhost:9' });
-      runWith(payload, { DROMOS_URL: 'http://localhost:9' });
-      expect(posts()).toHaveLength(2); // one call: args line + body line
+      const payload = { cwd: dir, agent_type: 'reviewer', agent_id: 'a1', last_assistant_message: 'ok' };
+      runWith(payload, URL);
+      runWith(payload, URL);
+      expect(posts()).toHaveLength(1);
     });
 
     it('keeps exit 0 and the ledger line when curl fails', () => {
       withLedger();
-      const r = runWith(
-        { cwd: dir, agent_type: 'planner' },
-        { DROMOS_URL: 'http://localhost:9', FAKE_CURL_EXIT: '28' }
-      );
+      const r = runWith({ cwd: dir, agent_type: 'planner' }, { ...URL, FAKE_CURL_EXIT: '28' });
+      expect(r.status).toBe(0);
+      expect(readLedger(ledger)).toContain('Subagent planner: stopped');
+    });
+
+    it('still writes the ledger and exits 0 when curl is not installed', () => {
+      withLedger();
+      const tools = path.join(dir, 'tools');
+      fs.mkdirSync(tools);
+      for (const t of ['bash', 'sed', 'tr', 'cut', 'git', 'date', 'grep', 'cksum', 'dirname', 'basename', 'tail', 'head', 'cat', 'wc', 'ls', 'find', 'jq']) {
+        const found = spawnSync('sh', ['-c', `command -v ${t}`], { encoding: 'utf8' }).stdout.trim();
+        if (found) fs.symlinkSync(found, path.join(tools, t));
+      }
+      const r = runWith({ cwd: dir, agent_type: 'planner' }, URL, tools);
       expect(r.status).toBe(0);
       expect(readLedger(ledger)).toContain('Subagent planner: stopped');
     });
 
     it('posts nothing for an agent outside the orchestrator allowlist', () => {
       withLedger();
-      runWith({ cwd: dir, agent_type: 'stranger' }, { DROMOS_URL: 'http://localhost:9' });
+      runWith({ cwd: dir, agent_type: 'stranger' }, URL);
       expect(fs.existsSync(calls)).toBe(false);
     });
   });

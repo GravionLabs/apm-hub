@@ -21,7 +21,7 @@
 # Every line gets an ISO-8601 UTC prefix `2026-10-21T15:19:46Z ` (same as Add-LedgerLine.ps1); readers accept lines with and without it.
 # DROMOS_URL set: after the ledger write the appended line is also POSTed to $DROMOS_URL/ingest (type progress, source
 # apm-hub/subagent-stop, issue = the ledger's issue number, agentId = DROMOS_AGENT_ID, data {line, agent}); curl, 500 ms
-# timeout, output and failure ignored; a deduplicated stop posts nothing; DROMOS_URL unset: no network call.
+# timeout, output and failure ignored; agentId is null when neither DROMOS_AGENT_ID nor the payload's agent_id is usable; only http(s) URLs; the reply excerpt leaves the machine; a deduplicated stop posts nothing; DROMOS_URL unset: no network call.
 # Never blocks: every path exits 0. Writes nothing when no ledger exists.
 
 payload="$(cat 2>/dev/null || true)"
@@ -275,14 +275,18 @@ case "$ts" in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[
 printf '%s\n' "$line" >> "$ledger" 2>/dev/null || true
 [ -n "$key" ] && { printf '%s\n' "$key" >> "$seen" 2>/dev/null || true; }
 
-# optional: forward the appended line to DROMOS_URL/ingest (after the ledger write, failures never matter)
-if [ -n "${DROMOS_URL:-}" ] && command -v curl >/dev/null 2>&1; then
-  jstr() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; } # JSON string body (control characters are already stripped)
+# optional: forward the appended line to DROMOS_URL/ingest (after the ledger write, failures never matter). The line carries the
+# first 120 characters of the subagent's reply: with DROMOS_URL set that text leaves the machine. Only http(s) URLs are used.
+if [[ "${DROMOS_URL:-}" =~ ^https?://[^[:space:]]+$ ]] && command -v curl >/dev/null 2>&1; then
+  jstr() { printf '%s' "$1" | tr -d '\n' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e "s/$(printf '\t')/\\\\t/g"; } # JSON string body
   issue_nr="$(basename "$(dirname "$ledger")")"
-  case "$issue_nr" in ''|*[!0-9]*) issue_nr="null" ;; esac
+  case "$issue_nr" in ''|*[!0-9]*) issue_nr="null" ;; *) issue_nr="$((10#$issue_nr))" ;; esac
+  # DROMOS_AGENT_ID, else the payload's agent_id; neither (or nothing valid left after sanitising): JSON null
   aid="$(printf '%s' "${DROMOS_AGENT_ID:-}" | tr -cd 'A-Za-z0-9:_./-' | cut -c1-128)"
-  printf '{"type":"progress","source":"apm-hub/subagent-stop","issue":%s,"agentId":"%s","data":{"line":"%s","agent":"%s"}}' \
-    "$issue_nr" "$(jstr "$aid")" "$(jstr "$line")" "$(jstr "$agent")" \
+  [ -n "$aid" ] || aid="$agent_id"
+  if [ -n "$aid" ]; then aid="\"$(jstr "$aid")\""; else aid="null"; fi
+  printf '{"type":"progress","source":"apm-hub/subagent-stop","issue":%s,"agentId":%s,"data":{"line":"%s","agent":"%s"}}' \
+    "$issue_nr" "$aid" "$(jstr "$line")" "$(jstr "$agent")" \
     | curl -s -S -o /dev/null --max-time 0.5 -X POST -H 'Content-Type: application/json' --data-binary @- "${DROMOS_URL%/}/ingest" >/dev/null 2>&1 || true
 fi
 exit 0
