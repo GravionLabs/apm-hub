@@ -20,11 +20,26 @@ describe('ci.yml parallel Vitest jobs (#502)', () => {
   });
 
   it('runs the selected project and names result artifacts per project', () => {
-    const run = steps('test').find((s) => s.run?.includes('vitest run'));
-    expect(run?.run).toContain('--project ${{ matrix.project }}');
+    const run = steps('test').find((s) => s.run === 'pnpm run test:ci:project');
+    expect(run).toBeDefined();
+    expect((run as Step & { env?: Record<string, string> }).env?.PROJECT).toBe(
+      '${{ matrix.project }}'
+    );
+    const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'));
+    expect(pkg.scripts['test:ci:project']).toContain('--project "$PROJECT"');
+    expect(pkg.scripts['test:ci']).toBe('vitest run --coverage');
     const artifacts = steps('test').filter((s) => s.uses?.startsWith('actions/upload-artifact'));
     expect(artifacts.length).toBe(2);
     for (const a of artifacts) expect(a.with?.name).toContain('${{ matrix.project }}');
+  });
+
+  it('publishes a per-project report and coverage summary from the vitest outputs', () => {
+    const reporter = steps('test').find((s) => s.uses?.startsWith('dorny/test-reporter'));
+    expect(reporter?.with?.name).toContain('${{ matrix.project }}');
+    expect(reporter?.with?.path).toBe('test-results/junit.xml');
+    const summary = steps('test').find((s) => s.uses?.startsWith('irongut/CodeCoverageSummary'));
+    expect(summary?.with?.filename).toBe('coverage/cobertura-coverage.xml');
+    expect(wf.jobs.test.permissions).toEqual({ checks: 'write', contents: 'read' });
   });
 
   it('does not use the fixed-name node/test action in any job', () => {
