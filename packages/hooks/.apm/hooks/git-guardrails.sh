@@ -24,8 +24,9 @@
 # - Scanning is linear: LC_ALL=C, regex tests instead of bracket-pattern replacement, a sliding ~1 KB window (a
 #   substring of a long bash string costs O(length)) and a JSON scanner that splits at '\' once instead of replacing
 #   (on bash 3.2 ${x//pat/rep} costs O(length * matches)). bash still spends ~50 us per word, line or pipe, so the
-#   cap is 24 KB: its worst shapes (many words, quotes, lines, pipes, '((', heredocs) parse in about 1.5 s on bash 3.2,
-#   well inside the 5 s hook timeout. A longer command fails open; quoted heredoc bodies (commit messages) are cheap.
+#   cap is 24 KB: its worst shapes (many words, quotes, lines, pipes, '((', heredocs) parse in 0.5-1.5 s on an idle
+#   bash 3.2 (macOS /bin/bash; measured with 24 KB payloads), about 3x that under heavy parallel load, still below
+#   the 5 s hook timeout. A longer command fails open; quoted heredoc bodies (commit messages) are cheap.
 # - git runs only in the payload cwd's own repository (status, symbolic-ref, rev-parse; no fsmonitor, no hooks,
 #   no optional locks). A target given via git -C <other repo> (also a nested or bare repo or git dir inside the
 #   cwd repo, found by a file walk, symlinks resolved), --git-dir, --work-tree, GIT_DIR or after cd is
