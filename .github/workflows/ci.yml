@@ -111,14 +111,6 @@ jobs:
           package-manager-version: '11.6.0'
           build-command: pnpm run build
 
-      - name: Test
-        uses: GravionLabs/ci/node/test@main
-        with:
-          node-version: '24'
-          package-manager: pnpm
-          package-manager-version: '11.6.0'
-          test-command: pnpm run test:ci
-
       - name: Check manifest skills lists
         run: node scripts/check-manifests.mjs
 
@@ -139,6 +131,85 @@ jobs:
 
       - name: Audit APM packages
         run: apm audit --ci
+
+  # One job per Vitest project, run in parallel. GravionLabs/ci/node/test@main is not
+  # used: its artifact and check names are fixed, so a matrix would lose all but one result.
+  # Required checks: the old single test step is now `Test (unit)`, `Test (scripts)` and
+  # `Test (integration)`; the repo owner must add them to branch protection ('Build & Test' stays).
+  # Each matrix job runs on its own runner, so the vitest.config.ts outputs (test-results/junit.xml,
+  # coverage/cobertura-coverage.xml) never clash. Coverage is per project; merging it is #503.
+  test:
+    name: Test (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [unit, scripts, integration]
+    # Least privilege: the mutable node/build@main ref gets no pull-requests write.
+    permissions:
+      checks: write
+      contents: read
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        shell: bash
+        run: npm install -g pnpm
+
+      - name: Build
+        uses: GravionLabs/ci/node/build@main
+        with:
+          node-version: '24'
+          package-manager: pnpm
+          package-manager-version: '11.6.0'
+          build-command: pnpm run build
+
+      - name: Test
+        env:
+          PROJECT: ${{ matrix.project }}
+        run: pnpm run test:ci:project
+
+      - name: Upload test results
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.project }}
+          path: test-results/
+          if-no-files-found: ignore
+
+      - name: Upload coverage
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.project }}
+          path: coverage/
+          if-no-files-found: ignore
+
+      - name: Publish test results
+        if: success() || failure()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Test Results (${{ matrix.project }})
+          path: test-results/junit.xml
+          reporter: jest-junit
+          fail-on-error: false
+
+      - name: Coverage summary
+        if: success() || failure()
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage/cobertura-coverage.xml
+          badge: true
+          format: markdown
+          output: both
+
+      - name: Add coverage to job summary
+        if: success() || failure()
+        shell: bash
+        run: '[ -f code-coverage-results.md ] && cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY" || true'
 
   determine-version:
     name: Determine Version
@@ -166,6 +237,7 @@ jobs:
     needs:
       - determine-version
       - build-test
+      - test
     permissions:
       contents: write
     env:
@@ -228,6 +300,7 @@ jobs:
     needs:
       - determine-version
       - build-test
+      - test
       - regenerate-and-commit
     permissions:
       contents: write
