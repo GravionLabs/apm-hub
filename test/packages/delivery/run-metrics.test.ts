@@ -196,8 +196,42 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     const { json } = await run(['-Transcript', t]);
     expect(json.main.requests).toBe(0);
     expect(json.main.peakContext).toBe(0);
-    expect(json.warnings.length).toBe(1);
+    expect(json.warnings.filter((w: string) => w.startsWith('Ledger not found'))).toHaveLength(1);
     expect(json.fixRounds).toBe(0);
+  });
+
+  describe('without agentlens', () => {
+    const noLens = (t: string, extra: string[] = []) => {
+      const bin = path.join(dir, 'empty-bin');
+      fs.mkdirSync(bin, { recursive: true });
+      return worker.run(['-Transcript', t, ...extra], { cwd: dir, env: { ...process.env, PATH: bin, DROMOS_STATE_DIR: path.join(dir, '.agents') } });
+    };
+
+    it('reports source transcript, the fallback warning and roles[] from the subagent metas', async () => {
+      const { transcript } = fixture();
+      const sub = path.join(dir, 'sess', 'subagents');
+      fs.writeFileSync(path.join(sub, 'agent-d.meta.json'), JSON.stringify({ agentType: 'reviewer' }));
+      fs.writeFileSync(path.join(sub, 'agent-d.jsonl'), JSON.stringify({ ...JSON.parse(msg('s4', 'claude-opus-4', { input_tokens: 1, output_tokens: 1 })), costUSD: 0.5 }) + '\n');
+      const r = await noLens(transcript);
+      expect(r.status).toBe(0);
+      const json = JSON.parse(r.stdout);
+      expect(json.source).toBe('transcript');
+      expect(json.warnings).toContain("agentlens not on PATH: cost from the transcript with the script's own price table (estimates)");
+      const roles = Object.fromEntries(json.roles.map((x: any) => [x.role, x]));
+      expect(roles.implementer).toMatchObject({ runs: 2, requests: 2, measured: false });
+      expect(roles.implementer.usd).toBeCloseTo(6, 4);
+      expect(roles.explorer).toMatchObject({ runs: 1, measured: false });
+      expect(roles.reviewer).toMatchObject({ runs: 1, requests: 1, usd: 0.5, measured: true });
+      expect(json.subagents.byRole).toHaveLength(3);
+    });
+
+    it('gives an empty roles[] without subagents', async () => {
+      const t = path.join(dir, 'n.jsonl');
+      fs.writeFileSync(t, '');
+      const json = JSON.parse((await noLens(t)).stdout);
+      expect(json.roles).toEqual([]);
+      expect(json.source).toBe('transcript');
+    });
   });
 
   it('uses the max for peak context and per field across duplicate ids', async () => {

@@ -11,9 +11,9 @@
 .PARAMETER SubagentsDir
   Default: <transcript without .jsonl>/subagents.
 .OUTPUTS
-  JSON: transcript, ledger, warnings, main, subagents, fixRounds (all Fix round lines), unattributedFixRounds (the part of
+  JSON: source ("transcript"), transcript, ledger, warnings, main, subagents, fixRounds (all Fix round lines), unattributedFixRounds (the part of
   fixRounds no task could be charged with: unknown task id or no Task line above; fixRounds minus the tasks[] sum),
-  tasks[] (task = issue number or plan id such as "p1", model, status, fixRounds, escalated, escalatedTo, reviewRounds),
+  roles[] (per subagent type: role, runs, requests, usd = measured cost when > 0 else estimated, measured), tasks[] (task = issue number or plan id such as "p1", model, status, fixRounds, escalated, escalatedTo, reviewRounds),
   escalationShare, rulings, gates, durations.
   durations: {total, phases: {read, explore, plan, implement, verify, review, pr}, tasks: [{task, seconds}], fixRounds: [{round, task, seconds}]}
   in seconds, from the optional ISO-8601 UTC prefix of ledger lines ('2026-10-21T15:19:46Z <text>'; lines without it are still read). A phase ends at its
@@ -37,6 +37,13 @@ $warnings = [System.Collections.Generic.List[string]]::new()
 
 function Get-Family([string]$model) {
   foreach ($f in $prices.Keys) { if ($model -match $f) { return $f } }
+  return $null
+}
+
+# Path of the agentlens executable or $null. Detection only; the transcript parser below does all the work.
+function Get-AgentLens {
+  $c = Get-Command agentlens -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($c) { return $c.Source }
   return $null
 }
 
@@ -108,6 +115,9 @@ function Measure-Requests([AllowEmptyCollection()][object[]]$requests) {
   }
 }
 
+$agentLens = Get-AgentLens
+if (-not $agentLens) { $warnings.Add("agentlens not on PATH: cost from the transcript with the script's own price table (estimates)") }
+
 # --- locate inputs
 if (-not $Transcript) {
   $dir = Join-Path $HOME ".claude/projects/$((Get-Location).Path -replace '[^A-Za-z0-9]', '-')"
@@ -154,6 +164,9 @@ if (Test-Path $SubagentsDir) {
   }
 }
 $roleList = @($roles.Values | Sort-Object role)
+$roleRows = @($roleList | ForEach-Object {
+  [ordered]@{ role = $_.role; runs = $_.count; requests = $_.requests; usd = $(if ($_.costMeasured -gt 0) { $_.costMeasured } else { $_.costEstimated }); measured = ($_.costMeasured -gt 0) }
+})
 function Sum-Of($items, [string]$prop) { $t = 0.0; foreach ($i in $items) { $t += $i.$prop }; return $t }
 
 # --- ledger
@@ -245,6 +258,7 @@ $escalated = @($taskMap.Values | Where-Object { $_.escalated }).Count
 $escalationShare = if ($taskMap.Count -gt 0) { [math]::Round($escalated / $taskMap.Count, 4) } else { 0 }
 
 [ordered]@{
+  source = 'transcript'
   transcript = Hide-Path (Resolve-Path $Transcript).Path
   ledger = $ledgerOut
   warnings = @($warnings)
@@ -256,6 +270,7 @@ $escalationShare = if ($taskMap.Count -gt 0) { [math]::Round($escalated / $taskM
     costEstimated = [math]::Round((Sum-Of $roleList 'costEstimated'), 4)
     byRole = $roleList
   }
+  roles = $roleRows
   fixRounds = $fix
   unattributedFixRounds = $unattributed
   tasks = $taskList
