@@ -1,3 +1,4 @@
+import { parse } from 'yaml';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -110,5 +111,41 @@ describe('orchestrator agent rules', () => {
     expect(body).toMatch(/subagent_type: [^)]*pbi-runner/);
     expect(body).toMatch(/except `pbi-runner` in loop runner mode/);
     expect(body).toMatch(/`pr-writer` or `pbi-runner` instead/);
+  });
+});
+
+describe('orchestrator model pins', () => {
+  const agentsDir = path.resolve(__dirname, '../../../packages/agents/.apm/agents');
+  const fm: any = parse(fs.readFileSync(agentPath, 'utf-8').match(/^---\n([\s\S]*?)\n---\n/)![1]);
+  const rule = pipelineRef.split('\n').find((l) => l.startsWith('- Model per dispatch'))!;
+
+  it('runs on sonnet in Claude and OpenCode', () => {
+    expect(fm.metadata.claude.model).toBe('sonnet');
+    expect(fm.metadata.opencode.model).toBe('anthropic/claude-sonnet-5-5');
+  });
+
+  it('no agent of the package inherits the session model', () => {
+    for (const f of fs.readdirSync(agentsDir).filter((n) => n.endsWith('.agent.md'))) {
+      expect(fs.readFileSync(path.join(agentsDir, f), 'utf-8'), f).not.toMatch(/^\s*model:\s*inherit\s*$/m);
+    }
+  });
+
+  it('pins planner to opus in both clients', () => {
+    const planner: any = parse(
+      fs.readFileSync(path.join(agentsDir, 'planner.agent.md'), 'utf-8').match(/^---\n([\s\S]*?)\n---\n/)![1],
+    );
+    expect(planner.metadata.claude.model).toBe('opus');
+    expect(planner.metadata.opencode.model).toBe('anthropic/claude-opus-5-5');
+  });
+
+  it('per-dispatch rule names explicit models and no dispatch pinned to inherit', () => {
+    expect(rule).toBeDefined();
+    expect(rule).toMatch(/`planner` opus/);
+    expect(rule).toMatch(/`implementer` sonnet/);
+    expect(rule).toMatch(/`reviewer` sonnet/);
+    expect(rule).toMatch(/`explorer` haiku/);
+    expect(rule).toMatch(/`issue-reader` haiku/);
+    expect(rule).not.toMatch(/`\w[\w-]*` inherit\b/);
+    expect(rule).not.toMatch(/pass `inherit`/);
   });
 });

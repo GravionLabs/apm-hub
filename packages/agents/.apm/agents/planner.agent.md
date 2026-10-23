@@ -6,9 +6,10 @@ user-invocable: false
 metadata:
   claude:
     tools: [Read, Grep, Glob, Bash, Skill, Agent]
-    model: inherit
+    model: opus
   opencode:
     mode: subagent
+    model: anthropic/claude-opus-5-5
     permission:
       read: allow
       glob: allow
