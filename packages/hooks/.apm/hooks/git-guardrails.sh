@@ -21,10 +21,11 @@
 #   substitutions inside the body are inspected). echo/printf text piped into a shell (echo ... | sh, bash -s)
 #   or sourced (source <(echo ...)) is inspected as commands. Redirect targets are not arguments.
 # - Nesting deeper than 24 levels (substitutions, bash -c, heredocs) is denied, not inspected.
-# - Scanning is linear: LC_ALL=C, a sliding 4 KB window (a substring of a long bash string costs O(length)) and
-#   bulk pattern replacement in the JSON scanner. bash still spends ~50 us per word, line or pipe, so the cap is
-#   24 KB: its worst shapes (many words, quotes, lines, pipes, '((', heredocs) parse in under 1.5 s, well inside
-#   the 5 s hook timeout. A longer command fails open; quoted heredoc bodies (commit messages) are cheap.
+# - Scanning is linear: LC_ALL=C, regex tests instead of bracket-pattern replacement, a sliding 4 KB window (a
+#   substring of a long bash string costs O(length)) and a JSON scanner that splits at '\' once instead of replacing
+#   (on bash 3.2 ${x//pat/rep} costs O(length * matches)). bash still spends ~50 us per word, line or pipe, so the
+#   cap is 24 KB: its worst shapes (many words, quotes, lines, pipes, '((', heredocs) parse in about 2 s on bash 3.2,
+#   well inside the 5 s hook timeout. A longer command fails open; quoted heredoc bodies (commit messages) are cheap.
 # - git runs only in the payload cwd's own repository (status, symbolic-ref, rev-parse; no fsmonitor, no hooks,
 #   no optional locks). A target given via git -C <other repo> (also a nested or bare repo or git dir inside the
 #   cwd repo, found by a file walk, symlinks resolved), --git-dir, --work-tree, GIT_DIR or after cd is
@@ -41,25 +42,54 @@ payload="$(cat 2>/dev/null || true)"
 
 J_tool=""; J_cwd=""; J_cmd=""; J_args=""
 
+# bash 3.2 makes ${x//pat/rep} cost O(length * matches), so the JSON scanner never replaces in a long string: it splits at
+# '\' (one C-level read), walks the fields once and rebuilds the string.
+_split() { # _split <string>: PARTS = the fields of the string split at '\' (a lone trailing '\' gives a last empty field)
+  local l
+  IFS='\' read -r -d '' -a PARTS <<< "$1~"
+  l=$((${#PARTS[@]} - 1)); PARTS[l]="${PARTS[l]%??}" # the sentinel and the newline the here-string added
+}
+_unph() { # _unph <string>: JD = the string with \001 -> '\' and \002 -> '"', in 256-char pieces (single-char patterns, no pairing)
+  local s="$1" i=0 n=${#1} c
+  JD=""
+  while ((i < n)); do c="${s:i:256}"; c=${c//$'\002'/'"'}; JD+=${c//$'\001'/'\'}; i=$((i + 256)); done
+}
 jdecode() { # jdecode <string body>: JD = the decoded JSON string (\001 and \002 stand for \\ and \")
-  local x="$1" hex ch
-  x=${x//'\n'/$'\n'}; x=${x//'\t'/$'\t'}; x=${x//'\r'/$'\r'}; x=${x//'\b'/}; x=${x//'\f'/}; x=${x//'\/'/"/"}
-  while [[ "$x" == *'\u'* ]]; do # one round per distinct code
-    hex=${x#*'\u'}; hex="${hex:0:4}"
-    case "$hex" in
-      000[aA]) ch=$'\n' ;;
-      0009) ch=$'\t' ;;
-      005[cC]) ch=$'\001' ;;
-      00[2-7][0-9a-fA-F]) printf -v ch "\\x${hex:2:2}" ;;
-      *) ch="?" ;;
+  local out k=1 f hex ch
+  _split "$1"; out="${PARTS[0]}"
+  while [ "$k" -lt ${#PARTS[@]} ]; do
+    f="${PARTS[k]}"; k=$((k + 1))
+    case "${f:0:1}" in
+      n) out+=$'\n'"${f:1}" ;;
+      t) out+=$'\t'"${f:1}" ;;
+      r) out+=$'\r'"${f:1}" ;;
+      b | f) out+="${f:1}" ;;
+      /) out+="/${f:1}" ;;
+      u)
+        hex="${f:1:4}"
+        case "$hex" in
+          000[aA]) ch=$'\n' ;;
+          0009) ch=$'\t' ;;
+          005[cC]) ch=$'\001' ;;
+          00[2-7][0-9a-fA-F]) printf -v ch "\\x${hex:2:2}" ;;
+          *) ch="?" ;;
+        esac
+        out+="$ch${f:5}" ;;
+      *) out+='\'"$f" ;;
     esac
-    x=${x//"\\u$hex"/"$ch"}
   done
-  x=${x//$'\002'/'"'}; JD=${x//$'\001'/'\'}
+  _unph "$out"
 }
 jsonscan() { # jsonscan <json>: first string value of tool_name|toolName, cwd, command, toolArgs (keys outside strings only)
-  local rest between str prev="" have=0
-  rest=${1//'\\'/$'\001'}; rest=${rest//'\"'/$'\002'} # now no '"' inside a string is escaped: bulk work, no char loop
+  local rest between str prev="" have=0 k
+  _split "$1"; rest="${PARTS[0]}"; k=1 # '\\' -> \001, '\"' -> \002: now no '"' inside a string is escaped
+  while [ "$k" -lt ${#PARTS[@]} ]; do
+    str="${PARTS[k]}"; k=$((k + 1))
+    if [ -z "$str" ]; then # '\\' (the pair's second '\' starts the next field), or a lone trailing '\'
+      if [ "$k" -lt ${#PARTS[@]} ]; then rest+=$'\001'"${PARTS[k]}"; k=$((k + 1)); else rest+='\'; fi
+    elif [ "${str:0:1}" = '"' ]; then rest+=$'\002'"${str:1}"
+    else rest+='\'"$str"; fi
+  done
   while :; do
     between="${rest%%\"*}"
     [ ${#between} -eq ${#rest} ] && break
@@ -96,8 +126,8 @@ else
 fi
 case "$(printf '%s' "$tool" | tr '[:upper:]' '[:lower:]')" in bash | shell | powershell | run_shell_command | '') ;; *) exit 0 ;; esac
 [ "${#cmd}" -gt 24576 ] && exit 0
-plain="${cmd//[\'\"\\]/}"
-case "$plain" in *git*) ;; *) exit 0 ;; esac
+GITRX=$'g[\'"\\\\]*i[\'"\\\\]*t' # "git" with quotes or backslashes between the letters (a regex test: bash 3.2 replaces a bracket pattern in O(n^2))
+[[ "$cmd" =~ $GITRX ]] || exit 0
 
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
 hgit() { GIT_OPTIONAL_LOCKS=0 GIT_ATTR_NOSYSTEM=1 git --no-optional-locks -c core.fsmonitor=false -c core.hooksPath=/dev/null "$@"; }
@@ -301,8 +331,8 @@ SHELLS=" bash sh zsh dash ksh ash "
 WRAPS=" sudo doas env command exec nohup time nice setsid timeout xargs stdbuf chronic unbuffer "
 
 analyze() { # analyze <string> [dq]: inspect it as a shell script (dq: text of an unquoted heredoc body)
-  local save="$S" W="" B=-1000000 p="${1//[\'\"\\]/}"
-  case "$p" in *git*) ;; *) return ;; esac # no git call can come out of it (same test as for the whole command)
+  local save="$S" W="" B=-1000000
+  [[ "$1" =~ $GITRX ]] || return # no git call can come out of it (same test as for the whole command)
   S="$1"; parse "" 0 "${2:-}"
   S="$save"
 }

@@ -5,11 +5,6 @@ import * as path from 'path';
 
 const SCRIPT = path.resolve(__dirname, '../../../packages/hooks/.apm/hooks/git-guardrails.sh');
 
-// macOS ships bash 3.2, where the hook's character scanner is quadratic on long commands (~100 s for 22 KB instead of < 6 s).
-// The time-bound tests only make sense on bash >= 4; the functional tests above run everywhere.
-const bashMajor = Number(spawnSync('bash', ['-c', 'echo ${BASH_VERSINFO[0]}'], { encoding: 'utf8' }).stdout.trim());
-const slowBash = !(bashMajor >= 4);
-
 const hermetic = (home: string, base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv => {
   const env = { ...base };
   for (const k of Object.keys(env)) if (k.startsWith('GIT_') || k === 'XDG_CONFIG_HOME') delete env[k];
@@ -518,7 +513,7 @@ describe('git-guardrails hook', () => {
     });
   });
 
-  describe.skipIf(slowBash)('performance and limits', () => {
+  describe('performance and limits', () => {
     const CAP = 24576;
     // Wall-clock bound per hook run; CI runners are 2-3x slower than a developer machine (#247), and a loaded local run (parallel suites) too (#336).
     const BOUND = process.env.CI ? 9000 : 6000;
