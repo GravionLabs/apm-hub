@@ -1,6 +1,7 @@
-import { parse } from 'yaml';
 import * as fs from 'fs';
 import * as path from 'path';
+import { parse } from 'yaml';
+import { OPENCODE_MODEL_BY_TIER } from '../../../src/generators/agent-model-validator';
 
 const agentPath = path.resolve(__dirname, '../../../packages/agents/.apm/agents/orchestrator.agent.md');
 const body = fs.readFileSync(agentPath, 'utf-8').replace(/^---\n[\s\S]*?\n---\n/, '');
@@ -138,14 +139,33 @@ describe('orchestrator model pins', () => {
     expect(planner.metadata.opencode.model).toBe('anthropic/claude-opus-5-5');
   });
 
-  it('per-dispatch rule names explicit models and no dispatch pinned to inherit', () => {
+  it('every agent file pins explicit claude and opencode models of one tier', () => {
+    const tiers = Object.entries(OPENCODE_MODEL_BY_TIER);
+    for (const f of fs.readdirSync(agentsDir).filter((n) => n.endsWith('.agent.md'))) {
+      const a: any = parse(fs.readFileSync(path.join(agentsDir, f), 'utf-8').match(/^---\n([\s\S]*?)\n---\n/)![1]);
+      expect(['haiku', 'sonnet', 'opus'], f).toContain(a.metadata.claude.model);
+      expect(a.metadata.opencode.model, f).toBe(OPENCODE_MODEL_BY_TIER[a.metadata.claude.model as keyof typeof OPENCODE_MODEL_BY_TIER]);
+    }
+    expect(tiers).toHaveLength(3);
+  });
+
+  it('per-dispatch rule pins every dispatch and none to inherit', () => {
     expect(rule).toBeDefined();
-    expect(rule).toMatch(/`planner` opus/);
-    expect(rule).toMatch(/`implementer` sonnet/);
-    expect(rule).toMatch(/`reviewer` sonnet/);
-    expect(rule).toMatch(/`explorer` haiku/);
-    expect(rule).toMatch(/`issue-reader` haiku/);
-    expect(rule).not.toMatch(/`\w[\w-]*` inherit\b/);
+    for (const pin of [
+      '`issue-reader` haiku',
+      '`explorer` haiku',
+      'Final-Verify haiku',
+      '`planner` opus',
+      '`implementer` sonnet',
+      '`review-lead` sonnet',
+      '`reviewer` sonnet',
+      '`pr-writer` sonnet',
+      'fix round 3 opus',
+    ]) {
+      expect(rule, pin).toContain(pin);
+    }
+    expect(rule).not.toMatch(/`[\w-]+`( and `[\w-]+`)*,? (to |defaults to |pinned to )?`?inherit\b/);
+    expect(rule).not.toMatch(/(round 3|Final-Verify|final verify) (to )?inherit\b/);
     expect(rule).not.toMatch(/pass `inherit`/);
   });
 });

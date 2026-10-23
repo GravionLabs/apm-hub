@@ -40,7 +40,7 @@ The input type decides it (`labels`, else title prefix):
 
 ## Model hint
 
-Same rule as the `orchestrator` agent: `haiku` only for mechanical edits; `sonnet` is the floor for prose-only and routine implementation; `inherit` (or stronger) for integration, design and cross-cutting items. Size L is `inherit` unless split.
+Same rule as the `orchestrator` agent: `haiku` only for mechanical edits; `sonnet` is the floor for prose-only and routine implementation; `inherit` (or stronger) for integration, design and cross-cutting items; the hint value `inherit` means opus at dispatch, the orchestrator never inherits its own model. Size L is `inherit` unless split.
 
 ## Return
 

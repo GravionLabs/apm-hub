@@ -77,7 +77,7 @@ To bump a model, edit `OPENCODE_MODEL_BY_TIER`, this table and the agent files.
 `metadata.claude.model` / `metadata.opencode.model` is the default for the role. An `Agent` call
 without `model` inherits the caller's model, usually the most expensive one, so the orchestrator
 names the model on every dispatch (see its "Model per dispatch" rule; the `implementer` defaults to
-`sonnet`, and the orchestrator passes `inherit` or stronger for integration and design tasks) and escalates one tier in
+`sonnet`, and the orchestrator passes `opus` for integration and design tasks; the `orchestrator` itself runs on `sonnet` and no agent of the package uses `inherit`) and escalates one tier in
 the fix loop instead of retrying the same model.
 
 ## Body rules
