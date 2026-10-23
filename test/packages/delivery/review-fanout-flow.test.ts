@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, '../../..');
 const fanout = fs.readFileSync(path.join(root, 'packages/delivery/.apm/skills/review-fanout/SKILL.md'), 'utf-8');
 const lead = fs.readFileSync(path.join(root, 'packages/agents/.apm/agents/review-lead.agent.md'), 'utf-8');
 const filterRef = fs.readFileSync(path.join(root, 'packages/delivery/.apm/skills/review-fanout/references/package-filter.md'), 'utf-8');
+const correctness = fs.readFileSync(path.join(root, 'packages/delivery/.apm/skills/review-fanout/references/correctness-dimension.md'), 'utf-8');
 const pipeline = fs.readFileSync(path.join(root, 'packages/github/.apm/skills/github-issue/references/pbi-pipeline.md'), 'utf-8');
 
 // The exclude list lives in the reference; parse it so docs and tests cannot drift.
@@ -80,5 +81,35 @@ describe('review-fanout: early verify (#452)', () => {
     expect(lead).toMatch(/Early verify/);
     expect(lead).toMatch(/CRITICAL or HIGH finding, dispatch its verify batch at once while other dimensions still run/);
     expect(lead).toMatch(/wait for all dimensions and all verify results, a finding refuted early stays refuted/);
+  });
+});
+
+describe('review-fanout: correctness checks invariants (#485)', () => {
+  it('step 1 appends plan.json invariants of items without a Task issue under Invariants (plan)', () => {
+    expect(fanout).toMatch(/When `<state>\/<issue>\/plan\.json` exists, also append the `## Invariants` section of each item that has one and no matching Task issue under `## Invariants \(plan\)`/);
+    expect(fanout).toContain('references/correctness-dimension.md');
+    expect(correctness).toMatch(/items\[\]\.issue` null, or its number is not among the Task sub-issues/);
+    expect(correctness).toContain('"## Invariants (plan)" >> <package>');
+    expect(correctness).toMatch(/no item qualifies: write no `## Invariants \(plan\)` heading/);
+  });
+
+  it('correctness brief makes a violated invariant HIGH with the invariant and diff line as evidence', () => {
+    expect(fanout).toMatch(/`correctness`: bugs, edge cases, error handling, races; check each invariant in the issue section: a violated one is HIGH, `evidence` quotes the invariant and the diff line/);
+    expect(correctness).toMatch(/A violated invariant is HIGH\. `evidence` quotes the invariant and the diff line/);
+  });
+
+  it('a violated invariant goes through verify like any HIGH', () => {
+    expect(fanout).toMatch(/goes through verify like any HIGH, refuted → advisory/);
+    expect(correctness).toMatch(/`refuted` turns it into an advisory/);
+    expect(fanout).toMatch(/tries to disprove each CRITICAL\/HIGH finding/);
+  });
+
+  it('without an Invariants section brief and findings stay unchanged', () => {
+    expect(fanout).toMatch(/no `## Invariants` section: unchanged/);
+    expect(correctness).toMatch(/No `## Invariants` anywhere in the package: the brief and the findings are unchanged/);
+  });
+
+  it('SKILL.md stays within 100 lines', () => {
+    expect(fanout.trimEnd().split('\n').length).toBeLessThanOrEqual(100);
   });
 });
