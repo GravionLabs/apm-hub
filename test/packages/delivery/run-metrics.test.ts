@@ -240,11 +240,11 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       { session: 'sess', requests: 40, main_requests: 30, peak_context: 123456, output: 7777, cost: 10, measured: true, subagent_share: 0.4 },
     ];
     const ROLES = [
-      { agent_type: 'main', runs: 1, requests: 30, cost: 6, measured: true },
+      { agent_type: 'main', runs: 1, requests: 30, cost: 99, measured: false },
       { agent_type: 'implementer', runs: 3, requests: 8, cost: 3, measured: true },
       { agent_type: 'explorer', runs: 2, requests: 2, cost: 1, measured: false },
     ];
-    // Fake agentlens: a /bin/sh script printing fixture files per argv; FAKE_MODE switches the failure modes.
+    // Fake agentlens: a /bin/sh script (POSIX only, hence the win32 skip of this describe) printing fixture files per argv; FAKE_MODE switches the failure modes.
     const fake = (opts: { version?: string; cost?: unknown; roles?: unknown } = {}) => {
       const bin = path.join(dir, 'lens-bin');
       fs.mkdirSync(bin, { recursive: true });
@@ -279,7 +279,8 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       const json = await withLens(bin);
       expect(json.source).toBe('agentlens');
       expect(json.warnings).toEqual([]);
-      expect(json.main).toEqual({ requests: 30, peakContext: 123456, outputTokens: 7777, costMeasured: 6, costEstimated: 0 });
+      expect(json.main).toEqual({ requests: 30, peakContext: 123456, outputTokens: 7777, costMeasured: 6, costEstimated: 0, measured: true });
+      // main cost = session cost 10 x (1 - subagent_share 0.4), not the roles 'main' row (99)
       expect(json.subagents.count).toBe(5);
       expect(json.subagents.costMeasured).toBe(3);
       expect(json.subagents.costEstimated).toBe(1);
@@ -289,6 +290,38 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       ]);
       // scoped to the session; the transcript's own price table is not used (fixture would estimate 7.0066)
       expect(fs.readFileSync(path.join(bin, 'args.log'), 'utf8')).toContain('efficiency --section roles --format json --session sess');
+    });
+
+    it('keeps the agentlens measured flag per figure, also for zero cost, and n/a cost as unknown', async () => {
+      const roles = [
+        { agent_type: 'implementer', runs: 1, requests: 1, cost: 0, measured: true },
+        { agent_type: 'explorer', runs: 1, requests: 1, cost: 2, measured: false },
+        { agent_type: 'planner', runs: 1, requests: 1, cost: null, measured: false },
+      ];
+      const cost = [{ session: 'sess', main_requests: 3, peak_context: 1, output: 1, cost: 4, measured: false, subagent_share: 0.5 }];
+      const json = await withLens(fake({ cost, roles }));
+      expect(json.source).toBe('agentlens');
+      expect(json.main).toMatchObject({ costMeasured: 0, costEstimated: 2, measured: false });
+      expect(json.roles).toEqual([
+        { role: 'explorer', runs: 1, requests: 1, usd: 2, measured: false },
+        { role: 'implementer', runs: 1, requests: 1, usd: 0, measured: true },
+        { role: 'planner', runs: 1, requests: 1, usd: null, measured: null },
+      ]);
+    });
+
+    it('reports a session with n/a cost as unknown main cost', async () => {
+      const cost = [{ session: 'sess', main_requests: 3, peak_context: 1, output: 1, cost: null, subagent_share: 0 }];
+      const json = await withLens(fake({ cost }));
+      expect(json.main).toMatchObject({ requests: 3, costMeasured: null, costEstimated: null, measured: null });
+    });
+
+    it.each([
+      ['main_requests', { session: 'sess', cost: 1, subagent_share: 0.1 }],
+      ['subagent_share', { session: 'sess', main_requests: 3, cost: 1 }],
+    ])('falls back to the transcript when the session row lacks %s', async (field, row) => {
+      const json = await withLens(fake({ cost: [row] }));
+      expect(json.source).toBe('transcript');
+      expect(json.warnings.some((w: string) => w.includes(field))).toBe(true);
     });
 
     it.each([

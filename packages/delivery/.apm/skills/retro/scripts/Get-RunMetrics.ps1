@@ -67,28 +67,41 @@ function ConvertFrom-LensJson([string]$text, [string]$what) {
 # Roles row: agent_type, runs, requests, cost (null = n/a), measured; a row with agent_type "main" is the main thread and not a role.
 function Pick($o, [string[]]$names, $default = $null) { foreach ($n in $names) { if ($null -ne $o.$n) { return $o.$n } }; return $default }
 function Convert-LensRows($sessionRow, [object[]]$roleRows) {
+  # cost null (n/a) stays unknown: measured/usd are null, the totals count it as 0 in neither bucket
   $split = {
     param($cost, $measured)
     $c = if ($null -ne $cost) { [double]$cost } else { 0.0 }
     if ($measured -eq $true) { @($c, 0.0) } else { @(0.0, $c) }
   }
-  $share = [double](Pick $sessionRow @('subagent_share', 'subagentShare') 0)
+  $mainReq = Pick $sessionRow @('main_requests', 'mainRequests')
+  $shareRaw = Pick $sessionRow @('subagent_share', 'subagentShare')
+  if ($null -eq $mainReq -or $null -eq $shareRaw) { throw 'agentlens session row lacks main_requests or subagent_share' }
+  $share = [double]$shareRaw
   $total = Pick $sessionRow @('cost', 'cost_usd')
+  # main cost = session cost minus the subagent share (not the roles "main" row)
   $mainCost = if ($null -ne $total) { [double]$total * (1 - $share) } else { $null }
-  $mc = & $split $mainCost (Pick $sessionRow @('measured', 'cost_measured'))
-  $mainReq = Pick $sessionRow @('main_requests', 'mainRequests', 'requests') 0
+  $mainFlag = Pick $sessionRow @('measured', 'cost_measured')
+  $mc = & $split $mainCost $mainFlag
   $main = [pscustomobject]@{
     requests = [int]$mainReq; peakContext = [int64](Pick $sessionRow @('peak_context', 'peakContext') 0)
     outputTokens = [int64](Pick $sessionRow @('output', 'output_tokens', 'outputTokens') 0)
-    costMeasured = [math]::Round($mc[0], 4); costEstimated = [math]::Round($mc[1], 4)
+    costMeasured = $(if ($null -eq $mainCost) { $null } else { [math]::Round($mc[0], 4) })
+    costEstimated = $(if ($null -eq $mainCost) { $null } else { [math]::Round($mc[1], 4) })
+    measured = $(if ($null -eq $mainCost) { $null } else { $mainFlag -eq $true })
   }
   $list = @()
   foreach ($r in $roleRows) {
     $name = [string](Pick $r @('agent_type', 'agentType', 'role'))
     if (-not $name -or $name -eq 'main') { continue }
     if ($name -notmatch '^[A-Za-z0-9_.-]+$') { $name = 'unknown' }
-    $rc = & $split (Pick $r @('cost', 'cost_usd')) (Pick $r @('measured', 'cost_measured'))
-    $list += [pscustomobject]@{ role = $name; count = [int](Pick $r @('runs', 'count') 0); requests = [int](Pick $r @('requests') 0); costMeasured = [math]::Round($rc[0], 4); costEstimated = [math]::Round($rc[1], 4) }
+    $cost = Pick $r @('cost', 'cost_usd')
+    $flag = Pick $r @('measured', 'cost_measured')
+    $rc = & $split $cost $flag
+    $list += [pscustomobject]@{
+      role = $name; count = [int](Pick $r @('runs', 'count') 0); requests = [int](Pick $r @('requests') 0)
+      costMeasured = [math]::Round($rc[0], 4); costEstimated = [math]::Round($rc[1], 4)
+      usd = $(if ($null -eq $cost) { $null } else { [math]::Round([double]$cost, 4) }); measured = $(if ($null -eq $cost) { $null } else { $flag -eq $true })
+    }
   }
   [pscustomobject]@{ main = $main; roles = @($list | Sort-Object role) }
 }
@@ -236,7 +249,8 @@ if (Test-Path $SubagentsDir) {
 }
 $roleList = @($roles.Values | Sort-Object role)
 $roleRows = @($roleList | ForEach-Object {
-  [ordered]@{ role = $_.role; runs = $_.count; requests = $_.requests; usd = $(if ($_.costMeasured -gt 0) { $_.costMeasured } else { $_.costEstimated }); measured = ($_.costMeasured -gt 0) }
+  if ($lens) { [ordered]@{ role = $_.role; runs = $_.count; requests = $_.requests; usd = $_.usd; measured = $_.measured } }  # agentlens flags, never derived from the amounts
+  else { [ordered]@{ role = $_.role; runs = $_.count; requests = $_.requests; usd = $(if ($_.costMeasured -gt 0) { $_.costMeasured } else { $_.costEstimated }); measured = ($_.costMeasured -gt 0) } }
 })
 function Sum-Of($items, [string]$prop) { $t = 0.0; foreach ($i in $items) { $t += $i.$prop }; return $t }
 
@@ -339,7 +353,7 @@ $escalationShare = if ($taskMap.Count -gt 0) { [math]::Round($escalated / $taskM
     skipped = $skipped
     costMeasured = [math]::Round((Sum-Of $roleList 'costMeasured'), 4)
     costEstimated = [math]::Round((Sum-Of $roleList 'costEstimated'), 4)
-    byRole = $roleList
+    byRole = @($roleList | ForEach-Object { $_ | Select-Object role, count, requests, costMeasured, costEstimated })
   }
   roles = $roleRows
   fixRounds = $fix
