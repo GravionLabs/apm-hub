@@ -13,6 +13,7 @@ Severity: 🔴 critical (invalid, fails validation) · 🟡 important (reduces r
 - [ ] `name` present — 🔴; well-formed and matches directory — 🟡
 - [ ] `description` present — 🔴; imperative, specific triggers, not over-broad — 🟡
 - [ ] Only allowed top-level keys — 🔴 for any forbidden or unknown key; the client keys `disable-model-invocation`, `user-invocable`, `context`, `agent` are allowed
+- [ ] `compatibility`, `chronicle-hints`, `model`, `allowed-tools` as top-level keys — 🔴; recommendation: remove, or move annotations to `metadata:`
 - [ ] `disable-model-invocation: true` is paired with `metadata.opencode/autoinvoke: 'false'` — 🔴 if missing; 🟡 if set on a skill that other skills load by name
 - [ ] `context: fork` only on a self-contained skill whose body states its return contract — 🟡
 - [ ] `metadata` values are free-form strings — 🟢
