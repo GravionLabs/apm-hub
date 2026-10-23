@@ -21,10 +21,10 @@
 #   substitutions inside the body are inspected). echo/printf text piped into a shell (echo ... | sh, bash -s)
 #   or sourced (source <(echo ...)) is inspected as commands. Redirect targets are not arguments.
 # - Nesting deeper than 24 levels (substitutions, bash -c, heredocs) is denied, not inspected.
-# - Scanning is linear: LC_ALL=C, regex tests instead of bracket-pattern replacement, a sliding 4 KB window (a
+# - Scanning is linear: LC_ALL=C, regex tests instead of bracket-pattern replacement, a sliding ~1 KB window (a
 #   substring of a long bash string costs O(length)) and a JSON scanner that splits at '\' once instead of replacing
 #   (on bash 3.2 ${x//pat/rep} costs O(length * matches)). bash still spends ~50 us per word, line or pipe, so the
-#   cap is 24 KB: its worst shapes (many words, quotes, lines, pipes, '((', heredocs) parse in about 2 s on bash 3.2,
+#   cap is 24 KB: its worst shapes (many words, quotes, lines, pipes, '((', heredocs) parse in about 1.5 s on bash 3.2,
 #   well inside the 5 s hook timeout. A longer command fails open; quoted heredoc bodies (commit messages) are cheap.
 # - git runs only in the payload cwd's own repository (status, symbolic-ref, rev-parse; no fsmonitor, no hooks,
 #   no optional locks). A target given via git -C <other repo> (also a nested or bare repo or git dir inside the
@@ -484,7 +484,7 @@ _shconsumer() { # is the collected command a shell that reads its script from st
 }
 _endseg() { # _endseg [pipe]: finish the simple command; "pipe" when its output feeds the next one
   local x
-  _flush
+  [ "$inw" = 1 ] && _flush
   if [ ${#toks[@]} -eq 0 ]; then
     [ "${1:-}" = pipe ] && { piped=1; pfeed=""; phd=(); }
     redir=0; herestr=0; return
@@ -517,7 +517,7 @@ _isshell() { # is the command collected so far a shell or source (a heredoc / he
 _arith_end() { # _arith_end <index of the first '(' of '((': sets AE to the index after the matching '))'
   local j=$1 d=0 c m=${#S} W="$W" B="$B" win ch
   while ((j < m)); do
-    if ((j - B > 3500 || j < B)); then B=$j; W="${S:j:4200}"; fi
+    if ((j - B > 600 || j < B)); then B=$j; W="${S:j:1300}"; fi
     win="${W:j-B:512}"; ch="${win%%[()]*}"
     if [ -n "$ch" ]; then j=$((j + ${#ch})); continue; fi
     c="${W:j-B:1}"; j=$((j + 1))
@@ -573,21 +573,28 @@ parse() { # parse <stop-char> <start> [dq|feed]: depth-capped wrapper around _pa
 }
 
 _parse() { # tokenize S, run handle per simple command, leave the end index in POS
-  local stop="$1" i="$2" mode="${3:-}" n=${#S} c nx q="" w="" inw=0 redir=0 herestr=0 j pos k body o win chunk W="$W" B="$B" # window of S: inherited
+  local stop="$1" i="$2" mode="${3:-}" n=${#S} c nx q="" w="" inw=0 redir=0 herestr=0 j pos k cl body o win chunk W="$W" B="$B" # window of S: inherited
   local feed=0 piped=0 pfeed="" segh=0
   local -a toks=() hdd=() hdq=() hdt=() hds=() phd=()
   [ "$mode" = dq ] && q='"'
   [ "$mode" = feed ] && feed=1
   while ((i < n)); do
-    if ((i - B > 3500 || i < B)); then B=$i; W="${S:i:4200}"; fi
-    o=$((i - B)); win="${W:o:512}"
+    if ((i - B > 600 || i < B)); then B=$i; W="${S:i:1300}"; fi
+    o=$((i - B)); win="${W:o:64}"
     case "$q" in
       "'") chunk="${win%%\'*}" ;;
       '"') chunk="${win%%$SP_DQ*}" ;;
       A) chunk="${win%%[\'\\]*}" ;;
       *) chunk="${win%%$SP_TOP*}" ;;
     esac
-    if [ -n "$chunk" ]; then w+="$chunk"; [ -z "$q" ] && inw=1; i=$((i + ${#chunk})); continue; fi
+    if [ -n "$chunk" ]; then
+      w+="$chunk"; cl=${#chunk}; i=$((i + cl))
+      if [ -z "$q" ]; then
+        inw=1
+        if [ "${win:cl:1}" = " " ] && [ "$herestr" = 0 ] && [ "$redir" = 0 ]; then toks+=("$w"); w=""; inw=0; i=$((i + 1)); fi # the space after a plain word: _flush inlined
+      fi
+      continue
+    fi
     c="${W:o:1}"
     case "$q" in
       "'") # chunk is empty, so c is the closing quote
@@ -629,7 +636,10 @@ _parse() { # tokenize S, run handle per simple command, leave the end index in P
       ')')
         _endseg
         if [ "$stop" = ")" ]; then POS=$((i + 1)); return; fi ;;
-      ' ' | $'\t') _flush ;;
+      ' ' | $'\t') # _flush, inlined for the common word end
+        if [ "$inw" = 1 ]; then
+          if [ "$herestr" = 1 ] || [ "$redir" = 1 ]; then _flush; else toks+=("$w"); w=""; inw=0; fi
+        fi ;;
       $'\n')
         _endseg
         if [ ${#hdd[@]} -gt 0 ]; then # read the bodies of the pending heredocs
