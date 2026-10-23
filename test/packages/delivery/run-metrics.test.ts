@@ -692,3 +692,25 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
   });
 });
+
+describe('retro SKILL.md step 1', () => {
+  const skill = fs.readFileSync(
+    path.resolve(__dirname, '../../../packages/delivery/.apm/skills/retro/SKILL.md'),
+    'utf8',
+  );
+  const step1 = skill.slice(skill.indexOf('1. **Metrics.**'), skill.indexOf('2. **Read primary sources.**'));
+
+  it('lists the seven report columns', () => {
+    expect(step1).toContain(
+      'cost, main peak, requests, roles by cost, review rounds, fix rounds, gates',
+    );
+  });
+
+  it('names both agentlens commands, the minimum version and the source rule', () => {
+    expect(step1).toContain('agentlens cost --by session --format json');
+    expect(step1).toContain('agentlens efficiency --section roles --format json');
+    expect(step1).toContain('0.11.0');
+    expect(step1).toContain('`source: transcript`');
+    expect(step1).not.toContain('use its CLI or MCP');
+  });
+});
