@@ -75,6 +75,17 @@ If you still have a local `~/.claude/commands/orchestrator.md`, delete it: a com
 The skill runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
 session context keeps growing, so prefer `claude --agent orchestrator` for real work.
 
+### Model of the main thread
+
+The `orchestrator` agent runs on sonnet by default; the main thread only relays phase summaries, rulings and gates, and every phase that needs more reasoning names its own model per dispatch. Override it explicitly:
+
+```powershell
+claude --model <id> --agent orchestrator "full 123"   # Claude Code
+opencode --model <provider/id> --agent orchestrator   # OpenCode, or set `model` in the agent file
+```
+
+Copilot CLI uses the session model (`--model`, `/model`); the agent file sets none. The inline `/orchestrator` skill does not enforce the model. Measured cost per model: [Models and cost](orchestrator.md#models-and-cost).
+
 ### Copilot CLI
 
 `copilot --agent orchestrator` runs with the same modes, gates and ledger and delegates the phases with Copilot CLI's `task` tool (own context window per subagent, `subagentStop` hook). Copilot subagents are stateless, so fix rounds start a fresh `implementer` instead of resuming one. Only a session without the `task` tool falls back to running the phases inline. Client matrix: [Clients](orchestrator.md#clients). The `/orch` prompt (skill `orch-pipeline`) is deprecated and removed in 3.0.0; use the orchestrator agent instead.
