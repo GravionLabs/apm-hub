@@ -1358,6 +1358,27 @@ describe('subagent-ledger hook', () => {
       expect(posts()[0].body.agentId).toBe('abc-1');
     });
 
+    it('accepts https anywhere and http to loopback hosts', () => {
+      withLedger();
+      for (const [n, u] of ['https://example.com/x', 'http://127.0.0.1:9', 'http://[::1]:9', 'http://localhost'].entries()) {
+        fs.rmSync(calls, { force: true });
+        runWith({ cwd: dir, agent_type: 'implementer', last_assistant_message: `run ${n}` }, { DROMOS_URL: u });
+        expect(posts()).toHaveLength(1);
+      }
+    });
+
+    it('falls back to the payload agent_id when DROMOS_AGENT_ID is empty after sanitising', () => {
+      withLedger();
+      runWith({ cwd: dir, agent_type: 'implementer', agent_id: 'p-1' }, { ...URL, DROMOS_AGENT_ID: '";$() ' });
+      expect(posts()[0].body.agentId).toBe('p-1');
+    });
+
+    it('prefers DROMOS_AGENT_ID over the payload agent_id', () => {
+      withLedger();
+      runWith({ cwd: dir, agent_type: 'implementer', agent_id: 'p-1' }, { ...URL, DROMOS_AGENT_ID: 'env-1' });
+      expect(posts()[0].body.agentId).toBe('env-1');
+    });
+
     it('sanitises DROMOS_AGENT_ID', () => {
       withLedger();
       runWith({ cwd: dir, agent_type: 'implementer' }, { ...URL, DROMOS_AGENT_ID: 'a"b c;$(x)' });
@@ -1371,14 +1392,14 @@ describe('subagent-ledger hook', () => {
       expect(posts()[0].body.issue).toBeNull();
     });
 
-    it('sends a leading-zero issue directory as a valid JSON number', () => {
-      fs.mkdirSync(path.join(dir, '.agents', '007'), { recursive: true });
-      fs.writeFileSync(path.join(dir, '.agents', '007', 'progress.md'), '# ledger\n');
-      runWith({ cwd: dir, agent_type: 'implementer' }, { ...URL, AGENTS_LEDGER: path.join(dir, '.agents', '007', 'progress.md') });
-      expect(posts()[0].body.issue).toBe(7);
+    it('sends a leading-zero issue directory (010) as a valid JSON number', () => {
+      fs.mkdirSync(path.join(dir, '.agents', '010'), { recursive: true });
+      fs.writeFileSync(path.join(dir, '.agents', '010', 'progress.md'), '# ledger\n');
+      runWith({ cwd: dir, agent_type: 'implementer' }, { ...URL, AGENTS_LEDGER: path.join(dir, '.agents', '010', 'progress.md') });
+      expect(posts()[0].body.issue).toBe(10);
     });
 
-    it.each(['ftp://h', '-oX', 'localhost:9', 'http://a b'])('ignores DROMOS_URL %s', (url) => {
+    it.each(['ftp://h', '-oX', 'localhost:9', 'http://a b', 'https://user:pw@host', 'http://example.com', 'http://localhost.evil.com', 'http://u@localhost:9'])('ignores DROMOS_URL %s', (url) => {
       withLedger();
       const r = runWith({ cwd: dir, agent_type: 'implementer' }, { DROMOS_URL: url });
       expect(r.status).toBe(0);
@@ -1401,17 +1422,21 @@ describe('subagent-ledger hook', () => {
       expect(readLedger(ledger)).toContain('Subagent planner: stopped');
     });
 
-    it('still writes the ledger and exits 0 when curl is not installed', () => {
+    it('still writes the ledger, exits 0 and posts nothing when curl is not installed', () => {
       withLedger();
       const tools = path.join(dir, 'tools');
       fs.mkdirSync(tools);
-      for (const t of ['bash', 'sed', 'tr', 'cut', 'git', 'date', 'grep', 'cksum', 'dirname', 'basename', 'tail', 'head', 'cat', 'wc', 'ls', 'find', 'jq']) {
+      const need = ['bash', 'sed', 'tr', 'cut', 'git', 'date', 'grep', 'cksum', 'dirname', 'basename', 'tail', 'head', 'cat', 'wc', 'ls', 'find'];
+      for (const t of [...need, 'jq']) {
         const found = spawnSync('sh', ['-c', `command -v ${t}`], { encoding: 'utf8' }).stdout.trim();
         if (found) fs.symlinkSync(found, path.join(tools, t));
+        else expect(t).toBe('jq'); // only jq is optional
       }
+      expect(fs.existsSync(path.join(tools, 'curl'))).toBe(false);
       const r = runWith({ cwd: dir, agent_type: 'planner' }, URL, tools);
       expect(r.status).toBe(0);
       expect(readLedger(ledger)).toContain('Subagent planner: stopped');
+      expect(fs.existsSync(calls)).toBe(false);
     });
 
     it('posts nothing for an agent outside the orchestrator allowlist', () => {
