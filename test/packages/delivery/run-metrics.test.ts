@@ -234,6 +234,87 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
   });
 
+  describe.skipIf(process.platform === 'win32')('with agentlens', () => {
+    const COST = [
+      { session: 'other', requests: 1, main_requests: 1, peak_context: 1, output: 1, cost: 9, measured: true, subagent_share: 0 },
+      { session: 'sess', requests: 40, main_requests: 30, peak_context: 123456, output: 7777, cost: 10, measured: true, subagent_share: 0.4 },
+    ];
+    const ROLES = [
+      { agent_type: 'main', runs: 1, requests: 30, cost: 6, measured: true },
+      { agent_type: 'implementer', runs: 3, requests: 8, cost: 3, measured: true },
+      { agent_type: 'explorer', runs: 2, requests: 2, cost: 1, measured: false },
+    ];
+    // Fake agentlens: a /bin/sh script printing fixture files per argv; FAKE_MODE switches the failure modes.
+    const fake = (opts: { version?: string; cost?: unknown; roles?: unknown } = {}) => {
+      const bin = path.join(dir, 'lens-bin');
+      fs.mkdirSync(bin, { recursive: true });
+      fs.writeFileSync(path.join(bin, 'cost.json'), JSON.stringify(opts.cost ?? COST));
+      fs.writeFileSync(path.join(bin, 'roles.json'), JSON.stringify(opts.roles ?? ROLES));
+      fs.writeFileSync(path.join(bin, 'args.log'), '');
+      const script = [
+        '#!/bin/sh',
+        `echo "$@" >> "${bin}/args.log"`,
+        'case "$1" in',
+        `  --version) echo "agentlens ${opts.version ?? '0.11.0'}" ;;`,
+        `  cost) [ "$FAKE_MODE" = fail ] && exit 1; [ "$FAKE_MODE" = garbage ] && { echo 'not json'; exit 0; }; cat "${bin}/cost.json" ;;`,
+        `  efficiency) cat "${bin}/roles.json" ;;`,
+        'esac',
+        '',
+      ].join('\n');
+      fs.writeFileSync(path.join(bin, 'agentlens'), script, { mode: 0o755 });
+      return bin;
+    };
+    const withLens = async (bin: string, extra: string[] = [], mode = '') => {
+      const { transcript, ledger } = fixture();
+      const r = await worker.run(['-Transcript', transcript, '-Ledger', ledger, ...extra], {
+        cwd: dir,
+        env: { ...process.env, PATH: `${bin}:/usr/bin:/bin`, FAKE_MODE: mode, DROMOS_STATE_DIR: path.join(dir, '.agents') },
+      });
+      expect(r.status).toBe(0);
+      return JSON.parse(r.stdout);
+    };
+
+    it('takes main, subagents and roles[] from agentlens for the transcript session, with its measured flags', async () => {
+      const bin = fake();
+      const json = await withLens(bin);
+      expect(json.source).toBe('agentlens');
+      expect(json.warnings).toEqual([]);
+      expect(json.main).toEqual({ requests: 30, peakContext: 123456, outputTokens: 7777, costMeasured: 6, costEstimated: 0 });
+      expect(json.subagents.count).toBe(5);
+      expect(json.subagents.costMeasured).toBe(3);
+      expect(json.subagents.costEstimated).toBe(1);
+      expect(json.roles).toEqual([
+        { role: 'explorer', runs: 2, requests: 2, usd: 1, measured: false },
+        { role: 'implementer', runs: 3, requests: 8, usd: 3, measured: true },
+      ]);
+      // scoped to the session; the transcript's own price table is not used (fixture would estimate 7.0066)
+      expect(fs.readFileSync(path.join(bin, 'args.log'), 'utf8')).toContain('efficiency --section roles --format json --session sess');
+    });
+
+    it.each([
+      ['too old', { version: '0.10.5' }, '', /0\.10\.5 is older than 0\.11\.0/],
+      ['a non-zero exit', {}, 'fail', /cost exited with 1/],
+      ['invalid JSON', {}, 'garbage', /invalid JSON/],
+      ['no matching session row', { cost: [COST[0]] }, '', /no session row for sess/],
+    ])('falls back to the transcript with a warning when agentlens is %s', async (_n, opts, mode, reason) => {
+      const json = await withLens(fake(opts), [], mode);
+      expect(json.source).toBe('transcript');
+      expect(json.warnings.some((w: string) => reason.test(w) && w.includes('estimates'))).toBe(true);
+      expect(json.main.requests).toBe(2);
+      expect(json.main.costEstimated).toBeCloseTo(0.0066, 4);
+      expect(json.subagents.costEstimated).toBeCloseTo(7, 4);
+    });
+
+    it('computes the ledger part identically on the agentlens and the fallback path', async () => {
+      const lens = await withLens(fake());
+      const fallback = await withLens(fake({ version: '0.1.0' }));
+      expect([lens.source, fallback.source]).toEqual(['agentlens', 'transcript']);
+      const ledgerPart = (j: any) => ({ ledger: j.ledger, fixRounds: j.fixRounds, unattributedFixRounds: j.unattributedFixRounds, tasks: j.tasks, escalationShare: j.escalationShare, rulings: j.rulings, gates: j.gates, durations: j.durations });
+      expect(ledgerPart(lens).fixRounds).toBe(2);
+      expect(ledgerPart(lens)).toEqual(ledgerPart(fallback));
+    });
+  });
+
   it('uses the max for peak context and per field across duplicate ids', async () => {
     const t = path.join(dir, 'p.jsonl');
     fs.writeFileSync(
