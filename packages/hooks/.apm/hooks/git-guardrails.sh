@@ -21,9 +21,11 @@
 #   substitutions inside the body are inspected). echo/printf text piped into a shell (echo ... | sh, bash -s)
 #   or sourced (source <(echo ...)) is inspected as commands. Redirect targets are not arguments.
 # - Nesting deeper than 24 levels (substitutions, bash -c, heredocs) is denied, not inspected.
-# - Scanning is linear: LC_ALL=C, a sliding 4 KB window (a substring of a long bash string costs O(length)) and
-#   bulk pattern replacement in the JSON scanner. bash still spends ~50 us per word, line or pipe, so the cap is
-#   24 KB: its worst shapes (many words, quotes, lines, pipes, '((', heredocs) parse in under 1.5 s, well inside
+# - Scanning is linear: LC_ALL=C, regex tests instead of bracket-pattern replacement, a sliding ~1 KB window (a
+#   substring of a long bash string costs O(length)) and a JSON scanner that splits at '\' once instead of replacing
+#   (on bash 3.2 ${x//pat/rep} costs O(length * matches)). bash still spends ~50 us per word, line or pipe, so the
+#   cap is 24 KB: its worst shapes (many words, quotes, lines, pipes, '((', heredocs) parse in 0.5-1.5 s on an idle
+#   bash 3.2 (macOS /bin/bash; measured with 24 KB payloads), about 3x that under heavy parallel load, still below
 #   the 5 s hook timeout. A longer command fails open; quoted heredoc bodies (commit messages) are cheap.
 # - git runs only in the payload cwd's own repository (status, symbolic-ref, rev-parse; no fsmonitor, no hooks,
 #   no optional locks). A target given via git -C <other repo> (also a nested or bare repo or git dir inside the
@@ -41,25 +43,54 @@ payload="$(cat 2>/dev/null || true)"
 
 J_tool=""; J_cwd=""; J_cmd=""; J_args=""
 
+# bash 3.2 makes ${x//pat/rep} cost O(length * matches), so the JSON scanner never replaces in a long string: it splits at
+# '\' (one C-level read), walks the fields once and rebuilds the string.
+_split() { # _split <string>: PARTS = the fields of the string split at '\' (a lone trailing '\' gives a last empty field)
+  local l
+  IFS='\' read -r -d '' -a PARTS <<< "$1~"
+  l=$((${#PARTS[@]} - 1)); PARTS[l]="${PARTS[l]%??}" # the sentinel and the newline the here-string added
+}
+_unph() { # _unph <string>: JD = the string with \001 -> '\' and \002 -> '"', in 256-char pieces (single-char patterns, no pairing)
+  local s="$1" i=0 n=${#1} c
+  JD=""
+  while ((i < n)); do c="${s:i:256}"; c=${c//$'\002'/'"'}; JD+=${c//$'\001'/'\'}; i=$((i + 256)); done
+}
 jdecode() { # jdecode <string body>: JD = the decoded JSON string (\001 and \002 stand for \\ and \")
-  local x="$1" hex ch
-  x=${x//'\n'/$'\n'}; x=${x//'\t'/$'\t'}; x=${x//'\r'/$'\r'}; x=${x//'\b'/}; x=${x//'\f'/}; x=${x//'\/'/"/"}
-  while [[ "$x" == *'\u'* ]]; do # one round per distinct code
-    hex=${x#*'\u'}; hex="${hex:0:4}"
-    case "$hex" in
-      000[aA]) ch=$'\n' ;;
-      0009) ch=$'\t' ;;
-      005[cC]) ch=$'\001' ;;
-      00[2-7][0-9a-fA-F]) printf -v ch "\\x${hex:2:2}" ;;
-      *) ch="?" ;;
+  local out k=1 f hex ch
+  _split "$1"; out="${PARTS[0]}"
+  while [ "$k" -lt ${#PARTS[@]} ]; do
+    f="${PARTS[k]}"; k=$((k + 1))
+    case "${f:0:1}" in
+      n) out+=$'\n'"${f:1}" ;;
+      t) out+=$'\t'"${f:1}" ;;
+      r) out+=$'\r'"${f:1}" ;;
+      b | f) out+="${f:1}" ;;
+      /) out+="/${f:1}" ;;
+      u)
+        hex="${f:1:4}"
+        case "$hex" in
+          000[aA]) ch=$'\n' ;;
+          0009) ch=$'\t' ;;
+          005[cC]) ch=$'\001' ;;
+          00[2-7][0-9a-fA-F]) printf -v ch "\\x${hex:2:2}" ;;
+          *) ch="?" ;;
+        esac
+        out+="$ch${f:5}" ;;
+      *) out+='\'"$f" ;;
     esac
-    x=${x//"\\u$hex"/"$ch"}
   done
-  x=${x//$'\002'/'"'}; JD=${x//$'\001'/'\'}
+  _unph "$out"
 }
 jsonscan() { # jsonscan <json>: first string value of tool_name|toolName, cwd, command, toolArgs (keys outside strings only)
-  local rest between str prev="" have=0
-  rest=${1//'\\'/$'\001'}; rest=${rest//'\"'/$'\002'} # now no '"' inside a string is escaped: bulk work, no char loop
+  local rest between str prev="" have=0 k
+  _split "$1"; rest="${PARTS[0]}"; k=1 # '\\' -> \001, '\"' -> \002: now no '"' inside a string is escaped
+  while [ "$k" -lt ${#PARTS[@]} ]; do
+    str="${PARTS[k]}"; k=$((k + 1))
+    if [ -z "$str" ]; then # '\\' (the pair's second '\' starts the next field), or a lone trailing '\'
+      if [ "$k" -lt ${#PARTS[@]} ]; then rest+=$'\001'"${PARTS[k]}"; k=$((k + 1)); else rest+='\'; fi
+    elif [ "${str:0:1}" = '"' ]; then rest+=$'\002'"${str:1}"
+    else rest+='\'"$str"; fi
+  done
   while :; do
     between="${rest%%\"*}"
     [ ${#between} -eq ${#rest} ] && break
@@ -96,8 +127,8 @@ else
 fi
 case "$(printf '%s' "$tool" | tr '[:upper:]' '[:lower:]')" in bash | shell | powershell | run_shell_command | '') ;; *) exit 0 ;; esac
 [ "${#cmd}" -gt 24576 ] && exit 0
-plain="${cmd//[\'\"\\]/}"
-case "$plain" in *git*) ;; *) exit 0 ;; esac
+GITRX=$'g[\'"\\\\]*i[\'"\\\\]*t' # "git" with quotes or backslashes between the letters (a regex test: bash 3.2 replaces a bracket pattern in O(n^2))
+[[ "$cmd" =~ $GITRX ]] || exit 0
 
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
 hgit() { GIT_OPTIONAL_LOCKS=0 GIT_ATTR_NOSYSTEM=1 git --no-optional-locks -c core.fsmonitor=false -c core.hooksPath=/dev/null "$@"; }
@@ -301,8 +332,8 @@ SHELLS=" bash sh zsh dash ksh ash "
 WRAPS=" sudo doas env command exec nohup time nice setsid timeout xargs stdbuf chronic unbuffer "
 
 analyze() { # analyze <string> [dq]: inspect it as a shell script (dq: text of an unquoted heredoc body)
-  local save="$S" W="" B=-1000000 p="${1//[\'\"\\]/}"
-  case "$p" in *git*) ;; *) return ;; esac # no git call can come out of it (same test as for the whole command)
+  local save="$S" W="" B=-1000000
+  [[ "$1" =~ $GITRX ]] || return # no git call can come out of it (same test as for the whole command)
   S="$1"; parse "" 0 "${2:-}"
   S="$save"
 }
@@ -454,7 +485,7 @@ _shconsumer() { # is the collected command a shell that reads its script from st
 }
 _endseg() { # _endseg [pipe]: finish the simple command; "pipe" when its output feeds the next one
   local x
-  _flush
+  [ "$inw" = 1 ] && _flush
   if [ ${#toks[@]} -eq 0 ]; then
     [ "${1:-}" = pipe ] && { piped=1; pfeed=""; phd=(); }
     redir=0; herestr=0; return
@@ -487,7 +518,7 @@ _isshell() { # is the command collected so far a shell or source (a heredoc / he
 _arith_end() { # _arith_end <index of the first '(' of '((': sets AE to the index after the matching '))'
   local j=$1 d=0 c m=${#S} W="$W" B="$B" win ch
   while ((j < m)); do
-    if ((j - B > 3500 || j < B)); then B=$j; W="${S:j:4200}"; fi
+    if ((j - B > 600 || j < B)); then B=$j; W="${S:j:1300}"; fi
     win="${W:j-B:512}"; ch="${win%%[()]*}"
     if [ -n "$ch" ]; then j=$((j + ${#ch})); continue; fi
     c="${W:j-B:1}"; j=$((j + 1))
@@ -543,21 +574,28 @@ parse() { # parse <stop-char> <start> [dq|feed]: depth-capped wrapper around _pa
 }
 
 _parse() { # tokenize S, run handle per simple command, leave the end index in POS
-  local stop="$1" i="$2" mode="${3:-}" n=${#S} c nx q="" w="" inw=0 redir=0 herestr=0 j pos k body o win chunk W="$W" B="$B" # window of S: inherited
+  local stop="$1" i="$2" mode="${3:-}" n=${#S} c nx q="" w="" inw=0 redir=0 herestr=0 j pos k cl body o win chunk W="$W" B="$B" # window of S: inherited
   local feed=0 piped=0 pfeed="" segh=0
   local -a toks=() hdd=() hdq=() hdt=() hds=() phd=()
   [ "$mode" = dq ] && q='"'
   [ "$mode" = feed ] && feed=1
   while ((i < n)); do
-    if ((i - B > 3500 || i < B)); then B=$i; W="${S:i:4200}"; fi
-    o=$((i - B)); win="${W:o:512}"
+    if ((i - B > 600 || i < B)); then B=$i; W="${S:i:1300}"; fi
+    o=$((i - B)); win="${W:o:64}"
     case "$q" in
       "'") chunk="${win%%\'*}" ;;
       '"') chunk="${win%%$SP_DQ*}" ;;
       A) chunk="${win%%[\'\\]*}" ;;
       *) chunk="${win%%$SP_TOP*}" ;;
     esac
-    if [ -n "$chunk" ]; then w+="$chunk"; [ -z "$q" ] && inw=1; i=$((i + ${#chunk})); continue; fi
+    if [ -n "$chunk" ]; then
+      w+="$chunk"; cl=${#chunk}; i=$((i + cl))
+      if [ -z "$q" ]; then
+        inw=1
+        if [ "${win:cl:1}" = " " ] && [ "$herestr" = 0 ] && [ "$redir" = 0 ]; then toks+=("$w"); w=""; inw=0; i=$((i + 1)); fi # the space after a plain word: _flush inlined
+      fi
+      continue
+    fi
     c="${W:o:1}"
     case "$q" in
       "'") # chunk is empty, so c is the closing quote
@@ -599,7 +637,10 @@ _parse() { # tokenize S, run handle per simple command, leave the end index in P
       ')')
         _endseg
         if [ "$stop" = ")" ]; then POS=$((i + 1)); return; fi ;;
-      ' ' | $'\t') _flush ;;
+      ' ' | $'\t') # _flush, inlined for the common word end
+        if [ "$inw" = 1 ]; then
+          if [ "$herestr" = 1 ] || [ "$redir" = 1 ]; then _flush; else toks+=("$w"); w=""; inw=0; fi
+        fi ;;
       $'\n')
         _endseg
         if [ ${#hdd[@]} -gt 0 ]; then # read the bodies of the pending heredocs

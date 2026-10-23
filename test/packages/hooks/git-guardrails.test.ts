@@ -5,11 +5,6 @@ import * as path from 'path';
 
 const SCRIPT = path.resolve(__dirname, '../../../packages/hooks/.apm/hooks/git-guardrails.sh');
 
-// macOS ships bash 3.2, where the hook's character scanner is quadratic on long commands (~100 s for 22 KB instead of < 6 s).
-// The time-bound tests only make sense on bash >= 4; the functional tests above run everywhere.
-const bashMajor = Number(spawnSync('bash', ['-c', 'echo ${BASH_VERSINFO[0]}'], { encoding: 'utf8' }).stdout.trim());
-const slowBash = !(bashMajor >= 4);
-
 const hermetic = (home: string, base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv => {
   const env = { ...base };
   for (const k of Object.keys(env)) if (k.startsWith('GIT_') || k === 'XDG_CONFIG_HOME') delete env[k];
@@ -518,7 +513,7 @@ describe('git-guardrails hook', () => {
     });
   });
 
-  describe.skipIf(slowBash)('performance and limits', () => {
+  describe('performance and limits', () => {
     const CAP = 24576;
     // Wall-clock bound per hook run; CI runners are 2-3x slower than a developer machine (#247), and a loaded local run (parallel suites) too (#336).
     const BOUND = process.env.CI ? 9000 : 6000;
@@ -576,6 +571,70 @@ describe('git-guardrails hook', () => {
         expect(ms).toBeLessThan(BOUND);
       }
     }, 3 * BOUND);
+    // the scanner works on a sliding window (1300 chars, recut after 600) and 64-char slices: put each construct across those offsets
+    const OFFSETS = [0, 55, 63, 64, 65, 120, 595, 599, 600, 601, 640, 1199, 1200, 1299, 1300, 1301, 1900, 2500];
+    const pad = (k: number) => 'a'.repeat(k);
+    const constructs: [string, (k: number) => string, boolean][] = [
+      ['a plain command after padding', (k) => `echo ${pad(k)}\ngit reset --hard`, true],
+      ['a command substitution', (k) => `echo ${pad(k)} "$(git reset --hard)"`, true],
+      ['a backtick substitution', (k) => `echo ${pad(k)} \`git reset --hard\``, true],
+      ['a heredoc body and a command after it', (k) => `cat <<'EOF'\n${pad(k)}\nEOF\ngit reset --hard`, true],
+      ['an indented <<- heredoc and a command after it', (k) => `cat <<-EOF\n\t${pad(k)}\n\tEOF\ngit reset --hard`, true],
+      ['a long heredoc delimiter', (k) => `cat <<${pad(k % 300)}\nx\n${pad(k % 300)}\ngit reset --hard`, true],
+      ['an unquoted heredoc with a substitution', (k) => `cat <<EOF\n${pad(k)} $(git reset --hard)\nEOF`, true],
+      ['a bash -c string', (k) => `echo ${pad(k)}; bash -c 'git reset --hard'`, true],
+      ['an arithmetic expression', (k) => `echo ${pad(k)} $((1+2))\ngit reset --hard`, true],
+      ['a comment', (k) => `# ${pad(k)}\ngit reset --hard`, true],
+      ['quoted text only', (k) => `echo '${pad(k)} git reset --hard'`, false],
+      ['a quoted heredoc body only', (k) => `cat <<'EOF'\n${pad(k)}\ngit reset --hard\nEOF`, false],
+      ['a comment only', (k) => `echo ${pad(k)} # git reset --hard`, false],
+    ];
+    for (const [name, build, deny] of constructs) {
+      it(`${deny ? 'denies' : 'allows'} ${name} at every window offset`, () => {
+        for (const k of OFFSETS) {
+          const c = build(k);
+          const r = run(claude(c));
+          expect(r.out === '' ? 'allow' : denied(r) ? 'deny' : 'other', `${name} at ${k}`).toBe(deny ? 'deny' : 'allow');
+        }
+      }, 60000);
+    }
+    it('denies a destructive command at offsets across the window without jq', () => {
+      for (const k of [63, 64, 600, 601, 1300]) {
+        expect(denied(runNoJq(claude(`echo ${pad(k)} "$(git reset --hard)"`))), `at ${k}`).toBe(true);
+      }
+    }, 60000);
+
+    describe('JSON decoding without jq', () => {
+      // payloads written by hand so the escapes reach the hook exactly as a host sends them
+      const raw = (command: string) => `{"tool_name":"Bash","tool_input":{"command":${command}},"cwd":"${repo.replace(/\\/g, '\\\\')}"}`;
+      const nj = (command: string) => runRaw(raw(command), {}, { ...process.env, PATH: nojq });
+      it('decodes escaped quotes, newlines and tabs', () => {
+        expect(denied(nj('"echo \\"hi\\"\\ngit reset --hard"'))).toBe(true);
+        expect(denied(nj('"echo\\t\\"a b\\" && git reset --hard"'))).toBe(true);
+      });
+      it('keeps an escaped backslash as one backslash, not an escape', () => {
+        expect(nj('"echo \\\\n git reset --hard"').out).toBe(''); // JSON \\n is backslash + n: inside a plain word, no newline: still `echo \n git reset --hard` -> reset runs as an argument of echo
+        expect(denied(nj('"echo \\\\\\\\\\ngit reset --hard"'))).toBe(true); // \\\\ then \n: two backslashes, then a real newline
+        expect(nj('"echo \\\\\\"x\\"\\ngit reset --hard"').out).toBe(''); // \\ + \" = backslash, quote: the quote opens a string that swallows the newline
+      });
+      it('decodes \\uXXXX escapes (space, newline, quote, backslash)', () => {
+        expect(denied(nj('"echo\\u0020x\\u000agit reset --hard"'))).toBe(true);
+        expect(denied(nj('"echo \\u0022a\\u0022; git reset --hard"'))).toBe(true);
+        expect(denied(nj('"git\\u0020reset\\u0020--hard"'))).toBe(true);
+        expect(nj('"echo \\u005c; true"').out).toBe(''); // no git
+      });
+      it('handles backslash-heavy payloads and a trailing backslash', () => {
+        expect(denied(nj(`"echo ${'\\\\\\\\'.repeat(400)}\\ngit reset --hard"`))).toBe(true);
+        expect(denied(nj(`"echo ${'\\\\\\"'.repeat(400)}\\ngit reset --hard"`))).toBe(true);
+        expect(nj('"echo git\\\\"').out).toBe('');
+      });
+      it('reads the same command as jq for a mix of escapes', () => {
+        const cmd = `echo "a\\tb" 'c\\\\d'\nx=1 git reset --hard # é`;
+        const viaJq = run(claude(cmd));
+        const viaScan = runNoJq(claude(cmd));
+        expect(denied(viaScan)).toBe(denied(viaJq));
+      });
+    });
     it('fails open above 24 KB, quickly, also for a 30000-line heredoc', () => {
       expect(run(claude(`git reset --hard # ${'x'.repeat(CAP)}`)).out).toBe('');
       const c = `cat <<EOF\n${'x\n'.repeat(30000)}EOF${tail}`;
