@@ -54,9 +54,9 @@ pwsh scripts/Set-Sprint.ps1 -Owner <login> -Number <n> -Issue 'org/a#12,org/b#7'
 
 | Limit | Default | Parameter |
 |:--|:--|:--|
-| per sprint, all repositories | 10 | `-MaxPerSprint` |
-| per sprint and repository | 5 | `-MaxPerRepo` |
-| `In release` per repository, any sprint | 5 | `-MaxInRelease` (full: cut the release first, `github-release`) |
+| per sprint, all repositories | 30 | `-MaxPerSprint` |
+| per sprint and repository | 10 | `-MaxPerRepo` |
+| `In release` per repository, any sprint | 10 | `-MaxInRelease` (full: cut the release first, `github-release`) |
 
 The issues must already be items of the project with Level PBI or Bug (`sync` sets it). `-Force` assigns despite a violation and still reports it.
 

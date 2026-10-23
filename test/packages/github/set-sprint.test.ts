@@ -62,27 +62,27 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
   });
 
   describe('limits', () => {
-    it('allows exactly 10 per sprint (2 repos x 5) and refuses the 11th', () => {
-      const items = [...many(5, 'o/a', { sprint: W43 }), ...many(4, 'o/b', { sprint: W43 })];
-      const b = item('o/b');
-      expect(run([...items, b], [ref(b)]).status).toBe(0);
+    it('allows exactly 30 per sprint (3 repos x 10) and refuses the 31st', () => {
+      const items = [...many(10, 'o/a', { sprint: W43 }), ...many(10, 'o/b', { sprint: W43 }), ...many(9, 'o/c', { sprint: W43 })];
       const c = item('o/c');
-      const r = run([...items, item('o/b', { sprint: W43 }), c], [ref(c)]);
+      expect(run([...items, c], [ref(c)]).status).toBe(0);
+      const d = item('o/d');
+      const r = run([...items, item('o/c', { sprint: W43 }), d], [ref(d)]);
       expect(r.status).toBe(1);
       expect(types(r)).toEqual(['SprintFull']);
-      expect(r.out.violations[0].message).toContain('limit 10');
+      expect(r.out.violations[0].message).toContain('limit 30');
     });
 
-    it('refuses a 6th PBI of one repository per sprint', () => {
+    it('refuses an 11th PBI of one repository per sprint', () => {
       const a = item('o/a');
-      const r = run([...many(5, 'o/a', { sprint: W43 }), a], [ref(a)]);
+      const r = run([...many(10, 'o/a', { sprint: W43 }), a], [ref(a)]);
       expect(r.status).toBe(1);
       expect(types(r)).toEqual(['RepoFull']);
     });
 
-    it('refuses a repository with 5 PBIs In release, whatever their sprint', () => {
+    it('refuses a repository with 10 PBIs In release, whatever their sprint', () => {
       const a = item('o/a');
-      const r = run([...many(5, 'o/a', { status: 'In release', sprint: '2026-W42' }), a], [ref(a)]);
+      const r = run([...many(10, 'o/a', { status: 'In release', sprint: '2026-W42' }), a], [ref(a)]);
       expect(r.status).toBe(1);
       expect(types(r)).toEqual(['ReleaseFull']);
       expect(r.out.violations[0].message).toContain('github-release');
@@ -90,23 +90,23 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
 
     it('counts only open PBIs and Bugs, not Tasks, Features or closed items', () => {
       const a = item('o/a');
-      const noise = [...many(3, 'o/a', { sprint: W43, level: 'Task' }), ...many(3, 'o/a', { sprint: W43, state: 'CLOSED' }), ...many(5, 'o/a', { status: 'In release', level: 'Task' })];
-      expect(run([...noise, ...many(3, 'o/a', { sprint: W43 }), a], [ref(a)]).status).toBe(0);
+      const noise = [...many(3, 'o/a', { sprint: W43, level: 'Task' }), ...many(3, 'o/a', { sprint: W43, state: 'CLOSED' }), ...many(10, 'o/a', { status: 'In release', level: 'Task' })];
+      expect(run([...noise, ...many(8, 'o/a', { sprint: W43 }), a], [ref(a)]).status).toBe(0);
       const bug = item('o/a', { level: 'Bug' });
-      expect(run([...many(5, 'o/a', { sprint: W43 }), bug], [ref(bug)]).status).toBe(1);
+      expect(run([...many(10, 'o/a', { sprint: W43 }), bug], [ref(bug)]).status).toBe(1);
     });
 
     it('is all or nothing: one violation assigns none of the targets', () => {
       const ok = item('o/b');
       const full = item('o/a');
-      const r = run([...many(5, 'o/a', { sprint: W43 }), full, ok], [ref(ok), ref(full)]);
+      const r = run([...many(10, 'o/a', { sprint: W43 }), full, ok], [ref(ok), ref(full)]);
       expect(r.status).toBe(1);
       expect(r.out.violations).toHaveLength(1);
     });
 
     it('-Force overrides the limits but still reports them', () => {
       const a = item('o/a');
-      const r = run([...many(5, 'o/a', { sprint: W43 }), a], [ref(a)], '-Force');
+      const r = run([...many(10, 'o/a', { sprint: W43 }), a], [ref(a)], '-Force');
       expect(r.status).toBe(0);
       expect(types(r)).toEqual(['RepoFull']);
       expect(r.out.assign).toHaveLength(1);

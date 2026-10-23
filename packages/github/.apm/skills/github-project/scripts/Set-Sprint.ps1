@@ -16,9 +16,9 @@
 .PARAMETER Issue         Issues to assign, comma separated: 'owner/repo#n' (or '#n' with -Repo). They must already be items of the project.
 .PARAMETER Repo          Default repository 'owner/repo' for '#n'.
 .PARAMETER Sprint        Sprint title, default the current ISO week ('2026-W43').
-.PARAMETER MaxPerSprint  Open PBIs per sprint over all repositories (default 10).
-.PARAMETER MaxPerRepo    Open PBIs per sprint and repository (default 5).
-.PARAMETER MaxInRelease  Open PBIs in status 'In release' per repository (default 5).
+.PARAMETER MaxPerSprint  Open PBIs per sprint over all repositories (default 30).
+.PARAMETER MaxPerRepo    Open PBIs per sprint and repository (default 10).
+.PARAMETER MaxInRelease  Open PBIs in status 'In release' per repository (default 10).
 .PARAMETER Force         Assign despite violated limits.
 .PARAMETER DryRun        Print the plan, change nothing.
 .PARAMETER Today         Date for the default sprint; only for tests.
@@ -32,9 +32,9 @@ param(
   [string[]]$Issue,
   [string]$Repo,
   [string]$Sprint,
-  [int]$MaxPerSprint = 10,
-  [int]$MaxPerRepo = 5,
-  [int]$MaxInRelease = 5,
+  [int]$MaxPerSprint = 30,
+  [int]$MaxPerRepo = 10,
+  [int]$MaxInRelease = 10,
   [switch]$Force,
   [switch]$DryRun,
   [datetime]$Today = (Get-Date),
@@ -163,7 +163,7 @@ if ($StateFile) {
   $state = Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json -Depth 20
   $DryRun = $true  # a state file never reaches GitHub
 } else {
-  if (-not $Owner -or $Number -lt 1 -or $targets.Count -eq 0) { throw 'Usage: Set-Sprint.ps1 -Owner <login> -Number <n> -Issue <owner/repo#n>... [-Repo <owner/repo>] [-Sprint 2026-W43] [-MaxPerSprint 10] [-MaxPerRepo 5] [-MaxInRelease 5] [-Force] [-DryRun] [-StateFile <json>] [-Json]' }
+  if (-not $Owner -or $Number -lt 1 -or $targets.Count -eq 0) { throw 'Usage: Set-Sprint.ps1 -Owner <login> -Number <n> -Issue <owner/repo#n>... [-Repo <owner/repo>] [-Sprint 2026-W43] [-MaxPerSprint 30] [-MaxPerRepo 10] [-MaxInRelease 10] [-Force] [-DryRun] [-StateFile <json>] [-Json]' }
   $state = Get-SprintState -Targets $targets
 }
 $plan = Get-SprintPlan -State $state -Targets $targets -SprintTitle $Sprint -MaxPerSprint $MaxPerSprint -MaxPerRepo $MaxPerRepo -MaxInRelease $MaxInRelease
