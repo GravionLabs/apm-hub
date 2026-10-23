@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { parse } from 'yaml';
+import { OPENCODE_MODEL_BY_TIER } from '../../../src/generators/agent-model-validator';
 
 const agentPath = path.resolve(__dirname, '../../../packages/agents/.apm/agents/orchestrator.agent.md');
 const body = fs.readFileSync(agentPath, 'utf-8').replace(/^---\n[\s\S]*?\n---\n/, '');
@@ -110,5 +112,60 @@ describe('orchestrator agent rules', () => {
     expect(body).toMatch(/subagent_type: [^)]*pbi-runner/);
     expect(body).toMatch(/except `pbi-runner` in loop runner mode/);
     expect(body).toMatch(/`pr-writer` or `pbi-runner` instead/);
+  });
+});
+
+describe('orchestrator model pins', () => {
+  const agentsDir = path.resolve(__dirname, '../../../packages/agents/.apm/agents');
+  const fm: any = parse(fs.readFileSync(agentPath, 'utf-8').match(/^---\n([\s\S]*?)\n---\n/)![1]);
+  const rule = pipelineRef.split('\n').find((l) => l.startsWith('- Model per dispatch'))!;
+
+  it('runs on sonnet in Claude and OpenCode', () => {
+    expect(fm.metadata.claude.model).toBe('sonnet');
+    expect(fm.metadata.opencode.model).toBe('anthropic/claude-sonnet-5-5');
+  });
+
+  it('no agent of the package inherits the session model', () => {
+    for (const f of fs.readdirSync(agentsDir).filter((n) => n.endsWith('.agent.md'))) {
+      expect(fs.readFileSync(path.join(agentsDir, f), 'utf-8'), f).not.toMatch(/^\s*model:\s*inherit\s*$/m);
+    }
+  });
+
+  it('pins planner to opus in both clients', () => {
+    const planner: any = parse(
+      fs.readFileSync(path.join(agentsDir, 'planner.agent.md'), 'utf-8').match(/^---\n([\s\S]*?)\n---\n/)![1],
+    );
+    expect(planner.metadata.claude.model).toBe('opus');
+    expect(planner.metadata.opencode.model).toBe('anthropic/claude-opus-5-5');
+  });
+
+  it('every agent file pins explicit claude and opencode models of one tier', () => {
+    const tiers = Object.entries(OPENCODE_MODEL_BY_TIER);
+    for (const f of fs.readdirSync(agentsDir).filter((n) => n.endsWith('.agent.md'))) {
+      const a: any = parse(fs.readFileSync(path.join(agentsDir, f), 'utf-8').match(/^---\n([\s\S]*?)\n---\n/)![1]);
+      expect(['haiku', 'sonnet', 'opus'], f).toContain(a.metadata.claude.model);
+      expect(a.metadata.opencode.model, f).toBe(OPENCODE_MODEL_BY_TIER[a.metadata.claude.model as keyof typeof OPENCODE_MODEL_BY_TIER]);
+    }
+    expect(tiers).toHaveLength(3);
+  });
+
+  it('per-dispatch rule pins every dispatch and none to inherit', () => {
+    expect(rule).toBeDefined();
+    for (const pin of [
+      '`issue-reader` haiku',
+      '`explorer` haiku',
+      'Final-Verify haiku',
+      '`planner` opus',
+      '`implementer` sonnet',
+      '`review-lead` sonnet',
+      '`reviewer` sonnet',
+      '`pr-writer` sonnet',
+      'fix round 3 opus',
+    ]) {
+      expect(rule, pin).toContain(pin);
+    }
+    expect(rule).not.toMatch(/`[\w-]+`( and `[\w-]+`)*,? (to |defaults to |pinned to )?`?inherit\b/);
+    expect(rule).not.toMatch(/(round 3|Final-Verify|final verify) (to )?inherit\b/);
+    expect(rule).not.toMatch(/pass `inherit`/);
   });
 });
