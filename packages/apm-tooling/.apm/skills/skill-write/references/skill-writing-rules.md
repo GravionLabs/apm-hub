@@ -26,7 +26,7 @@ Skills must load unchanged on GitHub Copilot, Claude Code and OpenCode, so only 
 | `user-invocable` | Optional. `false` hides the skill from the `/` menu while the model may still load it. |
 | `context` / `agent` | Optional. `context: fork` runs the skill in a subagent (Claude Code); `agent` names the agent definition. Only for self-contained skills that return a small result and never ask the user or spawn subagents; the body states the return contract. |
 
-**Forbidden top-level keys (🔴):** `allowed-tools` (matches no platform's tool vocabulary), `model` (platform-specific, goes stale), `compatibility` (a uniform claim carries no information), anything else (breaks strict loaders). Custom annotations go under `metadata:`. See `docs/concepts/skill-frontmatter.md` for the reasoning.
+**Forbidden top-level keys (🔴):** `allowed-tools` (matches no platform's tool vocabulary), `model` (platform-specific, goes stale), `compatibility` (a uniform claim carries no information), `chronicle-hints` (move to `metadata:`), anything else (breaks strict loaders). Custom annotations go under `metadata:`. See `docs/concepts/skill-frontmatter.md` for the reasoning.
 
 ```yaml
 ---
@@ -39,7 +39,7 @@ description: >
 
 ### Body
 
-- ≤ 100 lines (enforced by `src/generators/skill-size-validator.ts`); workflow, not long specs
+- ≤ 100 lines (enforced by `src/generators/skill-size-validator.test.ts`); workflow, not long specs
 - Order: one-sentence overview, prerequisites, numbered instructions, gotchas, one-line report format
 - Write conditional behavior as `If X → do Y; otherwise do Z`; no equal alternatives without a default
 - Shell blocks use ` ```powershell `
@@ -70,6 +70,6 @@ description: >
 
 ### Validation
 
-- Directory name matches `name`; no forbidden frontmatter keys
+- Directory name matches `name`; no forbidden frontmatter keys (`allowed-tools`, `model`, `compatibility`, `chronicle-hints`; annotations go under `metadata:`)
 - Description says when to use it; references are conditional; nothing duplicated across body and references
 - All shell fences are ` ```powershell `
