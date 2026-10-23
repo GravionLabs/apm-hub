@@ -11,10 +11,15 @@ $params = (Get-Command $Script).Parameters
 $basePath = $env:PATH
 $baseCwd = (Get-Location).Path
 while ($null -ne ($line = [Console]::In.ReadLine())) {
-  $req = $line | ConvertFrom-Json
-  $res = Invoke-ScriptCase -Script $Script -Params $params -BasePath $basePath -Case $req
-  Set-Location -LiteralPath $baseCwd
-  ConvertTo-Json -InputObject $res -Compress -Depth 3 | Set-Content -LiteralPath $req.out -Encoding utf8
-  [Console]::Out.WriteLine('@@done')
-  [Console]::Out.Flush()
+  $out = $null
+  try {
+    $req = $line | ConvertFrom-Json
+    $out = $req.out
+    $res = Invoke-ScriptCase -Script $Script -Params $params -BasePath $basePath -Case $req -FileExitCode
+  } catch { $res = [pscustomobject]@{ status = 1; stdout = ''; stderr = "worker: $($_.Exception.Message)`n" } }
+  try { Set-Location -LiteralPath $baseCwd; [Environment]::CurrentDirectory = $baseCwd } catch { }
+  if (-not $out) { continue }
+  ConvertTo-Json -InputObject $res -Compress -Depth 3 | Set-Content -LiteralPath $out -Encoding utf8
+  # explicit LF: WriteLine would emit CRLF on Windows
+  try { [Console]::Out.Write("@@done`n"); [Console]::Out.Flush() } catch { break }
 }

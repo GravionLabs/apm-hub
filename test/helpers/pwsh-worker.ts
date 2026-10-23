@@ -17,6 +17,8 @@ export class PwshWorker {
   private tail: Promise<unknown> = Promise.resolve();
   private tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pwsh-worker-'));
   private n = 0;
+  // a call that does not answer in time kills the worker (a late @@done can never be mistaken for the next call's answer)
+  private timeoutMs = 25000;
 
   constructor(script: string) {
     this.child = spawn(
@@ -24,6 +26,8 @@ export class PwshWorker {
       ['-NoProfile', '-File', path.join(__dirname, 'pwsh-worker.ps1'), script],
       { stdio: ['pipe', 'pipe', 'pipe'] }
     );
+    // a dead worker is reported through `exited`; a write to it must not crash the test run with EPIPE
+    this.child.stdin.on('error', () => undefined);
     let err = '';
     this.child.stdout.setEncoding('utf8').on('data', (d: string) => {
       this.buf += d;
@@ -56,12 +60,23 @@ export class PwshWorker {
     this.child.stdin.write(
       JSON.stringify({ key: `call-${this.n}`, args, cwd: realCwd, fullEnv, out }) + '\n'
     );
-    while (!this.buf.includes('@@done\n')) {
+    const deadline = Date.now() + this.timeoutMs;
+    let m: RegExpExecArray | null;
+    while (!(m = /@@done\r?\n/.exec(this.buf))) {
       if (this.exited) throw new Error(this.exited);
-      await new Promise<void>((resolve) => (this.waiting = resolve));
+      if (Date.now() > deadline) {
+        this.child.kill();
+        throw new Error(
+          `pwsh worker: no answer within ${this.timeoutMs} ms for: ${args.join(' ')}`
+        );
+      }
+      await new Promise<void>((resolve) => {
+        this.waiting = resolve;
+        setTimeout(resolve, 200).unref();
+      });
     }
     this.waiting = null;
-    this.buf = this.buf.slice(this.buf.indexOf('@@done\n') + 7);
+    this.buf = this.buf.slice(m.index + m[0].length);
     const raw = fs.readFileSync(out, 'utf8').replace(/^﻿/, '');
     fs.rmSync(out, { force: true });
     return JSON.parse(raw) as WorkerResult;

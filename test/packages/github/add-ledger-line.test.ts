@@ -70,7 +70,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Issue', () => {
 
   it.each(['loop-0', 'loop-x', 'loop-', 'loop-01', '../x', '0', '12345678901', 'loop-12345678901'])('rejects %s', async (issue) => {
     const r = await run(issue, 'x');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
   });
 
@@ -80,7 +80,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Issue', () => {
     fs.mkdirSync(path.join(dir, '.agents', '42'), { recursive: true });
     fs.symlinkSync(target, ledger('42'));
     const r = await run('42', 'x');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(r.stderr + r.stdout).toMatch(/symlinked/);
     expect(readLedger(target)).toBe('secret\n');
   });
@@ -199,7 +199,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   it.each(['adhoc', 'loop-5', '09', '0', 'x'])('rejects -Issue %s with -Bind and writes no marker', async (issue) => {
     withLoop();
     const r = await run('-Issue', issue, '-Bind', 'loop-5');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(fs.existsSync(marker())).toBe(false);
     expect(readLedger(loopLedger())).toBe('# loop\n');
   });
@@ -207,13 +207,13 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   it.each(['5', 'loop-0', 'loop-05', 'loop-x', '../loop-5', 'loop-5/x', ''])('rejects -Bind %s', async (bind) => {
     withLoop();
     const r = await run('-Issue', '9', '-Bind', bind);
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(fs.existsSync(marker())).toBe(false);
   });
 
   it('refuses to bind without a loop ledger', async () => {
     const r = await run('-Issue', '9', '-Bind', 'loop-5');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(r.stderr + r.stdout).toMatch(/loop ledger/i);
     expect(fs.existsSync(marker())).toBe(false);
   });
@@ -225,7 +225,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     fs.mkdirSync(path.dirname(marker()), { recursive: true });
     fs.symlinkSync(target, marker());
     const r = await run('-Issue', '9', '-Bind', 'loop-5');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(r.stderr + r.stdout).toMatch(/symlinked/);
     expect(readLedger(target)).toBe('secret\n');
     expect(readLedger(loopLedger())).toBe('# loop\n');
@@ -237,7 +237,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     fs.mkdirSync(path.join(dir, '.agents', 'loop-5'), { recursive: true });
     fs.symlinkSync(target, loopLedger());
     const r = await run('-Issue', '9', '-Bind', 'loop-5');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(readLedger(target)).toBe('# loop\n');
     expect(fs.existsSync(marker())).toBe(false);
   });
@@ -248,14 +248,14 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     fs.writeFileSync(path.join(real, 'loop-5', 'progress.md'), '# loop\n');
     fs.symlinkSync(real, path.join(dir, '.agents'));
     const r = await run('-Issue', '9', '-Bind', 'loop-5');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(fs.existsSync(path.join(real, 'current.d'))).toBe(false);
   });
 
   it('fails without a PBI ledger and writes nothing (no marker, no start line, no PBI directory)', async () => {
     withLoop('# loop\n', false);
     const r = await run('-Issue', '9', '-Bind', 'loop-5');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(r.stderr + r.stdout).toMatch(/PBI ledger/);
     expect(fs.existsSync(marker())).toBe(false);
     expect(readLedger(loopLedger())).toBe('# loop\n');
@@ -271,7 +271,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
 
   it('a failing -Bind with -Line does not create the PBI ledger when the loop ledger is missing', async () => {
     const r = await run('-Issue', '9', '-Line', '# 9', '-Bind', 'loop-5');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(fs.existsSync(path.join(dir, '.agents', '9'))).toBe(false);
     expect(fs.existsSync(marker())).toBe(false);
   });
@@ -282,7 +282,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     fs.writeFileSync(target, 'secret\n');
     fs.mkdirSync(path.dirname(marker()), { recursive: true });
     fs.symlinkSync(target, marker());
-    expect((await run('-Issue', '9', '-Line', 'more', '-Bind', 'loop-5')).status).not.toBe(0);
+    expect((await run('-Issue', '9', '-Line', 'more', '-Bind', 'loop-5')).status).toBe(1);
     expect(readLedger(pbiLedger())).toBe('# 9\n');
     expect(readLedger(loopLedger())).toBe('# loop\n');
     expect(readLedger(target)).toBe('secret\n');
@@ -292,7 +292,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     withLoop();
     fs.mkdirSync(marker(), { recursive: true });
     const r = await run('-Issue', '9', '-Line', 'more', '-Bind', 'loop-5');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(readLedger(pbiLedger())).toBe('# 9\n');
     expect(readLedger(loopLedger())).toBe('# loop\n');
     expect(fs.statSync(marker()).isDirectory()).toBe(true);
@@ -301,7 +301,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   it('-Bind refuses a directory marker without -Line too', async () => {
     withLoop();
     fs.mkdirSync(marker(), { recursive: true });
-    expect((await run('-Issue', '9', '-Bind', 'loop-5')).status).not.toBe(0);
+    expect((await run('-Issue', '9', '-Bind', 'loop-5')).status).toBe(1);
     expect(readLedger(loopLedger())).toBe('# loop\n');
   });
 
@@ -312,7 +312,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     fs.writeFileSync(path.join(real, 'current.d', keyOf(fs.realpathSync(dir))), '9 loop-5\n');
     fs.symlinkSync(real, path.join(dir, '.agents'));
     const r = await run('-Unbind');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(r.stderr + r.stdout).toMatch(/symlinked/);
     expect(readLedger(path.join(real, 'current.d', keyOf(fs.realpathSync(dir))))).toBe('9 loop-5\n');
   });
@@ -378,7 +378,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     fs.writeFileSync(target, '# loop\n');
     fs.mkdirSync(path.join(dir, '.agents', 'loop-5'), { recursive: true });
     fs.symlinkSync(target, loopLedger());
-    expect((await run('-Issue', '9', '-Line', 'more', '-Bind', 'loop-5')).status).not.toBe(0);
+    expect((await run('-Issue', '9', '-Line', 'more', '-Bind', 'loop-5')).status).toBe(1);
     expect(readLedger(pbiLedger())).toBe('# 9\n');
     expect(readLedger(target)).toBe('# loop\n');
     expect(fs.existsSync(marker())).toBe(false);
@@ -406,15 +406,15 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     fs.mkdirSync(path.dirname(marker()), { recursive: true });
     fs.symlinkSync(target, marker());
     const r = await run('-Unbind');
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(readLedger(target)).toBe('secret\n');
   });
 
   it('-Unbind cannot be combined with -Issue, -Line or -Bind', async () => {
     withLoop();
     plant('9 loop-5\n');
-    expect((await run('-Unbind', '-Issue', '9')).status).not.toBe(0);
-    expect((await run('-Unbind', '-Bind', 'loop-5')).status).not.toBe(0);
+    expect((await run('-Unbind', '-Issue', '9')).status).toBe(1);
+    expect((await run('-Unbind', '-Bind', 'loop-5')).status).toBe(1);
     expect(readLedger(marker())).toBe('9 loop-5\n');
   });
 });
@@ -501,7 +501,7 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 state directory (#402)', () => {
     const link = path.join(root, 'link');
     fs.symlinkSync(real, link);
     const r = await run(main, { DROMOS_STATE_DIR: link });
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(r.stderr + r.stdout).toMatch(/symlinked/);
     expect(fs.readdirSync(real)).toEqual([]);
   });

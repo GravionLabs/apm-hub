@@ -175,19 +175,19 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
 
   it('fails on a missing transcript', async () => {
     const r = await run(['-Transcript', path.join(dir, 'nope.jsonl')]);
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
   });
 
   it('fails with a clear message when no transcript exists', async () => {
     const r = await run([]);
-    expect(r.status).not.toBe(0);
+    expect(r.status).toBe(1);
     expect(r.stderr).toContain('No transcript found');
   });
 
   it('rejects a non-numeric -Issue', async () => {
     const t = path.join(dir, 's.jsonl');
     fs.writeFileSync(t, '');
-    expect((await run(['-Transcript', t, '-Issue', '../x'])).status).not.toBe(0);
+    expect((await run(['-Transcript', t, '-Issue', '../x'])).status).toBe(1);
   });
 
   it('reports zero requests for an empty transcript and warns about the missing ledger', async () => {

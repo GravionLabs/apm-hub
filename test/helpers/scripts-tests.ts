@@ -29,4 +29,5 @@ export const scriptsTests = [
   'test/packages/hooks/subagent-ledger.test.ts',
   'test/packages/shared/detect-techstack.test.ts',
   'test/packages/shared/enable-worktrees.test.ts',
+  'test/packages/shared/pwsh-worker.test.ts',
 ];

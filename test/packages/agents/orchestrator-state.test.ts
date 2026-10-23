@@ -272,9 +272,10 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 cache', () => {
     expect(JSON.parse(fs.readFileSync(cacheFile(), 'utf-8')).languages).toEqual([]);
   });
 
+  // runs in the shared worker: the script ends with `exit 1`, which the worker reports like `pwsh -File` (status 1)
   it('fails for a missing project root', { timeout: T }, async () => {
     const res = await worker.run(['-ProjectRoot', path.join(dir, 'nope')], { cwd: dir });
-    expect(res.status).not.toBe(0);
+    expect(res.status).toBe(1);
   });
 });
 
