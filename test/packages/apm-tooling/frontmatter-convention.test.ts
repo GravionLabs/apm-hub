@@ -5,18 +5,37 @@ import { describe, expect, it } from 'vitest';
 const skills = path.resolve(__dirname, '../../../packages/apm-tooling/.apm/skills');
 const read = (rel: string): string => readFileSync(path.join(skills, rel), 'utf8');
 
-const FORBIDDEN_KEYS = ['compatibility', 'chronicle-hints', 'model'];
+const FORBIDDEN_KEYS = ['compatibility', 'chronicle-hints', 'model', 'allowed-tools'];
+const lines = (rel: string): string[] => read(rel).split('\n');
+const namesAll = (line: string, keys: string[]): boolean =>
+  keys.every((k) => line.includes(`\`${k}\``));
 
 describe('apm-tooling enforces the skill frontmatter convention', () => {
   it.each([
-    'skill-write/references/skill-writing-rules.md',
-    'skill-audit/references/audit-checklist.md',
-    'skill-audit/SKILL.md',
-  ])('%s names every forbidden top-level key', (file) => {
-    const text = read(file);
+    ['skill-write/references/skill-writing-rules.md', /Forbidden top-level keys \(🔴\)/],
+    ['skill-write/SKILL.md', /Never .* at top level/],
+  ])('%s lists every forbidden key on its forbidden-key rule line', (file, rule) => {
+    const line = lines(file).find((l) => rule.test(l));
+    expect(line, `${file} has no forbidden-key rule line`).toBeDefined();
     for (const key of FORBIDDEN_KEYS) {
-      expect(text, `${file} lacks ${key}`).toContain(key);
+      expect(line, `${file} rule line lacks \`${key}\``).toContain(`\`${key}\``);
     }
+  });
+
+  it.each(['skill-audit/references/audit-checklist.md', 'skill-audit/SKILL.md'])(
+    '%s rates every forbidden top-level key critical',
+    (file) => {
+      const line = lines(file).find((l) => namesAll(l, FORBIDDEN_KEYS));
+      expect(line, `${file} has no line naming all forbidden keys`).toBeDefined();
+      expect(line).toContain('🔴');
+    }
+  );
+
+  it('skill-audit checklist recommends moving annotations to metadata', () => {
+    const line = lines('skill-audit/references/audit-checklist.md').find((l) =>
+      namesAll(l, FORBIDDEN_KEYS)
+    );
+    expect(line).toMatch(/recommendation: remove, or move annotations to `metadata:`/);
   });
 
   it('skill-write template frontmatter has only name and description', () => {
@@ -27,8 +46,13 @@ describe('apm-tooling enforces the skill frontmatter convention', () => {
     expect(keys).toEqual(['name', 'description']);
   });
 
-  it('skill-write SKILL.md points annotations to metadata', () => {
-    expect(read('skill-write/SKILL.md')).toContain('metadata');
+  it('skill-write sends chronicle-hints to metadata', () => {
+    expect(read('skill-write/references/skill-writing-rules.md')).toMatch(
+      /`chronicle-hints` \(move to `metadata:`\)/
+    );
+    expect(read('skill-write/SKILL.md')).toMatch(
+      /`chronicle-hints` at top level; annotations go under `metadata`/
+    );
   });
 
   it('no apm-tooling skill references the stale skill-size-validator.ts', () => {
@@ -39,6 +63,9 @@ describe('apm-tooling enforces the skill frontmatter convention', () => {
       'skill-audit/references/audit-checklist.md',
       'skill-update/SKILL.md',
       'skill-slim/SKILL.md',
+      'agent-write/SKILL.md',
+      'agent-audit/SKILL.md',
+      'agent-audit/references/audit-checklist.md',
     ]) {
       expect(read(file), file).not.toContain('skill-size-validator.ts');
     }

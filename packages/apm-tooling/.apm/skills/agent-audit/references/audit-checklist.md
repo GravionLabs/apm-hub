@@ -1,6 +1,6 @@
 ## Agent Audit Checklist
 
-Checks and severities only. The rules live in `docs/concepts/agent-frontmatter.md` at the repo root; read that first and check each item against it.
+Checks and severities only. The rules live in `docs/concepts/agent-frontmatter.md` at the repo root; read that first and check each item against it. Items marked *(derived)* follow from the rules but are not stated there verbatim.
 
 Severity: 🔴 critical (invalid, fails a test or a host load) · 🟡 important (reduces reliability or context economy) · 🟢 suggestion.
 
@@ -10,26 +10,32 @@ Severity: 🔴 critical (invalid, fails a test or a host load) · 🟡 important
 
 ### Top level
 
-- [ ] `name` present and matches the file stem (`<name>.agent.md`) — 🔴
-- [ ] `description` present, says what it returns and when to use it, ≤ 200 characters — 🔴 if missing; 🟡 otherwise
-- [ ] Only allowed keys: `name`, `description`, `tools`, `user-invocable`, `disable-model-invocation`, `metadata` — 🔴 for any other key
+- [ ] `name` present, kebab-case, matches the file stem (`<name>.agent.md`) — 🔴
+- [ ] `description` present — 🔴; one sentence on what it returns, one on when a caller should use it, ≤ 200 characters — 🟡
 - [ ] `model`, `mode`, `permission`, `color`, `steps`, `agents` as top-level keys — 🔴; recommendation: move to `metadata.claude` or `metadata.opencode`
-- [ ] `tools` uses Copilot aliases only (`read`, `search`, `edit`, `execute`, `agent`) — 🔴
-- [ ] Subagent has `user-invocable: false` — 🟡
-- [ ] Primary agent has `disable-model-invocation: true` and `metadata.opencode.mode: primary` — 🔴
+- [ ] No keys beyond `name`, `description`, `tools`, `user-invocable`, `disable-model-invocation`, `metadata` — 🟡 for any other key
+- [ ] `tools` is a YAML list of Copilot aliases (`read`, `search`, `edit`, `execute`, `agent`) — 🔴
+- [ ] A subagent the user never starts directly has `user-invocable: false` — 🟡
+- [ ] A primary agent is protected on every host: `disable-model-invocation: true` (Copilot), `metadata.opencode.mode: primary` (OpenCode), a never-dispatch-as-subagent rule in the body (Claude Code) — 🔴
 
 ### `metadata.claude` and `metadata.opencode`
 
 - [ ] `metadata` present with both `claude:` and `opencode:` blocks — 🔴
 - [ ] `metadata.claude.tools` uses Claude tool names; `metadata.claude.model` is `haiku`, `sonnet`, `opus` or `inherit` — 🔴
-- [ ] `metadata.opencode.mode` is `subagent` or `primary`; `metadata.opencode.model` is an id from the "Allowed model ids" table, omitted for `inherit` — 🔴
-- [ ] Tool sets agree across platforms (a read-only agent denies `edit`/`bash` on OpenCode, has no `Edit`/`Write`/`Bash` on Claude) — 🟡
-- [ ] YAML comments in `permission` sit on their own line — 🟡
+- [ ] `metadata.opencode.mode` is `subagent` or `primary` — 🔴
+- [ ] `metadata.opencode.model` is an id from the "Allowed model ids" table (`src/generators/agent-model-validator.ts`), omitted for `inherit` — 🔴
+- [ ] YAML comments in `metadata.opencode.permission` sit on their own line, never after a key — 🟡
+- [ ] Tool sets agree across platforms: top-level `tools`, `metadata.claude.tools` and `metadata.opencode.permission` grant the same capabilities — 🟢 *(derived)*
 
 ### Body
 
-- [ ] ≤ 40 lines — 🔴 (fails `agent-size-validator.test.ts`)
-- [ ] Return contract stated (word or line limit, JSON shape) — 🟡
-- [ ] Delegates procedures to skills by name; no copied skill body — 🟡
-- [ ] Client mechanisms named where they differ, with an inline fallback — 🟢
-- [ ] Shell fences are ` ```powershell ` — 🔴
+- [ ] ≤ 40 lines — 🔴 (fails `src/generators/agent-size-validator.test.ts`)
+- [ ] Return contract stated explicitly (word or line limit, JSON shape) — 🟡
+- [ ] Delegates by agent or skill name; no copied skill body — 🟡
+- [ ] Client mechanisms named where they differ (Claude `Agent`, OpenCode and Copilot CLI `task`, VS Code `runSubagent`), with the inline fallback — 🟢
+- [ ] Not designed around a subagent that starts subagents or is resumed later — 🟡
+
+### Enforcement
+
+- [ ] Listed in `packages/agents/apm.yml` `agents:` (`node scripts/check-manifests.mjs`) — 🔴
+- [ ] Copy in `apmw/tests/fixtures/agents/` updated when the agent changed — 🟢

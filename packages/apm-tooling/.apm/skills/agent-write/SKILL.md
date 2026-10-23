@@ -35,7 +35,7 @@ Paths to `scripts/`, `references/` and `assets/` are relative to this skill's di
 
 ### 4. Register
 
-10. Run `node scripts/check-manifests.mjs --fix` so `packages/agents/apm.yml` lists the agent; update the `agents` row in `AGENTS.md`.
+10. Run `node scripts/check-manifests.mjs --fix` at the repo root: it syncs the `agents:` list of `packages/agents/apm.yml` with the `.apm/agents/*.agent.md` files (and every package's `skills:` list). Then update the `agents` row in `AGENTS.md`.
 11. Copy the changed file to `apmw/tests/fixtures/agents/` and regenerate the goldens there.
 
 ## Gotchas
