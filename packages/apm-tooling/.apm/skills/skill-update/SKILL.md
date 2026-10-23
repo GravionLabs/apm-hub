@@ -22,7 +22,7 @@ Paths to `scripts/`, `references/` and `assets/` are relative to this skill's di
    |---|---|
    | Name mismatch | Update `name` or rename the directory. |
    | Description issue | Make it imperative, specific, ≤ 1,024 chars. |
-   | Forbidden frontmatter key | Remove it; move annotations under `metadata:`. |
+   | Forbidden frontmatter key | Remove `compatibility`, `model`, `allowed-tools`; move the `chronicle-hints` value under `metadata:`. |
    | Body too long | Move reference material to `references/`, load it conditionally. |
    | Content belongs in assets | Move long templates to `assets/`. |
    | Content belongs in scripts | Extract a flag-based script with `--help`, stdout data, stderr diagnostics, non-zero exit on failure. |
