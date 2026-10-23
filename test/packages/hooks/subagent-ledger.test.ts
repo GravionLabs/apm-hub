@@ -1263,4 +1263,89 @@ describe('subagent-ledger hook', () => {
       }
     });
   });
+
+  describe('DROMOS_URL ingest', () => {
+    let bin: string;
+    let calls: string;
+    beforeEach(() => {
+      bin = path.join(dir, 'bin');
+      calls = path.join(dir, 'curl.log');
+      fs.mkdirSync(bin);
+      // fake curl: log the arguments and the body, exit with FAKE_CURL_EXIT
+      fs.writeFileSync(
+        path.join(bin, 'curl'),
+        `#!/bin/sh\nprintf '%s\\n' "$*" >> "${calls}"\ncat >> "${calls}"\nprintf '\\n' >> "${calls}"\nexit "\${FAKE_CURL_EXIT:-0}"\n`,
+        { mode: 0o755 }
+      );
+    });
+    const runWith = (payload: unknown, env: Record<string, string>) =>
+      spawnSync('bash', [SCRIPT], {
+        input: JSON.stringify(payload),
+        encoding: 'utf8',
+        env: cleanEnv({ AGENTS_LEDGER: '', PATH: `${bin}:${process.env.PATH}`, ...env }),
+      });
+    const posts = () =>
+      fs.existsSync(calls) ? fs.readFileSync(calls, 'utf8').trim().split('\n') : [];
+
+    it('makes no network call when DROMOS_URL is unset', () => {
+      withLedger();
+      const r = runWith({ cwd: dir, agent_type: 'implementer' }, { DROMOS_URL: '' });
+      expect(r.status).toBe(0);
+      expect(fs.existsSync(calls)).toBe(false);
+      expect(readLedger(ledger)).toContain('Subagent implementer: stopped');
+    });
+
+    it('posts the appended line to DROMOS_URL/ingest after the ledger write', () => {
+      withLedger();
+      const r = runWith(
+        { cwd: dir, agent_type: 'implementer', last_assistant_message: 'say "hi"' },
+        { DROMOS_URL: 'http://localhost:9/', DROMOS_AGENT_ID: 'agent-1' }
+      );
+      expect(r.status).toBe(0);
+      const [args, body] = posts();
+      expect(args).toContain('--max-time 0.5');
+      expect(args).toContain('http://localhost:9/ingest');
+      const msg = JSON.parse(body);
+      expect(msg).toMatchObject({
+        type: 'progress',
+        source: 'apm-hub/subagent-stop',
+        issue: 7,
+        agentId: 'agent-1',
+      });
+      expect(msg.data.agent).toBe('implementer');
+      expect(msg.data.line).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z Subagent implementer: stopped — say "hi"$/
+      );
+      expect(fs.readFileSync(ledger, 'utf8')).toContain(msg.data.line);
+    });
+
+    it('posts a duplicate stop once', () => {
+      withLedger();
+      const payload = {
+        cwd: dir,
+        agent_type: 'reviewer',
+        agent_id: 'a1',
+        last_assistant_message: 'ok',
+      };
+      runWith(payload, { DROMOS_URL: 'http://localhost:9' });
+      runWith(payload, { DROMOS_URL: 'http://localhost:9' });
+      expect(posts()).toHaveLength(2); // one call: args line + body line
+    });
+
+    it('keeps exit 0 and the ledger line when curl fails', () => {
+      withLedger();
+      const r = runWith(
+        { cwd: dir, agent_type: 'planner' },
+        { DROMOS_URL: 'http://localhost:9', FAKE_CURL_EXIT: '28' }
+      );
+      expect(r.status).toBe(0);
+      expect(readLedger(ledger)).toContain('Subagent planner: stopped');
+    });
+
+    it('posts nothing for an agent outside the orchestrator allowlist', () => {
+      withLedger();
+      runWith({ cwd: dir, agent_type: 'stranger' }, { DROMOS_URL: 'http://localhost:9' });
+      expect(fs.existsSync(calls)).toBe(false);
+    });
+  });
 });
