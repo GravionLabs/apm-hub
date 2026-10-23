@@ -15,7 +15,7 @@ The issue section of the package already holds the PBI body and the Task sub-iss
 
 ## Brief
 
-Check each invariant in the issue section (`## Invariants` of the PBI and its Tasks) and in `## Invariants (plan)` against the diff. A violated invariant is HIGH. `evidence` quotes the invariant and the diff line that violates it; `file`/`line` point at that diff line.
+Check each invariant in the issue section (`## Invariants` of the PBI and its Tasks) and in `## Invariants (plan)` against the diff. A violated invariant is HIGH. `evidence` quotes the invariant and the diff line that violates it; `file`/`line` point at that diff line. An invariant violated by omission (nothing in the diff to point at) uses the closest changed file and its first changed line, else the placeholder `file` = the package path, `line` = 1; never an empty `file` or a `line` below 1.
 
 No `## Invariants` anywhere in the package: the brief and the findings are unchanged (bugs, edge cases, error handling, races).
 

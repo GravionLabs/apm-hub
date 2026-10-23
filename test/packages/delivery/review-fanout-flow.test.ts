@@ -86,7 +86,7 @@ describe('review-fanout: early verify (#452)', () => {
 
 describe('review-fanout: correctness checks invariants (#485)', () => {
   it('step 1 appends plan.json invariants of items without a Task issue under Invariants (plan)', () => {
-    expect(fanout).toMatch(/When `<state>\/<issue>\/plan\.json` exists, also append the `## Invariants` section of each item that has one and no matching Task issue under `## Invariants \(plan\)`/);
+    expect(fanout).toMatch(/append the plan invariants as `references\/correctness-dimension\.md` describes/);
     expect(fanout).toContain('references/correctness-dimension.md');
     expect(correctness).toMatch(/items\[\]\.issue` null, or its number is not among the Task sub-issues/);
     expect(correctness).toContain('"## Invariants (plan)" >> <package>');
@@ -107,6 +107,31 @@ describe('review-fanout: correctness checks invariants (#485)', () => {
   it('without an Invariants section brief and findings stay unchanged', () => {
     expect(fanout).toMatch(/no `## Invariants` section: unchanged/);
     expect(correctness).toMatch(/No `## Invariants` anywhere in the package: the brief and the findings are unchanged/);
+  });
+
+  it('selection rule on a sample plan: only items with Invariants and no matching Task issue are appended', () => {
+    // rule as documented in correctness-dimension.md: has `## Invariants`, and `issue` null or not among Task sub-issues
+    const select = (items: { id: string; body: string; issue: number | null }[], tasks: number[]) =>
+      items.filter((i) => /^## Invariants$/m.test(i.body) && (i.issue === null || !tasks.includes(i.issue))).map((i) => i.id);
+    const items = [
+      { id: 't1', body: 'x\n## Invariants\n- a', issue: null },
+      { id: 't2', body: 'x\n## Invariants\n- b', issue: 11 },
+      { id: 't3', body: 'x\n## Invariants\n- c', issue: 99 },
+      { id: 't4', body: 'no section', issue: null },
+    ];
+    expect(select(items, [11])).toEqual(['t1', 't3']);
+    expect(select(items, [])).toEqual(['t1', 't2', 't3']);
+    expect(select([], [11])).toEqual([]);
+    expect(correctness).toMatch(/has no `## Invariants`|each item whose body has one/);
+  });
+
+  it('invariant violated by omission gets a valid location fallback', () => {
+    expect(correctness).toMatch(/violated by omission[^\n]*closest changed file[^\n]*placeholder `file` = the package path, `line` = 1/);
+  });
+
+  it('"no spec available" sentence precedes the plan append, which also applies in a re-review', () => {
+    expect(fanout.indexOf('no spec available" as advisory')).toBeLessThan(fanout.indexOf('plan invariants'));
+    expect(fanout).toMatch(/also in a re-review\) and `<state>\/<issue>\/plan\.json` present/);
   });
 
   it('SKILL.md stays within 100 lines', () => {
