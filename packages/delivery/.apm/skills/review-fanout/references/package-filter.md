@@ -33,17 +33,17 @@ docs/*-list.md
 
 ## Documentation section
 
-Documentation hunks leave the code section and form a trailing `## Documentation` section (last in the package, after the issue and invariants sections). `correctness`, `security` and `tests` stop reading at that heading; `spec` and `conventions` read it. No documentation hunks: no heading. Patterns, one per line (the filter list above still applies):
+Documentation hunks leave the code section and form a trailing section opened by the marker line `=== DOCUMENTATION ===` (alone on its line, column 0; unlike a markdown heading it cannot collide with issue text), last in the package, after the issue and invariants sections. `correctness`, `security` and `tests` stop reading at the marker; `spec` and `conventions` read it. No documentation hunks: no marker. Patterns, one per line, used as git `:(glob)` pathspecs (`**/` also matches zero directories, so top-level files match; the filter list above still applies):
 
 ```text
 docs/**/*.md
 CHANGELOG.md
-README*.md
-site/**
+**/README*.md
+site/**/*.md
 ```
 
-The code section excludes them with `':!<pattern>'`; the section itself is `git diff -U3 <range> -- <pattern>...`.
+The code section excludes them with `':(exclude,glob)<pattern>'`; the section itself is `git diff -U3 <range> -- ':(glob)<pattern>'...`.
 
 ## Package size
 
-Report `package {bytes, tokensEstimated, hunks, docsHunks}`: `bytes` is the package file length, `tokensEstimated` = ceil(bytes / 4) (an estimate), `hunks` counts `^@@` lines in the code section, `docsHunks` in the Documentation section. Above 15000 estimated tokens (default, a caller may pass another threshold) add `oversize: {threshold, largest: [{file, bytes}]}` with the 3 largest files (from per-file diff byte counts) and the line `package ~<n>k tokens > 15k — largest: <files>`. The package is never split automatically.
+Report `package {bytes, tokensEstimated, hunks, docsHunks}`: `bytes` is the package file length, `tokensEstimated` = ceil(bytes / 4) (an estimate), `hunks` counts `^@@` lines in the code section, `docsHunks` in the Documentation section. Above 15000 estimated tokens (default, a caller may pass another threshold) add `oversize: {threshold, largest: [{file, bytes}]}` with the 3 largest files (from per-file diff byte counts) and the line `package ~<n>k tokens > 15k — largest: <files>`. `pwsh scripts/Get-PackageSize.ps1 -Path <package> [-Threshold n]` prints these fields as JSON. The package is never split automatically.

@@ -69,9 +69,7 @@ describe('review-lead agent contract', () => {
       '"line"',
       '"title"',
       '"blocking"',
-      '"packageTokens"',
-      '"oversize"',
-      '"package"',
+      '"packageFile"',
       '"review"',
     ]) {
       expect(body).toContain(key);
@@ -80,6 +78,17 @@ describe('review-lead agent contract', () => {
     expect(body).toContain('<state>/<issue>/review.json');
     expect(body).toMatch(/one JSON object and nothing else, at most 300 words/);
     expect(body).toMatch(/"error"/);
+  });
+
+  it('reply object names packageTokens, oversize and packageFile as keys, package stays the review.json object', () => {
+    const reply = /`(\{"verdict"[^`]*)`/.exec(body)?.[1] ?? '';
+    const keys = [...reply.matchAll(/"(\w+)":/g)].map((m) => m[1]);
+    expect(keys).toEqual(
+      expect.arrayContaining(['packageTokens', 'oversize', 'packageFile', 'review'])
+    );
+    expect(keys).not.toContain('package');
+    expect(reply).toMatch(/"packageTokens": <package\.tokensEstimated>/);
+    expect(reply).toMatch(/"oversize": "<one line, only above the threshold>"/);
   });
 
   it('takes range, issue and context.md and dispatches only reviewer and the verify sub-agent', () => {

@@ -243,7 +243,7 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
 - Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
 - Reviews read a package file (`<state>/<issue>/review-<n>.diff`: commit list, stat, `git diff -U3`)
   written by `review-fanout`; the diff is never pasted into a prompt, so it does not repeat per dimension.
-  Documentation hunks (`docs`, `CHANGELOG.md`, `README*.md`, `site`) form a trailing `## Documentation` section that only
+  Documentation hunks (`docs`, `CHANGELOG.md`, `README*.md`, `site`) form a trailing `=== DOCUMENTATION ===` section that only
   `spec` and `conventions` read. `review.json` records `package {bytes, tokensEstimated, hunks, docsHunks}`; above 15k
   estimated tokens a size note names the largest files (the package is never split).
 - `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec`. `correctness`

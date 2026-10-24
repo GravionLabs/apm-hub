@@ -7,6 +7,7 @@ export const scriptsTests = [
   'test/packages/delivery/apm-install.test.ts',
   'test/packages/delivery/queue.fast.test.ts',
   'test/packages/delivery/review-fanout-classify.test.ts',
+  'test/packages/delivery/review-fanout-package.test.ts',
   'test/packages/delivery/run-metrics.test.ts',
   'test/packages/github/add-ledger-line.test.ts',
   'test/packages/github/checkout-marker.test.ts',
