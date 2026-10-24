@@ -51,7 +51,7 @@ apm install delivery@apm-hub   # pulls in github, shared and the language packag
    Plan issue #42.
    ```
 
-   `issue-planning` explores the codebase and plans one level down (Epic to Features, Feature to PBIs, PBI to internal tasks) with `blocked_by`, size and model hints. It only writes `<state>/<issue>/plan.json` and `plan.md`; after you approve, the primary agent creates the issues with native sub-issue and blocked-by links.
+   `issue-planning` explores the codebase and plans one level down (Epic to Features, Feature to PBIs, PBI to internal tasks) with `blocked_by`, size and model tier. It only writes `<state>/<issue>/plan.json` and `plan.md`; after you approve, the primary agent creates the issues with native sub-issue and blocked-by links.
 
 2. **Run the orchestrated pipeline**
 

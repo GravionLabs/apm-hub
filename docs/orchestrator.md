@@ -113,7 +113,7 @@ sequenceDiagram
     O->>U: plan gate, grilling, approval
     U-->>O: approved
     loop each Task in blocking order
-        O->>I: Task issue, branch, path of context.md, model hint, report path
+        O->>I: Task issue, branch, path of context.md, tier, report path
         I-->>O: Status DONE, 15 lines or less
     end
     O->>L: range, issue, path of context.md (inline review-fanout where nesting is unsupported)
@@ -184,12 +184,14 @@ flowchart TD
     C -->|"CHANGES_REQUESTED"| D
     D --> E{"Blocking or<br/>selected advisories?"}
     E -->|"no"| PR["Pull request<br/>unselected advisories in the body"]
-    E -->|"yes"| F["Fix round 1 and 2<br/>resume the same implementer"]
+    E -->|"yes"| F["Fix round 1<br/>resume the same implementer"]
     F --> G["Re-review"]
     G --> C
-    F -->|"still blocked"| H["Fix round 3<br/>fresh implementer, one tier up"]
+    F -->|"blocking again"| H["Fix round 2<br/>fresh implementer, one tier up"]
     H --> G
-    H -->|"still blocked"| Q(["Ask you"])
+    H -->|"blocking again"| J["Fix round 3<br/>resume the escalated implementer"]
+    J --> G
+    J -->|"still blocked"| Q(["Ask you"])
 ```
 
 A failed dimension makes the review `incomplete` and the verdict `CHANGES_REQUESTED`: the review fails closed. The review summary and the question about advisories can be switched off with `--no-review-summary`; then only blocking findings are fixed and all advisories go to the PR body. `--fix-advisories none|medium|all[:dim,dim]` answers the question up front: `none` sends all advisories to the PR body, `medium` fixes MEDIUM and above, `all` fixes every advisory, `:dim,dim` restricts the policy to those review dimensions.
@@ -203,7 +205,7 @@ These always go to you; the orchestrator never decides them itself.
 | Plan | after the planner, before issues are created |
 | Open questions | grilling per `issue-planning` |
 | Advisories | after the review summary, unless `--fix-advisories` sets the policy |
-| Blocked review | fix round 3 still blocked |
+| Blocked review | still blocked after fix round 3 (round 2 escalated one tier on a blocking finding) |
 | Failed tests | the suite is red twice on a task, or Final-Verify is red twice |
 
 A gate and a ruling look alike but differ:
@@ -442,7 +444,8 @@ The last line is a fixed closing line saying the ledger is complete and that the
 
 ## Models and cost
 
-- Claude Code passes `model` on every `Agent` call. `issue-reader` and `explorer` run on haiku, `planner` runs on opus, `implementer` defaults to sonnet and gets opus for integration and design tasks, no dispatch inherits the main model, `review-lead` and `reviewer` run on sonnet.
+- Claude Code passes `model` on every `Agent` call, chosen by tier (`fast` haiku, `standard` sonnet, `strong` opus) per the [model policy](../packages/github/.apm/skills/github-issue/references/model-policy.md). `issue-reader` and `explorer` run on `fast`, `planner` on `strong`, `implementer` defaults to `standard` and gets the `tier` of its plan item (`strong` for integration and design tasks), `review-lead` and `reviewer` run on `standard`. No dispatch inherits the main model. After a second blocking `CHANGES_REQUESTED` on a task (fix round 2) a fresh implementer runs one tier up; advisory-only rounds never escalate.
+- Per-dispatch tiers are Claude-only. OpenCode and Copilot CLI take the model from the agent file and run every dispatch at its tier until `apmw sanitize` generates the `implementer-strong` and `reviewer-strong` variants.
 - Runner mode (Claude Code loop): `pbi-runner` is pinned to sonnet, `planner` runs on opus and verify on haiku, so the primary runs on sonnet (see the measured cost below). Primary growth per PBI is not yet measured; target under 3k tokens, procedure and the `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` requirement (3) in [Looping with `loop`](#looping-with-loop).
 - A cheaper model that needs two or three times the turns costs more. Sonnet is the floor for prose-only tasks.
 - Default and override: the `orchestrator` agent file pins sonnet. A stronger main thread is set explicitly: `claude --model <id> --agent orchestrator`; OpenCode: `opencode --model <provider/id>` or the `model` of the agent file; Copilot CLI: the session model (`--model`, `/model`), the agent file sets none. Details in [Working mode](working-mode.md#model-of-the-main-thread).
