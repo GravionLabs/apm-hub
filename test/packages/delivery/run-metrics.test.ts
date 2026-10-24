@@ -475,9 +475,24 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       expect(json.tasks[0]).toMatchObject({ fixRounds: 1, escalated: true, escalatedTo: 'opus' });
     });
 
-    it('escalates a task at fix round 3 even on the same model', async () => {
+    it('escalates at fix round 2 when the model changes', async () => {
+      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 1 (#1): x — model sonnet', 'Fix round 2 (#1): x — model opus']);
+      expect(json.tasks[0]).toMatchObject({ fixRounds: 2, escalated: true, escalatedTo: 'opus' });
+    });
+
+    it('does not escalate a round 2 resume on the same model', async () => {
+      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 2 (#1): x — model sonnet']);
+      expect(json.tasks[0]).toMatchObject({ escalated: false, escalatedTo: null });
+    });
+
+    it('does not escalate a round 3 line that names the same model', async () => {
       const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 3 (#1): x — model sonnet']);
-      expect(json.tasks[0]).toMatchObject({ fixRounds: 1, escalated: true });
+      expect(json.tasks[0]).toMatchObject({ escalated: false });
+    });
+
+    it('escalates a legacy fix round 3 without a model', async () => {
+      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 3 (#1): x']);
+      expect(json.tasks[0]).toMatchObject({ escalated: true, escalatedTo: null });
     });
 
     it('does not escalate on fix rounds 1-2 with the same model', async () => {

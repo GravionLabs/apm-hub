@@ -314,9 +314,11 @@ if ($Ledger -and (Test-Path $Ledger)) {
       else {
         $t = $taskMap[$target]; $t.fixRounds++
         $fm = Get-LedgerModel $line
-        # Escalation: a fix round on a different named model than the Task line (`inherit` is not a model name), or fix round >= 3 (fresh implementer one tier up).
-        $named = $fm -and $t.model -and $fm -ne 'inherit' -and $t.model -ne 'inherit'
-        if ($round -ge 3 -or ($named -and $fm -ne $t.model)) { $t.escalated = $true; if ($fm -and $fm -ne 'inherit') { $t.escalatedTo = $fm } }
+        # Escalation: the fix round line names a different model than the Task line (new ledgers, escalation at fix round 2).
+        # Legacy ledgers (fix line without a model, or `inherit`) escalated at fix round >= 3: keep that check for them only.
+        $fmNamed = $fm -and $fm -ne 'inherit'
+        $changed = $fmNamed -and $t.model -and $t.model -ne 'inherit' -and $fm -ne $t.model
+        if ($changed -or (-not $fmNamed -and $round -ge 3)) { $t.escalated = $true; if ($fmNamed) { $t.escalatedTo = $fm } }
       }
     }
     elseif ($line -match '^\s*(?:[-*]\s+)?Fix round\b') { $fix++; $unattributed++; $fixList.Add([ordered]@{ round = $null; task = $null; seconds = (Get-Span $prevMark $ts) }); $prevMark = $ts }
