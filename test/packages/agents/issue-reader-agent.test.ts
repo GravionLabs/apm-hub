@@ -1,7 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const agentPath = path.resolve(__dirname, '../../../packages/agents/.apm/agents/issue-reader.agent.md');
+const agentPath = path.resolve(
+  __dirname,
+  '../../../packages/agents/.apm/agents/issue-reader.agent.md'
+);
 const source = fs.readFileSync(agentPath, 'utf-8');
 const frontmatter = source.match(/^---\n([\s\S]*?)\n---\n/)![1];
 const body = source.replace(/^---\n[\s\S]*?\n---\n/, '');
@@ -26,12 +29,16 @@ describe('issue-reader agent contract', () => {
     expect(allowed).toContain('gh api *');
     expect(allowed).toContain('git fetch origin release/*');
     for (const rule of allowed) {
-      expect(rule).not.toMatch(/gh issue (close|edit|create|comment)|git (push|commit|checkout|reset|symbolic-ref)/);
+      expect(rule).not.toMatch(
+        /gh issue (close|edit|create|comment)|git (push|commit|checkout|reset|symbolic-ref)/
+      );
       expect(rule).not.toMatch(/^git (fetch|log|ls-remote)\*/); // no free glob right after the subcommand
     }
     // OpenCode: the last matching rule wins, so the catch-all deny comes first and the gh api denies last (planner order)
     expect(rules[0]).toEqual(['*', 'deny']);
-    expect(rules.findIndex(([k]) => k === 'gh api *')).toBeLessThan(rules.findIndex(([k]) => k === 'gh api*-X*'));
+    expect(rules.findIndex(([k]) => k === 'gh api *')).toBeLessThan(
+      rules.findIndex(([k]) => k === 'gh api*-X*')
+    );
     expect(bash).toContain('"gh api*-X*": deny');
     expect(bash).toContain('"gh api*graphql*": deny');
   });
@@ -45,7 +52,9 @@ describe('issue-reader agent contract', () => {
   });
 
   it('saves the issue body through a gh redirect and allows only that write path', () => {
-    expect(body).toContain(`gh issue view <nr> --json title,body --jq '"# "+.title+"\\n\\n"+.body' > <state>/<nr>/issue.md`);
+    expect(body).toContain(
+      `gh issue view <nr> --json title,body --jq '"# "+.title+"\\n\\n"+.body' > <state>/<nr>/issue.md`
+    );
     expect(body).toMatch(/never retyped/);
     expect(frontmatter).toContain('"gh issue view * > .git/agents/*/issue.md": allow');
     expect(frontmatter).toContain('"mkdir -p .git/agents/*": allow');
@@ -60,7 +69,9 @@ describe('issue-reader agent contract', () => {
   });
 
   it('states the JSON contract, the error shape and branch-only mode', () => {
-    expect(body).toMatch(/"issue": <nr>, "type", "title", "digest", "file": "<state>\/<nr>\/issue\.md", "branch", "stale"\?, "bug", "parent", "tasks": \[\{"n", "state", "merged", "sha"\?\}\], "ledger": "none\|resume"/);
+    expect(body).toMatch(
+      /"issue": <nr>, "type", "title", "digest", "file": "<state>\/<nr>\/issue\.md", "branch", "stale"\?, "bug", "parent", "tasks": \[\{"n", "state", "merged", "sha"\?\}\], "ledger": "none\|resume"/
+    );
     expect(body).toMatch(/`release\/next` if it exists, else the highest `release\/<x\.y>`/);
     expect(body).toMatch(/\{"error": "<first error line>"\}/);
     expect(body).toMatch(/\{"issue": null, "branch": "<branch>"\}/);

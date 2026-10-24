@@ -6,7 +6,10 @@ import * as path from 'path';
 import { PwshWorker } from '../../helpers/pwsh-worker';
 import { readLedger, gitCleanEnv } from '../hooks/ledger-test-helpers';
 
-const SCRIPT = path.resolve(__dirname, '../../../packages/github/.apm/skills/github-issue/scripts/Add-LedgerLine.ps1');
+const SCRIPT = path.resolve(
+  __dirname,
+  '../../../packages/github/.apm/skills/github-issue/scripts/Add-LedgerLine.ps1'
+);
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
 it('pwsh is installed in CI (the Add-LedgerLine cases must not be skipped there)', () => {
@@ -68,11 +71,14 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Issue', () => {
     expect(fs.statSync(path.join(dir, '.agents', 'loop-308')).isDirectory()).toBe(true);
   });
 
-  it.each(['loop-0', 'loop-x', 'loop-', 'loop-01', '../x', '0', '12345678901', 'loop-12345678901'])('rejects %s', async (issue) => {
-    const r = await run(issue, 'x');
-    expect(r.status).toBe(1);
-    expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
-  });
+  it.each(['loop-0', 'loop-x', 'loop-', 'loop-01', '../x', '0', '12345678901', 'loop-12345678901'])(
+    'rejects %s',
+    async (issue) => {
+      const r = await run(issue, 'x');
+      expect(r.status).toBe(1);
+      expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
+    }
+  );
 
   it('refuses a symlinked progress.md', async () => {
     const target = path.join(dir, 'target.md');
@@ -90,11 +96,19 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Issue', () => {
     const plant = (name: string, issue: number) => {
       fs.mkdirSync(leases(), { recursive: true });
       const old = '2026-01-01T00:00:00Z';
-      const body = JSON.stringify({ path: `/r/${name}`, issue, branch: `feat/${issue}`, host: 'h', started: old, heartbeat: old });
+      const body = JSON.stringify({
+        path: `/r/${name}`,
+        issue,
+        branch: `feat/${issue}`,
+        host: 'h',
+        started: old,
+        heartbeat: old,
+      });
       fs.writeFileSync(path.join(leases(), `${name}.json`), body);
       return body;
     };
-    const read = (name: string) => JSON.parse(fs.readFileSync(path.join(leases(), `${name}.json`), 'utf8'));
+    const read = (name: string) =>
+      JSON.parse(fs.readFileSync(path.join(leases(), `${name}.json`), 'utf8'));
 
     it('renews the heartbeat of the lease held by -Issue and leaves the others and the other fields alone', async () => {
       plant('aaaaaaaaaaaaaaaa', 42);
@@ -103,9 +117,18 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Issue', () => {
       expect((await run('42', 'x')).status).toBe(0);
       const l = read('aaaaaaaaaaaaaaaa');
       expect(Date.parse(l.heartbeat)).toBeGreaterThan(before - 5000);
-      expect(l).toMatchObject({ path: '/r/aaaaaaaaaaaaaaaa', issue: 42, branch: 'feat/42', host: 'h', started: '2026-01-01T00:00:00Z' });
+      expect(l).toMatchObject({
+        path: '/r/aaaaaaaaaaaaaaaa',
+        issue: 42,
+        branch: 'feat/42',
+        host: 'h',
+        started: '2026-01-01T00:00:00Z',
+      });
       expect(fs.readFileSync(path.join(leases(), 'bbbbbbbbbbbbbbbb.json'), 'utf8')).toBe(other);
-      expect(fs.readdirSync(leases()).sort()).toEqual(['aaaaaaaaaaaaaaaa.json', 'bbbbbbbbbbbbbbbb.json']);
+      expect(fs.readdirSync(leases()).sort()).toEqual([
+        'aaaaaaaaaaaaaaaa.json',
+        'bbbbbbbbbbbbbbbb.json',
+      ]);
     });
 
     it('does nothing without a lease and without a -Line', async () => {
@@ -145,9 +168,14 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   });
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-  const run = (...args: string[]) => worker.run(args, { cwd: dir, env: gitCleanEnv(process.env, { DROMOS_STATE_DIR: path.join(dir, '.agents') }) });
+  const run = (...args: string[]) =>
+    worker.run(args, {
+      cwd: dir,
+      env: gitCleanEnv(process.env, { DROMOS_STATE_DIR: path.join(dir, '.agents') }),
+    });
   /** Marker of this checkout: <state>/current.d/<first 16 hex of the SHA-256 of the checkout path> (same key as the lease). */
-  const keyOf = (checkout: string) => createHash('sha256').update(checkout, 'utf8').digest('hex').slice(0, 16);
+  const keyOf = (checkout: string) =>
+    createHash('sha256').update(checkout, 'utf8').digest('hex').slice(0, 16);
   const marker = () => path.join(dir, '.agents', 'current.d', keyOf(fs.realpathSync(dir)));
   const legacyMarker = () => path.join(dir, '.agents', 'current');
   const plant = (content: string) => {
@@ -155,8 +183,26 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     fs.writeFileSync(marker(), content);
   };
   const repo = (branch: string) => {
-    for (const a of [['init', '-q'], ['symbolic-ref', 'HEAD', `refs/heads/${branch}`], ['commit', '-q', '--allow-empty', '-m', 'init']]) {
-      const r = spawnSync('git', ['-C', dir, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a], { encoding: 'utf8', env: gitCleanEnv(process.env) });
+    for (const a of [
+      ['init', '-q'],
+      ['symbolic-ref', 'HEAD', `refs/heads/${branch}`],
+      ['commit', '-q', '--allow-empty', '-m', 'init'],
+    ]) {
+      const r = spawnSync(
+        'git',
+        [
+          '-C',
+          dir,
+          '-c',
+          'user.email=t@t',
+          '-c',
+          'user.name=t',
+          '-c',
+          'commit.gpgsign=false',
+          ...a,
+        ],
+        { encoding: 'utf8', env: gitCleanEnv(process.env) }
+      );
       if (r.status !== 0) throw new Error(`git ${a.join(' ')} failed: ${r.stderr}`);
     }
   };
@@ -183,8 +229,13 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
 
   it('writes the PBI ledger line first when -Line is given too', async () => {
     withLoop('# loop\n', false);
-    expect((await run('-Issue', '9', '-Line', '# orchestrator ledger — issue #9', '-Bind', 'loop-5')).status).toBe(0);
-    expect(readLedger(path.join(dir, '.agents', '9', 'progress.md'))).toBe('# orchestrator ledger — issue #9\n');
+    expect(
+      (await run('-Issue', '9', '-Line', '# orchestrator ledger — issue #9', '-Bind', 'loop-5'))
+        .status
+    ).toBe(0);
+    expect(readLedger(path.join(dir, '.agents', '9', 'progress.md'))).toBe(
+      '# orchestrator ledger — issue #9\n'
+    );
     expect(readLedger(marker())).toBe('9 loop-5\n');
   });
 
@@ -196,20 +247,26 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     expect(readLedger(loopLedger()).trimEnd().split('\n').pop()).toBe('Loop: PBI #9 started');
   });
 
-  it.each(['adhoc', 'loop-5', '09', '0', 'x'])('rejects -Issue %s with -Bind and writes no marker', async (issue) => {
-    withLoop();
-    const r = await run('-Issue', issue, '-Bind', 'loop-5');
-    expect(r.status).toBe(1);
-    expect(fs.existsSync(marker())).toBe(false);
-    expect(readLedger(loopLedger())).toBe('# loop\n');
-  });
+  it.each(['adhoc', 'loop-5', '09', '0', 'x'])(
+    'rejects -Issue %s with -Bind and writes no marker',
+    async (issue) => {
+      withLoop();
+      const r = await run('-Issue', issue, '-Bind', 'loop-5');
+      expect(r.status).toBe(1);
+      expect(fs.existsSync(marker())).toBe(false);
+      expect(readLedger(loopLedger())).toBe('# loop\n');
+    }
+  );
 
-  it.each(['5', 'loop-0', 'loop-05', 'loop-x', '../loop-5', 'loop-5/x', ''])('rejects -Bind %s', async (bind) => {
-    withLoop();
-    const r = await run('-Issue', '9', '-Bind', bind);
-    expect(r.status).toBe(1);
-    expect(fs.existsSync(marker())).toBe(false);
-  });
+  it.each(['5', 'loop-0', 'loop-05', 'loop-x', '../loop-5', 'loop-5/x', ''])(
+    'rejects -Bind %s',
+    async (bind) => {
+      withLoop();
+      const r = await run('-Issue', '9', '-Bind', bind);
+      expect(r.status).toBe(1);
+      expect(fs.existsSync(marker())).toBe(false);
+    }
+  );
 
   it('refuses to bind without a loop ledger', async () => {
     const r = await run('-Issue', '9', '-Bind', 'loop-5');
@@ -314,7 +371,9 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
     const r = await run('-Unbind');
     expect(r.status).toBe(1);
     expect(r.stderr + r.stdout).toMatch(/symlinked/);
-    expect(readLedger(path.join(real, 'current.d', keyOf(fs.realpathSync(dir))))).toBe('9 loop-5\n');
+    expect(readLedger(path.join(real, 'current.d', keyOf(fs.realpathSync(dir))))).toBe(
+      '9 loop-5\n'
+    );
   });
 
   it('-Unbind leaves a directory named current alone and exits 0', async () => {
@@ -340,7 +399,10 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   });
 
   it('writes the two-field marker in a directory outside any repository', async () => {
-    expect(spawnSync('git', ['-C', dir, 'rev-parse', '--git-dir'], { env: gitCleanEnv(process.env) }).status).not.toBe(0);
+    expect(
+      spawnSync('git', ['-C', dir, 'rev-parse', '--git-dir'], { env: gitCleanEnv(process.env) })
+        .status
+    ).not.toBe(0);
     withLoop();
     const r = await run('-Issue', '9', '-Bind', 'loop-5');
     expect(r.status).toBe(0);
@@ -351,12 +413,27 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 -Bind / -Unbind (loop marker, #375
   it('writes the two-field marker when git is not on the PATH', () => {
     repo('fix/12-x');
     withLoop();
-    const pwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '(Get-Process -Id $PID).Path'], { encoding: 'utf8' }).stdout.trim();
+    const pwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '(Get-Process -Id $PID).Path'], {
+      encoding: 'utf8',
+    }).stdout.trim();
     const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'addledger-nogit-'));
     try {
-      const env = { ...gitCleanEnv(process.env, { DROMOS_STATE_DIR: path.join(dir, '.agents') }), PATH: bin };
-      expect(spawnSync(pwsh, ['-NoProfile', '-Command', 'if (Get-Command git -ErrorAction Ignore) { exit 1 }'], { env }).status).toBe(0);
-      const r = spawnSync(pwsh, ['-NoProfile', '-File', SCRIPT, '-Issue', '9', '-Bind', 'loop-5'], { cwd: dir, encoding: 'utf8', env });
+      const env = {
+        ...gitCleanEnv(process.env, { DROMOS_STATE_DIR: path.join(dir, '.agents') }),
+        PATH: bin,
+      };
+      expect(
+        spawnSync(
+          pwsh,
+          ['-NoProfile', '-Command', 'if (Get-Command git -ErrorAction Ignore) { exit 1 }'],
+          { env }
+        ).status
+      ).toBe(0);
+      const r = spawnSync(pwsh, ['-NoProfile', '-File', SCRIPT, '-Issue', '9', '-Bind', 'loop-5'], {
+        cwd: dir,
+        encoding: 'utf8',
+        env,
+      });
       expect(r.status).toBe(0);
       expect(readLedger(marker())).toBe('9 loop-5\n');
     } finally {
@@ -433,7 +510,11 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 state directory (#402)', () => {
     return env;
   };
   const git = (cwd: string, ...a: string[]) => {
-    const r = spawnSync('git', ['-C', cwd, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a], { encoding: 'utf8', env: cleanEnv() });
+    const r = spawnSync(
+      'git',
+      ['-C', cwd, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a],
+      { encoding: 'utf8', env: cleanEnv() }
+    );
     if (r.status !== 0) throw new Error(`git ${a.join(' ')} failed: ${r.stderr}`);
   };
   const run = (cwd: string, extra: Record<string, string> = {}, ...args: string[]) =>
@@ -492,7 +573,9 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 state directory (#402)', () => {
   it('exits 1 with a message outside a repository without DROMOS_STATE_DIR', async () => {
     const r = await run(main);
     expect(r.status).toBe(1);
-    expect(r.stderr + r.stdout).toMatch(/No state directory: not inside a git repository \(set DROMOS_STATE_DIR\)/);
+    expect(r.stderr + r.stdout).toMatch(
+      /No state directory: not inside a git repository \(set DROMOS_STATE_DIR\)/
+    );
   });
 
   it('refuses a symlinked state directory', async () => {

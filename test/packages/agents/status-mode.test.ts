@@ -12,9 +12,16 @@ const section = (text: string, heading: string) => text.split(`## ${heading}`)[1
 describe('status.md: status table rules', () => {
   it('lists the six states in precedence order', () => {
     const states = section(status, 'States');
-    const order = ['`merged`', '`pr-open #<n>`', '`needs-decision`', '`blocked by #<a>, #<b>`', '`in progress (<detail>)`', '`open`'];
-    const idx = order.map(s => states.indexOf(s));
-    expect(idx.every(i => i >= 0)).toBe(true);
+    const order = [
+      '`merged`',
+      '`pr-open #<n>`',
+      '`needs-decision`',
+      '`blocked by #<a>, #<b>`',
+      '`in progress (<detail>)`',
+      '`open`',
+    ];
+    const idx = order.map((s) => states.indexOf(s));
+    expect(idx.every((i) => i >= 0)).toBe(true);
     expect([...idx].sort((a, b) => a - b)).toEqual(idx);
   });
 
@@ -50,7 +57,7 @@ describe('status.md: status table rules', () => {
 const orchestrator = read('packages/agents/.apm/agents/orchestrator.agent.md');
 const agentBody = orchestrator.split(/^---$/m).slice(2).join('---');
 const agentDescription = /^description: (.*)$/m.exec(orchestrator)![1];
-const statusRule = agentBody.split('\n').find(l => l.startsWith('`status <feature|epic>`')) ?? '';
+const statusRule = agentBody.split('\n').find((l) => l.startsWith('`status <feature|epic>`')) ?? '';
 const launcher = read('packages/agents/.apm/skills/orchestrator/SKILL.md');
 
 describe('status mode word: orchestrator agent', () => {
@@ -82,7 +89,9 @@ describe('status mode word: orchestrator agent', () => {
   });
 
   it('rejects a PBI or a description', () => {
-    expect(statusRule).toMatch(/A PBI or a description: say `status` needs a Feature or Epic number and stop/);
+    expect(statusRule).toMatch(
+      /A PBI or a description: say `status` needs a Feature or Epic number and stop/
+    );
     expect(agentBody).toMatch(/`next` takes none, nor does `loop` or `status`: say so and stop/);
   });
 });

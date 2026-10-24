@@ -11,7 +11,12 @@ describe.skipIf(!hasPwsh)('Exit-Checkout.ps1', () => {
     f = makeRepo();
   });
   afterEach(() => fs.rmSync(f.root, { recursive: true, force: true }));
-  const enter = (issue: string) => run('Enter-Checkout.ps1', ['-Issue', issue, '-Branch', `feat/${issue}`, '-Base', 'main'], f.repo);
+  const enter = (issue: string) =>
+    run(
+      'Enter-Checkout.ps1',
+      ['-Issue', issue, '-Branch', `feat/${issue}`, '-Base', 'main'],
+      f.repo
+    );
   const exit = (issue: string, cwd = f.repo) => run('Exit-Checkout.ps1', ['-Issue', issue], cwd);
   const wt = (n: string) => path.join(f.repo, '.worktrees', n);
   /** issue 3 holds the main checkout, so issue 7 gets a worktree */
@@ -24,7 +29,13 @@ describe.skipIf(!hasPwsh)('Exit-Checkout.ps1', () => {
     busy();
     const r = exit('7');
     expect(r.status).toBe(0);
-    expect(json(r)).toMatchObject({ released: true, path: wt('7'), worktree: true, removed: true, kept: null });
+    expect(json(r)).toMatchObject({
+      released: true,
+      path: wt('7'),
+      worktree: true,
+      removed: true,
+      kept: null,
+    });
     expect(fs.existsSync(wt('7'))).toBe(false);
     expect(readLeases(f.state).map((l) => l.issue)).toEqual([3]);
   });
@@ -51,7 +62,13 @@ describe.skipIf(!hasPwsh)('Exit-Checkout.ps1', () => {
     fs.appendFileSync(path.join(f.repo, 'a.txt'), 'work\n');
     const r = exit('7');
     expect(r.status).toBe(0);
-    expect(json(r)).toMatchObject({ released: true, path: f.repo, worktree: false, removed: false, kept: null });
+    expect(json(r)).toMatchObject({
+      released: true,
+      path: f.repo,
+      worktree: false,
+      removed: false,
+      kept: null,
+    });
     expect(readLeases(f.state)).toEqual([]);
     expect(git(f.repo, 'rev-parse', '--abbrev-ref', 'HEAD')).toBe('feat/7');
     expect(fs.readFileSync(path.join(f.repo, 'a.txt'), 'utf8')).toBe('a\nwork\n');

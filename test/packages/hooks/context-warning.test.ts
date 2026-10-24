@@ -39,7 +39,8 @@ describe('context-warning hook', () => {
     return { code: r.status, out: r.stdout.trim(), err: r.stderr.trim() };
   };
 
-  const resetState = () => fs.rmSync(path.join(dir, `claude-context-warning-${session}`), { force: true });
+  const resetState = () =>
+    fs.rmSync(path.join(dir, `claude-context-warning-${session}`), { force: true });
 
   const run = (transcript: string, env: Record<string, string> = {}) =>
     runRaw(JSON.stringify({ transcript_path: transcript, session_id: session }), env);
@@ -49,8 +50,11 @@ describe('context-warning hook', () => {
     const bin = path.join(dir, 'bin');
     fs.mkdirSync(bin, { recursive: true });
     for (const tool of ['cat', 'grep', 'tail', 'head', 'rm', 'tr', 'sed', 'dirname']) {
-      const found = spawnSync('sh', ['-c', `command -v ${tool}`], { encoding: 'utf8' }).stdout.trim();
-      if (found && !fs.existsSync(path.join(bin, tool))) fs.symlinkSync(found, path.join(bin, tool));
+      const found = spawnSync('sh', ['-c', `command -v ${tool}`], {
+        encoding: 'utf8',
+      }).stdout.trim();
+      if (found && !fs.existsSync(path.join(bin, tool)))
+        fs.symlinkSync(found, path.join(bin, tool));
     }
     return { PATH: bin };
   };
@@ -75,7 +79,9 @@ describe('context-warning hook', () => {
     expect(code).toBe(0);
     const json = JSON.parse(out);
     expect(json.hookSpecificOutput.hookEventName).toBe('UserPromptSubmit');
-    expect(json.hookSpecificOutput.additionalContext).toContain('Context is 150k tokens (limit 150k)');
+    expect(json.hookSpecificOutput.additionalContext).toContain(
+      'Context is 150k tokens (limit 150k)'
+    );
     expect(json.hookSpecificOutput.additionalContext).toContain('/clear');
   });
 
@@ -149,7 +155,11 @@ describe('context-warning hook', () => {
   it('never blocks on bad input', () => {
     expect(run(path.join(dir, 'missing.jsonl'))).toEqual({ code: 0, out: '', err: '' });
     expect(run(writeTranscript('not json at all'))).toEqual({ code: 0, out: '', err: '' });
-    expect(run(writeTranscript('{"message":{"role":"user"}}'))).toEqual({ code: 0, out: '', err: '' });
+    expect(run(writeTranscript('{"message":{"role":"user"}}'))).toEqual({
+      code: 0,
+      out: '',
+      err: '',
+    });
     const r = spawnSync('bash', [SCRIPT], { input: 'garbage', encoding: 'utf8' });
     expect(r.status).toBe(0);
     expect(r.stdout).toBe('');
@@ -160,7 +170,11 @@ describe('context-warning hook', () => {
     ['bash scanner (no jq)', () => noJqEnv()],
   ])('payload parsing with %s', (_name, envFor) => {
     const pretty = (t: string) =>
-      JSON.stringify({ session_id: session, transcript_path: t, hook_event_name: 'UserPromptSubmit' }, null, 2);
+      JSON.stringify(
+        { session_id: session, transcript_path: t, hook_event_name: 'UserPromptSubmit' },
+        null,
+        2
+      );
 
     it('handles a pretty-printed multi-line payload with reordered fields', () => {
       const t = writeTranscript(usageLine(1, 200000, 0));
@@ -191,7 +205,7 @@ describe('context-warning hook', () => {
 
     it('reads usage counts with spaces after colons', () => {
       const t = writeTranscript(
-        '{"message": {"usage": {"input_tokens": 1, "cache_read_input_tokens": 200000, "cache_creation_input_tokens": 0}}}',
+        '{"message": {"usage": {"input_tokens": 1, "cache_read_input_tokens": 200000, "cache_creation_input_tokens": 0}}}'
       );
       expect(runRaw(pretty(t), envFor()).out).toContain('200k');
     });
@@ -208,7 +222,7 @@ describe('context-warning hook', () => {
       expect(bad.err).toBe('context-warning: no transcript_path in payload');
       const t = writeTranscript('{"message":{"role":"user"}}');
       expect(runRaw(pretty(t), { ...envFor(), CONTEXT_WARN_DEBUG: '1' }).err).toBe(
-        'context-warning: no usage line in transcript',
+        'context-warning: no usage line in transcript'
       );
     });
   });
@@ -239,7 +253,7 @@ describe('context-warning hook', () => {
       expect(r.code).toBe(0);
       const out = JSON.parse(r.out);
       expect(out.additionalContext).toBe(
-        'Context is 28k tokens (limit 25k). Finish the current step, append the hand-off to <state dir>/<issue>/progress.md, then /clear and resume.',
+        'Context is 28k tokens (limit 25k). Finish the current step, append the hand-off to <state dir>/<issue>/progress.md, then /clear and resume.'
       );
       expect(out.hookSpecificOutput.hookEventName).toBe('PostToolUse');
       expect(out.hookSpecificOutput.additionalContext).toBe(out.additionalContext);
@@ -248,7 +262,9 @@ describe('context-warning hook', () => {
     it('counts inputTokens only (cache tokens are already included)', () => {
       const home = copilotHome(id);
       expect(runRaw(post, lowEnv(home, { CONTEXT_WARN_TOKENS: '28157' })).out).toBe('');
-      expect(runRaw(post, lowEnv(home, { CONTEXT_WARN_TOKENS: '28156' })).out).toContain('28k tokens');
+      expect(runRaw(post, lowEnv(home, { CONTEXT_WARN_TOKENS: '28156' })).out).toContain(
+        '28k tokens'
+      );
     });
 
     it('stays silent below the threshold and with the default threshold', () => {
@@ -262,15 +278,20 @@ describe('context-warning hook', () => {
       expect(runRaw(post, lowEnv(home)).out).toBe('');
       expect(fs.existsSync(path.join(dir, `copilot-context-warning-${id}`))).toBe(true);
       expect(runRaw(post, lowEnv(home, { CONTEXT_WARN_STEP: '1000' })).out).toBe('');
-      const grown = fs.readFileSync(eventsFixture, 'utf8') +
-        JSON.stringify({ type: 'session.usage_record', data: { usage: { inputTokens: 30000 } } }) + '\n';
+      const grown =
+        fs.readFileSync(eventsFixture, 'utf8') +
+        JSON.stringify({ type: 'session.usage_record', data: { usage: { inputTokens: 30000 } } }) +
+        '\n';
       copilotHome(id, grown);
       expect(runRaw(post, lowEnv(home)).out).toBe('');
       expect(runRaw(post, lowEnv(home, { CONTEXT_WARN_STEP: '1000' })).out).toContain('30k tokens');
     });
 
     it('uses transcriptPath of an agentStop payload', () => {
-      const payload = readFixture('copilot-agentstop.json').replace('__TRANSCRIPT__', eventsFixture);
+      const payload = readFixture('copilot-agentstop.json').replace(
+        '__TRANSCRIPT__',
+        eventsFixture
+      );
       const r = runRaw(payload, { CONTEXT_WARN_TOKENS: '25000' });
       expect(r.code).toBe(0);
       expect(JSON.parse(r.out).additionalContext).toContain('Context is 28k tokens');
@@ -283,7 +304,11 @@ describe('context-warning hook', () => {
     });
 
     it('never blocks: missing events file, no usage record, unsafe session id', () => {
-      expect(runRaw(post, lowEnv(path.join(dir, 'nowhere')))).toEqual({ code: 0, out: '', err: '' });
+      expect(runRaw(post, lowEnv(path.join(dir, 'nowhere')))).toEqual({
+        code: 0,
+        out: '',
+        err: '',
+      });
       const empty = copilotHome(id, '{"type":"session.start","data":{}}\n');
       expect(runRaw(post, lowEnv(empty)).out).toBe('');
       const evil = JSON.stringify({ sessionId: '../../etc', toolName: 'bash' });
@@ -299,7 +324,8 @@ describe('context-warning hook', () => {
       fs.mkdirSync(path.join(dir, 'x'), { recursive: true });
       fs.writeFileSync(
         path.join(dir, 'x', 'events.jsonl'),
-        JSON.stringify({ type: 'session.usage_record', data: { usage: { inputTokens: 900000 } } }) + '\n',
+        JSON.stringify({ type: 'session.usage_record', data: { usage: { inputTokens: 900000 } } }) +
+          '\n'
       );
       const evil = JSON.stringify({ sessionId: '../../x', toolName: 'bash' });
       expect(runRaw(evil, lowEnv(home))).toEqual({ code: 0, out: '', err: '' });

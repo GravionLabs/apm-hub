@@ -12,17 +12,25 @@ function walk(dir: string): string[] {
 }
 
 describe('delivery and shared skills use <state>, not .agents/', () => {
-  const files = [...walk(path.join(root, 'delivery/.apm/skills')), ...walk(path.join(root, 'shared/.apm/skills'))].filter(
-    (f) => /\.(md)$/.test(f),
-  );
+  const files = [
+    ...walk(path.join(root, 'delivery/.apm/skills')),
+    ...walk(path.join(root, 'shared/.apm/skills')),
+  ].filter((f) => /\.(md)$/.test(f));
 
   it('has no .agents state path except the .agents/skills install dir', () => {
-    const offenders = files.filter((f) => /\.agents(?!\/skills)/.test(fs.readFileSync(f, 'utf8').replace(/\.opencode\|\.agents\||~\/\.agents/g, '')));
+    const offenders = files.filter((f) =>
+      /\.agents(?!\/skills)/.test(
+        fs.readFileSync(f, 'utf8').replace(/\.opencode\|\.agents\||~\/\.agents/g, '')
+      )
+    );
     expect(offenders).toEqual([]);
   });
 
   it('detect-techstack documents state_dir and the removed exclude step', () => {
-    const s = fs.readFileSync(path.join(root, 'shared/.apm/skills/detect-techstack/SKILL.md'), 'utf8');
+    const s = fs.readFileSync(
+      path.join(root, 'shared/.apm/skills/detect-techstack/SKILL.md'),
+      'utf8'
+    );
     expect(s).toContain('"state_dir"');
     expect(s).toContain('no longer edits `.git/info/exclude`');
   });

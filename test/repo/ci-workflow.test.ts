@@ -55,3 +55,15 @@ describe('ci.yml parallel Vitest jobs (#502)', () => {
     }
   });
 });
+
+describe('ci.yml formatting check and triggers', () => {
+  it('runs on pull requests into main and release/next', () => {
+    expect(wf.on.pull_request.branches).toEqual(['main', 'release/next']);
+  });
+
+  it('runs prettier --check over the files the format script writes', () => {
+    const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'));
+    expect(pkg.scripts['format:check']).toBe(pkg.scripts.format.replace('--write', '--check'));
+    expect(steps('build-test').some((s) => s.run === 'pnpm run format:check')).toBe(true);
+  });
+});

@@ -28,10 +28,16 @@ describe('generateSkillList', () => {
     // Agents/instructions in csharp domain should be ignored by skill-list
     const csAgentsDir = path.join(packagesDir, 'csharp', '.apm', 'agents');
     fs.mkdirSync(csAgentsDir, { recursive: true });
-    fs.writeFileSync(path.join(csAgentsDir, 'csharp-expert.agent.md'), '---\nname: C# Expert\n---\n');
+    fs.writeFileSync(
+      path.join(csAgentsDir, 'csharp-expert.agent.md'),
+      '---\nname: C# Expert\n---\n'
+    );
     const csInstrDir = path.join(packagesDir, 'csharp', '.apm', 'instructions');
     fs.mkdirSync(csInstrDir, { recursive: true });
-    fs.writeFileSync(path.join(csInstrDir, 'csharp.instructions.md'), '---\ndescription: C# standards.\n---\n');
+    fs.writeFileSync(
+      path.join(csInstrDir, 'csharp.instructions.md'),
+      '---\ndescription: C# standards.\n---\n'
+    );
 
     // shared/.apm/skills/ts-write-tests/SKILL.md
     const sharedSkillsDir = path.join(packagesDir, 'shared', '.apm', 'skills');
@@ -82,7 +88,9 @@ describe('generateSkillList', () => {
     generateSkillList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('Scaffold a project. *(user-invoked: `/ts-create-project`)*');
-    expect(content).toContain('| [`ts-write-tests`](../packages/shared/.apm/skills/ts-write-tests/SKILL.md) | Write unit tests. |');
+    expect(content).toContain(
+      '| [`ts-write-tests`](../packages/shared/.apm/skills/ts-write-tests/SKILL.md) | Write unit tests. |'
+    );
   });
 
   it('should link to skill directory layout package files', () => {
@@ -133,7 +141,7 @@ describe('generateSkillList', () => {
         '    - https://github.com/gravionlabs/apm-hub/packages/github',
         '    - git@github.com:GravionLabs/apm-hub.git',
         '    - gravionlabs/apm-hub/packages/core',
-        ''
+        '',
       ].join('\n')
     );
     generateSkillList(packagesDir, outputFile);
@@ -152,7 +160,9 @@ describe('generateSkillList', () => {
       'name: csharp\ndependencies:\n  apm:\n    - a/b/c#v1\n    - d/e\n'
     );
     generateSkillList(packagesDir, outputFile);
-    expect(fs.readFileSync(outputFile, 'utf8')).toContain('External dependencies: `a/b/c#v1`, `d/e`');
+    expect(fs.readFileSync(outputFile, 'utf8')).toContain(
+      'External dependencies: `a/b/c#v1`, `d/e`'
+    );
   });
 
   it('should render object form without path or ref', () => {

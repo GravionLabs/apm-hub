@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, release/next]
   workflow_dispatch:
 
 permissions:
@@ -113,6 +113,9 @@ jobs:
 
       - name: Check manifest skills lists
         run: node scripts/check-manifests.mjs
+
+      - name: Check formatting
+        run: pnpm run format:check
 
       # Generated aggregate docs are gitignored/CI-owned; generate them in the
       # working tree only so the site build resolves its links. Never committed here.

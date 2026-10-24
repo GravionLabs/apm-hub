@@ -6,10 +6,17 @@ export const TS_PREFIX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z /;
 
 /** Reads a file and drops the optional timestamp prefix of every line, so format-agnostic assertions stay readable. */
 export const readLedger = (file: string): string =>
-  fs.readFileSync(file, 'utf8').split('\n').map((l) => l.replace(TS_PREFIX, '')).join('\n');
+  fs
+    .readFileSync(file, 'utf8')
+    .split('\n')
+    .map((l) => l.replace(TS_PREFIX, ''))
+    .join('\n');
 
 /** Env without inherited GIT_* (e.g. GIT_DIR when run from a git hook) and without user/system git config. */
-export const gitCleanEnv = (base: NodeJS.ProcessEnv, extra: Record<string, string> = {}): NodeJS.ProcessEnv => {
+export const gitCleanEnv = (
+  base: NodeJS.ProcessEnv,
+  extra: Record<string, string> = {}
+): NodeJS.ProcessEnv => {
   const env = { ...base };
   for (const k of Object.keys(env)) if (k.startsWith('GIT_')) delete env[k];
   return { ...env, GIT_CONFIG_GLOBAL: os.devNull, GIT_CONFIG_SYSTEM: os.devNull, ...extra };
@@ -27,7 +34,16 @@ export const BRANCHES_BOUND = [
 ];
 
 /** Branch names that carry no issue number: the newest-ledger fallback applies. */
-export const BRANCHES_UNBOUND = ['main', 'release/next', 'release/2', 'renovate/3-major', 'fix/7x-y', 'fix/x7-y', 'fix/7/slug', 'feat/x'];
+export const BRANCHES_UNBOUND = [
+  'main',
+  'release/next',
+  'release/2',
+  'renovate/3-major',
+  'fix/7x-y',
+  'fix/x7-y',
+  'fix/7/slug',
+  'feat/x',
+];
 
 /** Contents of <state>/current that break the strict `<pbi> loop-<nr>` format: the marker is ignored (branch rule applies). */
 export const MARKERS_MALFORMED = [
@@ -90,6 +106,15 @@ const LOOP_LEDGERS_FOREIGN_BRANCH_PLAIN = [
 
 /** Same ledgers with the timestamp prefix on every `Loop: ` line: readers must accept both formats. */
 const stamped = (l: string): string => l.replace(/^Loop: /gm, '2026-10-21T15:19:46Z Loop: ');
-export const LOOP_LEDGERS_STALE = [...LOOP_LEDGERS_STALE_PLAIN, ...LOOP_LEDGERS_STALE_PLAIN.map(stamped)];
-export const LOOP_LEDGERS_LIVE = [...LOOP_LEDGERS_LIVE_PLAIN, ...LOOP_LEDGERS_LIVE_PLAIN.map(stamped)];
-export const LOOP_LEDGERS_FOREIGN_BRANCH = [...LOOP_LEDGERS_FOREIGN_BRANCH_PLAIN, ...LOOP_LEDGERS_FOREIGN_BRANCH_PLAIN.map(stamped)];
+export const LOOP_LEDGERS_STALE = [
+  ...LOOP_LEDGERS_STALE_PLAIN,
+  ...LOOP_LEDGERS_STALE_PLAIN.map(stamped),
+];
+export const LOOP_LEDGERS_LIVE = [
+  ...LOOP_LEDGERS_LIVE_PLAIN,
+  ...LOOP_LEDGERS_LIVE_PLAIN.map(stamped),
+];
+export const LOOP_LEDGERS_FOREIGN_BRANCH = [
+  ...LOOP_LEDGERS_FOREIGN_BRANCH_PLAIN,
+  ...LOOP_LEDGERS_FOREIGN_BRANCH_PLAIN.map(stamped),
+];

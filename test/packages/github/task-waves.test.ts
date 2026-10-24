@@ -9,8 +9,21 @@ const ROOT = path.resolve(__dirname, '../../..');
 const REFS = path.join(ROOT, 'packages/github/.apm/skills/github-issue/references');
 const waves = fs.readFileSync(path.join(REFS, 'task-waves.md'), 'utf8');
 
-type Item = { id: string; issue: number | null; size?: string; blocked_by?: (string | number)[]; files?: string[] };
-const item = (id: string, files: string[], o: Partial<Item> = {}): Item => ({ id, issue: null, size: 'S', blocked_by: [], files, ...o });
+type Item = {
+  id: string;
+  issue: number | null;
+  size?: string;
+  blocked_by?: (string | number)[];
+  files?: string[];
+};
+const item = (id: string, files: string[], o: Partial<Item> = {}): Item => ({
+  id,
+  issue: null,
+  size: 'S',
+  blocked_by: [],
+  files,
+  ...o,
+});
 
 describe.skipIf(!hasPwsh)('Get-TaskWaves.ps1', () => {
   let dir: string;
@@ -22,21 +35,43 @@ describe.skipIf(!hasPwsh)('Get-TaskWaves.ps1', () => {
   const compute = (items: Item[], parallel: number, done: string[] = []) => {
     const plan = path.join(dir, 'plan.json');
     fs.writeFileSync(plan, JSON.stringify({ items }));
-    const r = run('Get-TaskWaves.ps1', ['-Plan', plan, '-Parallel', String(parallel), ...(done.length ? ['-Done', done.join(',')] : [])], dir);
+    const r = run(
+      'Get-TaskWaves.ps1',
+      [
+        '-Plan',
+        plan,
+        '-Parallel',
+        String(parallel),
+        ...(done.length ? ['-Done', done.join(',')] : []),
+      ],
+      dir
+    );
     return { status: r.status, out: r.status === 0 ? JSON.parse(r.stdout.trim()) : r.stderr };
   };
 
   it('puts independent Tasks with disjoint files into one wave, in plan order', () => {
-    expect(compute([item('p1', ['a']), item('p2', ['b']), item('p3', ['c'])], 3).out).toEqual([['p1', 'p2', 'p3']]);
+    expect(compute([item('p1', ['a']), item('p2', ['b']), item('p3', ['c'])], 3).out).toEqual([
+      ['p1', 'p2', 'p3'],
+    ]);
   });
 
   it('follows the blocked_by DAG: a blocked Task waits for the wave of its blocker', () => {
-    const items = [item('p1', ['a']), item('p2', ['b'], { blocked_by: ['p1'] }), item('p3', ['c']), item('p4', ['d'], { blocked_by: ['p2', 'p3'] })];
+    const items = [
+      item('p1', ['a']),
+      item('p2', ['b'], { blocked_by: ['p1'] }),
+      item('p3', ['c']),
+      item('p4', ['d'], { blocked_by: ['p2', 'p3'] }),
+    ];
     expect(compute(items, 3).out).toEqual([['p1', 'p3'], ['p2'], ['p4']]);
   });
 
   it('keeps Tasks with overlapping files (equal path or directory prefix) out of the same wave', () => {
-    const items = [item('p1', ['src/a.ts']), item('p2', ['src/a.ts']), item('p3', ['src']), item('p4', ['docs/x.md'])];
+    const items = [
+      item('p1', ['src/a.ts']),
+      item('p2', ['src/a.ts']),
+      item('p3', ['src']),
+      item('p4', ['docs/x.md']),
+    ];
     expect(compute(items, 4).out).toEqual([['p1', 'p4'], ['p2'], ['p3']]);
   });
 
@@ -53,17 +88,32 @@ describe.skipIf(!hasPwsh)('Get-TaskWaves.ps1', () => {
   });
 
   it('runs size L alone, also when it comes first or last', () => {
-    const items = [item('p1', ['a']), item('p2', ['b'], { size: 'L' }), item('p3', ['c']), item('p4', ['d'], { size: 'L' })];
+    const items = [
+      item('p1', ['a']),
+      item('p2', ['b'], { size: 'L' }),
+      item('p3', ['c']),
+      item('p4', ['d'], { size: 'L' }),
+    ];
     expect(compute(items, 4).out).toEqual([['p1', 'p3'], ['p2'], ['p4']]);
-    expect(compute([item('p1', ['a'], { size: 'L' }), item('p2', ['b'])], 3).out).toEqual([['p1'], ['p2']]);
+    expect(compute([item('p1', ['a'], { size: 'L' }), item('p2', ['b'])], 3).out).toEqual([
+      ['p1'],
+      ['p2'],
+    ]);
   });
 
   it('runs a Task without files alone', () => {
-    expect(compute([item('p1', []), item('p2', ['b']), item('p3', ['c'])], 3).out).toEqual([['p1'], ['p2', 'p3']]);
+    expect(compute([item('p1', []), item('p2', ['b']), item('p3', ['c'])], 3).out).toEqual([
+      ['p1'],
+      ['p2', 'p3'],
+    ]);
   });
 
   it('skips the done set (issue numbers with or without #, plan ids) and unblocks their dependents', () => {
-    const items = [item('p1', ['a'], { issue: 11 }), item('p2', ['b'], { issue: 12, blocked_by: ['p1'] }), item('p3', ['c'], { issue: 13, blocked_by: [11] })];
+    const items = [
+      item('p1', ['a'], { issue: 11 }),
+      item('p2', ['b'], { issue: 12, blocked_by: ['p1'] }),
+      item('p3', ['c'], { issue: 13, blocked_by: [11] }),
+    ];
     expect(compute(items, 3).out).toEqual([[11], [12, 13]]);
     expect(compute(items, 3, ['#11']).out).toEqual([[12, 13]]);
     expect(compute(items, 3, ['p1', '12']).out).toEqual([[13]]);
@@ -71,17 +121,26 @@ describe.skipIf(!hasPwsh)('Get-TaskWaves.ps1', () => {
   });
 
   it('uses the issue number as Task key when the plan item has one, the plan id otherwise', () => {
-    expect(compute([item('p1', ['a'], { issue: 21 }), item('p2', ['b'])], 3).out).toEqual([[21, 'p2']]);
+    expect(compute([item('p1', ['a'], { issue: 21 }), item('p2', ['b'])], 3).out).toEqual([
+      [21, 'p2'],
+    ]);
   });
 
   it('fails on a cycle', () => {
-    const r = compute([item('p1', ['a'], { blocked_by: ['p2'] }), item('p2', ['b'], { blocked_by: ['p1'] })], 3);
+    const r = compute(
+      [item('p1', ['a'], { blocked_by: ['p2'] }), item('p2', ['b'], { blocked_by: ['p1'] })],
+      3
+    );
     expect(r.status).not.toBe(0);
     expect(r.out).toMatch(/No unblocked Task left/);
   });
 
   it('fails on a missing plan file', () => {
-    const r = run('Get-TaskWaves.ps1', ['-Plan', path.join(dir, 'none.json'), '-Parallel', '3'], dir);
+    const r = run(
+      'Get-TaskWaves.ps1',
+      ['-Plan', path.join(dir, 'none.json'), '-Parallel', '3'],
+      dir
+    );
     expect(r.status).not.toBe(0);
   });
 });
@@ -95,7 +154,11 @@ describe.skipIf(!hasPwsh)('Task worktree and integration recipe of task-waves.md
 
   const taskBranch = (pbi: string, t: string) => `feat/${pbi}-t${t}`;
   const enterTask = (pbi: string, t: string, from: string) =>
-    run('Enter-Checkout.ps1', ['-Issue', `${pbi}-t${t}`, '-Branch', taskBranch(pbi, t), '-Base', 'main', '-From', from], f.repo);
+    run(
+      'Enter-Checkout.ps1',
+      ['-Issue', `${pbi}-t${t}`, '-Branch', taskBranch(pbi, t), '-Base', 'main', '-From', from],
+      f.repo
+    );
   const commit = (cwd: string, file: string, content: string, msg: string) => {
     fs.writeFileSync(path.join(cwd, file), content);
     git(cwd, 'add', file);
@@ -109,7 +172,11 @@ describe.skipIf(!hasPwsh)('Task worktree and integration recipe of task-waves.md
     const r = enterTask('9', '12', head);
     expect(r.status).toBe(0);
     const out = json(r);
-    expect(out).toMatchObject({ path: path.join(f.repo, '.worktrees', '9-t12'), worktree: true, branch: 'feat/9-t12' });
+    expect(out).toMatchObject({
+      path: path.join(f.repo, '.worktrees', '9-t12'),
+      worktree: true,
+      branch: 'feat/9-t12',
+    });
     expect(git(out.path, 'rev-parse', 'HEAD')).toBe(head);
     expect(git(f.repo, 'rev-parse', '--abbrev-ref', 'HEAD')).toBe('feat/9');
     expect(readLeases(f.state).map((l) => String(l.issue))).toEqual(['9-t12']);
@@ -122,7 +189,11 @@ describe.skipIf(!hasPwsh)('Task worktree and integration recipe of task-waves.md
   });
 
   it('New-Worktree -From rejects an unknown ref', () => {
-    const r = run('New-Worktree.ps1', ['-Issue', '9-t12', '-Branch', 'feat/9-t12', '-Base', 'main', '-From', 'nope'], f.repo);
+    const r = run(
+      'New-Worktree.ps1',
+      ['-Issue', '9-t12', '-Branch', 'feat/9-t12', '-Base', 'main', '-From', 'nope'],
+      f.repo
+    );
     expect(r.status).not.toBe(0);
     expect(r.stderr + r.stdout).toMatch(/Unknown -From ref/);
   });
@@ -139,9 +210,16 @@ describe.skipIf(!hasPwsh)('Task worktree and integration recipe of task-waves.md
     // wave base: the PBI HEAD before the wave; Task 1 already is on the PBI branch
     for (const t of ['2', '3']) git(f.repo, 'cherry-pick', `${base}..${taskBranch('9', t)}`);
     const subjects = git(f.repo, 'log', '--reverse', '--format=%s', `${base}..HEAD`).split('\n');
-    expect(subjects).toEqual(['feat: one (#9)', 'feat: two (#9)', 'feat: two b (#9)', 'feat: three (#9)']);
+    expect(subjects).toEqual([
+      'feat: one (#9)',
+      'feat: two (#9)',
+      'feat: two b (#9)',
+      'feat: three (#9)',
+    ]);
     // resume rule: the Refs grep finds the task commit on the PBI branch
-    expect(git(f.repo, 'log', '-E', '--grep', '^Refs #3$', '--format=%h', `${base}..HEAD`)).not.toBe('');
+    expect(
+      git(f.repo, 'log', '-E', '--grep', '^Refs #3$', '--format=%h', `${base}..HEAD`)
+    ).not.toBe('');
     for (const t of ['2', '3']) {
       expect(json(run('Exit-Checkout.ps1', ['-Issue', `9-t${t}`], f.repo)).removed).toBe(true);
       git(f.repo, 'update-ref', '-d', `refs/heads/${taskBranch('9', t)}`);
@@ -156,14 +234,27 @@ describe.skipIf(!hasPwsh)('Task worktree and integration recipe of task-waves.md
     commit(f.repo, 'a.txt', 'from task 1\n', 'feat: one (#9)\n\nRefs #1');
     commit(w2, 'a.txt', 'from task 2\n', 'feat: two (#9)\n\nRefs #2');
     const before = git(f.repo, 'rev-parse', 'HEAD');
-    const pick = spawnSync('git', ['cherry-pick', `${base}..${taskBranch('9', '2')}`], { cwd: f.repo, encoding: 'utf8' });
+    const pick = spawnSync('git', ['cherry-pick', `${base}..${taskBranch('9', '2')}`], {
+      cwd: f.repo,
+      encoding: 'utf8',
+    });
     expect(pick.status).not.toBe(0);
     expect(git(f.repo, 'diff', '--name-only', '--diff-filter=U')).toBe('a.txt');
     git(f.repo, 'cherry-pick', '--abort');
     expect(git(f.repo, 'rev-parse', 'HEAD')).toBe(before);
     expect(git(f.repo, 'status', '--porcelain', '--untracked-files=no')).toBe('');
     // resume: the unintegrated task branch is found by its Refs commit ahead of the PBI branch
-    expect(git(f.repo, 'log', '-E', '--grep', '^Refs #2$', '--format=%h', `HEAD..${taskBranch('9', '2')}`)).not.toBe('');
+    expect(
+      git(
+        f.repo,
+        'log',
+        '-E',
+        '--grep',
+        '^Refs #2$',
+        '--format=%h',
+        `HEAD..${taskBranch('9', '2')}`
+      )
+    ).not.toBe('');
   });
 });
 
@@ -191,8 +282,12 @@ describe('task-waves.md text', () => {
     const i = (re: RegExp) => waves.search(re);
     expect(i(/git cherry-pick <WAVE_BASE>/)).toBeGreaterThan(0);
     expect(i(/in plan order:/)).toBeGreaterThan(0);
-    expect(i(/git cherry-pick <WAVE_BASE>/)).toBeLessThan(i(/One `verify-project` on the integrated `HEAD`/));
-    expect(i(/One `verify-project` on the integrated `HEAD`/)).toBeLessThan(i(/Exit-Checkout\.ps1 -Issue <pbi>-t<task>/));
+    expect(i(/git cherry-pick <WAVE_BASE>/)).toBeLessThan(
+      i(/One `verify-project` on the integrated `HEAD`/)
+    );
+    expect(i(/One `verify-project` on the integrated `HEAD`/)).toBeLessThan(
+      i(/Exit-Checkout\.ps1 -Issue <pbi>-t<task>/)
+    );
     expect(waves).toMatch(/git update-ref -d refs\/heads\//);
   });
 

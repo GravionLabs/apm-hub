@@ -11,7 +11,9 @@ describe('grilling reference', () => {
   const publish = read(path.join(skillDir, 'references/publish.md'));
   const json = read(path.join(skillDir, 'references/plan.schema.json'));
   const skill = read(path.join(skillDir, 'SKILL.md'));
-  const orchestrator = read(path.join(root, 'agents/.apm/agents/orchestrator.agent.md')) + read(path.join(root, 'github/.apm/skills/github-issue/references/pbi-pipeline.md'));
+  const orchestrator =
+    read(path.join(root, 'agents/.apm/agents/orchestrator.agent.md')) +
+    read(path.join(root, 'github/.apm/skills/github-issue/references/pbi-pipeline.md'));
 
   it('attributes mattpocock/skills under MIT', () => {
     expect(grilling).toContain('mattpocock/skills');
@@ -20,7 +22,7 @@ describe('grilling reference', () => {
 
   it.each(['AskUserQuestion', 'Gate:', 'Ruling:', 'publish.md', '<state>/<issue>/progress.md'])(
     'covers %s',
-    (term) => expect(grilling).toContain(term),
+    (term) => expect(grilling).toContain(term)
   );
 
   it('asks one round of all unanswered questions, at most 4 per AskUserQuestion call', () => {
@@ -66,6 +68,8 @@ describe('grilling reference', () => {
 
   it('is referenced by issue-planning and the orchestrator', () => {
     expect(skill).toContain('references/grilling.md');
-    expect(orchestrator).toMatch(/\*\*Plan\*\*[^\n]*references\/grilling\.md[^\n]*references\/publish\.md/);
+    expect(orchestrator).toMatch(
+      /\*\*Plan\*\*[^\n]*references\/grilling\.md[^\n]*references\/publish\.md/
+    );
   });
 });

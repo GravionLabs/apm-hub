@@ -3,7 +3,10 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-const SCRIPT = path.resolve(__dirname, '../../../packages/github/.apm/skills/github-project/scripts/Set-ProjectStandard.ps1');
+const SCRIPT = path.resolve(
+  __dirname,
+  '../../../packages/github/.apm/skills/github-project/scripts/Set-ProjectStandard.ps1'
+);
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
 it('pwsh is installed in CI (the Set-ProjectStandard cases must not be skipped there)', () => {
@@ -11,17 +14,59 @@ it('pwsh is installed in CI (the Set-ProjectStandard cases must not be skipped t
 });
 
 type Opt = { id: string; name: string; color: string; description: string };
-const opt = (name: string, color = 'GRAY'): Opt => ({ id: `id-${name}`, name, color, description: `d ${name}` });
-const select = (name: string, options: Opt[]) => ({ id: `F-${name}`, name, databaseId: name.length, dataType: 'SINGLE_SELECT', options });
-const plain = (name: string, n: number) => ({ id: `F-${name}`, name, databaseId: n, dataType: 'TEXT' });
-const PLAIN = ['Title', 'Labels', 'Linked pull requests', 'Parent issue', 'Sub-issues progress'].map((n, i) => plain(n, i + 1));
+const opt = (name: string, color = 'GRAY'): Opt => ({
+  id: `id-${name}`,
+  name,
+  color,
+  description: `d ${name}`,
+});
+const select = (name: string, options: Opt[]) => ({
+  id: `F-${name}`,
+  name,
+  databaseId: name.length,
+  dataType: 'SINGLE_SELECT',
+  options,
+});
+const plain = (name: string, n: number) => ({
+  id: `F-${name}`,
+  name,
+  databaseId: n,
+  dataType: 'TEXT',
+});
+const PLAIN = [
+  'Title',
+  'Labels',
+  'Linked pull requests',
+  'Parent issue',
+  'Sub-issues progress',
+].map((n, i) => plain(n, i + 1));
 const DEFAULT_STATUS = ['Todo', 'In Progress', 'Done'].map((n) => opt(n));
 const HELIX_STATUS = ['Backlog', 'Ready', 'In progress', 'In review', 'Done'].map((n) => opt(n));
-const LEVEL = select('Level', ['Epic', 'Feature', 'PBI', 'Task', 'Bug'].map((n) => opt(n)));
-const STANDARD_VIEWS = ['Hierarchy', 'Board', 'Release next', 'Backlog', 'Recently closed'].map((name) => ({ id: `V-${name}`, name }));
+const LEVEL = select(
+  'Level',
+  ['Epic', 'Feature', 'PBI', 'Task', 'Bug'].map((n) => opt(n))
+);
+const STANDARD_VIEWS = ['Hierarchy', 'Board', 'Release next', 'Backlog', 'Recently closed'].map(
+  (name) => ({ id: `V-${name}`, name })
+);
 
-type Item = { id: string; number: number; title: string; state: string; labels: string[]; status?: string; level?: string };
-const item = (number: number, o: Partial<Item> = {}): Item => ({ id: `I-${number}`, number, title: `t${number}`, state: 'OPEN', labels: [], ...o });
+type Item = {
+  id: string;
+  number: number;
+  title: string;
+  state: string;
+  labels: string[];
+  status?: string;
+  level?: string;
+};
+const item = (number: number, o: Partial<Item> = {}): Item => ({
+  id: `I-${number}`,
+  number,
+  title: `t${number}`,
+  state: 'OPEN',
+  labels: [],
+  ...o,
+});
 
 interface State {
   fields: unknown[];
@@ -49,7 +94,11 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
   const plan = (s: unknown, ...flags: string[]): Action[] => {
     const file = path.join(dir, 'state.json');
     fs.writeFileSync(file, JSON.stringify({ projectId: 'P', ownerType: 'User', ...(s as object) }));
-    const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-StateFile', file, '-DryRun', '-Json', ...flags], { cwd: dir, encoding: 'utf8' });
+    const r = spawnSync(
+      'pwsh',
+      ['-NoProfile', '-File', SCRIPT, '-StateFile', file, '-DryRun', '-Json', ...flags],
+      { cwd: dir, encoding: 'utf8' }
+    );
     expect(r.status, r.stderr + r.stdout).toBe(0);
     return JSON.parse(r.stdout).actions;
   };
@@ -58,17 +107,25 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
   describe('Status', () => {
     it.each([
       ['default set', DEFAULT_STATUS, ['Todo', 'In Progress', 'In release', 'Done']],
-      ['Helix set', HELIX_STATUS, ['Backlog', 'Ready', 'In progress', 'In review', 'In release', 'Done']],
+      [
+        'Helix set',
+        HELIX_STATUS,
+        ['Backlog', 'Ready', 'In progress', 'In review', 'In release', 'Done'],
+      ],
     ])('inserts In release before Done and keeps ids (%s)', (_n, status, names) => {
       const [a] = ofType(plan(state({ status })), 'UpdateStatusOptions');
       expect(a.options.map((o: Opt) => o.name)).toEqual(names);
-      for (const o of status) expect(a.options.find((x: Opt) => x.name === o.name)).toMatchObject(o);
+      for (const o of status)
+        expect(a.options.find((x: Opt) => x.name === o.name)).toMatchObject(o);
       expect(a.options.find((x: Opt) => x.name === 'In release')).toMatchObject({ color: 'BLUE' });
       expect(a.options.find((x: Opt) => x.name === 'In release').id).toBeUndefined();
     });
 
     it('appends at the end without a Done option', () => {
-      const [a] = ofType(plan(state({ status: [opt('Todo'), opt('Doing')] })), 'UpdateStatusOptions');
+      const [a] = ofType(
+        plan(state({ status: [opt('Todo'), opt('Doing')] })),
+        'UpdateStatusOptions'
+      );
       expect(a.options.map((o: Opt) => o.name)).toEqual(['Todo', 'Doing', 'In release']);
     });
 
@@ -84,7 +141,13 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
       s.fields = s.fields.filter((f: any) => f.name !== 'Level');
       const [a] = ofType(plan(s), 'CreateField');
       expect(a.name).toBe('Level');
-      expect(a.options.map((o: Opt) => `${o.name}:${o.color}`)).toEqual(['Epic:PURPLE', 'Feature:GREEN', 'PBI:BLUE', 'Task:GRAY', 'Bug:RED']);
+      expect(a.options.map((o: Opt) => `${o.name}:${o.color}`)).toEqual([
+        'Epic:PURPLE',
+        'Feature:GREEN',
+        'PBI:BLUE',
+        'Task:GRAY',
+        'Bug:RED',
+      ]);
     });
 
     it('keeps an existing field untouched', () => {
@@ -93,8 +156,10 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
   });
 
   describe('-Sync', () => {
-    const sync = (items: Item[], status?: Opt[]) => plan(state({ items, status }), '-Sync').filter((a) => a.type === 'SetItem');
-    const set = (a: Action[], n: number, field: string) => a.find((x) => x.number === n && x.field === field)?.option;
+    const sync = (items: Item[], status?: Opt[]) =>
+      plan(state({ items, status }), '-Sync').filter((a) => a.type === 'SetItem');
+    const set = (a: Action[], n: number, field: string) =>
+      a.find((x) => x.number === n && x.field === field)?.option;
 
     it('derives Level from labels in order epic|feature|pbi|task|bug, then title prefix', () => {
       const a = sync([
@@ -123,12 +188,18 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
     });
 
     it('falls back to the first status option when Todo does not exist', () => {
-      const a = sync([item(3, { status: 'In release', level: 'PBI' })], [opt('Backlog'), opt('Done')]);
+      const a = sync(
+        [item(3, { status: 'In release', level: 'PBI' })],
+        [opt('Backlog'), opt('Done')]
+      );
       expect(set(a, 3, 'Status')).toBe('Backlog');
     });
 
     it('sets Level on closed items but never their Status', () => {
-      const a = sync([item(1, { state: 'CLOSED', labels: ['merged', 'pbi'], status: 'Done' }), item(2, { state: 'CLOSED', status: 'In release' })]);
+      const a = sync([
+        item(1, { state: 'CLOSED', labels: ['merged', 'pbi'], status: 'Done' }),
+        item(2, { state: 'CLOSED', status: 'In release' }),
+      ]);
       expect(set(a, 1, 'Level')).toBe('PBI');
       expect(set(a, 1, 'Status')).toBeUndefined();
       expect(set(a, 2, 'Status')).toBeUndefined();
@@ -136,21 +207,33 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
     });
 
     it('does nothing without -Sync', () => {
-      expect(ofType(plan(state({ items: [item(1, { labels: ['pbi'] })] })), 'SetItem')).toHaveLength(0);
+      expect(
+        ofType(plan(state({ items: [item(1, { labels: ['pbi'] })] })), 'SetItem')
+      ).toHaveLength(0);
     });
   });
 
   describe('views', () => {
     it('creates only the missing standard views with field names and grouping', () => {
       const views = STANDARD_VIEWS.filter((v) => v.name !== 'Board' && v.name !== 'Backlog');
-      const creates = ofType(plan(state({ views: [...views, { id: 'V-x', name: 'Mine' }] })), 'CreateView');
+      const creates = ofType(
+        plan(state({ views: [...views, { id: 'V-x', name: 'Mine' }] })),
+        'CreateView'
+      );
       expect(creates.map((c) => c.name)).toEqual(['Board', 'Backlog']);
-      expect(creates[0]).toMatchObject({ layout: 'board', filter: '-label:epic,feature -status:Done', verticalGroupBy: 'Status' });
+      expect(creates[0]).toMatchObject({
+        layout: 'board',
+        filter: '-label:epic,feature -status:Done',
+        verticalGroupBy: 'Status',
+      });
       expect(creates[1]).toMatchObject({ layout: 'table', groupBy: 'Parent issue' });
     });
 
     it('never deletes foreign views', () => {
-      const a = plan(state({ views: [...STANDARD_VIEWS, { id: 'V-x', name: 'Mine' }] }), '-RemoveDefaultViews');
+      const a = plan(
+        state({ views: [...STANDARD_VIEWS, { id: 'V-x', name: 'Mine' }] }),
+        '-RemoveDefaultViews'
+      );
       expect(ofType(a, 'DeleteView')).toHaveLength(0);
     });
   });
@@ -170,14 +253,21 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
     });
 
     it('plans the missing standard view before any deletion (it counts as existing afterwards)', () => {
-      const guard = plan(state({ views: [...STANDARD_VIEWS.slice(0, 4), ...defaults] }), '-RemoveDefaultViews');
-      expect(guard.findIndex((a) => a.type === 'CreateView')).toBeLessThan(guard.findIndex((a) => a.type === 'DeleteView'));
+      const guard = plan(
+        state({ views: [...STANDARD_VIEWS.slice(0, 4), ...defaults] }),
+        '-RemoveDefaultViews'
+      );
+      expect(guard.findIndex((a) => a.type === 'CreateView')).toBeLessThan(
+        guard.findIndex((a) => a.type === 'DeleteView')
+      );
       expect(ofType(guard, 'CreateView').map((c) => c.name)).toEqual(['Recently closed']);
       expect(ofType(guard, 'DeleteView')).toHaveLength(4);
     });
 
     it('deletes nothing without the flag', () => {
-      expect(ofType(plan(state({ views: [...STANDARD_VIEWS, ...defaults] })), 'DeleteView')).toHaveLength(0);
+      expect(
+        ofType(plan(state({ views: [...STANDARD_VIEWS, ...defaults] })), 'DeleteView')
+      ).toHaveLength(0);
     });
   });
 
@@ -197,7 +287,21 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
     it('titles by ISO week-year across New Year', () => {
       const file = path.join(dir, 'ny.json');
       fs.writeFileSync(file, JSON.stringify({ projectId: 'P', ownerType: 'User', ...state() }));
-      const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-StateFile', file, '-Sprints', '-Today', '2027-01-01', '-Json'], { encoding: 'utf8' });
+      const r = spawnSync(
+        'pwsh',
+        [
+          '-NoProfile',
+          '-File',
+          SCRIPT,
+          '-StateFile',
+          file,
+          '-Sprints',
+          '-Today',
+          '2027-01-01',
+          '-Json',
+        ],
+        { encoding: 'utf8' }
+      );
       const [a] = ofType(JSON.parse(r.stdout).actions, 'CreateIterationField');
       expect(a.iterations.slice(0, 2).map((i: any) => i.title)).toEqual(['2026-W53', '2027-W01']);
     });
@@ -206,14 +310,33 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
       const a = sprints(state());
       const creates = ofType(a, 'CreateView');
       expect(creates.map((c) => c.name)).toEqual(['Sprint', 'Sprint planning']);
-      expect(creates[0]).toMatchObject({ layout: 'board', filter: 'sprint:@current -level:Epic,Feature,Task', groupBy: 'Repository', verticalGroupBy: 'Status' });
-      expect(creates[1]).toMatchObject({ layout: 'table', filter: 'is:open no:sprint -level:Epic,Feature,Task', groupBy: 'Repository' });
-      expect(a.findIndex((x) => x.type === 'CreateIterationField')).toBeLessThan(a.findIndex((x) => x.type === 'CreateView'));
+      expect(creates[0]).toMatchObject({
+        layout: 'board',
+        filter: 'sprint:@current -level:Epic,Feature,Task',
+        groupBy: 'Repository',
+        verticalGroupBy: 'Status',
+      });
+      expect(creates[1]).toMatchObject({
+        layout: 'table',
+        filter: 'is:open no:sprint -level:Epic,Feature,Task',
+        groupBy: 'Repository',
+      });
+      expect(a.findIndex((x) => x.type === 'CreateIterationField')).toBeLessThan(
+        a.findIndex((x) => x.type === 'CreateView')
+      );
     });
 
     it('is idempotent and leaves an existing Sprint field and views alone', () => {
-      const views = [...STANDARD_VIEWS, { id: 'V-s', name: 'Sprint' }, { id: 'V-p', name: 'Sprint planning' }];
-      expect(sprints(state({ status: [opt('Todo'), opt('In release'), opt('Done')], fields: [SPRINT], views }))).toEqual([]);
+      const views = [
+        ...STANDARD_VIEWS,
+        { id: 'V-s', name: 'Sprint' },
+        { id: 'V-p', name: 'Sprint planning' },
+      ];
+      expect(
+        sprints(
+          state({ status: [opt('Todo'), opt('In release'), opt('Done')], fields: [SPRINT], views })
+        )
+      ).toEqual([]);
     });
 
     it('adds nothing without the flag', () => {

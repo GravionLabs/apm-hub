@@ -8,10 +8,7 @@ import {
   type DomainEntry,
 } from './list-generator';
 
-export function generateAgentList(
-  packagesBaseDir = 'packages',
-  outputFile = 'docs/agent-list.md'
-) {
+export function generateAgentList(packagesBaseDir = 'packages', outputFile = 'docs/agent-list.md') {
   const allAgents: DomainEntry[] = [];
   const byDomain: Record<string, DomainEntry[]> = {};
 

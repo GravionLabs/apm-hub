@@ -17,7 +17,7 @@ export async function createTestClient(options?: {
   extraEnv?: Record<string, string>;
 }): Promise<CopilotClient> {
   const env: Record<string, string> = {
-    ...process.env as Record<string, string>,
+    ...(process.env as Record<string, string>),
     ...(options?.extraEnv ?? {}),
   };
   if (options?.skillsDir) {

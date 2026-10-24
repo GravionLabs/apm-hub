@@ -23,16 +23,24 @@ afterEach(() => {
 const line = (o: unknown) => JSON.stringify(o);
 const transcript = [
   line({ type: 'system', subtype: 'init', skills: ['review-fanout'] }),
-  line({ type: 'assistant', message: { content: [{ type: 'text', text: 'Let me load a skill.' }] } }),
+  line({
+    type: 'assistant',
+    message: { content: [{ type: 'text', text: 'Let me load a skill.' }] },
+  }),
   line({
     type: 'assistant',
     message: { content: [{ type: 'tool_use', name: 'Skill', input: { skill: 'review-fanout' } }] },
   }),
-  line({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Bash', input: { command: 'ls' } }] } }),
+  line({
+    type: 'assistant',
+    message: { content: [{ type: 'tool_use', name: 'Bash', input: { command: 'ls' } }] },
+  }),
   'not json at all',
   line({
     type: 'assistant',
-    message: { content: [{ type: 'tool_use', name: 'Skill', input: { skill: 'delivery:verify-project' } }] },
+    message: {
+      content: [{ type: 'tool_use', name: 'Skill', input: { skill: 'delivery:verify-project' } }],
+    },
   }),
   line({ type: 'result', result: 'done' }),
 ].join('\n');
@@ -55,12 +63,18 @@ describe('extractInvokedSkills', () => {
   });
 
   it('handles CRLF line endings', () => {
-    expect(extractInvokedSkills(transcript.split('\n').join('\r\n'))).toEqual(['review-fanout', 'verify-project']);
+    expect(extractInvokedSkills(transcript.split('\n').join('\r\n'))).toEqual([
+      'review-fanout',
+      'verify-project',
+    ]);
   });
 
   it('ignores Skill blocks without a string skill name and non-array content', () => {
     const t = [
-      line({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Skill', input: { skill: 5 } }] } }),
+      line({
+        type: 'assistant',
+        message: { content: [{ type: 'tool_use', name: 'Skill', input: { skill: 5 } }] },
+      }),
       line({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Skill' }] } }),
       line({ type: 'assistant', message: { content: 'text' } }),
       line({ type: 'assistant', message: null }),
@@ -90,13 +104,23 @@ describe('analyzeTranscript', () => {
 
   it('fails on an empty transcript or one without a result event', () => {
     expect(analyzeTranscript('')).toEqual({ invoked: [], completed: false, failed: true });
-    expect(analyzeTranscript(line({ type: 'system' }))).toMatchObject({ completed: false, failed: true });
+    expect(analyzeTranscript(line({ type: 'system' }))).toMatchObject({
+      completed: false,
+      failed: true,
+    });
   });
 
   it('fails on an error result but treats hitting max turns as a normal end', () => {
-    expect(analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'success' })).failed).toBe(true);
-    expect(analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'error_during_execution' })).failed).toBe(true);
-    expect(analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'error_max_turns' })).failed).toBe(false);
+    expect(
+      analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'success' })).failed
+    ).toBe(true);
+    expect(
+      analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'error_during_execution' }))
+        .failed
+    ).toBe(true);
+    expect(
+      analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'error_max_turns' })).failed
+    ).toBe(false);
   });
 });
 
@@ -112,8 +136,14 @@ describe('summarize', () => {
 
   it('computes per-skill trigger and false-trigger rates', () => {
     const s = summarize(records);
-    expect(s.skills.find((k) => k.skill === 'a')).toMatchObject({ triggerRate: 50, falseTriggerRate: 50 });
-    expect(s.skills.find((k) => k.skill === 'b')).toMatchObject({ triggerRate: 100, falseTriggerRate: 0 });
+    expect(s.skills.find((k) => k.skill === 'a')).toMatchObject({
+      triggerRate: 50,
+      falseTriggerRate: 50,
+    });
+    expect(s.skills.find((k) => k.skill === 'b')).toMatchObject({
+      triggerRate: 100,
+      falseTriggerRate: 0,
+    });
   });
 
   it('computes overall rates', () => {
@@ -140,7 +170,9 @@ describe('checkThresholds', () => {
   });
 
   it('reports low trigger and high false-trigger rates', () => {
-    const msgs = checkThresholds(summarize([rec('a', 'positive', []), rec('a', 'negative', ['a'])]));
+    const msgs = checkThresholds(
+      summarize([rec('a', 'positive', []), rec('a', 'negative', ['a'])])
+    );
     expect(msgs).toContain('a: trigger rate 0% < 80%');
     expect(msgs).toContain('a: false-trigger rate 100% > 10%');
   });
@@ -155,7 +187,9 @@ describe('compareToBaseline', () => {
 
   it('flags a drop greater than 5 points but not exactly 5', () => {
     const mk = (hits: number) =>
-      summarize([...Array.from({ length: 20 }, (_, i) => rec('a', 'positive', i < hits ? ['a'] : []))]);
+      summarize([
+        ...Array.from({ length: 20 }, (_, i) => rec('a', 'positive', i < hits ? ['a'] : [])),
+      ]);
     expect(compareToBaseline(mk(19), mk(20))).toEqual([]); // 95 vs 100 = 5 points
     expect(compareToBaseline(mk(18), mk(20))).toEqual([
       'overall: trigger rate fell 100% -> 90%',
@@ -164,7 +198,11 @@ describe('compareToBaseline', () => {
   });
 
   it('flags a false-trigger rise and ignores skills absent from the baseline', () => {
-    const cur = summarize([rec('a', 'positive', ['a']), rec('a', 'negative', ['a']), rec('new', 'positive', [])]);
+    const cur = summarize([
+      rec('a', 'positive', ['a']),
+      rec('a', 'negative', ['a']),
+      rec('new', 'positive', []),
+    ]);
     const msgs = compareToBaseline(cur, base);
     expect(msgs).toContain('a: false-trigger rate rose 0% -> 100%');
     expect(msgs.some((m) => m.startsWith('new:'))).toBe(false);
@@ -172,20 +210,35 @@ describe('compareToBaseline', () => {
 });
 
 describe('compareToBaseline rounding and scope', () => {
-  const sk = (skill: string, positives: number, triggerRate: number, falseTriggerRate = 0, negatives = 0) => ({
-    skill, positives, negatives, triggerRate, falseTriggerRate,
+  const sk = (
+    skill: string,
+    positives: number,
+    triggerRate: number,
+    falseTriggerRate = 0,
+    negatives = 0
+  ) => ({
+    skill,
+    positives,
+    negatives,
+    triggerRate,
+    falseTriggerRate,
   });
-  const sum = (...skills: ReturnType<typeof sk>[]) => ({ overall: { positives: 0, negatives: 0, triggerRate: 0, falseTriggerRate: 0 }, skills });
+  const sum = (...skills: ReturnType<typeof sk>[]) => ({
+    overall: { positives: 0, negatives: 0, triggerRate: 0, falseTriggerRate: 0 },
+    skills,
+  });
 
   it('does not flag a 5-point difference that only exceeds 5 through float noise', () => {
     expect(compareToBaseline(sum(sk('a', 6, 28.3)), sum(sk('a', 6, 33.3)))).toEqual([]);
   });
 
   it('flags a false-trigger rise greater than 5 but not exactly 5', () => {
-    expect(compareToBaseline(sum(sk('a', 20, 100, 5, 20)), sum(sk('a', 20, 100, 0, 20)))).toEqual([]);
-    expect(compareToBaseline(sum(sk('a', 20, 100, 10, 20)), sum(sk('a', 20, 100, 0, 20)))).toContain(
-      'a: false-trigger rate rose 0% -> 10%',
+    expect(compareToBaseline(sum(sk('a', 20, 100, 5, 20)), sum(sk('a', 20, 100, 0, 20)))).toEqual(
+      []
     );
+    expect(
+      compareToBaseline(sum(sk('a', 20, 100, 10, 20)), sum(sk('a', 20, 100, 0, 20)))
+    ).toContain('a: false-trigger rate rose 0% -> 10%');
   });
 
   it('flags a per-skill drop that the overall rate hides', () => {
@@ -231,8 +284,14 @@ describe('score', () => {
   });
 
   it('accepts a result file as baseline and reports differing model and runs', () => {
-    const base = score([rec('a', 'positive', ['a'])], undefined, { meta: { model: 'haiku', runs: 3 }, notInstalled: ['x'] });
-    const cur = score([rec('a', 'positive', ['a'])], base, { meta: { model: 'sonnet', runs: 1 }, notInstalled: [] });
+    const base = score([rec('a', 'positive', ['a'])], undefined, {
+      meta: { model: 'haiku', runs: 3 },
+      notInstalled: ['x'],
+    });
+    const cur = score([rec('a', 'positive', ['a'])], base, {
+      meta: { model: 'sonnet', runs: 1 },
+      notInstalled: [],
+    });
     expect(cur.warnings).toEqual([
       'baseline model haiku differs from sonnet',
       'baseline runs 3 differ from 1',
@@ -270,7 +329,9 @@ describe('parseBaseline', () => {
   it('rejects data without a usable summary', () => {
     expect(() => parseBaseline({ date: '2026-10-14' })).toThrow(/no usable summary/);
     expect(() => parseBaseline(null)).toThrow(/no usable summary/);
-    expect(() => parseBaseline({ summary: { overall: {}, skills: [] } })).toThrow(/no usable summary/);
+    expect(() => parseBaseline({ summary: { overall: {}, skills: [] } })).toThrow(
+      /no usable summary/
+    );
   });
 });
 
@@ -286,7 +347,10 @@ describe('main (CLI)', () => {
     return f;
   };
   const silent = () => {
-    const spies = [vi.spyOn(console, 'log').mockImplementation(() => {}), vi.spyOn(console, 'error').mockImplementation(() => {})];
+    const spies = [
+      vi.spyOn(console, 'log').mockImplementation(() => {}),
+      vi.spyOn(console, 'error').mockImplementation(() => {}),
+    ];
     return () => spies.forEach((x) => x.mockRestore());
   };
 
@@ -294,7 +358,11 @@ describe('main (CLI)', () => {
     const f = write(tmp(), 't.jsonl', transcript);
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     expect(main(['extract', f])).toBe(0);
-    expect(JSON.parse(log.mock.calls[0][0])).toEqual({ invoked: ['review-fanout', 'verify-project'], completed: true, failed: false });
+    expect(JSON.parse(log.mock.calls[0][0])).toEqual({
+      invoked: ['review-fanout', 'verify-project'],
+      completed: true,
+      failed: false,
+    });
     log.mockRestore();
   });
 
@@ -302,7 +370,11 @@ describe('main (CLI)', () => {
     const d = tmp();
     const out = path.join(d, 'out.json');
     const restore = silent();
-    const code = main(['score', write(d, 'r.json', [rec('a', 'positive', ['a']), rec('a', 'negative', [])]), out]);
+    const code = main([
+      'score',
+      write(d, 'r.json', [rec('a', 'positive', ['a']), rec('a', 'negative', [])]),
+      out,
+    ]);
     restore();
     expect(code).toBe(0);
     expect(JSON.parse(fs.readFileSync(out, 'utf8')).summary.overall.triggerRate).toBe(100);
@@ -310,12 +382,24 @@ describe('main (CLI)', () => {
 
   it('score exits 1 on a threshold failure and on a regression against a committed-shape baseline', () => {
     const d = tmp();
-    const base = write(d, 'b.json', score([rec('a', 'positive', ['a'])], undefined, { meta: { model: 'sonnet', runs: 1 } }));
+    const base = write(
+      d,
+      'b.json',
+      score([rec('a', 'positive', ['a'])], undefined, { meta: { model: 'sonnet', runs: 1 } })
+    );
     const restore = silent();
-    const code = main(['score', write(d, 'r.json', [rec('a', 'positive', [])]), path.join(d, 'out.json'), base]);
+    const code = main([
+      'score',
+      write(d, 'r.json', [rec('a', 'positive', [])]),
+      path.join(d, 'out.json'),
+      base,
+    ]);
     restore();
     expect(code).toBe(1);
-    expect(JSON.parse(fs.readFileSync(path.join(d, 'out.json'), 'utf8')).regressions).toEqual(['overall: trigger rate fell 100% -> 0%', 'a: trigger rate fell 100% -> 0%']);
+    expect(JSON.parse(fs.readFileSync(path.join(d, 'out.json'), 'utf8')).regressions).toEqual([
+      'overall: trigger rate fell 100% -> 0%',
+      'a: trigger rate fell 100% -> 0%',
+    ]);
   });
 
   it('score exits 2 for a baseline without a summary, malformed records, a missing file and unknown commands', () => {

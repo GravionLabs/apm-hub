@@ -2,7 +2,14 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { GATE_ACCEPT, GATE_REJECT, SCRIPT, hasPwsh, posix, queueHelpers } from '../../helpers/queue.helpers';
+import {
+  GATE_ACCEPT,
+  GATE_REJECT,
+  SCRIPT,
+  hasPwsh,
+  posix,
+  queueHelpers,
+} from '../../helpers/queue.helpers';
 import { PwshWorker } from '../../helpers/pwsh-worker';
 
 describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () => {
@@ -22,14 +29,27 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
   const { calls } = queueHelpers(
     () => dir,
-    () => bin,
+    () => bin
   );
   // same environment as queueHelpers().run(args, true): the fake claude of this case first on PATH
   const run = (args: string[]) =>
-    worker.run(args, { cwd: dir, env: { ...process.env, QUEUE_POLL_SECONDS: '0', PATH: `${bin}${path.delimiter}${process.env.PATH}` } });
+    worker.run(args, {
+      cwd: dir,
+      env: {
+        ...process.env,
+        QUEUE_POLL_SECONDS: '0',
+        PATH: `${bin}${path.delimiter}${process.env.PATH}`,
+      },
+    });
   const statusFile = () => path.join(dir, '.agents', 'status-248.md');
-  const fake = (body: string) => fs.writeFileSync(path.join(bin, 'claude'), `#!/bin/sh\necho "$@" >> "${dir}/calls.log"\nmkdir -p .agents\n${body}\n`, { mode: 0o755 });
-  const WRITE = 'printf "| #1 | merged |\\n" > .agents/status-248.md; echo "Status: .agents/status-248.md"';
+  const fake = (body: string) =>
+    fs.writeFileSync(
+      path.join(bin, 'claude'),
+      `#!/bin/sh\necho "$@" >> "${dir}/calls.log"\nmkdir -p .agents\n${body}\n`,
+      { mode: 0o755 }
+    );
+  const WRITE =
+    'printf "| #1 | merged |\\n" > .agents/status-248.md; echo "Status: .agents/status-248.md"';
 
   it('prints the table and exits 0 when the file was written and announced', async () => {
     fake(WRITE);
@@ -40,7 +60,9 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
     const log = fs.readFileSync(path.join(dir, '.agents', 'status-248.log'), 'utf8');
     expect(log).toContain('=== exit code 0');
     await run(['-Status', '248']);
-    expect(fs.readFileSync(path.join(dir, '.agents', 'status-248.log'), 'utf8').match(/=== exit code 0/g)).toHaveLength(2);
+    expect(
+      fs.readFileSync(path.join(dir, '.agents', 'status-248.log'), 'utf8').match(/=== exit code 0/g)
+    ).toHaveLength(2);
   });
 
   describe('state dir without DROMOS_STATE_DIR', () => {
@@ -49,18 +71,27 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
       spawnSync('git', ['init', '-q'], { cwd: dir });
       const sd = path.join(fs.realpathSync(dir), '.git', 'agents');
       const marker = absolute ? sd + '/status-248.md' : 'status-248.md';
-      fake(`mkdir -p "${sd}"; printf "| #1 | merged |\\n" > "${sd}/status-248.md"; echo "Status: ${marker}"`);
-      const env = { ...process.env, QUEUE_POLL_SECONDS: '0', PATH: `${bin}${path.delimiter}${process.env.PATH}` };
+      fake(
+        `mkdir -p "${sd}"; printf "| #1 | merged |\\n" > "${sd}/status-248.md"; echo "Status: ${marker}"`
+      );
+      const env = {
+        ...process.env,
+        QUEUE_POLL_SECONDS: '0',
+        PATH: `${bin}${path.delimiter}${process.env.PATH}`,
+      };
       delete env.DROMOS_STATE_DIR;
       return { r: await worker.run(args, { cwd: dir, env }), sd };
     };
-    it.each([true, false])('reads the table from .git/agents (absolute marker: %s)', async (absolute) => {
-      const { r, sd } = await runGit(['-Status', '248'], absolute);
-      expect(r.status).toBe(0);
-      expect(r.stdout).toContain('| #1 | merged |');
-      expect(fs.existsSync(path.join(sd, 'status-248.log'))).toBe(true);
-      expect(fs.existsSync(path.join(dir, '.agents', 'status-248.md'))).toBe(false);
-    });
+    it.each([true, false])(
+      'reads the table from .git/agents (absolute marker: %s)',
+      async (absolute) => {
+        const { r, sd } = await runGit(['-Status', '248'], absolute);
+        expect(r.status).toBe(0);
+        expect(r.stdout).toContain('| #1 | merged |');
+        expect(fs.existsSync(path.join(sd, 'status-248.log'))).toBe(true);
+        expect(fs.existsSync(path.join(dir, '.agents', 'status-248.md'))).toBe(false);
+      }
+    );
   });
 
   it('creates no ledger', async () => {
@@ -171,7 +202,9 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
 
   it('strips escape sequences from the table, the output and the log', async () => {
     const esc = String.raw`C1:\0302\0205 bare:\033Z ST:\033]8;;u\033\\ok osc:\033]0;pwn\007 csi:\033[31mred\033[0m cr:a\rb`;
-    fake(String.raw`printf '| #1 \033[2Jtable |\n' > .agents/status-248.md; printf '%b\n' '${esc}'; echo "Status: .agents/status-248.md"`);
+    fake(
+      String.raw`printf '| #1 \033[2Jtable |\n' > .agents/status-248.md; printf '%b\n' '${esc}'; echo "Status: .agents/status-248.md"`
+    );
     const r = await run(['-Status', '248']);
     expect(r.status).toBe(0);
     const log = fs.readFileSync(path.join(dir, '.agents', 'status-248.log'), 'utf8');
@@ -200,7 +233,13 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
   it('clears AGENTS_LEDGER for the child and leaves the caller environment alone', async () => {
     fake(`${WRITE}; echo "ledger=[$AGENTS_LEDGER]" >> "${dir}/env.log"`);
     const r = await worker.run(['-Status', '248'], {
-      cwd: dir, env: { ...process.env, QUEUE_POLL_SECONDS: '0', AGENTS_LEDGER: '/x/ledger.md', PATH: `${bin}${path.delimiter}${process.env.PATH}` },
+      cwd: dir,
+      env: {
+        ...process.env,
+        QUEUE_POLL_SECONDS: '0',
+        AGENTS_LEDGER: '/x/ledger.md',
+        PATH: `${bin}${path.delimiter}${process.env.PATH}`,
+      },
     });
     expect(r.status).toBe(0);
     expect(fs.readFileSync(path.join(dir, 'env.log'), 'utf8').trim()).toBe('ledger=[]');
@@ -210,7 +249,11 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 -Status', () =
   it('restores AGENTS_LEDGER in the runner process after the run', () => {
     fake(WRITE);
     const cmd = `$env:AGENTS_LEDGER='/x/ledger.md'; & '${SCRIPT}' -Status 248 | Out-Null; Write-Output "after=$env:AGENTS_LEDGER"`;
-    const r = spawnSync('pwsh', ['-NoProfile', '-Command', cmd], { encoding: 'utf8', cwd: dir, env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` } });
+    const r = spawnSync('pwsh', ['-NoProfile', '-Command', cmd], {
+      encoding: 'utf8',
+      cwd: dir,
+      env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` },
+    });
     expect(r.stdout).toContain('after=/x/ledger.md');
   });
 

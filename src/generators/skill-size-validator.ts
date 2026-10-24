@@ -73,7 +73,12 @@ export function extractDescription(content: string): string {
   const fm = frontmatterLines(content);
   const start = fm.findIndex((l) => l.startsWith('description:'));
   if (start < 0) return '';
-  const parts = [fm[start].slice('description:'.length).trim().replace(/^[>|]-?$/, '')];
+  const parts = [
+    fm[start]
+      .slice('description:'.length)
+      .trim()
+      .replace(/^[>|]-?$/, ''),
+  ];
   for (let i = start + 1; i < fm.length && !/^[a-z-]+:/.test(fm[i]); i++) parts.push(fm[i].trim());
   return parts
     .join(' ')
@@ -112,7 +117,9 @@ export interface DescriptionBudget {
 
 /** True when the frontmatter gates the skill with `disable-model-invocation: true` (also quoted). */
 export function isModelGated(content: string): boolean {
-  return frontmatterLines(content).some((l) => /^disable-model-invocation:\s*(['"]?)true\1\s*$/.test(l));
+  return frontmatterLines(content).some((l) =>
+    /^disable-model-invocation:\s*(['"]?)true\1\s*$/.test(l)
+  );
 }
 
 export interface BudgetViolation {

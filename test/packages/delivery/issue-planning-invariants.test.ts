@@ -10,7 +10,10 @@ describe('issue-planning invariants section (#484)', () => {
   const skill = read(`${skillDir}/SKILL.md`);
 
   it('invariants.md holds the five checklist items', () => {
-    const items = ref.split('## Checklist')[1].split('\n## ')[0].match(/^\d\. .+$/gm)!;
+    const items = ref
+      .split('## Checklist')[1]
+      .split('\n## ')[0]
+      .match(/^\d\. .+$/gm)!;
     expect(items).toHaveLength(5);
     expect(items[0]).toMatch(/atomic|compensated/);
     expect(items[1]).toMatch(/error|fallback/i);

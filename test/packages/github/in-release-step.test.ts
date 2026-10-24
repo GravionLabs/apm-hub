@@ -7,7 +7,9 @@ import { parse } from 'yaml';
 const root = path.resolve(__dirname, '../../..');
 const rel = 'packages/github/.apm/skills/github-release/templates/release-branch.yml';
 const wf = parse(fs.readFileSync(path.join(root, rel), 'utf-8'));
-const run = (wf.jobs['release-pr'].steps as { id?: string; run?: string }[]).find((s) => s.id === 'in-release')!.run!;
+const run = (wf.jobs['release-pr'].steps as { id?: string; run?: string }[]).find(
+  (s) => s.id === 'in-release'
+)!.run!;
 
 // Fake `gh` that honours --jq (through real jq). Pushed commit: PR 7 (merged, base release/next), PR 8 (not merged),
 // PR 9 (merged, base main). Behaviour comes from env: CLOSING, BODY, COMMIT, STATUS_<issue>, NO_OPTION, FAIL.
@@ -68,11 +70,13 @@ function runStep(env: Record<string, string> = {}) {
       ...env,
     },
   });
-  const lines = (f: string) => (fs.existsSync(f) ? fs.readFileSync(f, 'utf-8').trim().split('\n') : []);
+  const lines = (f: string) =>
+    fs.existsSync(f) ? fs.readFileSync(f, 'utf-8').trim().split('\n') : [];
   return { ...r, mutations: lines(log), calls: lines(calls) };
 }
 
-const items = (r: ReturnType<typeof runStep>) => r.mutations.map((m) => /item=(i\d+)/.exec(m)![1]).sort();
+const items = (r: ReturnType<typeof runStep>) =>
+  r.mutations.map((m) => /item=(i\d+)/.exec(m)![1]).sort();
 
 describe('In release status step behavior (#489)', () => {
   it('warns and exits 0 without a token, touching nothing', () => {
@@ -135,9 +139,16 @@ describe('In release status step behavior (#489)', () => {
     });
 
     it('a token without scope project warns once, keeps the gh error and stops instead of one warning per issue', () => {
-      const r = runStep({ CLOSING: '[11, 12]', STATUS_11: 'Todo', STATUS_12: 'Todo', FAIL: 'scope' });
+      const r = runStep({
+        CLOSING: '[11, 12]',
+        STATUS_11: 'Todo',
+        STATUS_12: 'Todo',
+        FAIL: 'scope',
+      });
       expect(r.status).toBe(0);
-      expect(r.stdout).toMatch(/::warning::token cannot access the project \(classic PAT with scope project needed; fine-grained tokens cannot access user-owned projects\)/);
+      expect(r.stdout).toMatch(
+        /::warning::token cannot access the project \(classic PAT with scope project needed; fine-grained tokens cannot access user-owned projects\)/
+      );
       expect(r.stderr).toMatch(/Resource not accessible by personal access token/);
       expect(r.stdout).not.toMatch(/cannot read project items/);
       expect(r.calls.filter((c) => /-F issue=/.test(c))).toHaveLength(1);

@@ -68,7 +68,11 @@ describe('model-policy reference', () => {
 
   it('lists the Copilot CLI ids per tier', () => {
     const rows = tableRows(section(doc, 'Tier to model per client'));
-    expect(rows.map((r) => r[3])).toEqual(['`claude-haiku-5.5`', '`claude-sonnet-5.5`', '`claude-opus-5.5`']);
+    expect(rows.map((r) => r[3])).toEqual([
+      '`claude-haiku-5.5`',
+      '`claude-sonnet-5.5`',
+      '`claude-opus-5.5`',
+    ]);
   });
 
   it('escalates at fix round 2 and gates after round 3', () => {

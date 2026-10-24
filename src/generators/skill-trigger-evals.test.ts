@@ -21,7 +21,10 @@ function makePackages(skills: Record<string, { pkg?: string; gated?: boolean }>)
     const dir = path.join(base, pkg, '.apm', 'skills', name);
     fs.mkdirSync(dir, { recursive: true });
     const gate = gated ? 'disable-model-invocation: true\n' : '';
-    fs.writeFileSync(path.join(dir, 'SKILL.md'), `---\nname: ${name}\ndescription: 'x'\n${gate}---\nbody\n`);
+    fs.writeFileSync(
+      path.join(dir, 'SKILL.md'),
+      `---\nname: ${name}\ndescription: 'x'\n${gate}---\nbody\n`
+    );
   }
   return base;
 }
@@ -79,13 +82,20 @@ describe('validateEvals', () => {
 
   it('requires at least one positive and one negative prompt', () => {
     const base = makePackages({ a: {} });
-    expect(validateEvals([entry('a', [], ['n'])], base)).toEqual(['a: needs at least one shouldTrigger prompt']);
-    expect(validateEvals([entry('a', ['p'], [])], base)).toEqual(['a: needs at least one shouldNotTrigger prompt']);
+    expect(validateEvals([entry('a', [], ['n'])], base)).toEqual([
+      'a: needs at least one shouldTrigger prompt',
+    ]);
+    expect(validateEvals([entry('a', ['p'], [])], base)).toEqual([
+      'a: needs at least one shouldNotTrigger prompt',
+    ]);
   });
 
   it('rejects duplicate prompts within and across skills, case-insensitively', () => {
     const base = makePackages({ a: {}, b: {} });
-    const problems = validateEvals([entry('a', ['same'], ['n1']), entry('b', ['p2'], ['SAME'])], base);
+    const problems = validateEvals(
+      [entry('a', ['same'], ['n1']), entry('b', ['p2'], ['SAME'])],
+      base
+    );
     expect(problems).toEqual(['b: duplicate prompt "SAME" (also in a)']);
   });
 
@@ -98,25 +108,39 @@ describe('validateEvals', () => {
 
   it('reports malformed entries instead of throwing', () => {
     const base = makePackages({ a: {} });
-    const bad = { skill: 'a', shouldTrigger: 'x', shouldNotTrigger: [1, ' '] } as unknown as TriggerEval;
+    const bad = {
+      skill: 'a',
+      shouldTrigger: 'x',
+      shouldNotTrigger: [1, ' '],
+    } as unknown as TriggerEval;
     const problems = validateEvals([bad], base);
     expect(problems).toContain('a: shouldTrigger and shouldNotTrigger must be arrays');
-    expect(validateEvals([{ skill: 'a', shouldTrigger: ['p'], shouldNotTrigger: [1, ' '] } as unknown as TriggerEval], base)).toEqual([
-      'a: prompts must be non-empty strings',
-      'a: prompts must be non-empty strings',
-    ]);
+    expect(
+      validateEvals(
+        [
+          {
+            skill: 'a',
+            shouldTrigger: ['p'],
+            shouldNotTrigger: [1, ' '],
+          } as unknown as TriggerEval,
+        ],
+        base
+      )
+    ).toEqual(['a: prompts must be non-empty strings', 'a: prompts must be non-empty strings']);
   });
 
   it('normalizes whitespace and case when detecting duplicate prompts', () => {
     const base = makePackages({ a: {}, b: {} });
-    expect(validateEvals([entry('a', ['Same  '], ['n1']), entry('b', ['p2'], ['  same'])], base)).toEqual([
-      'b: duplicate prompt "  same" (also in a)',
-    ]);
+    expect(
+      validateEvals([entry('a', ['Same  '], ['n1']), entry('b', ['p2'], ['  same'])], base)
+    ).toEqual(['b: duplicate prompt "  same" (also in a)']);
   });
 
   it('rejects duplicate skill entries', () => {
     const base = makePackages({ a: {} });
-    expect(validateEvals([entry('a'), entry('a', ['p2'], ['n2'])], base)).toEqual(['a: duplicate entry']);
+    expect(validateEvals([entry('a'), entry('a', ['p2'], ['n2'])], base)).toEqual([
+      'a: duplicate entry',
+    ]);
   });
 });
 

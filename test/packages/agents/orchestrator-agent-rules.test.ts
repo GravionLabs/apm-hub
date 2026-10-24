@@ -3,9 +3,15 @@ import * as path from 'path';
 import { parse } from 'yaml';
 import { OPENCODE_MODEL_BY_TIER } from '../../../src/generators/agent-model-validator';
 
-const agentPath = path.resolve(__dirname, '../../../packages/agents/.apm/agents/orchestrator.agent.md');
+const agentPath = path.resolve(
+  __dirname,
+  '../../../packages/agents/.apm/agents/orchestrator.agent.md'
+);
 const body = fs.readFileSync(agentPath, 'utf-8').replace(/^---\n[\s\S]*?\n---\n/, '');
-const pipelinePath = path.resolve(__dirname, '../../../packages/github/.apm/skills/github-issue/references/pbi-pipeline.md');
+const pipelinePath = path.resolve(
+  __dirname,
+  '../../../packages/github/.apm/skills/github-issue/references/pbi-pipeline.md'
+);
 const pipelineRef = fs.readFileSync(pipelinePath, 'utf-8');
 // steps 0-6 and the per-PBI rules moved to the reference; the body points to it
 const lines = (body + '\n' + pipelineRef).split('\n');
@@ -48,7 +54,9 @@ describe('orchestrator agent rules', () => {
     const step1 = lines.find((l) => /^1\.\s/.test(l));
     expect(step1).toBeDefined();
     expect(step1).toContain('`issue-reader`');
-    expect(step1).toMatch(/\{issue, type, title, digest, file, branch, bug, parent, tasks:\[\{n, state, merged, sha\}\], ledger\}/);
+    expect(step1).toMatch(
+      /\{issue, type, title, digest, file, branch, bug, parent, tasks:\[\{n, state, merged, sha\}\], ledger\}/
+    );
     expect(step1).toContain('`<state>/<issue>/issue.md`');
     expect(step1).toMatch(/\{error\}/);
     expect(step1).toMatch(/`merged: true` and `state: open` close it/);
@@ -79,8 +87,18 @@ describe('orchestrator agent rules', () => {
 
   it('body points to the pipeline reference and the reference keeps every step and gate list', () => {
     expect(body).toContain('`github-issue` `references/pbi-pipeline.md`');
-    for (const n of [0, 1, 2, 3, 4, 5, 6]) expect(pipelineRef).toMatch(new RegExp(`^${n}\\.\\s`, 'm'));
-    for (const phrase of ['Model per dispatch', 'Same-issue ledger exists', '## Gate points', 'Red suite twice', 'CHANGES_REQUESTED', 'NEEDS_CONTEXT', 'Plan gate', 'Review summary'])
+    for (const n of [0, 1, 2, 3, 4, 5, 6])
+      expect(pipelineRef).toMatch(new RegExp(`^${n}\\.\\s`, 'm'));
+    for (const phrase of [
+      'Model per dispatch',
+      'Same-issue ledger exists',
+      '## Gate points',
+      'Red suite twice',
+      'CHANGES_REQUESTED',
+      'NEEDS_CONTEXT',
+      'Plan gate',
+      'Review summary',
+    ])
       expect(pipelineRef).toContain(phrase);
     expect(body).not.toMatch(/^\d\.\s/m);
   });
@@ -128,13 +146,17 @@ describe('orchestrator model pins', () => {
 
   it('no agent of the package inherits the session model', () => {
     for (const f of fs.readdirSync(agentsDir).filter((n) => n.endsWith('.agent.md'))) {
-      expect(fs.readFileSync(path.join(agentsDir, f), 'utf-8'), f).not.toMatch(/^\s*model:\s*inherit\s*$/m);
+      expect(fs.readFileSync(path.join(agentsDir, f), 'utf-8'), f).not.toMatch(
+        /^\s*model:\s*inherit\s*$/m
+      );
     }
   });
 
   it('pins planner to opus in both clients', () => {
     const planner: any = parse(
-      fs.readFileSync(path.join(agentsDir, 'planner.agent.md'), 'utf-8').match(/^---\n([\s\S]*?)\n---\n/)![1],
+      fs
+        .readFileSync(path.join(agentsDir, 'planner.agent.md'), 'utf-8')
+        .match(/^---\n([\s\S]*?)\n---\n/)![1]
     );
     expect(planner.metadata.claude.model).toBe('opus');
     expect(planner.metadata.opencode.model).toBe('anthropic/claude-opus-5-5');
@@ -143,9 +165,13 @@ describe('orchestrator model pins', () => {
   it('every agent file pins explicit claude and opencode models of one tier', () => {
     const tiers = Object.entries(OPENCODE_MODEL_BY_TIER);
     for (const f of fs.readdirSync(agentsDir).filter((n) => n.endsWith('.agent.md'))) {
-      const a: any = parse(fs.readFileSync(path.join(agentsDir, f), 'utf-8').match(/^---\n([\s\S]*?)\n---\n/)![1]);
+      const a: any = parse(
+        fs.readFileSync(path.join(agentsDir, f), 'utf-8').match(/^---\n([\s\S]*?)\n---\n/)![1]
+      );
       expect(['haiku', 'sonnet', 'opus'], f).toContain(a.metadata.claude.model);
-      expect(a.metadata.opencode.model, f).toBe(OPENCODE_MODEL_BY_TIER[a.metadata.claude.model as keyof typeof OPENCODE_MODEL_BY_TIER]);
+      expect(a.metadata.opencode.model, f).toBe(
+        OPENCODE_MODEL_BY_TIER[a.metadata.claude.model as keyof typeof OPENCODE_MODEL_BY_TIER]
+      );
     }
     expect(tiers).toHaveLength(3);
   });
@@ -168,7 +194,9 @@ describe('orchestrator model pins', () => {
     expect(rule).toContain('references/model-policy.md');
     expect(rule).not.toMatch(/inherit`|`inherit/);
     expect(rule).not.toMatch(/\b(haiku|sonnet|opus)\b/);
-    expect(rule).not.toMatch(/`[\w-]+`( and `[\w-]+`)*,? (to |defaults to |pinned to )?`?inherit\b/);
+    expect(rule).not.toMatch(
+      /`[\w-]+`( and `[\w-]+`)*,? (to |defaults to |pinned to )?`?inherit\b/
+    );
     expect(rule).not.toMatch(/(round 3|Final-Verify|final verify) (to )?inherit\b/);
     expect(rule).not.toMatch(/pass `inherit`/);
   });
@@ -180,14 +208,18 @@ describe('fix-round escalation (#251)', () => {
   it('round 1 resumes, round 2 escalates one tier after a second blocking CHANGES_REQUESTED, round 3 resumes once', () => {
     expect(step5).toMatch(/round 1 resumes the same implementer/);
     expect(step5).toMatch(
-      /round 2, the second `CHANGES_REQUESTED` with a blocking finding on the same task, dispatches a fresh implementer one tier up/,
+      /round 2, the second `CHANGES_REQUESTED` with a blocking finding on the same task, dispatches a fresh implementer one tier up/
     );
-    expect(step5).toMatch(/round 3 resumes that escalated implementer once; still blocked after round 3 → gate to the user/);
+    expect(step5).toMatch(
+      /round 3 resumes that escalated implementer once; still blocked after round 3 → gate to the user/
+    );
     expect(step5).toContain('`model-policy.md` "Escalation in the fix loop"');
   });
 
   it('never escalates for advisory-only rounds or DONE_WITH_CONCERNS', () => {
-    expect(step5).toMatch(/Advisory-only rounds[^.]*`DONE_WITH_CONCERNS` reply resume the same implementer at its tier, never escalate/);
+    expect(step5).toMatch(
+      /Advisory-only rounds[^.]*`DONE_WITH_CONCERNS` reply resume the same implementer at its tier, never escalate/
+    );
   });
 
   it('no longer escalates at round 3 or resumes rounds 1-2', () => {

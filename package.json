@@ -11,6 +11,7 @@
     "generate:ci": "node dist/index.js --aggregate",
     "generate:all": "npm run build && npm run generate:ci",
     "format": "prettier --write \"{src,test}/**/*.ts\"",
+    "format:check": "prettier --check \"{src,test}/**/*.ts\"",
     "test": "vitest run --project unit --project scripts",
     "test:all": "vitest run",
     "test:unit": "vitest run --project unit",

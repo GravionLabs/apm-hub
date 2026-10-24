@@ -3,9 +3,21 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { execFileSync } from 'child_process';
-import { readLedger, BRANCHES_BOUND, BRANCHES_UNBOUND, LOOP_LEDGERS_FOREIGN_BRANCH, LOOP_LEDGERS_LIVE, LOOP_LEDGERS_STALE, MARKERS_MALFORMED, gitCleanEnv } from './ledger-test-helpers';
+import {
+  readLedger,
+  BRANCHES_BOUND,
+  BRANCHES_UNBOUND,
+  LOOP_LEDGERS_FOREIGN_BRANCH,
+  LOOP_LEDGERS_LIVE,
+  LOOP_LEDGERS_STALE,
+  MARKERS_MALFORMED,
+  gitCleanEnv,
+} from './ledger-test-helpers';
 
-const PLUGIN = path.resolve(__dirname, '../../../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts');
+const PLUGIN = path.resolve(
+  __dirname,
+  '../../../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts'
+);
 
 type Hooks = {
   event: (a: any) => Promise<void>;
@@ -17,12 +29,15 @@ describe('opencode plugin shipping', () => {
   it('lives at the shipped path inside the hooks package', () => {
     expect(fs.existsSync(PLUGIN)).toBe(true);
     expect(path.relative(path.resolve(__dirname, '../../../packages/hooks'), PLUGIN)).toBe(
-      path.join('.apm', 'opencode', 'plugins', 'apm-hub-hooks.ts'),
+      path.join('.apm', 'opencode', 'plugins', 'apm-hub-hooks.ts')
     );
   });
 
   it('is not excluded by a files list in the hooks manifest', () => {
-    const manifest = fs.readFileSync(path.resolve(__dirname, '../../../packages/hooks/apm.yml'), 'utf8');
+    const manifest = fs.readFileSync(
+      path.resolve(__dirname, '../../../packages/hooks/apm.yml'),
+      'utf8'
+    );
     expect(manifest).not.toMatch(/^files:/m);
   });
 });
@@ -60,11 +75,19 @@ describe('opencode plugin apm-hub-hooks', () => {
     { tool: 'task', args: { subagent_type } },
     { output },
   ];
-  const result = (s: string) => `<task id="ses_1" state="completed">\n<task_result>\n${s}\n</task_result>\n</task>`;
+  const result = (s: string) =>
+    `<task id="ses_1" state="completed">\n<task_result>\n${s}\n</task_result>\n</task>`;
   const assistant = (sessionID: string, input: number, read = 0, write = 0) => ({
     event: {
       type: 'message.updated',
-      properties: { sessionID, info: { role: 'assistant', sessionID, tokens: { input, output: 5, cache: { read, write } } } },
+      properties: {
+        sessionID,
+        info: {
+          role: 'assistant',
+          sessionID,
+          tokens: { input, output: 5, cache: { read, write } },
+        },
+      },
     },
   });
   const chat = async (h: Hooks, sessionID = 's1') => {
@@ -93,7 +116,9 @@ describe('opencode plugin apm-hub-hooks', () => {
       const before = Date.now();
       await h['tool.execute.after'](...task('implementer', result('Status: DONE')));
       const lines = fs.readFileSync(ledger, 'utf8').trimEnd().split('\n');
-      expect(lines[1]).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z Subagent implementer: stopped — Status: DONE$/);
+      expect(lines[1]).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z Subagent implementer: stopped — Status: DONE$/
+      );
       expect(Math.abs(Date.parse(lines[1].slice(0, 20)) - before)).toBeLessThan(10_000);
     });
 
@@ -109,7 +134,9 @@ describe('opencode plugin apm-hub-hooks', () => {
       withLedger();
       const h = await load();
       await h['tool.execute.after'](...task('explorer', result('x'.repeat(300))));
-      expect(readLedger(ledger).split('\n')[1]).toBe(`Subagent explorer: stopped — ${'x'.repeat(120)}`);
+      expect(readLedger(ledger).split('\n')[1]).toBe(
+        `Subagent explorer: stopped — ${'x'.repeat(120)}`
+      );
     });
 
     it('writes the bare line without a result', async () => {
@@ -177,7 +204,12 @@ describe('opencode plugin apm-hub-hooks', () => {
     it('skips the orchestrator in any case or namespace', async () => {
       withLedger();
       const h = await load();
-      for (const n of ['orchestrator', 'Orchestrator', 'apm-hub:orchestrator', 'agents/orchestrator']) {
+      for (const n of [
+        'orchestrator',
+        'Orchestrator',
+        'apm-hub:orchestrator',
+        'agents/orchestrator',
+      ]) {
         await h['tool.execute.after'](...task(n, result('x')));
       }
       expect(readLedger(ledger)).toBe('# ledger\n');
@@ -186,7 +218,10 @@ describe('opencode plugin apm-hub-hooks', () => {
     it('ignores other tools', async () => {
       withLedger();
       const h = await load();
-      await h['tool.execute.after']({ tool: 'bash', args: { subagent_type: 'x' } }, { output: 'y' });
+      await h['tool.execute.after'](
+        { tool: 'bash', args: { subagent_type: 'x' } },
+        { output: 'y' }
+      );
       expect(readLedger(ledger)).toBe('# ledger\n');
     });
 
@@ -213,7 +248,12 @@ describe('opencode plugin apm-hub-hooks', () => {
       await h['tool.execute.after'](...task('a'.repeat(56) + ':reviewer', result('ok'))); // 65: cut to ":reviewe"
       await h['tool.execute.after'](...task(fits, result('ok')));
       const lines = readLedger(ledger).split('\n');
-      expect(lines).toEqual(['# ledger', 'Subagent evil-forgedlinex:reviewer: stopped — ok', `Subagent ${fits}: stopped — ok`, '']);
+      expect(lines).toEqual([
+        '# ledger',
+        'Subagent evil-forgedlinex:reviewer: stopped — ok',
+        `Subagent ${fits}: stopped — ok`,
+        '',
+      ]);
     });
 
     it('replaces control characters in the summary', async () => {
@@ -237,7 +277,9 @@ describe('opencode plugin apm-hub-hooks', () => {
       const link = path.join(dir, '.agents', '7', 'progress.md');
       fs.symlinkSync(target, link);
       const h = await load();
-      await expect(h['tool.execute.after'](...task('reviewer', result('APPROVE')))).resolves.toBeUndefined();
+      await expect(
+        h['tool.execute.after'](...task('reviewer', result('APPROVE')))
+      ).resolves.toBeUndefined();
       expect(readLedger(target)).toBe('secret\n');
       expect(fs.readdirSync(path.join(dir, '.agents', '7'))).toEqual(['progress.md']);
       // control: the same call writes once the link is a regular file, so the symlink is the reason for the refusal
@@ -261,7 +303,12 @@ describe('opencode plugin apm-hub-hooks', () => {
     it('never throws on malformed input', async () => {
       withLedger();
       const h = await load();
-      const bad: [any, any][] = [[undefined, undefined], [null, null], [{ tool: 'task' }, {}], [{ tool: 'task', args: 5 }, { output: 5 }]];
+      const bad: [any, any][] = [
+        [undefined, undefined],
+        [null, null],
+        [{ tool: 'task' }, {}],
+        [{ tool: 'task', args: 5 }, { output: 5 }],
+      ];
       for (const [i, o] of bad) {
         await expect(h['tool.execute.after'](i, o)).resolves.toBeUndefined();
       }
@@ -273,36 +320,64 @@ describe('opencode plugin apm-hub-hooks', () => {
       withLedger();
       process.env.AGENTS_LEDGER = dir; // a directory
       const h = await load();
-      await expect(h['tool.execute.after'](...task('reviewer', result('x')))).resolves.toBeUndefined();
+      await expect(
+        h['tool.execute.after'](...task('reviewer', result('x')))
+      ).resolves.toBeUndefined();
     });
   });
 
   describe('ledger binding (#357)', () => {
-    const git = (...a: string[]) => execFileSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...a], { stdio: 'ignore' });
+    const git = (...a: string[]) =>
+      execFileSync(
+        'git',
+        [
+          '-C',
+          dir,
+          '-c',
+          'user.name=t',
+          '-c',
+          'user.email=t@t',
+          '-c',
+          'commit.gpgsign=false',
+          ...a,
+        ],
+        { stdio: 'ignore' }
+      );
     const repo = (branch: string) => {
       git('init', '-q');
       git('symbolic-ref', 'HEAD', `refs/heads/${branch}`); // not `init -b` (git >= 2.28)
       git('commit', '-q', '--allow-empty', '-m', 'init');
-      const head = execFileSync('git', ['-C', dir, 'rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8' }).trim();
+      const head = execFileSync('git', ['-C', dir, 'rev-parse', '--abbrev-ref', 'HEAD'], {
+        encoding: 'utf8',
+      }).trim();
       expect(head).toBe(branch);
     };
     const read = (issue: string) => readLedger(path.join(dir, '.agents', issue, 'progress.md'));
-    const run = async (name: unknown) => (await load())['tool.execute.after'](...task(name, result('ok')));
+    const run = async (name: unknown) =>
+      (await load())['tool.execute.after'](...task(name, result('ok')));
 
-    it.each(['issue-reader', 'explorer', 'planner', 'reviewer', 'review-lead', 'implementer', 'pr-writer', 'pbi-runner'])(
-      'records the allowlisted agent %s',
-      async (n) => {
-        withLedger();
-        await run(n);
-        expect(read('7')).toBe(`# ledger\nSubagent ${n}: stopped — ok\n`);
-      },
-    );
+    it.each([
+      'issue-reader',
+      'explorer',
+      'planner',
+      'reviewer',
+      'review-lead',
+      'implementer',
+      'pr-writer',
+      'pbi-runner',
+    ])('records the allowlisted agent %s', async (n) => {
+      withLedger();
+      await run(n);
+      expect(read('7')).toBe(`# ledger\nSubagent ${n}: stopped — ok\n`);
+    });
 
     it('records a namespaced allowlisted agent by its last part', async () => {
       withLedger();
       await run('agents:reviewer');
       await run('apm/Explorer');
-      expect(read('7')).toBe('# ledger\nSubagent agents:reviewer: stopped — ok\nSubagent apm/Explorer: stopped — ok\n');
+      expect(read('7')).toBe(
+        '# ledger\nSubagent agents:reviewer: stopped — ok\nSubagent apm/Explorer: stopped — ok\n'
+      );
     });
 
     it.each(['general', 'subagent', 'build-helper', 'my-reviewer', 'reviewer-x', 'agents:other'])(
@@ -311,7 +386,7 @@ describe('opencode plugin apm-hub-hooks', () => {
         withLedger();
         await run(n);
         expect(read('7')).toBe('# ledger\n');
-      },
+      }
     );
 
     it('ignores a missing subagent type', async () => {
@@ -368,15 +443,18 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read('99')).toBe('# ledger\n');
     });
 
-    it.each(BRANCHES_UNBOUND)('yields no number for branch %s (newest-ledger fallback)', async (b) => {
-      repo(b);
-      const old = withLedger('7');
-      fs.utimesSync(old, new Date(2020, 1, 1), new Date(2020, 1, 1));
-      withLedger('99');
-      await run('reviewer');
-      expect(read('7')).toBe('# ledger\n');
-      expect(read('99')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
-    });
+    it.each(BRANCHES_UNBOUND)(
+      'yields no number for branch %s (newest-ledger fallback)',
+      async (b) => {
+        repo(b);
+        const old = withLedger('7');
+        fs.utimesSync(old, new Date(2020, 1, 1), new Date(2020, 1, 1));
+        withLedger('99');
+        await run('reviewer');
+        expect(read('7')).toBe('# ledger\n');
+        expect(read('99')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
+      }
+    );
 
     it('without a .agents/current marker binds a stop to the ledger of the branch still checked out', async () => {
       repo('fix/7-x'); // no loop binding: the branch rule applies although ledger 9 is newer
@@ -461,7 +539,12 @@ describe('opencode plugin apm-hub-hooks', () => {
       const marker = path.join(dir, 'MARKER');
       const hooks = path.join(dir, 'evil-hooks');
       fs.mkdirSync(hooks);
-      for (const h of ['post-checkout', 'pre-commit', 'reference-transaction', 'post-index-change']) {
+      for (const h of [
+        'post-checkout',
+        'pre-commit',
+        'reference-transaction',
+        'post-index-change',
+      ]) {
         fs.writeFileSync(path.join(hooks, h), `#!/bin/sh\ntouch '${marker}'\n`, { mode: 0o755 });
       }
       git('config', 'core.fsmonitor', `touch '${marker}'; echo`);
@@ -549,10 +632,16 @@ describe('opencode plugin apm-hub-hooks', () => {
       const bin = path.join(dir, 'shim');
       const log = path.join(dir, 'git-args.log');
       fs.mkdirSync(bin);
-      fs.writeFileSync(path.join(bin, 'git'), `#!/bin/sh\nprintf '%s ' "$@" >> '${log}'\nexec '${realGit}' "$@"\n`, { mode: 0o755 });
+      fs.writeFileSync(
+        path.join(bin, 'git'),
+        `#!/bin/sh\nprintf '%s ' "$@" >> '${log}'\nexec '${realGit}' "$@"\n`,
+        { mode: 0o755 }
+      );
       process.env.PATH = `${bin}${path.delimiter}${process.env.PATH ?? ''}`;
       await run('reviewer');
-      expect(readLedger(log)).toContain('-c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse');
+      expect(readLedger(log)).toContain(
+        '-c core.fsmonitor=false -c core.hooksPath=/dev/null rev-parse'
+      );
       expect(read('12')).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
     });
 
@@ -569,7 +658,22 @@ describe('opencode plugin apm-hub-hooks', () => {
   });
 
   describe('state dir without override (#402)', () => {
-    const git = (cwd: string, ...a: string[]) => execFileSync('git', ['-C', cwd, '-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...a], { stdio: 'ignore' });
+    const git = (cwd: string, ...a: string[]) =>
+      execFileSync(
+        'git',
+        [
+          '-C',
+          cwd,
+          '-c',
+          'user.name=t',
+          '-c',
+          'user.email=t@t',
+          '-c',
+          'commit.gpgsign=false',
+          ...a,
+        ],
+        { stdio: 'ignore' }
+      );
     const repo = (branch: string) => {
       git(dir, 'init', '-q');
       git(dir, 'symbolic-ref', 'HEAD', `refs/heads/${branch}`);
@@ -639,7 +743,11 @@ describe('opencode plugin apm-hub-hooks', () => {
       repo('main');
       seed(common(), '3');
       const f = seed(common(), '4');
-      fs.utimesSync(path.join(common(), 'agents', '3', 'progress.md'), new Date(2020, 1, 1), new Date(2020, 1, 1));
+      fs.utimesSync(
+        path.join(common(), 'agents', '3', 'progress.md'),
+        new Date(2020, 1, 1),
+        new Date(2020, 1, 1)
+      );
       await stop();
       expect(readLedger(f)).toBe('# ledger\nSubagent reviewer: stopped — ok\n');
     });
@@ -697,7 +805,22 @@ describe('opencode plugin apm-hub-hooks', () => {
   });
 
   describe('loop marker .agents/current (#375)', () => {
-    const git = (...a: string[]) => execFileSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...a], { stdio: 'ignore' });
+    const git = (...a: string[]) =>
+      execFileSync(
+        'git',
+        [
+          '-C',
+          dir,
+          '-c',
+          'user.name=t',
+          '-c',
+          'user.email=t@t',
+          '-c',
+          'commit.gpgsign=false',
+          ...a,
+        ],
+        { stdio: 'ignore' }
+      );
     const repo = (branch: string) => {
       git('init', '-q');
       git('symbolic-ref', 'HEAD', `refs/heads/${branch}`);
@@ -711,10 +834,13 @@ describe('opencode plugin apm-hub-hooks', () => {
       return f;
     };
     const read = (f: string) => readLedger(f);
-    const marker = (content = '9 loop-5\n') => fs.writeFileSync(path.join(dir, '.agents', 'current'), content);
-    const stop = async (name = 'issue-reader') => (await load())['tool.execute.after'](...task(name, result('ok')));
+    const marker = (content = '9 loop-5\n') =>
+      fs.writeFileSync(path.join(dir, '.agents', 'current'), content);
+    const stop = async (name = 'issue-reader') =>
+      (await load())['tool.execute.after'](...task(name, result('ok')));
     const OLD = new Date(2020, 1, 1);
-    const LOOP = '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\n';
+    const LOOP =
+      '# loop\nLoop: PBI #7 started\nLoop: PBI #7 done — https://x/pr/7\nLoop: PBI #9 started\n';
     const scenario = (loop = LOOP) => {
       repo('fix/7-x');
       const l7 = mk('7');
@@ -773,13 +899,16 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read(l7)).toBe('# 7\n');
     });
 
-    it.each(MARKERS_MALFORMED.map((m) => [JSON.stringify(m), m]))('ignores the malformed marker %s and binds to the branch', async (_, m) => {
-      const { l7, l9 } = scenario();
-      marker(m);
-      await stop();
-      expect(read(l7)).toBe(`# 7\n${LINE}`);
-      expect(read(l9)).toBe('# 9\n');
-    });
+    it.each(MARKERS_MALFORMED.map((m) => [JSON.stringify(m), m]))(
+      'ignores the malformed marker %s and binds to the branch',
+      async (_, m) => {
+        const { l7, l9 } = scenario();
+        marker(m);
+        await stop();
+        expect(read(l7)).toBe(`# 7\n${LINE}`);
+        expect(read(l9)).toBe('# 9\n');
+      }
+    );
 
     it('ignores a symlinked marker', async () => {
       const { l7, l9 } = scenario();
@@ -818,22 +947,28 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read(l9)).toBe('# 9\n');
     });
 
-    it.each(LOOP_LEDGERS_STALE.map((l) => [JSON.stringify(l), l]))('ignores a stale marker when the loop ledger is %s', async (_, l) => {
-      const { l7, l9, lp } = scenario(l);
-      marker();
-      await stop();
-      expect(read(l7)).toBe(`# 7\n${LINE}`);
-      expect(read(l9)).toBe('# 9\n');
-      expect(fs.readFileSync(lp, 'utf8')).toBe(l);
-    });
+    it.each(LOOP_LEDGERS_STALE.map((l) => [JSON.stringify(l), l]))(
+      'ignores a stale marker when the loop ledger is %s',
+      async (_, l) => {
+        const { l7, l9, lp } = scenario(l);
+        marker();
+        await stop();
+        expect(read(l7)).toBe(`# 7\n${LINE}`);
+        expect(read(l9)).toBe('# 9\n');
+        expect(fs.readFileSync(lp, 'utf8')).toBe(l);
+      }
+    );
 
-    it.each(LOOP_LEDGERS_LIVE.map((l) => [JSON.stringify(l), l]))('honours the marker while the loop ledger is %s', async (_, l) => {
-      const { l7, l9 } = scenario(l);
-      marker();
-      await stop();
-      expect(read(l9)).toBe(`# 9\n${LINE}`);
-      expect(read(l7)).toBe('# 7\n');
-    });
+    it.each(LOOP_LEDGERS_LIVE.map((l) => [JSON.stringify(l), l]))(
+      'honours the marker while the loop ledger is %s',
+      async (_, l) => {
+        const { l7, l9 } = scenario(l);
+        marker();
+        await stop();
+        expect(read(l9)).toBe(`# 9\n${LINE}`);
+        expect(read(l7)).toBe('# 7\n');
+      }
+    );
 
     it('ignores a marker whose loop ledger is a symlink', async () => {
       repo('fix/7-x');
@@ -863,13 +998,16 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read(l7)).toBe(`# 7\n${LINE}`);
     });
 
-    it.each(LOOP_LEDGERS_FOREIGN_BRANCH.map((l) => [JSON.stringify(l), l]))('ignores the marker on a branch whose issue the loop has not finished: %s', async (_, l) => {
-      const { l7, l9 } = scenario(l);
-      marker();
-      await stop();
-      expect(read(l7)).toBe(`# 7\n${LINE}`);
-      expect(read(l9)).toBe('# 9\n');
-    });
+    it.each(LOOP_LEDGERS_FOREIGN_BRANCH.map((l) => [JSON.stringify(l), l]))(
+      'ignores the marker on a branch whose issue the loop has not finished: %s',
+      async (_, l) => {
+        const { l7, l9 } = scenario(l);
+        marker();
+        await stop();
+        expect(read(l7)).toBe(`# 7\n${LINE}`);
+        expect(read(l9)).toBe('# 9\n');
+      }
+    );
 
     it('does not let the stale marker of a killed loop capture a later run on another issue branch', async () => {
       repo('fix/12-other');
@@ -936,7 +1074,12 @@ describe('opencode plugin apm-hub-hooks', () => {
     it('writes nothing through a symlinked .agents even with a valid marker', async () => {
       repo('fix/7-x');
       const real = path.join(dir, 'real');
-      for (const [f, c] of [['7/progress.md', '# 7\n'], ['9/progress.md', '# 9\n'], ['loop-5/progress.md', LOOP], ['current', '9 loop-5\n']]) {
+      for (const [f, c] of [
+        ['7/progress.md', '# 7\n'],
+        ['9/progress.md', '# 9\n'],
+        ['loop-5/progress.md', LOOP],
+        ['current', '9 loop-5\n'],
+      ]) {
         fs.mkdirSync(path.dirname(path.join(real, f)), { recursive: true });
         fs.writeFileSync(path.join(real, f), c);
       }
@@ -978,16 +1121,19 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read(l7)).toBe('# 7\n');
     });
 
-    it.each(BRANCHES_UNBOUND)('honours a live marker on the branch %s without an issue number', async (b) => {
-      repo(b);
-      const l9 = mk('9', '# 9\n', OLD);
-      const l7 = mk('7');
-      mk('loop-5', '# loop\nLoop: PBI #9 started\n');
-      marker();
-      await stop();
-      expect(read(l9)).toBe(`# 9\n${LINE}`);
-      expect(read(l7)).toBe('# 7\n');
-    });
+    it.each(BRANCHES_UNBOUND)(
+      'honours a live marker on the branch %s without an issue number',
+      async (b) => {
+        repo(b);
+        const l9 = mk('9', '# 9\n', OLD);
+        const l7 = mk('7');
+        mk('loop-5', '# loop\nLoop: PBI #9 started\n');
+        marker();
+        await stop();
+        expect(read(l9)).toBe(`# 9\n${LINE}`);
+        expect(read(l7)).toBe('# 7\n');
+      }
+    );
 
     it('honours the marker on the branch recorded at -Bind (first PBI bound from an unrelated issue branch)', async () => {
       repo('fix/12-x');
@@ -1042,14 +1188,17 @@ describe('opencode plugin apm-hub-hooks', () => {
       expect(read(l9)).toBe(`# 9\n${LINE}`);
     });
 
-    it.each(['general', 'subagent', 'build-helper'])('writes nothing for the foreign agent %s with a valid marker', async (t) => {
-      const { l7, l9, lp } = scenario();
-      marker();
-      await stop(t);
-      expect(read(l9)).toBe('# 9\n');
-      expect(read(l7)).toBe('# 7\n');
-      expect(read(lp)).toBe(LOOP);
-    });
+    it.each(['general', 'subagent', 'build-helper'])(
+      'writes nothing for the foreign agent %s with a valid marker',
+      async (t) => {
+        const { l7, l9, lp } = scenario();
+        marker();
+        await stop(t);
+        expect(read(l9)).toBe('# 9\n');
+        expect(read(l7)).toBe('# 7\n');
+        expect(read(lp)).toBe(LOOP);
+      }
+    );
   });
 
   describe('context warning', () => {
@@ -1065,7 +1214,12 @@ describe('opencode plugin apm-hub-hooks', () => {
       await h.event(assistant('s1', 1000, 140000, 10000));
       const parts = await chat(h);
       expect(parts).toHaveLength(1);
-      expect(parts[0]).toMatchObject({ type: 'text', synthetic: true, sessionID: 's1', messageID: 'm1' });
+      expect(parts[0]).toMatchObject({
+        type: 'text',
+        synthetic: true,
+        sessionID: 's1',
+        messageID: 'm1',
+      });
       expect(parts[0].text).toContain('Context is 151k tokens (limit 150k)');
     });
 
@@ -1092,7 +1246,10 @@ describe('opencode plugin apm-hub-hooks', () => {
     it('tracks sessions separately and ignores user messages', async () => {
       const h = await load();
       await h.event(assistant('s1', 160000));
-      await h.event({ type: 'message.updated', properties: { info: { role: 'user', sessionID: 's2', tokens: { input: 999999 } } } });
+      await h.event({
+        type: 'message.updated',
+        properties: { info: { role: 'user', sessionID: 's2', tokens: { input: 999999 } } },
+      });
       expect(await chat(h, 's2')).toEqual([]);
       expect(await chat(h, 's1')).toHaveLength(1);
     });
