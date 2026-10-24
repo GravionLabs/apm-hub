@@ -110,3 +110,11 @@ describe('correctness brief checks invariants (#485)', () => {
     expect(reviewer).not.toMatch(/Invariants/);
   });
 });
+
+describe('reviewer Documentation boundary (#535)', () => {
+  it('rule 2 stops correctness, security and tests at ## Documentation; spec and conventions read it', () => {
+    expect(reviewer).toMatch(
+      /for `correctness`, `security` and `tests` stop at the `## Documentation` heading \(`spec` and `conventions` read it\)/
+    );
+  });
+});

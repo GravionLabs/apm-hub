@@ -69,6 +69,8 @@ describe('review-lead agent contract', () => {
       '"line"',
       '"title"',
       '"blocking"',
+      '"packageTokens"',
+      '"oversize"',
       '"package"',
       '"review"',
     ]) {

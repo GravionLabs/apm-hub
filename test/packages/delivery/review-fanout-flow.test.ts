@@ -206,3 +206,44 @@ describe('review-fanout: correctness checks invariants (#485)', () => {
     expect(fanout.trimEnd().split('\n').length).toBeLessThanOrEqual(100);
   });
 });
+
+describe('review-fanout: smaller package (#535)', () => {
+  it('uses -U3 in SKILL.md and package-filter.md, never -U10', () => {
+    expect(fanout).toContain('git diff -U3 <base>..<head>');
+    expect(filterRef).toContain('`git diff -U3`');
+    expect(fanout).not.toContain('-U10');
+    expect(filterRef).not.toContain('-U10');
+  });
+
+  it('splits documentation hunks into a trailing ## Documentation section', () => {
+    expect(fanout).toContain('## Documentation');
+    expect(fanout).toMatch(/written LAST, after the issue and invariants sections/);
+    expect(fanout).toMatch(/none → no heading/);
+    expect(fanout).toMatch(
+      /`correctness`, `security`, `tests`: stop reading at `## Documentation`/
+    );
+    expect(fanout).toMatch(/`spec` and `conventions` read it/);
+    for (const pat of ['docs/**/*.md', 'CHANGELOG.md', 'README*.md', 'site/**']) {
+      expect(filterRef).toContain(pat + '\n');
+    }
+  });
+
+  it('reports package size fields, bytes/4 estimate and the 15k note without a split', () => {
+    expect(fanout).toContain('"package":{"bytes":0,"tokensEstimated":0,"hunks":0,"docsHunks":0}');
+    expect(fanout).toMatch(/ceil\(bytes \/ 4\)/);
+    expect(fanout).toMatch(/Above 15000 estimated tokens/);
+    expect(fanout).toContain('package ~<n>k tokens > 15k — largest: <files>');
+    expect(fanout).toMatch(/never split the package/);
+    expect(filterRef).toMatch(/3 largest files/);
+    expect(filterRef).toMatch(/never split automatically/);
+  });
+
+  it('keeps SKILL.md within 100 lines', () => {
+    expect(fanout.trim().split('\n').length).toBeLessThanOrEqual(100);
+  });
+
+  it('ledger review line carries the package size', () => {
+    expect(pipeline).toContain('Phase review: complete — <sha> — package ~<n>k tokens');
+    expect(pipeline).toContain('packageTokens, oversize?, package, review}');
+  });
+});
