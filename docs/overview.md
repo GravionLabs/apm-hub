@@ -1,7 +1,7 @@
 # Overview
 
 <!-- AUTO:start version -->
-Welcome to **apm-hub** v2.3.1 👋
+Welcome to **apm-hub** v2.4.0 👋
 <!-- AUTO:end version -->
 
 apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The one `agents` package adds the `orchestrator` primary agent and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to. The entry point beyond skill names is the `orchestrator` agent (`/orch` is deprecated and removed in 3.0.0).
