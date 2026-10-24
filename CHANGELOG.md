@@ -5,6 +5,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.4.0] — 2026-10-24
+
+### Bug Fixes
+- **github**: Set-Sprint.ps1 GraphQL state query has an unbalanced brace (#507) (#508)
+- **hooks**: Status line colours the 5h/7d rate limits per threshold instead of grey (#515)
+- **github**: In release step names the missing project scope, docs drop fine-grained tokens (#518)
+- Make git-guardrails scanner linear on bash 3.2 (#367) (#528)
+- **github**: Create worktrees without upstream tracking (#567)
+
+
+### Features
+- **github**: Set project Status 'In release' in CI when a PR merges into release/next (#489) (#513)
+- **github**: Set-Sprint.ps1 enforces the dependency order of the native blocked-by links (#514)
+- **hooks**: Status line entries point at the skill scripts, no copy (#512) (#517)
+- Invariants section for async and stateful tasks (#484) (#516)
+- Subagentstop hook posts progress to dromos ingest (#389) (#522)
+- Check task invariants in review-fanout correctness (#485) (#536)
+- Orchestrator runs on sonnet by default (#533) (#542)
+- Read run metrics from agentlens in retro (#540) (#549)
+- Model policy reference, tiers and escalation at fix round 2 (#251) (#555)
+
+
+## [2.3.1] — 2026-10-22
+
+### Documentation
+- Update CHANGELOG.md for v2.3.1 [skip ci]
+
+
 ## [2.3.0] — 2026-10-16
 
 ### Bug Fixes
