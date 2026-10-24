@@ -6,10 +6,13 @@ import * as path from 'path';
 // #252: a released release branch (its `v<x.y>.0` tag exists, or it was continued past its merge) is never
 // finished or picked again. The snippets under test are the ones the skill text carries, extracted verbatim.
 const root = path.resolve(__dirname, '../../..');
-const skill = fs.readFileSync(path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'), 'utf-8');
+const skill = fs.readFileSync(
+  path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'),
+  'utf-8'
+);
 const reference = fs.readFileSync(
   path.join(root, 'packages/github/.apm/skills/github-issue/references/release-branches.md'),
-  'utf-8',
+  'utf-8'
 );
 
 const snippet = (text: string, start: RegExp): string => {
@@ -20,14 +23,15 @@ const snippet = (text: string, start: RegExp): string => {
 const resolver = snippet(reference, /`(h=\$\(git ls-remote --heads origin 'release\/\*'[^`]*)`/);
 const releasedCheck = snippet(skill, /`(for t in \$\(git tag -l 'v\*'\);[^`]*)`/);
 const tagCheck = snippet(skill, /`(git ls-remote --tags origin "refs\/tags\/v<x\.y>\.0")`/);
-const mergedCheck = snippet(skill, /`(git log --merges --first-parent origin\/<default> --format=%P[^`]*)`/).replace(
-  '<default>',
-  'main',
-);
+const mergedCheck = snippet(
+  skill,
+  /`(git log --merges --first-parent origin\/<default> --format=%P[^`]*)`/
+).replace('<default>', 'main');
 
 const hermetic = (home: string): NodeJS.ProcessEnv => {
   const env = { ...process.env };
-  for (const k of Object.keys(env)) if (k.startsWith('GIT_') || k === 'XDG_CONFIG_HOME') delete env[k];
+  for (const k of Object.keys(env))
+    if (k.startsWith('GIT_') || k === 'XDG_CONFIG_HOME') delete env[k];
   return { ...env, HOME: home, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
 };
 
@@ -39,7 +43,11 @@ describe('release guards (#252)', () => {
   let env: NodeJS.ProcessEnv;
 
   const git = (cwd: string, ...args: string[]) => {
-    const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { cwd, encoding: 'utf8', env });
+    const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], {
+      cwd,
+      encoding: 'utf8',
+      env,
+    });
     if (r.status !== 0) throw new Error(`git ${args.join(' ')} failed: ${r.stderr}`);
     return r.stdout.trim();
   };

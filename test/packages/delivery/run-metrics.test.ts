@@ -6,12 +6,15 @@ import { PwshWorker } from '../../helpers/pwsh-worker';
 
 const SCRIPT = path.resolve(
   __dirname,
-  '../../../packages/delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1',
+  '../../../packages/delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1'
 );
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
 const msg = (id: string, model: string, usage: object) =>
-  JSON.stringify({ type: 'assistant', message: { id, role: 'assistant', model, content: [], usage } });
+  JSON.stringify({
+    type: 'assistant',
+    message: { id, role: 'assistant', model, content: [], usage },
+  });
 
 if (!hasPwsh && process.env.CI) throw new Error('pwsh is required in CI');
 
@@ -28,8 +31,15 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
   });
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-  const run = async (args: string[], cwd = dir, stateDir: string | null = path.join(dir, '.agents')) => {
-    const r = await worker.run(args, { cwd, env: { ...process.env, DROMOS_STATE_DIR: stateDir ?? '' } });
+  const run = async (
+    args: string[],
+    cwd = dir,
+    stateDir: string | null = path.join(dir, '.agents')
+  ) => {
+    const r = await worker.run(args, {
+      cwd,
+      env: { ...process.env, DROMOS_STATE_DIR: stateDir ?? '' },
+    });
     return { ...r, json: r.status === 0 ? JSON.parse(r.stdout) : null };
   };
 
@@ -39,12 +49,27 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       transcript,
       [
         '{"type":"mode"}',
-        msg('m1', 'claude-sonnet-5-5', { input_tokens: 100, cache_creation_input_tokens: 1000, cache_read_input_tokens: 0, output_tokens: 10 }),
+        msg('m1', 'claude-sonnet-5-5', {
+          input_tokens: 100,
+          cache_creation_input_tokens: 1000,
+          cache_read_input_tokens: 0,
+          output_tokens: 10,
+        }),
         // same id again (streamed block): must count once, last usage wins
-        msg('m1', 'claude-sonnet-5-5', { input_tokens: 100, cache_creation_input_tokens: 1000, cache_read_input_tokens: 0, output_tokens: 50 }),
-        msg('m2', 'claude-sonnet-5-5', { input_tokens: 10, cache_creation_input_tokens: 0, cache_read_input_tokens: 5000, output_tokens: 20 }),
+        msg('m1', 'claude-sonnet-5-5', {
+          input_tokens: 100,
+          cache_creation_input_tokens: 1000,
+          cache_read_input_tokens: 0,
+          output_tokens: 50,
+        }),
+        msg('m2', 'claude-sonnet-5-5', {
+          input_tokens: 10,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 5000,
+          output_tokens: 20,
+        }),
         '{"truncated":',
-      ].join('\n') + '\n',
+      ].join('\n') + '\n'
     );
     const sub = path.join(dir, 'sess', 'subagents');
     fs.mkdirSync(sub, { recursive: true });
@@ -52,14 +77,30 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       fs.writeFileSync(path.join(sub, `${name}.meta.json`), JSON.stringify({ agentType: role }));
       fs.writeFileSync(path.join(sub, `${name}.jsonl`), lines.join('\n') + '\n');
     };
-    const u = { input_tokens: 1000000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, output_tokens: 0 };
-    agent('agent-a', 'implementer', [msg('s1', 'claude-sonnet-5-5', u), msg('s1', 'claude-sonnet-5-5', u)]);
+    const u = {
+      input_tokens: 1000000,
+      cache_creation_input_tokens: 0,
+      cache_read_input_tokens: 0,
+      output_tokens: 0,
+    };
+    agent('agent-a', 'implementer', [
+      msg('s1', 'claude-sonnet-5-5', u),
+      msg('s1', 'claude-sonnet-5-5', u),
+    ]);
     agent('agent-b', 'implementer', [msg('s2', 'claude-sonnet-5-5', u)]);
     agent('agent-c', 'explorer', [msg('s3', 'claude-haiku-4-5', u)]);
     const ledger = path.join(dir, 'progress.md');
     fs.writeFileSync(
       ledger,
-      ['# ledger', 'Ruling: skip split', 'Ruling: manual stack', 'Fix round 1: DONE', 'Fix round 2: DONE', 'Gate: merge denied', 'Subagent reviewer: stopped'].join('\n') + '\n',
+      [
+        '# ledger',
+        'Ruling: skip split',
+        'Ruling: manual stack',
+        'Fix round 1: DONE',
+        'Fix round 2: DONE',
+        'Gate: merge denied',
+        'Subagent reviewer: stopped',
+      ].join('\n') + '\n'
     );
     return { transcript, ledger };
   };
@@ -110,16 +151,28 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     const { transcript } = fixture();
     spawnSync('git', ['init', '-q'], { cwd: dir });
     fs.mkdirSync(path.join(dir, '.git', 'agents', '7'), { recursive: true });
-    fs.writeFileSync(path.join(dir, '.git', 'agents', '7', 'progress.md'), 'Fix round 1: x\nFix round 2: y\n');
+    fs.writeFileSync(
+      path.join(dir, '.git', 'agents', '7', 'progress.md'),
+      'Fix round 1: x\nFix round 2: y\n'
+    );
     const viaCommon = await run(['-Transcript', transcript], dir, null);
     expect(viaCommon.json.fixRounds).toBe(2);
     expect(viaCommon.json.ledger).toMatch(/agents[\/]7[\/]progress\.md$/);
-    expect((await run(['-Transcript', transcript, '-Issue', '7'], dir, null)).json.fixRounds).toBe(2);
+    expect((await run(['-Transcript', transcript, '-Issue', '7'], dir, null)).json.fixRounds).toBe(
+      2
+    );
   });
 
   it('finds the ledger from a linked worktree via the shared <git common dir>/agents', async () => {
     const { transcript } = fixture();
-    const g = (cwd: string, ...a: string[]) => expect(spawnSync('git', ['-c', 'commit.gpgsign=false', '-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd, env: { ...process.env, GIT_CONFIG_GLOBAL: os.devNull, GIT_CONFIG_NOSYSTEM: '1' } }).status).toBe(0);
+    const g = (cwd: string, ...a: string[]) =>
+      expect(
+        spawnSync(
+          'git',
+          ['-c', 'commit.gpgsign=false', '-c', 'user.name=t', '-c', 'user.email=t@t', ...a],
+          { cwd, env: { ...process.env, GIT_CONFIG_GLOBAL: os.devNull, GIT_CONFIG_NOSYSTEM: '1' } }
+        ).status
+      ).toBe(0);
     g(dir, 'init', '-q', '-b', 'main');
     g(dir, 'commit', '-q', '--allow-empty', '-m', 'x');
     const wt = path.join(dir, 'wt');
@@ -136,7 +189,10 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     const other = fs.mkdtempSync(path.join(os.tmpdir(), 'metrics-state-'));
     try {
       fs.mkdirSync(path.join(other, '3'));
-      fs.writeFileSync(path.join(other, '3', 'progress.md'), 'Fix round 1: x\nFix round 2: y\nFix round 3: z\n');
+      fs.writeFileSync(
+        path.join(other, '3', 'progress.md'),
+        'Fix round 1: x\nFix round 2: y\nFix round 3: z\n'
+      );
       const r = await run(['-Transcript', transcript, '-Issue', '3'], dir, other + path.sep);
       expect(r.json.fixRounds).toBe(3);
       expect(r.json.ledger).toBe(path.join(other, '3', 'progress.md'));
@@ -145,18 +201,21 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     }
   });
 
-  it.skipIf(process.platform === 'win32')('reads (never writes) through a symlinked state directory', async () => {
-    const { transcript } = fixture();
-    const real = path.join(dir, 'real');
-    fs.mkdirSync(path.join(real, '4'), { recursive: true });
-    fs.writeFileSync(path.join(real, '4', 'progress.md'), 'Fix round 1: x\n');
-    const link = path.join(dir, 'linked');
-    fs.symlinkSync(real, link);
-    const r = await run(['-Transcript', transcript, '-Issue', '4'], dir, link);
-    expect(r.status).toBe(0);
-    expect(r.json.fixRounds).toBe(1);
-    expect(fs.readdirSync(real)).toEqual(['4']);
-  });
+  it.skipIf(process.platform === 'win32')(
+    'reads (never writes) through a symlinked state directory',
+    async () => {
+      const { transcript } = fixture();
+      const real = path.join(dir, 'real');
+      fs.mkdirSync(path.join(real, '4'), { recursive: true });
+      fs.writeFileSync(path.join(real, '4', 'progress.md'), 'Fix round 1: x\n');
+      const link = path.join(dir, 'linked');
+      fs.symlinkSync(real, link);
+      const r = await run(['-Transcript', transcript, '-Issue', '4'], dir, link);
+      expect(r.status).toBe(0);
+      expect(r.json.fixRounds).toBe(1);
+      expect(fs.readdirSync(real)).toEqual(['4']);
+    }
+  );
 
   it('reports no ledger outside a git repository without DROMOS_STATE_DIR', async () => {
     const { transcript } = fixture();
@@ -204,19 +263,33 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     const noLens = (t: string, extra: string[] = []) => {
       const bin = path.join(dir, 'empty-bin');
       fs.mkdirSync(bin, { recursive: true });
-      return worker.run(['-Transcript', t, ...extra], { cwd: dir, env: { ...process.env, PATH: bin, DROMOS_STATE_DIR: path.join(dir, '.agents') } });
+      return worker.run(['-Transcript', t, ...extra], {
+        cwd: dir,
+        env: { ...process.env, PATH: bin, DROMOS_STATE_DIR: path.join(dir, '.agents') },
+      });
     };
 
     it('reports source transcript, the fallback warning and roles[] from the subagent metas', async () => {
       const { transcript } = fixture();
       const sub = path.join(dir, 'sess', 'subagents');
-      fs.writeFileSync(path.join(sub, 'agent-d.meta.json'), JSON.stringify({ agentType: 'reviewer' }));
-      fs.writeFileSync(path.join(sub, 'agent-d.jsonl'), JSON.stringify({ ...JSON.parse(msg('s4', 'claude-opus-4', { input_tokens: 1, output_tokens: 1 })), costUSD: 0.5 }) + '\n');
+      fs.writeFileSync(
+        path.join(sub, 'agent-d.meta.json'),
+        JSON.stringify({ agentType: 'reviewer' })
+      );
+      fs.writeFileSync(
+        path.join(sub, 'agent-d.jsonl'),
+        JSON.stringify({
+          ...JSON.parse(msg('s4', 'claude-opus-4', { input_tokens: 1, output_tokens: 1 })),
+          costUSD: 0.5,
+        }) + '\n'
+      );
       const r = await noLens(transcript);
       expect(r.status).toBe(0);
       const json = JSON.parse(r.stdout);
       expect(json.source).toBe('transcript');
-      expect(json.warnings).toContain("agentlens not on PATH: cost from the transcript with the script's own price table (estimates)");
+      expect(json.warnings).toContain(
+        "agentlens not on PATH: cost from the transcript with the script's own price table (estimates)"
+      );
       const roles = Object.fromEntries(json.roles.map((x: any) => [x.role, x]));
       expect(roles.implementer).toMatchObject({ runs: 2, requests: 2, measured: false });
       expect(roles.implementer.usd).toBeCloseTo(6, 4);
@@ -236,8 +309,26 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
 
   describe.skipIf(process.platform === 'win32')('with agentlens', () => {
     const COST = [
-      { session: 'other', requests: 1, main_requests: 1, peak_context: 1, output: 1, cost: 9, measured: true, subagent_share: 0 },
-      { session: 'sess', requests: 40, main_requests: 30, peak_context: 123456, output: 7777, cost: 10, measured: true, subagent_share: 0.4 },
+      {
+        session: 'other',
+        requests: 1,
+        main_requests: 1,
+        peak_context: 1,
+        output: 1,
+        cost: 9,
+        measured: true,
+        subagent_share: 0,
+      },
+      {
+        session: 'sess',
+        requests: 40,
+        main_requests: 30,
+        peak_context: 123456,
+        output: 7777,
+        cost: 10,
+        measured: true,
+        subagent_share: 0.4,
+      },
     ];
     const ROLES = [
       { agent_type: 'main', runs: 1, requests: 30, cost: 99, measured: false },
@@ -268,7 +359,12 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       const { transcript, ledger } = fixture();
       const r = await worker.run(['-Transcript', transcript, '-Ledger', ledger, ...extra], {
         cwd: dir,
-        env: { ...process.env, PATH: `${bin}:/usr/bin:/bin`, FAKE_MODE: mode, DROMOS_STATE_DIR: path.join(dir, '.agents') },
+        env: {
+          ...process.env,
+          PATH: `${bin}:/usr/bin:/bin`,
+          FAKE_MODE: mode,
+          DROMOS_STATE_DIR: path.join(dir, '.agents'),
+        },
       });
       expect(r.status).toBe(0);
       return JSON.parse(r.stdout);
@@ -279,7 +375,14 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       const json = await withLens(bin);
       expect(json.source).toBe('agentlens');
       expect(json.warnings).toEqual([]);
-      expect(json.main).toEqual({ requests: 30, peakContext: 123456, outputTokens: 7777, costMeasured: 6, costEstimated: 0, measured: true });
+      expect(json.main).toEqual({
+        requests: 30,
+        peakContext: 123456,
+        outputTokens: 7777,
+        costMeasured: 6,
+        costEstimated: 0,
+        measured: true,
+      });
       // main cost = session cost 10 x (1 - subagent_share 0.4), not the roles 'main' row (99)
       expect(json.subagents.count).toBe(5);
       expect(json.subagents.costMeasured).toBe(3);
@@ -289,7 +392,9 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
         { role: 'implementer', runs: 3, requests: 8, usd: 3, measured: true },
       ]);
       // scoped to the session; the transcript's own price table is not used (fixture would estimate 7.0066)
-      expect(fs.readFileSync(path.join(bin, 'args.log'), 'utf8')).toContain('efficiency --section roles --format json --session sess');
+      expect(fs.readFileSync(path.join(bin, 'args.log'), 'utf8')).toContain(
+        'efficiency --section roles --format json --session sess'
+      );
     });
 
     it('keeps the agentlens measured flag per figure, also for zero cost, and n/a cost as unknown', async () => {
@@ -298,7 +403,17 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
         { agent_type: 'explorer', runs: 1, requests: 1, cost: 2, measured: false },
         { agent_type: 'planner', runs: 1, requests: 1, cost: null, measured: false },
       ];
-      const cost = [{ session: 'sess', main_requests: 3, peak_context: 1, output: 1, cost: 4, measured: false, subagent_share: 0.5 }];
+      const cost = [
+        {
+          session: 'sess',
+          main_requests: 3,
+          peak_context: 1,
+          output: 1,
+          cost: 4,
+          measured: false,
+          subagent_share: 0.5,
+        },
+      ];
       const json = await withLens(fake({ cost, roles }));
       expect(json.source).toBe('agentlens');
       expect(json.main).toMatchObject({ costMeasured: 0, costEstimated: 2, measured: false });
@@ -310,9 +425,23 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
 
     it('reports a session with n/a cost as unknown main cost', async () => {
-      const cost = [{ session: 'sess', main_requests: 3, peak_context: 1, output: 1, cost: null, subagent_share: 0 }];
+      const cost = [
+        {
+          session: 'sess',
+          main_requests: 3,
+          peak_context: 1,
+          output: 1,
+          cost: null,
+          subagent_share: 0,
+        },
+      ];
       const json = await withLens(fake({ cost }));
-      expect(json.main).toMatchObject({ requests: 3, costMeasured: null, costEstimated: null, measured: null });
+      expect(json.main).toMatchObject({
+        requests: 3,
+        costMeasured: null,
+        costEstimated: null,
+        measured: null,
+      });
     });
 
     it.each([
@@ -329,20 +458,34 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       ['a non-zero exit', {}, 'fail', /cost exited with 1/],
       ['invalid JSON', {}, 'garbage', /invalid JSON/],
       ['no matching session row', { cost: [COST[0]] }, '', /no session row for sess/],
-    ])('falls back to the transcript with a warning when agentlens is %s', async (_n, opts, mode, reason) => {
-      const json = await withLens(fake(opts), [], mode);
-      expect(json.source).toBe('transcript');
-      expect(json.warnings.some((w: string) => reason.test(w) && w.includes('estimates'))).toBe(true);
-      expect(json.main.requests).toBe(2);
-      expect(json.main.costEstimated).toBeCloseTo(0.0066, 4);
-      expect(json.subagents.costEstimated).toBeCloseTo(7, 4);
-    });
+    ])(
+      'falls back to the transcript with a warning when agentlens is %s',
+      async (_n, opts, mode, reason) => {
+        const json = await withLens(fake(opts), [], mode);
+        expect(json.source).toBe('transcript');
+        expect(json.warnings.some((w: string) => reason.test(w) && w.includes('estimates'))).toBe(
+          true
+        );
+        expect(json.main.requests).toBe(2);
+        expect(json.main.costEstimated).toBeCloseTo(0.0066, 4);
+        expect(json.subagents.costEstimated).toBeCloseTo(7, 4);
+      }
+    );
 
     it('computes the ledger part identically on the agentlens and the fallback path', async () => {
       const lens = await withLens(fake());
       const fallback = await withLens(fake({ version: '0.1.0' }));
       expect([lens.source, fallback.source]).toEqual(['agentlens', 'transcript']);
-      const ledgerPart = (j: any) => ({ ledger: j.ledger, fixRounds: j.fixRounds, unattributedFixRounds: j.unattributedFixRounds, tasks: j.tasks, escalationShare: j.escalationShare, rulings: j.rulings, gates: j.gates, durations: j.durations });
+      const ledgerPart = (j: any) => ({
+        ledger: j.ledger,
+        fixRounds: j.fixRounds,
+        unattributedFixRounds: j.unattributedFixRounds,
+        tasks: j.tasks,
+        escalationShare: j.escalationShare,
+        rulings: j.rulings,
+        gates: j.gates,
+        durations: j.durations,
+      });
       expect(ledgerPart(lens).fixRounds).toBe(2);
       expect(ledgerPart(lens)).toEqual(ledgerPart(fallback));
     });
@@ -356,7 +499,7 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
         msg('a', 'claude-sonnet-5-5', { input_tokens: 9000, output_tokens: 1 }),
         msg('b', 'claude-sonnet-5-5', { input_tokens: 10, output_tokens: 5 }),
         msg('b', 'claude-sonnet-5-5', { input_tokens: 4, output_tokens: 2 }),
-      ].join('\n') + '\n',
+      ].join('\n') + '\n'
     );
     const { json } = await run(['-Transcript', t]);
     expect(json.main.requests).toBe(2);
@@ -366,8 +509,17 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
 
   it('skips sidechain records in the main transcript', async () => {
     const t = path.join(dir, 'sc.jsonl');
-    const side = { ...JSON.parse(msg('s', 'claude-sonnet-5-5', { input_tokens: 500, output_tokens: 1 })), isSidechain: true };
-    fs.writeFileSync(t, JSON.stringify(side) + '\n' + msg('m', 'claude-sonnet-5-5', { input_tokens: 5, output_tokens: 1 }) + '\n');
+    const side = {
+      ...JSON.parse(msg('s', 'claude-sonnet-5-5', { input_tokens: 500, output_tokens: 1 })),
+      isSidechain: true,
+    };
+    fs.writeFileSync(
+      t,
+      JSON.stringify(side) +
+        '\n' +
+        msg('m', 'claude-sonnet-5-5', { input_tokens: 5, output_tokens: 1 }) +
+        '\n'
+    );
     const { json } = await run(['-Transcript', t]);
     expect(json.main.requests).toBe(1);
     expect(json.main.peakContext).toBe(5);
@@ -379,7 +531,10 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     const sub = path.join(dir, 'x', 'subagents');
     fs.mkdirSync(sub, { recursive: true });
     fs.writeFileSync(path.join(sub, 'a.meta.json'), '{}');
-    fs.writeFileSync(path.join(sub, 'a.jsonl'), msg('q', 'claude-haiku-4-5', { input_tokens: 1000000, output_tokens: 0 }) + '\n');
+    fs.writeFileSync(
+      path.join(sub, 'a.jsonl'),
+      msg('q', 'claude-haiku-4-5', { input_tokens: 1000000, output_tokens: 0 }) + '\n'
+    );
     fs.writeFileSync(path.join(sub, 'b.meta.json'), '{bad');
     fs.writeFileSync(path.join(sub, 'c.meta.json'), JSON.stringify({ agentType: '../evil role' }));
     const { json } = await run(['-Transcript', t]);
@@ -393,10 +548,17 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
 
   it('keeps measured and estimated cost apart and ignores unknown model families', async () => {
     const t = path.join(dir, 'mix.jsonl');
-    const e = { ...JSON.parse(msg('a', 'claude-opus-4-5', { input_tokens: 1, output_tokens: 1 })), costUSD: 0.25 };
+    const e = {
+      ...JSON.parse(msg('a', 'claude-opus-4-5', { input_tokens: 1, output_tokens: 1 })),
+      costUSD: 0.25,
+    };
     fs.writeFileSync(
       t,
-      [JSON.stringify(e), msg('b', 'claude-haiku-4-5', { input_tokens: 1000000, output_tokens: 0 }), msg('c', 'gpt-x', { input_tokens: 1000000, output_tokens: 0 })].join('\n') + '\n',
+      [
+        JSON.stringify(e),
+        msg('b', 'claude-haiku-4-5', { input_tokens: 1000000, output_tokens: 0 }),
+        msg('c', 'gpt-x', { input_tokens: 1000000, output_tokens: 0 }),
+      ].join('\n') + '\n'
     );
     const { json } = await run(['-Transcript', t]);
     expect(json.main.costMeasured).toBe(0.25);
@@ -412,7 +574,7 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
         output_tokens: 1000000,
         cache_creation_input_tokens: 1000000,
         cache_creation: { ephemeral_1h_input_tokens: 1000000 },
-      }) + '\n',
+      }) + '\n'
     );
     expect((await run(['-Transcript', t])).json.main.costEstimated).toBeCloseTo(5 + 25 + 10, 4);
   });
@@ -423,14 +585,20 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     const l = path.join(dir, 'l.md');
     fs.writeFileSync(
       l,
-      ['- Fix round 1: x', '  Ruling: use ghp_abcdef123456 now', '- Gate: Bearer abc.def and password=hunter2', 'Ruling: sk-abcdefghijkl'].join('\n') + '\n',
+      [
+        '- Fix round 1: x',
+        '  Ruling: use ghp_abcdef123456 now',
+        '- Gate: Bearer abc.def and password=hunter2',
+        'Ruling: sk-abcdefghijkl',
+      ].join('\n') + '\n'
     );
     const { json } = await run(['-Transcript', t, '-Ledger', l]);
     expect(json.fixRounds).toBe(1);
     expect(json.rulings.count).toBe(2);
     expect(json.gates.count).toBe(1);
     const all = JSON.stringify(json);
-    for (const secret of ['ghp_abcdef', 'abc.def', 'hunter2', 'sk-abcdefghijkl']) expect(all).not.toContain(secret);
+    for (const secret of ['ghp_abcdef', 'abc.def', 'hunter2', 'sk-abcdefghijkl'])
+      expect(all).not.toContain(secret);
     const empty = path.join(dir, 'empty.md');
     fs.writeFileSync(empty, '');
     expect((await run(['-Transcript', t, '-Ledger', empty])).json.rulings.count).toBe(0);
@@ -454,8 +622,24 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
         'Fix round 1: DONE — model opus',
       ]);
       expect(json.tasks).toEqual([
-        { task: 11, model: 'sonnet', status: 'DONE', fixRounds: 0, escalated: false, escalatedTo: null, reviewRounds: 1 },
-        { task: 12, model: 'opus', status: 'DONE', fixRounds: 1, escalated: false, escalatedTo: null, reviewRounds: 1 },
+        {
+          task: 11,
+          model: 'sonnet',
+          status: 'DONE',
+          fixRounds: 0,
+          escalated: false,
+          escalatedTo: null,
+          reviewRounds: 1,
+        },
+        {
+          task: 12,
+          model: 'opus',
+          status: 'DONE',
+          fixRounds: 1,
+          escalated: false,
+          escalatedTo: null,
+          reviewRounds: 1,
+        },
       ]);
       expect(json.escalationShare).toBe(0);
       expect(json.fixRounds).toBe(1);
@@ -463,7 +647,17 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
 
     it('yields null models for ledgers without the model suffix and 0 share without tasks', async () => {
       const old = await metrics(['Task #5: DONE — abc1234', 'Fix round 1: DONE']);
-      expect(old.tasks).toEqual([{ task: 5, model: null, status: 'DONE', fixRounds: 1, escalated: false, escalatedTo: null, reviewRounds: 0 }]);
+      expect(old.tasks).toEqual([
+        {
+          task: 5,
+          model: null,
+          status: 'DONE',
+          fixRounds: 1,
+          escalated: false,
+          escalatedTo: null,
+          reviewRounds: 0,
+        },
+      ]);
       expect(old.escalationShare).toBe(0);
       const none = await metrics(['# ledger']);
       expect(none.tasks).toEqual([]);
@@ -471,32 +665,54 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
 
     it('escalates a task whose fix round runs on a different named model, with that model as target', async () => {
-      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 1 (#1): DONE — model opus']);
+      const json = await metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Fix round 1 (#1): DONE — model opus',
+      ]);
       expect(json.tasks[0]).toMatchObject({ fixRounds: 1, escalated: true, escalatedTo: 'opus' });
     });
 
     it('escalates at fix round 2 when the model changes', async () => {
-      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 1 (#1): x — model sonnet', 'Fix round 2 (#1): x — model opus']);
+      const json = await metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Fix round 1 (#1): x — model sonnet',
+        'Fix round 2 (#1): x — model opus',
+      ]);
       expect(json.tasks[0]).toMatchObject({ fixRounds: 2, escalated: true, escalatedTo: 'opus' });
     });
 
     it('treats alias, Claude id and OpenCode id of one tier as the same model', async () => {
-      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 2 (#1): x — model anthropic/claude-sonnet-5-5']);
+      const json = await metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Fix round 2 (#1): x — model anthropic/claude-sonnet-5-5',
+      ]);
       expect(json.tasks[0]).toMatchObject({ escalated: false, escalatedTo: null });
     });
 
     it('escalates from a Claude id to another tier given as OpenCode id', async () => {
-      const json = await metrics(['Task #1: DONE — a — model claude-sonnet-5.5', 'Fix round 2 (#1): x — model anthropic/claude-opus-5-5']);
-      expect(json.tasks[0]).toMatchObject({ escalated: true, escalatedTo: 'anthropic/claude-opus-5-5' });
+      const json = await metrics([
+        'Task #1: DONE — a — model claude-sonnet-5.5',
+        'Fix round 2 (#1): x — model anthropic/claude-opus-5-5',
+      ]);
+      expect(json.tasks[0]).toMatchObject({
+        escalated: true,
+        escalatedTo: 'anthropic/claude-opus-5-5',
+      });
     });
 
     it('does not escalate a round 2 resume on the same model', async () => {
-      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 2 (#1): x — model sonnet']);
+      const json = await metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Fix round 2 (#1): x — model sonnet',
+      ]);
       expect(json.tasks[0]).toMatchObject({ escalated: false, escalatedTo: null });
     });
 
     it('does not escalate a round 3 line that names the same model', async () => {
-      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 3 (#1): x — model sonnet']);
+      const json = await metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Fix round 3 (#1): x — model sonnet',
+      ]);
       expect(json.tasks[0]).toMatchObject({ escalated: false });
     });
 
@@ -506,7 +722,11 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
 
     it('does not escalate on fix rounds 1-2 with the same model', async () => {
-      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 1 (#1): x — model sonnet', 'Fix round 2 (#1): x — model sonnet']);
+      const json = await metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Fix round 1 (#1): x — model sonnet',
+        'Fix round 2 (#1): x — model sonnet',
+      ]);
       expect(json.tasks[0]).toMatchObject({ fixRounds: 2, escalated: false, escalatedTo: null });
     });
 
@@ -521,7 +741,10 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
 
     it('reports escalatedTo null for a fix round 3 on inherit', async () => {
-      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 3 (#1): x — model inherit']);
+      const json = await metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Fix round 3 (#1): x — model inherit',
+      ]);
       expect(json.tasks[0]).toMatchObject({ escalated: true, escalatedTo: null });
     });
 
@@ -537,16 +760,32 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
 
     it('attributes a legacy fix line with a model suffix to the last Task line', async () => {
-      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Task #2: DONE — b — model sonnet', 'Fix round 1: x — model opus']);
+      const json = await metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Task #2: DONE — b — model sonnet',
+        'Fix round 1: x — model opus',
+      ]);
       expect(json.tasks.map((t: { fixRounds: number }) => t.fixRounds)).toEqual([0, 1]);
       expect(json.tasks[1]).toMatchObject({ escalated: true, escalatedTo: 'opus' });
       expect(json.unattributedFixRounds).toBe(0);
     });
 
     it('tracks a single task without issue under its plan id', async () => {
-      const json = await metrics(['Task #p1: DONE — a — model sonnet', 'Fix round 1 (#p1): x — model sonnet', 'Fix round 3 (#p1): x — model opus']);
+      const json = await metrics([
+        'Task #p1: DONE — a — model sonnet',
+        'Fix round 1 (#p1): x — model sonnet',
+        'Fix round 3 (#p1): x — model opus',
+      ]);
       expect(json.tasks).toEqual([
-        { task: 'p1', model: 'sonnet', status: 'DONE', fixRounds: 2, escalated: true, escalatedTo: 'opus', reviewRounds: 0 },
+        {
+          task: 'p1',
+          model: 'sonnet',
+          status: 'DONE',
+          fixRounds: 2,
+          escalated: true,
+          escalatedTo: 'opus',
+          reviewRounds: 0,
+        },
       ]);
       expect(json.unattributedFixRounds).toBe(0);
       expect(json.escalationShare).toBe(1);
@@ -606,17 +845,30 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
         'Task #3: DONE — c — model sonnet',
         'Fix round 1 (#3): x — model opus',
       ]);
-      expect(json.tasks.map((t: { escalated: boolean }) => t.escalated)).toEqual([false, false, true]);
+      expect(json.tasks.map((t: { escalated: boolean }) => t.escalated)).toEqual([
+        false,
+        false,
+        true,
+      ]);
       expect(json.tasks[2].escalatedTo).toBe('opus');
     });
 
     it('counts only Phase review lines as review rounds', async () => {
-      const json = await metrics(['Task #1: DONE — a', 'Phase review: complete — n/a', 'Review round 2: x', 'Phase review: complete — n/a']);
+      const json = await metrics([
+        'Task #1: DONE — a',
+        'Phase review: complete — n/a',
+        'Review round 2: x',
+        'Phase review: complete — n/a',
+      ]);
       expect(json.tasks[0].reviewRounds).toBe(2);
     });
 
     it('keeps a fix round with an unknown target unattributed instead of charging the last task', async () => {
-      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Task #2: DONE — b — model sonnet', 'Fix round 1 (#p9): x — model opus']);
+      const json = await metrics([
+        'Task #1: DONE — a — model sonnet',
+        'Task #2: DONE — b — model sonnet',
+        'Fix round 1 (#p9): x — model opus',
+      ]);
       expect(json.tasks.map((t: { fixRounds: number }) => t.fixRounds)).toEqual([0, 0]);
       expect(json.fixRounds).toBe(1);
       expect(json.unattributedFixRounds).toBe(1);
@@ -629,7 +881,10 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
 
     it('reads bulleted Task and Fix round lines', async () => {
-      const json = await metrics(['- Task #1: DONE — a — model sonnet', '* Fix round 1 (#1): x — model opus']);
+      const json = await metrics([
+        '- Task #1: DONE — a — model sonnet',
+        '* Fix round 1 (#1): x — model opus',
+      ]);
       expect(json.tasks[0]).toMatchObject({ fixRounds: 1, escalated: true, escalatedTo: 'opus' });
     });
 
@@ -639,13 +894,22 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
 
     it('reports escalatedTo null for round 3 without a model and ignores an oversized task number', async () => {
-      const json = await metrics(['Task #1: DONE — a', 'Fix round 3 (#1): x', 'Task #99999999999: DONE — z']);
+      const json = await metrics([
+        'Task #1: DONE — a',
+        'Fix round 3 (#1): x',
+        'Task #99999999999: DONE — z',
+      ]);
       expect(json.tasks[0]).toMatchObject({ escalated: true, escalatedTo: null });
       expect(json.tasks).toHaveLength(1);
     });
 
     it('reports the run-wide review count on every task', async () => {
-      const json = await metrics(['Task #1: DONE — a', 'Task #2: DONE — b', 'Phase review: complete — n/a', 'Phase review: complete — n/a']);
+      const json = await metrics([
+        'Task #1: DONE — a',
+        'Task #2: DONE — b',
+        'Phase review: complete — n/a',
+        'Phase review: complete — n/a',
+      ]);
       expect(json.tasks.map((t: { reviewRounds: number }) => t.reviewRounds)).toEqual([2, 2]);
     });
   });
@@ -678,7 +942,15 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     it('computes total, phases, tasks and fix rounds from consecutive timestamps', async () => {
       const d = (await metrics(FIXTURE)).durations;
       expect(d.total).toBe(770);
-      expect(d.phases).toEqual({ read: 10, explore: 30, plan: 30, implement: 470, verify: 30, review: 120, pr: 80 });
+      expect(d.phases).toEqual({
+        read: 10,
+        explore: 30,
+        plan: 30,
+        implement: 470,
+        verify: 30,
+        review: 120,
+        pr: 80,
+      });
       // a Task ends at its line and starts at the previous Phase-complete, Task or Fix round line
       expect(d.tasks).toEqual([
         { task: 11, seconds: 240 },
@@ -691,14 +963,16 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
 
     it('accepts lines with and without the prefix; untimed spans and absent phases are null', async () => {
-      const d = (await metrics([
-        '# orchestrator ledger',
-        'Phase read: complete — n/a',
-        '2026-10-21T10:00:00Z Phase plan: complete — plan.json',
-        '2026-10-21T10:00:30Z Task #1: DONE — abc — model sonnet',
-        'Task #2: DONE — def — model sonnet',
-        '2026-10-21T10:01:00Z Fix round 1 (#2): x',
-      ])).durations;
+      const d = (
+        await metrics([
+          '# orchestrator ledger',
+          'Phase read: complete — n/a',
+          '2026-10-21T10:00:00Z Phase plan: complete — plan.json',
+          '2026-10-21T10:00:30Z Task #1: DONE — abc — model sonnet',
+          'Task #2: DONE — def — model sonnet',
+          '2026-10-21T10:01:00Z Fix round 1 (#2): x',
+        ])
+      ).durations;
       expect(d.total).toBe(60);
       expect(d.phases.read).toBeNull();
       expect(d.phases.plan).toBeNull(); // starts at the untimed read line
@@ -711,26 +985,45 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
 
     it('reads Phase verify: ok|fail lines with the tests part as the verify phase', async () => {
-      const d = (await metrics([
-        '2026-10-21T10:00:00Z # h',
-        '2026-10-21T10:01:00Z Phase verify: fail — tests 3/5',
-        '2026-10-21T10:01:30Z Fix round 1 (#1): x — model sonnet — tests 5/5',
-        '2026-10-21T10:03:00Z Phase verify: ok — tests 5/5',
-      ])).durations;
+      const d = (
+        await metrics([
+          '2026-10-21T10:00:00Z # h',
+          '2026-10-21T10:01:00Z Phase verify: fail — tests 3/5',
+          '2026-10-21T10:01:30Z Fix round 1 (#1): x — model sonnet — tests 5/5',
+          '2026-10-21T10:03:00Z Phase verify: ok — tests 5/5',
+        ])
+      ).durations;
       expect(d.phases.verify).toBe(180);
     });
 
     it('still parses the tasks of a prefixed ledger', async () => {
       const json = await metrics(FIXTURE);
-      expect(json.tasks.map((t: { task: number; status: string }) => [t.task, t.status])).toEqual([[11, 'DONE'], [12, 'DONE']]);
+      expect(json.tasks.map((t: { task: number; status: string }) => [t.task, t.status])).toEqual([
+        [11, 'DONE'],
+        [12, 'DONE'],
+      ]);
       expect(json.fixRounds).toBe(2);
     });
 
     it('gives null everywhere for a ledger without timestamps, never an error', async () => {
-      const json = await metrics(['# ledger', 'Phase read: complete — n/a', 'Task #5: DONE — abc', 'Fix round 1 (#5): x', 'Phase review: complete — n/a']);
+      const json = await metrics([
+        '# ledger',
+        'Phase read: complete — n/a',
+        'Task #5: DONE — abc',
+        'Fix round 1 (#5): x',
+        'Phase review: complete — n/a',
+      ]);
       expect(json.durations.total).toBeNull();
       expect(Object.values(json.durations.phases).every((v) => v === null)).toBe(true);
-      expect(Object.keys(json.durations.phases)).toEqual(['read', 'explore', 'plan', 'implement', 'verify', 'review', 'pr']);
+      expect(Object.keys(json.durations.phases)).toEqual([
+        'read',
+        'explore',
+        'plan',
+        'implement',
+        'verify',
+        'review',
+        'pr',
+      ]);
       expect(json.durations.tasks).toEqual([{ task: 5, seconds: null }]);
       expect(json.durations.fixRounds).toEqual([{ round: 1, task: 5, seconds: null }]);
     });
@@ -745,7 +1038,12 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
     });
 
     it('treats a clock going backwards as null', async () => {
-      const d = (await metrics(['2026-10-21T10:10:00Z # h', '2026-10-21T10:05:00Z Phase read: complete — n/a'])).durations;
+      const d = (
+        await metrics([
+          '2026-10-21T10:10:00Z # h',
+          '2026-10-21T10:05:00Z Phase read: complete — n/a',
+        ])
+      ).durations;
       expect(d.phases.read).toBeNull();
     });
   });
@@ -754,13 +1052,16 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
 describe('retro SKILL.md step 1', () => {
   const skill = fs.readFileSync(
     path.resolve(__dirname, '../../../packages/delivery/.apm/skills/retro/SKILL.md'),
-    'utf8',
+    'utf8'
   );
-  const step1 = skill.slice(skill.indexOf('1. **Metrics.**'), skill.indexOf('2. **Read primary sources.**'));
+  const step1 = skill.slice(
+    skill.indexOf('1. **Metrics.**'),
+    skill.indexOf('2. **Read primary sources.**')
+  );
 
   it('lists the seven report columns', () => {
     expect(step1).toContain(
-      'cost, main peak, requests, roles by cost, review rounds, fix rounds, gates',
+      'cost, main peak, requests, roles by cost, review rounds, fix rounds, gates'
     );
   });
 

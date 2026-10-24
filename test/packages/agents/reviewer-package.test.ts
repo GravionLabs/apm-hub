@@ -8,11 +8,14 @@ const reviewer = read('agents/.apm/agents/reviewer.agent.md');
 const fanout = read('delivery/.apm/skills/review-fanout/SKILL.md');
 const orchestratorAgent = read('agents/.apm/agents/orchestrator.agent.md');
 // steps 0-6 and per-PBI rules live in the pipeline reference
-const orchestrator = orchestratorAgent + '\n' + read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
+const orchestrator =
+  orchestratorAgent + '\n' + read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
 const pipeline = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
 const verify = read('delivery/.apm/skills/verify-project/SKILL.md');
 const specDim = read('delivery/.apm/skills/review-fanout/references/spec-dimension.md');
-const correctnessDim = read('delivery/.apm/skills/review-fanout/references/correctness-dimension.md');
+const correctnessDim = read(
+  'delivery/.apm/skills/review-fanout/references/correctness-dimension.md'
+);
 
 describe('reviewer without a review package (#233)', () => {
   it('reviewer returns [] plus a NO_PACKAGE line and has no git diff fallback', () => {
@@ -32,8 +35,12 @@ describe('reviewer without a review package (#233)', () => {
   });
 
   it('location-less advisories use a placeholder location in fanout and spec brief', () => {
-    expect(fanout).toMatch(/\(`spec` "no spec available", `conventions` "install `<stack>@apm-hub`"\) use the placeholder `file` = the package path, `line` = 1/);
-    expect(specDim).toMatch(/"no spec available" with severity LOW, placeholder location `file` = the package path, `line` = 1/);
+    expect(fanout).toMatch(
+      /\(`spec` "no spec available", `conventions` "install `<stack>@apm-hub`"\) use the placeholder `file` = the package path, `line` = 1/
+    );
+    expect(specDim).toMatch(
+      /"no spec available" with severity LOW, placeholder location `file` = the package path, `line` = 1/
+    );
   });
 
   it('review-fanout rejects empty-file findings and fails closed', () => {
@@ -57,7 +64,9 @@ describe('reviewer without a review package (#233)', () => {
     expect(step5()).toMatch(/dispatch `review-lead` \(sonnet\)/);
     expect(step5()).toMatch(/Claude Code/);
     expect(step5()).toMatch(/build the review summary from `findings`/);
-    expect(step5()).toMatch(/Copilot CLI, OpenCode, VS Code Copilot[^)]*\) run one `review-fanout` inline/);
+    expect(step5()).toMatch(
+      /Copilot CLI, OpenCode, VS Code Copilot[^)]*\) run one `review-fanout` inline/
+    );
     expect(step5()).toContain('{verdict, mode, incomplete, failedDimensions, findings:');
     expect(pipeline).toMatch(/`review-lead` standard/);
   });
@@ -74,7 +83,12 @@ describe('reviewer without a review package (#233)', () => {
   });
 
   it('advisory policy is unchanged with review-lead', () => {
-    for (const t of ['`--fix-advisories` apply that policy without asking', 'the rest go to the PR body', 'hidden by `--no-review-summary`']) expect(step5()).toContain(t);
+    for (const t of [
+      '`--fix-advisories` apply that policy without asking',
+      'the rest go to the PR body',
+      'hidden by `--no-review-summary`',
+    ])
+      expect(step5()).toContain(t);
   });
 
   it('verify-project does not fork into the reviewer agent', () => {

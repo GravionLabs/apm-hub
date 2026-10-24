@@ -9,7 +9,8 @@ const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
 
 const orchestratorAgent = read('agents/.apm/agents/orchestrator.agent.md');
 // steps 0-6 and per-PBI rules live in the pipeline reference
-const orchestrator = orchestratorAgent + '\n' + read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
+const orchestrator =
+  orchestratorAgent + '\n' + read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
 const issueReader = read('agents/.apm/agents/issue-reader.agent.md');
 const conventional = read('github/.apm/skills/github-issue/references/conventional-commits.md');
 const subIssues = read('github/.apm/skills/github-issue/references/sub-issues.md');
@@ -26,7 +27,9 @@ describe.skipIf(!hasPwsh)('ledger format agreement with Get-RunMetrics', () => {
   it('parses the exact Task and Fix round lines the pipeline spec documents', () => {
     const spec = read('github/.apm/skills/github-issue/references/pbi-pipeline.md');
     const taskFmt = /`(Task #<nr>: <status> — <sha> — model <name>)`/.exec(spec)?.[1];
-    const fixFmt = /`(Fix round <r> \(#<task>\): <result> — model <name> — tests <n>\/<m>)`/.exec(spec)?.[1];
+    const fixFmt = /`(Fix round <r> \(#<task>\): <result> — model <name> — tests <n>\/<m>)`/.exec(
+      spec
+    )?.[1];
     expect(taskFmt).toBeDefined();
     expect(fixFmt).toBeDefined();
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-fmt-'));
@@ -34,12 +37,32 @@ describe.skipIf(!hasPwsh)('ledger format agreement with Get-RunMetrics', () => {
       const t = path.join(dir, 't.jsonl');
       fs.writeFileSync(t, '');
       const l = path.join(dir, 'progress.md');
-      const values: Record<string, string> = { nr: '7', status: 'DONE', sha: 'abc1234', task: '7', r: '1', result: 'DONE', name: 'opus', n: '3', m: '3' };
+      const values: Record<string, string> = {
+        nr: '7',
+        status: 'DONE',
+        sha: 'abc1234',
+        task: '7',
+        r: '1',
+        result: 'DONE',
+        name: 'opus',
+        n: '3',
+        m: '3',
+      };
       const fill = (f: string) => f.replace(/<(\w+)>/g, (m, k) => values[k] ?? m);
       fs.writeFileSync(l, [fill(taskFmt!), fill(fixFmt!)].join('\n') + '\n');
       const script = path.join(pk, 'delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1');
-      const out = execFileSync('pwsh', ['-NoProfile', '-File', script, '-Transcript', t, '-Ledger', l], { encoding: 'utf-8' });
-      expect(JSON.parse(out).tasks[0]).toMatchObject({ task: 7, model: 'opus', fixRounds: 1, escalated: false, escalatedTo: null });
+      const out = execFileSync(
+        'pwsh',
+        ['-NoProfile', '-File', script, '-Transcript', t, '-Ledger', l],
+        { encoding: 'utf-8' }
+      );
+      expect(JSON.parse(out).tasks[0]).toMatchObject({
+        task: 7,
+        model: 'opus',
+        fixRounds: 1,
+        escalated: false,
+        escalatedTo: null,
+      });
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -47,16 +70,29 @@ describe.skipIf(!hasPwsh)('ledger format agreement with Get-RunMetrics', () => {
 
   it('fills the retro Escalation line from the script output of an escalated plan-id task', () => {
     const retro = read('delivery/.apm/skills/retro/SKILL.md');
-    const lineFmt = /`(Escalation: #<task> <kind> — <model> -> <model> after <n> fix rounds)`/.exec(retro)?.[1];
+    const lineFmt = /`(Escalation: #<task> <kind> — <model> -> <model> after <n> fix rounds)`/.exec(
+      retro
+    )?.[1];
     expect(lineFmt).toBeDefined();
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-esc-'));
     try {
       const t = path.join(dir, 't.jsonl');
       fs.writeFileSync(t, '');
       const l = path.join(dir, 'progress.md');
-      fs.writeFileSync(l, ['Task #p1: DONE — abc1234 — model sonnet', 'Fix round 1 (#p1): DONE — model sonnet', 'Fix round 2 (#p1): DONE — model opus'].join('\n') + '\n');
+      fs.writeFileSync(
+        l,
+        [
+          'Task #p1: DONE — abc1234 — model sonnet',
+          'Fix round 1 (#p1): DONE — model sonnet',
+          'Fix round 2 (#p1): DONE — model opus',
+        ].join('\n') + '\n'
+      );
       const script = path.join(pk, 'delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1');
-      const task = JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', script, '-Transcript', t, '-Ledger', l], { encoding: 'utf-8' })).tasks[0];
+      const task = JSON.parse(
+        execFileSync('pwsh', ['-NoProfile', '-File', script, '-Transcript', t, '-Ledger', l], {
+          encoding: 'utf-8',
+        })
+      ).tasks[0];
       expect(task.escalated).toBe(true);
       const models = [task.model, task.escalatedTo];
       const line = lineFmt!
@@ -80,7 +116,8 @@ describe('orch-pipeline deprecation stub', () => {
     expect(frontmatter).toContain('disable-model-invocation: true');
     expect(frontmatter).toContain("opencode/autoinvoke: 'false'");
     expect(countBodyLines(stub)).toBeLessThanOrEqual(10);
-    for (const c of ['claude', 'copilot', 'opencode']) expect(stub).toContain(`${c} --agent orchestrator`);
+    for (const c of ['claude', 'copilot', 'opencode'])
+      expect(stub).toContain(`${c} --agent orchestrator`);
     expect(stub).toContain('https://github.com/GravionLabs/apm-hub/blob/main/docs/working-mode.md');
     expect(stub).toContain('3.0.0');
   });
@@ -144,13 +181,29 @@ describe('task flow consistency', () => {
 
   it('the Task section list agrees across template, task-issues.md and plan-schema.md', () => {
     const tpl = read('github/.apm/issue-templates/task.md');
-    for (const s of ['Parent PBI: #', 'Overview', 'Implementation Notes', 'Context', 'Depends on', 'Files', 'Done when']) {
+    for (const s of [
+      'Parent PBI: #',
+      'Overview',
+      'Implementation Notes',
+      'Context',
+      'Depends on',
+      'Files',
+      'Done when',
+    ]) {
       expect(tpl).toContain(s);
       expect(taskIssues).toContain(s);
     }
     expect(tpl).not.toContain('Definition of Done');
     expect(taskIssues).not.toContain('Definition of Done');
-    for (const s of ['Parent PBI', 'Overview', 'Implementation Notes', 'Context', 'Depends on', 'Files', 'Done when']) {
+    for (const s of [
+      'Parent PBI',
+      'Overview',
+      'Implementation Notes',
+      'Context',
+      'Depends on',
+      'Files',
+      'Done when',
+    ]) {
       expect(planSchemaDoc).toContain(s);
     }
     const marker = (t: string) => [t.indexOf('agent-ready:start'), t.indexOf('agent-ready:end')];
@@ -170,7 +223,14 @@ describe('task flow consistency', () => {
   });
 
   it('task format and publish agree on the sections', () => {
-    for (const s of ['Parent PBI: #', 'Implementation Notes', 'Context', 'Depends on', 'Files', 'Done when']) {
+    for (const s of [
+      'Parent PBI: #',
+      'Implementation Notes',
+      'Context',
+      'Depends on',
+      'Files',
+      'Done when',
+    ]) {
       expect(taskIssues).toContain(s);
     }
     expect(publish).toContain('[Task]');
@@ -211,13 +271,19 @@ describe('task flow consistency', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'task-grep-'));
     try {
       const git = (...a: string[]) =>
-        execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: dir, encoding: 'utf-8' });
+        execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], {
+          cwd: dir,
+          encoding: 'utf-8',
+        });
       git('init', '-q');
       git('commit', '-q', '--allow-empty', '-m', 'chore: base');
       git('commit', '-q', '--allow-empty', '-m', 'feat: a (#1)\n\nbody text\n\nRefs #123');
       git('commit', '-q', '--allow-empty', '-m', 'feat: b (#1)\n\nbody text\n\nRefs #12');
       const find = (n: string) =>
-        git('log', '-E', '--grep', `^Refs #${n}$`, '--format=%s', 'HEAD~2..HEAD').trim().split('\n').filter(Boolean);
+        git('log', '-E', '--grep', `^Refs #${n}$`, '--format=%s', 'HEAD~2..HEAD')
+          .trim()
+          .split('\n')
+          .filter(Boolean);
       expect(find('12')).toEqual(['feat: b (#1)']);
       expect(find('123')).toEqual(['feat: a (#1)']);
       expect(find('1')).toEqual([]);

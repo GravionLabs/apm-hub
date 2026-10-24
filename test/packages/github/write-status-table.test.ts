@@ -3,7 +3,10 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-const SCRIPT = path.resolve(__dirname, '../../../packages/github/.apm/skills/github-issue/scripts/Write-StatusTable.ps1');
+const SCRIPT = path.resolve(
+  __dirname,
+  '../../../packages/github/.apm/skills/github-issue/scripts/Write-StatusTable.ps1'
+);
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
 it('pwsh is installed in CI (the Write-StatusTable cases must not be skipped there)', () => {
@@ -18,7 +21,13 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
   const table = '#12 merged First\n#13 pr-open #40 Second\nNext PBI: #14 Third\n';
-  const run = (args: string[], input?: string) => spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { cwd: dir, encoding: 'utf8', input, env: { ...process.env, DROMOS_STATE_DIR: path.join(dir, '.agents') } });
+  const run = (args: string[], input?: string) =>
+    spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], {
+      cwd: dir,
+      encoding: 'utf8',
+      input,
+      env: { ...process.env, DROMOS_STATE_DIR: path.join(dir, '.agents') },
+    });
   const target = (issue: string) => path.join(dir, '.agents', `status-${issue}.md`);
   const withFile = (content: string) => {
     const f = path.join(dir, 'in.md');
@@ -45,11 +54,14 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
     expect(fs.readdirSync(path.join(dir, '.agents'))).toEqual(['status-248.md']);
   });
 
-  it.each(['0', '01', '../x', '-1', 'x', '5/..', '1;rm', '12345678901', '5\n'])('rejects -Issue %j', (issue) => {
-    const r = run(['-Issue', issue, '-Path', withFile(table)]);
-    expect(r.status).not.toBe(0);
-    expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
-  });
+  it.each(['0', '01', '../x', '-1', 'x', '5/..', '1;rm', '12345678901', '5\n'])(
+    'rejects -Issue %j',
+    (issue) => {
+      const r = run(['-Issue', issue, '-Path', withFile(table)]);
+      expect(r.status).not.toBe(0);
+      expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false);
+    }
+  );
 
   it('fails without prompting when -Issue is missing', () => {
     const r = run(['-Path', withFile(table)]);
@@ -76,17 +88,20 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
     }
   });
 
-  it.skipIf(process.platform === 'win32')('refuses a symlinked target and leaves the link target untouched', () => {
-    const secret = path.join(dir, 'secret.md');
-    fs.writeFileSync(secret, 'secret\n');
-    fs.mkdirSync(path.join(dir, '.agents'));
-    fs.symlinkSync(secret, target('5'));
-    const r = run(['-Issue', '5', '-Path', withFile(table)]);
-    expect(r.status).not.toBe(0);
-    expect(r.stderr + r.stdout).toMatch(/symlinked/);
-    expect(fs.readFileSync(secret, 'utf8')).toBe('secret\n');
-    expect(fs.readdirSync(path.join(dir, '.agents'))).toEqual(['status-5.md']);
-  });
+  it.skipIf(process.platform === 'win32')(
+    'refuses a symlinked target and leaves the link target untouched',
+    () => {
+      const secret = path.join(dir, 'secret.md');
+      fs.writeFileSync(secret, 'secret\n');
+      fs.mkdirSync(path.join(dir, '.agents'));
+      fs.symlinkSync(secret, target('5'));
+      const r = run(['-Issue', '5', '-Path', withFile(table)]);
+      expect(r.status).not.toBe(0);
+      expect(r.stderr + r.stdout).toMatch(/symlinked/);
+      expect(fs.readFileSync(secret, 'utf8')).toBe('secret\n');
+      expect(fs.readdirSync(path.join(dir, '.agents'))).toEqual(['status-5.md']);
+    }
+  );
 
   it.skipIf(process.platform === 'win32')('refuses a dangling symlinked .agents/', () => {
     const missing = path.join(os.tmpdir(), `missing-${process.pid}-${Date.now()}`);
@@ -97,18 +112,22 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
     expect(fs.existsSync(missing)).toBe(false);
   });
 
-  it.skipIf(process.platform === 'win32')('refuses a dangling symlinked target and does not create the link target', () => {
-    const missing = path.join(dir, 'not-there.md');
-    fs.mkdirSync(path.join(dir, '.agents'));
-    fs.symlinkSync(missing, target('5'));
-    const r = run(['-Issue', '5', '-Path', withFile(table)]);
-    expect(r.status).not.toBe(0);
-    expect(r.stderr + r.stdout).toMatch(/symlinked/);
-    expect(fs.existsSync(missing)).toBe(false);
-  });
+  it.skipIf(process.platform === 'win32')(
+    'refuses a dangling symlinked target and does not create the link target',
+    () => {
+      const missing = path.join(dir, 'not-there.md');
+      fs.mkdirSync(path.join(dir, '.agents'));
+      fs.symlinkSync(missing, target('5'));
+      const r = run(['-Issue', '5', '-Path', withFile(table)]);
+      expect(r.status).not.toBe(0);
+      expect(r.stderr + r.stdout).toMatch(/symlinked/);
+      expect(fs.existsSync(missing)).toBe(false);
+    }
+  );
 
   it('strips escape sequences and control characters but keeps tabs and newlines', () => {
-    const dirty = '#1 a\tb \x1b[31mred\x1b[0m\n#2 \x1b]0;pwn\x07x \x1b]8;;u\x1b\\y\x1bZ z\x01\x7f\x85\r\nNext PBI: #3\n';
+    const dirty =
+      '#1 a\tb \x1b[31mred\x1b[0m\n#2 \x1b]0;pwn\x07x \x1b]8;;u\x1b\\y\x1bZ z\x01\x7f\x85\r\nNext PBI: #3\n';
     expect(run(['-Issue', '5', '-Path', withFile(dirty)]).status).toBe(0);
     expect(fs.readFileSync(target('5'), 'utf8')).toBe('#1 a\tb red\n#2 x y z\nNext PBI: #3\n');
   });
@@ -131,19 +150,40 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1 state directory (#402)', () => 
     const e = { ...process.env, ...env };
     for (const k of Object.keys(e)) if (k.startsWith('GIT_')) delete e[k];
     if (env.DROMOS_STATE_DIR === undefined) delete e.DROMOS_STATE_DIR;
-    return spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Issue', '5', '-Path', 't'], { cwd, encoding: 'utf8', env: e });
+    return spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Issue', '5', '-Path', 't'], {
+      cwd,
+      encoding: 'utf8',
+      env: e,
+    });
   };
 
   it('writes <git common dir>/agents/status-5.md from a linked worktree', () => {
     const main = path.join(root, 'main');
     fs.mkdirSync(main);
-    const g = (cwd: string, ...a: string[]) => spawnSync('git', ['-C', cwd, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a], { encoding: 'utf8' });
+    const g = (cwd: string, ...a: string[]) =>
+      spawnSync(
+        'git',
+        [
+          '-C',
+          cwd,
+          '-c',
+          'user.email=t@t',
+          '-c',
+          'user.name=t',
+          '-c',
+          'commit.gpgsign=false',
+          ...a,
+        ],
+        { encoding: 'utf8' }
+      );
     g(main, 'init', '-q');
     g(main, 'commit', '-q', '--allow-empty', '-m', 'init');
     const wt = path.join(root, 'wt');
     expect(g(main, 'worktree', 'add', '-q', '-b', 'feat/5-x', wt).status).toBe(0);
     expect(run(wt, {}).status).toBe(0);
-    expect(fs.readFileSync(path.join(main, '.git', 'agents', 'status-5.md'), 'utf8')).toBe('#1 merged A\n');
+    expect(fs.readFileSync(path.join(main, '.git', 'agents', 'status-5.md'), 'utf8')).toBe(
+      '#1 merged A\n'
+    );
   });
 
   it('honours DROMOS_STATE_DIR, also with a trailing slash', () => {
@@ -176,13 +216,30 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1 live runners (#468)', () => {
   });
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
   const state = () => path.join(dir, '.agents');
-  const run = (args: string[], input?: string) => spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { cwd: dir, encoding: 'utf8', input, env: { ...process.env, DROMOS_STATE_DIR: state() } });
+  const run = (args: string[], input?: string) =>
+    spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], {
+      cwd: dir,
+      encoding: 'utf8',
+      input,
+      env: { ...process.env, DROMOS_STATE_DIR: state() },
+    });
   const lease = (key: string, issue: number, minutesAgo: number) => {
     fs.mkdirSync(path.join(state(), 'leases'), { recursive: true });
     const beat = new Date(Date.now() - minutesAgo * 60000).toISOString().replace(/\.\d+Z$/, 'Z');
-    fs.writeFileSync(path.join(state(), 'leases', `${key}.json`), JSON.stringify({ path: `/w/${key}`, issue, branch: `feat/${issue}-x`, host: 'h', started: beat, heartbeat: beat }) + '\n');
+    fs.writeFileSync(
+      path.join(state(), 'leases', `${key}.json`),
+      JSON.stringify({
+        path: `/w/${key}`,
+        issue,
+        branch: `feat/${issue}-x`,
+        host: 'h',
+        started: beat,
+        heartbeat: beat,
+      }) + '\n'
+    );
   };
-  const table = '#12 merged First\n#13 open Second\n#14 in progress (Phase plan: complete) Third\n#15 open Fourth\n#16 pr-open #40 Fifth\n#17 blocked by #3 Sixth\nNext PBI: #13 Second\n';
+  const table =
+    '#12 merged First\n#13 open Second\n#14 in progress (Phase plan: complete) Third\n#15 open Fourth\n#16 pr-open #40 Fifth\n#17 blocked by #3 Sixth\nNext PBI: #13 Second\n';
   const out = () => fs.readFileSync(path.join(state(), 'status-9.md'), 'utf8');
 
   it('marks open and in-progress rows of a PBI with a live lease as in progress (runner); a stale lease does not count', () => {

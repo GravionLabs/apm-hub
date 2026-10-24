@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { countBodyLines, AGENT_BODY_LINE_LIMIT } from '../../../src/generators/agent-size-validator';
+import {
+  countBodyLines,
+  AGENT_BODY_LINE_LIMIT,
+} from '../../../src/generators/agent-size-validator';
 
 const pk = path.resolve(__dirname, '../../../packages');
 const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');

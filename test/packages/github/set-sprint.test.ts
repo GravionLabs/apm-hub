@@ -3,7 +3,10 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-const SCRIPT = path.resolve(__dirname, '../../../packages/github/.apm/skills/github-project/scripts/Set-Sprint.ps1');
+const SCRIPT = path.resolve(
+  __dirname,
+  '../../../packages/github/.apm/skills/github-project/scripts/Set-Sprint.ps1'
+);
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
 it('pwsh is installed in CI (the Set-Sprint cases must not be skipped there)', () => {
@@ -23,8 +26,17 @@ interface Item {
   blockedBy?: { repo: string; number: number; state: string }[];
 }
 let n = 0;
-const item = (repo: string, o: Partial<Item> = {}): Item => ({ id: `I-${++n}`, repo, number: n, state: 'OPEN', level: 'PBI', status: 'Todo', ...o });
-const many = (count: number, repo: string, o: Partial<Item> = {}) => Array.from({ length: count }, () => item(repo, o));
+const item = (repo: string, o: Partial<Item> = {}): Item => ({
+  id: `I-${++n}`,
+  repo,
+  number: n,
+  state: 'OPEN',
+  level: 'PBI',
+  status: 'Todo',
+  ...o,
+});
+const many = (count: number, repo: string, o: Partial<Item> = {}) =>
+  Array.from({ length: count }, () => item(repo, o));
 const ref = (i: Item) => `${i.repo}#${i.number}`;
 
 describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
@@ -36,8 +48,31 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
 
   const run = (items: Item[], targets: string[], ...flags: string[]) => {
     const file = path.join(dir, 'state.json');
-    fs.writeFileSync(file, JSON.stringify({ projectId: 'P', sprintField: { id: 'F-Sprint', iterations: ITERATIONS }, items }));
-    const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-StateFile', file, '-Today', '2026-10-22', '-Json', '-Issue', targets.join(','), ...flags], { cwd: dir, encoding: 'utf8' });
+    fs.writeFileSync(
+      file,
+      JSON.stringify({
+        projectId: 'P',
+        sprintField: { id: 'F-Sprint', iterations: ITERATIONS },
+        items,
+      })
+    );
+    const r = spawnSync(
+      'pwsh',
+      [
+        '-NoProfile',
+        '-File',
+        SCRIPT,
+        '-StateFile',
+        file,
+        '-Today',
+        '2026-10-22',
+        '-Json',
+        '-Issue',
+        targets.join(','),
+        ...flags,
+      ],
+      { cwd: dir, encoding: 'utf8' }
+    );
     return { status: r.status, out: r.stdout.trim() ? JSON.parse(r.stdout) : null, err: r.stderr };
   };
   const types = (r: ReturnType<typeof run>) => r.out.violations.map((v: any) => v.type);
@@ -47,13 +82,19 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
     const r = run([a], [ref(a)]);
     expect(r.status, r.err).toBe(0);
     expect(r.out.sprint).toBe(W43);
-    expect(r.out.assign).toEqual([{ item: a.id, issue: ref(a), iteration: `it-${W43}`, sprint: W43, previous: null }]);
+    expect(r.out.assign).toEqual([
+      { item: a.id, issue: ref(a), iteration: `it-${W43}`, sprint: W43, previous: null },
+    ]);
   });
 
   it('takes an explicit sprint and a default repository for #n', () => {
     const a = item('o/a');
     const r = run([a], [`#${a.number}`], '-Repo', 'o/a', '-Sprint', '2026-W44');
-    expect(r.out.assign[0]).toMatchObject({ issue: ref(a), iteration: 'it-2026-W44', sprint: '2026-W44' });
+    expect(r.out.assign[0]).toMatchObject({
+      issue: ref(a),
+      iteration: 'it-2026-W44',
+      sprint: '2026-W44',
+    });
   });
 
   it('skips an item that is already in the sprint', () => {
@@ -63,7 +104,11 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
 
   describe('limits', () => {
     it('allows exactly 30 per sprint (3 repos x 10) and refuses the 31st', () => {
-      const items = [...many(10, 'o/a', { sprint: W43 }), ...many(10, 'o/b', { sprint: W43 }), ...many(9, 'o/c', { sprint: W43 })];
+      const items = [
+        ...many(10, 'o/a', { sprint: W43 }),
+        ...many(10, 'o/b', { sprint: W43 }),
+        ...many(9, 'o/c', { sprint: W43 }),
+      ];
       const c = item('o/c');
       expect(run([...items, c], [ref(c)]).status).toBe(0);
       const d = item('o/d');
@@ -82,7 +127,10 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
 
     it('refuses a repository with 10 PBIs In release, whatever their sprint', () => {
       const a = item('o/a');
-      const r = run([...many(10, 'o/a', { status: 'In release', sprint: '2026-W42' }), a], [ref(a)]);
+      const r = run(
+        [...many(10, 'o/a', { status: 'In release', sprint: '2026-W42' }), a],
+        [ref(a)]
+      );
       expect(r.status).toBe(1);
       expect(types(r)).toEqual(['ReleaseFull']);
       expect(r.out.violations[0].message).toContain('github-release');
@@ -90,7 +138,11 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
 
     it('counts only open PBIs and Bugs, not Tasks, Features or closed items', () => {
       const a = item('o/a');
-      const noise = [...many(3, 'o/a', { sprint: W43, level: 'Task' }), ...many(3, 'o/a', { sprint: W43, state: 'CLOSED' }), ...many(10, 'o/a', { status: 'In release', level: 'Task' })];
+      const noise = [
+        ...many(3, 'o/a', { sprint: W43, level: 'Task' }),
+        ...many(3, 'o/a', { sprint: W43, state: 'CLOSED' }),
+        ...many(10, 'o/a', { status: 'In release', level: 'Task' }),
+      ];
       expect(run([...noise, ...many(8, 'o/a', { sprint: W43 }), a], [ref(a)]).status).toBe(0);
       const bug = item('o/a', { level: 'Bug' });
       expect(run([...many(10, 'o/a', { sprint: W43 }), bug], [ref(bug)]).status).toBe(1);
@@ -114,14 +166,19 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
 
     it('limits are parameters', () => {
       const a = item('o/a');
-      expect(types(run([item('o/a', { sprint: W43 }), a], [ref(a)], '-MaxPerRepo', '1'))).toEqual(['RepoFull']);
-      expect(types(run([item('o/a', { sprint: W43 }), a], [ref(a)], '-MaxPerSprint', '1'))).toEqual(['SprintFull']);
+      expect(types(run([item('o/a', { sprint: W43 }), a], [ref(a)], '-MaxPerRepo', '1'))).toEqual([
+        'RepoFull',
+      ]);
+      expect(types(run([item('o/a', { sprint: W43 }), a], [ref(a)], '-MaxPerSprint', '1'))).toEqual(
+        ['SprintFull']
+      );
     });
   });
 
   // Native blocked-by links; the live run reads them per target, the state file carries them as items[].blockedBy.
   describe('dependency order', () => {
-    const blockedBy = (...blockers: Item[]) => blockers.map((b) => ({ repo: b.repo, number: b.number, state: b.state }));
+    const blockedBy = (...blockers: Item[]) =>
+      blockers.map((b) => ({ repo: b.repo, number: b.number, state: b.state }));
 
     it('refuses a PBI whose open blocker is in no sprint and names the blocker', () => {
       const blocker = item('o/a');
@@ -191,10 +248,15 @@ describe.skipIf(!hasPwsh)('Set-Sprint.ps1 -StateFile', () => {
 });
 
 describe('GraphQL here-strings in the project scripts', () => {
-  const dir = path.resolve(__dirname, '../../../packages/github/.apm/skills/github-project/scripts');
+  const dir = path.resolve(
+    __dirname,
+    '../../../packages/github/.apm/skills/github-project/scripts'
+  );
   const queries = ['Set-Sprint.ps1', 'Set-ProjectStandard.ps1'].flatMap((file) => {
     const text = fs.readFileSync(path.join(dir, file), 'utf8');
-    return [...text.matchAll(/\$(\w+) = @'\r?\n([\s\S]*?)\r?\n'@/g)].map((m) => [`${file} $${m[1]}`, m[2]] as const);
+    return [...text.matchAll(/\$(\w+) = @'\r?\n([\s\S]*?)\r?\n'@/g)].map(
+      (m) => [`${file} $${m[1]}`, m[2]] as const
+    );
   });
 
   it('finds the queries', () => {

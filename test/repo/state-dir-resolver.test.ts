@@ -35,7 +35,9 @@ describe('Resolve-StateDir copies', () => {
     const block = extract(PWSH_FILES[0]);
     expect(block).toContain('DROMOS_STATE_DIR');
     expect(block).toContain('--git-common-dir');
-    expect(block).toContain('No state directory: not inside a git repository (set DROMOS_STATE_DIR)');
+    expect(block).toContain(
+      'No state directory: not inside a git repository (set DROMOS_STATE_DIR)'
+    );
   });
 });
 

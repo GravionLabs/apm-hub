@@ -40,7 +40,9 @@ describe('generateAgentList', () => {
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('# Agent List');
     expect(content).toContain('## Agents');
-    expect(content).toContain('| [`orchestrator`](../packages/agents/.apm/agents/orchestrator.agent.md) | Issue orchestrator. |');
+    expect(content).toContain(
+      '| [`orchestrator`](../packages/agents/.apm/agents/orchestrator.agent.md) | Issue orchestrator. |'
+    );
     expect(content).toContain('Read-only exploration. *(subagent)*');
     expect(content).not.toContain('## Ts');
     expect(content).not.toContain('notes');

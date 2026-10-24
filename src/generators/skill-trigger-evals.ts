@@ -35,9 +35,12 @@ export function validateEvals(evals: TriggerEval[], packagesBaseDir: string): st
   for (const e of evals) {
     if (seenSkills.has(e.skill)) problems.push(`${e.skill}: duplicate entry`);
     seenSkills.add(e.skill);
-    if (!expected.has(e.skill)) problems.push(`${e.skill}: not a model-invocable consumer skill (gated or unknown)`);
-    if (!Array.isArray(e.shouldTrigger) || !e.shouldTrigger.length) problems.push(`${e.skill}: needs at least one shouldTrigger prompt`);
-    if (!Array.isArray(e.shouldNotTrigger) || !e.shouldNotTrigger.length) problems.push(`${e.skill}: needs at least one shouldNotTrigger prompt`);
+    if (!expected.has(e.skill))
+      problems.push(`${e.skill}: not a model-invocable consumer skill (gated or unknown)`);
+    if (!Array.isArray(e.shouldTrigger) || !e.shouldTrigger.length)
+      problems.push(`${e.skill}: needs at least one shouldTrigger prompt`);
+    if (!Array.isArray(e.shouldNotTrigger) || !e.shouldNotTrigger.length)
+      problems.push(`${e.skill}: needs at least one shouldNotTrigger prompt`);
     const prompts = [e.shouldTrigger, e.shouldNotTrigger];
     if (prompts.some((l) => l !== undefined && !Array.isArray(l))) {
       problems.push(`${e.skill}: shouldTrigger and shouldNotTrigger must be arrays`);
@@ -48,10 +51,12 @@ export function validateEvals(evals: TriggerEval[], packagesBaseDir: string): st
         problems.push(`${e.skill}: prompts must be non-empty strings`);
         continue;
       }
-      if (p.trim().startsWith('-')) problems.push(`${e.skill}: prompt starts with "-" (read as a CLI flag): "${p}"`);
+      if (p.trim().startsWith('-'))
+        problems.push(`${e.skill}: prompt starts with "-" (read as a CLI flag): "${p}"`);
       const key = p.trim().toLowerCase();
       const prev = seenPrompts.get(key);
-      if (prev !== undefined) problems.push(`${e.skill}: duplicate prompt "${p}" (also in ${prev})`);
+      if (prev !== undefined)
+        problems.push(`${e.skill}: duplicate prompt "${p}" (also in ${prev})`);
       else seenPrompts.set(key, e.skill);
     }
   }

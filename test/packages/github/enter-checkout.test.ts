@@ -1,7 +1,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
-import { Fixture, git, json, leaseKey, makeRepo, plantLease, readLeases, run } from './worktree-test-helpers';
+import {
+  Fixture,
+  git,
+  json,
+  leaseKey,
+  makeRepo,
+  plantLease,
+  readLeases,
+  run,
+} from './worktree-test-helpers';
 
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
@@ -11,8 +20,18 @@ describe.skipIf(!hasPwsh)('Enter-Checkout.ps1', () => {
     f = makeRepo();
   });
   afterEach(() => fs.rmSync(f.root, { recursive: true, force: true }));
-  const enter = (issue: string, cwd = f.repo, extra: string[] = [], env: Record<string, string> = {}) =>
-    run('Enter-Checkout.ps1', ['-Issue', issue, '-Branch', `feat/${issue}`, '-Base', 'main', ...extra], cwd, env);
+  const enter = (
+    issue: string,
+    cwd = f.repo,
+    extra: string[] = [],
+    env: Record<string, string> = {}
+  ) =>
+    run(
+      'Enter-Checkout.ps1',
+      ['-Issue', issue, '-Branch', `feat/${issue}`, '-Base', 'main', ...extra],
+      cwd,
+      env
+    );
   const wt = (n: string) => path.join(f.repo, '.worktrees', n);
 
   it('free checkout: main checkout, branch from origin/main, worktree false, exactly one lease', () => {
@@ -26,7 +45,14 @@ describe.skipIf(!hasPwsh)('Enter-Checkout.ps1', () => {
     expect(leases).toHaveLength(1);
     expect(out.lease).toBe(path.join(f.state, 'leases', `${leaseKey(f.repo)}.json`));
     expect(leases[0]).toMatchObject({ path: f.repo, issue: 7, branch: 'feat/7' });
-    expect(Object.keys(leases[0]).sort()).toEqual(['branch', 'heartbeat', 'host', 'issue', 'path', 'started']);
+    expect(Object.keys(leases[0]).sort()).toEqual([
+      'branch',
+      'heartbeat',
+      'host',
+      'issue',
+      'path',
+      'started',
+    ]);
     expect(leases[0].started).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
     expect(leases[0].heartbeat).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
     expect(fs.existsSync(path.join(f.repo, '.worktrees'))).toBe(false);
@@ -177,6 +203,8 @@ describe.skipIf(!hasPwsh)('Enter-Checkout.ps1', () => {
 
   it('requires -Branch and -Base', () => {
     expect(run('Enter-Checkout.ps1', ['-Issue', '7', '-Base', 'main'], f.repo).status).not.toBe(0);
-    expect(run('Enter-Checkout.ps1', ['-Issue', '7', '-Branch', 'feat/7'], f.repo).status).not.toBe(0);
+    expect(run('Enter-Checkout.ps1', ['-Issue', '7', '-Branch', 'feat/7'], f.repo).status).not.toBe(
+      0
+    );
   });
 });

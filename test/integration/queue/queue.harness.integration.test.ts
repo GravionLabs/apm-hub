@@ -16,7 +16,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
 
   const { ledger, readLedger, run, fakeClaude, calls } = queueHelpers(
     () => dir,
-    () => bin,
+    () => bin
   );
 
   describe.skipIf(!posix)('runs with a fake harness binary', () => {
@@ -24,15 +24,31 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
     const onlyPwshEnv = (only: string) => {
       const home = path.join(dir, 'home');
       fs.mkdirSync(home, { recursive: true });
-      const dotnet = Object.fromEntries(Object.entries(process.env).filter(([k]) => k.startsWith('DOTNET_')));
-      return { ...dotnet, PATH: only, HOME: home, TMPDIR: os.tmpdir(), LANG: process.env.LANG ?? 'C.UTF-8', DOTNET_CLI_HOME: home, DOTNET_CLI_TELEMETRY_OPTOUT: '1' } as NodeJS.ProcessEnv;
+      const dotnet = Object.fromEntries(
+        Object.entries(process.env).filter(([k]) => k.startsWith('DOTNET_'))
+      );
+      return {
+        ...dotnet,
+        PATH: only,
+        HOME: home,
+        TMPDIR: os.tmpdir(),
+        LANG: process.env.LANG ?? 'C.UTF-8',
+        DOTNET_CLI_HOME: home,
+        DOTNET_CLI_TELEMETRY_OPTOUT: '1',
+      } as NodeJS.ProcessEnv;
     };
     const onlyPwsh = (args: string[]) => {
-      const real = spawnSync('pwsh', ['-NoProfile', '-Command', '(Get-Command pwsh).Source'], { encoding: 'utf8' }).stdout.trim();
+      const real = spawnSync('pwsh', ['-NoProfile', '-Command', '(Get-Command pwsh).Source'], {
+        encoding: 'utf8',
+      }).stdout.trim();
       const only = path.join(dir, 'onlypwsh');
       fs.mkdirSync(only, { recursive: true });
       if (!fs.existsSync(path.join(only, 'pwsh'))) fs.symlinkSync(real, path.join(only, 'pwsh'));
-      return spawnSync(path.join(only, 'pwsh'), ['-NoProfile', '-File', SCRIPT, ...args], { encoding: 'utf8', cwd: dir, env: onlyPwshEnv(only) });
+      return spawnSync(path.join(only, 'pwsh'), ['-NoProfile', '-File', SCRIPT, ...args], {
+        encoding: 'utf8',
+        cwd: dir,
+        env: onlyPwshEnv(only),
+      });
     };
 
     it('fails with a clear message when the harness binary is not on PATH', () => {
@@ -51,7 +67,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
       fs.writeFileSync(
         path.join(bin, 'opencode'),
         `#!/bin/sh\necho "$OPENCODE_PERMISSION" > "${dir}/perm.txt"\nmkdir -p .agents/1\necho "Ledger complete." >> .agents/1/progress.md\n`,
-        { mode: 0o755 },
+        { mode: 0o755 }
       );
       const r = run(['1', '-Harness', 'opencode'], true);
       expect(r.status).toBe(0);
@@ -68,7 +84,9 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
       expect(calls()).toHaveLength(2);
       expect(r.stdout).toMatch(/^#1 done$/m);
       expect(r.stdout).toMatch(/^#2 done$/m);
-      expect(fs.readFileSync(path.join(dir, '.agents/1/run.log'), 'utf8')).toContain('output for 1');
+      expect(fs.readFileSync(path.join(dir, '.agents/1/run.log'), 'utf8')).toContain(
+        'output for 1'
+      );
     });
 
     it('runs again on a ledger without Ledger complete. (resume)', () => {
@@ -144,9 +162,15 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
     });
 
     it('filters -Label issues by author_association only with -TrustedOnly', () => {
-      fs.writeFileSync(path.join(bin, 'gh'), `#!/bin/sh\necho "$@" > "${dir}/gh.args"\nprintf '4\\n'\n`, { mode: 0o755 });
+      fs.writeFileSync(
+        path.join(bin, 'gh'),
+        `#!/bin/sh\necho "$@" > "${dir}/gh.args"\nprintf '4\\n'\n`,
+        { mode: 0o755 }
+      );
       run(['-Label', 'ready', '-DryRun'], true);
-      expect(fs.readFileSync(path.join(dir, 'gh.args'), 'utf8')).not.toContain('author_association');
+      expect(fs.readFileSync(path.join(dir, 'gh.args'), 'utf8')).not.toContain(
+        'author_association'
+      );
       run(['-Label', 'ready', '-TrustedOnly', '-DryRun'], true);
       const args = fs.readFileSync(path.join(dir, 'gh.args'), 'utf8');
       expect(args).toContain('select(.pull_request | not)');

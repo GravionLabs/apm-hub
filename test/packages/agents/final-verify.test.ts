@@ -14,7 +14,9 @@ const step5 = pipeline.split('\n').find((l) => l.startsWith('5. '))!;
 describe('Final-Verify step (#449)', () => {
   it('step 5 runs verify-project in a forked haiku general-purpose context before the review', () => {
     expect(step5.indexOf('Final-Verify')).toBeGreaterThanOrEqual(0);
-    expect(step5.indexOf('Final-Verify')).toBeLessThan(step5.indexOf('review `<first BASE>..HEAD`'));
+    expect(step5.indexOf('Final-Verify')).toBeLessThan(
+      step5.indexOf('review `<first BASE>..HEAD`')
+    );
     expect(step5).toContain('`verify-project`');
     expect(step5).toContain('forked general-purpose context');
     expect(step5).toMatch(/`subagent_type: general-purpose`, model haiku/);

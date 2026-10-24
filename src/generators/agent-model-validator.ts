@@ -54,7 +54,8 @@ const isDict = (v: unknown): v is Dict => typeof v === 'object' && v !== null &&
 export function checkAgentModels(agentFiles: string[]): AgentModelViolation[] {
   const violations: AgentModelViolation[] = [];
   for (const filePath of agentFiles) {
-    const add = (field: AgentModelViolation['field'], value: string) => violations.push({ filePath, field, value });
+    const add = (field: AgentModelViolation['field'], value: string) =>
+      violations.push({ filePath, field, value });
     const match = fs.readFileSync(filePath, 'utf8').match(/^---\r?\n([\s\S]*?)\r?\n---/);
     if (!match) continue;
     let data: unknown;
@@ -85,7 +86,8 @@ export function checkAgentModels(agentFiles: string[]): AgentModelViolation[] {
         continue;
       }
       if (!('model' in section)) continue;
-      if (!allowed.includes(String(section.model))) add(`metadata.${key}.model`, String(section.model));
+      if (!allowed.includes(String(section.model)))
+        add(`metadata.${key}.model`, String(section.model));
     }
   }
   return violations;

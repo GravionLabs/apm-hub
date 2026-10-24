@@ -3,10 +3,16 @@ import * as path from 'path';
 import { parse } from 'yaml';
 
 const root = path.resolve(__dirname, '../../..');
-const source = fs.readFileSync(path.join(root, 'packages/agents/.apm/agents/review-lead.agent.md'), 'utf-8');
+const source = fs.readFileSync(
+  path.join(root, 'packages/agents/.apm/agents/review-lead.agent.md'),
+  'utf-8'
+);
 const fm: any = parse(source.match(/^---\n([\s\S]*?)\n---\n/)![1]);
 const body = source.replace(/^---\n[\s\S]*?\n---\n/, '');
-const fanout = fs.readFileSync(path.join(root, 'packages/delivery/.apm/skills/review-fanout/SKILL.md'), 'utf-8');
+const fanout = fs.readFileSync(
+  path.join(root, 'packages/delivery/.apm/skills/review-fanout/SKILL.md'),
+  'utf-8'
+);
 const agentsApm: any = parse(fs.readFileSync(path.join(root, 'packages/agents/apm.yml'), 'utf-8'));
 
 describe('review-lead agent contract', () => {
@@ -15,7 +21,8 @@ describe('review-lead agent contract', () => {
     expect(fm.metadata.claude.model).toBe('sonnet');
     expect(fm.metadata.opencode.model).toBe('anthropic/claude-sonnet-5-5');
     expect(fm.metadata.claude.tools).toEqual(['Agent', 'Read', 'Grep', 'Glob', 'Bash', 'Skill']);
-    for (const t of ['Edit', 'Write', 'AskUserQuestion']) expect(fm.metadata.claude.tools).not.toContain(t);
+    for (const t of ['Edit', 'Write', 'AskUserQuestion'])
+      expect(fm.metadata.claude.tools).not.toContain(t);
     expect(fm.tools).not.toContain('edit');
     expect(fm.metadata.claude.skills).toEqual(['review-fanout']);
     expect(fm.metadata.opencode.mode).toBe('subagent');
@@ -27,8 +34,16 @@ describe('review-lead agent contract', () => {
     expect(perm.edit).toBe('deny');
     expect(perm.task).toEqual({ '*': 'deny', reviewer: 'allow' });
     expect(perm.bash['*']).toBe('deny');
-    const allowed = Object.keys(perm.bash).filter((k) => perm.bash[k] === 'allow').sort();
-    expect(allowed).toEqual(['git diff *', 'git log *', 'git merge-base *', 'git rev-parse *', 'git show *']);
+    const allowed = Object.keys(perm.bash)
+      .filter((k) => perm.bash[k] === 'allow')
+      .sort();
+    expect(allowed).toEqual([
+      'git diff *',
+      'git log *',
+      'git merge-base *',
+      'git rev-parse *',
+      'git show *',
+    ]);
     for (const k of allowed) expect(k).toMatch(/^git [a-z-]+ \*$/);
     expect(JSON.stringify(perm)).not.toMatch(/pwsh|"gh |"git \*"|"\*": "allow"/);
     expect(body).toMatch(/Claude Code only/);
@@ -36,7 +51,8 @@ describe('review-lead agent contract', () => {
   });
 
   it('reply contract covers mode, failedDimensions, error shape, overflow and review path fallback', () => {
-    for (const key of ['"mode"', '"failedDimensions"', '"truncated"', '"step"']) expect(body).toContain(key);
+    for (const key of ['"mode"', '"failedDimensions"', '"truncated"', '"step"'])
+      expect(body).toContain(key);
     expect(body).toMatch(/Empty diff[^\n]*"error"/);
     expect(body).toMatch(/never drop or shorten a blocking finding/);
     expect(body).toContain('`$TMPDIR`');
@@ -44,7 +60,18 @@ describe('review-lead agent contract', () => {
   });
 
   it('returns the output keys as JSON only within 300 words', () => {
-    for (const key of ['"verdict"', '"incomplete"', '"findings"', '"severity"', '"file"', '"line"', '"title"', '"blocking"', '"package"', '"review"']) {
+    for (const key of [
+      '"verdict"',
+      '"incomplete"',
+      '"findings"',
+      '"severity"',
+      '"file"',
+      '"line"',
+      '"title"',
+      '"blocking"',
+      '"package"',
+      '"review"',
+    ]) {
       expect(body).toContain(key);
     }
     expect(body).toContain('"APPROVE"|"CHANGES_REQUESTED"');

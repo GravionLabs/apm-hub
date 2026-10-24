@@ -34,7 +34,9 @@ describe('checkAgentModels', () => {
   });
 
   it('accepts every allowed id', () => {
-    const files = ALLOWED_OPENCODE_MODELS.map((m, i) => write(`a${i}.agent.md`, agent('sonnet', m)));
+    const files = ALLOWED_OPENCODE_MODELS.map((m, i) =>
+      write(`a${i}.agent.md`, agent('sonnet', m))
+    );
     expect(checkAgentModels(files)).toEqual([]);
   });
 
@@ -65,7 +67,11 @@ describe('checkAgentModels', () => {
     const f = write('bad.agent.md', agent('sonnet', 'anthropic/claude-haiku-9-9'));
     const v = checkAgentModels([f]);
     expect(v).toHaveLength(1);
-    expect(v[0]).toMatchObject({ filePath: f, field: 'metadata.opencode.model', value: 'anthropic/claude-haiku-9-9' });
+    expect(v[0]).toMatchObject({
+      filePath: f,
+      field: 'metadata.opencode.model',
+      value: 'anthropic/claude-haiku-9-9',
+    });
   });
 
   it('flags an unknown claude model', () => {
@@ -101,13 +107,19 @@ describe('checkAgentModels', () => {
   });
 
   it('flags a null claude section and a null opencode section', () => {
-    const f = write('nulls.agent.md', '---\nname: x\nmetadata:\n  claude:\n  opencode:\n---\nbody\n');
+    const f = write(
+      'nulls.agent.md',
+      '---\nname: x\nmetadata:\n  claude:\n  opencode:\n---\nbody\n'
+    );
     const v = checkAgentModels([f]);
     expect(v.map((x) => x.field)).toEqual(['metadata.claude', 'metadata.opencode']);
   });
 
   it('flags a null model value', () => {
-    const f = write('nullmodel.agent.md', '---\nname: x\nmetadata:\n  claude:\n    model:\n---\nbody\n');
+    const f = write(
+      'nullmodel.agent.md',
+      '---\nname: x\nmetadata:\n  claude:\n    model:\n---\nbody\n'
+    );
     const v = checkAgentModels([f]);
     expect(v).toHaveLength(1);
     expect(v[0]).toMatchObject({ field: 'metadata.claude.model', value: 'null' });
@@ -159,8 +171,12 @@ describe('live repo agent model check', () => {
   });
 
   it('documents every allowed id in agent-frontmatter.md', () => {
-    const doc = fs.readFileSync(path.resolve(__dirname, '../../docs/concepts/agent-frontmatter.md'), 'utf8');
-    for (const id of [...ALLOWED_CLAUDE_MODELS, ...ALLOWED_OPENCODE_MODELS]) expect(doc).toContain(id);
+    const doc = fs.readFileSync(
+      path.resolve(__dirname, '../../docs/concepts/agent-frontmatter.md'),
+      'utf8'
+    );
+    for (const id of [...ALLOWED_CLAUDE_MODELS, ...ALLOWED_OPENCODE_MODELS])
+      expect(doc).toContain(id);
   });
 
   it('every agent uses allowed model ids', () => {

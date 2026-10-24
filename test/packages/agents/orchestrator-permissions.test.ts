@@ -4,10 +4,13 @@ import * as path from 'path';
 import { spawnSync } from 'child_process';
 import { parse } from 'yaml';
 
-const agentPath = path.resolve(__dirname, '../../../packages/agents/.apm/agents/orchestrator.agent.md');
+const agentPath = path.resolve(
+  __dirname,
+  '../../../packages/agents/.apm/agents/orchestrator.agent.md'
+);
 const scriptPath = path.resolve(
   __dirname,
-  '../../../packages/github/.apm/skills/github-issue/scripts/Add-LedgerLine.ps1',
+  '../../../packages/github/.apm/skills/github-issue/scripts/Add-LedgerLine.ps1'
 );
 
 function loadBashRules(): [string, string][] {
@@ -15,7 +18,8 @@ function loadBashRules(): [string, string][] {
   const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
   if (!match) throw new Error(`No frontmatter found in ${agentPath}`);
   const permission = parse(match[1])?.metadata?.opencode?.permission;
-  if (!permission?.bash) throw new Error(`metadata.opencode.permission.bash missing in ${agentPath}`);
+  if (!permission?.bash)
+    throw new Error(`metadata.opencode.permission.bash missing in ${agentPath}`);
   return Object.entries(permission.bash as Record<string, string>);
 }
 
@@ -34,7 +38,14 @@ function decidePart(rules: [string, string][], part: string): string {
   const command = part.replace(/\s*\d*>>?\s*\S+/g, '').trim();
   let result = 'ask';
   for (const [pattern, action] of rules) {
-    const re = new RegExp('^' + pattern.split('*').map((p) => p.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('.*') + '$');
+    const re = new RegExp(
+      '^' +
+        pattern
+          .split('*')
+          .map((p) => p.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
+          .join('.*') +
+        '$'
+    );
     if (re.test(command)) result = action;
   }
   return result;
@@ -49,8 +60,17 @@ function decide(rules: [string, string][], command: string): string {
 
 describe('orchestrator OpenCode permissions', () => {
   const rules = loadBashRules();
-  const ledger = (args: string) => `pwsh .claude/skills/github-issue/scripts/Add-LedgerLine.ps1 ${args}`;
-  const skillDirs = ['.claude/skills', '.opencode/skills', '.agents/skills', '.github/skills', '~/.claude/skills', '~/.agents/skills', '~/.config/opencode/skills'];
+  const ledger = (args: string) =>
+    `pwsh .claude/skills/github-issue/scripts/Add-LedgerLine.ps1 ${args}`;
+  const skillDirs = [
+    '.claude/skills',
+    '.opencode/skills',
+    '.agents/skills',
+    '.github/skills',
+    '~/.claude/skills',
+    '~/.agents/skills',
+    '~/.config/opencode/skills',
+  ];
 
   it('keeps edit denied for source files', () => {
     expect(loadPermission().edit).toBe('deny');
@@ -64,15 +84,32 @@ describe('orchestrator OpenCode permissions', () => {
   it('allows ledger writes only through the Add-LedgerLine helper', () => {
     expect(decide(rules, ledger('-Issue 222 -Line "Phase plan: complete — n/a"'))).toBe('allow');
     for (const dir of skillDirs) {
-      expect(decide(rules, `pwsh ${dir}/github-issue/scripts/Add-LedgerLine.ps1 -Issue adhoc`)).toBe('allow');
-      expect(decide(rules, `pwsh ${dir}/detect-techstack/scripts/Detect-TechStack.ps1 -ProjectRoot .`)).toBe('allow');
+      expect(
+        decide(rules, `pwsh ${dir}/github-issue/scripts/Add-LedgerLine.ps1 -Issue adhoc`)
+      ).toBe('allow');
+      expect(
+        decide(rules, `pwsh ${dir}/detect-techstack/scripts/Detect-TechStack.ps1 -ProjectRoot .`)
+      ).toBe('allow');
     }
   });
 
   it('allows the status table writer from every skill directory and asks when it is chained', () => {
-    for (const dir of skillDirs) expect(decide(rules, `pwsh ${dir}/github-issue/scripts/Write-StatusTable.ps1 -Issue 248 -Path /tmp/t.md`)).toBe('allow');
-    expect(decide(rules, 'pwsh .claude/skills/github-issue/scripts/Write-StatusTable.ps1 -Issue 1 -Path x; rm -rf src')).toBe('ask');
-    expect(decide(rules, 'pwsh .claude/skills/other/scripts/Write-StatusTable.ps1 -Issue 1')).toBe('ask');
+    for (const dir of skillDirs)
+      expect(
+        decide(
+          rules,
+          `pwsh ${dir}/github-issue/scripts/Write-StatusTable.ps1 -Issue 248 -Path /tmp/t.md`
+        )
+      ).toBe('allow');
+    expect(
+      decide(
+        rules,
+        'pwsh .claude/skills/github-issue/scripts/Write-StatusTable.ps1 -Issue 1 -Path x; rm -rf src'
+      )
+    ).toBe('ask');
+    expect(decide(rules, 'pwsh .claude/skills/other/scripts/Write-StatusTable.ps1 -Issue 1')).toBe(
+      'ask'
+    );
   });
 
   it('still allows git and gh', () => {
@@ -110,16 +147,25 @@ describe('orchestrator OpenCode permissions', () => {
     expect(decide(rules, 'pwsh scripts/Other.ps1 -Issue 1')).toBe('ask');
     expect(decide(rules, 'pwsh -Command "rm -rf src"')).toBe('ask');
     expect(decide(rules, 'pwsh -Command x a/scripts/Add-LedgerLine.ps1 y')).toBe('ask');
-    expect(decide(rules, 'pwsh -NoProfile -Command "rm -rf src" x/scripts/Detect-TechStack.ps1 y')).toBe('ask');
+    expect(
+      decide(rules, 'pwsh -NoProfile -Command "rm -rf src" x/scripts/Detect-TechStack.ps1 y')
+    ).toBe('ask');
     expect(decide(rules, 'pwsh /tmp/x/scripts/Add-LedgerLine.ps1 1 y')).toBe('ask');
-    expect(decide(rules, 'pwsh /home/u/.agents/skills/github-issue/scripts/Add-LedgerLine.ps1 -Issue 1')).toBe('ask');
-    expect(decide(rules, 'pwsh .claude/skills/other/scripts/Add-LedgerLine.ps1 -Issue 1')).toBe('ask');
+    expect(
+      decide(rules, 'pwsh /home/u/.agents/skills/github-issue/scripts/Add-LedgerLine.ps1 -Issue 1')
+    ).toBe('ask');
+    expect(decide(rules, 'pwsh .claude/skills/other/scripts/Add-LedgerLine.ps1 -Issue 1')).toBe(
+      'ask'
+    );
   });
 
   it('has no allow rule that starts with a wildcard or lets pwsh run arbitrary scripts', () => {
     const allowed = rules.filter(([, a]) => a === 'allow').map(([p]) => p);
     expect(allowed.filter((p) => p.startsWith('*') || /^pwsh \*/.test(p))).toEqual([]);
-    for (const p of allowed.filter((x) => x.startsWith('pwsh '))) expect(p).toMatch(/^pwsh \S+\/scripts\/(Add-LedgerLine|Detect-TechStack|Write-StatusTable|Enter-Checkout|Exit-Checkout|Get-TaskWaves)\.ps1 \*$/);
+    for (const p of allowed.filter((x) => x.startsWith('pwsh ')))
+      expect(p).toMatch(
+        /^pwsh \S+\/scripts\/(Add-LedgerLine|Detect-TechStack|Write-StatusTable|Enter-Checkout|Exit-Checkout|Get-TaskWaves)\.ps1 \*$/
+      );
   });
 });
 
@@ -132,13 +178,19 @@ describe.skipIf(!pwshAvailable)('Add-LedgerLine.ps1', () => {
   });
   afterEach(() => fs.rmSync(cwd, { recursive: true, force: true }));
   const run = (...args: string[]) =>
-    spawnSync('pwsh', ['-NoProfile', '-File', scriptPath, ...args], { cwd, encoding: 'utf-8', env: { ...process.env, DROMOS_STATE_DIR: path.join(cwd, '.agents') } });
+    spawnSync('pwsh', ['-NoProfile', '-File', scriptPath, ...args], {
+      cwd,
+      encoding: 'utf-8',
+      env: { ...process.env, DROMOS_STATE_DIR: path.join(cwd, '.agents') },
+    });
 
   it('creates the directory and appends lines', () => {
     expect(run('-Issue', '222', '-Line', '# header').status).toBe(0);
     expect(run('-Issue', '222', '-Line', 'Phase plan: complete').status).toBe(0);
     const text = fs.readFileSync(path.join(cwd, '.agents/222/progress.md'), 'utf-8');
-    expect(text.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z /gm, '')).toBe('# header\nPhase plan: complete\n');
+    expect(text.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z /gm, '')).toBe(
+      '# header\nPhase plan: complete\n'
+    );
     expect(text).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z # header\n/);
   });
 
@@ -148,11 +200,14 @@ describe.skipIf(!pwshAvailable)('Add-LedgerLine.ps1', () => {
     expect(fs.existsSync(path.join(cwd, '.agents/adhoc/progress.md'))).toBe(false);
   });
 
-  it.each(['../x', '5/..', '5 6', '0', '-1', 'x', '1;rm', '/etc', '007', '5\n', '5\u2028'])('rejects issue %s', (issue) => {
-    const r = run('-Issue', issue, '-Line', 'x');
-    expect(r.status).not.toBe(0);
-    expect(fs.existsSync(path.join(cwd, '.agents'))).toBe(false);
-  });
+  it.each(['../x', '5/..', '5 6', '0', '-1', 'x', '1;rm', '/etc', '007', '5\n', '5\u2028'])(
+    'rejects issue %s',
+    (issue) => {
+      const r = run('-Issue', issue, '-Line', 'x');
+      expect(r.status).not.toBe(0);
+      expect(fs.existsSync(path.join(cwd, '.agents'))).toBe(false);
+    }
+  );
 
   it.each(['a\nb', 'a\u2028b', 'a\rb'])('rejects a multi-line value %j', (line) => {
     expect(run('-Issue', '5', '-Line', line).status).not.toBe(0);

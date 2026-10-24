@@ -6,7 +6,7 @@ import * as path from 'path';
 
 const SCRIPT = path.resolve(
   __dirname,
-  '../../../packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1',
+  '../../../packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1'
 );
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
@@ -23,7 +23,10 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     fs.writeFileSync(f, content);
   };
   const detect = () => {
-    const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-ProjectRoot', dir, '-NoCache'], { encoding: 'utf8', env: { ...process.env, DROMOS_STATE_DIR: path.join(dir, '.agents') } });
+    const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-ProjectRoot', dir, '-NoCache'], {
+      encoding: 'utf8',
+      env: { ...process.env, DROMOS_STATE_DIR: path.join(dir, '.agents') },
+    });
     expect(r.status).toBe(0);
     return JSON.parse(r.stdout);
   };
@@ -47,7 +50,15 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     write('jest.config.js');
     write('pytest.ini');
     write('vitest.config.ts');
-    expect(detect().tools).toEqual(['vitest', 'biome', 'eslint', 'prettier', 'jest', 'pytest', 'cargo']);
+    expect(detect().tools).toEqual([
+      'vitest',
+      'biome',
+      'eslint',
+      'prettier',
+      'jest',
+      'pytest',
+      'cargo',
+    ]);
   });
 
   it('detects vitest via vite.config test block, devDependencies, and pytest via pyproject', () => {
@@ -125,10 +136,28 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
   it('recomputes a cache written under the techstack-v2 schema', () => {
     write('Cargo.toml', '[package]\n');
     // the hash the v2 script would have stored for this exact project
-    const fileHash = crypto.createHash('sha256').update(fs.readFileSync(path.join(dir, 'Cargo.toml'))).digest('hex').toUpperCase();
-    const v2Hash = crypto.createHash('sha256').update(`techstack-v2\nCargo.toml:${fileHash}`).digest('hex');
-    write('.agents/techstack.json', JSON.stringify({ languages: ['stale'], test: ['stale-test'], implementation: ['stale-implementation'], manifest_hash: v2Hash }));
-    const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-ProjectRoot', dir], { encoding: 'utf8', env: { ...process.env, DROMOS_STATE_DIR: path.join(dir, '.agents') } });
+    const fileHash = crypto
+      .createHash('sha256')
+      .update(fs.readFileSync(path.join(dir, 'Cargo.toml')))
+      .digest('hex')
+      .toUpperCase();
+    const v2Hash = crypto
+      .createHash('sha256')
+      .update(`techstack-v2\nCargo.toml:${fileHash}`)
+      .digest('hex');
+    write(
+      '.agents/techstack.json',
+      JSON.stringify({
+        languages: ['stale'],
+        test: ['stale-test'],
+        implementation: ['stale-implementation'],
+        manifest_hash: v2Hash,
+      })
+    );
+    const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-ProjectRoot', dir], {
+      encoding: 'utf8',
+      env: { ...process.env, DROMOS_STATE_DIR: path.join(dir, '.agents') },
+    });
     expect(JSON.parse(r.stdout).languages).toEqual(['rust']);
   });
 });
@@ -144,7 +173,10 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 state directory (#402)', () => {
     const e: NodeJS.ProcessEnv = { ...process.env, ...env };
     for (const k of Object.keys(e)) if (k.startsWith('GIT_')) delete e[k];
     if (!('DROMOS_STATE_DIR' in env)) delete e.DROMOS_STATE_DIR;
-    return spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-ProjectRoot', dir, ...args], { encoding: 'utf8', env: e });
+    return spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-ProjectRoot', dir, ...args], {
+      encoding: 'utf8',
+      env: e,
+    });
   };
 
   it('reports state_dir, caches there and leaves .git/info/exclude untouched', () => {
@@ -164,7 +196,10 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 state directory (#402)', () => {
     spawnSync('git', ['-C', dir, 'init', '-q']);
     detect();
     const cached = detect();
-    expect(JSON.parse(cached.stdout)).toMatchObject({ languages: ['rust'], state_dir: path.join(dir, '.git', 'agents') });
+    expect(JSON.parse(cached.stdout)).toMatchObject({
+      languages: ['rust'],
+      state_dir: path.join(dir, '.git', 'agents'),
+    });
   });
 
   it('honours DROMOS_STATE_DIR', () => {

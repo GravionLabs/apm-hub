@@ -7,9 +7,13 @@ import { gitCleanEnv, readLedger } from './ledger-test-helpers';
 
 // Loop marker per checkout (#466): <state>/current.d/<key>, shared scenarios for subagent-ledger.sh and the OpenCode plugin.
 const HOOK = path.resolve(__dirname, '../../../packages/hooks/.apm/hooks/subagent-ledger.sh');
-const PLUGIN = path.resolve(__dirname, '../../../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts');
+const PLUGIN = path.resolve(
+  __dirname,
+  '../../../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts'
+);
 
-const key = (checkout: string) => createHash('sha256').update(checkout, 'utf8').digest('hex').slice(0, 16);
+const key = (checkout: string) =>
+  createHash('sha256').update(checkout, 'utf8').digest('hex').slice(0, 16);
 const stamp = (ms = Date.now()) => new Date(ms).toISOString().replace(/\.\d+Z$/, 'Z');
 const LOOP5 = '# loop\nLoop: PBI #9 started\n';
 const LOOP6 = '# loop\nLoop: PBI #8 started\n';
@@ -25,7 +29,11 @@ describe.each(['hook', 'plugin'] as const)('loop marker per checkout (#466): %s'
   const saved = { ...process.env };
 
   const git = (cwd: string, ...a: string[]) => {
-    const r = spawnSync('git', ['-C', cwd, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a], { encoding: 'utf8', env: gitCleanEnv(process.env) });
+    const r = spawnSync(
+      'git',
+      ['-C', cwd, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a],
+      { encoding: 'utf8', env: gitCleanEnv(process.env) }
+    );
     if (r.status !== 0) throw new Error(`git ${a.join(' ')} failed: ${r.stderr}`);
   };
   const ledger = (nr: string, body = `# ${nr}\n`, mtime?: Date) => {
@@ -41,19 +49,36 @@ describe.each(['hook', 'plugin'] as const)('loop marker per checkout (#466): %s'
   };
   const lease = (checkout: string, issue: number, heartbeat = stamp()) => {
     fs.mkdirSync(path.join(state, 'leases'), { recursive: true });
-    fs.writeFileSync(path.join(state, 'leases', `${key(checkout)}.json`), JSON.stringify({ path: checkout, issue, branch: `feat/${issue}-x`, host: 'h', started: heartbeat, heartbeat }));
+    fs.writeFileSync(
+      path.join(state, 'leases', `${key(checkout)}.json`),
+      JSON.stringify({
+        path: checkout,
+        issue,
+        branch: `feat/${issue}-x`,
+        host: 'h',
+        started: heartbeat,
+        heartbeat,
+      })
+    );
   };
   const stop = async (cwd: string) => {
     if (impl === 'hook') {
       const env = gitCleanEnv(process.env, { AGENTS_LEDGER: '' });
       delete env.DROMOS_STATE_DIR;
-      const r = spawnSync('bash', [HOOK], { input: JSON.stringify({ cwd, agent_type: 'issue-reader', last_assistant_message: 'ok' }), encoding: 'utf8', env });
+      const r = spawnSync('bash', [HOOK], {
+        input: JSON.stringify({ cwd, agent_type: 'issue-reader', last_assistant_message: 'ok' }),
+        encoding: 'utf8',
+        env,
+      });
       expect(r.status).toBe(0);
       return;
     }
     const mod = await import(/* @vite-ignore */ PLUGIN);
     const h = await mod.ApmHubHooks({ directory: cwd });
-    await h['tool.execute.after']({ tool: 'task', args: { subagent_type: 'issue-reader' } }, { output: '<task_result>\nok\n</task_result>' });
+    await h['tool.execute.after'](
+      { tool: 'task', args: { subagent_type: 'issue-reader' } },
+      { output: '<task_result>\nok\n</task_result>' }
+    );
   };
 
   beforeEach(() => {

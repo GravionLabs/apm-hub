@@ -33,7 +33,15 @@ describe.each(Object.entries(files))('merged-label %s (#358)', (_name, rel) => {
 
 describe.each(Object.entries(files))('In release status step %s (#489)', (_name, rel) => {
   const wf = parse(fs.readFileSync(path.join(root, rel), 'utf-8'));
-  const all = wf.jobs['release-pr'].steps as { uses?: string; id?: string; name?: string; run?: string; env?: Record<string, string>; if?: string; 'continue-on-error'?: boolean }[];
+  const all = wf.jobs['release-pr'].steps as {
+    uses?: string;
+    id?: string;
+    name?: string;
+    run?: string;
+    env?: Record<string, string>;
+    if?: string;
+    'continue-on-error'?: boolean;
+  }[];
   const idx = all.findIndex((s) => s.id === 'in-release');
   const step = all[idx];
 
@@ -63,7 +71,8 @@ describe('release workflow and template stay identical (#489)', () => {
 });
 
 describe('In release status docs (#489)', () => {
-  const read = (p: string) => fs.readFileSync(path.join(root, 'packages/github/.apm/skills', p), 'utf-8');
+  const read = (p: string) =>
+    fs.readFileSync(path.join(root, 'packages/github/.apm/skills', p), 'utf-8');
 
   it('merged-label.md documents PROJECT_TOKEN, scope project and the release/next limit', () => {
     const doc = read('github-release/references/merged-label.md');
@@ -89,18 +98,28 @@ describe('In release status docs (#489)', () => {
 
 describe('github-release skill (#358)', () => {
   it('cut checks for mark-merged-issues and never adds the template silently', () => {
-    const skill = fs.readFileSync(path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'), 'utf-8');
+    const skill = fs.readFileSync(
+      path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'),
+      'utf-8'
+    );
     expect(skill).toContain('mark-merged-issues');
     expect(skill).toContain('never silently');
-    expect(fs.existsSync(path.join(root, 'packages/github/.apm/skills/github-release/references/merged-label.md'))).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(root, 'packages/github/.apm/skills/github-release/references/merged-label.md')
+      )
+    ).toBe(true);
   });
 });
 
 describe('github-release skill refuses a released branch (#252)', () => {
-  const skill = fs.readFileSync(path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'), 'utf-8');
+  const skill = fs.readFileSync(
+    path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'),
+    'utf-8'
+  );
   const reference = fs.readFileSync(
     path.join(root, 'packages/github/.apm/skills/github-issue/references/release-branches.md'),
-    'utf-8',
+    'utf-8'
   );
   const section = (text: string, from: string, to: string) => {
     const start = text.indexOf(from);
@@ -134,7 +153,9 @@ describe('github-release skill refuses a released branch (#252)', () => {
 
   it('a later finish on the merged branch deletes release/next only for a merge-commit tip without open PRs', () => {
     expect(finish).toContain('git log --merges --first-parent origin/<default> --format=%P');
-    expect(finish).toContain('`gh pr list --base <branch> --state open` is empty; deleting would close them');
+    expect(finish).toContain(
+      '`gh pr list --base <branch> --state open` is empty; deleting would close them'
+    );
     expect(finish).toContain('git push origin --delete release/next');
   });
 
