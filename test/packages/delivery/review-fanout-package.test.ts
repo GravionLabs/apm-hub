@@ -94,11 +94,11 @@ d('review package: documentation split (real git)', () => {
 
 d('Get-PackageSize.ps1', () => {
   const sec = (file: string, body: string) =>
-    `diff --git a/${file} b/${file}\n--- a/${file}\n+++ b/${file}\n@@ -1 +1 @@\n${body}\n`;
+    `diff --git a/${file} b/${file}\n--- a/${file}\n+++ b/${file}\n@@ -0,0 +1 @@\n${body}\n`;
 
   it('estimates tokens as ceil(bytes / 4) and counts hunks per section', () => {
     const p = path.join(tmp, 'p.diff');
-    fs.writeFileSync(p, `${sec('a', '+x')}@@ -5 +5 @@\n+y\n${MARKER}\n${sec('docs/d.md', '+z')}`);
+    fs.writeFileSync(p, `${sec('a', '+x')}@@ -5,0 +5 @@\n+y\n${MARKER}\n${sec('docs/d.md', '+z')}`);
     const r = size(p);
     expect(r.hunks).toBe(2);
     expect(r.docsHunks).toBe(1);
@@ -106,15 +106,28 @@ d('Get-PackageSize.ps1', () => {
     expect(r.tokensEstimated).toBeGreaterThan(0);
   });
 
-  it('counts a heading-like "## Documentation" in issue text as ordinary content', () => {
+  it('ignores @@ lines and bytes of appended issue text and findings after the code section', () => {
+    const p = path.join(tmp, 'p.diff');
+    const issue = '## Documentation\nissue text\n@@ not a hunk\n@@ -1 +1 @@ looks like one\n';
+    fs.writeFileSync(p, `${sec('a.ts', '+x')}${issue}${'y'.repeat(40000)}\n`);
+    const r = size(p, '-Threshold', '1');
+    expect(r.hunks).toBe(1);
+    expect(r.docsHunks).toBe(0);
+    // the appended text is not attributed to a.ts
+    expect(r.oversize.largest).toHaveLength(1);
+    expect(r.oversize.largest[0].file).toBe('a.ts');
+    expect(r.oversize.largest[0].bytes).toBeLessThan(200);
+  });
+
+  it('counts hunks of the Documentation section even when issue text sits before the marker', () => {
     const p = path.join(tmp, 'p.diff');
     fs.writeFileSync(
       p,
-      `${sec('a', '+x')}## Documentation\nissue text\n@@ not a hunk? yes it is\n`
+      `${sec('a.ts', '+x')}issue\n@@ -1 +1 @@ fake\n${MARKER}\n${sec('docs/d.md', '+z')}`
     );
     const r = size(p);
-    expect(r.hunks).toBe(2);
-    expect(r.docsHunks).toBe(0);
+    expect(r.hunks).toBe(1);
+    expect(r.docsHunks).toBe(1);
   });
 
   it('stays quiet at exactly the threshold and adds oversize with the 3 largest files above it', () => {
