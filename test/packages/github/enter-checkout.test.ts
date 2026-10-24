@@ -70,7 +70,7 @@ describe.skipIf(!hasPwsh)('Enter-Checkout.ps1', () => {
     expect(json(enter('7')).worktree).toBe(false);
   });
 
-  it('live lease of another issue on the main checkout: .worktrees/<nr>, worktree true', () => {
+  it('live lease of another issue on the main checkout: .worktrees dir <nr>, worktree true', () => {
     plantLease(f.state, { path: f.repo, issue: 3, branch: 'feat/3' });
     const r = enter('7');
     expect(r.status).toBe(0);
@@ -82,7 +82,7 @@ describe.skipIf(!hasPwsh)('Enter-Checkout.ps1', () => {
     expect(out.lease).toBe(path.join(f.state, 'leases', `${leaseKey(wt('7'))}.json`));
   });
 
-  it('dirty tracked file: .worktrees/<nr>', () => {
+  it('dirty tracked file: .worktrees dir <nr>', () => {
     fs.appendFileSync(path.join(f.repo, 'a.txt'), 'changed\n');
     const out = json(enter('7'));
     expect(out).toMatchObject({ path: wt('7'), worktree: true });
@@ -163,7 +163,7 @@ describe.skipIf(!hasPwsh)('Enter-Checkout.ps1', () => {
     expect(fs.existsSync(path.join(f.state, 'leases'))).toBe(false);
   });
 
-  it('busy and .worktrees/ not ignored: refuses naming Enable-Worktrees.ps1', () => {
+  it('busy and .worktrees dir not ignored: refuses naming Enable-Worktrees.ps1', () => {
     fs.rmSync(f.root, { recursive: true, force: true });
     f = makeRepo({ ignore: false });
     plantLease(f.state, { path: f.repo, issue: 3, branch: 'feat/3' });

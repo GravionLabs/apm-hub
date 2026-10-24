@@ -99,7 +99,7 @@ describe.skipIf(!hasPwsh)('Exit-Checkout.ps1', () => {
     expect(git(f.repo, 'worktree', 'list', '--porcelain')).not.toContain('.worktrees');
   });
 
-  it('does not remove a worktree outside .worktrees/<nr> named in a lease', () => {
+  it('does not remove a worktree outside .worktrees dir <nr> named in a lease', () => {
     const other = path.join(f.root, 'other-wt');
     git(f.repo, 'worktree', 'add', '-q', '-b', 'side', other);
     plantLease(f.state, { path: other, issue: 7 });
