@@ -18,7 +18,11 @@ describe('Task waves wiring (#467)', () => {
     expect(orchestrator).toMatch(/`--parallel <1-4>`/);
     expect(orchestrator).toMatch(/forwarded to `pbi-runner`/);
     expect(orchestrator).toMatch(/references\/task-waves\.md/);
-    expect(body(orchestrator).split('\n').filter((l) => l.trim()).length).toBeLessThanOrEqual(40);
+    expect(
+      body(orchestrator)
+        .split('\n')
+        .filter((l) => l.trim()).length
+    ).toBeLessThanOrEqual(40);
   });
 
   it('orchestrator body does not carry the wave rules or the defaults', () => {
@@ -46,7 +50,9 @@ describe('Task waves wiring (#467)', () => {
     expect(step4).toMatch(/`--parallel 1`/);
     expect(step4).toMatch(/record `BASE=\$\(git rev-parse HEAD\)` once, before the first wave/);
     expect(step4).toMatch(/footer `Refs #<task>`/);
-    expect(step4).toMatch(/never get their own branch or PR; local task branches of a wave are never pushed/);
+    expect(step4).toMatch(
+      /never get their own branch or PR; local task branches of a wave are never pushed/
+    );
   });
 
   it('defaults live in task-waves.md only', () => {

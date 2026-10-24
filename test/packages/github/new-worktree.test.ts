@@ -19,8 +19,14 @@ describe.skipIf(!hasPwsh)('New-Worktree.ps1', () => {
     f = makeRepo();
     const r = nw(['-Issue', '7', '-Base', 'main']);
     expect(r.status).toBe(0);
-    expect(json(r)).toEqual({ path: path.join(f.repo, '.worktrees', '7'), branch: 'feat/7', base: 'main' });
-    expect(git(path.join(f.repo, '.worktrees', '7'), 'rev-parse', '--abbrev-ref', 'HEAD')).toBe('feat/7');
+    expect(json(r)).toEqual({
+      path: path.join(f.repo, '.worktrees', '7'),
+      branch: 'feat/7',
+      base: 'main',
+    });
+    expect(git(path.join(f.repo, '.worktrees', '7'), 'rev-parse', '--abbrev-ref', 'HEAD')).toBe(
+      'feat/7'
+    );
     expect(fs.existsSync(path.join(f.repo, '.worktrees', '7', 'a.txt'))).toBe(true);
   });
 
@@ -102,12 +108,15 @@ describe.skipIf(!hasPwsh)('New-Worktree.ps1', () => {
     expect(branches()).toEqual(['main']);
   });
 
-  it.each(['../x', '7/../8', 'a b', '', '7;x', 'loop-', '7-t', '..', '-7'])('rejects the issue value %j', (issue) => {
-    f = makeRepo();
-    const r = nw(['-Issue', issue, '-Base', 'main']);
-    expect(r.status).not.toBe(0);
-    expect(fs.existsSync(path.join(f.repo, '.worktrees'))).toBe(false);
-  });
+  it.each(['../x', '7/../8', 'a b', '', '7;x', 'loop-', '7-t', '..', '-7'])(
+    'rejects the issue value %j',
+    (issue) => {
+      f = makeRepo();
+      const r = nw(['-Issue', issue, '-Base', 'main']);
+      expect(r.status).not.toBe(0);
+      expect(fs.existsSync(path.join(f.repo, '.worktrees'))).toBe(false);
+    }
+  );
 
   it('requires -Base and rejects odd base or branch names', () => {
     f = makeRepo();

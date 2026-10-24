@@ -67,14 +67,20 @@ describe('checkAgentSizes', () => {
     fs.writeFileSync(long, agent(AGENT_BODY_LINE_LIMIT + 1));
     const violations = checkAgentSizes([ok, long]);
     expect(violations).toHaveLength(1);
-    expect(violations[0]).toEqual({ filePath: long, bodyLines: AGENT_BODY_LINE_LIMIT + 1, limit: AGENT_BODY_LINE_LIMIT });
+    expect(violations[0]).toEqual({
+      filePath: long,
+      bodyLines: AGENT_BODY_LINE_LIMIT + 1,
+      limit: AGENT_BODY_LINE_LIMIT,
+    });
   });
 });
 
 describe('live repo agent size check', () => {
   it('no agent body in the repo exceeds the line limit', () => {
     const violations = checkAgentSizes(findAgentFiles(path.resolve(__dirname, '../../packages')));
-    const message = violations.map((v) => `${v.filePath} (${v.bodyLines} body lines, limit ${v.limit})`).join('\n');
+    const message = violations
+      .map((v) => `${v.filePath} (${v.bodyLines} body lines, limit ${v.limit})`)
+      .join('\n');
     expect(violations, message).toEqual([]);
   });
 });

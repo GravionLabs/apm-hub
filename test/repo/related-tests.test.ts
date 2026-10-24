@@ -15,6 +15,7 @@ const FILES = [
   'test/packages/ts/ts-pnpm-workflow.test.ts',
   'test/packages/ts/ts-package.test.ts',
   'test/packages/github/release-workflow.test.ts',
+  'test/repo/ci-workflow.test.ts',
   'test/repo/pages-workflow.test.ts',
   'test/repo/state-dir-resolver.test.ts',
 ];
@@ -66,6 +67,7 @@ describe('related-tests', () => {
 
   it('maps .github to the repo tests', () => {
     expect(rel('.github/workflows/ci.yml')).toEqual([
+      'test/repo/ci-workflow.test.ts',
       'test/repo/pages-workflow.test.ts',
       'test/repo/state-dir-resolver.test.ts',
     ]);

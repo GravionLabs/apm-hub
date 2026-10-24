@@ -75,6 +75,21 @@ If you still have a local `~/.claude/commands/orchestrator.md`, delete it: a com
 The skill runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
 session context keeps growing, so prefer `claude --agent orchestrator` for real work.
 
+### Model of the main thread
+
+The `orchestrator` agent runs on sonnet by default; the main thread only relays phase summaries, rulings and gates, and every phase that needs more reasoning names its own model per dispatch. Override it explicitly:
+
+```powershell
+claude --model <id> --agent orchestrator "full 123"   # Claude Code
+opencode --model <provider/id> --agent orchestrator   # OpenCode, or set `model` in the agent file
+```
+
+Copilot CLI uses the session model (`--model`, `/model`); the agent file sets none. The inline `/orchestrator` skill does not enforce the model. Measured cost per model: [Models and cost](orchestrator.md#models-and-cost).
+
+### Model policy and tiers
+
+Roles and tasks map to the tiers `fast`, `standard` and `strong` ([model policy](../packages/github/.apm/skills/github-issue/references/model-policy.md)); the planner sets a `tier` with a reason per plan item. A task still blocked after its second `CHANGES_REQUESTED` with a blocking finding (fix round 2) gets a fresh implementer one tier up; advisory-only rounds never escalate. Per-dispatch tiers are Claude Code only: OpenCode and Copilot CLI use the model of the agent file until `apmw sanitize` generates `implementer-strong` and `reviewer-strong`.
+
 ### Copilot CLI
 
 `copilot --agent orchestrator` runs with the same modes, gates and ledger and delegates the phases with Copilot CLI's `task` tool (own context window per subagent, `subagentStop` hook). Copilot subagents are stateless, so fix rounds start a fresh `implementer` instead of resuming one. Only a session without the `task` tool falls back to running the phases inline. Client matrix: [Clients](orchestrator.md#clients). The `/orch` prompt (skill `orch-pipeline`) is deprecated and removed in 3.0.0; use the orchestrator agent instead.
@@ -228,7 +243,9 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
 - Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
 - Reviews read a package file (`<state>/<issue>/review-<n>.diff`: commit list, stat, diff with context)
   written by `review-fanout`; the diff is never pasted into a prompt, so it does not repeat per dimension.
-- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec`. `spec` compares
+- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec`. `correctness`
+  also checks each `## Invariants` entry of the PBI, its Tasks and plan items without a Task issue (appended under
+  `## Invariants (plan)`); a violated invariant is HIGH, quoted in `evidence`, and goes through verify. `spec` compares
   the diff with the originating issue: the number comes from the argument, the branch `<type>/<nr>-<slug>` or
   `Closes #n` in the range, and the issue body plus its Task sub-issue bodies are appended to the same package
   file. It reports missing, partial or wrong criteria (HIGH) and scope creep (MEDIUM), never merged with

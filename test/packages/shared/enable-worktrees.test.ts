@@ -5,7 +5,7 @@ import * as path from 'path';
 
 const SCRIPT = path.resolve(
   __dirname,
-  '../../../packages/shared/.apm/skills/detect-techstack/scripts/Enable-Worktrees.ps1',
+  '../../../packages/shared/.apm/skills/detect-techstack/scripts/Enable-Worktrees.ps1'
 );
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 const SNIPPET = "exclude: [...configDefaults.exclude, '**/.worktrees/**']";
@@ -36,12 +36,13 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Enable-Worktrees.ps1'
     if (mode) fs.chmodSync(f, mode);
   };
   const read = (rel: string) => fs.readFileSync(path.join(dir, rel), 'utf8');
-  const fakeBin = (name: string, body: string) => write(`node_modules/.bin/${name}`, `#!/bin/sh\n${body}\n`, 0o755);
+  const fakeBin = (name: string, body: string) =>
+    write(`node_modules/.bin/${name}`, `#!/bin/sh\n${body}\n`, 0o755);
   // fake vitest: lists every *.test.ts, or only src/ when the config has a scoped include
   const fakeVitest = () =>
     fakeBin(
       'vitest',
-      `if grep -q 'src/\\*\\*' vitest.config.ts 2>/dev/null; then find src -name '*.test.ts' 2>/dev/null; else find . -name '*.test.ts' -not -path './node_modules/*' | sed 's|^\\./||'; fi`,
+      `if grep -q 'src/\\*\\*' vitest.config.ts 2>/dev/null; then find src -name '*.test.ts' 2>/dev/null; else find . -name '*.test.ts' -not -path './node_modules/*' | sed 's|^\\./||'; fi`
     );
   const fakeBiome = () => fakeBin('biome', 'echo "$@" > biome.ran');
 
@@ -50,9 +51,16 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Enable-Worktrees.ps1'
     const stackFile = path.join(os.tmpdir(), `${path.basename(dir)}-stack.json`);
     fs.writeFileSync(stackFile, JSON.stringify(stack));
     const calls = steps
-      .map((s) => `$o = & '${SCRIPT}' -Root '${dir}' -TechStack '${stackFile}' ${s === 'check' ? '-Check' : ''} | Out-String; [pscustomobject]@{ code = $LASTEXITCODE; out = ($o | ConvertFrom-Json) }`)
+      .map(
+        (s) =>
+          `$o = & '${SCRIPT}' -Root '${dir}' -TechStack '${stackFile}' ${s === 'check' ? '-Check' : ''} | Out-String; [pscustomobject]@{ code = $LASTEXITCODE; out = ($o | ConvertFrom-Json) }`
+      )
       .join('\n');
-    const r = spawnSync('pwsh', ['-NoProfile', '-Command', `@(\n${calls}\n) | ConvertTo-Json -Depth 8 -AsArray`], { encoding: 'utf8' });
+    const r = spawnSync(
+      'pwsh',
+      ['-NoProfile', '-Command', `@(\n${calls}\n) | ConvertTo-Json -Depth 8 -AsArray`],
+      { encoding: 'utf8' }
+    );
     fs.rmSync(stackFile, { force: true });
     expect(r.stderr).toBe('');
     return JSON.parse(r.stdout);
@@ -94,13 +102,24 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Enable-Worktrees.ps1'
 
   it('sets the biome vcs block and formats through node_modules/.bin', () => {
     write('.gitignore', '.worktrees/\n');
-    write('biome.json', JSON.stringify({ formatter: { indentStyle: 'space' }, vcs: { enabled: false, defaultBranch: 'main' } }));
+    write(
+      'biome.json',
+      JSON.stringify({
+        formatter: { indentStyle: 'space' },
+        vcs: { enabled: false, defaultBranch: 'main' },
+      })
+    );
     fakeBiome();
     const [first, second] = run(['apply', 'apply'], {});
     expect(first.out.changed).toEqual(['biome.json']);
     expect(first.out.hints).toEqual([]);
     const cfg = JSON.parse(read('biome.json'));
-    expect(cfg.vcs).toEqual({ enabled: true, clientKind: 'git', useIgnoreFile: true, defaultBranch: 'main' });
+    expect(cfg.vcs).toEqual({
+      enabled: true,
+      clientKind: 'git',
+      useIgnoreFile: true,
+      defaultBranch: 'main',
+    });
     expect(cfg.formatter).toEqual({ indentStyle: 'space' });
     expect(read('biome.ran').trim()).toBe('format --write biome.json');
     expect(second.out.changed).toEqual([]);

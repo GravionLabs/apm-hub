@@ -76,21 +76,36 @@ describe('rust package', () => {
     const ref = () => read('packages/rust/.apm/skills/rust-implementation/references/tauri.md');
 
     it('rust-implementation loads the reference only for framework tauri', () => {
-      const line = impl().split('\n').find((l) => l.includes('references/tauri.md'))!;
+      const line = impl()
+        .split('\n')
+        .find((l) => l.includes('references/tauri.md'))!;
       expect(line).toContain('frameworks: ["tauri"]');
       expect(line).toContain('`references/tauri.md`');
       expect(impl().match(/references\/tauri\.md/g)).toHaveLength(1);
     });
 
     it('detect-techstack reports tauri as a framework', () => {
-      const dt = read('packages/shared/.apm/skills/detect-techstack/SKILL.md')
-        + fs.readdirSync(path.join(root, 'packages/shared/.apm/skills/detect-techstack'), { recursive: true })
-          .filter((f) => String(f).endsWith('.md')).map((f) => read(`packages/shared/.apm/skills/detect-techstack/${f}`)).join('');
+      const dt =
+        read('packages/shared/.apm/skills/detect-techstack/SKILL.md') +
+        fs
+          .readdirSync(path.join(root, 'packages/shared/.apm/skills/detect-techstack'), {
+            recursive: true,
+          })
+          .filter((f) => String(f).endsWith('.md'))
+          .map((f) => read(`packages/shared/.apm/skills/detect-techstack/${f}`))
+          .join('');
       expect(dt).toContain('tauri');
     });
 
     it('tauri.md has a section per required topic', () => {
-      for (const h of [/^## Commands$/m, /^## Events vs commands$/m, /^## Capabilities and permissions/m, /^## Plugins$/m, /^## Layout and separation$/m, /^## Tauri 1 vs 2$/m])
+      for (const h of [
+        /^## Commands$/m,
+        /^## Events vs commands$/m,
+        /^## Capabilities and permissions/m,
+        /^## Plugins$/m,
+        /^## Layout and separation$/m,
+        /^## Tauri 1 vs 2$/m,
+      ])
         expect(ref()).toMatch(h);
       expect(ref()).toContain('tauri::State');
       expect(ref()).toContain('thiserror');
@@ -107,7 +122,9 @@ describe('rust package', () => {
     });
 
     it('verify-project step 5 runs cargo in src-tauri and builds with tauri build', () => {
-      const line = read('packages/delivery/.apm/skills/verify-project/SKILL.md').split('\n').find((l) => l.startsWith('5. Rust'))!;
+      const line = read('packages/delivery/.apm/skills/verify-project/SKILL.md')
+        .split('\n')
+        .find((l) => l.startsWith('5. Rust'))!;
       expect(line).toContain('src-tauri/');
       expect(line).toContain('`pnpm tauri build`');
       expect(line).toContain('packageManager');

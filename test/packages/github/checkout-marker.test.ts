@@ -5,7 +5,10 @@ import * as os from 'os';
 import * as path from 'path';
 import { readLedger, gitCleanEnv } from '../hooks/ledger-test-helpers';
 
-const SCRIPTS = path.resolve(__dirname, '../../../packages/github/.apm/skills/github-issue/scripts');
+const SCRIPTS = path.resolve(
+  __dirname,
+  '../../../packages/github/.apm/skills/github-issue/scripts'
+);
 const SCRIPT = path.join(SCRIPTS, 'Add-LedgerLine.ps1');
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
@@ -15,11 +18,20 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 marker per checkout (#466)', () =>
   let wt: string;
   let state: string;
   const git = (cwd: string, ...a: string[]) => {
-    const r = spawnSync('git', ['-C', cwd, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a], { encoding: 'utf8', env: gitCleanEnv(process.env) });
+    const r = spawnSync(
+      'git',
+      ['-C', cwd, '-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...a],
+      { encoding: 'utf8', env: gitCleanEnv(process.env) }
+    );
     if (r.status !== 0) throw new Error(`git ${a.join(' ')} failed: ${r.stderr}`);
   };
   const key = (p: string) => createHash('sha256').update(p, 'utf8').digest('hex').slice(0, 16);
-  const run = (cwd: string, ...args: string[]) => spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], { cwd, encoding: 'utf8', env: gitCleanEnv(process.env) });
+  const run = (cwd: string, ...args: string[]) =>
+    spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, ...args], {
+      cwd,
+      encoding: 'utf8',
+      env: gitCleanEnv(process.env),
+    });
   const marker = (checkout: string) => path.join(state, 'current.d', key(checkout));
   const ledger = (nr: string, body: string) => {
     fs.mkdirSync(path.join(state, nr), { recursive: true });
@@ -86,11 +98,19 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 marker per checkout (#466)', () =>
     git(main, 'remote', 'add', 'origin', origin);
     git(main, 'push', '-q', 'origin', 'HEAD:refs/heads/main');
     const enter = path.join(SCRIPTS, 'Enter-Checkout.ps1');
-    const r = spawnSync('pwsh', ['-NoProfile', '-File', enter, '-Issue', '8', '-Branch', 'feat/8-x', '-Base', 'main'], { cwd: main, encoding: 'utf8', env: gitCleanEnv(process.env) });
+    const r = spawnSync(
+      'pwsh',
+      ['-NoProfile', '-File', enter, '-Issue', '8', '-Branch', 'feat/8-x', '-Base', 'main'],
+      { cwd: main, encoding: 'utf8', env: gitCleanEnv(process.env) }
+    );
     expect(r.status, r.stderr).toBe(0);
     expect(path.basename(JSON.parse(r.stdout.trim()).lease as string)).toBe(`${key(main)}.json`);
     // and for a worktree created by Enter-Checkout (main is now busy)
-    const r2 = spawnSync('pwsh', ['-NoProfile', '-File', enter, '-Issue', '7', '-Branch', 'feat/7-x', '-Base', 'main'], { cwd: main, encoding: 'utf8', env: gitCleanEnv(process.env) });
+    const r2 = spawnSync(
+      'pwsh',
+      ['-NoProfile', '-File', enter, '-Issue', '7', '-Branch', 'feat/7-x', '-Base', 'main'],
+      { cwd: main, encoding: 'utf8', env: gitCleanEnv(process.env) }
+    );
     expect(r2.status, r2.stderr).toBe(0);
     const out = JSON.parse(r2.stdout.trim());
     expect(out.worktree).toBe(true);
@@ -116,7 +136,10 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 concurrent appends (#466)', () => 
     const spawnWriter = (w: number) =>
       new Promise<number | null>((resolve) => {
         const cmd = `1..${LINES} | ForEach-Object { & '${SCRIPT}' -Issue 5 -Line ("w${w}-" + $_ + "-${pad}") | Out-Null }`;
-        spawn('pwsh', ['-NoProfile', '-Command', cmd], { cwd: dir, env, stdio: 'ignore' }).on('exit', (code) => resolve(code));
+        spawn('pwsh', ['-NoProfile', '-Command', cmd], { cwd: dir, env, stdio: 'ignore' }).on(
+          'exit',
+          (code) => resolve(code)
+        );
       });
     const codes = await Promise.all(Array.from({ length: WRITERS }, (_, w) => spawnWriter(w)));
     expect(codes).toEqual(Array(WRITERS).fill(0));
@@ -136,7 +159,11 @@ describe.skipIf(!hasPwsh)('Add-LedgerLine.ps1 concurrent appends (#466)', () => 
     const state = path.join(dir, 'state');
     fs.mkdirSync(path.join(state, '5'), { recursive: true });
     fs.writeFileSync(path.join(state, '5', 'progress.md.lock'), '');
-    const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Issue', '5', '-Line', 'hello'], { cwd: dir, encoding: 'utf8', env: { ...process.env, DROMOS_STATE_DIR: state } });
+    const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Issue', '5', '-Line', 'hello'], {
+      cwd: dir,
+      encoding: 'utf8',
+      env: { ...process.env, DROMOS_STATE_DIR: state },
+    });
     expect(r.status, r.stderr).toBe(0);
     expect(readLedger(path.join(state, '5', 'progress.md'))).toBe('hello\n');
   });

@@ -4,7 +4,7 @@ import Ajv from 'ajv/dist/2020';
 
 const refs = path.resolve(
   __dirname,
-  '../../../packages/delivery/.apm/skills/issue-planning/references',
+  '../../../packages/delivery/.apm/skills/issue-planning/references'
 );
 const schema = JSON.parse(fs.readFileSync(path.join(refs, 'plan.schema.json'), 'utf-8'));
 const doc = fs.readFileSync(path.join(refs, 'plan-schema.md'), 'utf-8');
@@ -35,7 +35,12 @@ function graphErrors(plan: any): string[] {
   if (plan.level === 'task' && plan.items.length === 1 && real.length > 0) {
     errors.push('single task must not have an issue');
   }
-  if (plan.level === 'task' && plan.items.length > 1 && real.length > 0 && real.length < plan.items.length) {
+  if (
+    plan.level === 'task' &&
+    plan.items.length > 1 &&
+    real.length > 0 &&
+    real.length < plan.items.length
+  ) {
     errors.push('task issues must be all or none');
   }
   if (plan.input_type === 'description' && real.length > 0) {
@@ -57,10 +62,7 @@ function graphErrors(plan: any): string[] {
   return errors;
 }
 
-const check = (plan: any) => [
-  ...(validateSchema(plan) ? [] : ['schema']),
-  ...graphErrors(plan),
-];
+const check = (plan: any) => [...(validateSchema(plan) ? [] : ['schema']), ...graphErrors(plan)];
 
 const clone = () => structuredClone(example);
 const item = (id: string, blocked_by: any[] = []) => ({ ...clone().items[0], id, blocked_by });
@@ -68,6 +70,33 @@ const item = (id: string, blocked_by: any[] = []) => ({ ...clone().items[0], id,
 describe('plan.json schema', () => {
   it('accepts the example from plan-schema.md', () => {
     expect(check(example)).toEqual([]);
+  });
+
+  it('requires tier and rejects model', () => {
+    const p = clone();
+    expect(p.items[0].tier).toBe('standard');
+    expect(p.items[0].model).toBeUndefined();
+    p.items[0].model = 'sonnet';
+    expect(check(p)).toContain('schema');
+    const noTier = clone();
+    delete noTier.items[0].tier;
+    expect(check(noTier)).toContain('schema');
+  });
+
+  it.each(['fast', 'standard', 'strong'])('accepts tier %s', (tier) => {
+    const p = clone();
+    p.items[0].tier = tier;
+    expect(check(p)).toEqual([]);
+  });
+
+  it.each(['haiku', 'sonnet', 'inherit', 'opus'])('rejects tier %s', (tier) => {
+    const p = clone();
+    p.items[0].tier = tier;
+    expect(check(p)).toContain('schema');
+  });
+
+  it('plan-schema.md documents the legacy model migration', () => {
+    expect(doc).toMatch(/`haiku` to `fast`, `sonnet` to `standard`, `inherit` to `strong`/);
   });
 
   it('rejects a dangling blocked_by id', () => {

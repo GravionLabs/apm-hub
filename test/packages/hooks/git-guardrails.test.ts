@@ -5,14 +5,10 @@ import * as path from 'path';
 
 const SCRIPT = path.resolve(__dirname, '../../../packages/hooks/.apm/hooks/git-guardrails.sh');
 
-// macOS ships bash 3.2, where the hook's character scanner is quadratic on long commands (~100 s for 22 KB instead of < 6 s).
-// The time-bound tests only make sense on bash >= 4; the functional tests above run everywhere.
-const bashMajor = Number(spawnSync('bash', ['-c', 'echo ${BASH_VERSINFO[0]}'], { encoding: 'utf8' }).stdout.trim());
-const slowBash = !(bashMajor >= 4);
-
 const hermetic = (home: string, base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv => {
   const env = { ...base };
-  for (const k of Object.keys(env)) if (k.startsWith('GIT_') || k === 'XDG_CONFIG_HOME') delete env[k];
+  for (const k of Object.keys(env))
+    if (k.startsWith('GIT_') || k === 'XDG_CONFIG_HOME') delete env[k];
   return { ...env, HOME: home, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
 };
 
@@ -22,7 +18,8 @@ describe('git-guardrails hook', () => {
   let fresh: string | undefined;
   let home: string;
 
-  const git = (...args: string[]) => spawnSync('git', args, { cwd: repo, encoding: 'utf8', env: hermetic(home) });
+  const git = (...args: string[]) =>
+    spawnSync('git', args, { cwd: repo, encoding: 'utf8', env: hermetic(home) });
 
   beforeAll(() => {
     home = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-home-'));
@@ -63,13 +60,18 @@ describe('git-guardrails hook', () => {
     cwd: repo,
   });
 
-  const runRaw = (input: string, env: Record<string, string> = {}, base: NodeJS.ProcessEnv = process.env) => {
+  const runRaw = (
+    input: string,
+    env: Record<string, string> = {},
+    base: NodeJS.ProcessEnv = process.env
+  ) => {
     const clean = hermetic(home, base);
     delete clean.GIT_GUARDRAILS_OFF;
     const r = spawnSync('bash', [SCRIPT], { input, encoding: 'utf8', env: { ...clean, ...env } });
     return { code: r.status, out: r.stdout.trim() };
   };
-  const run = (payload: unknown, env: Record<string, string> = {}) => runRaw(JSON.stringify(payload), env);
+  const run = (payload: unknown, env: Record<string, string> = {}) =>
+    runRaw(JSON.stringify(payload), env);
   const denied = (r: { out: string }) => JSON.parse(r.out).permissionDecision === 'deny';
 
   // PATH with only bash, sed, tr, head, cat, git, grep: no jq
@@ -81,10 +83,12 @@ describe('git-guardrails hook', () => {
   let nojq: string;
   beforeAll(() => {
     nojq = fs.mkdtempSync(path.join(os.tmpdir(), 'nojq-'));
-    for (const b of ['bash', 'sed', 'tr', 'head', 'cat', 'git', 'grep']) fs.symlinkSync(fs.realpathSync(which(b)!), path.join(nojq, b));
+    for (const b of ['bash', 'sed', 'tr', 'head', 'cat', 'git', 'grep'])
+      fs.symlinkSync(fs.realpathSync(which(b)!), path.join(nojq, b));
   });
   afterAll(() => fs.rmSync(nojq, { recursive: true, force: true }));
-  const runNoJq = (payload: unknown) => runRaw(JSON.stringify(payload), {}, { ...process.env, PATH: nojq });
+  const runNoJq = (payload: unknown) =>
+    runRaw(JSON.stringify(payload), {}, { ...process.env, PATH: nojq });
   const dirty = () => fs.writeFileSync(path.join(repo, 'a.txt'), 'x'); // modifies a tracked file
   const untracked = () => fs.writeFileSync(path.join(repo, 'new.txt'), 'x');
 
@@ -130,7 +134,7 @@ describe('git-guardrails hook', () => {
     "bash -c 'git reset --hard'",
     'sh -c "git clean -fd"',
     "bash -lc 'cd x && git reset --hard'",
-    "zsh -c \"bash -c 'git reset --hard'\"",
+    'zsh -c "bash -c \'git reset --hard\'"',
     'timeout 5 git reset --hard',
     'timeout -s KILL 5 git reset --hard',
     'echo x | xargs git reset --hard',
@@ -277,7 +281,9 @@ describe('git-guardrails hook', () => {
       child.stdin.end(JSON.stringify(payload));
     });
   beforeAll(async () => {
-    const jobs = payloads.flatMap(([n, mk]) => [...blocked, ...allowed].map((c) => [`${n}\0${c}`, mk(c)] as const));
+    const jobs = payloads.flatMap(([n, mk]) =>
+      [...blocked, ...allowed].map((c) => [`${n}\0${c}`, mk(c)] as const)
+    );
     let next = 0;
     await Promise.all(
       Array.from({ length: 8 }, async () => {
@@ -285,7 +291,7 @@ describe('git-guardrails hook', () => {
           const [k, payload] = jobs[next++];
           tableRuns.set(k, await runAsync(payload));
         }
-      }),
+      })
     );
   }, 60000);
 
@@ -325,35 +331,42 @@ describe('git-guardrails hook', () => {
     'git restore ..',
     'git checkout -- ./.',
     'git -c alias.co=checkout co -- ./',
-  ])(
-    'denies %s only with uncommitted changes',
-    (c) => {
-      withFreshRepo();
-      expect(run(claude(c)).out).toBe('');
-      dirty();
-      expect(JSON.parse(run(claude(c)).out).permissionDecision).toBe('deny');
-      expect(JSON.parse(run(copilot(c)).out).permissionDecision).toBe('deny');
-    },
-  );
+  ])('denies %s only with uncommitted changes', (c) => {
+    withFreshRepo();
+    expect(run(claude(c)).out).toBe('');
+    dirty();
+    expect(JSON.parse(run(claude(c)).out).permissionDecision).toBe('deny');
+    expect(JSON.parse(run(copilot(c)).out).permissionDecision).toBe('deny');
+  });
   it('allows restore --staged . even when dirty', () => {
     withFreshRepo();
     dirty();
     expect(run(claude('git restore --staged .')).out).toBe('');
   });
   it('treats a directory change before checkout . as possibly dirty', () => {
-    expect(JSON.parse(run(claude('cd other && git checkout -- .')).out).permissionDecision).toBe('deny');
+    expect(JSON.parse(run(claude('cd other && git checkout -- .')).out).permissionDecision).toBe(
+      'deny'
+    );
   });
 
   it('ignores other tools', () => {
-    expect(run({ tool_name: 'Read', tool_input: { command: 'git reset --hard' }, cwd: repo }).out).toBe('');
-    expect(run({ toolName: 'view', toolArgs: '{"command":"git reset --hard"}', cwd: repo }).out).toBe('');
+    expect(
+      run({ tool_name: 'Read', tool_input: { command: 'git reset --hard' }, cwd: repo }).out
+    ).toBe('');
+    expect(
+      run({ toolName: 'view', toolArgs: '{"command":"git reset --hard"}', cwd: repo }).out
+    ).toBe('');
   });
-  it.each(['', 'not json', '{"tool_name":"Bash","tool_input":{"comm', '{"tool_name":"Bash"}', 'null', '[]'])(
-    'fails open on malformed raw stdin %j',
-    (raw) => {
-      expect(runRaw(raw)).toEqual({ code: 0, out: '' });
-    },
-  );
+  it.each([
+    '',
+    'not json',
+    '{"tool_name":"Bash","tool_input":{"comm',
+    '{"tool_name":"Bash"}',
+    'null',
+    '[]',
+  ])('fails open on malformed raw stdin %j', (raw) => {
+    expect(runRaw(raw)).toEqual({ code: 0, out: '' });
+  });
   it('passes on an empty object payload', () => {
     expect(run({}).out).toBe('');
   });
@@ -387,7 +400,11 @@ describe('git-guardrails hook', () => {
       spawnSync('git', ['init', '-q', '-b', branch, dir], { env });
       fs.writeFileSync(path.join(dir, 'b.txt'), 'x');
       spawnSync('git', ['-C', dir, 'add', 'b.txt'], { env });
-      spawnSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'i'], { env });
+      spawnSync(
+        'git',
+        ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'i'],
+        { env }
+      );
     };
     beforeEach(() => {
       other = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-other-'));
@@ -432,8 +449,12 @@ describe('git-guardrails hook', () => {
   });
   it('explains the reason and escapes quotes in the deny JSON', () => {
     withFreshRepo();
-    expect(JSON.parse(run(claude('git reset --hard')).out).permissionDecisionReason).toContain('git reset --hard');
-    expect(JSON.parse(run(claude('git clean -fd')).out).permissionDecisionReason).toContain('git clean -f');
+    expect(JSON.parse(run(claude('git reset --hard')).out).permissionDecisionReason).toContain(
+      'git reset --hard'
+    );
+    expect(JSON.parse(run(claude('git clean -fd')).out).permissionDecisionReason).toContain(
+      'git clean -f'
+    );
     git('checkout', '-q', '-b', 'release/a"b');
     const r = run(claude('git push -f'));
     expect(JSON.parse(r.out).permissionDecisionReason).toContain('release/a"b');
@@ -453,24 +474,51 @@ describe('git-guardrails hook', () => {
     it('has no jq on the restricted PATH', () => {
       expect(fs.existsSync(path.join(nojq, 'jq'))).toBe(false);
     });
-    it.each(['git reset --hard', 'git push --force origin main', 'git clean -fd', "bash -c 'git reset --hard'"])(
-      'denies a whole-command %s for Claude and Copilot',
-      (c) => {
-        expect(denied(runNoJq(claude(c)))).toBe(true);
-        expect(denied(runNoJq(copilot(c)))).toBe(true);
-      },
-    );
-    it('denies the literal payloads from the review', () => {
-      expect(denied(runRaw('{"tool_name":"Bash","tool_input":{"command":"git reset --hard"}}', {}, { ...process.env, PATH: nojq }))).toBe(true);
-      expect(denied(runRaw('{"toolName":"bash","toolArgs":"{\\"command\\":\\"git reset --hard\\"}"}', {}, { ...process.env, PATH: nojq }))).toBe(true);
+    it.each([
+      'git reset --hard',
+      'git push --force origin main',
+      'git clean -fd',
+      "bash -c 'git reset --hard'",
+    ])('denies a whole-command %s for Claude and Copilot', (c) => {
+      expect(denied(runNoJq(claude(c)))).toBe(true);
+      expect(denied(runNoJq(copilot(c)))).toBe(true);
     });
-    it.each(['git status', 'git push --force origin feature', 'git commit -m "x; git reset --hard"', 'ls'])('passes %s', (c) => {
+    it('denies the literal payloads from the review', () => {
+      expect(
+        denied(
+          runRaw(
+            '{"tool_name":"Bash","tool_input":{"command":"git reset --hard"}}',
+            {},
+            { ...process.env, PATH: nojq }
+          )
+        )
+      ).toBe(true);
+      expect(
+        denied(
+          runRaw(
+            '{"toolName":"bash","toolArgs":"{\\"command\\":\\"git reset --hard\\"}"}',
+            {},
+            { ...process.env, PATH: nojq }
+          )
+        )
+      ).toBe(true);
+    });
+    it.each([
+      'git status',
+      'git push --force origin feature',
+      'git commit -m "x; git reset --hard"',
+      'ls',
+    ])('passes %s', (c) => {
       expect(runNoJq(claude(c)).out).toBe('');
       expect(runNoJq(copilot(c)).out).toBe('');
     });
     it('ignores non-Bash tools', () => {
-      expect(runNoJq({ tool_name: 'Read', tool_input: { command: 'git reset --hard' }, cwd: repo }).out).toBe('');
-      expect(runNoJq({ toolName: 'view', toolArgs: '{"command":"git reset --hard"}', cwd: repo }).out).toBe('');
+      expect(
+        runNoJq({ tool_name: 'Read', tool_input: { command: 'git reset --hard' }, cwd: repo }).out
+      ).toBe('');
+      expect(
+        runNoJq({ toolName: 'view', toolArgs: '{"command":"git reset --hard"}', cwd: repo }).out
+      ).toBe('');
     });
     it('decodes JSON escapes in the command', () => {
       expect(denied(runNoJq(claude('echo "a\tb"\ngit reset --hard')))).toBe(true);
@@ -482,15 +530,30 @@ describe('git-guardrails hook', () => {
       fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
       const other = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-cwd-'));
       try {
-        expect(runNoJq({ tool_name: 'Bash', tool_input: { command: 'git reset --hard' }, cwd: other }).out).not.toBe('');
-        const p = { tool_name: 'Bash', tool_input: { command: `echo '"cwd":"${other}"'; git reset --hard` }, cwd: repo };
+        expect(
+          runNoJq({ tool_name: 'Bash', tool_input: { command: 'git reset --hard' }, cwd: other })
+            .out
+        ).not.toBe('');
+        const p = {
+          tool_name: 'Bash',
+          tool_input: { command: `echo '"cwd":"${other}"'; git reset --hard` },
+          cwd: repo,
+        };
         expect(runNoJq(p).out).toBe('');
       } finally {
         fs.rmSync(other, { recursive: true, force: true });
       }
     });
     it('denies heredoc and parser cases', () => {
-      for (const c of ['bash <<EOF\ngit reset --hard\nEOF', 'cat <<EOF\n$(git reset --hard)\nEOF', 'sh <<< "git reset --hard"', '(( x<<2 ))\ngit reset --hard', "echo $'it\\'s'; git reset --hard", 'git reset --hard>/dev/null', 'g""it reset --hard'])
+      for (const c of [
+        'bash <<EOF\ngit reset --hard\nEOF',
+        'cat <<EOF\n$(git reset --hard)\nEOF',
+        'sh <<< "git reset --hard"',
+        '(( x<<2 ))\ngit reset --hard',
+        "echo $'it\\'s'; git reset --hard",
+        'git reset --hard>/dev/null',
+        'g""it reset --hard',
+      ])
         expect(denied(runNoJq(claude(c)))).toBe(true);
     });
     it('resolves HEAD to the current protected branch', () => {
@@ -507,28 +570,43 @@ describe('git-guardrails hook', () => {
     });
     it('honours both opt-outs', () => {
       withFreshRepo();
-      expect(runRaw(JSON.stringify(claude('git reset --hard')), { GIT_GUARDRAILS_OFF: '1' }, { ...process.env, PATH: nojq }).out).toBe('');
+      expect(
+        runRaw(
+          JSON.stringify(claude('git reset --hard')),
+          { GIT_GUARDRAILS_OFF: '1' },
+          { ...process.env, PATH: nojq }
+        ).out
+      ).toBe('');
       fs.mkdirSync(path.join(repo, '.git', 'agents'));
       fs.writeFileSync(path.join(repo, '.git', 'agents', 'guardrails.off'), '');
       expect(runNoJq(claude('git reset --hard')).out).toBe('');
     });
     it('passes malformed input', () => {
       expect(runRaw('', {}, { ...process.env, PATH: nojq })).toEqual({ code: 0, out: '' });
-      expect(runRaw('{"tool_name":"Bash","tool_input":{"comm', {}, { ...process.env, PATH: nojq })).toEqual({ code: 0, out: '' });
+      expect(
+        runRaw('{"tool_name":"Bash","tool_input":{"comm', {}, { ...process.env, PATH: nojq })
+      ).toEqual({ code: 0, out: '' });
     });
   });
 
-  describe.skipIf(slowBash)('performance and limits', () => {
+  describe('performance and limits', () => {
     const CAP = 24576;
     // Wall-clock bound per hook run; CI runners are 2-3x slower than a developer machine (#247), and a loaded local run (parallel suites) too (#336).
     const BOUND = process.env.CI ? 9000 : 6000;
-    const msg = Array.from({ length: 440 }, (_, i) => `line ${i} of a long commit message with some words`).join('\n');
+    const msg = Array.from(
+      { length: 440 },
+      (_, i) => `line ${i} of a long commit message with some words`
+    ).join('\n');
     const timed = (fn: () => { out: string }) => {
       const t = Date.now();
       const r = fn();
       return { r, ms: Date.now() - t };
     };
-    const big = [`git commit -m "$(cat <<'EOF'\n${msg}\nEOF\n)"`, `git commit -m '${msg}'`, `git commit -F - <<EOF\n${msg}\nEOF`];
+    const big = [
+      `git commit -m "$(cat <<'EOF'\n${msg}\nEOF\n)"`,
+      `git commit -m '${msg}'`,
+      `git commit -F - <<EOF\n${msg}\nEOF`,
+    ];
     it.each(big)('scans a ~22 KB commit quickly with jq', (c) => {
       expect(c.length).toBeGreaterThan(21000);
       expect(c.length).toBeLessThan(CAP);
@@ -549,7 +627,8 @@ describe('git-guardrails hook', () => {
 
     // worst-case shapes just below the cap: every one ends in a destructive command that must still be found
     const tail = '\ngit reset --hard';
-    const fill = (unit: string, head = '') => head + unit.repeat(Math.floor((CAP - 200 - head.length) / unit.length)) + tail;
+    const fill = (unit: string, head = '') =>
+      head + unit.repeat(Math.floor((CAP - 200 - head.length) / unit.length)) + tail;
     const shapes: [string, string][] = [
       ['many words', fill('a ', 'echo ')],
       ['many single quotes', fill("'a' ", 'echo ')],
@@ -568,14 +647,105 @@ describe('git-guardrails hook', () => {
       ['an 8000-line <<- heredoc', `cat <<-EOF\n${'\tx\n'.repeat(8000)}\tEOF${tail}`],
       ['many echo | sh', fill("echo 'a' | sh\n")],
     ];
-    it.each(shapes)('denies after %s within the time bound, with and without jq', (_n, c) => {
-      expect(c.length).toBeLessThanOrEqual(CAP);
-      for (const fn of [run, runNoJq]) {
-        const { r, ms } = timed(() => fn(claude(c)));
-        expect(denied(r)).toBe(true);
-        expect(ms).toBeLessThan(BOUND);
+    it.each(shapes)(
+      'denies after %s within the time bound, with and without jq',
+      (_n, c) => {
+        expect(c.length).toBeLessThanOrEqual(CAP);
+        for (const fn of [run, runNoJq]) {
+          const { r, ms } = timed(() => fn(claude(c)));
+          expect(denied(r)).toBe(true);
+          expect(ms).toBeLessThan(BOUND);
+        }
+      },
+      3 * BOUND
+    );
+    // the scanner works on a sliding window (1300 chars, recut after 600) and 64-char slices: put each construct across those offsets
+    const OFFSETS = [
+      0, 55, 63, 64, 65, 120, 595, 599, 600, 601, 640, 1199, 1200, 1299, 1300, 1301, 1900, 2500,
+    ];
+    const pad = (k: number) => 'a'.repeat(k);
+    const constructs: [string, (k: number) => string, boolean][] = [
+      ['a plain command after padding', (k) => `echo ${pad(k)}\ngit reset --hard`, true],
+      ['a command substitution', (k) => `echo ${pad(k)} "$(git reset --hard)"`, true],
+      ['a backtick substitution', (k) => `echo ${pad(k)} \`git reset --hard\``, true],
+      [
+        'a heredoc body and a command after it',
+        (k) => `cat <<'EOF'\n${pad(k)}\nEOF\ngit reset --hard`,
+        true,
+      ],
+      [
+        'an indented <<- heredoc and a command after it',
+        (k) => `cat <<-EOF\n\t${pad(k)}\n\tEOF\ngit reset --hard`,
+        true,
+      ],
+      [
+        'a long heredoc delimiter',
+        (k) => `cat <<${pad(k % 300)}\nx\n${pad(k % 300)}\ngit reset --hard`,
+        true,
+      ],
+      [
+        'an unquoted heredoc with a substitution',
+        (k) => `cat <<EOF\n${pad(k)} $(git reset --hard)\nEOF`,
+        true,
+      ],
+      ['a bash -c string', (k) => `echo ${pad(k)}; bash -c 'git reset --hard'`, true],
+      ['an arithmetic expression', (k) => `echo ${pad(k)} $((1+2))\ngit reset --hard`, true],
+      ['a comment', (k) => `# ${pad(k)}\ngit reset --hard`, true],
+      ['quoted text only', (k) => `echo '${pad(k)} git reset --hard'`, false],
+      ['a quoted heredoc body only', (k) => `cat <<'EOF'\n${pad(k)}\ngit reset --hard\nEOF`, false],
+      ['a comment only', (k) => `echo ${pad(k)} # git reset --hard`, false],
+    ];
+    for (const [name, build, deny] of constructs) {
+      it(`${deny ? 'denies' : 'allows'} ${name} at every window offset`, () => {
+        for (const k of OFFSETS) {
+          const c = build(k);
+          const r = run(claude(c));
+          expect(r.out === '' ? 'allow' : denied(r) ? 'deny' : 'other', `${name} at ${k}`).toBe(
+            deny ? 'deny' : 'allow'
+          );
+        }
+      }, 60000);
+    }
+    it('denies a destructive command at offsets across the window without jq', () => {
+      for (const k of [63, 64, 600, 601, 1300]) {
+        expect(denied(runNoJq(claude(`echo ${pad(k)} "$(git reset --hard)"`))), `at ${k}`).toBe(
+          true
+        );
       }
-    }, 3 * BOUND);
+    }, 60000);
+
+    describe('JSON decoding without jq', () => {
+      // payloads written by hand so the escapes reach the hook exactly as a host sends them
+      const raw = (command: string) =>
+        `{"tool_name":"Bash","tool_input":{"command":${command}},"cwd":"${repo.replace(/\\/g, '\\\\')}"}`;
+      const nj = (command: string) => runRaw(raw(command), {}, { ...process.env, PATH: nojq });
+      it('decodes escaped quotes, newlines and tabs', () => {
+        expect(denied(nj('"echo \\"hi\\"\\ngit reset --hard"'))).toBe(true);
+        expect(denied(nj('"echo\\t\\"a b\\" && git reset --hard"'))).toBe(true);
+      });
+      it('keeps an escaped backslash as one backslash, not an escape', () => {
+        expect(nj('"echo \\\\n git reset --hard"').out).toBe(''); // JSON \\n is backslash + n: inside a plain word, no newline: still `echo \n git reset --hard` -> reset runs as an argument of echo
+        expect(denied(nj('"echo \\\\\\\\\\ngit reset --hard"'))).toBe(true); // \\\\ then \n: two backslashes, then a real newline
+        expect(nj('"echo \\\\\\"x\\"\\ngit reset --hard"').out).toBe(''); // \\ + \" = backslash, quote: the quote opens a string that swallows the newline
+      });
+      it('decodes \\uXXXX escapes (space, newline, quote, backslash)', () => {
+        expect(denied(nj('"echo\\u0020x\\u000agit reset --hard"'))).toBe(true);
+        expect(denied(nj('"echo \\u0022a\\u0022; git reset --hard"'))).toBe(true);
+        expect(denied(nj('"git\\u0020reset\\u0020--hard"'))).toBe(true);
+        expect(nj('"echo \\u005c; true"').out).toBe(''); // no git
+      });
+      it('handles backslash-heavy payloads and a trailing backslash', () => {
+        expect(denied(nj(`"echo ${'\\\\\\\\'.repeat(400)}\\ngit reset --hard"`))).toBe(true);
+        expect(denied(nj(`"echo ${'\\\\\\"'.repeat(400)}\\ngit reset --hard"`))).toBe(true);
+        expect(nj('"echo git\\\\"').out).toBe('');
+      });
+      it('reads the same command as jq for a mix of escapes', () => {
+        const cmd = `echo "a\\tb" 'c\\\\d'\nx=1 git reset --hard # é`;
+        const viaJq = run(claude(cmd));
+        const viaScan = runNoJq(claude(cmd));
+        expect(denied(viaScan)).toBe(denied(viaJq));
+      });
+    });
     it('fails open above 24 KB, quickly, also for a 30000-line heredoc', () => {
       expect(run(claude(`git reset --hard # ${'x'.repeat(CAP)}`)).out).toBe('');
       const c = `cat <<EOF\n${'x\n'.repeat(30000)}EOF${tail}`;
@@ -598,8 +768,12 @@ describe('git-guardrails hook', () => {
       const marker = path.join(evil, 'pwned');
       try {
         spawnSync('git', ['init', '-q', evil], { env: hermetic(home) });
-        fs.writeFileSync(path.join(evil, 'hook.sh'), `#!/bin/sh\ntouch ${marker}\n`, { mode: 0o755 });
-        spawnSync('git', ['-C', evil, 'config', 'core.fsmonitor', path.join(evil, 'hook.sh')], { env: hermetic(home) });
+        fs.writeFileSync(path.join(evil, 'hook.sh'), `#!/bin/sh\ntouch ${marker}\n`, {
+          mode: 0o755,
+        });
+        spawnSync('git', ['-C', evil, 'config', 'core.fsmonitor', path.join(evil, 'hook.sh')], {
+          env: hermetic(home),
+        });
         run(claude(`git -C ${evil} checkout .`));
         expect(fs.existsSync(marker)).toBe(false);
       } finally {
@@ -615,7 +789,11 @@ describe('git-guardrails hook', () => {
         fs.writeFileSync(path.join(evil, '.gitattributes'), 'f filter=x\n');
         fs.writeFileSync(path.join(evil, 'f'), 'a\n');
         spawnSync('git', ['-C', evil, 'add', '.'], { env });
-        spawnSync('git', ['-C', evil, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'i'], { env });
+        spawnSync(
+          'git',
+          ['-C', evil, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'i'],
+          { env }
+        );
         spawnSync('git', ['-C', evil, 'config', 'filter.x.clean', `touch ${marker}; cat`], { env });
         fs.writeFileSync(path.join(evil, 'f'), 'b\n'); // same size, old mtime: git status would hash it through the filter
         fs.utimesSync(path.join(evil, 'f'), new Date('2000-01-01'), new Date('2000-01-01'));
@@ -637,7 +815,8 @@ describe('git-guardrails hook', () => {
       let wt: string;
       let marker: string;
       const bare = () => path.join(repo, 'bare.git');
-      const stale = () => fs.utimesSync(path.join(wt, 'f'), new Date('2000-01-01'), new Date('2000-01-01'));
+      const stale = () =>
+        fs.utimesSync(path.join(wt, 'f'), new Date('2000-01-01'), new Date('2000-01-01'));
       beforeEach(() => {
         withFreshRepo();
         // a git dir (no .git entry) inside the cwd whose config points at a work tree and defines a clean filter
@@ -648,10 +827,18 @@ describe('git-guardrails hook', () => {
         fs.writeFileSync(path.join(wt, '.git', 'info', 'attributes'), 'f filter=x\n');
         fs.writeFileSync(path.join(wt, 'f'), 'a\n');
         spawnSync('git', ['-C', wt, 'add', 'f'], { env });
-        spawnSync('git', ['-C', wt, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'i'], { env });
+        spawnSync(
+          'git',
+          ['-C', wt, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'i'],
+          { env }
+        );
         fs.renameSync(path.join(wt, '.git'), bare());
         spawnSync('git', ['--git-dir', bare(), 'config', 'core.worktree', wt], { env });
-        spawnSync('git', ['--git-dir', bare(), 'config', 'filter.x.clean', `touch ${marker}; cat`], { env });
+        spawnSync(
+          'git',
+          ['--git-dir', bare(), 'config', 'filter.x.clean', `touch ${marker}; cat`],
+          { env }
+        );
         fs.writeFileSync(path.join(wt, 'f'), 'b\n'); // same size, old mtime: git status hashes it through the filter
         stale();
         // control: a plain git status there does run the filter
@@ -705,12 +892,20 @@ describe('git-guardrails hook', () => {
         fs.writeFileSync(
           path.join(shim, 'git'),
           `#!/bin/sh\nprintf '%s|%s\\n' "$GIT_OPTIONAL_LOCKS" "$*" >> ${log}\nexec ${fs.realpathSync(which('git')!)} "$@"\n`,
-          { mode: 0o755 },
+          { mode: 0o755 }
         );
         const shimmed = { ...process.env, PATH: `${shim}${path.delimiter}${process.env.PATH}` };
         dirty();
         expect(denied(runRaw(JSON.stringify(claude('git checkout .')), {}, shimmed))).toBe(true);
-        expect(denied(runRaw(JSON.stringify(claude(`git -C ${other} checkout . && git -C ${other} push -f`)), {}, shimmed))).toBe(true);
+        expect(
+          denied(
+            runRaw(
+              JSON.stringify(claude(`git -C ${other} checkout . && git -C ${other} push -f`)),
+              {},
+              shimmed
+            )
+          )
+        ).toBe(true);
         const lines = fs.readFileSync(log, 'utf8').trim().split('\n');
         expect(lines.some((l) => l.includes('status'))).toBe(true);
         for (const l of lines) {
@@ -738,7 +933,13 @@ describe('git-guardrails hook', () => {
     });
     it('GIT_GUARDRAILS_OFF=1 disables the hook for Copilot payloads, with and without jq', () => {
       expect(run(copilot('git reset --hard'), { GIT_GUARDRAILS_OFF: '1' }).out).toBe('');
-      expect(runRaw(JSON.stringify(copilot('git reset --hard')), { GIT_GUARDRAILS_OFF: '1' }, { ...process.env, PATH: nojq }).out).toBe('');
+      expect(
+        runRaw(
+          JSON.stringify(copilot('git reset --hard')),
+          { GIT_GUARDRAILS_OFF: '1' },
+          { ...process.env, PATH: nojq }
+        ).out
+      ).toBe('');
       expect(denied(runNoJq(copilot('git reset --hard')))).toBe(true);
     });
     it('an inline GIT_GUARDRAILS_OFF=1 in the command does not disable the hook', () => {

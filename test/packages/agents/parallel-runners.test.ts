@@ -14,7 +14,8 @@ const body = orchestrator.split(/^---$/m)[2];
 const section = (text: string, heading: string) => text.split(heading)[1].split(/^#{2,3} /m)[0];
 const parallel = section(reference, '### Parallel runners (`--pbi-parallel <m>`)');
 /** One bullet of the section, found by its bold lead-in. */
-const bullet = (name: string) => parallel.split('\n').find((l) => l.startsWith(`- **${name}**`)) ?? '';
+const bullet = (name: string) =>
+  parallel.split('\n').find((l) => l.startsWith(`- **${name}**`)) ?? '';
 
 describe('orchestrator agent: --pbi-parallel', () => {
   it('names the flag only, the rules live in loop-mode.md', () => {
@@ -72,10 +73,14 @@ describe('loop-mode reference: parallel runners', () => {
 
   it('stops headless at the first gate after the other runners finished, keeping every Gate: in its own ledger', () => {
     const h = bullet('Headless');
-    expect(h).toMatch(/first `GATE`[^.]*stops the loop: no new runner, no slot filled, nothing resumed/);
+    expect(h).toMatch(
+      /first `GATE`[^.]*stops the loop: no new runner, no slot filled, nothing resumed/
+    );
     expect(h).toMatch(/Every other live runner gets `SendMessage`/);
     expect(h).toMatch(/Each `Gate:` line stays in the ledger of its own PBI, without `Ruling:`/);
-    expect(h.indexOf('After the last runner returned')).toBeGreaterThan(h.indexOf('Every other live runner'));
+    expect(h.indexOf('After the last runner returned')).toBeGreaterThan(
+      h.indexOf('Every other live runner')
+    );
     expect(h).toContain('Loop: stopped — headless gate: <question of the first gate>');
   });
 
@@ -105,7 +110,9 @@ describe('loop-mode reference: parallel runners', () => {
   });
 
   it('documents the other-clients line', () => {
-    expect(bullet('Other clients')).toContain('`--pbi-parallel ignored: this client runs the loop inline, one PBI at a time.`');
+    expect(bullet('Other clients')).toContain(
+      '`--pbi-parallel ignored: this client runs the loop inline, one PBI at a time.`'
+    );
     expect(bullet('Other clients')).toMatch(/keep the inline loop/);
   });
 });
@@ -117,12 +124,18 @@ describe('docs and status', () => {
     expect(loopDocs).toContain('--parallel floor(4 / <m>)');
     expect(loopDocs).toContain('`in progress (runner)`');
     const clients = docs.split('\n## Clients')[1].split(/^## /m)[0];
-    expect(clients).toMatch(/parallel PBI runners \(`loop --pbi-parallel <m>`\)[^.]*keep the inline loop[^.]*ignore the flag with one line/);
+    expect(clients).toMatch(
+      /parallel PBI runners \(`loop --pbi-parallel <m>`\)[^.]*keep the inline loop[^.]*ignore the flag with one line/
+    );
   });
 
   it('adds the runner state from the leases to status.md before the ledger-based in progress', () => {
-    expect(status).toMatch(/5\. `in progress \(runner\)`: the PBI holds a live checkout lease \(`<state>\/leases\/\*\.json`, `heartbeat` within 120 minutes/);
-    expect(status.indexOf('`in progress (runner)`')).toBeLessThan(status.indexOf('6. `in progress (<detail>)`'));
+    expect(status).toMatch(
+      /5\. `in progress \(runner\)`: the PBI holds a live checkout lease \(`<state>\/leases\/\*\.json`, `heartbeat` within 120 minutes/
+    );
+    expect(status.indexOf('`in progress (runner)`')).toBeLessThan(
+      status.indexOf('6. `in progress (<detail>)`')
+    );
     expect(status).toContain('Write-StatusTable.ps1 -Live');
   });
 });

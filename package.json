@@ -11,11 +11,13 @@
     "generate:ci": "node dist/index.js --aggregate",
     "generate:all": "npm run build && npm run generate:ci",
     "format": "prettier --write \"{src,test}/**/*.ts\"",
+    "format:check": "prettier --check \"{src,test}/**/*.ts\"",
     "test": "vitest run --project unit --project scripts",
     "test:all": "vitest run",
     "test:unit": "vitest run --project unit",
     "test:related": "node scripts/run-related-tests.mjs",
     "test:ci": "vitest run --coverage",
+    "test:ci:project": "vitest run --coverage --project \"$PROJECT\"",
     "test:integration": "cd test/integration && npm install --silent && vitest run",
     "test:watch": "vitest",
     "check:manifests": "node scripts/check-manifests.mjs"

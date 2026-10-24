@@ -14,7 +14,10 @@ const manifests = fs
   .readdirSync(HOOKS_DIR)
   .filter((f) => f.endsWith('.json'))
   .sort()
-  .map((f) => ({ file: f, json: JSON.parse(fs.readFileSync(path.join(HOOKS_DIR, f), 'utf8')) as Manifest }));
+  .map((f) => ({
+    file: f,
+    json: JSON.parse(fs.readFileSync(path.join(HOOKS_DIR, f), 'utf8')) as Manifest,
+  }));
 
 const events = manifests.flatMap((m) => Object.keys(m.json.hooks));
 
@@ -36,14 +39,21 @@ describe('hook manifests: event set per harness', () => {
   });
 
   it('Claude Code gets exactly SubagentStop, UserPromptSubmit, PreToolUse', () => {
-    expect(events.filter(isClaude).sort()).toEqual(['PreToolUse', 'SubagentStop', 'UserPromptSubmit']);
+    expect(events.filter(isClaude).sort()).toEqual([
+      'PreToolUse',
+      'SubagentStop',
+      'UserPromptSubmit',
+    ]);
   });
 
   // apm 0.33.0 integrates every event of a manifest into every target, so Copilot
   // events must not be shipped (manual setup, docs/usage/copilot-hooks.md).
-  it.each(manifests.map((m) => [m.file, m.json] as const))('%s carries no camelCase event', (_file, json) => {
-    expect(Object.keys(json.hooks).filter(isCopilot)).toEqual([]);
-  });
+  it.each(manifests.map((m) => [m.file, m.json] as const))(
+    '%s carries no camelCase event',
+    (_file, json) => {
+      expect(Object.keys(json.hooks).filter(isCopilot)).toEqual([]);
+    }
+  );
 
   it.each(manifests.map((m) => [m.file, m.json] as const))(
     '%s maps one event with one entry to its existing script',
@@ -60,6 +70,6 @@ describe('hook manifests: event set per harness', () => {
       expect(hook.command).toBe(`bash ./${want.script}`);
       expect(hook.timeout).toBeGreaterThan(0);
       expect(fs.existsSync(path.join(HOOKS_DIR, want.script))).toBe(true);
-    },
+    }
   );
 });

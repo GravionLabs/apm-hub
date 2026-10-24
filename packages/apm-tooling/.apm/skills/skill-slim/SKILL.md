@@ -31,7 +31,7 @@ Read each large skill and its references. For every block ask: **could the model
 | Move | Specs, long tables, examples > ~20 lines | `references/` or `assets/`, loaded conditionally |
 | Deduplicate | Same steps in several skills, repeated boilerplate | One skill owns it; others delegate |
 
-Also flag: contradictions between skills (tools, folders, naming), forbidden frontmatter keys, `bash` fences, links that leave the package.
+Also flag: contradictions between skills (tools, folders, naming), forbidden frontmatter keys (`compatibility`, `chronicle-hints`, `model`, `allowed-tools`: 🔴, remove or move to `metadata:`), `bash` fences, links that leave the package.
 
 ### 3. Report and wait
 

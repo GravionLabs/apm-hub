@@ -20,18 +20,19 @@ from the [official statusLine docs](https://code.claude.com/docs/en/statusline) 
 pwsh <skill dir>/scripts/Install-Statusline.ps1 [-Force] [-Uninstall] [-WhatIf]
 ```
 
-Or run `/context-statusline`. The installer copies `statusline.mjs` and `subagent-statusline.mjs` to
-`~/.claude/apm-hub/statusline/` and sets `statusLine` and `subagentStatusLine` in `~/.claude/settings.json` to
-`node ~/.claude/apm-hub/statusline/<file>.mjs`. Other keys stay untouched, a `settings.json.bak-<timestamp>` is written
-first, and a second run changes nothing. A `statusLine` you set yourself is replaced only with `-Force`; `-Uninstall`
-removes only the entries and files this installer wrote. Re-run it after `apm update` to refresh the copies.
+Or run `/context-statusline`. The installer sets `statusLine` and `subagentStatusLine` in `~/.claude/settings.json` to
+`node ~/.claude/skills/context-statusline/scripts/<file>.mjs`: the scripts of the installed skill itself, so `apm update`
+refreshes the status line and no copy is made. The directory is derived from where the installer runs (a project-scoped
+deployment gives that project's path); it refuses when the script is not there. Other keys stay untouched, a
+`settings.json.bak-<timestamp>` is written first, and a second run changes nothing. Entries of older versions (copies under
+`~/.claude/apm-hub/statusline/`) are migrated and the copies removed. A `statusLine` you set yourself is replaced
+only with `-Force`; `-Uninstall` removes only the entries this installer wrote and old copies, never the skill files.
 
 ## GitHub Copilot CLI
 
 Copilot CLI has an experimental `statusLine` and no subagent equivalent. `Install-Statusline.ps1 -Client copilot` (or `all`):
 
-- copies `statusline.mjs` to `~/.copilot/apm-hub/statusline/` (own copy, independent of the Claude Code one; with `COPILOT_HOME` set, to `$COPILOT_HOME/apm-hub/statusline/` and the command carries that absolute path with `/`)
-- sets `statusLine` to `{"type":"command","command":"node ~/.copilot/apm-hub/statusline/statusline.mjs","padding":1}` in `~/.copilot/settings.json` (or `$COPILOT_HOME/settings.json`)
+- sets `statusLine` to `{"type":"command","command":"node ~/.agents/skills/context-statusline/scripts/statusline.mjs","padding":1}` in `~/.copilot/settings.json` (or `$COPILOT_HOME/settings.json`): the Copilot deployment of the skill, which must exist (run from the `~/.claude/skills/` copy the installer still picks `~/.agents/skills/` for Copilot and refuses when it is missing)
 - adds `STATUS_LINE` once to `feature_flags.enabled`, keeping other flags and keys
 - same backup, idempotency, `-Force` and `-WhatIf` rules as for Claude Code; `-Uninstall` removes the entry and script but leaves the `STATUS_LINE` flag (another status line may rely on it)
 

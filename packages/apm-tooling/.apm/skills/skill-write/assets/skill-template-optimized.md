@@ -27,3 +27,14 @@ description: >
 - {Non-obvious fact and how to handle it}
 
 Report: {summary, files changed, verify command}.
+
+## Optional frontmatter (delete this section when scaffolding)
+
+Add only when needed, below `description`:
+
+```yaml
+license: MIT
+metadata:
+  author: gravionlabs
+  version: "1.0.0"
+```

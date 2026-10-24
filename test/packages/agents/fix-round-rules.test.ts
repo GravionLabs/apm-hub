@@ -33,13 +33,31 @@ describe('fix round rules (#459)', () => {
   });
 
   it('ledger line carries the test count, older lines stay valid', () => {
-    expect(pipeline).toContain('`Fix round <r> (#<task>): <result> — model <name> — tests <n>/<m>`');
-    expect(pipeline).toMatch(/older lines without these parts, including the tests part, stay valid/);
+    expect(pipeline).toContain(
+      '`Fix round <r> (#<task>): <result> — model <name> — tests <n>/<m>`'
+    );
+    expect(pipeline).toMatch(
+      /older lines without these parts, including the tests part, stay valid/
+    );
     expect(docs).toContain('Fix round 1 (#201): 2 blocking fixed — model sonnet — tests 18/18');
   });
 
   it('docs/orchestrator.md describes the fix round rules', () => {
     expect(docs).toMatch(/no full suite in a fix round/);
-    expect(docs).toMatch(/`<last review HEAD>\.\.HEAD` with the dimensions that had blocking or selected findings plus `correctness`/);
+    expect(docs).toMatch(
+      /`<last review HEAD>\.\.HEAD` with the dimensions that had blocking or selected findings plus `correctness`/
+    );
+  });
+
+  it('docs align with the model policy: tiers, round-2 escalation, Claude-only dispatch', () => {
+    const read2 = (f: string) =>
+      fs.readFileSync(path.resolve(__dirname, '../../../docs', f), 'utf-8');
+    expect(docs).toContain('Fix round 2<br/>fresh implementer, one tier up');
+    expect(docs).not.toMatch(/Fix round 3<br\/>fresh implementer/);
+    expect(docs).toMatch(/Per-dispatch tiers are Claude-only/);
+    for (const f of ['concepts/agent-frontmatter.md', 'working-mode.md']) {
+      expect(read2(f)).toMatch(/implementer-strong/);
+      expect(read2(f)).toMatch(/model-policy\.md/);
+    }
   });
 });

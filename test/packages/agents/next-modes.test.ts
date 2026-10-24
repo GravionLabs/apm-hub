@@ -71,7 +71,9 @@ describe('next-selection reference', () => {
   it('drops PBIs merged into the integration branch, fetching before the grep', () => {
     expect(reference).toMatch(/^## Merged \(closes at release\)$/m);
     expect(merged.indexOf('git fetch origin <integration-branch>')).toBeGreaterThanOrEqual(0);
-    expect(merged.indexOf('git fetch origin <integration-branch>')).toBeLessThan(merged.indexOf('--grep'));
+    expect(merged.indexOf('git fetch origin <integration-branch>')).toBeLessThan(
+      merged.indexOf('--grep')
+    );
     expect(merged).toContain('origin/<integration-branch>');
     expect(merged).toMatch(/never close them by hand/);
     expect(merged).toMatch(/merged first/);
@@ -87,7 +89,9 @@ describe('next-selection reference', () => {
   });
 
   it('defines the Feature rule: at least one PBI and every open PBI merged', () => {
-    expect(merged).toMatch(/Feature counts as merged when it has at least one open PBI and every open PBI is merged/);
+    expect(merged).toMatch(
+      /Feature counts as merged when it has at least one open PBI and every open PBI is merged/
+    );
     const candidates = reference.split(/^## Candidates$/m)[1].split(/^## /m)[0];
     expect(candidates).toMatch(/merged Feature/);
     expect(candidates).not.toMatch(/or that has none/);
@@ -101,18 +105,39 @@ describe('next-selection reference', () => {
       expect(part).toContain('waiting for merge: PR #<n>');
     }
     expect(end).toContain('merged, closes at release: #<a>, #<b>');
-    expect(end).toMatch(/Every open PBI merged: `Feature #<feature> is done — merged, closes at release/);
+    expect(end).toMatch(
+      /Every open PBI merged: `Feature #<feature> is done — merged, closes at release/
+    );
   });
 
   describe('merged commit check (command read from the reference)', () => {
     let dir: string;
-    const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' };
+    const env = {
+      ...process.env,
+      GIT_CONFIG_GLOBAL: '/dev/null',
+      GIT_CONFIG_SYSTEM: '/dev/null',
+      GIT_CONFIG_NOSYSTEM: '1',
+    };
     const git = (...a: string[]) =>
-      execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', ...a], {
-        cwd: dir,
-        env,
-        encoding: 'utf-8',
-      });
+      execFileSync(
+        'git',
+        [
+          '-c',
+          'user.name=t',
+          '-c',
+          'user.email=t@t',
+          '-c',
+          'commit.gpgsign=false',
+          '-c',
+          'core.hooksPath=/dev/null',
+          ...a,
+        ],
+        {
+          cwd: dir,
+          env,
+          encoding: 'utf-8',
+        }
+      );
     const find = (nr: string) => {
       const cmd = commandFrom(merged, 'git log', '--grep');
       expect(cmd).toContain('origin/<integration-branch>');
@@ -129,7 +154,13 @@ describe('next-selection reference', () => {
       dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pbi-merged-'));
       git('init', '-q');
       git('checkout', '-q', '-b', 'release/1.0');
-      git('commit', '-q', '--allow-empty', '-m', 'fix: a (#249)\n\nbody\n\nFixes #249\nCo-Authored-By: x <x@x>');
+      git(
+        'commit',
+        '-q',
+        '--allow-empty',
+        '-m',
+        'fix: a (#249)\n\nbody\n\nFixes #249\nCo-Authored-By: x <x@x>'
+      );
       git('commit', '-q', '--allow-empty', '-m', 'feat: b\n\nCloses #31');
       git('commit', '-q', '--allow-empty', '-m', 'feat: c\n\nRESOLVES #50');
       git('commit', '-q', '--allow-empty', '-m', 'feat: d\n\nFixed: #51.');
@@ -175,7 +206,10 @@ describe('loop mode documentation', () => {
   });
 
   it('next still selects exactly one PBI per run', () => {
-    const nextRule = body.slice(body.indexOf('`next <feature|epic>`'), body.indexOf('`loop <feature|epic>`'));
+    const nextRule = body.slice(
+      body.indexOf('`next <feature|epic>`'),
+      body.indexOf('`loop <feature|epic>`')
+    );
     expect(nextRule).toMatch(/Exactly one PBI per run \(except `loop`\)/);
     expect(reference).toMatch(/^The first remaining candidate in sub-issue order is the PBI\./m);
   });

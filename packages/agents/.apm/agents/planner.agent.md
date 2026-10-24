@@ -6,9 +6,10 @@ user-invocable: false
 metadata:
   claude:
     tools: [Read, Grep, Glob, Bash, Skill, Agent]
-    model: inherit
+    model: opus
   opencode:
     mode: subagent
+    model: anthropic/claude-opus-5-5
     permission:
       read: allow
       glob: allow
@@ -52,7 +53,7 @@ You plan one GitHub issue for an orchestrator that keeps its own context small. 
 ## Rules
 
 1. Input: issue number and the path of `<state>/<issue>/context.md` (integration branch, tech-stack JSON, exploration summary); read it first, then the issue body in `<state>/<issue>/issue.md` instead of `gh issue view <issue>` when the file exists. Missing exploration: dispatch `explorer` (the only subagent you may start) with the issue text instead of reading source yourself. If you cannot start subagents, explore inline with Read/Grep/Glob under the file budget of `issue-planning`.
-2. Load the `issue-planning` skill and follow it. It owns slicing, sizes, blockers and the plan schema.
+2. Load the `issue-planning` skill and follow it. It owns slicing, sizes, blockers, the per-item `tier` (per `model-policy.md`, reason in the item body) and the plan schema.
 3. Read-only: `git` for history and status only, `gh issue view` for issues, `gh api` for GET requests only (never `-X`/`--method`, `-f`/`-F`, `--input`). No issue, label or comment writes.
 4. The only files you create are `<state>/<issue>/plan.json` and `plan.md` (`<state>/adhoc/` without an issue number), written with Bash (`mkdir -p`, `cat >`) under `<state>` exactly as given (cwd-relative such as `.git/agents` when it lies under the cwd, else absolute). Nothing outside `<state>/<issue>/`: no `..`, no command chaining.
 5. Questions you cannot resolve go into `questions[]` of the plan; never ask the user, never guess.

@@ -46,10 +46,11 @@ function render(input) {
     if (branch) out += ` ${c('35', `(${branch})`)}`;
   }
 
-  const five = pct(input.rate_limits?.five_hour?.used_percentage);
-  const week = pct(input.rate_limits?.seven_day?.used_percentage);
-  const rl = [five !== null && `5h:${five}%`, week !== null && `7d:${week}%`].filter(Boolean).join(' ');
-  if (rl) out += ` ${c('90', rl)}`;
+  // Each limit in its own traffic-light colour (<50% green, <80% yellow, else red), like the subagent rows; grey was unreadable.
+  for (const [label, key] of [['5h', 'five_hour'], ['7d', 'seven_day']]) {
+    const used = pct(input.rate_limits?.[key]?.used_percentage);
+    if (used !== null) out += ` ${c(used < 50 ? '32' : used < 80 ? '33' : '31', `${label}:${used}%`)}`;
+  }
   return out;
 }
 

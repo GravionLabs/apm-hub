@@ -22,7 +22,7 @@ Paths to `scripts/`, `references/` and `assets/` are relative to this skill's di
 ## Gotchas
 
 - A zero-finding report is valid; do not invent fixes.
-- `bash`/`sh` fences and forbidden frontmatter keys are always 🔴 and must be fixed; everything else is the user's call.
+- `bash`/`sh` fences and forbidden frontmatter keys (`compatibility`, `chronicle-hints`, `model`, `allowed-tools`) are always 🔴 and must be fixed; everything else is the user's call.
 - Do not run `skill-update` without the user's go.
 
 Report: `Audit: <name> — PASS (<n> checks)` or `FINDINGS (<n> 🔴 · <m> 🟡 · <x> 🟢)`, followed by the findings list and `Re-audit: skill-audit <skill-path>`.

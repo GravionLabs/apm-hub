@@ -14,7 +14,9 @@ const step5 = pipeline.split('\n').find((l) => l.startsWith('5. '))!;
 describe('Final-Verify step (#449)', () => {
   it('step 5 runs verify-project in a forked haiku general-purpose context before the review', () => {
     expect(step5.indexOf('Final-Verify')).toBeGreaterThanOrEqual(0);
-    expect(step5.indexOf('Final-Verify')).toBeLessThan(step5.indexOf('review `<first BASE>..HEAD`'));
+    expect(step5.indexOf('Final-Verify')).toBeLessThan(
+      step5.indexOf('review `<first BASE>..HEAD`')
+    );
     expect(step5).toContain('`verify-project`');
     expect(step5).toContain('forked general-purpose context');
     expect(step5).toMatch(/`subagent_type: general-purpose`, model haiku/);
@@ -33,10 +35,10 @@ describe('Final-Verify step (#449)', () => {
     expect(gates).toMatch(/Gate: Final-Verify red twice/);
   });
 
-  it('models: Final-Verify is haiku in the pipeline and in the runner pins', () => {
+  it('models: Final-Verify is fast (haiku) in the pipeline and in the runner pins', () => {
     expect(pipeline).not.toContain('final verify inherit');
-    expect(pipeline).toContain('Final-Verify haiku');
-    expect(pipeline).toMatch(/`explorer` and final verify to haiku/);
+    expect(pipeline).toContain('Final-Verify fast');
+    expect(pipeline).toMatch(/`explorer` and final verify to fast/);
     expect(runner).toContain('final verify haiku');
     expect(runner).not.toContain('final verify opus');
   });

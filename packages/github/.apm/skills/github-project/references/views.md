@@ -25,6 +25,6 @@ Not part of the five, so `-RemoveDefaultViews` ignores them. Field `Sprint` is a
 
 `Closes #n` fires only on the default branch, so issues merged into `release/next` stay open and carry the label `merged` (`github-release`, `references/merged-label.md`). The project needs a status for that state, otherwise they sit in `Todo`/`In progress` until the release lands.
 
-- The label stays the source of truth: skills and CI (`mark-merged-issues`, `close-release-issues`) read and write the label, never the project.
-- `github-project sync` mirrors it into the Status `In release`; the reverse (`In release` without the label) goes back to `Todo`.
+- The label stays the source of truth: skills and CI (`mark-merged-issues`, `close-release-issues`) read and write the label.
+- CI sets the Status `In release` itself (step `Set project status In release` in the release workflow, token `PROJECT_TOKEN` or `GH_PAT`, a classic PAT with scope `project`, fine-grained tokens cannot access user-owned projects; without it only the label is set). `github-project sync` is the repair path and mirrors the label into the Status; the reverse (`In release` without the label) goes back to `Todo`.
 - On release, `close-release-issues` closes the issue and removes the label; the built-in workflow "Item closed" then sets `Done`.

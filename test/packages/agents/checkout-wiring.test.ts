@@ -3,16 +3,27 @@ import * as path from 'path';
 
 const ROOT = path.resolve(__dirname, '../../..');
 const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
-const SKILL_DIRS = ['.claude/skills', '.opencode/skills', '.agents/skills', '.github/skills', '~/.claude/skills', '~/.agents/skills', '~/.config/opencode/skills'];
+const SKILL_DIRS = [
+  '.claude/skills',
+  '.opencode/skills',
+  '.agents/skills',
+  '.github/skills',
+  '~/.claude/skills',
+  '~/.agents/skills',
+  '~/.config/opencode/skills',
+];
 
 describe.each(['orchestrator', 'pbi-runner'])('%s OpenCode bash allowlist', (agent) => {
   const text = read(`packages/agents/.apm/agents/${agent}.agent.md`);
-  it.each(['Enter-Checkout.ps1', 'Exit-Checkout.ps1'])('allows %s for every skills dir, like Add-LedgerLine.ps1', (script) => {
-    for (const dir of SKILL_DIRS) {
-      expect(text).toContain(`"pwsh ${dir}/github-issue/scripts/${script} *": allow`);
-      expect(text).toContain(`"pwsh ${dir}/github-issue/scripts/Add-LedgerLine.ps1 *": allow`);
+  it.each(['Enter-Checkout.ps1', 'Exit-Checkout.ps1'])(
+    'allows %s for every skills dir, like Add-LedgerLine.ps1',
+    (script) => {
+      for (const dir of SKILL_DIRS) {
+        expect(text).toContain(`"pwsh ${dir}/github-issue/scripts/${script} *": allow`);
+        expect(text).toContain(`"pwsh ${dir}/github-issue/scripts/Add-LedgerLine.ps1 *": allow`);
+      }
     }
-  });
+  );
 });
 
 describe('isolation: worktree is gone', () => {
@@ -24,7 +35,9 @@ describe('isolation: worktree is gone', () => {
     }
     return out;
   };
-  const hits = [...walk('packages'), ...walk('docs')].filter((f) => read(f).includes('isolation: worktree'));
+  const hits = [...walk('packages'), ...walk('docs')].filter((f) =>
+    read(f).includes('isolation: worktree')
+  );
 
   it('is not referenced in any package file', () => {
     expect(hits.filter((f) => f.startsWith('packages/'))).toEqual([]);
@@ -32,7 +45,9 @@ describe('isolation: worktree is gone', () => {
 
   it('survives only as the one explanatory sentence in docs/working-mode.md', () => {
     expect(hits).toEqual(['docs/working-mode.md']);
-    expect(read('docs/working-mode.md')).toContain("`.claude/worktrees/` is Claude Code's own location for manual `claude --worktree <name>` sessions");
+    expect(read('docs/working-mode.md')).toContain(
+      "`.claude/worktrees/` is Claude Code's own location for manual `claude --worktree <name>` sessions"
+    );
   });
 
   it('implementer.agent.md has no parallel-worktree line', () => {
@@ -41,11 +56,16 @@ describe('isolation: worktree is gone', () => {
 });
 
 describe('docs and references name the scripts', () => {
-  it.each(['loop-mode.md', 'pbi-pipeline.md'])('%s names Enter-Checkout.ps1 and Exit-Checkout.ps1', (f) => {
-    const text = read(`packages/github/.apm/skills/github-issue/references/${f}`);
-    expect(text).toContain('Enter-Checkout.ps1 -Issue <pbi> -Branch <type>/<pbi>-<slug> -Base <integration branch>');
-    expect(text).toContain('Exit-Checkout.ps1 -Issue <pbi>');
-  });
+  it.each(['loop-mode.md', 'pbi-pipeline.md'])(
+    '%s names Enter-Checkout.ps1 and Exit-Checkout.ps1',
+    (f) => {
+      const text = read(`packages/github/.apm/skills/github-issue/references/${f}`);
+      expect(text).toContain(
+        'Enter-Checkout.ps1 -Issue <pbi> -Branch <type>/<pbi>-<slug> -Base <integration branch>'
+      );
+      expect(text).toContain('Exit-Checkout.ps1 -Issue <pbi>');
+    }
+  );
 
   it('working-mode.md describes the convention and warns about git clean -ffdx once', () => {
     const text = read('docs/working-mode.md');
@@ -73,8 +93,16 @@ describe('docs and references name the scripts', () => {
   });
 
   it('AGENTS.md github row names the new scripts', () => {
-    const row = read('AGENTS.md').split('\n').find((l) => l.startsWith('| `github` |'))!;
-    for (const s of ['New-Worktree.ps1', 'Remove-Worktree.ps1', 'Enter-Checkout.ps1', 'Exit-Checkout.ps1']) expect(row).toContain(s);
+    const row = read('AGENTS.md')
+      .split('\n')
+      .find((l) => l.startsWith('| `github` |'))!;
+    for (const s of [
+      'New-Worktree.ps1',
+      'Remove-Worktree.ps1',
+      'Enter-Checkout.ps1',
+      'Exit-Checkout.ps1',
+    ])
+      expect(row).toContain(s);
   });
 });
 
@@ -90,7 +118,9 @@ describe('verify-project and apm-install wording', () => {
     expect(text).toContain('Enable-Worktrees.ps1');
     expect(text).toContain('apply mode');
     expect(text).toContain('changed files');
-    expect(read('packages/delivery/.apm/skills/apm-install/scripts/Install-HubPackages.ps1')).toContain('Enable-Worktrees.ps1');
+    expect(
+      read('packages/delivery/.apm/skills/apm-install/scripts/Install-HubPackages.ps1')
+    ).toContain('Enable-Worktrees.ps1');
   });
 
   it('the queue skill names the lease scripts', () => {

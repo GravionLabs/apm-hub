@@ -65,7 +65,8 @@ export interface TranscriptAnalysis {
   failed: boolean;
 }
 
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Analyzes a stream-json transcript (JSON lines): invoked skills and whether the session ended properly. */
 export function analyzeTranscript(transcript: string): TranscriptAnalysis {
@@ -81,11 +82,13 @@ export function analyzeTranscript(transcript: string): TranscriptAnalysis {
     }
     if (!isObject(ev)) continue;
     if (ev.type === 'result') result = ev;
-    if (ev.type !== 'assistant' || !isObject(ev.message) || !Array.isArray(ev.message.content)) continue;
+    if (ev.type !== 'assistant' || !isObject(ev.message) || !Array.isArray(ev.message.content))
+      continue;
     for (const block of ev.message.content as unknown[]) {
       if (!isObject(block) || block.type !== 'tool_use' || block.name !== 'Skill') continue;
       const input = block.input;
-      if (isObject(input) && typeof input.skill === 'string') invoked.push(input.skill.split(':').pop() as string);
+      if (isObject(input) && typeof input.skill === 'string')
+        invoked.push(input.skill.split(':').pop() as string);
     }
   }
   const maxTurns = result?.subtype === 'error_max_turns';
@@ -118,7 +121,13 @@ export function summarize(records: RunRecord[]): Summary {
   const names = [...new Set(records.map((r) => r.skill))].sort();
   return {
     overall: rates(records, hit),
-    skills: names.map((skill) => ({ skill, ...rates(records.filter((r) => r.skill === skill), hit) })),
+    skills: names.map((skill) => ({
+      skill,
+      ...rates(
+        records.filter((r) => r.skill === skill),
+        hit
+      ),
+    })),
   };
 }
 
@@ -146,8 +155,14 @@ function overallOf(skills: SkillRates[]): Rates {
   return {
     positives,
     negatives,
-    triggerRate: pct(sum((k) => (k.triggerRate * k.positives) / 100), positives),
-    falseTriggerRate: pct(sum((k) => (k.falseTriggerRate * k.negatives) / 100), negatives),
+    triggerRate: pct(
+      sum((k) => (k.triggerRate * k.positives) / 100),
+      positives
+    ),
+    falseTriggerRate: pct(
+      sum((k) => (k.falseTriggerRate * k.negatives) / 100),
+      negatives
+    ),
   };
 }
 
@@ -155,19 +170,26 @@ function overallOf(skills: SkillRates[]): Rates {
  * Regressions versus a baseline: trigger rate drops or false-trigger rate rises by more than maxDrop points.
  * Only skills present in both summaries are compared, `overall` included.
  */
-export function compareToBaseline(current: Summary, baseline: Summary, maxDrop = MAX_DROP): string[] {
+export function compareToBaseline(
+  current: Summary,
+  baseline: Summary,
+  maxDrop = MAX_DROP
+): string[] {
   const out: string[] = [];
   const cmp = (label: string, cur: Rates, base: Rates) => {
     if (round1(base.triggerRate - cur.triggerRate) > maxDrop)
       out.push(`${label}: trigger rate fell ${base.triggerRate}% -> ${cur.triggerRate}%`);
     if (round1(cur.falseTriggerRate - base.falseTriggerRate) > maxDrop)
-      out.push(`${label}: false-trigger rate rose ${base.falseTriggerRate}% -> ${cur.falseTriggerRate}%`);
+      out.push(
+        `${label}: false-trigger rate rose ${base.falseTriggerRate}% -> ${cur.falseTriggerRate}%`
+      );
   };
   const pairs = current.skills.flatMap((cur) => {
     const base = baseline.skills.find((b) => b.skill === cur.skill);
     return base ? [{ cur, base }] : [];
   });
-  if (pairs.length > 0) cmp('overall', overallOf(pairs.map((p) => p.cur)), overallOf(pairs.map((p) => p.base)));
+  if (pairs.length > 0)
+    cmp('overall', overallOf(pairs.map((p) => p.cur)), overallOf(pairs.map((p) => p.base)));
   for (const { cur, base } of pairs) cmp(cur.skill, cur, base);
   return out;
 }
@@ -178,7 +200,10 @@ export interface Baseline extends ScoreContext {
 }
 
 const isRates = (v: unknown): boolean =>
-  isObject(v) && ['positives', 'negatives', 'triggerRate', 'falseTriggerRate'].every((k) => typeof v[k] === 'number');
+  isObject(v) &&
+  ['positives', 'negatives', 'triggerRate', 'falseTriggerRate'].every(
+    (k) => typeof v[k] === 'number'
+  );
 
 /** Accepts a result file or a bare summary; throws a clear error when no usable summary is found. */
 export function parseBaseline(data: unknown): Baseline {
@@ -189,7 +214,9 @@ export function parseBaseline(data: unknown): Baseline {
     !Array.isArray(summary.skills) ||
     !summary.skills.every((k) => isObject(k) && typeof k.skill === 'string' && isRates(k))
   )
-    throw new Error('baseline has no usable summary (expected a result file with "summary" or a bare summary)');
+    throw new Error(
+      'baseline has no usable summary (expected a result file with "summary" or a bare summary)'
+    );
   const ctx = isObject(data) ? data : {};
   return {
     summary: summary as unknown as Summary,
@@ -199,21 +226,34 @@ export function parseBaseline(data: unknown): Baseline {
 }
 
 /** Differences between the baseline and the current run that make a comparison less meaningful. */
-export function baselineWarnings(current: ScoreContext & { summary: Summary }, base: Baseline): string[] {
+export function baselineWarnings(
+  current: ScoreContext & { summary: Summary },
+  base: Baseline
+): string[] {
   const out: string[] = [];
   if (base.meta?.model && current.meta?.model && base.meta.model !== current.meta.model)
     out.push(`baseline model ${base.meta.model} differs from ${current.meta.model}`);
-  if (base.meta?.runs !== undefined && current.meta?.runs !== undefined && base.meta.runs !== current.meta.runs)
+  if (
+    base.meta?.runs !== undefined &&
+    current.meta?.runs !== undefined &&
+    base.meta.runs !== current.meta.runs
+  )
     out.push(`baseline runs ${base.meta.runs} differ from ${current.meta.runs}`);
   const a = [...(base.notInstalled ?? [])].sort().join(',');
   const b = [...(current.notInstalled ?? [])].sort().join(',');
-  if (base.notInstalled && a !== b) out.push(`baseline notInstalled set differs (${a || 'none'} vs ${b || 'none'})`);
+  if (base.notInstalled && a !== b)
+    out.push(`baseline notInstalled set differs (${a || 'none'} vs ${b || 'none'})`);
   const have = new Set(current.summary.skills.map((k) => k.skill));
-  for (const k of base.summary.skills) if (!have.has(k.skill)) out.push(`${k.skill} is in the baseline but not in this run`);
+  for (const k of base.summary.skills)
+    if (!have.has(k.skill)) out.push(`${k.skill} is in the baseline but not in this run`);
   return out;
 }
 
-export function score(records: RunRecord[], baseline?: Baseline | Summary, ctx: ScoreContext = {}): ScoreResult {
+export function score(
+  records: RunRecord[],
+  baseline?: Baseline | Summary,
+  ctx: ScoreContext = {}
+): ScoreResult {
   const summary = summarize(records);
   const base = baseline ? ('summary' in baseline ? baseline : { summary: baseline }) : undefined;
   const failed = records.filter((r) => r.failed).length;
@@ -245,7 +285,8 @@ const readJson = (file: string, what: string): unknown => {
 
 function parseRecords(data: unknown): { records: RunRecord[]; ctx: ScoreContext } {
   const list = Array.isArray(data) ? data : isObject(data) ? data.records : undefined;
-  if (!Array.isArray(list)) throw new Error('records must be an array (or an object with a "records" array)');
+  if (!Array.isArray(list))
+    throw new Error('records must be an array (or an object with a "records" array)');
   for (const r of list) {
     if (
       !isObject(r) ||
@@ -253,12 +294,16 @@ function parseRecords(data: unknown): { records: RunRecord[]; ctx: ScoreContext 
       (r.kind !== 'positive' && r.kind !== 'negative') ||
       !Array.isArray(r.invoked)
     )
-      throw new Error('malformed record: expected { skill: string, kind: "positive"|"negative", invoked: string[] }');
+      throw new Error(
+        'malformed record: expected { skill: string, kind: "positive"|"negative", invoked: string[] }'
+      );
   }
   const ctx: ScoreContext = isObject(data)
     ? {
         meta: isObject(data.meta) ? (data.meta as RunMeta) : undefined,
-        notInstalled: Array.isArray(data.notInstalled) ? (data.notInstalled as string[]) : undefined,
+        notInstalled: Array.isArray(data.notInstalled)
+          ? (data.notInstalled as string[])
+          : undefined,
       }
     : {};
   return { records: list as RunRecord[], ctx };
@@ -283,14 +328,22 @@ export function main(argv: string[]): number {
       const baseline = c ? parseBaseline(readJson(c, 'baseline')) : undefined;
       const result = score(records, baseline, ctx);
       fs.writeFileSync(b, JSON.stringify(result, null, 2));
-      console.log(`trigger ${result.summary.overall.triggerRate}%  false-trigger ${result.summary.overall.falseTriggerRate}%`);
-      if (result.failedRuns > 0) console.log(`${result.failedRuns} of ${records.length} sessions failed (excluded from rates)`);
+      console.log(
+        `trigger ${result.summary.overall.triggerRate}%  false-trigger ${result.summary.overall.falseTriggerRate}%`
+      );
+      if (result.failedRuns > 0)
+        console.log(
+          `${result.failedRuns} of ${records.length} sessions failed (excluded from rates)`
+        );
       for (const w of result.warnings) console.log(`WARN ${w}`);
       if (records.length > 0 && result.failedRuns / records.length > MAX_FAILED_SHARE) {
-        console.error(`ERROR more than ${MAX_FAILED_SHARE * 100}% of sessions failed; the result is not trustworthy`);
+        console.error(
+          `ERROR more than ${MAX_FAILED_SHARE * 100}% of sessions failed; the result is not trustworthy`
+        );
         return 2;
       }
-      for (const m of [...result.thresholdFailures, ...result.regressions]) console.log(`FAIL ${m}`);
+      for (const m of [...result.thresholdFailures, ...result.regressions])
+        console.log(`FAIL ${m}`);
       return result.thresholdFailures.length + result.regressions.length > 0 ? 1 : 0;
     }
   } catch (e) {

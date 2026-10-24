@@ -28,7 +28,8 @@ export const TEST_DUPLICATE_PATTERNS: TestDuplicatePattern[] = [
   { name: 'package test command', regex: /\b(npm|pnpm|yarn)\s+(run\s+)?test\b|\bng\s+test\b/i },
   {
     name: 'runner config',
-    regex: /\b(vitest|jest|pytest|karma|playwright|cypress|mocha)\.config\b|\bpytest\.ini\b|\bconftest\.py\b/i,
+    regex:
+      /\b(vitest|jest|pytest|karma|playwright|cypress|mocha)\.config\b|\bpytest\.ini\b|\bconftest\.py\b/i,
   },
   {
     name: 'test file naming',
@@ -63,7 +64,7 @@ export function isPointerLine(text: string): boolean {
 /** All packages/<domain>/.apm/skills/<lang>-implementation/SKILL.md files. */
 export function findImplementationSkillFiles(packagesBaseDir: string): string[] {
   return findSkillFiles(packagesBaseDir).filter((f) =>
-    path.basename(path.dirname(f)).endsWith('-implementation'),
+    path.basename(path.dirname(f)).endsWith('-implementation')
   );
 }
 
@@ -80,7 +81,8 @@ export function checkTestDuplicates(skillFiles: string[]): TestDuplicateViolatio
       .forEach((text, i) => {
         for (const p of TEST_DUPLICATE_PATTERNS) {
           if (p.allowPointer && isPointerLine(text)) continue;
-          if (p.regex.test(text)) violations.push({ filePath, line: offset + i + 1, pattern: p.name, text: text.trim() });
+          if (p.regex.test(text))
+            violations.push({ filePath, line: offset + i + 1, pattern: p.name, text: text.trim() });
         }
       });
   }

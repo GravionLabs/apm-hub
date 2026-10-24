@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { isCopilotAvailable, createTestSession, SKILLS_DIR, PACKAGES_DIR } from '../harness/copilot-harness.js';
+import {
+  isCopilotAvailable,
+  createTestSession,
+  SKILLS_DIR,
+  PACKAGES_DIR,
+} from '../harness/copilot-harness.js';
 import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 
@@ -42,8 +47,8 @@ describe('Skill directory structure (static, always runs)', () => {
   it('should have .github/skills directory with SKILL.md files', () => {
     expect(existsSync(SKILLS_DIR)).toBe(true);
     const skillDirs = readdirSync(SKILLS_DIR, { withFileTypes: true })
-      .filter(d => d.isDirectory())
-      .map(d => d.name);
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
     expect(skillDirs.length).toBeGreaterThan(0);
     for (const dir of skillDirs) {
       const skillMd = join(SKILLS_DIR, dir, 'SKILL.md');
@@ -54,9 +59,9 @@ describe('Skill directory structure (static, always runs)', () => {
   it('should have packages directory with at least one .apm/skills subdirectory', () => {
     expect(existsSync(PACKAGES_DIR)).toBe(true);
     const domains = readdirSync(PACKAGES_DIR, { withFileTypes: true })
-      .filter(d => d.isDirectory())
-      .map(d => d.name);
-    const domainsWithSkills = domains.filter(d =>
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
+    const domainsWithSkills = domains.filter((d) =>
       existsSync(join(PACKAGES_DIR, d, '.apm', 'skills'))
     );
     expect(domainsWithSkills.length).toBeGreaterThan(0);

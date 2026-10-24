@@ -9,18 +9,20 @@
   3. Executes unless -DryRun. Exit 0 = assigned, 1 = limit violated or input error.
   Limits (open PBIs and Bugs only): per sprint in total, per sprint and repository, and 'In release' per repository
   (a repository with a full release branch takes no new PBI until it is released).
+  Dependency order: a target with an open native blocked-by link enters only when the blocker is in this sprint or an
+  earlier one, or is assigned in the same run. A 'Blocked by #n' line in the body alone is not read.
 .PARAMETER Owner         User or organization login that owns the project.
 .PARAMETER Number        Project number.
 .PARAMETER Issue         Issues to assign, comma separated: 'owner/repo#n' (or '#n' with -Repo). They must already be items of the project.
 .PARAMETER Repo          Default repository 'owner/repo' for '#n'.
 .PARAMETER Sprint        Sprint title, default the current ISO week ('2026-W43').
-.PARAMETER MaxPerSprint  Open PBIs per sprint over all repositories (default 10).
-.PARAMETER MaxPerRepo    Open PBIs per sprint and repository (default 5).
-.PARAMETER MaxInRelease  Open PBIs in status 'In release' per repository (default 5).
+.PARAMETER MaxPerSprint  Open PBIs per sprint over all repositories (default 30).
+.PARAMETER MaxPerRepo    Open PBIs per sprint and repository (default 10).
+.PARAMETER MaxInRelease  Open PBIs in status 'In release' per repository (default 10).
 .PARAMETER Force         Assign despite violated limits.
 .PARAMETER DryRun        Print the plan, change nothing.
 .PARAMETER Today         Date for the default sprint; only for tests.
-.PARAMETER StateFile     JSON state (projectId, sprintField, items) instead of reading from GitHub.
+.PARAMETER StateFile     JSON state (projectId, sprintField, items with optional blockedBy [{repo, number, state}]) instead of reading from GitHub.
 .PARAMETER Json          Emit {sprint, assign, violations} as JSON.
 #>
 [CmdletBinding()]
@@ -30,9 +32,9 @@ param(
   [string[]]$Issue,
   [string]$Repo,
   [string]$Sprint,
-  [int]$MaxPerSprint = 10,
-  [int]$MaxPerRepo = 5,
-  [int]$MaxInRelease = 5,
+  [int]$MaxPerSprint = 30,
+  [int]$MaxPerRepo = 10,
+  [int]$MaxInRelease = 10,
   [switch]$Force,
   [switch]$DryRun,
   [datetime]$Today = (Get-Date),
@@ -76,6 +78,20 @@ function Get-SprintPlan {
     if ($iteration) { $assign.Add([ordered]@{ item = $item.id; issue = $ref; iteration = $iteration.id; sprint = $SprintTitle; previous = $item.sprint }) }
   }
 
+  # Dependency order from the native blocked-by links (the source 'orchestrator next' reads): an open blocker must be in
+  # this sprint (already, or assigned in this run) or in an earlier one. Sprint titles 'YYYY-Www' compare as strings.
+  foreach ($item in $newItems) {
+    $ref = "$($item.repo)#$($item.number)"
+    foreach ($b in @($item.blockedBy | Where-Object { $_.state -eq 'OPEN' })) {
+      if (@($newItems | Where-Object { $_.repo -eq $b.repo -and $_.number -eq $b.number }).Count -gt 0) { continue }
+      $blocker = @($State.items) | Where-Object { $_.repo -eq $b.repo -and $_.number -eq $b.number } | Select-Object -First 1
+      if ($blocker.sprint -and $blocker.sprint -le $SprintTitle) { continue }
+      $where = if ($blocker.sprint) { "sprint $($blocker.sprint)" } else { 'no sprint' }
+      $bRef = "$($b.repo)#$($b.number)"
+      $violations.Add([ordered]@{ type = 'Blocked'; issue = $ref; blocker = $bRef; message = "$ref is blocked by open $bRef ($where): assign the blocker to $SprintTitle or an earlier sprint first, or together." })
+    }
+  }
+
   $total = $inSprint.Count + $newItems.Count
   if ($newItems.Count -gt 0 -and $total -gt $MaxPerSprint) { $violations.Add([ordered]@{ type = 'SprintFull'; message = "Sprint $SprintTitle would hold $total PBIs (limit $MaxPerSprint)." }) }
   foreach ($repo in @($newItems | ForEach-Object { $_.repo } | Select-Object -Unique)) {
@@ -99,7 +115,7 @@ $StateQuery = @'
 query($login: String!, $n: Int!) { repositoryOwner(login: $login) { ... on ProjectV2Owner { projectV2(number: $n) {
   id
   fields(first: 50) { nodes { __typename
-    ... on ProjectV2IterationField { id name configuration { iterations { id title } completedIterations { id title } } } } } } } }
+    ... on ProjectV2IterationField { id name configuration { iterations { id title } completedIterations { id title } } } } } } } } }
 '@
 $ItemsQuery = @'
 query($id: ID!, $cursor: String) { node(id: $id) { ... on ProjectV2 { items(first: 100, after: $cursor) {
@@ -111,6 +127,7 @@ query($id: ID!, $cursor: String) { node(id: $id) { ... on ProjectV2 { items(firs
 '@
 
 function Get-SprintState {
+  param($Targets)
   $p = (Invoke-Graphql $StateQuery @{ login = $Owner; n = $Number }).repositoryOwner.projectV2
   if (-not $p) { throw "Project $Owner/$Number not found (or scope 'project' missing: gh auth refresh -s project)." }
   $f = @($p.fields.nodes) | Where-Object { $_.name -eq 'Sprint' -and $_.configuration } | Select-Object -First 1
@@ -125,6 +142,16 @@ function Get-SprintState {
     }
     $cursor = $page.pageInfo.endCursor
   } while ($page.pageInfo.hasNextPage)
+  # Native blocked-by links of the targets only (one REST call each); a blocker may live in another repository.
+  foreach ($t in $Targets) {
+    $item = $items | Where-Object { $_.repo -eq $t.repo -and $_.number -eq $t.number } | Select-Object -First 1
+    if (-not $item) { continue }
+    $links = @(Invoke-Gh -GhArgs @('api', "repos/$($t.repo)/issues/$($t.number)/dependencies/blocked_by?per_page=100"))
+    $item.blockedBy = @($links | ForEach-Object {
+        $r = if ($_.repository_url -match '/repos/(?<r>[^/]+/[^/]+)$') { $Matches.r } else { $t.repo }
+        [ordered]@{ repo = $r; number = $_.number; state = $_.state }
+      })
+  }
   [ordered]@{ projectId = $p.id; sprintField = [ordered]@{ id = $f.id; iterations = @($f.configuration.iterations) + @($f.configuration.completedIterations) }; items = @($items) }
 }
 
@@ -136,8 +163,8 @@ if ($StateFile) {
   $state = Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json -Depth 20
   $DryRun = $true  # a state file never reaches GitHub
 } else {
-  if (-not $Owner -or $Number -lt 1 -or $targets.Count -eq 0) { throw 'Usage: Set-Sprint.ps1 -Owner <login> -Number <n> -Issue <owner/repo#n>... [-Repo <owner/repo>] [-Sprint 2026-W43] [-MaxPerSprint 10] [-MaxPerRepo 5] [-MaxInRelease 5] [-Force] [-DryRun] [-StateFile <json>] [-Json]' }
-  $state = Get-SprintState
+  if (-not $Owner -or $Number -lt 1 -or $targets.Count -eq 0) { throw 'Usage: Set-Sprint.ps1 -Owner <login> -Number <n> -Issue <owner/repo#n>... [-Repo <owner/repo>] [-Sprint 2026-W43] [-MaxPerSprint 30] [-MaxPerRepo 10] [-MaxInRelease 10] [-Force] [-DryRun] [-StateFile <json>] [-Json]' }
+  $state = Get-SprintState -Targets $targets
 }
 $plan = Get-SprintPlan -State $state -Targets $targets -SprintTitle $Sprint -MaxPerSprint $MaxPerSprint -MaxPerRepo $MaxPerRepo -MaxInRelease $MaxInRelease
 $blocked = $plan.violations.Count -gt 0 -and -not $Force

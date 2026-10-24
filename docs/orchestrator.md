@@ -13,7 +13,7 @@ flowchart LR
     U([You]) -->|"mode + issue or description"| O["orchestrator<br/>primary agent<br/>keeps phase summaries only"]
     O -->|"issue reference"| D["issue-reader<br/>haiku, gh and git read-only<br/>type, branch, digest, tasks as JSON"]
     O -->|"title and digest"| E["explorer<br/>haiku, read-only<br/>summary of 300 words or less"]
-    O -->|"issue + stack + summary"| P["planner<br/>inherit model, read-only<br/>writes plan.json"]
+    O -->|"issue + stack + summary"| P["planner<br/>opus, read-only<br/>writes plan.json"]
     O -->|"one task"| I["implementer<br/>sonnet by default<br/>tests, commits, report file"]
     O -->|"range + issue (Claude Code)"| L["review-lead<br/>sonnet, read-only<br/>verdict + findings as JSON"]
     L -->|"via review-fanout"| R["reviewer<br/>sonnet, read-only<br/>findings as JSON"]
@@ -28,10 +28,10 @@ flowchart LR
 
 | Agent | Model | Tools | Returns |
 |:--|:--|:--|:--|
-| [`orchestrator`](../packages/agents/.apm/agents/orchestrator.agent.md) | inherit | Agent, Read, Grep, Glob, Bash, Skill, AskUserQuestion, SendMessage | phase summaries, PR URL, rulings |
+| [`orchestrator`](../packages/agents/.apm/agents/orchestrator.agent.md) | sonnet (override: [Models and cost](#models-and-cost)) | Agent, Read, Grep, Glob, Bash, Skill, AskUserQuestion, SendMessage | phase summaries, PR URL, rulings |
 | [`issue-reader`](../packages/agents/.apm/agents/issue-reader.agent.md) | haiku | Read, Grep, Glob, Bash (read-only `gh` and `git`) | one JSON object: type, title, digest, path of the saved `issue.md`, integration branch (`null` or `stale` when a cut is needed), parent, bug flag, Task sub-issues with merged state and sha, ledger `none` or `resume`; `{error}` on a bad reference |
 | [`explorer`](../packages/agents/.apm/agents/explorer.agent.md) | haiku | Read, Grep, Glob | summary with `file:line` references |
-| [`planner`](../packages/agents/.apm/agents/planner.agent.md) | inherit | Read, Grep, Glob, Bash, Skill, Agent | path of `plan.json`, summary, open question count |
+| [`planner`](../packages/agents/.apm/agents/planner.agent.md) | opus | Read, Grep, Glob, Bash, Skill, Agent | path of `plan.json`, summary, open question count |
 | [`implementer`](../packages/agents/.apm/agents/implementer.agent.md) | sonnet (overridable per task) | Read, Edit, Write, Grep, Glob, Bash, Skill | report file and a reply of 15 lines or less |
 | [`reviewer`](../packages/agents/.apm/agents/reviewer.agent.md) | sonnet | Read, Grep, Glob, Bash | findings JSON for one dimension |
 | [`review-lead`](../packages/agents/.apm/agents/review-lead.agent.md) | sonnet | Agent, Read, Grep, Glob, Bash, Skill | verdict, findings list (severity, file, line, title, blocking), package and `review.json` paths; Claude Code only, other clients run `review-fanout` inline |
@@ -113,7 +113,7 @@ sequenceDiagram
     O->>U: plan gate, grilling, approval
     U-->>O: approved
     loop each Task in blocking order
-        O->>I: Task issue, branch, path of context.md, model hint, report path
+        O->>I: Task issue, branch, path of context.md, tier, report path
         I-->>O: Status DONE, 15 lines or less
     end
     O->>L: range, issue, path of context.md (inline review-fanout where nesting is unsupported)
@@ -172,7 +172,7 @@ A bug (label `bug`, type `Bug` or a `fix` title prefix) makes the implementer lo
 
 ## Review and fix rounds
 
-`review-fanout` classifies the diff mechanically, then dispatches one `reviewer` per dimension in a single parallel batch: `correctness`, `security`, `conventions`, `tests` and `spec`. A second pass tries to disprove each CRITICAL or HIGH finding; it starts for a dimension as soon as that dimension reports such a finding, while the others still run (one verify batch per arriving dimension). Dedupe and the verdict wait for all dimensions and all verify results; a finding refuted early stays refuted. The lead sends all reviewers in one message and then waits for their replies; it never runs `sleep` and never polls files or ledgers (`Agent` on Claude Code, `task()` on OpenCode and `runSubagent` on Copilot return the results). The diff goes to a package file on disk and never enters the orchestrator's context.
+`review-fanout` classifies the diff mechanically, then dispatches one `reviewer` per dimension in a single parallel batch: `correctness`, `security`, `conventions`, `tests` and `spec`; `correctness` also checks the diff against the `## Invariants` of the PBI, its Tasks and plan items without a Task issue, a violated invariant is HIGH. A second pass tries to disprove each CRITICAL or HIGH finding; it starts for a dimension as soon as that dimension reports such a finding, while the others still run (one verify batch per arriving dimension). Dedupe and the verdict wait for all dimensions and all verify results; a finding refuted early stays refuted. The lead sends all reviewers in one message and then waits for their replies; it never runs `sleep` and never polls files or ledgers (`Agent` on Claude Code, `task()` on OpenCode and `runSubagent` on Copilot return the results). The diff goes to a package file on disk and never enters the orchestrator's context.
 
 Where a subagent may start subagents (Claude Code, see [Clients](#clients)) the orchestrator dispatches `review-lead` (sonnet) with the range, the issue number and the path of `context.md`. It runs `review-fanout` in its own context and replies with JSON only: `verdict`, `incomplete`, a `findings` list and the paths of the package and of `review.json`. The review summary is built from `findings`. On Copilot CLI, OpenCode and VS Code Copilot, where nesting is not documented or off by default, and in the inline `/orchestrator` command, the orchestrator runs `review-fanout` itself as before. Fix rounds hand the implementer the findings list, the files of the findings and the `review.json` path, never the package, and name the targeted test rule: no full suite in a fix round. The re-review covers `<last review HEAD>..HEAD` with the dimensions that had blocking or selected findings plus `correctness`; `review-lead` passes range, dimension list and the previous `review.json` to `review-fanout`; the re-review package holds only the fix diff plus the earlier findings (fixed, open, advisory), not the full diff again. Every package leaves out generated files, lockfiles, goldens, minified assets, `dist/`, `coverage/`, `docs/*-list.md` and binaries ([package-filter.md](../packages/delivery/.apm/skills/review-fanout/references/package-filter.md)). Final-Verify runs once after the last fix round. The advisory choice, `--no-review-summary` and `--fix-advisories` behave the same either way.
 
@@ -184,12 +184,14 @@ flowchart TD
     C -->|"CHANGES_REQUESTED"| D
     D --> E{"Blocking or<br/>selected advisories?"}
     E -->|"no"| PR["Pull request<br/>unselected advisories in the body"]
-    E -->|"yes"| F["Fix round 1 and 2<br/>resume the same implementer"]
+    E -->|"yes"| F["Fix round 1<br/>resume the same implementer"]
     F --> G["Re-review"]
     G --> C
-    F -->|"still blocked"| H["Fix round 3<br/>fresh implementer, one tier up"]
+    F -->|"blocking again"| H["Fix round 2<br/>fresh implementer, one tier up"]
     H --> G
-    H -->|"still blocked"| Q(["Ask you"])
+    H -->|"blocking again"| J["Fix round 3<br/>resume the escalated implementer"]
+    J --> G
+    J -->|"still blocked"| Q(["Ask you"])
 ```
 
 A failed dimension makes the review `incomplete` and the verdict `CHANGES_REQUESTED`: the review fails closed. The review summary and the question about advisories can be switched off with `--no-review-summary`; then only blocking findings are fixed and all advisories go to the PR body. `--fix-advisories none|medium|all[:dim,dim]` answers the question up front: `none` sends all advisories to the PR body, `medium` fixes MEDIUM and above, `all` fixes every advisory, `:dim,dim` restricts the policy to those review dimensions.
@@ -203,7 +205,7 @@ These always go to you; the orchestrator never decides them itself.
 | Plan | after the planner, before issues are created |
 | Open questions | grilling per `issue-planning` |
 | Advisories | after the review summary, unless `--fix-advisories` sets the policy |
-| Blocked review | fix round 3 still blocked |
+| Blocked review | still blocked after fix round 3 (round 2 escalated one tier on a blocking finding) |
 | Failed tests | the suite is red twice on a task, or Final-Verify is red twice |
 
 A gate and a ruling look alike but differ:
@@ -375,7 +377,7 @@ flowchart TD
 - Loop ledger `<state>/loop-<nr>/progress.md`: header `# orchestrator ledger — loop #<nr> — branch <branch>` (written once, when the file does not exist yet), one `Loop: PBI #<nr> done — <pr>` line per PBI and `Loop: stopped — <reason>` at the end. Per-PBI ledgers and `Ruling:` lines stay in `<state>/<pbi>/progress.md`. At each PBI boundary the orchestrator creates `<state>/<pbi>/progress.md` with its header and binds the loop to it before dispatching `issue-reader` (`Add-LedgerLine.ps1 -Issue <pbi> -Bind loop-<nr>`: the line `Loop: PBI #<pbi> started` in the loop ledger plus the marker of the caller's checkout, `<state>/current.d/<key>`, with `<key>` the lease key of that checkout), so the hook's `Subagent` lines of the new PBI land in its own ledger although its branch does not exist yet. Every stop removes the marker of that checkout again (`-Unbind`). Each PBI of the loop takes its checkout in step 1b and releases it after its `Loop: PBI #<nr> done` line.
 - Runner mode (Claude Code, with `Agent` and `SendMessage`): the primary stays thin. Per PBI it dispatches the `pbi-runner` subagent with `{pbi, loop, flags}` (`--fix-advisories` and `--no-review-summary` forwarded verbatim) and keeps only its JSON. A `GATE` reply is asked with `AskUserQuestion` and the answer goes back with `SendMessage` to the runner until it returns `DONE`, `BLOCKED` or `FAILED`; the runner records the `Ruling:`. `BLOCKED` and `FAILED` stop the loop with the reasons `runner blocked` and `runner failed`. The cap is 10 PBIs in runner mode and 3 inline; Copilot CLI and OpenCode keep the inline loop.
 - Parallel runners (`--pbi-parallel <m>`, 1-4, default 2; Claude Code only): the primary dispatches up to `<m>` `pbi-runner` at once for the first `<m>` candidates in sub-issue order, each in its own checkout (step 1b: the main checkout for the first, `.worktrees/<nr>` for each further one) with its own loop marker. Each runner gets `--parallel floor(4 / <m>)` for its Tasks (never more than your `--parallel`), so at most 4 `implementer` subagents run at once. Gates are asked one at a time, oldest first, the question prefixed `PBI #<nr>:`, and the answer resumes that runner with `SendMessage` while the others keep working. Headless, the first `GATE` stops the loop after the other runners finish their current step; each `Gate:` line stays in its own PBI ledger. A finished runner writes `Loop: PBI #<nr> done — <pr>`, releases its checkout and its slot is refilled by a new selection that leaves out the PBIs of live runners (read from the leases), until nothing is selectable, the cap or the context warning is reached. `Loop: stopped` is written once, after the last runner returned. `--pbi-parallel 1` is the sequential runner mode; `status <feature|epic>` shows PBIs of live runners as `in progress (runner)`. Rules: [loop-mode.md](../packages/github/.apm/skills/github-issue/references/loop-mode.md) Runner mode.
-- Primary model in runner mode: not yet measured. By design the primary only selects, dispatches the runner, asks gates and writes `Loop:` lines, and every model-heavy phase runs in a subagent: the runner is pinned to sonnet, `planner` to opus and the verify phase to haiku. The primary may therefore run on haiku or sonnet; opus is not needed for it. Whether haiku relays gates and keeps the ledger reliably over ten PBIs has not been measured, so start with sonnet.
+- Primary model: the `orchestrator` runs on sonnet by default. Measured on 29 orchestrator runs between 2026-10-17 and 2026-10-23 (Claude Code transcripts, AgentLens 0.10.5 price table, costs are estimates): the main thread on sonnet cost $0.25-0.82 per run, 20-40 % of the run cost ($1.3-2.9); on opus it cost about 3x (35-38 % of a $7-9 run), on fable 4-8x (75 % of a $6.46 run). The subagents of the same runs cost $1-2 in total. The main thread never reads source or issue bodies, so a stronger model buys nothing measurable. By design the primary only selects, dispatches the runner, asks gates and writes `Loop:` lines, and every model-heavy phase runs in a subagent: the runner is pinned to sonnet, `planner` to opus and the verify phase to haiku. Whether haiku relays gates and keeps the ledger reliably over ten PBIs has not been measured, so start with sonnet.
 - Depth: runner mode needs `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` of at least 3 (runner, then review-lead, then reviewer, once [#307](https://github.com/GravionLabs/apm-hub/issues/307) lands). Depth 3 dispatch was verified in [#340](#runner-checks-claude-code); a depth-3 agent has no `Agent` tool. The default allows 3 levels; `1` turns nesting off and breaks runner mode.
 - Measurement (not yet measured, no numbers recorded): run `orchestrator loop <feature>` over three small planned PBIs on Claude Code, then run the `retro` skill's `scripts/Get-RunMetrics.ps1` on the session and read the primary's context growth per PBI. Target: under 3k tokens of primary growth per PBI. If a PBI exceeds it, name the biggest contributor and open a follow-up issue. Record the primary model with the numbers. Tracked in [#345](https://github.com/GravionLabs/apm-hub/issues/345).
 - Rerun `orchestrator loop <nr>` after `/clear` to resume: the orchestrator re-reads the Feature or Epic via the loop target number and runs the selection again; finished PBIs drop out by their PR state, not by the ledger. The report of a stopped loop ends with one `Next:` line: `Next: #<nr> <title> — orchestrator loop <feature> after /clear` when a PBI is still selectable or paused, otherwise the `next` variants (what blocks the rest, or the Feature is done).
@@ -386,7 +388,7 @@ The `hooks` package adds three hooks around the orchestrator. They are plain bas
 
 | Hook | Event | Reads from the payload | Writes or blocks | Opt-out |
 |:--|:--|:--|:--|:--|
-| [`subagent-ledger.sh`](../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path`, `agent_id` | appends `Subagent <name>: stopped — <first line, 120 chars>` for the orchestrator's own subagents to the ledger of the PBI bound by a running loop in the payload's checkout, else of the branch issue (allowlist, marker, branch and fallback rules below); only when that ledger exists, which the orchestrator creates. Agent name and `agent_id` are sanitised; a `pbi-runner` stop is summarised from the `status` of its JSON reply (`GATE <phase>`, `DONE <pr>`, `BLOCKED`, `FAILED`; needs `jq`). Dedupe per `agent_id` and payload in the sidecar `<state>/<issue>/.ledger-seen` (a regular file, never a symlink), so the stop events of nested agents and of a `SendMessage` resume are written once | none |
+| [`subagent-ledger.sh`](../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path`, `agent_id` | appends `Subagent <name>: stopped — <first line, 120 chars>` for the orchestrator's own subagents to the ledger of the PBI bound by a running loop in the payload's checkout, else of the branch issue (allowlist, marker, branch and fallback rules below); only when that ledger exists, which the orchestrator creates. Agent name and `agent_id` are sanitised; a `pbi-runner` stop is summarised from the `status` of its JSON reply (`GATE <phase>`, `DONE <pr>`, `BLOCKED`, `FAILED`; needs `jq`). Dedupe per `agent_id` and payload in the sidecar `<state>/<issue>/.ledger-seen` (a regular file, never a symlink), so the stop events of nested agents and of a `SendMessage` resume are written once. With `DROMOS_URL` set, the appended line is also POSTed once (a deduplicated stop posts nothing) to `$DROMOS_URL/ingest` after the ledger write, as JSON `{type: "progress", source: "apm-hub/subagent-stop", issue, agentId: $DROMOS_AGENT_ID (else the payload's `agent_id`, else `null`), data: {line, agent}}`, with a 500 ms timeout; only `https` URLs are used (`http` only for `localhost`, `127.0.0.1`, `[::1]`; a URL with credentials is ignored) and the line contains the first 120 characters of the subagent's reply, so that text leaves the machine; failures are ignored and `DROMOS_URL` unset makes no network call | none; leave `DROMOS_URL` unset |
 | [`context-warning.sh`](../packages/hooks/.apm/hooks/context-warning.sh) | `UserPromptSubmit` | `transcript_path`, `session_id` | injects an `additionalContext` warning once the last request has at least 150k tokens (`CONTEXT_WARN_TOKENS`), again after +100k (`CONTEXT_WARN_STEP`) | none; raise `CONTEXT_WARN_TOKENS` to silence it |
 | [`git-guardrails.sh`](../packages/hooks/.apm/hooks/git-guardrails.sh) | `PreToolUse`, matcher `Bash` | `tool_name`, `cwd`, `tool_input.command` | prints a `permissionDecision: deny` JSON with the reason; nothing for allowed commands | `GIT_GUARDRAILS_OFF=1` or `<state>/guardrails.off` |
 
@@ -442,10 +444,11 @@ The last line is a fixed closing line saying the ledger is complete and that the
 
 ## Models and cost
 
-- Claude Code passes `model` on every `Agent` call. `issue-reader` and `explorer` run on haiku, `planner` inherits, `implementer` defaults to sonnet and gets `inherit` or stronger for integration and design tasks, `review-lead` and `reviewer` run on sonnet.
-- Runner mode (Claude Code loop): `pbi-runner` is pinned to sonnet, `planner` runs on opus and verify on haiku, so the primary may run on haiku or sonnet. Primary growth per PBI is not yet measured; target under 3k tokens, procedure and the `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` requirement (3) in [Looping with `loop`](#looping-with-loop).
+- Claude Code passes `model` on every `Agent` call, chosen by tier (`fast` haiku, `standard` sonnet, `strong` opus) per the [model policy](../packages/github/.apm/skills/github-issue/references/model-policy.md). `issue-reader` and `explorer` run on `fast`, `planner` on `strong`, `implementer` defaults to `standard` and gets the `tier` of its plan item (`strong` for integration and design tasks), `review-lead` and `reviewer` run on `standard`. No dispatch inherits the main model. After a second blocking `CHANGES_REQUESTED` on a task (fix round 2) a fresh implementer runs one tier up; advisory-only rounds never escalate.
+- Per-dispatch tiers are Claude-only. OpenCode and Copilot CLI take the model from the agent file and run every dispatch at its tier until `apmw sanitize` generates the `implementer-strong` and `reviewer-strong` variants.
+- Runner mode (Claude Code loop): `pbi-runner` is pinned to sonnet, `planner` runs on opus and verify on haiku, so the primary runs on sonnet (see the measured cost below). Primary growth per PBI is not yet measured; target under 3k tokens, procedure and the `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` requirement (3) in [Looping with `loop`](#looping-with-loop).
 - A cheaper model that needs two or three times the turns costs more. Sonnet is the floor for prose-only tasks.
-- OpenCode reads the model from the agent file; Copilot has no override.
+- Default and override: the `orchestrator` agent file pins sonnet. A stronger main thread is set explicitly: `claude --model <id> --agent orchestrator`; OpenCode: `opencode --model <provider/id>` or the `model` of the agent file; Copilot CLI: the session model (`--model`, `/model`), the agent file sets none. Details in [Working mode](working-mode.md#model-of-the-main-thread).
 - `plan` mode ends with `Next: /clear, then orchestrator implement <issue>`. Planning fills the context, and after an idle gap the prompt cache is rewritten at a cost that grows with it. In `full` mode above 100k tokens the orchestrator offers the same stop once.
 
 ## Clients
@@ -456,6 +459,8 @@ The last line is a fixed closing line saying the ledger is complete and that the
 | GitHub Copilot CLI | `copilot --agent orchestrator` | `task` with the agent name | not documented | not documented | no, subagents are stateless |
 | VS Code Copilot | agent picker | `runSubagent` | off by default (`chat.subagents.allowInvocationsFromSubagents`), then at most 5 levels | no, the clarifying-question tool is unavailable to subagents | no, each invocation is stateless |
 | OpenCode | `opencode --agent orchestrator` | `task` with the agent name (`permission.task`) | not documented | `permission.question` exists; behaviour inside a subagent not documented | not documented |
+
+Per-dispatch models (the tier's model on every `Agent` call, fix round 2 one tier up) are Claude Code only; Copilot CLI, VS Code Copilot and OpenCode take the model from the agent file ([model-policy.md](../packages/github/.apm/skills/github-issue/references/model-policy.md)).
 
 Parallel Task waves need several subagent calls in one message: Claude Code issues parallel `Agent` calls, Copilot CLI and OpenCode parallel `task` calls, VS Code Copilot `runSubagent`. A client without parallel subagents falls back to `--parallel 1` and says so in one line (`Parallel: 1 — client has no parallel subagents`).
 

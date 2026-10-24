@@ -25,7 +25,13 @@ const LEDGER = '<state>/loop-<nr>/progress.md';
 const HEADER = '# orchestrator ledger — loop #<nr> — branch <branch>';
 const DONE_LINE = 'Loop: PBI #<nr> done — <pr>';
 const STOP_LINE = 'Loop: stopped — <reason>';
-const STOP_REASONS = ['nothing selectable', 'headless gate: <question>', 'context warning', 'pbi cap', 'user stop'];
+const STOP_REASONS = [
+  'nothing selectable',
+  'headless gate: <question>',
+  'context warning',
+  'pbi cap',
+  'user stop',
+];
 const RUNNER_REASONS = ['runner blocked', 'runner failed'];
 const RESUME_LINE = 'orchestrator loop <feature> after /clear';
 
@@ -85,11 +91,17 @@ describe('loop-mode reference', () => {
 
   it('creates the per-PBI ledger before dispatching the issue-reader (hook race)', () => {
     const ledger = section(reference, 'Loop ledger');
-    expect(ledger).toMatch(/right after announcing `Next PBI: #<nr> <title>` and before dispatching `issue-reader`/);
-    expect(ledger).toContain("Add-LedgerLine.ps1 -Issue <pbi> -Line '# orchestrator ledger — issue #<pbi> — branch <branch>'");
+    expect(ledger).toMatch(
+      /right after announcing `Next PBI: #<nr> <title>` and before dispatching `issue-reader`/
+    );
+    expect(ledger).toContain(
+      "Add-LedgerLine.ps1 -Issue <pbi> -Line '# orchestrator ledger — issue #<pbi> — branch <branch>'"
+    );
     expect(ledger).toMatch(/header-only ledger, which resumes at step 1/);
     // the agent's step 1 creates the directory for the ledger; a pre-created one is a resume, not a conflict
-    expect(read('packages/github/.apm/skills/github-issue/references/pbi-pipeline.md')).toMatch(/`ledger: resume` → the same-issue ledger rule/);
+    expect(read('packages/github/.apm/skills/github-issue/references/pbi-pipeline.md')).toMatch(
+      /`ledger: resume` → the same-issue ledger rule/
+    );
   });
 
   it('binds the loop to the new PBI before issue-reader and unbinds at every stop (#375)', () => {
@@ -97,15 +109,21 @@ describe('loop-mode reference', () => {
     expect(ledger).toContain('Add-LedgerLine.ps1 -Issue <pbi> -Bind loop-<nr>');
     expect(ledger).toContain('`Loop: PBI #<pbi> started`');
     expect(ledger).toContain('`<state>/current.d/<key>` (`<key>` = the lease key of that checkout');
-    expect(ledger).toContain('content `<pbi> loop-<nr>`, plus the issue number of the branch it ran on');
+    expect(ledger).toContain(
+      'content `<pbi> loop-<nr>`, plus the issue number of the branch it ran on'
+    );
     expect(ledger).toContain('one marker per checkout');
     expect(ledger).toMatch(/last `Loop: ` line is not a `Loop: stopped` line/);
     expect(ledger).not.toMatch(/prefer the marker over the branch number/);
     expect(ledger).toMatch(/a `Loop: PBI #<nr> done` line; any other issue branch wins/);
     expect(ledger).toMatch(/`-Bind` fails without the PBI ledger/);
     expect(ledger).not.toContain('apm-hub/issues/375');
-    expect(section(reference, 'Stop conditions')).toMatch(/then the `Loop: stopped` line, then `Add-LedgerLine\.ps1 -Unbind`/);
-    expect(section(reference, 'Runner mode (Claude Code)')).toMatch(/header and bind it[\s\S]*followed by `Add-LedgerLine\.ps1 -Unbind`/);
+    expect(section(reference, 'Stop conditions')).toMatch(
+      /then the `Loop: stopped` line, then `Add-LedgerLine\.ps1 -Unbind`/
+    );
+    expect(section(reference, 'Runner mode (Claude Code)')).toMatch(
+      /header and bind it[\s\S]*followed by `Add-LedgerLine\.ps1 -Unbind`/
+    );
   });
 
   it('reselects by PR state, never by the ledger, and names the blocked-chain stop', () => {
@@ -123,12 +141,16 @@ describe('loop-mode reference', () => {
   it('lists the stop conditions with the client differences and the PBI cap fallback', () => {
     const stops = section(reference, 'Stop conditions');
     expect(stops).toMatch(/1\. \*\*Context warning\*\*/);
-    expect(stops).toMatch(/2\. \*\*PBI cap\*\*: 3 PBIs finished in this loop run \(10 in runner mode\)/);
+    expect(stops).toMatch(
+      /2\. \*\*PBI cap\*\*: 3 PBIs finished in this loop run \(10 in runner mode\)/
+    );
     expect(stops).toMatch(/3\. \*\*Nothing selectable\*\*/);
     expect(stops).toMatch(/No candidate/);
     expect(stops).toMatch(/`hooks` package/);
     expect(stops).toMatch(/Copilot CLI \(`postToolUse`\)[^\n]*fires inside a running loop/);
-    expect(stops).toMatch(/Claude Code \(`UserPromptSubmit`\) and OpenCode \(`chat\.message`\)[^\n]*only with a user message/);
+    expect(stops).toMatch(
+      /Claude Code \(`UserPromptSubmit`\) and OpenCode \(`chat\.message`\)[^\n]*only with a user message/
+    );
     expect(stops).toMatch(/fallback for clients where the warning cannot fire mid-loop/);
     expect(stops).toContain('Gate: <question>');
     expect(stops).toContain('Loop: stopped — headless gate: <question>');
@@ -184,7 +206,9 @@ describe('loop-mode reference: runner mode', () => {
 
   it('relays a GATE: AskUserQuestion, then SendMessage to the runner, until a final status', () => {
     expect(runner.indexOf('`GATE`')).toBeGreaterThan(-1);
-    expect(runner.indexOf('`AskUserQuestion`')).toBeLessThan(runner.indexOf('`SendMessage` the answer'));
+    expect(runner.indexOf('`AskUserQuestion`')).toBeLessThan(
+      runner.indexOf('`SendMessage` the answer')
+    );
     expect(runner).toMatch(/runner's agent id/);
     expect(runner).toMatch(/until a final status/);
     expect(runner).toMatch(/primary makes no `Ruling:` itself/);
@@ -245,7 +269,9 @@ describe('loop mode: sibling references', () => {
   });
 
   it('next-selection keeps one PBI per next run and points to loop-mode', () => {
-    expect(selection).toContain('Exactly one PBI per run; `loop` repeats the selection per `loop-mode.md`.');
+    expect(selection).toContain(
+      'Exactly one PBI per run; `loop` repeats the selection per `loop-mode.md`.'
+    );
     expect(selection).toMatch(/first remaining candidate in sub-issue order/);
   });
 });

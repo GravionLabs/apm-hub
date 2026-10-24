@@ -1,6 +1,6 @@
 name: apm-tooling
 version: 2.3.1
-description: apm-hub contributor tooling for the skill lifecycle. Write, audit, update and slim SKILL.md files and their companion directories.
+description: apm-hub contributor tooling for the skill and agent lifecycle. Write, audit, update and slim SKILL.md files and their companion directories; write and audit agent source files.
 author:
   name: Gravion
 license: MIT
@@ -9,6 +9,8 @@ keywords:
   - tooling
   - skill-lifecycle
 skills:
+  - agent-audit
+  - agent-write
   - skill-audit
   - skill-slim
   - skill-update

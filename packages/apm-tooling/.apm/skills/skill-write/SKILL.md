@@ -21,7 +21,7 @@ Paths to `scripts/`, `references/` and `assets/` are relative to this skill's di
 ### 2. Create and structure
 
 3. Create `SKILL.md` first; add `scripts/`, `references/` or `assets/` only if they reduce repeated context.
-4. Frontmatter: `name` and `description` only, plus optional `license` and `metadata`. The only other keys allowed are the client keys in the rules (`disable-model-invocation` paired with `metadata.opencode/autoinvoke: 'false'`, `user-invocable`, `context: fork`, `agent`); add them only when the rules say so.
+4. Frontmatter: `name` and `description` only, plus optional `license` and `metadata`. The only other keys allowed are the client keys in the rules (`disable-model-invocation` paired with `metadata.opencode/autoinvoke: 'false'`, `user-invocable`, `context: fork`, `agent`); add them only when the rules say so. Never `allowed-tools`, `model`, `compatibility` or `chronicle-hints` at top level; annotations go under `metadata`.
 5. Body: one-sentence overview, numbered instructions, gotchas, one-line report format. Stay ≤ 100 lines.
 
 ### 3. Validate
