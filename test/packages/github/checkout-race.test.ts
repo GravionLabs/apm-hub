@@ -63,7 +63,10 @@ describe('Enter-Checkout.ps1 lease creation is race-safe (#466)', () => {
       const results = outs.map(
         (o) => JSON.parse(o.stdout.trim()) as { path: string; worktree: boolean }
       );
-      expect(results.filter((r) => !r.worktree)).toHaveLength(1);
+      expect(
+        results.filter((r) => !r.worktree),
+        JSON.stringify(outs)
+      ).toHaveLength(1);
       expect(results.filter((r) => r.worktree)).toHaveLength(n - 1);
       const leases = readLeases(f.state);
       expect(leases).toHaveLength(n);
@@ -83,7 +86,10 @@ describe('Enter-Checkout.ps1 lease creation is race-safe (#466)', () => {
     const outs = await Promise.all([enter(f, 201), enter(f, 202)]);
     for (const o of outs) expect(o.code, o.stderr).toBe(0);
     const results = outs.map((o) => JSON.parse(o.stdout.trim()) as { worktree: boolean });
-    expect(results.filter((r) => !r.worktree)).toHaveLength(1);
+    expect(
+      results.filter((r) => !r.worktree),
+      JSON.stringify(outs)
+    ).toHaveLength(1);
     const onMain = readLeases(f.state).filter((l) => l.path === f.repo);
     expect(onMain).toHaveLength(1);
     expect([201, 202]).toContain(onMain[0].issue);

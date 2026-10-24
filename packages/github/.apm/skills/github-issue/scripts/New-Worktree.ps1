@@ -63,5 +63,5 @@ if ($From) {
   if ($LASTEXITCODE -ne 0) { throw "Unknown -From ref '$From'." }
   $start = $From
 } else { Invoke-Git $root @('fetch', 'origin', $Base) }
-Invoke-Git $root @('worktree', 'add', '-b', $Branch, $target, $start)
+Invoke-Git $root @('worktree', 'add', '--no-track', '-b', $Branch, $target, $start)
 [ordered]@{ path = $target; branch = $Branch; base = $Base } | ConvertTo-Json -Compress
