@@ -21,11 +21,11 @@ A cheaper model that needs 2–3× the turns costs more: `fast` is only for role
 
 ## Escalation in the fix loop
 
-Fix rounds of one task (counted per task, from its first blocking review):
+Fix rounds of one task (counted per task, from its first blocking review; in a PBI with several tasks each task has its own counter and tier, and a blocking finding on one task never escalates another):
 
 1. Round 1: a `CHANGES_REQUESTED` with at least one blocking finding → resume the same implementer at its tier.
-2. Round 2: the second `CHANGES_REQUESTED` with a blocking finding on the same task → a fresh implementer one tier up (`fast` → `standard` → `strong`; `strong` stays `strong`).
-3. Round 3: still a blocking finding → resume the escalated implementer once.
+2. Round 2: the second `CHANGES_REQUESTED` with a blocking finding on the same task → a fresh implementer one tier up (`fast` → `standard` → `strong`). A task already at `strong` gets no higher model: the fresh implementer runs at `strong` again with the findings and the ladder continues unchanged.
+3. Round 3: still a blocking finding → resume the escalated implementer once (for a task already at `strong`: the round-2 implementer).
 4. Still blocked after round 3 → gate to the user (`orchestrator-gates.md`).
 
 Never escalate for an advisory-only round (selected MEDIUM/LOW findings without a blocking one) or for a `DONE_WITH_CONCERNS` reply; those keep the same implementer and tier and do not count as a round of this ladder. Clients without resume (Copilot subagents are stateless) start a fresh implementer at the round's tier with the findings, the context path and the report path.

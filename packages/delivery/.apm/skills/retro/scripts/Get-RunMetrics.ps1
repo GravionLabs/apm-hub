@@ -271,6 +271,12 @@ function Get-PhaseKey([string]$name) {
   return $null
 }
 # Optional ' — model <name>' suffix (older ledgers have none): null when absent.
+# Comparable model key: the tier family when the id names one (haiku/sonnet/opus: 'sonnet', 'claude-sonnet-5.5', 'anthropic/claude-sonnet-5-5' are one), else the lowercased id.
+function Get-ModelKey([string]$m) {
+  $l = $m.ToLowerInvariant()
+  foreach ($f in 'haiku', 'sonnet', 'opus') { if ($l -match "(?:^|[/\-])$f(?:$|[-.\d])") { return $f } }
+  return $l
+}
 function Get-LedgerModel([string]$line) { if ($line -match '(?i)(?:^|\s)model\s+([A-Za-z0-9_.:/-]+)\s*$') { return Hide-Secrets $Matches[1] } return $null }
 if ($Ledger -and (Test-Path $Ledger)) {
   $ledgerOut = Hide-Path (Resolve-Path $Ledger).Path
@@ -317,7 +323,7 @@ if ($Ledger -and (Test-Path $Ledger)) {
         # Escalation: the fix round line names a different model than the Task line (new ledgers, escalation at fix round 2).
         # Legacy ledgers (fix line without a model, or `inherit`) escalated at fix round >= 3: keep that check for them only.
         $fmNamed = $fm -and $fm -ne 'inherit'
-        $changed = $fmNamed -and $t.model -and $t.model -ne 'inherit' -and $fm -ne $t.model
+        $changed = $fmNamed -and $t.model -and $t.model -ne 'inherit' -and (Get-ModelKey $fm) -ne (Get-ModelKey $t.model)
         if ($changed -or (-not $fmNamed -and $round -ge 3)) { $t.escalated = $true; if ($fmNamed) { $t.escalatedTo = $fm } }
       }
     }

@@ -480,6 +480,16 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1', () => {
       expect(json.tasks[0]).toMatchObject({ fixRounds: 2, escalated: true, escalatedTo: 'opus' });
     });
 
+    it('treats alias, Claude id and OpenCode id of one tier as the same model', async () => {
+      const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 2 (#1): x — model anthropic/claude-sonnet-5-5']);
+      expect(json.tasks[0]).toMatchObject({ escalated: false, escalatedTo: null });
+    });
+
+    it('escalates from a Claude id to another tier given as OpenCode id', async () => {
+      const json = await metrics(['Task #1: DONE — a — model claude-sonnet-5.5', 'Fix round 2 (#1): x — model anthropic/claude-opus-5-5']);
+      expect(json.tasks[0]).toMatchObject({ escalated: true, escalatedTo: 'anthropic/claude-opus-5-5' });
+    });
+
     it('does not escalate a round 2 resume on the same model', async () => {
       const json = await metrics(['Task #1: DONE — a — model sonnet', 'Fix round 2 (#1): x — model sonnet']);
       expect(json.tasks[0]).toMatchObject({ escalated: false, escalatedTo: null });

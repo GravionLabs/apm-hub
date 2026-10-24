@@ -76,8 +76,9 @@ describe('plan.json schema', () => {
     expect(p.items[0].model).toBeUndefined();
     p.items[0].model = 'sonnet';
     expect(check(p)).toContain('schema');
-    delete p.items[0].tier;
-    expect(check(p)).toContain('schema');
+    const noTier = clone();
+    delete noTier.items[0].tier;
+    expect(check(noTier)).toContain('schema');
   });
 
   it.each(['fast', 'standard', 'strong'])('accepts tier %s', (tier) => {
