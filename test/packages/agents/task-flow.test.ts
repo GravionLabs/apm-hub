@@ -121,8 +121,8 @@ describe('task flow consistency', () => {
     expect(orchestrator).toMatch(/implement mode when the issue has no Task sub-issues/);
     expect(orchestrator).toMatch(/Task sub-issues never get their own branch or PR/);
     expect(orchestrator).toMatch(/Existing Task sub-issues are used as they are/);
-    expect(orchestrator).toMatch(/model` sonnet, no `size: L` review/);
-    expect(orchestrator).toContain('`model` hint');
+    expect(orchestrator).toMatch(/tier `standard`, no `size: L` review/);
+    expect(orchestrator).toContain("the plan item's `tier`");
   });
 
   it('task-issues.md owns the commit, resume and single-task rules', () => {

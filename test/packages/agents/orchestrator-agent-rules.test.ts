@@ -41,7 +41,7 @@ describe('orchestrator agent rules', () => {
 
   it('lists pr-writer among the dispatchable subagents with a model', () => {
     expect(body).toMatch(/subagent_type: [^)]*pr-writer/);
-    expect(pipelineRef).toMatch(/`pr-writer` sonnet/);
+    expect(pipelineRef).toMatch(/`pr-writer` standard/);
   });
 
   it('dispatches step 1 to issue-reader and keeps only its JSON', () => {
@@ -72,9 +72,9 @@ describe('orchestrator agent rules', () => {
     expect(para).toMatch(/branch-only/);
   });
 
-  it('lists issue-reader among the dispatchable subagents on haiku', () => {
+  it('lists issue-reader among the dispatchable subagents at tier fast', () => {
     expect(body).toMatch(/subagent_type: [^)]*issue-reader/);
-    expect(pipelineRef).toMatch(/`issue-reader` haiku/);
+    expect(pipelineRef).toMatch(/`issue-reader` fast/);
   });
 
   it('body points to the pipeline reference and the reference keeps every step and gate list', () => {
@@ -85,10 +85,10 @@ describe('orchestrator agent rules', () => {
     expect(body).not.toMatch(/^\d\.\s/m);
   });
 
-  it('lists review-lead among the dispatchable subagents on sonnet', () => {
+  it('lists review-lead among the dispatchable subagents at tier standard', () => {
     expect(body).toMatch(/subagent_type: [^)]*review-lead/);
     expect(body).toMatch(/`review-lead` in step 5/);
-    expect(pipelineRef).toMatch(/`review-lead` sonnet/);
+    expect(pipelineRef).toMatch(/`review-lead` standard/);
   });
 
   it('does not claim every phase runs in a subagent', () => {
@@ -102,6 +102,7 @@ describe('orchestrator agent rules', () => {
     expect(items[0]).toMatch(/^1\. Plan gate \(step 3\)/);
     expect(items[1]).toMatch(/^2\. Review summary \(step 5\).*--fix-advisories/);
     expect(items[2]).toMatch(/^3\. `CHANGES_REQUESTED` still blocked after fix round 3/);
+    expect(items[2]).toMatch(/round 2 escalated one tier, round 3 resumed it once/);
     expect(items[3]).toMatch(/^4\. Red suite twice/);
     expect(items[4]).toMatch(/^5\. `NEEDS_CONTEXT` from a bug implementer/);
     expect(items[5]).toMatch(/^6\. .*append `Gate: <question>`/);
@@ -149,23 +150,59 @@ describe('orchestrator model pins', () => {
     expect(tiers).toHaveLength(3);
   });
 
-  it('per-dispatch rule pins every dispatch and none to inherit', () => {
+  it('per-dispatch rule pins every dispatch to a tier of model-policy.md and none to inherit', () => {
     expect(rule).toBeDefined();
     for (const pin of [
-      '`issue-reader` haiku',
-      '`explorer` haiku',
-      'Final-Verify haiku',
-      '`planner` opus',
-      '`implementer` sonnet',
-      '`review-lead` sonnet',
-      '`reviewer` sonnet',
-      '`pr-writer` sonnet',
-      'fix round 3 opus',
+      '`issue-reader` fast',
+      '`explorer` fast',
+      'Final-Verify fast',
+      '`planner` strong',
+      "`implementer` the plan item's `tier`",
+      '`review-lead` standard',
+      '`reviewer` standard',
+      '`pr-writer` standard',
+      'fix round 2 one tier up',
     ]) {
       expect(rule, pin).toContain(pin);
     }
+    expect(rule).toContain('references/model-policy.md');
+    expect(rule).not.toMatch(/inherit`|`inherit/);
+    expect(rule).not.toMatch(/\b(haiku|sonnet|opus)\b/);
     expect(rule).not.toMatch(/`[\w-]+`( and `[\w-]+`)*,? (to |defaults to |pinned to )?`?inherit\b/);
     expect(rule).not.toMatch(/(round 3|Final-Verify|final verify) (to )?inherit\b/);
     expect(rule).not.toMatch(/pass `inherit`/);
+  });
+});
+
+describe('fix-round escalation (#251)', () => {
+  const step5 = pipelineRef.split('\n').find((l) => l.startsWith('5. '))!;
+
+  it('round 1 resumes, round 2 escalates one tier after a second blocking CHANGES_REQUESTED, round 3 resumes once', () => {
+    expect(step5).toMatch(/round 1 resumes the same implementer/);
+    expect(step5).toMatch(
+      /round 2, the second `CHANGES_REQUESTED` with a blocking finding on the same task, dispatches a fresh implementer one tier up/,
+    );
+    expect(step5).toMatch(/round 3 resumes that escalated implementer once; still blocked after round 3 → gate to the user/);
+    expect(step5).toContain('`model-policy.md` "Escalation in the fix loop"');
+  });
+
+  it('never escalates for advisory-only rounds or DONE_WITH_CONCERNS', () => {
+    expect(step5).toMatch(/Advisory-only rounds[^.]*`DONE_WITH_CONCERNS` reply resume the same implementer at its tier, never escalate/);
+  });
+
+  it('no longer escalates at round 3 or resumes rounds 1-2', () => {
+    expect(step5).not.toMatch(/rounds 1[–-]2 resume/);
+    expect(step5).not.toMatch(/round 3 a fresh implementer/);
+  });
+
+  it('the implementer gets the plan item tier, not a model hint', () => {
+    const step4 = pipelineRef.split('\n').find((l) => l.startsWith('4. '))!;
+    expect(step4).toContain("the plan item's `tier`");
+    expect(step4).not.toContain('`model` hint');
+    expect(pipelineRef).not.toMatch(/inherit`|`inherit/);
+  });
+
+  it('the fix-round ledger line records the escalated model', () => {
+    expect(pipelineRef).toMatch(/at fix round 2 the escalated one so `retro` sees the escalation/);
   });
 });
