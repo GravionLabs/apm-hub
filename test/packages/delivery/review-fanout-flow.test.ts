@@ -206,3 +206,54 @@ describe('review-fanout: correctness checks invariants (#485)', () => {
     expect(fanout.trimEnd().split('\n').length).toBeLessThanOrEqual(100);
   });
 });
+
+describe('review-fanout: smaller package (#535)', () => {
+  const MARKER = '=== DOCUMENTATION ===';
+  const DOC_PATTERNS = (
+    /Patterns, one per line[^\n]*\n\n```text\n([\s\S]*?)\n```/.exec(filterRef)?.[1] ?? ''
+  )
+    .split('\n')
+    .filter(Boolean);
+
+  it('uses -U3 in SKILL.md and package-filter.md, never -U10', () => {
+    expect(fanout).toContain('git diff -U3 <base>..<head>');
+    expect(filterRef).toContain('`git diff -U3`');
+    expect(fanout).not.toContain('-U10');
+    expect(filterRef).not.toContain('-U10');
+  });
+
+  it('documentation patterns cover top-level files and nested markdown, one per line', () => {
+    expect(DOC_PATTERNS).toEqual(['docs/**/*.md', 'CHANGELOG.md', '**/README*.md', 'site/**/*.md']);
+    expect(filterRef).toContain(':(glob)');
+  });
+
+  it('uses a unique marker line, not a markdown heading, and tells code reviewers to stop there', () => {
+    expect(fanout).toContain(MARKER);
+    expect(filterRef).toContain(MARKER);
+    expect(fanout).not.toContain('## Documentation');
+    expect(fanout).toMatch(/written LAST, after the issue and invariants sections/);
+    expect(fanout).toMatch(/none → no marker/);
+    expect(fanout).toMatch(
+      /`correctness`, `security`, `tests`: stop reading at the `=== DOCUMENTATION ===` line/
+    );
+    expect(fanout).toMatch(/`spec` and `conventions` read it/);
+  });
+
+  it('PR path writes the same marker section', () => {
+    expect(fanout).toMatch(/a PR: `gh pr diff <nr>` sections of those files, same marker/);
+  });
+
+  it('SKILL.md declares the size fields, the 15k note and no split', () => {
+    expect(fanout).toContain('"package":{"bytes":0,"tokensEstimated":0,"hunks":0,"docsHunks":0}');
+    expect(fanout).toMatch(/Above 15000 estimated tokens/);
+    expect(fanout).toContain('package ~<n>k tokens > 15k — largest: <files>');
+    expect(fanout).toMatch(/never split the package/);
+    expect(filterRef).toMatch(/never split automatically/);
+  });
+
+  it('ledger review line carries the package size and the reply names the new keys', () => {
+    expect(pipeline).toMatch(/Phase review: complete — <sha> — package ~<n>k tokens/);
+    expect(pipeline).toMatch(/packageTokens, oversize\?, packageFile, review\}/);
+    expect(pipeline).toMatch(/Phase review/);
+  });
+});

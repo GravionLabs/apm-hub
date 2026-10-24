@@ -15,7 +15,7 @@ describe.skipIf(!hasPwsh)('New-Worktree.ps1', () => {
   const nw = (args: string[], cwd = f.repo) => run('New-Worktree.ps1', args, cwd);
   const branches = () => git(f.repo, 'branch', '--format=%(refname:short)').split('\n');
 
-  it('creates .worktrees/7 on feat/7 from origin/main and prints the JSON', () => {
+  it('creates .worktrees dir 7 on feat/7 from origin/main and prints the JSON', () => {
     f = makeRepo();
     const r = nw(['-Issue', '7', '-Base', 'main']);
     expect(r.status).toBe(0);
@@ -44,7 +44,7 @@ describe.skipIf(!hasPwsh)('New-Worktree.ps1', () => {
     expect(fs.existsSync(path.join(f.repo, '.worktrees', '7', 'new.txt'))).toBe(true);
   });
 
-  it('run from inside .worktrees/7 it creates .worktrees/8 beside it, not nested', () => {
+  it('run from inside .worktrees dir 7 it creates .worktrees dir 8 beside it, not nested', () => {
     f = makeRepo();
     expect(nw(['-Issue', '7', '-Base', 'main']).status).toBe(0);
     const r = nw(['-Issue', '8', '-Base', 'main'], path.join(f.repo, '.worktrees', '7'));
@@ -60,7 +60,7 @@ describe.skipIf(!hasPwsh)('New-Worktree.ps1', () => {
     expect(json(r).path).toBe(path.join(f.repo, '.worktrees', issue));
   });
 
-  it('refuses when .worktrees/ is not ignored, naming Enable-Worktrees.ps1, and creates nothing', () => {
+  it('refuses when .worktrees dir is not ignored, naming Enable-Worktrees.ps1, and creates nothing', () => {
     f = makeRepo({ ignore: false });
     const r = nw(['-Issue', '7', '-Base', 'main']);
     expect(r.status).not.toBe(0);

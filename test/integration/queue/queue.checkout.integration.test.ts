@@ -132,7 +132,7 @@ exit 0
       );
     });
 
-    it('with a live foreign lease on the main checkout the run gets .worktrees/<nr>, removed afterwards', () => {
+    it('with a live foreign lease on the main checkout the run gets .worktrees dir <nr>, removed afterwards', () => {
       const c = C.foreign;
       expect(R.foreign.status).toBe(0);
       expect(fs.readFileSync(c.pwdFile, 'utf8').trim()).toBe(path.join(c.repo, '.worktrees', '10'));

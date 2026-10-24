@@ -93,7 +93,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Enable-Worktrees.ps1'
     expect(read('.gitignore')).toBe('node_modules\n.worktrees/\n');
   });
 
-  it('leaves a repository alone that already ignores .worktrees/', () => {
+  it('leaves a repository alone that already ignores .worktrees dir', () => {
     write('.gitignore', '.worktrees/\n');
     const [r] = run(['apply'], {});
     expect(r.out.changed).toEqual([]);
