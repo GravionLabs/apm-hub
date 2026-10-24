@@ -24,7 +24,7 @@ Paths to `scripts/`, `references/` and `assets/` are relative to this skill's di
 
 3. Top level (Copilot style): `name`, `description` (what it returns and when to use it, ≤ 200 characters), optional `tools` as Copilot aliases (`read`, `search`, `edit`, `execute`, `agent`), optional `user-invocable: false` for subagents, optional `disable-model-invocation: true` for a primary agent, and `metadata`.
 4. Never at top level: `model`, `mode`, `permission`, `color`, `steps`, `agents`. Platform keys go under `metadata.claude` (`tools` with Claude names, `model`, optional `skills`) and `metadata.opencode` (`mode`, `model`, `permission`).
-5. Models: copy the ids from the "Allowed model ids" table in the doc (single source `src/generators/agent-model-validator.ts`); `inherit` on Claude means omit `metadata.opencode.model`.
+5. Models: copy the ids from the "Allowed model ids" table in the doc (single source `MODEL_BY_TIER` in `src/generators/agent-model-validator.ts`); both models of one tier, never `inherit`.
 6. Keep `metadata.claude.tools` and `metadata.opencode.permission` consistent with the top-level `tools`: a read-only agent denies `edit` and `bash` on OpenCode and lists no `Edit`/`Write`/`Bash` on Claude.
 
 ### 3. Body

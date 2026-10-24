@@ -46,7 +46,7 @@ their own line, never after a key, and repeat nothing there that the docs do not
 metadata:
   claude:
     tools: [Read, Grep, Glob]          # Claude tool names; Agent, Bash, Edit, Write, Skill, AskUserQuestion …
-    model: haiku                       # haiku | sonnet | opus | inherit
+    model: haiku                       # haiku | sonnet | opus (never inherit)
     skills: [implementation]           # optional: skills preloaded into the agent
   opencode:
     mode: subagent                     # subagent | primary
@@ -65,12 +65,13 @@ Copy the OpenCode id from this table, never from another agent file. The single 
 
 | Tier | `metadata.claude.model` | `metadata.opencode.model` |
 |:--|:--|:--|
-| haiku | `haiku` | `anthropic/claude-haiku-5-5` |
-| sonnet | `sonnet` | `anthropic/claude-sonnet-5-5` |
-| opus | `opus` | `anthropic/claude-opus-5-5` |
-| caller's model | `inherit` | (omit) |
+| fast | `haiku` | `anthropic/claude-haiku-5-5` |
+| standard | `sonnet` | `anthropic/claude-sonnet-5-5` |
+| strong | `opus` | `anthropic/claude-opus-5-5` |
 
-To bump a model, edit `OPENCODE_MODEL_BY_TIER`, this table and the agent files.
+`inherit` is not allowed: every agent pins a model. Which tier a role or task gets is the
+[model policy](../../packages/github/.apm/skills/github-issue/references/model-policy.md).
+To bump a model, edit `MODEL_BY_TIER`, this table, the model policy and the agent files.
 
 ## Model: frontmatter versus dispatch
 
