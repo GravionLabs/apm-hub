@@ -15,14 +15,14 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "title", "body", "size", "model", "blocked_by", "files", "skills", "issue"],
+        "required": ["id", "title", "body", "size", "tier", "blocked_by", "files", "skills", "issue"],
         "additionalProperties": false,
         "properties": {
           "id": { "type": "string", "pattern": "^p[0-9]+$" },
           "title": { "type": "string", "minLength": 1 },
           "body": { "type": "string", "minLength": 1 },
           "size": { "enum": ["S", "M", "L"] },
-          "model": { "enum": ["haiku", "sonnet", "inherit"] },
+          "tier": { "enum": ["fast", "standard", "strong"] },
           "blocked_by": {
             "type": "array",
             "items": { "oneOf": [{ "type": "string", "pattern": "^p[0-9]+$" }, { "type": "integer", "minimum": 1 }] }

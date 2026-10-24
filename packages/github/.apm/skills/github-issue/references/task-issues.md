@@ -46,4 +46,4 @@ Blocked by #<task>, or none (also set as native blocked-by link)
 - Review range `<first BASE>..HEAD`: `BASE` of the first task is `git merge-base HEAD origin/<integration-branch>` when the ledger is missing; the PBI branch holds only its own commits.
 - PR task list, one line per task: `#<task> — <sha>`, the LAST commit sha carrying that task's `Refs` footer when it has several commits; a single task without issue: `#<pbi> — <sha>`.
 - Only sub-issues labelled `task` are tasks of the PBI's branch. Children labelled `pbi` (of a Feature or Epic) are separate PBIs with their own branch (`batch-workflow.md`).
-- Hand-made Task issues have no `plan.json`: use them as they are, `model` defaults to `sonnet`, no `size: L` quick review; blocking order comes from the native blocked-by links.
+- Hand-made Task issues have no `plan.json`: use them as they are, tier defaults to `standard`, no `size: L` quick review; blocking order comes from the native blocked-by links.

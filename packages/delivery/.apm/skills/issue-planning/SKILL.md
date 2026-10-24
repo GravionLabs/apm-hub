@@ -34,13 +34,13 @@ The input type decides it (`labels`, else title prefix):
 2. Load `detect-techstack`; keep the JSON.
 3. Read the input: `gh issue view <nr> --json title,body,labels`, or the description. Read ALL children, open and closed, with `gh api --paginate repos/{owner}/{repo}/issues/<nr>/sub_issues --jq '.[]|{number,state,title,labels:[.labels[].name]}'`; closed Tasks count as existing and are never re-planned ("Open vs. all tasks" in `github-issue` `references/task-issues.md`). Plan only what is missing; skip open Task issues already merged ("Task merged", same file) and close them.
 4. Explore per the depth through the `explorer` agent: one call per affected area with the file budget and the question; keep only its ≤ 300-word summaries (Claude Code `Agent` with `subagent_type: explorer`, OpenCode `task`, VS Code Copilot `runSubagent`). A runner that cannot spawn agents (a subagent) explores inline with Read/Grep/Glob under the same budget; dispatching `explorer` is then the caller's job.
-5. Slice per `references/slicing.md`. Per item set `blocked_by`, `size` (S/M/L), `model` (haiku/sonnet/inherit, rule below) and `files`. Items whose files or exploration summary show background/async work, persistence or a state machine get an `## Invariants` section per `references/invariants.md` (load it only then).
+5. Slice per `references/slicing.md`. Per item set `blocked_by`, `size` (S/M/L), `tier` (fast/standard/strong, see ## Tier) and `files`. Items whose files or exploration summary show background/async work, persistence or a state machine get an `## Invariants` section per `references/invariants.md` (load it only then).
 6. Collect open decisions as `questions[]`. Answers given in the prompt are final: keep those questions removed and plan accordingly. Resolve anything the repo can answer yourself; keep only real choices (product, scope, risk) with options, a `recommended` option and the item ids it `blocks`.
 7. Write `<state>/<issue>/plan.json` (schema: `references/plan-schema.md`) and `plan.md` (human view: table of items, blocker order, questions). Create the directory; use `<state>/adhoc/` without an issue number.
 
-## Model hint
+## Tier
 
-Same rule as the `orchestrator` agent: `haiku` only for mechanical edits; `sonnet` is the floor for prose-only and routine implementation; `inherit` (or stronger) for integration, design and cross-cutting items; the hint value `inherit` means opus at dispatch, the orchestrator never inherits its own model. Size L is `inherit` unless split.
+Set `tier` per `references/model-policy.md` in the `github-issue` skill (attributes to tier, tier to model id per client). Every item body carries one line `Tier: <tier> — <reason>`. Size L is `strong` unless split.
 
 ## Return
 
