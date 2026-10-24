@@ -70,6 +70,33 @@ describe('plan.json schema', () => {
     expect(check(example)).toEqual([]);
   });
 
+  it('requires tier and rejects model', () => {
+    const p = clone();
+    expect(p.items[0].tier).toBe('standard');
+    expect(p.items[0].model).toBeUndefined();
+    p.items[0].model = 'sonnet';
+    expect(check(p)).toContain('schema');
+    const noTier = clone();
+    delete noTier.items[0].tier;
+    expect(check(noTier)).toContain('schema');
+  });
+
+  it.each(['fast', 'standard', 'strong'])('accepts tier %s', (tier) => {
+    const p = clone();
+    p.items[0].tier = tier;
+    expect(check(p)).toEqual([]);
+  });
+
+  it.each(['haiku', 'sonnet', 'inherit', 'opus'])('rejects tier %s', (tier) => {
+    const p = clone();
+    p.items[0].tier = tier;
+    expect(check(p)).toContain('schema');
+  });
+
+  it('plan-schema.md documents the legacy model migration', () => {
+    expect(doc).toMatch(/`haiku` to `fast`, `sonnet` to `standard`, `inherit` to `strong`/);
+  });
+
   it('rejects a dangling blocked_by id', () => {
     const p = clone();
     p.items[0].blocked_by = ['p9'];

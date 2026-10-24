@@ -46,7 +46,7 @@ their own line, never after a key, and repeat nothing there that the docs do not
 metadata:
   claude:
     tools: [Read, Grep, Glob]          # Claude tool names; Agent, Bash, Edit, Write, Skill, AskUserQuestion …
-    model: haiku                       # haiku | sonnet | opus | inherit
+    model: haiku                       # haiku | sonnet | opus (never inherit)
     skills: [implementation]           # optional: skills preloaded into the agent
   opencode:
     mode: subagent                     # subagent | primary
@@ -65,20 +65,26 @@ Copy the OpenCode id from this table, never from another agent file. The single 
 
 | Tier | `metadata.claude.model` | `metadata.opencode.model` |
 |:--|:--|:--|
-| haiku | `haiku` | `anthropic/claude-haiku-5-5` |
-| sonnet | `sonnet` | `anthropic/claude-sonnet-5-5` |
-| opus | `opus` | `anthropic/claude-opus-5-5` |
-| caller's model | `inherit` | (omit) |
+| fast | `haiku` | `anthropic/claude-haiku-5-5` |
+| standard | `sonnet` | `anthropic/claude-sonnet-5-5` |
+| strong | `opus` | `anthropic/claude-opus-5-5` |
 
-To bump a model, edit `OPENCODE_MODEL_BY_TIER`, this table and the agent files.
+`inherit` is not allowed: every agent pins a model. Which tier a role or task gets is the
+[model policy](../../packages/github/.apm/skills/github-issue/references/model-policy.md).
+To bump a model, edit `MODEL_BY_TIER`, this table, the model policy and the agent files.
 
 ## Model: frontmatter versus dispatch
 
 `metadata.claude.model` / `metadata.opencode.model` is the default for the role. An `Agent` call
 without `model` inherits the caller's model, usually the most expensive one, so the orchestrator
 names the model on every dispatch (see its "Model per dispatch" rule; the `implementer` defaults to
-`sonnet`, and the orchestrator passes `opus` for integration and design tasks; the `orchestrator` itself runs on `sonnet` and no agent of the package uses `inherit`) and escalates one tier in
-the fix loop instead of retrying the same model.
+`sonnet`, and the orchestrator passes the `tier` of the plan item, `strong` for integration and design
+tasks; the `orchestrator` itself runs on `sonnet` and no agent of the package uses `inherit`). In the
+fix loop round 1 resumes the same implementer; the second `CHANGES_REQUESTED` with a blocking finding
+(fix round 2) starts a fresh one a tier up instead of retrying the same model, and a task still
+blocked after round 3 goes to a gate. Advisory-only rounds never escalate. Per-dispatch tiers work on
+Claude Code only; OpenCode and Copilot use the agent file's model until `apmw sanitize` generates
+`implementer-strong` and `reviewer-strong`.
 
 ## Body rules
 

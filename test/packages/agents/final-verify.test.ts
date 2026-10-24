@@ -33,10 +33,10 @@ describe('Final-Verify step (#449)', () => {
     expect(gates).toMatch(/Gate: Final-Verify red twice/);
   });
 
-  it('models: Final-Verify is haiku in the pipeline and in the runner pins', () => {
+  it('models: Final-Verify is fast (haiku) in the pipeline and in the runner pins', () => {
     expect(pipeline).not.toContain('final verify inherit');
-    expect(pipeline).toContain('Final-Verify haiku');
-    expect(pipeline).toMatch(/`explorer` and final verify to haiku/);
+    expect(pipeline).toContain('Final-Verify fast');
+    expect(pipeline).toMatch(/`explorer` and final verify to fast/);
     expect(runner).toContain('final verify haiku');
     expect(runner).not.toContain('final verify opus');
   });

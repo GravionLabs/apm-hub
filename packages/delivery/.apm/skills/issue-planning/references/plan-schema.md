@@ -16,7 +16,7 @@ Written to `<state>/<issue>/plan.json` by the planning step, read by the primary
       "title": "feat: add plan schema reference",
       "body": "Parent Feature: #179\n\n## Overview\n...\n\n## Acceptance Criteria\n- [ ] ...",
       "size": "S",
-      "model": "sonnet",
+      "tier": "standard",
       "blocked_by": [],
       "files": ["packages/x/.apm/skills/y/SKILL.md"],
       "skills": ["ts-implementation"],
@@ -49,7 +49,7 @@ Written to `<state>/<issue>/plan.json` by the planning step, read by the primary
 | `items[].title` | Conventional per level: `Feature: …`, `feat: …` / `fix: …`, `chore: …` |
 | `items[].body` | Issue body; for levels `feature` and `pbi` the first line is `Parent Epic: #N` / `Parent Feature: #N` (the parent number, as in `parent_issue`) followed by the sections of the matching issue template (see the `github-issue` skill). For `task`, the Task issue body (Parent PBI line, or `Parent Bug: #<bug>` for a Bug parent; Overview, Implementation Notes, agent-ready block with Context, Depends on, Files, Done when; Done when names the interface(s) under test). Optional `## Invariants` section for async/stateful items (`invariants.md`): before `## Definition of Done` for `pbi`, before the agent-ready block for `task` |
 | `items[].size` | `S`, `M`, `L` (see `slicing.md`) |
-| `items[].model` | `haiku`, `sonnet`, `inherit` |
+| `items[].tier` | `fast`, `standard`, `strong`, chosen per `references/model-policy.md` in `github-issue`; the item body states `Tier: <tier> — <reason>`. Migration: a legacy `model` maps `haiku` to `fast`, `sonnet` to `standard`, `inherit` to `strong`; readers apply the same mapping to existing plans, new plans carry only `tier` |
 | `items[].blocked_by` | Plan ids or existing issue numbers (integers); acyclic; `[]` when free |
 | `items[].files`, `skills` | Files to touch; `<lang>-implementation` names from detect-techstack |
 | `items[].issue` | `null` until publish writes the created issue number back |

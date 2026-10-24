@@ -21,9 +21,9 @@ Severity: 🔴 critical (invalid, fails a test or a host load) · 🟡 important
 ### `metadata.claude` and `metadata.opencode`
 
 - [ ] `metadata` present with both `claude:` and `opencode:` blocks — 🔴
-- [ ] `metadata.claude.tools` uses Claude tool names; `metadata.claude.model` is `haiku`, `sonnet`, `opus` or `inherit` — 🔴
+- [ ] `metadata.claude.tools` uses Claude tool names; `metadata.claude.model` is `haiku`, `sonnet` or `opus`, never `inherit` — 🔴
 - [ ] `metadata.opencode.mode` is `subagent` or `primary` — 🔴
-- [ ] `metadata.opencode.model` is an id from the "Allowed model ids" table (`src/generators/agent-model-validator.ts`), omitted for `inherit` — 🔴
+- [ ] `metadata.opencode.model` is an id from the "Allowed model ids" table (`src/generators/agent-model-validator.ts`), the same tier as `metadata.claude.model` — 🔴
 - [ ] YAML comments in `metadata.opencode.permission` sit on their own line, never after a key — 🟡
 - [ ] Tool sets agree across platforms: top-level `tools`, `metadata.claude.tools` and `metadata.opencode.permission` grant the same capabilities — 🟢 *(derived)*
 

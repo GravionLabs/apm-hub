@@ -86,6 +86,10 @@ opencode --model <provider/id> --agent orchestrator   # OpenCode, or set `model`
 
 Copilot CLI uses the session model (`--model`, `/model`); the agent file sets none. The inline `/orchestrator` skill does not enforce the model. Measured cost per model: [Models and cost](orchestrator.md#models-and-cost).
 
+### Model policy and tiers
+
+Roles and tasks map to the tiers `fast`, `standard` and `strong` ([model policy](../packages/github/.apm/skills/github-issue/references/model-policy.md)); the planner sets a `tier` with a reason per plan item. A task still blocked after its second `CHANGES_REQUESTED` with a blocking finding (fix round 2) gets a fresh implementer one tier up; advisory-only rounds never escalate. Per-dispatch tiers are Claude Code only: OpenCode and Copilot CLI use the model of the agent file until `apmw sanitize` generates `implementer-strong` and `reviewer-strong`.
+
 ### Copilot CLI
 
 `copilot --agent orchestrator` runs with the same modes, gates and ledger and delegates the phases with Copilot CLI's `task` tool (own context window per subagent, `subagentStop` hook). Copilot subagents are stateless, so fix rounds start a fresh `implementer` instead of resuming one. Only a session without the `task` tool falls back to running the phases inline. Client matrix: [Clients](orchestrator.md#clients). The `/orch` prompt (skill `orch-pipeline`) is deprecated and removed in 3.0.0; use the orchestrator agent instead.
