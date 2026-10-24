@@ -114,6 +114,9 @@ jobs:
       - name: Check manifest skills lists
         run: node scripts/check-manifests.mjs
 
+      - name: Check formatting
+        run: pnpm run format:check
+
       # Generated aggregate docs are gitignored/CI-owned; generate them in the
       # working tree only so the site build resolves its links. Never committed here.
       # generate:all = tsc build + generate:ci; dist/ is not available after the test action.
