@@ -59,6 +59,37 @@ describe('review-lead agent contract', () => {
     expect(body).toContain('defaults to `HEAD`');
   });
 
+  it('takes the rulings path and replies with suppressed (#482)', () => {
+    expect(body).toMatch(/rulings file path `<state>\/<pbi>\/rulings\.json`/);
+    expect(body).toContain('"suppressed": <count');
+    expect(body).toMatch(/0 without a rulings file/);
+    expect(body).toMatch(/status fixed, open, pr-body, declined or deferred/);
+    expect(body).toMatch(/Pass the rulings file path to `review-fanout`/);
+    expect(body).toMatch(/never blocking CRITICAL\/HIGH/);
+  });
+
+  it('status vocabulary agrees across skill, agent and pipeline (#482)', () => {
+    const pipe = fs.readFileSync(
+      path.resolve(
+        __dirname,
+        '../../../packages/github/.apm/skills/github-issue/references/pbi-pipeline.md'
+      ),
+      'utf-8'
+    );
+    const skill = fs.readFileSync(
+      path.resolve(__dirname, '../../../packages/delivery/.apm/skills/review-fanout/SKILL.md'),
+      'utf-8'
+    );
+    for (const s of ['pr-body', 'declined', 'deferred']) {
+      expect(body).toContain(s);
+      expect(skill).toContain(s);
+      expect(pipe).toContain(s);
+    }
+    expect(pipe).toMatch(
+      /advisories matching a `pr-body`, `declined` or `deferred` ruling are suppressed/
+    );
+  });
+
   it('returns the output keys as JSON only within 300 words', () => {
     for (const key of [
       '"verdict"',

@@ -11,8 +11,17 @@ const step = (n: number) => pipeline.split('\n').find((l) => new RegExp(`^${n}\\
 describe('finding rulings', () => {
   it('step 5 records rulings.json and the Ruling line', () => {
     expect(step(5)).toMatch(/`<state>\/<pbi>\/rulings\.json`/);
-    expect(step(5)).toMatch(/`fixed\|declined\|deferred`/);
     expect(step(5)).toMatch(/`Ruling: <n> declined, <k> deferred findings`/);
+  });
+
+  it('step 5 records pr-body, passes the rulings file to review-lead and reads suppressed', () => {
+    expect(step(5)).toMatch(/`fixed\|declined\|deferred\|pr-body`/);
+    expect(step(5)).toMatch(/as `pr-body` with the same merge rule/);
+    expect(step(5)).toMatch(
+      /the previous round's `review\.json` path and `<state>\/<pbi>\/rulings\.json`/
+    );
+    expect(step(5)).toMatch(/matching a `pr-body`, `declined` or `deferred` ruling are suppressed/);
+    expect(step(5)).toMatch(/findings:\[[^\]]*\], suppressed, truncated\?/);
   });
 
   it('step 6 passes declined and deferred findings to pr-writer and keeps Closes', () => {
