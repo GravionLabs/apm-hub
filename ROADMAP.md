@@ -80,8 +80,9 @@ Feature #413 closes with #421, Epic #411 with it. These PBIs share no files with
 | 3 | #590 | retro guardrails: `guardrails.md`, `Test-RetroScope.ps1` in review and CI | M | #587 |
 | 4 | #588 | retro trigger from loop and queue (`--retro auto|never`, thresholds) | M | #587; serial with #392 (queue runner) |
 | 5 | #589 | hypothesis check after k runs, revert candidates | M | #587, #588 |
+| 6 | #594 | planner estimates (size, tier) on the Task ledger line; retro measures their accuracy | M | #586 (parallel to #587–#589) |
 
-Feature #576 closes with #589. #590 runs before #588 so the first automatic retro is already bounded.
+Feature #576 closes with #589 and #594. #590 runs before #588 so the first automatic retro is already bounded.
 
 ### 2.7.0 — Feature #390: attention, queue, usage, `/dromos-mux`
 
