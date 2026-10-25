@@ -1,6 +1,8 @@
 <#
 .SYNOPSIS
   Runs a caller-supplied format (or check) command on the changed files with the given extensions. No language logic.
+.PARAMETER Language
+  Key into `<repo>/.agents/format.json`; an entry there replaces -Extensions, -Command and -Requires (a configured tool that is missing is an error).
 .PARAMETER Extensions
   Extensions to keep, e.g. '.ts','.tsx' (one comma-separated string works too; the leading dot is optional).
 .PARAMETER Command
@@ -13,8 +15,9 @@
   Also include the files changed in `<Base>...HEAD`. Default: uncommitted changes only (staged, unstaged, untracked).
 #>
 param(
-  [Parameter(Mandatory)][string[]]$Extensions,
-  [Parameter(Mandatory)][string]$Command,
+  [string]$Language,
+  [string[]]$Extensions,
+  [string]$Command,
   [switch]$Check,
   [string]$Requires,
   [string]$Base
@@ -23,6 +26,33 @@ $ErrorActionPreference = 'Stop'
 
 $root = (& git rev-parse --show-toplevel 2>$null)
 if ($LASTEXITCODE -ne 0 -or -not $root) { Write-Output 'skipped: not a git repository'; exit 0 }
+
+function Stop-Fail([string]$Message) { Write-Error "error: $Message" -ErrorAction Continue; exit 1 }
+
+# per-project override: an entry for -Language replaces extensions and ALL default commands
+$commands = @(); $override = $false
+$overrideFile = Join-Path $root '.agents/format.json'
+if ($Language -and (Test-Path -LiteralPath $overrideFile -PathType Leaf)) {
+  try { $cfg = Get-Content -LiteralPath $overrideFile -Raw | ConvertFrom-Json -ErrorAction Stop }
+  catch { Stop-Fail ".agents/format.json is not valid JSON ($($_.Exception.Message))" }
+  $entry = if ($cfg -is [pscustomobject]) { $cfg.PSObject.Properties[$Language] } else { $null }
+  if ($entry) {
+    $override = $true
+    $key = if ($Check) { 'check' } else { 'format' }
+    $entryVal = $entry.Value
+    $cmdProp = if ($entryVal -is [pscustomobject]) { $entryVal.PSObject.Properties[$key] } else { $null }
+    if (-not $cmdProp) { Stop-Fail ".agents/format.json: entry '$Language' has no '$key' command" }
+    $commands = @($cmdProp.Value | Where-Object { $_ -is [string] -and $_.Trim() })
+    if ($commands.Count -eq 0) { Stop-Fail ".agents/format.json: entry '$Language' has an empty '$key' command" }
+    $extProp = $entryVal.PSObject.Properties['extensions']
+    if ($extProp) { $Extensions = @($extProp.Value) }
+  }
+}
+if (-not $override) {
+  if (-not $Command) { Stop-Fail '-Command is required (no .agents/format.json entry applies)' }
+  $commands = @($Command)
+}
+if (-not $Extensions) { Stop-Fail '-Extensions is required (no .agents/format.json entry supplies them)' }
 
 $exts = @($Extensions | ForEach-Object { $_ -split ',' } | Where-Object { $_.Trim() } |
   ForEach-Object { $e = $_.Trim().ToLowerInvariant(); if ($e.StartsWith('.')) { $e } else { ".$e" } })
@@ -52,11 +82,15 @@ $files = @($names | Select-Object -Unique | Where-Object {
   })
 if ($files.Count -eq 0) { Write-Output 'skipped: no changed files'; exit 0 }
 
-$tokens = @($Command.Trim() -split '\s+' | Where-Object { $_ })
-$tool = $tokens[0]
-if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { Write-Output "skipped: $tool not found"; exit 0 }
+$plans = @($commands | ForEach-Object { , @($_.Trim() -split '\s+' | Where-Object { $_ }) })
+foreach ($t in $plans) {
+  if (-not (Get-Command $t[0] -ErrorAction SilentlyContinue)) {
+    if ($override) { Stop-Fail "$($t[0]) not found (configured in .agents/format.json for $Language)" }
+    Write-Output "skipped: $($t[0]) not found"; exit 0
+  }
+}
 
-if ($Requires) {
+if ($Requires -and -not $override) {
   $rt = @($Requires.Trim() -split '\s+' | Where-Object { $_ })
   $ok = $false
   if (Get-Command $rt[0] -ErrorAction SilentlyContinue) {
@@ -70,17 +104,24 @@ if ($Requires) {
 # every file is its own argument (no shell quoting); the command never sees `.` or a directory
 # a name starting with '-' must not read as an option
 $safe = @($files | ForEach-Object { if ($_.StartsWith('-')) { "./$_" } else { $_ } })
-$argList = [System.Collections.Generic.List[string]]::new()
-$placed = $false
-foreach ($t in $tokens[1..($tokens.Count)] | Where-Object { $_ }) {
-  if ($t -eq '{files}') { foreach ($f in $safe) { $argList.Add($f) }; $placed = $true } else { $argList.Add($t) }
+function Get-ArgList([string[]]$Tokens) {
+  $argList = [System.Collections.Generic.List[string]]::new()
+  $placed = $false
+  foreach ($t in $Tokens | Select-Object -Skip 1) {
+    if ($t -eq '{files}') { foreach ($f in $safe) { $argList.Add($f) }; $placed = $true } else { $argList.Add($t) }
+  }
+  if (-not $placed) { foreach ($f in $safe) { $argList.Add($f) } }
+  , $argList.ToArray()
 }
-if (-not $placed) { foreach ($f in $safe) { $argList.Add($f) } }
 
 Push-Location -LiteralPath $root
 try {
-  & $tool @argList
-  $code = $LASTEXITCODE
+  foreach ($t in $plans) {
+    $al = Get-ArgList $t
+    & $t[0] @al
+    $code = $LASTEXITCODE
+    if ($code -ne 0) { break }
+  }
 } finally { Pop-Location }
 if ($code -ne 0) { exit $code }
 Write-Output ("{0}: {1} files" -f ($(if ($Check) { 'checked' } else { 'formatted' }), $files.Count))
