@@ -19,9 +19,9 @@ metadata:
       task: deny
       skill: allow
       bash:
+        "*": deny
         "git *": allow
         "gh *": allow
-        "*": deny
 ---
 
 You open the pull request for one PBI on behalf of the orchestrator. Everything you need is in your prompt, the ledger and git; you never ask questions.
