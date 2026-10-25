@@ -1,0 +1,50 @@
+# Keeps the project field Needs current between orchestrator runs (Sync-ProjectNeeds.ps1 computes it from GitHub state).
+# Same token reasoning as add-to-project.yml: a user-owned project needs a classic PAT with the `project` scope.
+# PROJECT_TOKEN wins over GH_PAT. No token: a warning and a green job. pull_request_target: the job checks out the
+# default branch only (for the script) and never runs PR code; the head ref is read as data through env.
+name: Project needs
+
+on:
+  issues:
+    types: [labeled, unlabeled, closed, reopened]
+  pull_request_target:
+    types: [opened, closed, ready_for_review]
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync-needs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Sync Needs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN || secrets.GH_PAT }}
+          GH_REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if (-not $env:GH_TOKEN) {
+            Write-Host '::warning::PROJECT_TOKEN and GH_PAT are empty: Needs sync skipped'
+            exit 0
+          }
+          $script = 'packages/github/.apm/skills/github-project/scripts/Sync-ProjectNeeds.ps1'
+          $syncArgs = @('-Repo', $env:GH_REPO)
+          if ($env:EVENT_NAME -eq 'issues') {
+            $syncArgs += @('-Issue', $env:ISSUE_NUMBER, '-IncludeParents')
+          } elseif ($env:EVENT_NAME -eq 'pull_request_target') {
+            if ($env:HEAD_REF -match '(^|/)(\d+)-') {
+              $syncArgs += @('-Issue', $Matches[2], '-IncludeParents')
+            } else {
+              Write-Host "::notice::No issue number in head ref '$($env:HEAD_REF)': Needs sync skipped"
+              exit 0
+            }
+          }
+          & $script @syncArgs
+          exit $LASTEXITCODE
