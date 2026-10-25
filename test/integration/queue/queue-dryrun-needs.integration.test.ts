@@ -24,6 +24,11 @@ esac
 case "$*" in
   *issues/20/sub_issues*) echo '[{"number":10,"state":"open","title":"[Feature] F","type":{"name":"Feature"}}]' ;;
   *issues/10/sub_issues*) echo '[{"number":11,"state":"open","title":"[PBI] plan me","type":{"name":"PBI"}},{"number":12,"state":"open","title":"[PBI] decide\\u001b[31m me","type":{"name":"PBI"}},{"number":13,"state":"open","title":"[PBI] blocked","type":{"name":"PBI"}},{"number":14,"state":"open","title":"[PBI] ready","type":{"name":"PBI"}},{"number":15,"state":"open","title":"[PBI] merged","type":{"name":"PBI"}},{"number":16,"state":"closed","title":"[PBI] closed","type":{"name":"PBI"}},{"number":17,"state":"open","title":"[Task] a task","type":{"name":"Task"}}]' ;;
+  *issues/30/sub_issues*) echo '[]' ;;
+  *issues/40/sub_issues*) echo '[{"number":40,"state":"open","title":"[Feature] self","type":{"name":"Feature"}},{"number":41,"state":"open","title":"[Feature] f","type":{"name":"Feature"}}]' ;;
+  *issues/41/sub_issues*) echo '[{"number":42,"state":"open","title":"[Feature] g","type":{"name":"Feature"}}]' ;;
+  *issues/42/sub_issues*) echo '[{"number":43,"state":"open","title":"[Feature] too deep","type":{"name":"Feature"}}]' ;;
+  *issues/43/sub_issues*) echo '[{"number":14,"state":"open","title":"[PBI] deep","type":{"name":"PBI"}}]' ;;
   *issues/1[1-9]/sub_issues*) echo '[]' ;;
   *issues/13/dependencies/blocked_by*) echo '[{"number":99,"state":"open"}]' ;;
   *dependencies/blocked_by*) echo '[]' ;;
@@ -53,6 +58,8 @@ describe.skipIf(!hasPwsh || !posix)(
 
     reg('feature', { args: ['-DryRun', '-Feature', '10'] });
     reg('epic', { args: ['-DryRun', '-Epic', '20'] });
+    reg('empty', { args: ['-DryRun', '-Feature', '30'] });
+    reg('cycle', { args: ['-DryRun', '-Epic', '40'] });
     reg('nogh', { args: ['-DryRun', '-Feature', '10'], noGh: true });
     reg('ghfail', { args: ['-DryRun', '-Feature', '10'], ghFails: true });
 
@@ -106,6 +113,18 @@ describe.skipIf(!hasPwsh || !posix)(
       expect(R.epic.status, R.epic.stdout + R.epic.stderr).toBe(0);
       expect(lines('epic')[0]).toMatch(/^\[dry-run\] Epic #20: /);
       expect(lines('epic')).toContain('#14 Ready [PBI] ready');
+    });
+
+    it('a Feature without open PBIs says so instead of reporting Needs as unavailable', () => {
+      expect(R.empty.status, R.empty.stdout + R.empty.stderr).toBe(0);
+      expect(R.empty.stdout).toContain('[dry-run] No open PBIs found.');
+      expect(R.empty.stdout).not.toContain('unavailable');
+    });
+
+    it('a cycle terminates and Features deeper than two levels are not walked', () => {
+      expect(R.cycle.status, R.cycle.stdout + R.cycle.stderr).toBe(0);
+      expect(R.cycle.stdout).toContain('[dry-run] No open PBIs found.');
+      expect(R.cycle.stdout).not.toContain('#14');
     });
 
     it('without gh prints the dry-run line and the unavailable line, exit 0', () => {

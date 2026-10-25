@@ -14,8 +14,8 @@
   a temp file in the state directory is moved over the target.
   Needs: every PBI row `#<nr> <state> <title>` becomes `#<nr> <state> | <Needs> | <title>` (`-` when the rule clears the value) and the last line is
   `Needs me: <n> planning, <m> decisions, <k> release review`. The value comes from Get-NeedsValue of NeedsRules.psm1 (the rule of Sync-ProjectNeeds.ps1,
-  no second implementation); the issue state is read with gh GET calls only (or from -StateFile), the project is never written. A live-lease row without
-  a stronger value counts as `In progress`. Module missing or state unreadable: one warning, rows stay as given, no summary line, exit 0.
+  no second implementation); the issue state is read with gh GET calls only (or from -StateFile), the project is never written. A merged row counts as project Status `In release` and a live-lease row as `In Progress`
+  (facts handed to Get-NeedsValue, which keeps the precedence). -StateFile exists so tests and offline runs need no GitHub. Module missing or state unreadable: one warning, rows stay as given, no summary line, exit 0.
 .PARAMETER Issue Feature or Epic number.
 .PARAMETER Path  File that holds the table. Without it the table is read from stdin.
 .PARAMETER Live  Print the issue numbers of the live leases and exit; no -Issue, no content, no file.
@@ -87,12 +87,16 @@ try {
     $items = @((Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json).items | Where-Object { $_ })
   } elseif ($rows.Count -gt 0) { $items = @(Get-IssueNeedsItem -Number $rows) }
   $liveLeases = @(Get-LiveLeaseIssue $base)
+  $mergedRows = @([regex]::Matches($text, '(?m)^\s*#(\d+) merged(?=[ \t]|$)') | ForEach-Object { [int]$_.Groups[1].Value })
   $needs = @{}
   foreach ($nr in $rows) {
     $it = $items | Where-Object { [int]$_.number -eq $nr } | Select-Object -First 1
-    $v = if ($it) { Get-NeedsValue $it } else { $null }
-    if ($v -eq 'Ready' -and $liveLeases -contains "$nr") { $v = 'In progress' }
-    $needs[$nr] = $v
+    if ($it) {
+      # Facts for the rule, no second rule: a merged row is project Status 'In release' (not readable over REST); a live runner is 'In Progress'.
+      if ($mergedRows -contains $nr) { $it | Add-Member -NotePropertyName status -NotePropertyValue 'In release' -Force }
+      elseif ($liveLeases -contains "$nr" -and "$(Get-Prop $it 'status')" -ne 'In release') { $it | Add-Member -NotePropertyName status -NotePropertyValue 'In Progress' -Force }
+    }
+    $needs[$nr] = if ($it) { Get-NeedsValue $it } else { $null }
   }
   $text = [regex]::Replace($text, "(?m)^([ \t]*#(\d+) $stateRe)(?=[ \t]|$)[ \t]*(\S?)", {
       param($m) $v = $needs[[int]$m.Groups[2].Value]

@@ -220,7 +220,8 @@ if ($Status) {
   exit 0
 }
 
-# Shared Needs rule (github-issue/scripts/NeedsRules.psm1, installed beside this skill or in the repository layout).
+# Shared Needs rule: cross-skill import of the github package's github-issue/scripts/NeedsRules.psm1 (documented in SKILL.md), installed beside this skill or in the repository layout).
+# The PBI walk is an approximation of the orchestrator's `next` selection (which stays in the orchestrator), not a copy of it.
 function Get-NeedsModule {
   foreach ($d in @((Join-Path $PSScriptRoot '../../github-issue/scripts'), (Join-Path $PSScriptRoot '../../../../../github/.apm/skills/github-issue/scripts'))) {
     $f = Join-Path $d 'NeedsRules.psm1'
@@ -251,6 +252,7 @@ function Write-DryRunNeeds([string]$Root) {
         elseif ($lvl -ne 'Task') { $pbis.Add($c) }
       }
     }
+    if ($pbis.Count -eq 0) { Write-Host '[dry-run] No open PBIs found.'; return }
     $items = @(Get-IssueNeedsItem -Number @($pbis | ForEach-Object { [int]$_.number } | Sort-Object -Unique))
     foreach ($p in @($pbis | Sort-Object { [int]$_.number })) {
       $it = $items | Where-Object { $_.number -eq [int]$p.number } | Select-Object -First 1

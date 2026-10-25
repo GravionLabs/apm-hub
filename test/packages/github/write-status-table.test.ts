@@ -432,6 +432,51 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
       expect(out()).toContain('#7 in progress (runner) | In progress | A\n');
     });
 
+    const leaseFor = (nr: number) => {
+      fs.mkdirSync(path.join(state(), 'leases'), { recursive: true });
+      const beat = new Date().toISOString();
+      fs.writeFileSync(
+        path.join(state(), 'leases', `l${nr}.json`),
+        JSON.stringify({
+          path: '/w',
+          issue: nr,
+          branch: 'b',
+          host: 'h',
+          started: beat,
+          heartbeat: beat,
+        })
+      );
+    };
+
+    it('a merged row counts as Release review without the merged label', async () => {
+      const r = await run('#5 merged M\n', [item(5, { status: null })]);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toBe(
+        '#5 merged | Release review | M\nNeeds me: 0 planning, 0 decisions, 1 release review\n'
+      );
+    });
+
+    it('a live lease keeps Decision and Blocked, turns Planning into In progress', async () => {
+      [2, 4, 1].forEach(leaseFor);
+      const r = await run('#2 open D\n#4 open B\n#1 open P\n', [
+        item(2, { labels: ['needs-decision'] }),
+        item(4, { blockedByOpen: 1 }),
+        item(1, { subIssueLevels: [] }),
+      ]);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toContain('#2 in progress (runner) | Decision | D\n');
+      expect(out()).toContain('#4 in progress (runner) | Blocked | B\n');
+      expect(out()).toContain('#1 in progress (runner) | In progress | P\n');
+      expect(out()).toContain('Needs me: 0 planning, 1 decisions, 0 release review');
+    });
+
+    it('a merged row with a live lease stays Release review', async () => {
+      leaseFor(5);
+      const r = await run('#5 merged M\n', [item(5)]);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toContain('#5 merged | Release review | M\n');
+    });
+
     it('reads GitHub with GET calls only and never writes the project', async () => {
       const bin = path.join(dir, 'bin');
       fs.mkdirSync(bin);
