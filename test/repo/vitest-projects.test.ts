@@ -4,7 +4,8 @@ import config from '../../vitest.config';
 import { scriptsTests } from '../helpers/scripts-tests';
 
 const ROOT = path.resolve(__dirname, '../..');
-const SPAWN = /spawnSync|execFileSync|execSync|spawn\(/;
+// Helpers that spawn on behalf of the test file count too (createClassifyFixture runs git and pwsh).
+const SPAWN = /spawnSync|execFileSync|execSync|spawn\(|createClassifyFixture\(/;
 
 const walk = (dir: string): string[] =>
   fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true }).flatMap((e) => {
