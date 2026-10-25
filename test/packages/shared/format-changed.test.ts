@@ -54,7 +54,10 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
   it('skips when nothing changed', async () => {
     fake('fmt');
     const r = await go(['-Extensions', '.ts', '-Command', 'fmt {files}']);
-    expect(r).toMatchObject({ status: 0, stdout: expect.stringContaining('skipped: no changed files') });
+    expect(r).toMatchObject({
+      status: 0,
+      stdout: expect.stringContaining('skipped: no changed files'),
+    });
     expect(logged()).toEqual([]);
   });
 

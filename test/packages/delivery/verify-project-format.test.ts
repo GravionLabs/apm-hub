@@ -3,7 +3,7 @@ import * as path from 'path';
 
 const skill = fs.readFileSync(
   path.resolve(__dirname, '../../../packages/delivery/.apm/skills/verify-project/SKILL.md'),
-  'utf-8',
+  'utf-8'
 );
 const step4 = skill.split('\n').find((l) => l.startsWith('4. '))!;
 

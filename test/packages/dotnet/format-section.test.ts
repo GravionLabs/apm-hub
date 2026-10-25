@@ -4,10 +4,11 @@ import { describe, expect, it } from 'vitest';
 
 const skill = readFileSync(
   path.resolve(__dirname, '../../../packages/dotnet/.apm/skills/dotnet-implementation/SKILL.md'),
-  'utf8',
+  'utf8'
 );
 const section = /^## Format$([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(skill)?.[1] ?? '';
-const line = (label: string): string => section.split('\n').find((l) => l.startsWith('- ' + label)) ?? '';
+const line = (label: string): string =>
+  section.split('\n').find((l) => l.startsWith('- ' + label)) ?? '';
 
 describe('dotnet-implementation ## Format', () => {
   it('has the section with extensions', () => {
