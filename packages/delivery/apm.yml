@@ -1,5 +1,5 @@
 name: delivery
-version: 2.5.0
+version: 2.5.1
 description: "Issue-driven development workflow: parallel review fan-out, run retrospective (retro), session hand-off document (handoff), headless queue runner (queue, optional --fix-advisories), package installer (apm-install), project verification, issue planning with native sub-issues, and git-cliff changelog setup. Pulls in github and shared; stack packages are installed per project."
 registry: https://github.com/GravionLabs/apm-hub
 dependencies:
