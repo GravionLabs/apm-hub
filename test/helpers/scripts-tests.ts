@@ -27,6 +27,7 @@ export const scriptsTests = [
   'test/packages/github/set-project-standard.test.ts',
   'test/packages/github/set-sprint.test.ts',
   'test/packages/github/sync-project-needs.test.ts',
+  'test/packages/github/sync-project-needs.live.test.ts',
   'test/packages/github/task-waves.test.ts',
   'test/packages/github/write-status-table.test.ts',
   'test/packages/hooks/checkout-binding.test.ts',
