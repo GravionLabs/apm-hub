@@ -49,8 +49,9 @@ Two defaults, each switched off by a flag, and one flag that answers the advisor
 | `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged (in progress as defined in `github-issue` `references/status.md`), merged ones per the "Task merged" rule for Tasks and `Merged (closes at release)` in `next-selection.md` for PBIs and Features) and you pick one |
 | `--no-review-summary` | After `review-fanout` it shows one line per finding (`severity file:line issue`, blocking first, MEDIUM/LOW included) and asks which advisories to fix; the rest go to the PR body. With the flag only blocking findings trigger fix rounds |
 | `--fix-advisories none\|medium\|all[:dim,dim]` | Decides the advisory question up front: `none` sends all advisories to the PR body, `medium` fixes MEDIUM and above, `all` fixes every advisory; `:dim,dim` limits the policy to those `review-fanout` dimensions (other advisories go to the PR body). Blocking findings are always fixed. Prints `Advisory policy: <policy> — fixing <n>, PR body <m>` and writes a `Ruling:` ledger line |
+| `--advisory-rounds <0-5>` | Caps the fix rounds that hold only advisories after the first `APPROVE` (default `1`). At the limit the remaining advisories go to the PR body without a question or `Gate:` and a `Ruling:` ledger line is written; `0` sends them all there right after the first `APPROVE`. Blocking findings always get fix rounds. Details: `github-issue` `references/orchestrator-gates.md` |
 
-Headless runs write `Gate: <question>` to the ledger and stop; with `--fix-advisories` set, the review summary writes no `Gate:` line (policy ruling instead). The queue runner forwards the policy as `-FixAdvisories none|medium|all`, documented there once #227 lands. Details: `github-issue` `references/orchestrator-gates.md`.
+Headless runs write `Gate: <question>` to the ledger and stop; with `--fix-advisories` set or the `--advisory-rounds` limit reached, the review summary writes no `Gate:` line (policy ruling instead). The queue runner forwards the policy as `-FixAdvisories none|medium|all`, documented there once #227 lands. Details: `github-issue` `references/orchestrator-gates.md`.
 
 ### Setup
 
@@ -241,9 +242,12 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
 - `/context` before a long step shows what fills the window; the skill list and large tool outputs
   are the usual culprits.
 - Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
-- Reviews read a package file (`<state>/<issue>/review-<n>.diff`: commit list, stat, diff with context)
+- Reviews read a package file (`<state>/<issue>/review-<n>.diff`: commit list, stat, `git diff -U3`)
   written by `review-fanout`; the diff is never pasted into a prompt, so it does not repeat per dimension.
-- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec`. `correctness`
+  Documentation hunks (`docs`, `CHANGELOG.md`, `README*.md`, `site`) form a trailing `=== DOCUMENTATION ===` section that only
+  `spec` and `conventions` read. `review.json` records `package {bytes, tokensEstimated, hunks, docsHunks}`; above 15k
+  estimated tokens a size note names the largest files (the package is never split).
+- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec` (a small `full` diff runs fewer, see the size class in [orchestrator.md](orchestrator.md)). `correctness`
   also checks each `## Invariants` entry of the PBI, its Tasks and plan items without a Task issue (appended under
   `## Invariants (plan)`); a violated invariant is HIGH, quoted in `evidence`, and goes through verify. `spec` compares
   the diff with the originating issue: the number comes from the argument, the branch `<type>/<nr>-<slug>` or

@@ -137,8 +137,9 @@ jobs:
 
   # One job per Vitest project, run in parallel. GravionLabs/ci/node/test@main is not
   # used: its artifact and check names are fixed, so a matrix would lose all but one result.
-  # Required checks: the old single test step is now `Test (unit)`, `Test (scripts)` and
-  # `Test (integration)`; the repo owner must add them to branch protection ('Build & Test' stays).
+  # Required checks: the old single test step is now `Test (unit)`, `Test (scripts)`,
+  # `Test (integration)` and `Test (perf)` (wall-clock cases, `pnpm run test:perf`);
+  # the repo owner must add them to branch protection ('Build & Test' stays).
   # Each matrix job runs on its own runner, so the vitest.config.ts outputs (test-results/junit.xml,
   # coverage/cobertura-coverage.xml) never clash. Coverage is per project; merging it is #503.
   test:
@@ -147,7 +148,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [unit, scripts, integration]
+        project: [unit, scripts, integration, perf]
     # Least privilege: the mutable node/build@main ref gets no pull-requests write.
     permissions:
       checks: write

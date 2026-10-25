@@ -11,6 +11,8 @@
     new 'Gate: <question>' line         -> gate: the queue stops, the question is printed, exit 2
     neither                             -> failed: the queue stops (exit 1) unless -ContinueOnError
   Output of every run is appended to <state>/<issue>/run.log. The runner never merges (unless the opt-in -MergeApproved is given) and never answers a gate.
+  Feature/Epic mode runs github-project/scripts/Sync-ProjectNeeds.ps1 -Issue <pbi> -IncludeParents after each 'Next PBI:' and after the PBI entry is decided
+  (best effort, result in <state>/<pbi>/run.log, never changes the exit code; PROJECT_SYNC_OFF=1 disables, NEEDS_SYNC_SCRIPT overrides the script path).
   Run it from the repository root. Exit codes: 0 all done/skipped, 1 failed, 2 gate, 3 nothing selectable (queue mode only).
 
   -Status <nr>: one-shot 'status <nr>' (no loop, no ledger); prints <state>/status-<nr>.md. Exit 0: file written during this run and
@@ -141,6 +143,28 @@ $MarkerStart = '\A[\s*`>_-]*'
 $MarkerEnd = '[*`_]*:'
 $GatePattern = $MarkerStart + 'Gate' + $MarkerEnd
 function Get-Gates([string[]]$Lines) { @($Lines | ForEach-Object { "$_".Trim() } | Where-Object { $_ -cmatch $GatePattern }) }
+# Project Needs sync at PBI boundaries: Sync-ProjectNeeds.ps1 of the github-project skill (installed beside this skill, or the repository
+# layout; NEEDS_SYNC_SCRIPT overrides). Best effort: output and failures go to the log file, never to $exit or $stop. PROJECT_SYNC_OFF=1 disables.
+function Invoke-NeedsSync([string]$Pbi, [string]$LogFile) {
+  if ($env:PROJECT_SYNC_OFF -eq '1') { return }
+  try {
+    $f = $env:NEEDS_SYNC_SCRIPT
+    if (-not $f) {
+      foreach ($d in @((Join-Path $PSScriptRoot '../../github-project/scripts'), (Join-Path $PSScriptRoot '../../../../../github/.apm/skills/github-project/scripts'))) {
+        $c = Join-Path $d 'Sync-ProjectNeeds.ps1'
+        if (Test-Path -LiteralPath $c -PathType Leaf) { $f = (Resolve-Path -LiteralPath $c).Path; break }
+      }
+    }
+    if (-not $f -or -not (Test-Path -LiteralPath $f -PathType Leaf)) { Add-Content -LiteralPath $LogFile -Value "Needs sync skipped: Sync-ProjectNeeds.ps1 not found" -Encoding utf8; return }
+    $o = @(& pwsh -NoProfile -File $f -Issue $Pbi -IncludeParents 2>&1 | ForEach-Object { "$_" })
+    $c = $LASTEXITCODE
+    $o = @($o | Where-Object { $_.Trim() } | Select-Object -Last 1)
+    $line = if ($c -ne 0) { "Needs sync failed for #${Pbi} (exit code $c)$(if ($o) { ': ' + $o[0] })" } elseif ($o) { $o[0] } else { "Needs sync #${Pbi}: no output" }
+    Add-Content -LiteralPath $LogFile -Value $line -Encoding utf8
+  } catch {
+    try { Add-Content -LiteralPath $LogFile -Value "Needs sync failed for #${Pbi}: $($_.Exception.Message)" -Encoding utf8 } catch { }
+  }
+}
 
 if ($Status) {
   $bad = [ordered]@{ 'issue numbers' = ($Issue.Count -gt 0); '-IssueFile' = [bool]$IssueFile; '-Label' = [bool]$Label; '-Feature/-Epic' = [bool]($Feature -or $Epic)
@@ -196,6 +220,51 @@ if ($Status) {
   exit 0
 }
 
+# Shared Needs rule: cross-skill import of the github package's github-issue/scripts/NeedsRules.psm1 (documented in SKILL.md), installed beside this skill or in the repository layout).
+# The PBI walk is an approximation of the orchestrator's `next` selection (which stays in the orchestrator), not a copy of it.
+function Get-NeedsModule {
+  foreach ($d in @((Join-Path $PSScriptRoot '../../github-issue/scripts'), (Join-Path $PSScriptRoot '../../../../../github/.apm/skills/github-issue/scripts'))) {
+    $f = Join-Path $d 'NeedsRules.psm1'
+    if (Test-Path -LiteralPath $f -PathType Leaf) { return (Resolve-Path -LiteralPath $f).Path }
+  }
+  throw 'NeedsRules.psm1 not found (install the github package beside the delivery package).'
+}
+# Dry run of -Feature/-Epic: one line per open PBI "#<nr> <Needs> <title>", "(skip)" for what the queue skips. gh GET calls only; any failure is one line.
+function Write-DryRunNeeds([string]$Root) {
+  try {
+    if (-not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)) { throw "'gh' not found on PATH" }
+    Import-Module (Get-NeedsModule) -Force
+    $pbis = [System.Collections.Generic.List[object]]::new()
+    $queue = [System.Collections.Generic.Queue[object]]::new()
+    $queue.Enqueue(@{ n = [int]$Root; d = 0 })
+    $seen = @{}
+    while ($queue.Count -gt 0) {
+      $cur = $queue.Dequeue()
+      if ($seen[$cur.n] -or $cur.d -gt 2) { continue }
+      $seen[$cur.n] = $true
+      $json = & gh api --method GET "repos/{owner}/{repo}/issues/$($cur.n)/sub_issues?per_page=100" 2>&1 | Out-String
+      if ($LASTEXITCODE -ne 0) { throw "gh api sub_issues of #$($cur.n) failed" }
+      foreach ($c in @($json | ConvertFrom-Json -Depth 20)) {
+        if ("$($c.state)" -ne 'open') { continue }
+        $lvl = Get-Prop (Get-Prop $c 'type') 'name'
+        if (-not $lvl -and "$($c.title)" -match '^\[(Epic|Feature|PBI|Task|Bug)\]') { $lvl = $Matches[1] }
+        if ($lvl -in 'Epic', 'Feature') { $queue.Enqueue(@{ n = [int]$c.number; d = $cur.d + 1 }) }
+        elseif ($lvl -ne 'Task') { $pbis.Add($c) }
+      }
+    }
+    if ($pbis.Count -eq 0) { Write-Host '[dry-run] No open PBIs found.'; return }
+    $items = @(Get-IssueNeedsItem -Number @($pbis | ForEach-Object { [int]$_.number } | Sort-Object -Unique))
+    foreach ($p in @($pbis | Sort-Object { [int]$_.number })) {
+      $it = $items | Where-Object { $_.number -eq [int]$p.number } | Select-Object -First 1
+      $needs = Get-NeedsValue $it
+      $label = $needs ? $needs : '-'
+      $skip = $needs -in 'Planning', 'Decision', 'Blocked'
+      Write-Host "#$($p.number) $label $(Remove-ControlChar "$($p.title)")$(if ($skip) { ' (skip)' })"
+    }
+  }
+  catch { Write-Host "[dry-run] Needs unavailable: $(Remove-ControlChar "$($_.Exception.Message)")" }
+}
+
 if ($PbiParallel -and -not ($Feature -or $Epic)) { throw '-PbiParallel needs -Feature or -Epic.' }
 if ($Feature -or $Epic) {
   if ($Feature -and $Epic) { throw 'Pass either -Feature or -Epic, not both.' }
@@ -205,7 +274,11 @@ if ($Feature -or $Epic) {
   $kind = $Feature ? 'Feature' : 'Epic'
   $inv = Get-HarnessInvocation $nr 'next' $adv
   $cmd = $inv.Cmd; $envVars = $inv.EnvVars; $envText = $inv.EnvText
-  if ($DryRun) { Write-Host "[dry-run] ${kind} #${nr}: $envText"; exit 0 }
+  if ($DryRun) {
+    Write-Host "[dry-run] ${kind} #${nr}: $envText"
+    Write-DryRunNeeds $nr
+    exit 0
+  }
   $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
   if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
   if ($MergeApproved -and -not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)) { throw "'gh' not found on PATH (needed for -MergeApproved)." }
@@ -297,6 +370,7 @@ if ($Feature -or $Epic) {
       Test-NotSymlink (Join-Path $pbiDir 'run.log')
       Add-Content -LiteralPath (Join-Path $pbiDir 'run.log') -Value (@("=== $iterStart $envText") + $out + $trailer) -Encoding utf8
       $env:AGENTS_LEDGER = Join-Path $pbiDir "progress.md"
+      Invoke-NeedsSync $pbi (Join-Path $pbiDir 'run.log')
       $after = Get-LedgerLines $pbi
       $newGate = @(Get-Gates $after).Count -gt [int]$gatesBefore[$pbi]
       $gate = if ($gm) { $gm } elseif ($newGate) { @(Get-Gates $after)[-1] } else { $null }
@@ -349,6 +423,7 @@ if ($Feature -or $Epic) {
           }
         }
       }
+      Invoke-NeedsSync $pbi (Join-Path $pbiDir 'run.log')
       $entry.ended = Get-Date -Format o
       $pbis.Add([pscustomobject]$entry)
       $prev = $pbi

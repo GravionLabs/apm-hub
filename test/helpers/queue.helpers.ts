@@ -24,6 +24,9 @@ export const GATE_REJECT = ['See Gate: x', 'xGate: x', 'gate: x'];
 // Hermetic state dir: a relative DROMOS_STATE_DIR resolves against the cwd of every run, so each test's temp dir keeps its
 // own `.agents/` and nothing lands in the real repository's git common dir (spawned children inherit process.env).
 process.env.DROMOS_STATE_DIR = '.agents';
+// The Needs sync (Invoke-NeedsSync) spawns a real pwsh script per PBI boundary; off by default so -Feature/-Epic batches stay fast
+// and never reach gh. queue.needs.integration.test.ts turns it on per case (env PROJECT_SYNC_OFF: null removes the variable).
+process.env.PROJECT_SYNC_OFF = '1';
 
 if (!hasPwsh && process.env.CI)
   throw new Error(

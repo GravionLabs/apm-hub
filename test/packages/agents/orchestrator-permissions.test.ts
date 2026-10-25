@@ -164,7 +164,7 @@ describe('orchestrator OpenCode permissions', () => {
     expect(allowed.filter((p) => p.startsWith('*') || /^pwsh \*/.test(p))).toEqual([]);
     for (const p of allowed.filter((x) => x.startsWith('pwsh ')))
       expect(p).toMatch(
-        /^pwsh \S+\/scripts\/(Add-LedgerLine|Detect-TechStack|Write-StatusTable|Enter-Checkout|Exit-Checkout|Get-TaskWaves)\.ps1 \*$/
+        /^pwsh \S+\/scripts\/(Add-LedgerLine|Detect-TechStack|Write-StatusTable|Enter-Checkout|Exit-Checkout|Get-TaskWaves|Sync-ProjectNeeds)\.ps1 \*$/
       );
   });
 });

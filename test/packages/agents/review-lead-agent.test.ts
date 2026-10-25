@@ -59,6 +59,37 @@ describe('review-lead agent contract', () => {
     expect(body).toContain('defaults to `HEAD`');
   });
 
+  it('takes the rulings path and replies with suppressed (#482)', () => {
+    expect(body).toMatch(/rulings file path `<state>\/<pbi>\/rulings\.json`/);
+    expect(body).toContain('"suppressed": <count');
+    expect(body).toMatch(/0 without a rulings file/);
+    expect(body).toMatch(/status fixed, open, pr-body, declined or deferred/);
+    expect(body).toMatch(/Pass the rulings file path to `review-fanout`/);
+    expect(body).toMatch(/never blocking CRITICAL\/HIGH/);
+  });
+
+  it('status vocabulary agrees across skill, agent and pipeline (#482)', () => {
+    const pipe = fs.readFileSync(
+      path.resolve(
+        __dirname,
+        '../../../packages/github/.apm/skills/github-issue/references/pbi-pipeline.md'
+      ),
+      'utf-8'
+    );
+    const skill = fs.readFileSync(
+      path.resolve(__dirname, '../../../packages/delivery/.apm/skills/review-fanout/SKILL.md'),
+      'utf-8'
+    );
+    for (const s of ['pr-body', 'declined', 'deferred']) {
+      expect(body).toContain(s);
+      expect(skill).toContain(s);
+      expect(pipe).toContain(s);
+    }
+    expect(pipe).toMatch(
+      /advisories matching a `pr-body`, `declined` or `deferred` ruling are suppressed/
+    );
+  });
+
   it('returns the output keys as JSON only within 300 words', () => {
     for (const key of [
       '"verdict"',
@@ -69,7 +100,7 @@ describe('review-lead agent contract', () => {
       '"line"',
       '"title"',
       '"blocking"',
-      '"package"',
+      '"packageFile"',
       '"review"',
     ]) {
       expect(body).toContain(key);
@@ -78,6 +109,17 @@ describe('review-lead agent contract', () => {
     expect(body).toContain('<state>/<issue>/review.json');
     expect(body).toMatch(/one JSON object and nothing else, at most 300 words/);
     expect(body).toMatch(/"error"/);
+  });
+
+  it('reply object names packageTokens, oversize and packageFile as keys, package stays the review.json object', () => {
+    const reply = /`(\{"verdict"[^`]*)`/.exec(body)?.[1] ?? '';
+    const keys = [...reply.matchAll(/"(\w+)":/g)].map((m) => m[1]);
+    expect(keys).toEqual(
+      expect.arrayContaining(['packageTokens', 'oversize', 'packageFile', 'review'])
+    );
+    expect(keys).not.toContain('package');
+    expect(reply).toMatch(/"packageTokens": <package\.tokensEstimated>/);
+    expect(reply).toMatch(/"oversize": "<one line, only above the threshold>"/);
   });
 
   it('takes range, issue and context.md and dispatches only reviewer and the verify sub-agent', () => {

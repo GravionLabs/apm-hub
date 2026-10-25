@@ -110,3 +110,13 @@ describe('correctness brief checks invariants (#485)', () => {
     expect(reviewer).not.toMatch(/Invariants/);
   });
 });
+
+describe('reviewer Documentation boundary (#535)', () => {
+  it('rule 2 names the marker and which dimensions stop there or read it', () => {
+    const rule2 = reviewer.split('\n').find((l) => /^2\.\s/.test(l)) ?? '';
+    expect(rule2).toContain('=== DOCUMENTATION ===');
+    const [stops, reads] = rule2.split(/spec`? and `?conventions/);
+    for (const d of ['correctness', 'security', 'tests']) expect(stops).toContain('`' + d + '`');
+    expect(reads).toMatch(/read it/);
+  });
+});

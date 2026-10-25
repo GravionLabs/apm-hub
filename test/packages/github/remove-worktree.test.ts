@@ -67,7 +67,7 @@ describe.skipIf(!hasPwsh)('Remove-Worktree.ps1', () => {
     expect(git(f.repo, 'worktree', 'list', '--porcelain')).not.toContain('.worktrees');
   });
 
-  it('refuses an unregistered directory under .worktrees/ and does not delete it', () => {
+  it('refuses an unregistered directory under .worktrees dir and does not delete it', () => {
     fs.mkdirSync(path.join(f.repo, '.worktrees', '9'));
     fs.writeFileSync(path.join(f.repo, '.worktrees', '9', 'keep.txt'), 'k');
     const r = rw(['-Issue', '9', '-Force']);

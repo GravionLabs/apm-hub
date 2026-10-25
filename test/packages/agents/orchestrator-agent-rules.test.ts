@@ -18,14 +18,16 @@ const lines = (body + '\n' + pipelineRef).split('\n');
 const all = body + '\n' + pipelineRef;
 
 describe('orchestrator agent rules', () => {
+  it('lists --advisory-rounds in the description and the flag list', () => {
+    expect(fs.readFileSync(agentPath, 'utf-8')).toMatch(/description:.*--advisory-rounds/);
+    expect(body).toContain('`--advisory-rounds <0-5>` (default 1');
+  });
+
   it('never allows general-purpose for a phase', () => {
     const offenders: string[] = [];
     for (const line of lines) {
       for (const match of line.matchAll(/general-purpose/g)) {
         const before = line.slice(Math.max(0, match.index - 40), match.index);
-        // the only exception: the Final-Verify command runner (verify-project in a forked general-purpose context)
-        const verifyContext = line.slice(Math.max(0, match.index - 120), match.index);
-        if (/verify-project/.test(verifyContext)) continue;
         if (!/\b(never|not|no)\b/i.test(before)) offenders.push(line.trim().slice(0, 120));
       }
     }
@@ -181,7 +183,7 @@ describe('orchestrator model pins', () => {
     for (const pin of [
       '`issue-reader` fast',
       '`explorer` fast',
-      'Final-Verify fast',
+      'Final-Verify standard',
       '`planner` strong',
       "`implementer` the plan item's `tier`",
       '`review-lead` standard',

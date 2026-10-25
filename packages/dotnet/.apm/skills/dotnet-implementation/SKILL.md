@@ -19,6 +19,16 @@ The official `dotnet` plugin skills (dependency `dotnet/skills`) cover general C
 - XML docs on public API; `<summary>` is one sentence starting with a third-person verb
 - Upgrades: bump versions centrally in `Directory.Build.props` / `Directory.Packages.props`; no prerelease unless requested; build and test after each step
 
+## Format
+
+- Extensions: `.cs`
+- Format: `dotnet format --include {files}`
+- Check (read-only): `dotnet format --verify-no-changes --include {files}`
+- Not configured: `dotnet format` unavailable — the `-Requires` probe fails, the script prints `skipped: dotnet not configured`; note it in the report
+- Run each format command after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Language dotnet -Extensions .cs -Requires 'dotnet format --version' -Command 'dotnet format --include {files}'` (`-Check` for the check commands; see `implementation` `references/format.md`)
+- Override: `.agents/format.json` with an entry for `dotnet` replaces these commands; then run the script once per mode with `-Language dotnet` only (it supplies extensions and commands); a missing configured tool is an error (`docs/usage/format-override.md`)
+- JetBrains: `jb cleanupcode` / `jb inspectcode` as override example, see `docs/usage/format-override.md`
+
 ## EF Core
 
 - Fluent API in `IEntityTypeConfiguration<T>`, not data annotations

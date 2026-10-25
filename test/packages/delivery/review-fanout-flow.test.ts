@@ -89,17 +89,108 @@ describe('review-fanout: smaller package (#453)', () => {
     expect(fanout).toMatch(
       /only the fix diff `<last review HEAD>\.\.HEAD` plus the earlier findings/
     );
-    expect(fanout).toContain('fixed|open|advisory');
+    expect(fanout).toContain('fixed|open|pr-body|declined: <reason>');
+    expect(fanout).not.toContain('fixed|open|advisory');
     expect(fanout).toMatch(/never the full diff again/);
   });
 
   it('review-lead and the PBI pipeline pass the previous review.json', () => {
     expect(lead).toMatch(/previous round's `review\.json` path to `review-fanout`/);
     expect(lead).toMatch(
-      /only the fix diff plus the earlier findings with status fixed, open or advisory, never the full diff/
+      /only the fix diff plus the earlier findings with status fixed, open, pr-body, declined or deferred, never the full diff/
     );
     expect(lead).toMatch(/filters generated files, lockfiles and goldens/);
     expect(pipeline).toMatch(/previous round's `review\.json` path/);
+  });
+});
+
+describe('review-fanout: rulings pass (#482)', () => {
+  const pass = fanout.split('\n').find((l) => l.startsWith('3. **Rulings pass**'))!;
+
+  it('matches on same file and normalised text, ignoring the line', () => {
+    expect(pass).toMatch(/`file` equals an entry's `file`/);
+    expect(pass).toMatch(/normalised `issue` equals that entry's normalised `title`/);
+    expect(pass).toMatch(/lowercase, collapse whitespace, strip trailing punctuation/);
+    expect(pass).toMatch(/`line` is ignored/);
+    expect(pass).toMatch(/`pr-body`, `declined` or `deferred`/);
+  });
+
+  it('runs before dedupe and verify and drops only MEDIUM/LOW', () => {
+    expect(pass).toMatch(/before dedupe and verify/);
+    expect(pass).toMatch(/new MEDIUM\/LOW finding/);
+    expect(pass).toMatch(/CRITICAL\/HIGH match is never dropped[^.]*goes through verify/);
+  });
+
+  it('without a readable rulings file nothing is dropped', () => {
+    expect(pass).toMatch(/missing, unreadable or invalid → skip the pass, nothing dropped/);
+    expect(fanout).toMatch(/`\[\]` without a rulings file/);
+  });
+
+  it('output schema carries suppressed', () => {
+    expect(fanout).toContain('"suppressed":[]');
+  });
+});
+
+describe('review-fanout: rulings pass fixtures (#482)', () => {
+  type F = { file: string; severity: string; issue: string; dim?: string };
+  type R = { file: string; title: string; status: string };
+  const norm = (t: string) =>
+    t
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/[.!?;:,]+$/, '');
+  // Mirrors the SKILL.md rulings pass rules (keep in sync with the prose asserted below)
+  const pass = (findings: F[], rulings: R[] | null) => {
+    if (!rulings) return { kept: findings, suppressed: [] as F[] };
+    const valid = rulings.filter(
+      (r) => r.file && r.title && ['pr-body', 'declined', 'deferred'].includes(r.status)
+    );
+    const kept: F[] = [];
+    const suppressed: F[] = [];
+    for (const f of findings) {
+      const n = norm(f.issue);
+      const hit = valid.some((r) => {
+        const t = norm(r.title);
+        return r.file === f.file && (n === t || n.includes(t) || t.includes(n));
+      });
+      const droppable = ['MEDIUM', 'LOW'].includes(f.severity) && f.dim !== 'security';
+      (hit && droppable ? suppressed : kept).push(f);
+    }
+    return { kept, suppressed };
+  };
+  const rulings: R[] = [
+    { file: 'a.ts', title: 'Missing null check', status: 'declined' },
+    { file: '', title: 'x', status: 'pr-body' },
+    { file: 'b.ts', title: 'Naming', status: 'bogus' },
+  ];
+
+  it('drops a reworded MEDIUM match on another line, keeps other files and malformed-entry matches', () => {
+    const r = pass(
+      [
+        { file: 'a.ts', severity: 'MEDIUM', issue: ' missing NULL check.' },
+        { file: 'c.ts', severity: 'MEDIUM', issue: 'Missing null check' },
+        { file: 'b.ts', severity: 'LOW', issue: 'Naming' },
+      ],
+      rulings
+    );
+    expect(r.suppressed.map((f) => f.file)).toEqual(['a.ts']);
+    expect(r.kept.map((f) => f.file)).toEqual(['c.ts', 'b.ts']);
+  });
+
+  it('keeps HIGH and security matches, and drops nothing without a rulings file', () => {
+    const fs = [
+      { file: 'a.ts', severity: 'HIGH', issue: 'Missing null check' },
+      { file: 'a.ts', severity: 'MEDIUM', issue: 'Missing null check', dim: 'security' },
+    ];
+    expect(pass(fs, rulings).kept).toHaveLength(2);
+    expect(pass(fs, null).suppressed).toEqual([]);
+  });
+
+  it('SKILL.md states the rules the fixture mirrors', () => {
+    expect(fanout).toMatch(/contains it or is contained in it/);
+    expect(fanout).toMatch(/skipped, the other entries still apply/);
+    expect(fanout).toMatch(/`security` finding is never dropped/);
   });
 });
 
@@ -204,5 +295,187 @@ describe('review-fanout: correctness checks invariants (#485)', () => {
 
   it('SKILL.md stays within 100 lines', () => {
     expect(fanout.trimEnd().split('\n').length).toBeLessThanOrEqual(100);
+  });
+});
+
+describe('review-fanout: smaller package (#535)', () => {
+  const MARKER = '=== DOCUMENTATION ===';
+  const DOC_PATTERNS = (
+    /Patterns, one per line[^\n]*\n\n```text\n([\s\S]*?)\n```/.exec(filterRef)?.[1] ?? ''
+  )
+    .split('\n')
+    .filter(Boolean);
+
+  it('uses -U3 in SKILL.md and package-filter.md, never -U10', () => {
+    expect(fanout).toContain('git diff -U3 <base>..<head>');
+    expect(filterRef).toContain('`git diff -U3`');
+    expect(fanout).not.toContain('-U10');
+    expect(filterRef).not.toContain('-U10');
+  });
+
+  it('documentation patterns cover top-level files and nested markdown, one per line', () => {
+    expect(DOC_PATTERNS).toEqual(['docs/**/*.md', 'CHANGELOG.md', '**/README*.md', 'site/**/*.md']);
+    expect(filterRef).toContain(':(glob)');
+  });
+
+  it('uses a unique marker line, not a markdown heading, and tells code reviewers to stop there', () => {
+    expect(fanout).toContain(MARKER);
+    expect(filterRef).toContain(MARKER);
+    expect(fanout).not.toContain('## Documentation');
+    expect(fanout).toMatch(/written LAST, after the issue and invariants sections/);
+    expect(fanout).toMatch(/none → no marker/);
+    expect(fanout).toMatch(
+      /`correctness`, `security`, `tests`: stop reading at the `=== DOCUMENTATION ===` line/
+    );
+    expect(fanout).toMatch(/`spec` and `conventions` read it/);
+  });
+
+  it('PR path writes the same marker section', () => {
+    expect(fanout).toMatch(/a PR: `gh pr diff <nr>` sections of those files, same marker/);
+  });
+
+  it('SKILL.md declares the size fields, the 15k note and no split', () => {
+    expect(fanout).toContain('"package":{"bytes":0,"tokensEstimated":0,"hunks":0,"docsHunks":0}');
+    expect(fanout).toMatch(/Above 15000 estimated tokens/);
+    expect(fanout).toContain('package ~<n>k tokens > 15k — largest: <files>');
+    expect(fanout).toMatch(/never split the package/);
+    expect(filterRef).toMatch(/never split automatically/);
+  });
+
+  it('ledger review line carries the package size and the reply names the new keys', () => {
+    expect(pipeline).toMatch(/Phase review: complete — <sha> — package ~<n>k tokens/);
+    expect(pipeline).toMatch(/packageTokens, oversize\?, packageFile, review\}/);
+    expect(pipeline).toMatch(/Phase review/);
+  });
+});
+
+describe('review-fanout: size class and skipped dimensions (#534)', () => {
+  const orchestratorDoc = fs.readFileSync(path.join(root, 'docs/orchestrator.md'), 'utf-8');
+  const classifyLine = fanout
+    .split('\n')
+    .find((l) => l.includes('Classify-Diff.ps1 -Range') === false && l.includes('It prints'))!;
+
+  it('step 2 names the reduced full + small set and that a caller list replaces it', () => {
+    expect(classifyLine).toContain('{mode,dimensions,reason,size,signals,skippedDimensions}');
+    expect(classifyLine).toMatch(/`full` \+ `small`/);
+    expect(classifyLine).toMatch(/`correctness`, `tests`, `spec`/);
+    expect(classifyLine).toMatch(/`security` on the `risky` or `sensitive` signal/);
+    expect(classifyLine).toMatch(/`conventions` on the `source` signal/);
+    expect(classifyLine).toMatch(/a dimension list given by the caller replaces them/);
+    expect(classifyLine).toMatch(/`-Force full` runs all five/);
+    expect(classifyLine).toMatch(/invalid JSON is `full` with all five dimensions/);
+  });
+
+  it('output shape and review.json carry skippedDimensions', () => {
+    expect(fanout).toContain('"skippedDimensions":[{"dimension","reason"}]');
+    expect(fanout).toMatch(
+      /`skippedDimensions` = the dimensions the size class dropped, `\[\]` when none/
+    );
+  });
+
+  it('ledger review line lists skipped dimensions read from review.json', () => {
+    expect(pipeline).toContain('[ — skipped <dim>,<dim> (size small)]');
+    expect(pipeline).toMatch(/read from `skippedDimensions` of `review\.json`/);
+  });
+
+  it('a size-skipped dimension is never added back in a re-review', () => {
+    expect(pipeline).toMatch(/a dimension skipped for size is never added back/);
+    expect(fanout).toMatch(/never adds a size-skipped dimension back/);
+  });
+
+  it('docs mention the size class and skippedDimensions', () => {
+    expect(orchestratorDoc).toMatch(/The size class: a small diff/);
+    expect(orchestratorDoc).toContain('`skippedDimensions` in `review.json`');
+    expect(fs.readFileSync(path.join(root, 'docs/working-mode.md'), 'utf-8')).toMatch(
+      /a small `full` diff runs fewer/
+    );
+  });
+});
+
+describe('review-fanout: review.json shape and ledger line (#534)', () => {
+  // Output template of SKILL.md, made parseable by quoting the bare field names.
+  const shapeLine = fanout.split('\n').find((l) => l.startsWith('`{"mode"'))!;
+  const template = /^`(\{.*\})`/
+    .exec(shapeLine)![1]
+    .replace(/\{(file,line,severity,issue,evidence)\}/, '"$1"')
+    .replace(/\{"dimension","reason"\}/, '{"dimension":"","reason":""}')
+    .replace(/"APPROVE\|CHANGES_REQUESTED"|"[a-z|]+\|[a-z|]+"/g, '""');
+  const shape = JSON.parse(template) as Record<string, unknown>;
+
+  it('the output template is valid JSON with skippedDimensions as {dimension,reason} array', () => {
+    expect(Object.keys(shape)).toEqual(
+      expect.arrayContaining([
+        'mode',
+        'dimensions',
+        'verdict',
+        'suppressed',
+        'skippedDimensions',
+        'package',
+      ])
+    );
+    expect(shape.skippedDimensions).toEqual([{ dimension: '', reason: '' }]);
+  });
+
+  // Ledger template of pbi-pipeline.md as a regex: the optional skipped part becomes an optional group.
+  const ledgerTemplate = /`(Phase review: complete[^`]*)`/.exec(pipeline)![1];
+  const ledger = new RegExp(
+    '^' +
+      ledgerTemplate
+        .replace(
+          /\[ — skipped <dim>,<dim> \(size small\)\]/,
+          '( — skipped \\w+(,\\w+)* \\(size small\\))?'
+        )
+        .replace('<sha>', '[0-9a-f]+')
+        .replace('<n>', '\\d+') +
+      '$'
+  );
+
+  it('the ledger template accepts a review line with and without skipped dimensions', () => {
+    expect(ledgerTemplate).toBe(
+      'Phase review: complete — <sha> — package ~<n>k tokens[ — skipped <dim>,<dim> (size small)]'
+    );
+    expect('Phase review: complete — abc1234 — package ~12k tokens').toMatch(ledger);
+    expect(
+      'Phase review: complete — abc1234 — package ~12k tokens — skipped security,conventions (size small)'
+    ).toMatch(ledger);
+    expect(
+      'Phase review: complete — abc1234 — package ~3k tokens — skipped security (size small)'
+    ).toMatch(ledger);
+  });
+
+  it('the ledger template rejects an empty skipped list or a missing size note', () => {
+    expect(
+      'Phase review: complete — abc1234 — package ~12k tokens — skipped  (size small)'
+    ).not.toMatch(ledger);
+    expect('Phase review: complete — abc1234 — package ~12k tokens — skipped security').not.toMatch(
+      ledger
+    );
+    expect('Phase review: complete — abc1234 — skipped security (size small)').not.toMatch(ledger);
+  });
+
+  it('a re-review carries the earlier skippedDimensions forward along the whole dispatch chain', () => {
+    // The previous review.json travels pipeline -> review-lead -> review-fanout.
+    expect(pipeline).toMatch(
+      /`review-lead` gets range, dimension list, the previous round's `review\.json` path[^\n]*?passes them to `review-fanout`/
+    );
+    expect(lead).toMatch(
+      /Re-review: also pass the previous round's `review\.json` path to `review-fanout`/
+    );
+    expect(fanout).toMatch(
+      /\*\*Re-review\*\* after a fix round \(the caller passes the previous round's `review\.json`\)/
+    );
+    // The carried field is the one the output template defines, with the same entry shape.
+    const rule = fanout.split('\n').find((l) => l.includes('A re-review keeps the delta rule'))!;
+    const carried =
+      /carries the `(\w+)` of the previous `review\.json` into its own \(union, no duplicates\)/.exec(
+        rule
+      );
+    expect(carried?.[1]).toBe('skippedDimensions');
+    expect(shape).toHaveProperty(carried![1]);
+    expect(shape[carried![1]]).toEqual([{ dimension: '', reason: '' }]);
+    // Same sentence: nothing skipped is re-added, and the record survives the overwrite.
+    expect(rule).toMatch(
+      /never adds a size-skipped dimension back and carries the `skippedDimensions`[^\n]*?so the record survives the overwrite\./
+    );
   });
 });

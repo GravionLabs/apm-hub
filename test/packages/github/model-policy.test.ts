@@ -48,7 +48,7 @@ describe('model-policy reference', () => {
   it.each([
     ['planner', 'strong'],
     ['issue-reader', 'fast'],
-    ['Final-Verify', 'fast'],
+    ['Final-Verify', 'standard'],
     ['prose only', 'standard'],
     ['size: L', 'strong'],
   ])('maps %s to %s', (attribute, tier) => {
