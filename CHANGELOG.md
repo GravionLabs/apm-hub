@@ -5,6 +5,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.5.0] — 2026-10-25
+
+### Bug Fixes
+- Restore bash tool for pr-writer, review-lead and reviewer on OpenCode (#426) (#599)
+- Run Final-Verify full test suite once (#610) (#615)
+
+
+### Documentation
+- Schedule Epic #573 (unattended loops) in ROADMAP.md (#593)
+- Schedule Feature #595 (project cockpit) in 2.5.0 and record the merged PBIs (#627)
+- Add unattended path overview for the self-learning workflow (#573) (#645)
+- Roadmap notes after the label and milestone cleanup (#647)
+
+
+### Features
+- Smaller review-fanout package (#535) (#572)
+- Limit fix rounds after approve with --advisory-rounds (#480) (#602)
+- Fix rounds stay inside the issue scope (#481) (#606)
+- Skip advisories already ruled in review-fanout (#482) (#607)
+- Run fewer review dimensions for small diffs (#534) (#611)
+- Format changed sources as a fixed implementer step (#383) (#616)
+- **agents**: Cache published Task bodies as task-<nr>.md and hand the implementer the path (#548) (#622)
+- Add per-project format override (#386) (#621)
+- Add field Needs and views to project standard (#596) (#644)
+- Sync project needs from github state (#597) (#646)
+- Show needs per pbi in status and queue dry run (#598) (#648)
+
+
 ## [2.4.0] — 2026-10-24
 
 ### Bug Fixes
@@ -13,6 +41,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - **github**: In release step names the missing project scope, docs drop fine-grained tokens (#518)
 - Make git-guardrails scanner linear on bash 3.2 (#367) (#528)
 - **github**: Create worktrees without upstream tracking (#567)
+
+
+### Documentation
+- Update CHANGELOG.md for v2.4.0 [skip ci]
 
 
 ### Features
