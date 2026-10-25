@@ -1,6 +1,6 @@
 # Roadmap
 
-Order of work and release assignment for the open issues. Created 2026-10-18, last release `v2.4.0` (2026-10-24), updated 2026-10-25 for Epic #573 (unattended loops, see the analysis document "dromos + apm-hub: Analyse und selbstlernendes Agent-System"). Each release has a GitHub milestone of the same name. Work runs one PBI at a time on `release/next` (several PBIs edit `orchestrator.agent.md` or the ledger hook).
+Order of work and release assignment for the open issues. Created 2026-10-18, last release `v2.4.0` (2026-10-24), updated 2026-10-25 for Epic #573 (unattended loops, see the analysis document "dromos + apm-hub: Analyse und selbstlernendes Agent-System") and for Feature #595 (project cockpit, pulled into 2.5.0). Each release has a GitHub milestone of the same name. Work runs one PBI at a time on `release/next` (several PBIs edit `orchestrator.agent.md` or the ledger hook).
 
 ## 2.4.0 — Feature runs and hardening (released as `v2.4.0`; only Feature #248 is still open and closes with its verification follow-ups)
 
@@ -14,15 +14,29 @@ Order of work and release assignment for the open issues. Created 2026-10-18, la
 
 Closing: Feature #248 and Epic #300 once #402 and #251 are merged. Then `github-release` finish.
 
-## 2.5.0 — Epic #384: format changed sources
+## 2.5.0 — Epic #384 (format, review convergence) and Feature #595: project cockpit
+
+Merged on `release/next` (project status `In release`); the release is cut once the cockpit PBIs below are merged:
+
+| Issue | Title | Note |
+| --- | --- | --- |
+| #442 | worktrees on demand under `.worktrees/<nr>`, checkout lease, queue wiring | Tasks #443 #444 #465 #445 |
+| #383, #386 | format changed sources as a fixed implementer step, per-project override in `.agents/format.json` | Feature #385 closes |
+| #480, #481, #482, #534, #535 | review rounds converge after APPROVE, smaller review package, fewer dimensions for small diffs | Feature #478 stays open with the unscheduled #487, #541, #543 |
+| #548 | Task bodies cached as `task-<nr>.md` | Feature #547 closes |
+| #569, #570 | test files split per describe | Feature #568 closes with #571 (2.6.0) |
+| #426 | bash tool for `pr-writer`, `review-lead`, `reviewer` on OpenCode | Feature #432 stays open |
+| #610 | Final-Verify runs the full test suite once | — |
+
+The cockpit replaces the sprint as the way to pick work: a project field `Needs` (`Planning`, `Decision`, `Review`, `Blocked`, `Ready`, `In progress`, `Release review`) computed from GitHub state, and the views `Needs me`, `Ready for loop` and `Blocked` on it. The `Sprint` field stays optional. Pulled forward from 2.6.0 because the unattended loops of Epic #573 need the human's two jobs (planning, release review) visible first.
 
 | Order | Issue | Title | Size | Depends on |
 | --- | --- | --- | --- | --- |
-| 1 | #383 | format changed sources as a fixed implementer step | M | — |
-| 2 | #386 | per-project override in `.agents/format.json` | S | #383 |
-| 3 | #442 | worktrees on demand under `.worktrees/<nr>`, checkout lease, queue wiring | L | #402 (Tasks #443 #444 #465 #445) |
+| 1 | #596 | project standard: field `Needs`, views `Needs me`, `Ready for loop`, `Blocked`, `Sprint next`; label `planned` on publish | S | — |
+| 2 | #597 | `Sync-ProjectNeeds.ps1`: rules, `Set-ProjectStandard -Sync`, loop and queue call at PBI boundaries, workflow `project-needs.yml` | M | #596 |
+| 3 | #598 | `Needs` column in `orchestrator status` and `queue -DryRun`, closing `Needs me:` line | S | #597 |
 
-Feature #385 closes with #386.
+Feature #595 closes with #598. The sync hooks in `add-to-project.yml` and `release-pr.yml` and the workflow template for other repositories are split out as #626 (2.6.0). #597 edits `loop-mode.md` and the queue runner before #579 and #582 do, so no parallel work on those files in this release.
 
 ### 2.5.0 — Epic #411, Feature #412: Rust stack package with Tauri
 
@@ -51,6 +65,13 @@ The loop and the queue run a Feature or Epic without a human by default. Two hum
 | 8 | #585 | docs: unattended mode, review points, rollback | S | #582, #579 |
 
 Feature #574 closes with #581, Feature #575 with #585. Before the first unattended run of this repository: #583 protects `release/next` (today it has no required checks).
+
+### 2.6.0 — Feature #595 follow-up and PBIs moved out of 2.5.0
+
+| Order | Issue | Title | Size | Depends on |
+| --- | --- | --- | --- | --- |
+| 1 | #626 | `Needs` sync from `add-to-project.yml` and `release-pr.yml`; workflow template for other repositories | S | #597 |
+| 2 | #571 | git-guardrails performance cases in their own file (closes Feature #568) | S | — |
 
 ### 2.6.0 — Epic #387, Feature #388: dromos MVP
 
