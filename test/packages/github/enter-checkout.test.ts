@@ -301,6 +301,10 @@ describe.skipIf(!hasPwsh || spawnSync('node', ['-v']).status !== 0)(
         { PROJECT_SYNC_OFF: '1' } as Record<string, string>
       );
       expect(other.status, other.stderr).toBe(0);
+      // the main checkout (the caller cwd) no longer has the config; only the new worktree (from origin/main) does
+      git(f.repo, 'rm', '-q', '.agents/project.json');
+      git(f.repo, 'commit', '-q', '-m', 'drop config on feat/3');
+      expect(fs.existsSync(path.join(f.repo, '.agents/project.json'))).toBe(false);
       const { r, gh } = enter({ config: false });
       expect(r.status, r.stderr).toBe(0);
       expect(json(r).worktree).toBe(true);
