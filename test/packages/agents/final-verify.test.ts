@@ -40,6 +40,18 @@ describe('Final-Verify step (#449)', () => {
     }
   });
 
+  it('regression #610: no Final-Verify text outside step 5 routes verify-project through general-purpose or haiku', () => {
+    const modelPolicy = read('github/.apm/skills/github-issue/references/model-policy.md');
+    const texts = { verifyProject, gates, waves, runner, docs, modelPolicy };
+    for (const [name, text] of Object.entries(texts)) {
+      expect(text, name).not.toMatch(/forked general-purpose context/);
+      expect(text, name).not.toMatch(/`Agent` with `subagent_type: general-purpose`/);
+      expect(text, name).not.toMatch(/final verify haiku|verify on haiku|verify phase to haiku/i);
+      expect(text, name).not.toMatch(/verify-project, haiku/);
+    }
+    expect(modelPolicy).toMatch(/forked skill without `agent:`[^.]*caller's model/);
+  });
+
   it('verify-project, the light check, task waves and the runner carry the run-once rule (#610)', () => {
     expect(verifyProject).toContain('context: fork');
     expect(verifyProject).toMatch(
