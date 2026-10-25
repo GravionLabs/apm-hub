@@ -68,3 +68,33 @@ describe('fix round rules (#459)', () => {
     }
   });
 });
+
+describe('fix rounds stay inside the issue scope (#481)', () => {
+  const implementer = read('agents/.apm/agents/implementer.agent.md');
+  const rule = (n: number) => implementer.split('\n').find((l) => l.startsWith(`${n}. `))!;
+
+  it('step 5 states the issue-wins rule, four deferral triggers and three statuses', () => {
+    expect(step5).toMatch(/the issue wins over a conflicting finding/);
+    for (const t of [
+      'a new module',
+      'a new fallback or retry path',
+      'new I/O',
+      'a new security mechanism',
+    ]) {
+      expect(step5).toContain(t);
+    }
+    expect(step5).toContain('`deferred`, not implemented');
+    expect(step5).toContain('fixed | declined: <reason> | deferred: out of scope — <need>');
+  });
+
+  it('implementer rules 3, 7 and 8 name the statuses for report and reply', () => {
+    expect(rule(3)).toMatch(/issue wins over a conflicting finding/);
+    expect(rule(3)).toMatch(/new module.*fallback or retry path.*new I\/O.*security mechanism/);
+    expect(rule(7)).toContain('`fixed`');
+    expect(rule(7)).toContain('`declined: <reason>`');
+    expect(rule(7)).toContain('`deferred: out of scope — <need>`');
+    expect(rule(8)).toContain('`Findings:`');
+    expect(rule(8)).toMatch(/declined or deferred finding by `file:line`/);
+    expect(rule(8)).toMatch(/at most 15 lines/);
+  });
+});
