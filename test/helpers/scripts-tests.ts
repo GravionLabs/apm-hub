@@ -27,6 +27,8 @@ export const scriptsTests = [
   'test/packages/hooks/git-guardrails.test.ts',
   'test/packages/hooks/opencode-plugin.test.ts',
   'test/packages/hooks/statusline.test.ts',
+  'test/packages/hooks/subagent-ledger.binding.test.ts',
+  'test/packages/hooks/subagent-ledger.loop-marker.test.ts',
   'test/packages/hooks/subagent-ledger.test.ts',
   'test/packages/shared/detect-techstack.test.ts',
   'test/packages/shared/enable-worktrees.test.ts',
