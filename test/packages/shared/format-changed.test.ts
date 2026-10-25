@@ -122,4 +122,106 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
     expect(r.stdout.trim()).toBe('formatted: 2 files');
     expect(logged().sort()).toEqual(['c.ts', 'd.ts']);
   });
+
+  it('fails non-zero with the git error for an invalid -Base', async () => {
+    fake('fmt');
+    write('a.ts', 'x');
+    const r = await go([
+      '-Extensions',
+      '.ts',
+      '-Command',
+      'fmt {files}',
+      '-Base',
+      'no-such-ref',
+      '-Check',
+    ]);
+    expect(r.status).not.toBe(0);
+    expect(r.stdout).not.toContain('skipped');
+    expect(r.stderr).toMatch(/no-such-ref|unknown revision/);
+    expect(logged()).toEqual([]);
+  });
+
+  it('keeps non-ASCII and spaced file names intact', async () => {
+    fake('fmt');
+    write('Größe über.ts', 'x');
+    write('日本語.ts', 'x');
+    const r = await go(['-Extensions', '.ts', '-Command', 'fmt {files}']);
+    expect(r.stdout.trim()).toBe('formatted: 2 files');
+    expect(logged().sort()).toEqual(['Größe über.ts', '日本語.ts']);
+  });
+
+  it('prefixes names that start with a dash', async () => {
+    fake('fmt');
+    write('-rf.ts', 'x');
+    await go(['-Extensions', '.ts', '-Command', 'fmt {files}']);
+    expect(logged()).toEqual(['./-rf.ts']);
+  });
+
+  it('appends the files when the command has no {files} placeholder', async () => {
+    fake('fmt');
+    write('a.ts', 'x');
+    const r = await go(['-Extensions', '.ts', '-Command', 'fmt --fix']);
+    expect(r.stdout.trim()).toBe('formatted: 1 files');
+    expect(logged()).toEqual(['--fix', 'a.ts']);
+  });
+
+  it('works in a repository without a commit', async () => {
+    fake('fmt');
+    const fresh = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fmt-nohead-')));
+    spawnSync('git', ['init', '-q'], { cwd: fresh });
+    fs.writeFileSync(path.join(fresh, 'n.ts'), 'x');
+    spawnSync('git', ['add', 'n.ts'], { cwd: fresh });
+    fs.writeFileSync(path.join(fresh, 'u.ts'), 'x');
+    const r = await worker.run(['-Extensions', '.ts', '-Command', 'fmt {files}'], {
+      cwd: fresh,
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+    });
+    const log = fs.readFileSync(path.join(fresh, 'args.log'), 'utf8').trim().split('\n').sort();
+    fs.rmSync(fresh, { recursive: true, force: true });
+    expect(r.stdout.trim()).toBe('formatted: 2 files');
+    expect(log).toEqual(['n.ts', 'u.ts']);
+  });
+
+  it('skips outside a git repository', async () => {
+    fake('fmt');
+    const plain = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fmt-nogit-')));
+    const r = await worker.run(['-Extensions', '.ts', '-Command', 'fmt {files}'], {
+      cwd: plain,
+      env: {
+        ...process.env,
+        PATH: `${bin}:${process.env.PATH}`,
+        GIT_CEILING_DIRECTORIES: path.dirname(plain),
+      },
+    });
+    fs.rmSync(plain, { recursive: true, force: true });
+    expect(r.status).toBe(0);
+    expect(r.stdout.trim()).toBe('skipped: not a git repository');
+  });
+
+  it('skips when the -Requires probe fails and runs when it passes', async () => {
+    fake('fmt');
+    fake('probe-bad', 'exit 3');
+    fake('probe-ok');
+    write('a.ts', 'x');
+    const bad = await go([
+      '-Extensions',
+      '.ts',
+      '-Command',
+      'fmt {files}',
+      '-Requires',
+      'probe-bad --version',
+    ]);
+    expect(bad.status).toBe(0);
+    expect(bad.stdout.trim()).toBe('skipped: probe-bad not configured');
+    const ok = await go([
+      '-Extensions',
+      '.ts',
+      '-Command',
+      'fmt {files}',
+      '-Requires',
+      'probe-ok --version',
+    ]);
+    expect(ok.stdout.trim()).toBe('formatted: 1 files');
+    expect(logged()).toContain('a.ts');
+  });
 });

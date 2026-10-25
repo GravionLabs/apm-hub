@@ -14,8 +14,8 @@ description: 'Python implementation and test rules (pytest) extending `implement
 - Extensions: `.py .pyi`
 - Format: `uv run ruff format {files}` then `uv run ruff check --fix {files}`
 - Check (read-only): `uv run ruff format --check {files}` and `uv run ruff check {files}`
-- Not configured: no ruff in the project — skip, note it in the report
-- Run each format command after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Extensions .py,.pyi -Command 'uv run ruff format {files}'` (`-Check` for the check commands; see `implementation` `references/format.md`)
+- Not configured: no ruff in the project — the `-Requires` probe fails, the script prints `skipped: uv not configured`; note it in the report
+- Run each format command after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Extensions .py,.pyi -Requires 'uv run ruff --version' -Command 'uv run ruff format {files}'` (`-Check` for the check commands; see `implementation` `references/format.md`)
 
 ## Imports
 

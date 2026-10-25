@@ -24,8 +24,8 @@ The official `dotnet` plugin skills (dependency `dotnet/skills`) cover general C
 - Extensions: `.cs`
 - Format: `dotnet format --include {files}`
 - Check (read-only): `dotnet format --verify-no-changes --include {files}`
-- Not configured: no solution/project or `dotnet format` unavailable — skip, note it in the report
-- Run each format command after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Extensions .cs -Command 'dotnet format --include {files}'` (`-Check` for the check commands; see `implementation` `references/format.md`)
+- Not configured: `dotnet format` unavailable — the `-Requires` probe fails, the script prints `skipped: dotnet not configured`; note it in the report
+- Run each format command after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Extensions .cs -Requires 'dotnet format --version' -Command 'dotnet format --include {files}'` (`-Check` for the check commands; see `implementation` `references/format.md`)
 
 ## EF Core
 
