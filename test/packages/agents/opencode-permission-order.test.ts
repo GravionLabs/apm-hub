@@ -129,5 +129,16 @@ describe('OpenCode permission map order (last matching rule wins)', () => {
     expect(decide(bash, 'git push --force origin main')).toBe('deny');
     expect(decide(bash, 'gh pr merge 1 --auto')).toBe('deny');
     expect(decide(bash, 'gh issue close 1')).toBe('deny');
+    expect(decide(bash, 'git branch --show-current')).toBe('allow');
+    expect(decide(bash, 'git branch -D main')).toBe('deny');
+    expect(decide(bash, 'git branch -m old new')).toBe('deny');
+    expect(decide(bash, 'git remote -v')).toBe('allow');
+    expect(decide(bash, 'git remote set-url origin x')).toBe('deny');
+    expect(decide(bash, 'git fetch origin release/next')).toBe('allow');
+    expect(decide(bash, 'git fetch --upload-pack=x origin')).toBe('deny');
+    expect(decide(bash, 'gh pr edit 5 --add-reviewer @copilot')).toBe('allow');
+    expect(decide(bash, 'gh pr edit 5 --title x')).toBe('deny');
+    expect(decide(bash, 'git diff --output=/tmp/x')).toBe('deny');
+    expect(decide(bash, 'git log --output=/tmp/x')).toBe('deny');
   });
 });
