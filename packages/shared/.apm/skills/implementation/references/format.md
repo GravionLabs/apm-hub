@@ -3,8 +3,8 @@
 `scripts/Format-Changed.ps1` formats (or checks) the changed files of a task. It holds no language knowledge: the caller passes extensions and the command, normally taken from the `## Format` section of the `<lang>-implementation` skill.
 
 ```powershell
-pwsh scripts/Format-Changed.ps1 -Extensions .ts,.tsx -Command 'npx prettier --write {files}'
-pwsh scripts/Format-Changed.ps1 -Extensions .ts,.tsx -Command 'npx prettier --check {files}' -Check
+pwsh scripts/Format-Changed.ps1 -Language ts -Extensions .ts,.tsx -Command 'npx prettier --write {files}'
+pwsh scripts/Format-Changed.ps1 -Language ts -Extensions .ts,.tsx -Command 'npx prettier --check {files}' -Check
 ```
 
 ## Parameters
@@ -41,7 +41,10 @@ With `-Language <lang>` the script reads `<git toplevel>/.agents/format.json`:
 ```
 
 - An entry for `<lang>` replaces all default commands of the language (and `-Requires`); `extensions` replace `-Extensions` (absent: `-Extensions` stays). `-Check` selects `check`, otherwise `format`; each is a string or an array run in order on the same file list, the first non-zero exit stops.
-- A tool configured there that is missing is an error, never a skip. A missing mode key is an error too (no fallback to `-Command`).
+- `{files}` as its own token expands to one argument per file; inside a token (`--include={files}`) the files are joined by `;`.
+- The override ignores `-Command`/`-Requires`, so every call with the same `-Language` and mode runs the same override commands again. A skill with several calls (e.g. prettier + eslint) therefore repeats them; make the override commands idempotent, or call the script once per mode with `-Language` only.
+- The script prints `notice: running commands from .agents/format.json` on stderr: the file is repo-controlled, review it like code.
+- A tool configured there that is missing is an error, never a skip, even when no file changed. A missing mode key is an error too (no fallback to `-Command`).
 - No entry for `<lang>`, other entries, or no `-Language`: the file is ignored and `-Extensions`/`-Command` apply (both then required).
 
 ## From a `## Format` section

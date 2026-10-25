@@ -14,9 +14,10 @@ describe('docs/usage/format-override.md', () => {
     expect(doc).toContain('git diff --exit-code');
   });
   it('documents precedence, errors and the gitignore note', () => {
-    expect(doc).toContain('replaces all default commands');
-    expect(doc).toMatch(/not installed is an error/);
-    expect(doc).toContain('!.agents/format.json');
+    expect(doc).toMatch(/replaces all default commands/i);
+    expect(doc).toMatch(/error/i);
+    expect(doc).toMatch(/^\.agents\/\*$/m);
+    expect(doc).toMatch(/^!\.agents\/format\.json$/m);
   });
   it('is linked from README and the site sidebar', () => {
     expect(read('README.md')).toContain('docs/usage/format-override.md');

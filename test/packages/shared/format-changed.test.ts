@@ -244,11 +244,13 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
       expect(logged()).toEqual(['chk', 'A.cs']);
     });
 
-    it('works without -Extensions/-Command and uses -Extensions when the entry has none', async () => {
+    it('needs -Extensions only when the entry has none, never -Command', async () => {
       fake('jb');
       write('a.ts', 'x');
       cfg({ ts: { format: 'jb {files}' } });
-      expect((await go(['-Language', 'ts'])).status).toBe(1);
+      const none = await go(['-Language', 'ts']);
+      expect(none.status).toBe(1);
+      expect(none.stderr).toContain('-Extensions is required');
       const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
       expect(r.stdout.trim()).toBe('formatted: 1 files');
       expect(logged()).toEqual(['a.ts']);
@@ -256,11 +258,13 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
 
     it('errors naming the tool when the override tool is missing, default not run', async () => {
       fake('dflt');
+      fake('jb');
       write('a.ts', 'x');
-      cfg({ ts: { format: 'no-such-jb {files}' } });
+      cfg({ ts: { format: ['jb {files}', 'no-such-jb {files}'] } });
       const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'dflt {files}']);
-      expect(r.status).not.toBe(0);
-      expect(r.stderr).toContain('no-such-jb');
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain('no-such-jb not found');
+      expect(r.stderr).toContain('ts');
       expect(r.stdout).not.toContain('skipped');
       expect(logged()).toEqual([]);
     });
@@ -308,7 +312,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
         'jb {files}',
         '-Check',
       ]);
-      expect(r.status).not.toBe(0);
+      expect(r.status).toBe(1);
       expect(r.stderr).toMatch(/format\.json.*ts.*check/);
       expect(logged()).toEqual([]);
     });
@@ -318,8 +322,8 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
       write('a.ts', 'x');
       cfg('{ nope');
       const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'dflt {files}']);
-      expect(r.status).not.toBe(0);
-      expect(r.stderr).toContain('format.json');
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain('format.json is not valid JSON');
     });
 
     it('is ignored without -Language', async () => {
@@ -329,6 +333,75 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
       const r = await go(['-Extensions', '.ts', '-Command', 'dflt {files}']);
       expect(r.status).toBe(0);
       expect(logged()).toEqual(['a.ts']);
+    });
+
+    it('ignores -Requires with an override', async () => {
+      fake('jb');
+      write('a.ts', 'x');
+      cfg({ ts: { format: 'jb {files}' } });
+      const r = await go([
+        '-Language',
+        'ts',
+        '-Extensions',
+        '.ts',
+        '-Requires',
+        'probe-bad --version',
+      ]);
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe('formatted: 1 files');
+      expect(logged()).toEqual(['a.ts']);
+    });
+
+    it('errors on a missing tool even when no file changed', async () => {
+      cfg({ ts: { format: 'no-such-jb {files}' } });
+      const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain('no-such-jb not found');
+    });
+
+    it('prints a notice on stderr when an override applies', async () => {
+      fake('jb');
+      write('a.ts', 'x');
+      cfg({ ts: { format: 'jb {files}' } });
+      const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
+      expect(r.stderr).toContain('notice:');
+      expect(r.stderr).toContain('.agents/format.json');
+    });
+
+    it('substitutes {files} inside a token, joined by ;', async () => {
+      fake('jb');
+      write('a.ts', 'x');
+      write('b.ts', 'x');
+      cfg({ ts: { format: 'jb --include={files} sln' } });
+      const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
+      expect(r.status).toBe(0);
+      expect(logged()).toEqual(['--include=a.ts;b.ts', 'sln']);
+    });
+
+    it('substitutes an embedded {files} in the default -Command too', async () => {
+      fake('dflt');
+      write('a.ts', 'x');
+      await go(['-Extensions', '.ts', '-Command', 'dflt --include={files}']);
+      expect(logged()).toEqual(['--include=a.ts']);
+    });
+
+    it.each([
+      ['entry is not an object', { ts: 'jb {files}' }, /no 'format' command/],
+      ['mode value is empty', { ts: { format: [] } }, /empty 'format' command/],
+      ['mode value is blank', { ts: { format: ' ' } }, /empty 'format' command/],
+      ['file is not an object', [1], null],
+    ])('errors when %s', async (_n, conf, re) => {
+      fake('jb');
+      write('a.ts', 'x');
+      cfg(conf);
+      const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'jb {files}']);
+      if (re) {
+        expect(r.status).toBe(1);
+        expect(r.stderr).toMatch(re);
+        expect(logged()).toEqual([]);
+      } else {
+        expect(r.stdout.trim()).toBe('formatted: 1 files'); // no entry: default applies
+      }
     });
 
     it('requires -Command and -Extensions when no entry applies', async () => {

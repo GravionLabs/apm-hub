@@ -46,6 +46,8 @@ if ($Language -and (Test-Path -LiteralPath $overrideFile -PathType Leaf)) {
     if ($commands.Count -eq 0) { Stop-Fail ".agents/format.json: entry '$Language' has an empty '$key' command" }
     $extProp = $entryVal.PSObject.Properties['extensions']
     if ($extProp) { $Extensions = @($extProp.Value) }
+    # commands come from a repo-controlled file: say so (no gate)
+    Write-Error "notice: running commands from .agents/format.json for '$Language'" -ErrorAction Continue
   }
 }
 if (-not $override) {
@@ -53,6 +55,14 @@ if (-not $override) {
   $commands = @($Command)
 }
 if (-not $Extensions) { Stop-Fail '-Extensions is required (no .agents/format.json entry supplies them)' }
+
+$plans = @($commands | ForEach-Object { , @($_.Trim() -split '\s+' | Where-Object { $_ }) })
+if ($override) {
+  # a configured tool that is missing is an error even when nothing changed
+  foreach ($t in $plans) {
+    if (-not (Get-Command $t[0] -ErrorAction SilentlyContinue)) { Stop-Fail "$($t[0]) not found (configured in .agents/format.json for $Language)" }
+  }
+}
 
 $exts = @($Extensions | ForEach-Object { $_ -split ',' } | Where-Object { $_.Trim() } |
   ForEach-Object { $e = $_.Trim().ToLowerInvariant(); if ($e.StartsWith('.')) { $e } else { ".$e" } })
@@ -82,12 +92,9 @@ $files = @($names | Select-Object -Unique | Where-Object {
   })
 if ($files.Count -eq 0) { Write-Output 'skipped: no changed files'; exit 0 }
 
-$plans = @($commands | ForEach-Object { , @($_.Trim() -split '\s+' | Where-Object { $_ }) })
-foreach ($t in $plans) {
-  if (-not (Get-Command $t[0] -ErrorAction SilentlyContinue)) {
-    if ($override) { Stop-Fail "$($t[0]) not found (configured in .agents/format.json for $Language)" }
-    Write-Output "skipped: $($t[0]) not found"; exit 0
-  }
+if (-not $override) {
+  $t = $plans[0]
+  if (-not (Get-Command $t[0] -ErrorAction SilentlyContinue)) { Write-Output "skipped: $($t[0]) not found"; exit 0 }
 }
 
 if ($Requires -and -not $override) {
@@ -108,7 +115,9 @@ function Get-ArgList([string[]]$Tokens) {
   $argList = [System.Collections.Generic.List[string]]::new()
   $placed = $false
   foreach ($t in $Tokens | Select-Object -Skip 1) {
-    if ($t -eq '{files}') { foreach ($f in $safe) { $argList.Add($f) }; $placed = $true } else { $argList.Add($t) }
+    if ($t -eq '{files}') { foreach ($f in $safe) { $argList.Add($f) }; $placed = $true }
+    elseif ($t.Contains('{files}')) { $argList.Add($t.Replace('{files}', ($safe -join ';'))); $placed = $true } # embedded: files joined by ';'
+    else { $argList.Add($t) }
   }
   if (-not $placed) { foreach ($f in $safe) { $argList.Add($f) } }
   , $argList.ToArray()
