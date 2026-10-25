@@ -2,6 +2,27 @@
 
 Order of work and release assignment for the open issues. Created 2026-10-18, last release `v2.4.0` (2026-10-24), updated 2026-10-25 for Epic #573 (unattended loops, see the analysis document "dromos + apm-hub: Analyse und selbstlernendes Agent-System") and for Feature #595 (project cockpit, pulled into 2.5.0). Each release has a GitHub milestone of the same name. Work runs one PBI at a time on `release/next` (several PBIs edit `orchestrator.agent.md` or the ledger hook).
 
+## Unattended path — self-learning workflow (Epic #573)
+
+Overview across releases. The per-release tables below stay the order of work. Two human review points remain by design: planning (Epic → Feature → PBI → Tasks) and the release PR `release/next` → `main`. dromos blocks nothing up to step 5; counterpart: `GravionLabs/dromos` `ROADMAP.md`, Stage 2b.
+
+| Step | Feature | PBIs in order | Release | Done when |
+| --- | --- | --- | --- | --- |
+| 0 | #595 project cockpit (Epic #384) | #597 → #598; #626 follows | 2.5.0 (#626: 2.6.0) | `Needs` is computed from GitHub state and shown by `status` and `queue -DryRun` |
+| 1 | #574 unattended gates | #578 → #579 → #580 → #581 | 2.6.0 | a gate parks one PBI and the loop continues; `/ruling` answers it |
+| 2 | #575 auto-merge | #582 → #583 → #585, #584 after #582 | 2.6.0 | merge by default, `release/**` carries required checks, docs name the two review points |
+| 3 | #576 retro, stage 0 | #586 → #587 → #590 → #588 → #589, #594 parallel to #587–#589 | 2.7.0 | a retro runs after every loop, bounded by `Test-RetroScope.ps1`, and files candidate PBIs with hypothesis and metric |
+| 4 | #390 attention, queue, usage | #391, #392, #393 → #394 | 2.7.0 | parked gates reach dromos as `attention`; serial with #588 (queue runner) |
+| 5 | #577 retro reads the dromos history | #591 → #592 | 2.8.0 | cross-harness metrics; needs dromos 0.2.0 |
+| 6 | #398 queue runner as driver | planned after dromos#65 | 2.8.0 | overnight Epic runs on the bus session API |
+
+Rules for this path:
+
+- No unattended run in this repository before #582 and #583 are both merged; until then run with `--no-merge`.
+- #590 before #588: the first automatic retro is already bounded.
+- `Needs` rules: `needs-decision` (parked gates, retro candidates) → `Decision` and `needs-review` → `Review` are in #597. A finished Feature or Epic (`FEATURE_DONE`, #584) needs its own rule in `Sync-ProjectNeeds.ps1`, added with #584.
+- First acceptance run: one small Feature with `queue -Feature <nr>` overnight, ending with a list of parked PBIs and a release PR.
+
 ## 2.4.0 — Feature runs and hardening (released as `v2.4.0`; only Feature #248 is still open and closes with its verification follow-ups)
 
 | Order | Issue | Title | Size | Note |
