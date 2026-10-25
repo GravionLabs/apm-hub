@@ -59,6 +59,15 @@ describe('review-lead agent contract', () => {
     expect(body).toContain('defaults to `HEAD`');
   });
 
+  it('takes the rulings path and replies with suppressed (#482)', () => {
+    expect(body).toMatch(/rulings file path `<state>\/<pbi>\/rulings\.json`/);
+    expect(body).toContain('"suppressed": <count');
+    expect(body).toMatch(/0 without a rulings file/);
+    expect(body).toMatch(/status fixed, open, pr-body, declined or deferred/);
+    expect(body).toMatch(/Pass the rulings file path to `review-fanout`/);
+    expect(body).toMatch(/never blocking CRITICAL\/HIGH/);
+  });
+
   it('returns the output keys as JSON only within 300 words', () => {
     for (const key of [
       '"verdict"',

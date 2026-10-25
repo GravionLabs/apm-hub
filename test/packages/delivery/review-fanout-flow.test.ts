@@ -89,17 +89,45 @@ describe('review-fanout: smaller package (#453)', () => {
     expect(fanout).toMatch(
       /only the fix diff `<last review HEAD>\.\.HEAD` plus the earlier findings/
     );
-    expect(fanout).toContain('fixed|open|advisory');
+    expect(fanout).toContain('fixed|open|pr-body|declined: <reason>');
+    expect(fanout).not.toContain('fixed|open|advisory');
     expect(fanout).toMatch(/never the full diff again/);
   });
 
   it('review-lead and the PBI pipeline pass the previous review.json', () => {
     expect(lead).toMatch(/previous round's `review\.json` path to `review-fanout`/);
     expect(lead).toMatch(
-      /only the fix diff plus the earlier findings with status fixed, open or advisory, never the full diff/
+      /only the fix diff plus the earlier findings with status fixed, open, pr-body, declined or deferred, never the full diff/
     );
     expect(lead).toMatch(/filters generated files, lockfiles and goldens/);
     expect(pipeline).toMatch(/previous round's `review\.json` path/);
+  });
+});
+
+describe('review-fanout: rulings pass (#482)', () => {
+  const pass = fanout.split('\n').find((l) => l.startsWith('3. **Rulings pass**'))!;
+
+  it('matches on same file and normalised text, ignoring the line', () => {
+    expect(pass).toMatch(/`file` equals an entry's `file`/);
+    expect(pass).toMatch(/normalised `issue` equals that entry's normalised `title`/);
+    expect(pass).toMatch(/lowercase, collapse whitespace, strip trailing punctuation/);
+    expect(pass).toMatch(/`line` is ignored/);
+    expect(pass).toMatch(/`pr-body`, `declined` or `deferred`/);
+  });
+
+  it('runs before dedupe and verify and drops only MEDIUM/LOW', () => {
+    expect(pass).toMatch(/before dedupe and verify/);
+    expect(pass).toMatch(/new MEDIUM\/LOW finding/);
+    expect(pass).toMatch(/CRITICAL\/HIGH match is never dropped[^.]*goes through verify/);
+  });
+
+  it('without a readable rulings file nothing is dropped', () => {
+    expect(pass).toMatch(/missing, unreadable or invalid → skip the pass, nothing dropped/);
+    expect(fanout).toMatch(/`\[\]` without a rulings file/);
+  });
+
+  it('output schema carries suppressed', () => {
+    expect(fanout).toContain('"suppressed":[]');
   });
 });
 
