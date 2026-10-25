@@ -94,7 +94,26 @@ describe('fix rounds stay inside the issue scope (#481)', () => {
     expect(rule(7)).toContain('`declined: <reason>`');
     expect(rule(7)).toContain('`deferred: out of scope — <need>`');
     expect(rule(8)).toContain('`Findings:`');
-    expect(rule(8)).toMatch(/declined or deferred finding by `file:line`/);
+    expect(rule(8)).toMatch(/declined or deferred findings by `file:line`/);
     expect(rule(8)).toMatch(/at most 15 lines/);
+  });
+});
+
+describe('fix round review advisories (#481)', () => {
+  const impl = read('agents/.apm/agents/implementer.agent.md');
+
+  it('never defers a blocking security finding', () => {
+    expect(impl).toMatch(/except a blocking security finding/);
+    expect(pipeline).toMatch(/except a blocking security finding, which is never deferred/);
+  });
+
+  it('merges rulings across rounds and passes follow-up numbers to pr-writer', () => {
+    expect(pipeline).toMatch(/merge those statuses into `<state>\/<pbi>\/rulings\.json`/);
+    expect(pipeline).toMatch(/never overwrite the file/);
+    expect(pipeline).toMatch(/follow-up `#<n>` per deferred finding/);
+  });
+
+  it('keeps the implementer reply within the cap', () => {
+    expect(impl).toMatch(/at most 5 declined or deferred findings/);
   });
 });
