@@ -34,7 +34,7 @@ Rules for this path:
 | 5 | #251 | model policy, opus in `plan.json`, escalation at fix round 2 | M | released |
 | 6 | #389 | `SubagentStop` hook sends `progress` to `$DROMOS_URL/ingest` (Feature #388, closed) | M | released; opt-in through `DROMOS_URL`, needs `POST /ingest` (dromos#43, in dromos `v0.1.0`) |
 
-Feature #248 has no open PBI left and can be closed (its verification follow-ups #422–#425, #450 belong to Feature #432). Epic #300 closes with Feature #547 (merged, ships in 2.5.0).
+Feature #248 is closed; its verification follow-ups #422–#425, #450 belong to Feature #432. Epic #300 closes with Feature #547 (merged, ships in 2.5.0).
 
 ## 2.5.0 — Epic #384 (format, review convergence) and Feature #595: project cockpit
 
@@ -114,7 +114,7 @@ Feature #413 closes with #421, Epic #411 with it. These PBIs share no files with
 | 3 | #590 | retro guardrails: `guardrails.md`, `Test-RetroScope.ps1` in review and CI | M | #587 |
 | 4 | #588 | retro trigger from loop and queue (`--retro auto|never`, thresholds) | M | #587; serial with #392 (queue runner) |
 | 5 | #589 | hypothesis check after k runs, revert candidates | M | #587, #588 |
-| 6 | #594 | planner estimates (size, tier) on the Task ledger line; retro measures their accuracy | M | #586 (parallel to #587–#589); not merged yet, its `merged` label is a mislabel of 2026-10-25 |
+| 6 | #594 | planner estimates (size, tier) on the Task ledger line; retro measures their accuracy | M | #586 (parallel to #587–#589) |
 
 Feature #576 closes with #589 and #594. #590 runs before #588 so the first automatic retro is already bounded.
 
@@ -166,4 +166,4 @@ PBIs for #398 are planned when #65 is released (`orchestrator plan 398`).
 
 - #398 depends on the session API in dromos#61; until then the local executor stays the only one.
 - 2.6.0 has no dromos dependency any more (#389 shipped in 2.4.0). Feature #390 (2.7.0) needs dromos#138 and dromos-mux, 2.8.0 needs dromos 0.2.0 and 0.4.0; if dromos lags, those move, nothing else does.
-- Milestones on GitHub lag the roadmap: Epic #384, Features #385, #547, #568 and Epic #300 carry 2.6.0 although their PBIs are merged for 2.5.0; Epic #573 and #594 carry a wrong `merged` label (both set 2026-10-25 04:22 UTC by automation).
+- The `merged` label was set by automation on Epic #573 and the unmerged #594 (2026-10-25 04:22 UTC, both removed by hand); the label step of the release workflow matches issue numbers in PR bodies too loosely.
