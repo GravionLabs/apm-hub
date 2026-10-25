@@ -21,6 +21,12 @@ describe('verify-project format check (#383)', () => {
     expect(step4).toMatch(/not configured or `skipped:`/);
   });
 
+  it('states that a format.json override applies with the check key', () => {
+    expect(step4).toContain('.agents/format.json');
+    expect(step4).toContain('`check` key');
+    expect(step4).toContain('-Language <lang> -Check -Base');
+  });
+
   it('stays within 100 lines', () => {
     expect(skill.split('\n').length).toBeLessThanOrEqual(100);
   });

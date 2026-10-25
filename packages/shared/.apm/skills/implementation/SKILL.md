@@ -17,7 +17,7 @@ Test behavior through the public interface, never internals; expected values com
 - [ ] Tests follow the good-tests rules (no internals coupling, no tautological assertions)
 - [ ] Build passes when the stack compiles and compiled sources changed; targeted tests pass (test files of the changed paths and direct neighbours, `<lang>-test` "Targeted run"; unknown mapping: the fast/unit group, never the full suite); the full run is the PBI Final-Verify
 - [ ] Every item of an Invariants section in the task or PBI body has a test that exercises it
-- [ ] Changed files formatted: `scripts/Format-Changed.ps1` runs the Format command of the language skill on them (`references/format.md`)
+- [ ] Changed files formatted: `scripts/Format-Changed.ps1` runs the Format command of the language skill on them (`references/format.md`); a `.agents/format.json` override for the language applies
 - [ ] Never commit red
 - [ ] No debug output left in code
 
