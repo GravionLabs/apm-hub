@@ -1,6 +1,6 @@
 # Mechanical vs full classification
 
-`pwsh -NoProfile -File scripts/Classify-Diff.ps1 [-Range "<base>..<head>"] [-Force full] [-MaxLines 20]` prints `{"mode","dimensions","reason"}` (`mode` is `mechanical`, `docs`, `text` or `full`) and exits 0. No `-Range`: working tree vs `HEAD`. Use `dimensions` as the fan-out list. Script fails, prints nothing or invalid JSON: `full`. The script is authoritative: its regexes are the complete lists; the names below are what they cover.
+`pwsh -NoProfile -File scripts/Classify-Diff.ps1 [-Range "<base>..<head>"] [-Force full] [-MaxLines 20] [-SmallLines 150]` prints `{"mode","dimensions","reason","size","signals","skippedDimensions"}` (`mode` is `mechanical`, `docs`, `text` or `full`) and exits 0. No `-Range`: working tree vs `HEAD`. Use `dimensions` as the fan-out list. Script fails, prints nothing or invalid JSON: `full`. The script is authoritative: its regexes are the complete lists; the names below are what they cover.
 
 **Ref safety**: run it only when both refs match `^[A-Za-z0-9._/@~^-]+$` and do not start with `-`; else `full` without running it. The script also rejects a range starting with `-`, containing whitespace, or with a side `git rev-parse --verify` rejects, and returns `full` outside a git work tree or when any git call fails. Git runs with `--literal-pathspecs` and `--` before pathspecs. Working-tree mode: any untracked file is `full` (`git diff` cannot see it). A PR number without a local range is always `full`.
 
@@ -112,8 +112,24 @@ Mechanical runs `correctness` and `spec`. `security` is added when:
 - any manifest (`apm.yml`, `marketplace.json`, `plugin.json`) changed: it stays mechanical (cheap renames) but dependency or source edits get a security look;
 - any added line in a docs, manifest or test file (renamed with edits included) contains a command, install or remote pattern: `curl`, `wget`, `eval`, `iex`, `iwr`/`irm`, `Invoke-Expression`, `Invoke-WebRequest`, `Invoke-RestMethod`, `chmod`, `sudo`, `ssh`/`scp`/`rsync`, `nc`/`ncat`/`socat`, `npx`/`pnpx`/`bunx`/`uvx`, `npm`/`pnpm`/`yarn`/`bun` `install`/`add`/`dlx`/`exec`, `pip`/`pipx`/`gem`/`cargo`/`uv pip` `install`, `go install`/`go get`, `-enc`/`-EncodedCommand`, `pwsh -e`, `python -c`, `node`/`perl`/`ruby -e`, `bash -c`, `bash <(`, `rm -rf`, `base64`, `certutil`, any `scheme://` URL (`https://`, `ftp://`, `ssh://`), `git@host:`, `git clone`, a pipe into `sh`/`bash`/`zsh`/`pwsh`/`powershell`/`python`/`node`/`iex`, or looks like executable code (`.mdx` pages): `<script`, a line starting with `import` or `export`, `require(`, `child_process`, `process.env`, `fs.write`/`fs.unlink`/`fs.rm`. Docs stay mechanical.
 
-## Full (all five dimensions)
+## Full
 
-Everything else: other content change, binary, more lines than the threshold, empty diff, git or parse error, script error, unsupported change type. Unsure means full. `-Force full` skips classification.
+Everything else: other content change, binary, more lines than the threshold, empty diff, git or parse error, script error, unsupported change type. Unsure means full. `-Force full` skips classification and always returns all five dimensions (`size: large`), also on a small diff.
+
+### Size class and signals
+
+Every result carries `size` (`small|large`), `signals` (subset of `risky`, `sensitive`, `source`, in that order) and `skippedDimensions` (`[{dimension, reason}]`, empty unless a small `full` diff dropped some). The script is authoritative.
+
+- **size**: added + deleted lines over all changed paths except those of the package filter (`references/package-filter.md`: lockfiles, snapshots, goldens, minified, `dist/`, `coverage/`, `docs/*-list.md`; those lines are not counted, not scanned and their location class is ignored). `small` when at most **150** lines (`-SmallLines`) and no counted path (source or destination) is class `exec` or `build`; else `large`. Whatever cannot be measured (git error, parse error, empty or invalid range, binary, symlink, submodule, mode change, quoted path, `-Force full`) is `large` with `signals: []`.
+- **signals**: `risky` = an added line matches the command patterns of the Dimensions section (skill text also the destructive/credential patterns, test files without the `import`/`export` rule); `sensitive` = a path matches the path triggers; `source` = a path of class source, or an instruction file with a source extension (`.ps1`, `.ts`, ...). Computed for every diff that reaches classification.
+- **selection** for `full` + `small`; `full` + `large` and the modes `mechanical`, `docs` and `text` keep their dimensions and skip nothing:
+
+| Dimension | `full` + `small` runs it when |
+|:--|:--|
+| `correctness`, `tests`, `spec` | always |
+| `security` | `risky` or `sensitive` |
+| `conventions` | `source` |
+
+Skipped dimensions get the reason `size small: <n> <= <limit> lines, no risky/sensitive trigger` (security) or `... no source file` (conventions). A caller-supplied dimension list still replaces the selection.
 
 Known limits: a basename-preserving move into a convention-loaded place is still mechanical: file-based routes, plugin folders, or a tool file not in the lists moved to where the tool reads it (`config/vercel.json` → `vercel.json`); the `correctness` reviewer sees it.

