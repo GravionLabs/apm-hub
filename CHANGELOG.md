@@ -5,6 +5,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.5.1] — 2026-10-25
+
+### Bug Fixes
+- **ci**: Splat Sync-ProjectNeeds arguments as a hashtable
+
+
 ## [2.5.0] — 2026-10-25
 
 ### Bug Fixes
@@ -17,6 +23,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Schedule Feature #595 (project cockpit) in 2.5.0 and record the merged PBIs (#627)
 - Add unattended path overview for the self-learning workflow (#573) (#645)
 - Roadmap notes after the label and milestone cleanup (#647)
+- Update CHANGELOG.md for v2.5.0 [skip ci]
 
 
 ### Features
