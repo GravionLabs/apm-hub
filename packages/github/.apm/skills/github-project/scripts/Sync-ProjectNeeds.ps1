@@ -53,12 +53,10 @@ $ErrorActionPreference = 'Stop'
 
 $script:Usage = 'Usage: Sync-ProjectNeeds.ps1 [-Owner <login> -Number <n>] [-Repo owner/repo] [-Issue 12,13|owner/repo#12] [-IncludeParents] [-DryRun] [-StateFile <json>] [-SetStatus <option>] [-Json]'
 
-# Property of an object or hashtable-like value, $null when absent (StrictMode safe).
-function Get-Prop($Obj, [string]$Name) {
-  if ($null -eq $Obj) { return $null }
-  $p = $Obj.PSObject.Properties[$Name]
-  if ($p) { $p.Value } else { $null }
-}
+# Shared rule module (Get-Prop, Get-NeedsValue), also used by Write-StatusTable.ps1 and the queue dry run.
+$script:NeedsModule = Join-Path $PSScriptRoot '../../github-issue/scripts/NeedsRules.psm1'
+if (-not (Test-Path -LiteralPath $script:NeedsModule -PathType Leaf)) { throw "NeedsRules.psm1 not found (install the github package: $script:NeedsModule)." }
+Import-Module -Name $script:NeedsModule -Global
 
 function Resolve-ProjectRef {
   param([string]$Owner, [int]$Number, [string]$Root)
@@ -76,28 +74,6 @@ function Resolve-ProjectRef {
     if ($m.Success) { return @{ owner = $m.Groups[1].Value; number = [int]$m.Groups[2].Value } }
   }
   $null
-}
-
-# Pure rule function: Needs option name, or $null to clear the field.
-function Get-NeedsValue($Item) {
-  if ("$(Get-Prop $Item 'state')".ToUpperInvariant() -eq 'CLOSED') { return $null }
-  $labels = @(Get-Prop $Item 'labels' | ForEach-Object { "$_".ToLowerInvariant() })
-  $status = "$(Get-Prop $Item 'status')"
-  if ($labels -contains 'needs-decision') { return 'Decision' }
-  if ($labels -contains 'needs-review') { return 'Review' }
-  $blocked = Get-Prop $Item 'blockedByOpen'
-  if ($blocked -is [bool] ? $blocked : ([int]("0$blocked") -gt 0)) { return 'Blocked' }
-  if ($labels -contains 'merged' -or $status -eq 'In release') { return 'Release review' }
-  $nr = [int](Get-Prop $Item 'number')
-  $heads = @(Get-Prop $Item 'prHeads' | Where-Object { $_ })
-  if ($status -eq 'In Progress' -or @($heads | Where-Object { "$_" -match "(^|/)$nr-" }).Count -gt 0) { return 'In progress' }
-  $level = "$(Get-Prop $Item 'level')"
-  $subs = @(Get-Prop $Item 'subIssueLevels' | ForEach-Object { "$_" })
-  switch ($level) {
-    'Epic' { if ($subs -notcontains 'Feature') { return 'Planning' }; return $null }
-    'Feature' { if ($subs -notcontains 'PBI') { return 'Planning' }; return $null }
-    default { if ($subs -notcontains 'Task' -and $labels -notcontains 'planned') { return 'Planning' }; return 'Ready' }
-  }
 }
 
 # 'owner/repo#n' / number / {repo, number} -> @{ repo; number } ($repo may be $null for a bare number).

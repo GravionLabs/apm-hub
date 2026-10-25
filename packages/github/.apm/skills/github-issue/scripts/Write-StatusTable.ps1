@@ -12,9 +12,14 @@
   needs-decision and blocked rows keep their state (first match wins, as in status.md). -Live prints the issue numbers of the live leases, one per line,
   and writes nothing (interactive status: the model marks the rows itself). Control characters and escape sequences are stripped from the content. The content comes from -Path (a file) or, without -Path, from stdin. The write is atomic:
   a temp file in the state directory is moved over the target.
+  Needs: every PBI row `#<nr> <state> <title>` becomes `#<nr> <state> | <Needs> | <title>` (`-` when the rule clears the value) and the last line is
+  `Needs me: <n> planning, <m> decisions, <k> release review`. The value comes from Get-NeedsValue of NeedsRules.psm1 (the rule of Sync-ProjectNeeds.ps1,
+  no second implementation); the issue state is read with gh GET calls only (or from -StateFile), the project is never written. A live-lease row without
+  a stronger value counts as `In progress`. Module missing or state unreadable: one warning, rows stay as given, no summary line, exit 0.
 .PARAMETER Issue Feature or Epic number.
 .PARAMETER Path  File that holds the table. Without it the table is read from stdin.
 .PARAMETER Live  Print the issue numbers of the live leases and exit; no -Issue, no content, no file.
+.PARAMETER StateFile JSON {items:[{number, state, level, labels[], status, blockedByOpen, subIssueLevels[], prHeads[]}]} (Sync-ProjectNeeds.ps1 shape) instead of reading GitHub; rows without an item get `-`.
 .PARAMETER LeaseTtlMinutes Heartbeat age after which a lease is stale (default 120, as Enter-Checkout.ps1).
 #>
 [CmdletBinding()]
@@ -22,6 +27,7 @@ param(
   [string]$Issue,
   [string]$Path,
   [switch]$Live,
+  [string]$StateFile,
   [ValidateRange(1, 525600)][int]$LeaseTtlMinutes = 120
 )
 # No Mandatory: a headless run must exit non-zero with a message instead of prompting.
@@ -59,7 +65,7 @@ $text = if ($PSBoundParameters.ContainsKey('Path')) {
 if ([string]::IsNullOrWhiteSpace($text)) { throw 'No content: pass -Path or pipe the table on stdin.' }
 # Issue titles are untrusted data: strip CSI, OSC (BEL or ST terminated, payload limited to one line so an unterminated
 # OSC cannot swallow later rows), other ESC sequences and control characters (C0 except tab and newline, DEL, C1).
-# Same patterns as Remove-ControlChar in delivery/skills/queue/scripts/Invoke-OrchestratorQueue.ps1: skills do not share code.
+# Same patterns as Remove-ControlChar in delivery/skills/queue/scripts/Invoke-OrchestratorQueue.ps1 (only the Needs rule is shared, NeedsRules.psm1).
 $text = [regex]::Replace($text, '\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b\r\n]*(\x07|\x1b\\)|\x1b.?', '')
 $text = [regex]::Replace($text, '[\x00-\x08\x0b-\x1f\x7f-\x9f]', '')
 $text = $text.TrimEnd("`r", "`n") + "`n"
@@ -68,6 +74,32 @@ $base = Resolve-StateDir
 foreach ($nr in Get-LiveLeaseIssue $base) {
   $text = [regex]::Replace($text, "(?m)^(\s*#$nr )(?:open|in progress \([^)\n]*\))(?=[ \t]|$)", '${1}in progress (runner)')
 }
+# Needs column and closing summary (read-only; never fails the status).
+$stateRe = '(?:merged|pr-open #\d+|needs-decision|blocked by #\d+(?:, #\d+)*|in progress \([^)\n]*\)|open)'
+try {
+  $mod = Join-Path $PSScriptRoot 'NeedsRules.psm1'
+  if (-not (Test-Path -LiteralPath $mod -PathType Leaf)) { throw "NeedsRules.psm1 not found: $mod" }
+  Import-Module -Name $mod -Global
+  $rows = @([regex]::Matches($text, "(?m)^\s*#(\d+) $stateRe(?=[ \t]|$)") | ForEach-Object { [int]$_.Groups[1].Value } | Select-Object -Unique)
+  $items = @()
+  if ($StateFile) {
+    if (-not (Test-Path -LiteralPath $StateFile -PathType Leaf)) { throw "State file not found: $StateFile" }
+    $items = @((Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json).items | Where-Object { $_ })
+  } elseif ($rows.Count -gt 0) { $items = @(Get-IssueNeedsItem -Number $rows) }
+  $liveLeases = @(Get-LiveLeaseIssue $base)
+  $needs = @{}
+  foreach ($nr in $rows) {
+    $it = $items | Where-Object { [int]$_.number -eq $nr } | Select-Object -First 1
+    $v = if ($it) { Get-NeedsValue $it } else { $null }
+    if ($v -eq 'Ready' -and $liveLeases -contains "$nr") { $v = 'In progress' }
+    $needs[$nr] = $v
+  }
+  $text = [regex]::Replace($text, "(?m)^([ \t]*#(\d+) $stateRe)(?=[ \t]|$)[ \t]*(\S?)", {
+      param($m) $v = $needs[[int]$m.Groups[2].Value]
+      "$($m.Groups[1].Value) | $(if ($v) { $v } else { '-' })" + $(if ($m.Groups[3].Value) { " | $($m.Groups[3].Value)" } else { '' }) })
+  $vals = @($needs.Values)
+  $text += "Needs me: $(@($vals | Where-Object { $_ -eq 'Planning' }).Count) planning, $(@($vals | Where-Object { $_ -eq 'Decision' }).Count) decisions, $(@($vals | Where-Object { $_ -eq 'Release review' }).Count) release review`n"
+} catch { [Console]::Error.WriteLine("Warning: Needs column skipped: $($_.Exception.Message)") }
 $file = [IO.Path]::GetFullPath((Join-Path $base "status-$Issue.md"))
 if (-not $file.StartsWith($base + [IO.Path]::DirectorySeparatorChar)) { throw "Path escapes the state directory: $file" }
 # A symlinked state directory or target is refused (it could point outside the project).
