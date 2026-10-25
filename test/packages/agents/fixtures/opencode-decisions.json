@@ -1,0 +1,9 @@
+{
+  "probe.catch-all-last": {
+    "opencode": "1.18.3",
+    "map": { "git *": "allow", "*": "deny" },
+    "command": "git status --short",
+    "outcome": "tool-removed",
+    "message": "Model tried to call unavailable tool 'bash'"
+  }
+}

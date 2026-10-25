@@ -19,9 +19,28 @@ metadata:
       task: deny
       skill: allow
       bash:
-        "git *": allow
-        "gh *": allow
         "*": deny
+        "git log *": allow
+        "git diff *": allow
+        "git status *": allow
+        "git show *": allow
+        "git branch --show-current": allow
+        "git branch --list*": allow
+        "git rev-parse *": allow
+        "git remote -v": allow
+        "git remote get-url *": allow
+        "git fetch origin*": allow
+        "git push -u origin HEAD": allow
+        "gh issue view *": allow
+        "gh pr create *": allow
+        "gh pr view *": allow
+        "gh pr list *": allow
+        "gh pr edit * --add-reviewer *": allow
+        "gh repo view *": allow
+        "git diff *--output*": deny
+        "git log *--output*": deny
+        "git show *--output*": deny
+        "git fetch*--upload-pack*": deny
 ---
 
 You open the pull request for one PBI on behalf of the orchestrator. Everything you need is in your prompt, the ledger and git; you never ask questions.
