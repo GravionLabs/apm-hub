@@ -5,10 +5,20 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.5.2] — 2026-10-25
+
+### Bug Fixes
+- **github**: Check options before name in Sync-ProjectNeeds field lookup
+
+
 ## [2.5.1] — 2026-10-25
 
 ### Bug Fixes
 - **ci**: Splat Sync-ProjectNeeds arguments as a hashtable
+
+
+### Documentation
+- Update CHANGELOG.md for v2.5.1 [skip ci]
 
 
 ## [2.5.0] — 2026-10-25
