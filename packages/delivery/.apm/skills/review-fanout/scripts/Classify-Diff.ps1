@@ -300,7 +300,8 @@ try {
     if (@($files | Where-Object { $_.StartsWith('"') }).Count -gt 0) { Exit-WithFull "quoted path (tab, newline, quote or backslash): $path" }
     $cls = @($files | ForEach-Object { Get-LocationClass $_ })
     $cls1 = @($cls | Select-Object -Unique)
-    $isFiltered = $path -imatch $filtered
+    # An exec path (e.g. .github/actions/x/dist/index.js) is never dropped by the package filter.
+    $isFiltered = ($path -imatch $filtered) -and ($cls1 -notcontains 'exec')
     if (-not $isFiltered) {
       $sizeLines += $changed
       $measured += $files
@@ -333,7 +334,7 @@ try {
       } else {
         Defer "test file change is not a pure rename of local identifiers: $path"
         if ($isFiltered) { continue }
-        $kind = 'other'
+        $kind = 'tests'
       }
     } elseif ($c -eq 'instruction' -and @($files | Where-Object { $_ -inotmatch $skillText }).Count -eq 0) {
       $kind = 'text'
@@ -355,7 +356,7 @@ try {
     $diffs = Read-Diff $d
     foreach ($p in $kindOf.Keys) {
       if (-not $diffs.ContainsKey($p)) { continue }
-      $re = switch ($kindOf[$p]) { 'text' { $riskyText } 'tests' { $riskyCore } 'mechtest' { $risky } default { $risky } }
+      $re = switch ($kindOf[$p]) { 'text' { $riskyText } 'tests' { $riskyCore } 'mechtest' { $risky } default { $riskyText } }
       if (@($diffs[$p].Lines | Where-Object { $_.StartsWith('+') -and $_ -imatch $re }).Count -gt 0) { $hits[$p] = $true }
     }
   }

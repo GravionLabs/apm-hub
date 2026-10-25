@@ -117,8 +117,13 @@ const expectFull = (r: Result, reason?: RegExp) => {
   expect(r.mode).toBe('full');
   const rest = ALL_DIMS.filter((d) => !r.dimensions.includes(d));
   expect(r.skippedDimensions.map((s) => s.dimension)).toEqual(rest);
-  expect(r.dimensions).toEqual(expect.arrayContaining(['correctness', 'tests', 'spec']));
-  if (r.size === 'large') expect(r.dimensions).toEqual(ALL_DIMS);
+  // Small diffs: correctness, tests, spec, security on risky/sensitive, conventions on source.
+  const keep = r.size === 'large' ? ALL_DIMS : ['correctness', 'tests', 'spec'];
+  if (r.size === 'small') {
+    if (r.signals.includes('risky') || r.signals.includes('sensitive')) keep.push('security');
+    if (r.signals.includes('source')) keep.push('conventions');
+  }
+  expect(r.dimensions).toEqual(ALL_DIMS.filter((d) => keep.includes(d)));
   if (reason) expect(r.reason).toMatch(reason);
 };
 // Full with all five dimensions, size large and nothing skipped (forced or unmeasurable).
@@ -1398,8 +1403,8 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
 
     batch(
       'added and deleted lines both count',
-      () => write('src/app.ts', lines(100)), // 30 deleted + 100 added
-      (r) => expect(r.size).toBe('small')
+      () => write('src/app.ts', lines(125)), // 30 deleted + 125 added = 155; added alone would be small
+      (r) => expect(r.size).toBe('large')
     );
 
     batch(
@@ -1496,6 +1501,83 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
         expect(r.size).toBe('small');
         expect(r.signals).toEqual(['risky']);
         expect(r.dimensions).toEqual(NO_CONV);
+      }
+    );
+
+    batch(
+      'a credential assignment in a source file is a risky signal (security kept)',
+      () => write('src/new.ts', 'const password = "hunter2hunter2";\n'),
+      (r) => {
+        expect(r.signals).toEqual(['risky', 'source']);
+        expect(r.dimensions).toEqual(ALL_DIMS);
+      }
+    );
+
+    batch(
+      'an exec path under dist/ is not dropped by the package filter',
+      () => write('.github/actions/x/dist/index.js', 'run();\n'),
+      (r) => {
+        expect(r.size).toBe('large');
+        expect(r.dimensions).toEqual(ALL_DIMS);
+      }
+    );
+
+    batch(
+      'a deferred test file (outside test dirs) with an import line is small without a risky signal',
+      () => write('pkg/test_foo.py', 'import os\n'),
+      (r) => {
+        expect(r.mode).toBe('full');
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual([]);
+        expect(r.dimensions).toEqual(MIN);
+      }
+    );
+
+    batch(
+      'manifest next to skill text is full and small, without security',
+      () => {
+        write('apm.yml', 'name: y\n');
+        write('packages/x/.apm/skills/foo/SKILL.md', body.replace('line 3', 'x'));
+      },
+      (r) => {
+        expect(r.reason).toMatch(/^manifest change next to skill text/);
+        expect(r.size).toBe('small');
+        expect(r.dimensions).toEqual(MIN);
+      }
+    );
+
+    batch(
+      'a security-sensitive path next to skill text is full with security',
+      () => {
+        write('packages/x/.apm/skills/foo/SKILL.md', body.replace('line 3', 'x'));
+        write('docs/auth.md', body.replace('line 3', 'x'));
+      },
+      (r) => {
+        expect(r.reason).toMatch(/^security-sensitive path/);
+        expect(r.signals).toEqual(['sensitive']);
+        expect(r.dimensions).toEqual(NO_CONV);
+      }
+    );
+
+    batch(
+      'a frontmatter change in an agent file is full and small',
+      () =>
+        write('packages/x/.apm/agents/a.agent.md', AGENT.replace("['read', 'search']", "['read']")),
+      (r) => {
+        expect(r.reason).toMatch(/^frontmatter key 'tools' changed/);
+        expect(r.size).toBe('small');
+        expect(r.dimensions).toEqual(MIN);
+      }
+    );
+
+    batch(
+      'a mechanical rename carries size small, no signals and nothing skipped',
+      () => mv('docs/guide.md', 'docs/other.md'),
+      (r) => {
+        expectMech(r);
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual([]);
+        expect(r.skippedDimensions).toEqual([]);
       }
     );
 
