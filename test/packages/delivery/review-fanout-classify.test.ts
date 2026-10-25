@@ -1534,6 +1534,97 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     );
 
     batch(
+      'a deferred test file with a credential assignment is a risky signal (security kept)',
+      () => write('pkg/test_foo.py', 'password = "hunter2hunter2"\n'),
+      (r) => {
+        expect(r.mode).toBe('full');
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual(['risky']);
+        expect(r.dimensions).toEqual(NO_CONV);
+      }
+    );
+
+    batch(
+      'a deferred test file with a destructive git command has no risky signal',
+      () => write('pkg/test_foo.py', 'run("git reset --hard")\n'),
+      (r) => {
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual([]);
+        expect(r.dimensions).toEqual(MIN);
+      }
+    );
+
+    batch(
+      'a token assignment in a test file under test/ is a security trigger',
+      () => write('test/helpers/h.ts', 'export const h = 1;\nconst token = "abcdefabcdef";\n'),
+      (r) => {
+        expect(r.reason).toMatch(/^security trigger in added lines: test\/helpers\/h\.ts/);
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual(['risky']);
+        expect(r.dimensions).toEqual(NO_CONV);
+      }
+    );
+
+    for (const [what, line] of [
+      ['a credential assignment', 'password: hunter2'],
+      ['a destructive git command', 'Run git reset --hard'],
+      ['a private key header', '-----BEGIN RSA PRIVATE KEY'],
+    ]) {
+      batch(
+        `${what} in docs prose keeps mode docs without a risky signal`,
+        () => write('CONTRIBUTING.md', body.replace('line 3', line)),
+        (r) => {
+          expectDocs(r);
+          expect(r.signals).toEqual([]);
+        }
+      );
+    }
+
+    batch(
+      'a credential assignment in a manifest is no risky signal (security from the manifest)',
+      () => write('apm.yml', 'name: x\npassword: hunter2\n'),
+      (r) => {
+        expectSec(r);
+        expect(r.signals).toEqual([]);
+      }
+    );
+
+    batch(
+      'a command pattern in a manifest is a risky signal',
+      () => write('apm.yml', 'name: x\nsource: https://x.test\n'),
+      (r) => {
+        expectSec(r);
+        expect(r.signals).toEqual(['risky']);
+      }
+    );
+
+    batch(
+      'a destructive git command in an instruction script is a risky signal (security kept)',
+      () =>
+        write(
+          'packages/x/.apm/skills/foo/scripts/Run-Foo.ps1',
+          'Write-Output "foo"\ngit reset --hard\n'
+        ),
+      (r) => {
+        expect(r.mode).toBe('full');
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual(['risky', 'source']);
+        expect(r.dimensions).toEqual(ALL_DIMS);
+      }
+    );
+
+    batch(
+      'an api key in a non-source instruction file is a risky signal (security kept)',
+      () => write('packages/x/.apm/skills/foo/data.yml', 'api_key: abcdef\n'),
+      (r) => {
+        expect(r.mode).toBe('full');
+        expect(r.size).toBe('small');
+        expect(r.signals).toEqual(['risky']);
+        expect(r.dimensions).toEqual(NO_CONV);
+      }
+    );
+
+    batch(
       'manifest next to skill text is full and small, without security',
       () => {
         write('apm.yml', 'name: y\n');

@@ -59,7 +59,9 @@ $riskyCore = '\b(curl|wget|eval|iex|iwr|irm|chmod|chown|sudo|ssh|scp|sftp|rsync|
 $riskyEsm = '^\+\s*(import|export)\s'
 $risky = "$riskyCore|$riskyEsm"
 # Skill text is read by agents: shell steps that destroy, force-push or carry credentials are security-relevant.
-$riskyText = $risky + '|\bgit\s+push\b[^\n]*(--force\b|--force-with-lease|\s-[a-z]*f\b)|\bgit\s+(reset\s+--hard|clean\s+-\w*f|branch\s+-D)\b|^\+\s*(\$\s*)?(rm|del|rmdir|Remove-Item)\s+\S|\bRemove-Item\b[^\n]*-Recurse|(pass(word|wd)?|secret|token|api[-_]?key|credentials?|private[-_]?key|bearer|authorization)\s*[:=]\s*\S|-----BEGIN [A-Z ]*PRIVATE KEY|\b(ghp|gho|ghs|github_pat|sk|AKIA)[_-]?[A-Za-z0-9]{16,}'
+# Credential assignments, private key headers and token prefixes: risky in every text, source and test file (not docs or manifests).
+$riskyCred = '(pass(word|wd)?|secret|token|api[-_]?key|credentials?|private[-_]?key|bearer|authorization)\s*[:=]\s*\S|-----BEGIN [A-Z ]*PRIVATE KEY|\b(ghp|gho|ghs|github_pat|sk|AKIA)[_-]?[A-Za-z0-9]{16,}'
+$riskyText = $risky + '|\bgit\s+push\b[^\n]*(--force\b|--force-with-lease|\s-[a-z]*f\b)|\bgit\s+(reset\s+--hard|clean\s+-\w*f|branch\s+-D)\b|^\+\s*(\$\s*)?(rm|del|rmdir|Remove-Item)\s+\S|\bRemove-Item\b[^\n]*-Recurse|' + $riskyCred
 # Text-only classes (content paths, not rename classes): skill and agent text, and test-only files.
 $skillText = '(^|/)(SKILL|AGENTS|CLAUDE)\.md$|\.(agent|prompt)\.md$|(^|/)(references|templates|assets)/.+\.md$'
 $testsPath = '(^|/)test/|\.test\.ts$'
@@ -356,7 +358,7 @@ try {
     $diffs = Read-Diff $d
     foreach ($p in $kindOf.Keys) {
       if (-not $diffs.ContainsKey($p)) { continue }
-      $re = switch ($kindOf[$p]) { 'text' { $riskyText } 'tests' { $riskyCore } 'mechtest' { $risky } default { $riskyText } }
+      $re = switch ($kindOf[$p]) { 'text' { $riskyText } 'other' { $riskyText } 'tests' { "$riskyCore|$riskyCred" } 'mechtest' { "$risky|$riskyCred" } default { $risky } }
       if (@($diffs[$p].Lines | Where-Object { $_.StartsWith('+') -and $_ -imatch $re }).Count -gt 0) { $hits[$p] = $true }
     }
   }
