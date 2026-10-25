@@ -4,11 +4,14 @@ The single place that maps a role, task or reviewer to a model tier (`fast`, `st
 
 ## Tier by attribute
 
+Final-Verify is `standard` because a forked skill without `agent:` (as `verify-project`) runs on the caller's model on Claude Code; no `Agent` call can pin it, so it is not pinned (`docs/concepts/skill-frontmatter.md`). Checked for #610: the fork gets no `model`, so the accepted model is the caller's sonnet.
+
 When several rows apply, the highest tier wins.
 
 | Attribute | Tier |
 |:--|:--|
-| Role `issue-reader`, `explorer`, Final-Verify (`verify-project`, only runs commands) | `fast` |
+| Role `issue-reader`, `explorer` | `fast` |
+| Final-Verify (`verify-project`; on Claude Code the skill's `context: fork` runs on the caller's model, so no `fast` pin) | `standard` |
 | Task: docs, mechanical change, `size: S` or `size: M` | `standard` |
 | Task: prose only (skill, agent or reference text) | `standard` (never below) |
 | Task: parser, security, concurrency, cross-package design or `size: L` | `strong` |

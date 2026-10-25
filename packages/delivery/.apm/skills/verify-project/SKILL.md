@@ -4,7 +4,7 @@ description: 'Run build, tests and lint; report pass/fail with the first error. 
 context: fork
 ---
 
-Phase: verify. Run checks on project. On Claude Code this skill runs in a forked general-purpose context (never the `reviewer` agent, which answers with a findings array and expects a review package): build and test output stays there, the caller receives only the JSON below.
+Phase: verify. Run checks on project. On Claude Code `context: fork` is the isolated context (the fork runs on the caller's model): callers invoke this skill directly, never through an `Agent` or the `reviewer` agent, which answers with a findings array and expects a review package. Build and test output stays in the fork, the caller receives only the JSON below.
 
 ## Steps
 
@@ -33,3 +33,4 @@ Phase: verify. Run checks on project. On Claude Code this skill runs in a forked
 - Run commands in project root.
 - Step fails? Stop, report first error.
 - Output JSON only.
+- Run the build and the full suite exactly once per call; never start another agent, subagent or skill that runs them again (on Claude Code the fork is already the isolated context).
