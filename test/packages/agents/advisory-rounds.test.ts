@@ -7,9 +7,10 @@ const refs = path.resolve(
 );
 const gates = fs.readFileSync(path.join(refs, 'orchestrator-gates.md'), 'utf-8');
 const pipeline = fs.readFileSync(path.join(refs, 'pbi-pipeline.md'), 'utf-8');
-const section = gates
-  .split('### Advisory round limit (`--advisory-rounds <n>`)')[1]
-  .split(/^(?:##|Headless)/m)[0];
+const heading = '### Advisory round limit (`--advisory-rounds <n>`)';
+if (!gates.includes(heading)) throw new Error(`missing section: ${heading}`);
+const section = gates.split(heading)[1].split(/^(?:##|Headless)/m)[0];
+const read = (p: string) => fs.readFileSync(path.resolve(__dirname, '../../../', p), 'utf-8');
 const step5 = pipeline.split('\n').find((l) => l.startsWith('5. '))!;
 
 describe('--advisory-rounds (#480)', () => {
@@ -79,5 +80,36 @@ describe('--advisory-rounds (#480)', () => {
     expect(step5).toMatch(/light check \(Final-Verify plus a `correctness`-only delta review\)/);
     expect(step5).toMatch(/except after an advisory-only round/);
     expect(pipeline).toMatch(/nor once `--advisory-rounds` is reached/);
+  });
+
+  it('counter is recovered from the ledger and the question shows the round cost', () => {
+    expect(section).toMatch(/derived from the ledger, never held in memory/);
+    expect(section).toContain('`Fix round` lines with result `advisory`');
+    expect(section).toMatch(/validated integer 0-5/);
+    expect(section).toMatch(/Another round costs:/);
+  });
+
+  it('headless exemption names both the policy and the limit', () => {
+    const headless = gates.split(/^Headless \(no question tool\)/m)[1].split('\n')[0];
+    expect(headless).toMatch(/`--fix-advisories` is set[^.]*`--advisory-rounds` limit is reached/);
+  });
+
+  it('flag, range and default agree across agents, skill, loop and docs', () => {
+    const files = [
+      'packages/agents/.apm/agents/orchestrator.agent.md',
+      'packages/agents/.apm/agents/pbi-runner.agent.md',
+      'packages/agents/.apm/skills/orchestrator/SKILL.md',
+      'packages/github/.apm/skills/github-issue/references/loop-mode.md',
+      'docs/orchestrator.md',
+      'docs/working-mode.md',
+    ];
+    for (const f of files) expect(read(f)).toContain('--advisory-rounds');
+    for (const f of [files[0], files[2], files[5]])
+      expect(read(f)).toContain('--advisory-rounds <0-5>');
+    expect(read(files[3])).toMatch(
+      /forwards `--fix-advisories`, `--advisory-rounds` and `--no-review-summary` verbatim/
+    );
+    expect(read(files[0])).toContain('`--advisory-rounds <0-5>` (default 1');
+    expect(read(files[5])).toContain('(default `1`)');
   });
 });

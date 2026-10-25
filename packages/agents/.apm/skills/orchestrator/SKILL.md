@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: 'Run the orchestrator inline: /orchestrator [--fix-advisories <p>] [--advisory-rounds <n>] [flags] plan|implement|full|next|loop|status <issue>. Prefer claude --agent orchestrator.'
+description: 'Run the orchestrator inline: /orchestrator [--fix-advisories <p>] [--advisory-rounds <n>] [other flags] plan|implement|full|next|loop|status <issue>. Prefer claude --agent orchestrator.'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'
