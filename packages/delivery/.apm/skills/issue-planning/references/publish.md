@@ -1,6 +1,6 @@
 # Publish a plan
 
-Run by the primary agent (it can ask and write) after the user approved `plan.md` and every `questions[]` entry is answered, dropped or deferred (`deferred: true`). The planning step never runs this. Level `task`: nothing to publish unless there are ≥ 2 items; then publish them as `[Task]` sub-issues of the PBI (body format: `github-issue` `references/task-issues.md`, title `[Task] <title>`, label `task`, first body line `Parent PBI: #N`, or `Parent Bug: #<bug>` for a Bug parent) together with the approval gate, in plan order with blocked-by links. A single task or a description is never published; the orchestrator rewrites a description plan to a PBI plan at the gate first (`github-issue` `references/orchestrator-gates.md`), then publishes it as one.
+Run by the primary agent (it can ask and write) after the user approved `plan.md` and every `questions[]` entry is answered, dropped or deferred (`deferred: true`). The planning step never runs this. Level `task`: nothing to publish unless there are ≥ 2 items; then publish them as `[Task]` sub-issues of the PBI (body format: `github-issue` `references/task-issues.md`, title `[Task] <title>`, label `task`, first body line `Parent PBI: #N`, or `Parent Bug: #<bug>` for a Bug parent) together with the approval gate, in plan order with blocked-by links. A single task or a description is never published as Task issues (the label `planned` is still set, see § 5); the orchestrator rewrites a description plan to a PBI plan at the gate first (`github-issue` `references/orchestrator-gates.md`), then publishes it as one.
 
 Resolve `{owner}/{repo}`. The run is idempotent: skip items whose `issue` is already non-null, and repeat only what is missing. Create items in dependency order (an item after everything in its `blocked_by`), so each blocker has an issue number first.
 
@@ -51,3 +51,14 @@ gh api repos/{owner}/{repo}/issues/<item-nr>/dependencies/blocked_by --jq '[.[].
 The first must list every created number; the second must list every expected blocker of that item. Fix missing links and re-check; report any that still fail.
 
 Set `status` to `published` when both checks pass, else `partial` with the failing step in `summary`, and write the file back.
+
+## 5. Label planned
+
+Level `task` with a `parent_issue` that is a PBI only. Mark the PBI as planned in two cases: (a) the Tasks were published and the checks of § 4 passed (≥ 2 items), or (b) a single task: right after the user approved `plan.json` at the gate (publish otherwise stays a no-op). Not for a description plan before the orchestrator created the PBI. Ensure the label idempotently, then add it:
+
+```powershell
+gh label create planned --force --color 0E8A16 --description "Task breakdown published or single-task plan approved"
+gh issue edit <pbi> --add-label planned
+```
+
+Repeating is safe. Nothing removes the label afterwards (`github-release` leaves it; it is harmless on closed issues).
