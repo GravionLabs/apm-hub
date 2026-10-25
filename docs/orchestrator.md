@@ -121,7 +121,7 @@ sequenceDiagram
     R-->>L: findings JSON
     L-->>O: verdict, findings list, review.json path
     O->>U: review summary, pick advisories to fix
-    O->>W: PBI, branch, task list, unfixed advisories
+    O->>W: PBI, branch, task list, unfixed advisories, declined and deferred findings
     W-->>O: PR number and URL as JSON
     O-->>U: PR URL and rulings
 ```
@@ -139,7 +139,7 @@ flowchart TD
     PBI --> T3["Task issue<br/>Refs commit"]
 ```
 
-Task sub-issues never get their own branch or PR. Each task commit has the subject `<type>: <desc> (#<pbi>)` and the footer `Refs #<task>`, never `Closes`. The PR body carries `Closes #<pbi>` and the list `#<task> — <sha>`. A PR that leaves a Task or a deferred acceptance criterion open says `Refs #<pbi>` instead and lists it under `## Not delivered`: the release leaves the PBI open and `next` selects it again for the rest. A criterion deferred at a gate becomes a Task sub-issue. A PBI that becomes a single task creates no Task issue and uses `Refs #<pbi>`.
+Task sub-issues never get their own branch or PR. Each task commit has the subject `<type>: <desc> (#<pbi>)` and the footer `Refs #<task>`, never `Closes`. The PR body carries `Closes #<pbi>` and the list `#<task> — <sha>`. A PR that leaves a Task or a deferred acceptance criterion open says `Refs #<pbi>` instead and lists it under `## Not delivered` (the release leaves the PBI open and `next` selects it again for the rest). Advisories the user did not fix and findings the implementer declined (with reason) appear under `## Advisories not fixed`; findings deferred as out of scope appear under `## Follow-up candidates` and do not change `Closes`. The orchestrator records the per-finding statuses in `<state>/<pbi>/rulings.json`. A criterion deferred at a gate becomes a Task sub-issue. A PBI that becomes a single task creates no Task issue and uses `Refs #<pbi>`.
 
 ## Parallel Task waves
 
