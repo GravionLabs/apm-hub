@@ -348,3 +348,46 @@ describe('review-fanout: smaller package (#535)', () => {
     expect(pipeline).toMatch(/Phase review/);
   });
 });
+
+describe('review-fanout: size class and skipped dimensions (#534)', () => {
+  const orchestratorDoc = fs.readFileSync(path.join(root, 'docs/orchestrator.md'), 'utf-8');
+  const classifyLine = fanout
+    .split('\n')
+    .find((l) => l.includes('Classify-Diff.ps1 -Range') === false && l.includes('It prints'))!;
+
+  it('step 2 names the reduced full + small set and that a caller list replaces it', () => {
+    expect(classifyLine).toContain('{mode,dimensions,reason,size,signals,skippedDimensions}');
+    expect(classifyLine).toMatch(/`full` \+ `small`/);
+    expect(classifyLine).toMatch(/`correctness`, `tests`, `spec`/);
+    expect(classifyLine).toMatch(/`security` on the `risky` or `sensitive` signal/);
+    expect(classifyLine).toMatch(/`conventions` on the `source` signal/);
+    expect(classifyLine).toMatch(/a dimension list given by the caller replaces them/);
+    expect(classifyLine).toMatch(/`-Force full` runs all five/);
+    expect(classifyLine).toMatch(/invalid JSON is `full` with all five dimensions/);
+  });
+
+  it('output shape and review.json carry skippedDimensions', () => {
+    expect(fanout).toContain('"skippedDimensions":[{"dimension","reason"}]');
+    expect(fanout).toMatch(
+      /`skippedDimensions` = the dimensions the size class dropped, `\[\]` when none/
+    );
+  });
+
+  it('ledger review line lists skipped dimensions read from review.json', () => {
+    expect(pipeline).toContain('[ — skipped <dim>,<dim> (size small)]');
+    expect(pipeline).toMatch(/read from `skippedDimensions` of `review\.json`/);
+  });
+
+  it('a size-skipped dimension is never added back in a re-review', () => {
+    expect(pipeline).toMatch(/a dimension skipped for size is never added back/);
+    expect(fanout).toMatch(/never adds a size-skipped dimension back/);
+  });
+
+  it('docs mention the size class and skippedDimensions', () => {
+    expect(orchestratorDoc).toMatch(/The size class: a small diff/);
+    expect(orchestratorDoc).toContain('`skippedDimensions` in `review.json`');
+    expect(fs.readFileSync(path.join(root, 'docs/working-mode.md'), 'utf-8')).toMatch(
+      /a small `full` diff runs fewer/
+    );
+  });
+});
