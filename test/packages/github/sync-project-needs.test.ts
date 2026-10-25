@@ -260,4 +260,40 @@ describe.skipIf(!hasPwsh)('Sync-ProjectNeeds', () => {
     const r = await worker.run(['-StateFile', file, '-DryRun'], { cwd: tmp });
     expect(r.stdout.trim()).toBe('o/r#4: Needs (none) -> Review');
   });
+  describe('-SetStatus', () => {
+    const state = (items: Item[]) => {
+      const file = path.join(tmp, 'state.json');
+      fs.writeFileSync(file, JSON.stringify({ owner: 'o', number: 1, items }));
+      return file;
+    };
+    it('with -StateFile only reports the action', async () => {
+      const file = state([base({ number: 7 })]);
+      const r = await worker.run(
+        ['-StateFile', file, '-Issue', 'o/r#7', '-SetStatus', 'In Progress', '-Json'],
+        { cwd: tmp }
+      );
+      expect(r.status).toBe(0);
+      expect(JSON.parse(r.stdout).actions).toEqual([
+        { issue: 'o/r#7', item: 'I-7', field: 'Status', to: 'In Progress' },
+      ]);
+    });
+    it('an issue outside the project is one line, exit 0', async () => {
+      const file = state([base({ number: 7 })]);
+      const r = await worker.run(
+        ['-StateFile', file, '-Issue', 'o/r#8', '-SetStatus', 'In Progress'],
+        { cwd: tmp }
+      );
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe('Status not set: #8 is not in the project');
+    });
+    it('needs exactly one -Issue', async () => {
+      const file = state([base({ number: 7 })]);
+      const r = await worker.run(
+        ['-StateFile', file, '-Issue', 'o/r#7,o/r#8', '-SetStatus', 'In Progress'],
+        { cwd: tmp }
+      );
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain('exactly one -Issue');
+    });
+  });
 });

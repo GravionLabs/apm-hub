@@ -13,6 +13,9 @@
     2. the main checkout (parent of the git common dir) has no live lease of another issue and 'git status --porcelain --untracked-files=no' is empty:
        'git fetch origin <base>', check out <branch> (created from origin/<base> when missing), lease, worktree=false
     3. otherwise New-Worktree.ps1 -> .worktrees/<nr> (an existing registered worktree of that name is reused), lease, worktree=true
+  After the lease is written on the main-checkout and worktree paths, the project Status of the issue is set to 'In Progress' through
+  github-project/scripts/Sync-ProjectNeeds.ps1 -SetStatus (silent without .agents/project.json or add-to-project.yml; PROJECT_SYNC_OFF=1 disables;
+  a failure is one 'Project status:' line on stderr, exit code unchanged).
   A lease older than -LeaseTtlMinutes is stale: it counts as free and is taken over (stderr: 'stale lease of #<n> taken over').
   Race safety: the lease of the main checkout is claimed BEFORE the dirty check and the checkout, by exclusive create (O_EXCL: it fails when
   <key>.json exists; a file younger than 10 s that cannot be parsed yet counts as a lease being written). A stale lease is first moved away
@@ -120,6 +123,25 @@ function Save-Lease([string]$CheckoutPath, [string]$LeaseBranch, $Existing, [swi
   if (-not $created) { return $null }
   $file
 }
+# Sets the project Status of the issue to 'In Progress' once the lease exists. Silent without project config or with PROJECT_SYNC_OFF=1;
+# any failure is one 'Project status:' line on stderr (stdout stays the JSON result), never an exception.
+function Set-ProjectStatus([string]$CheckoutPath) {
+  if ($env:PROJECT_SYNC_OFF -eq '1' -or $Issue -notmatch '\A[0-9]+\z') { return }
+  $configured = (Test-Path -LiteralPath (Join-Path $CheckoutPath '.agents/project.json') -PathType Leaf) -or
+    (Test-Path -LiteralPath (Join-Path $CheckoutPath '.github/workflows/add-to-project.yml') -PathType Leaf) -or
+    (Test-Path -LiteralPath (Join-Path $CheckoutPath '.github/workflows/add-to-project.yaml') -PathType Leaf)
+  if (-not $configured) { return }
+  try {
+    $script = Join-Path $PSScriptRoot '../../github-project/scripts/Sync-ProjectNeeds.ps1'
+    if (-not (Test-Path -LiteralPath $script -PathType Leaf)) { throw 'Sync-ProjectNeeds.ps1 not found (install the github-project skill)' }
+    $url = "$(& git -C $CheckoutPath config --get remote.origin.url 2>$null)".Trim()
+    if ($url -notmatch 'github\.com[:/]([^/\s]+/[^/\s]+?)(\.git)?/?\z') { throw "cannot derive owner/repo from origin '$url'" }
+    $out = @(& pwsh -NoProfile -File $script -Issue "$($Matches[1])#$Issue" -SetStatus 'In Progress' 2>&1 | ForEach-Object { "$_" })
+    if ($LASTEXITCODE -ne 0) { throw ($out -join ' ') }
+  } catch {
+    [Console]::Error.WriteLine("Project status: not set for #${Issue}: $($_ -replace '\s+', ' ')")
+  }
+}
 function Write-Result([string]$CheckoutPath, [bool]$IsWorktree, [string]$ResultBranch, [string]$LeaseFile) {
   [ordered]@{ path = $CheckoutPath; worktree = $IsWorktree; branch = $ResultBranch; base = $Base; lease = $LeaseFile } | ConvertTo-Json -Compress
 }
@@ -185,6 +207,7 @@ if ($claimed) {
     Remove-Item -LiteralPath $claimed -Force -ErrorAction SilentlyContinue # a failed checkout does not keep the main checkout busy
     throw
   }
+  Set-ProjectStatus $root
   Write-Result $root $false $Branch $claimed
   return
 }
@@ -202,4 +225,5 @@ if ($registered -contains $target) {
   $wtBranch = "$($created.branch)"
 }
 $file = Save-Lease $target $wtBranch $null
+Set-ProjectStatus $target
 Write-Result $target $true $wtBranch $file

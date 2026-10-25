@@ -30,6 +30,9 @@
 .PARAMETER IncludeParents   Also sync the parent of every selected -Issue item.
 .PARAMETER DryRun           Print the actions, change nothing.
 .PARAMETER StateFile        JSON state instead of reading from GitHub (no gh call).
+.PARAMETER SetStatus        Status mode (needs exactly one -Issue): sets the project Status of that issue to this option (e.g. 'In Progress') and nothing
+                            else. No project configured: silent, exit 0. Issue not in the project or option missing: one line 'Status not set: ...', exit 0.
+                            With -StateFile only the action is reported ({issue, item, field: 'Status', to}); other errors: exit 1.
 .PARAMETER Json             Emit {project, actions, skipped} as JSON instead of text.
 #>
 [CmdletBinding()]
@@ -41,13 +44,14 @@ param(
   [switch]$IncludeParents,
   [switch]$DryRun,
   [string]$StateFile,
+  [string]$SetStatus,
   [switch]$Json
 )
 # No Mandatory: a headless run must exit non-zero with a message instead of prompting.
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$script:Usage = 'Usage: Sync-ProjectNeeds.ps1 [-Owner <login> -Number <n>] [-Repo owner/repo] [-Issue 12,13|owner/repo#12] [-IncludeParents] [-DryRun] [-StateFile <json>] [-Json]'
+$script:Usage = 'Usage: Sync-ProjectNeeds.ps1 [-Owner <login> -Number <n>] [-Repo owner/repo] [-Issue 12,13|owner/repo#12] [-IncludeParents] [-DryRun] [-StateFile <json>] [-SetStatus <option>] [-Json]'
 
 # Property of an object or hashtable-like value, $null when absent (StrictMode safe).
 function Get-Prop($Obj, [string]$Name) {
@@ -321,6 +325,34 @@ if ($StateFile) {
 $ref = Resolve-ProjectRef -Owner $Owner -Number $Number -Root "$root"
 if (-not $ref -and $state -and (Get-Prop $state 'owner') -and (Get-Prop $state 'number')) {
   $ref = @{ owner = "$($state.owner)"; number = [int]$state.number }
+}
+if ($SetStatus) {
+  $one = @(@($Issue | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ }))
+  if ($one.Count -ne 1) { throw "-SetStatus needs exactly one -Issue. $script:Usage" }
+  if (-not $ref) { exit 0 }
+  $r = ConvertTo-IssueRef $one[0] $(if ($Repo) { $Repo } else { $null })
+  if ($state) {
+    $it = @(Get-Prop $state 'items' | Where-Object { $_ -and (Test-RefMatch $r $_) }) | Select-Object -First 1
+    if (-not $it) { Write-Output "Status not set: #$($r.number) is not in the project"; exit 0 }
+    $act = [ordered]@{ issue = "$($it.repo)#$($it.number)"; item = Get-Prop $it 'itemId'; field = 'Status'; to = $SetStatus }
+    if ($Json) { [ordered]@{ project = $ref; actions = @($act) } | ConvertTo-Json -Depth 6 } else { Write-Output "$($act.issue): Status -> $SetStatus" }
+    exit 0
+  }
+  if (-not $r.repo) { throw "Issue #$($r.number) needs -Repo or the form owner/repo#n. $script:Usage" }
+  try {
+    $p = (Invoke-Graphql $script:FieldsQuery @{ login = $ref.owner; n = $ref.number }).repositoryOwner.projectV2
+    if (-not $p) { throw "Project $($ref.owner)/$($ref.number) not found." }
+    $field = @($p.fields.nodes) | Where-Object { $_.name -eq 'Status' -and $_.PSObject.Properties['options'] } | Select-Object -First 1
+    $opt = if ($field) { @($field.options) | Where-Object { $_.name -eq $SetStatus } | Select-Object -First 1 }
+    if (-not $opt) { Write-Output "Status not set: option '$SetStatus' missing in the project"; exit 0 }
+    $node = @(Get-IssueNodes -ProjectId $p.id -Refs @($r)) | Select-Object -First 1
+    if (-not $node) { Write-Output "Status not set: #$($r.number) is not in the project"; exit 0 }
+    if ($DryRun) { Write-Output "#$($r.number): Status -> $SetStatus (dry run)"; exit 0 }
+    $q = 'mutation($i: UpdateProjectV2ItemFieldValueInput!) { updateProjectV2ItemFieldValue(input: $i) { clientMutationId } }'
+    Invoke-Graphql $q @{ i = @{ projectId = $p.id; itemId = $node.item.id; fieldId = $field.id; value = @{ singleSelectOptionId = $opt.id } } } | Out-Null
+  } catch { Write-Output "Status not set: $_"; exit 1 }
+  Write-Output "#$($r.number): Status -> $SetStatus"
+  exit 0
 }
 if (-not $ref) { Write-Output 'Needs sync skipped: no project configured'; exit 0 }
 $live = -not $state
