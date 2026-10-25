@@ -294,7 +294,7 @@ Two values anchor the review range. `BASE` is `git rev-parse HEAD` before each t
 
 Issues merged into a release branch carry the label `merged` (set by CI, removed when the release closes them). Selection uses it as a fast path only; the PR and commit check stays authoritative because labels can be edited by hand.
 
-The Task issues are the source of truth and `plan.json` is a local cache of their numbers. A plan change edits the Task issue or adds one, then the cache. A task counts as merged when a commit with the footer `Refs #<task>` is reachable from the remote integration branch; the orchestrator then closes the issue and skips it. The exact grep is in [task-issues.md](../packages/github/.apm/skills/github-issue/references/task-issues.md).
+The Task issues are the source of truth; `plan.json` caches their numbers and `task-<nr>.md` their bodies. A plan change edits the Task issue or adds one, then both caches. A task counts as merged when a commit with the footer `Refs #<task>` is reachable from the remote integration branch; the orchestrator then closes the issue and skips it. The exact grep is in [task-issues.md](../packages/github/.apm/skills/github-issue/references/task-issues.md).
 
 ```mermaid
 stateDiagram-v2

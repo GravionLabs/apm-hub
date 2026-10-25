@@ -9,7 +9,7 @@ const publish = fs.readFileSync(
   'utf-8'
 );
 
-describe('publish keeps Task bodies as task-<nr>.md (#619)', () => {
+describe('publish keeps Task bodies as task-<nr>.md (#548)', () => {
   it('names the cache path', () => {
     expect(publish).toContain('<state>/<pbi>/task-<nr>.md');
   });
@@ -20,8 +20,12 @@ describe('publish keeps Task bodies as task-<nr>.md (#619)', () => {
 
   it('re-run rule: skip created items, overwrite a missing file, never append', () => {
     expect(publish).toMatch(/already non-null is skipped/);
-    expect(publish).toMatch(/overwrite, never append/);
+    expect(publish).toMatch(/Overwrite, never append/);
     expect(publish).toContain('gh issue view <nr> --json title,body');
+  });
+
+  it('writes the cache from the published issue, not from plan.json', () => {
+    expect(publish).toMatch(/never write it from the `plan\.json` `body`/);
   });
 
   it('leaves feature and pbi levels on a temporary body file', () => {

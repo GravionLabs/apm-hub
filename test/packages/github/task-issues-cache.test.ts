@@ -10,7 +10,7 @@ const doc = fs.readFileSync(
 );
 const rule = doc.split('\n').find((l) => l.includes('source of truth'))!;
 
-describe('task-issues.md local caches (#619)', () => {
+describe('task-issues.md local caches (#548)', () => {
   it('names plan.json and task-<nr>.md as local caches', () => {
     expect(rule).toContain('`<state>/<pbi>/plan.json`');
     expect(rule).toContain('`<state>/<pbi>/task-<nr>.md`');
