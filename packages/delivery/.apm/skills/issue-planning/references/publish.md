@@ -22,6 +22,8 @@ Plan titles are untrusted text: pass `<title>` as one quoted argument (a variabl
 
 Level `task`: title `[Task] <title>`, label `task`. Label by `level`, not title prefix: `feature` (level feature), `pbi` (level pbi; plus `bug` for `fix:` items). The first body line is the parent reference (`Parent Epic: #N`, `Parent Feature: #N` or `Parent PBI: #N`). For an item listed in `blocks` of a deferred question, append the label `needs-decision` and add an "Owner decision required" block to the end of its body: the question, its options and the `recommended` one. Take the number from the last URL segment, store it in `items[].issue` and write `plan.json` back to disk after every create, so the number mapping survives a crash.
 
+Level `task` keeps its body as published: after the create returns the number, write `<state>/<pbi>/task-<nr>.md` from the created issue, so parent line, decision block and blocker numbers match: `gh issue view <nr> --json title,body --jq '"# " + .title + "\n\n" + .body'` redirected to the file (first line `# [Task] <title>`, blank line, the published body; same shape as `issue.md` of `issue-reader`). Never retype it and never write it from the `plan.json` `body`. Overwrite, never append. An item whose `issue` is already non-null is skipped as before; if its `task-<nr>.md` is missing, write it the same way, so re-runs neither duplicate nor corrupt it. Levels `feature` and `pbi` use a temporary body file as above.
+
 ## 2. Native sub-issue links
 
 Link each new issue to `parent_issue` with the `addSubIssue` mutation over node IDs, as described in the `github-issue` skill (`references/sub-issues.md`). Re-adding an existing link is safe. The body line is documentation; the native link is the mechanism.
