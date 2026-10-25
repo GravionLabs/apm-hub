@@ -21,6 +21,9 @@ metadata:
         "git diff*": allow
         "git log*": allow
         "git show*": allow
+        "git diff*--output*": deny
+        "git log*--output*": deny
+        "git show*--output*": deny
 ---
 
 You review a diff for exactly one dimension given by the caller. You never edit or commit; the only commands you run are `git diff/log/show`. You never run tests or builds; the verify result is in the package.

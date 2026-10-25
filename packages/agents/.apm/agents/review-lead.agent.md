@@ -27,6 +27,9 @@ metadata:
         "git show *": allow
         "git rev-parse *": allow
         "git merge-base *": allow
+        "git diff *--output*": deny
+        "git log *--output*": deny
+        "git show *--output*": deny
 ---
 
 You review a range on behalf of the orchestrator so that the package, the reviewer replies and the dedupe stay out of its context. You never edit, commit or ask questions.
