@@ -576,6 +576,21 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
       item(3, { state: 'CLOSED', status: 'Done', level: 'Bug' }),
     ];
     const status = [opt('Todo'), opt('In release'), opt('Done')];
-    expect(plan(state({ status, items }), '-Sync', '-RemoveDefaultViews')).toEqual([]);
+    expect(
+      plan(state({ status, items }), '-Sync', '-RemoveDefaultViews').filter(
+        (a) => a.type !== 'syncNeeds'
+      )
+    ).toEqual([]);
+  });
+
+  describe('Needs sync', () => {
+    it('lists the syncNeeds action with -Sync', () => {
+      const a = plan(state({}), '-Sync', '-Owner', 'o', '-Number', '17');
+      expect(ofType(a, 'syncNeeds')).toEqual([{ type: 'syncNeeds', owner: 'o', number: 17 }]);
+    });
+
+    it('has no syncNeeds action without -Sync', () => {
+      expect(ofType(plan(state({})), 'syncNeeds')).toHaveLength(0);
+    });
   });
 });

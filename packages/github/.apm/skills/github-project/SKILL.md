@@ -35,6 +35,7 @@ Always run `-DryRun` first, show the actions to the user, then run without it. `
 - Status: option `In release` (BLUE) goes directly before `Done`; every existing option keeps its id, so item values survive.
 - Level: created (Epic, Feature, PBI, Task, Bug) only when missing.
 - Sync, open issues only: Level from labels `epic|feature|pbi|task|bug` (first match in that order), fallback title prefix `[Epic]`, `[Feature]`, `[PBI]`, `[Task]`, only where Level is empty. Label `merged` → `In release`; `In release` without `merged` → `Todo`. Closed items are untouched.
+- `-Sync` also runs `scripts/Sync-ProjectNeeds.ps1` (forwards `-DryRun`; offline `-StateFile` only lists the action `syncNeeds`). A failing Needs sync is one warning, the run still exits 0. Details: `references/needs-sync.md`.
 - Needs: single-select (Planning, Decision, Review, Blocked, Ready, In progress, Release review), created when missing; an existing field keeps its option ids and gets missing options appended.
 - Views are matched by name; missing ones are created, others are never touched (`references/views.md`).
 - `-RemoveDefaultViews` deletes `View <n>` and `Probe` views, only when all five standard views exist; `Sprint planning` (old) only when `Needs me`, `Ready for loop` and `Sprint next` exist or are planned.

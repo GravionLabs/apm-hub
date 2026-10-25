@@ -23,6 +23,19 @@ One reproducible GitHub Project (v2) layout for all GravionLabs repositories. `p
 | In progress | PURPLE | A runner or person is working on it. |
 | Release review | PINK | The release content waits for an owner review. Owner action. |
 
+`-Sync` also runs `Sync-ProjectNeeds.ps1`, which sets Needs of every open item. Rule order, first match wins:
+
+1. Closed: Needs is cleared.
+2. Label `needs-decision`: Decision.
+3. Label `needs-review`: Review.
+4. Open native blocked-by link: Blocked.
+5. Label `merged` or Status `In release`: Release review.
+6. Open pull request for the issue or Status `In Progress`: In progress.
+7. Epic without Feature, Feature without PBI, PBI without Task and without label `planned`: Planning.
+8. Otherwise Ready (Epics and Features: cleared).
+
+The project comes from `-Owner`/`-Number`, else `.agents/project.json` (`{"owner": "...", "number": 17}`), else `project-url:` in `.github/workflows/add-to-project.yml`. A failing Needs sync prints one warning; the run still exits 0.
+
 ## Views
 
 Views are matched by name. Missing ones are created, existing ones are never touched. Sorting cannot be set through the API.

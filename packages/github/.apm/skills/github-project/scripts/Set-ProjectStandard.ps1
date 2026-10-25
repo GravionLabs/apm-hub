@@ -11,13 +11,13 @@
   The owner may be a user or an organization.
 .PARAMETER Owner               User or organization login that owns the project.
 .PARAMETER Number              Project number.
-.PARAMETER Sync                Also sync items: Level from labels/title, label 'merged' <-> status 'In release' (open issues only); ensure the labels 'planned' and 'needs-review' in the repositories linked to the project.
+.PARAMETER Sync                Also run Sync-ProjectNeeds.ps1 (field Needs; offline only the action syncNeeds) and sync items: Level from labels/title, label 'merged' <-> status 'In release' (open issues only); ensure the labels 'planned' and 'needs-review' in the repositories linked to the project.
 .PARAMETER Sprints             Also add the weekly iteration field 'Sprint' (titles 'YYYY-Www', ISO week) and the views 'Sprint' and 'Sprint next'.
 .PARAMETER Today               Date that decides the first sprint (default: today); only for tests.
 .PARAMETER RemoveDefaultViews  Delete views named 'View <n>' or 'Probe', only when all five standard views exist afterwards; also 'Sprint planning' (replaced by 'Sprint next') when 'Needs me' and 'Ready for loop' exist afterwards.
 .PARAMETER DryRun              Print the actions, change nothing.
 .PARAMETER StateFile           JSON state (projectId, ownerType, fields, views, items) instead of reading from GitHub.
-.PARAMETER Json                Emit {actions, manualSteps} as JSON instead of text.
+.PARAMETER Json                Emit {dryRun, actions, needs, manualSteps} as JSON instead of text.
 #>
 [CmdletBinding()]
 param(
@@ -216,6 +216,7 @@ function Format-Action($a) {
     'CreateView' { "Create view $($a.name) ($($a.layout), filter: $($a.filter))" }
     'EnsureLabel' { "Label $($a.repo): $($a.name) ($($a.color))" }
     'DeleteView' { "Delete view $($a.name)" }
+    'syncNeeds' { "Sync Needs: Sync-ProjectNeeds.ps1 -Owner $($a.owner) -Number $($a.number)" }
   }
 }
 
@@ -342,10 +343,29 @@ if ($StateFile) {
 $actions = Get-ProjectPlan -State $state -Sync $Sync.IsPresent -RemoveDefaultViews $RemoveDefaultViews.IsPresent -Sprints $Sprints.IsPresent -Today $Today
 if (-not $DryRun -and $actions.Count -gt 0) { Invoke-Plan $actions $state }
 
+# -Sync also sets the field Needs. Offline (-StateFile) the call is only listed; a failing Needs sync is one warning, never a failed run.
+$needsOutput = @()
+if ($Sync) {
+  if ($StateFile) {
+    $actions = @($actions) + [pscustomobject]@{ type = 'syncNeeds'; owner = $Owner; number = $Number }
+  } else {
+    $needsArgs = @{ Owner = $Owner; Number = $Number }
+    if ($DryRun) { $needsArgs.DryRun = $true }
+    try {
+      $needsOutput = @(& (Join-Path $PSScriptRoot 'Sync-ProjectNeeds.ps1') @needsArgs *>&1 | ForEach-Object { "$_" })
+      if ($LASTEXITCODE -ne 0 -and $null -ne $LASTEXITCODE) { throw "exit code $LASTEXITCODE" }
+    } catch {
+      $needsOutput = @("Warning: Needs sync failed: $($_.Exception.Message)")
+      $global:LASTEXITCODE = 0
+    }
+  }
+}
+
 if ($Json) {
-  [ordered]@{ dryRun = $DryRun.IsPresent; actions = @($actions); manualSteps = $script:ManualSteps } | ConvertTo-Json -Depth 20
+  [ordered]@{ dryRun = $DryRun.IsPresent; actions = @($actions); needs = @($needsOutput); manualSteps = $script:ManualSteps } | ConvertTo-Json -Depth 20
 } else {
   $verb = if ($DryRun) { 'Planned' } else { 'Applied' }
   if ($actions.Count -eq 0) { 'No changes.' } else { "$verb $($actions.Count) action(s):"; $actions | ForEach-Object { "  - $(Format-Action $_)" } }
+  if ($needsOutput.Count -gt 0) { ''; $needsOutput }
   ''; 'Manual steps (UI only):'; $script:ManualSteps | ForEach-Object { "  - $_" }
 }
