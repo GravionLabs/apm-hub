@@ -23,6 +23,11 @@ describe('fix round rules (#459)', () => {
     expect(step5).toMatch(/Final-Verify runs once \(see above\)/);
   });
 
+  it('advisory-only rounds count toward --advisory-rounds, not the escalation ladder', () => {
+    expect(step5).toMatch(/Advisory-only rounds[^.]*never escalate and are not counted/);
+    expect(step5).toMatch(/advisory-only rounds are capped by `--advisory-rounds`/);
+  });
+
   it('review-lead accepts range and dimension list and passes them to review-fanout', () => {
     expect(reviewLead).toContain('`<last review HEAD>..HEAD`');
     expect(reviewLead).toMatch(/optionally a dimension list/);
