@@ -195,7 +195,8 @@ function Get-ProjectPlan {
         if ($v.name -match '^View \d+$' -or $v.name -eq 'Probe') { $actions.Add([ordered]@{ type = 'DeleteView'; name = $v.name; id = $v.id }) }
       }
     }
-    $needsViews = -not ('Needs me', 'Ready for loop' | Where-Object { $after -notcontains $_ })
+    # Sprint planning goes only when its replacement and the Needs views exist (or are planned), so -Sprints must be present or Sprint next already there.
+    $needsViews = -not ('Needs me', 'Ready for loop', 'Sprint next' | Where-Object { $after -notcontains $_ })
     if ($needsViews) {
       foreach ($v in @($State.views)) {
         if ($v.name -eq 'Sprint planning') { $actions.Add([ordered]@{ type = 'DeleteView'; name = $v.name; id = $v.id }) }
@@ -276,6 +277,7 @@ function Invoke-Plan($Actions, $State) {
   $field = { param($name) (@($State.fields) | Where-Object { $_.name -eq $name } | Select-Object -First 1) }
   # Fields and views first: a failing item edit must not leave the project without its views.
   $ordered = @($Actions | Where-Object { $_.type -ne 'SetItem' }) + @($Actions | Where-Object { $_.type -eq 'SetItem' })
+  $labelFailures = [System.Collections.Generic.List[string]]::new()
   foreach ($a in $ordered) {
     switch ($a.type) {
       'UpdateStatusOptions' {
@@ -319,13 +321,15 @@ function Invoke-Plan($Actions, $State) {
       }
       'EnsureLabel' {
         $out = & gh label create $a.name --repo $a.repo --color $a.color --description $a.description --force 2>&1
-        if ($LASTEXITCODE -ne 0) { throw "gh label create $($a.name) --repo $($a.repo) failed: $out" }
+        # A repository without write access must not abort the remaining actions: warn, continue, fail at the end.
+        if ($LASTEXITCODE -ne 0) { $labelFailures.Add("gh label create $($a.name) --repo $($a.repo) failed: $out"); Write-Warning $labelFailures[-1] }
       }
       'DeleteView' {
         Invoke-Graphql 'mutation($i: DeleteProjectV2ViewInput!) { deleteProjectV2View(input: $i) { clientMutationId } }' @{ i = @{ viewId = $a.id } } | Out-Null
       }
     }
   }
+  if ($labelFailures.Count -gt 0) { throw "$($labelFailures.Count) label(s) could not be created; all other actions were applied." }
 }
 
 if ($StateFile) {

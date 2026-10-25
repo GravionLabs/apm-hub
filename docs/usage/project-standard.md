@@ -16,7 +16,7 @@ One reproducible GitHub Project (v2) layout for all GravionLabs repositories. `p
 | Option | Colour | Means for the owner and the loop |
 |:--|:--|:--|
 | Planning | BLUE | The item has to be planned (`issue-planning`) before work starts. Owner action. |
-| Decision | ORANGE | An owner decision is open (label `needs-decision`). Owner action. |
+| Decision | ORANGE | An owner decision is open (the planner marks such items with the label `needs-decision`, which `issue-planning` creates on publish; this script does not sync it). Owner action. |
 | Review | YELLOW | A pull request or result waits for an owner review (label `needs-review`). Owner action. |
 | Blocked | RED | Cannot proceed; the loop skips it. |
 | Ready | GREEN | Planned and unblocked: the loop may pick it up. |
@@ -35,12 +35,12 @@ Views are matched by name. Missing ones are created, existing ones are never tou
 | Backlog | table | `is:open -status:"In release" -label:epic,feature` | rows: Parent issue | Open work not yet merged. |
 | Recently closed | table | `is:closed` | none | Audit trail. |
 | Needs me | board | `is:open needs:Planning,Decision,Review,"Release review"` | columns: Needs | Everything that waits for the owner. |
-| Ready for loop | table | `is:open needs:Ready -level:Epic,Feature,Task` | rows: Parent issue | PBIs and Bugs the loop may take; also the place to pick from for `Set-Sprint.ps1`. |
+| Ready for loop | table | `is:open needs:Ready -level:Epic,Feature,Task` | rows: Parent issue | PBIs and Bugs the loop may take. |
 | Blocked | table | `is:open needs:Blocked` | none | Blocked items. |
 | Sprint | board | `sprint:@current -level:Epic,Feature,Task` | columns: Status, rows: Repository | `-Sprints` only: the current week. |
 | Sprint next | board | `sprint:@next -level:Epic,Feature,Task` | columns: Status, rows: Repository | `-Sprints` only: the next week. |
 
-`-Sprints` adds the field `Sprint` and the two sprint views. The earlier view `Sprint planning` is replaced by `Sprint next`. With `-RemoveDefaultViews` the script deletes `View <n>` and `Probe` (only when all five standard views exist) and `Sprint planning` (only when `Needs me` and `Ready for loop` exist). Without that switch `Sprint planning` stays.
+`-Sprints` adds the field `Sprint` and the two sprint views. Pick PBIs for `Set-Sprint.ps1` from `Backlog` or `Ready for loop`. The earlier view `Sprint planning` is replaced by `Sprint next`. With `-RemoveDefaultViews` the script deletes `View <n>` and `Probe` (only when all five standard views exist) and `Sprint planning` (only when `Needs me`, `Ready for loop` and `Sprint next` exist or are created in the same run). Without that switch `Sprint planning` stays.
 
 ### Manual steps
 

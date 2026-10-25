@@ -453,15 +453,25 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
 
     describe('Sprint planning', () => {
       const SP = { id: 'V-sp', name: 'Sprint planning' };
-      const del = (views: { id: string; name: string }[]) =>
-        ofType(plan(state({ views }), '-RemoveDefaultViews'), 'DeleteView').map((d) => d.id);
+      const del = (views: { id: string; name: string }[], ...flags: string[]) =>
+        ofType(plan(state({ views }), '-RemoveDefaultViews', ...flags), 'DeleteView').map(
+          (d) => d.id
+        );
 
       it('is deleted when both Needs views exist', () => {
-        expect(del([...ALL_VIEWS, SP])).toEqual(['V-sp']);
+        expect(del([...ALL_VIEWS, SP], '-Sprints')).toEqual(['V-sp']);
       });
 
       it('is deleted when the Needs views are only planned', () => {
-        expect(del([...STANDARD_VIEWS, SP])).toEqual(['V-sp']);
+        expect(del([...STANDARD_VIEWS, SP], '-Sprints')).toEqual(['V-sp']);
+      });
+
+      it('is kept when Sprint next does not exist and -Sprints is absent', () => {
+        expect(del([...ALL_VIEWS, SP])).toEqual([]);
+      });
+
+      it('is deleted when Sprint next already exists, without -Sprints', () => {
+        expect(del([...ALL_VIEWS, { id: 'V-sn', name: 'Sprint next' }, SP])).toEqual(['V-sp']);
       });
 
       it('is kept without the flag', () => {
@@ -469,7 +479,7 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
       });
 
       it('never deletes Backlog, Hierarchy or Release next', () => {
-        const ids = del([...ALL_VIEWS, SP]);
+        const ids = del([...ALL_VIEWS, SP], '-Sprints');
         expect(ids).not.toContain('V-Backlog');
         expect(ids).not.toContain('V-Hierarchy');
         expect(ids).not.toContain('V-Release next');

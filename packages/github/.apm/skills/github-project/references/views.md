@@ -31,7 +31,7 @@ Not part of the five, so `-RemoveDefaultViews` ignores them. Field `Sprint` is a
 | Sprint | board | `sprint:@current -level:Epic,Feature,Task` | columns: Status, rows: Repository | The week at a glance over all repositories: Todo, In release, Done. |
 | Sprint next | board | `sprint:@next -level:Epic,Feature,Task` | columns: Status, rows: Repository | The coming week; assign PBIs to it with `Set-Sprint.ps1`. |
 
-`-RemoveDefaultViews` deletes `View <n>` and `Probe` through GraphQL `deleteProjectV2View`, only when all five views above exist. It also deletes the old view `Sprint planning` (replaced by `Sprint next`), only when `Needs me` and `Ready for loop` exist; without the switch `Sprint planning` stays.
+`-RemoveDefaultViews` deletes `View <n>` and `Probe` through GraphQL `deleteProjectV2View`, only when all five views above exist. It also deletes the old view `Sprint planning` (replaced by `Sprint next`), only when `Needs me`, `Ready for loop` and `Sprint next` exist or are planned; without the switch `Sprint planning` stays.
 
 ## Why `In release` mirrors `merged`
 
