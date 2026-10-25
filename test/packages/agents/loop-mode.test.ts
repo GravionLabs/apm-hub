@@ -200,7 +200,9 @@ describe('loop-mode reference: runner mode', () => {
   it('dispatches pbi-runner and forwards the flags verbatim', () => {
     expect(runner).toContain('subagent_type: pbi-runner');
     expect(runner).toContain('{pbi, loop: <nr>, flags, context}');
-    expect(runner).toMatch(/forwards `--fix-advisories` and `--no-review-summary` verbatim/);
+    expect(runner).toMatch(
+      /forwards `--fix-advisories`, `--advisory-rounds` and `--no-review-summary` verbatim/
+    );
     expect(runner).toMatch(/create the PBI ledger header/);
   });
 

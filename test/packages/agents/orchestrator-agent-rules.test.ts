@@ -18,6 +18,11 @@ const lines = (body + '\n' + pipelineRef).split('\n');
 const all = body + '\n' + pipelineRef;
 
 describe('orchestrator agent rules', () => {
+  it('lists --advisory-rounds in the description and the flag list', () => {
+    expect(fs.readFileSync(agentPath, 'utf-8')).toMatch(/description:.*--advisory-rounds/);
+    expect(body).toContain('`--advisory-rounds <0-5>` (default 1');
+  });
+
   it('never allows general-purpose for a phase', () => {
     const offenders: string[] = [];
     for (const line of lines) {

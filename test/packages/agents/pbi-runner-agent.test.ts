@@ -142,3 +142,14 @@ describe('pbi-runner agent contract', () => {
     expect(body).toMatch(/Started at top level[^\n]*stop and point to `orchestrator`/);
   });
 });
+
+describe('pbi-runner flags input', () => {
+  it('lists --advisory-rounds among the forwarded flags', () => {
+    expect(
+      fs.readFileSync(
+        path.resolve(__dirname, '../../../packages/agents/.apm/agents/pbi-runner.agent.md'),
+        'utf-8'
+      )
+    ).toContain('`--advisory-rounds <n>`');
+  });
+});
