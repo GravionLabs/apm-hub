@@ -2,7 +2,7 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-  Brings a GitHub Project (v2) to the GravionLabs standard: Status 'In release', fields Level and Needs, eight views, optional label sync.
+  Brings a GitHub Project (v2) to the GravionLabs standard: Status 'In release', fields Level and Needs, eight views, optional item and label sync.
 .DESCRIPTION
   1. Reads the state (fields with options, views, issue items) via 'gh api graphql', or from -StateFile (no gh call at all).
   2. A pure function (Get-ProjectPlan) computes the action list.
@@ -11,7 +11,7 @@
   The owner may be a user or an organization.
 .PARAMETER Owner               User or organization login that owns the project.
 .PARAMETER Number              Project number.
-.PARAMETER Sync                Also sync items: Level from labels/title, label 'merged' <-> status 'In release' (open issues only).
+.PARAMETER Sync                Also sync items: Level from labels/title, label 'merged' <-> status 'In release' (open issues only); ensure the labels 'planned' and 'needs-review' in the repositories linked to the project.
 .PARAMETER Sprints             Also add the weekly iteration field 'Sprint' (titles 'YYYY-Www', ISO week) and the views 'Sprint' and 'Sprint next'.
 .PARAMETER Today               Date that decides the first sprint (default: today); only for tests.
 .PARAMETER RemoveDefaultViews  Delete views named 'View <n>' or 'Probe', only when all five standard views exist afterwards; also 'Sprint planning' (replaced by 'Sprint next') when 'Needs me' and 'Ready for loop' exist afterwards.
@@ -41,6 +41,10 @@ $script:NeedsOptions = @(
   @{ name = 'Planning'; color = 'BLUE' }, @{ name = 'Decision'; color = 'ORANGE' }, @{ name = 'Review'; color = 'YELLOW' },
   @{ name = 'Blocked'; color = 'RED' }, @{ name = 'Ready'; color = 'GREEN' }, @{ name = 'In progress'; color = 'PURPLE' },
   @{ name = 'Release review'; color = 'PINK' })
+# Labels ensured per linked repository under -Sync; colour/description of 'planned' equal issue-planning references/publish.md § 5.
+$script:StandardLabels = @(
+  @{ name = 'planned'; color = '0E8A16'; description = 'Task breakdown published or single-task plan approved' },
+  @{ name = 'needs-review'; color = 'FBCA04'; description = 'Waiting for an owner review' })
 $script:InReleaseDescription = 'Merged into a release branch, ships with the next release (label merged)'
 $script:StandardViews = @(
   @{ name = 'Hierarchy'; layout = 'table'; filter = 'is:open'; groupBy = $null; verticalGroupBy = $null
@@ -152,6 +156,18 @@ function Get-ProjectPlan {
     }
   }
 
+  # 3a. Labels: standard labels per linked repository; a state without 'repositories' yields none.
+  if ($Sync) {
+    foreach ($repo in @($State.repositories | Where-Object { $_ })) {
+      foreach ($std in $script:StandardLabels) {
+        $cur = @($repo.labels) | Where-Object { $_.name -eq $std.name } | Select-Object -First 1
+        if (-not $cur -or "$($cur.color)".ToUpperInvariant() -ne $std.color -or "$($cur.description)" -ne $std.description) {
+          $actions.Add([ordered]@{ type = 'EnsureLabel'; repo = $repo.nameWithOwner; name = $std.name; color = $std.color; description = $std.description })
+        }
+      }
+    }
+  }
+
   # 4. Views, matched by name; other views are never touched.
   $existing = @($State.views | ForEach-Object { $_.name })
   foreach ($v in @($script:StandardViews) + @($script:NeedsViews)) {
@@ -197,6 +213,7 @@ function Format-Action($a) {
     'CreateIterationField' { "Create field $($a.name): $($a.iterations.Count) weekly iterations $($a.iterations[0].title) .. $($a.iterations[-1].title)" }
     'SetItem' { "#$($a.number) $($a.field) -> $($a.option)" }
     'CreateView' { "Create view $($a.name) ($($a.layout), filter: $($a.filter))" }
+    'EnsureLabel' { "Label $($a.repo): $($a.name) ($($a.color))" }
     'DeleteView' { "Delete view $($a.name)" }
   }
 }
@@ -218,6 +235,10 @@ query($login: String!, $n: Int!) { repositoryOwner(login: $login) { __typename .
     ... on ProjectV2IterationField { id name databaseId dataType } } }
   views(first: 50) { nodes { id name layout filter } } } } } }
 '@
+$ReposQuery = @'
+query($id: ID!) { node(id: $id) { ... on ProjectV2 { repositories(first: 50) { nodes { nameWithOwner
+  labels(first: 100) { nodes { name color description } } } } } } }
+'@
 $ItemsQuery = @'
 query($id: ID!, $cursor: String) { node(id: $id) { ... on ProjectV2 { items(first: 100, after: $cursor) {
   pageInfo { hasNextPage endCursor }
@@ -232,7 +253,7 @@ function Get-ProjectState {
   $p = $d.repositoryOwner.projectV2
   if (-not $p) { throw "Project $Owner/$Number not found (or scope 'project' missing: gh auth refresh -s project)." }
   $state = [ordered]@{ owner = $Owner; number = $Number; projectId = $p.id; ownerType = $d.repositoryOwner.__typename
-    fields = @($p.fields.nodes); views = @($p.views.nodes); items = @() }
+    fields = @($p.fields.nodes); views = @($p.views.nodes); items = @(); repositories = @() }
   if ($WithItems) {
     $items = [System.Collections.Generic.List[object]]::new(); $cursor = $null
     do {
@@ -245,6 +266,8 @@ function Get-ProjectState {
       $cursor = $page.pageInfo.endCursor
     } while ($page.pageInfo.hasNextPage)
     $state.items = @($items)
+    $state.repositories = @((Invoke-Graphql $ReposQuery @{ id = $p.id }).node.repositories.nodes | ForEach-Object {
+        [ordered]@{ nameWithOwner = $_.nameWithOwner; labels = @($_.labels.nodes) } })
   }
   $state
 }
@@ -293,6 +316,10 @@ function Invoke-Plan($Actions, $State) {
         if ($a.verticalGroupBy) { $body.vertical_group_by = @(& $ids @($a.verticalGroupBy)) }
         $base = if ($State.ownerType -eq 'Organization') { "/orgs/$Owner" } else { "/users/$Owner" }
         Invoke-Gh -GhArgs @('api', '-X', 'POST', "$base/projectsV2/$Number/views") -Body $body | Out-Null
+      }
+      'EnsureLabel' {
+        $out = & gh label create $a.name --repo $a.repo --color $a.color --description $a.description --force 2>&1
+        if ($LASTEXITCODE -ne 0) { throw "gh label create $($a.name) --repo $($a.repo) failed: $out" }
       }
       'DeleteView' {
         Invoke-Graphql 'mutation($i: DeleteProjectV2ViewInput!) { deleteProjectV2View(input: $i) { clientMutationId } }' @{ i = @{ viewId = $a.id } } | Out-Null

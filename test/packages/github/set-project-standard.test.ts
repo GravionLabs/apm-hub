@@ -291,6 +291,68 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
     });
   });
 
+  describe('-Sync labels', () => {
+    const PLANNED = {
+      name: 'planned',
+      color: '0E8A16',
+      description: 'Task breakdown published or single-task plan approved',
+    };
+    const NEEDS_REVIEW = {
+      name: 'needs-review',
+      color: 'FBCA04',
+      description: 'Waiting for an owner review',
+    };
+    const repo = (nameWithOwner: string, labels: object[] = []) => ({ nameWithOwner, labels });
+    const labels = (repositories: object[] | undefined, ...flags: string[]) =>
+      ofType(plan({ ...state(), repositories }, ...flags), 'EnsureLabel');
+
+    it('emits both labels with exact colour and description for every repository', () => {
+      const a = labels([repo('o/a'), repo('o/b')], '-Sync');
+      expect(a).toEqual(
+        ['o/a', 'o/b'].flatMap((r) =>
+          [PLANNED, NEEDS_REVIEW].map((l) => ({ type: 'EnsureLabel', repo: r, ...l }))
+        )
+      );
+    });
+
+    it('emits nothing for matching labels, colour compared case-insensitively', () => {
+      expect(
+        labels([repo('o/a', [PLANNED, { ...NEEDS_REVIEW, color: 'fbca04' }])], '-Sync')
+      ).toEqual([]);
+    });
+
+    it('emits one action for a differing colour or description', () => {
+      expect(
+        labels([repo('o/a', [{ ...PLANNED, color: 'FFFFFF' }, NEEDS_REVIEW])], '-Sync')
+      ).toEqual([{ type: 'EnsureLabel', repo: 'o/a', ...PLANNED }]);
+      expect(
+        labels([repo('o/a', [PLANNED, { ...NEEDS_REVIEW, description: 'x' }])], '-Sync')
+      ).toEqual([{ type: 'EnsureLabel', repo: 'o/a', ...NEEDS_REVIEW }]);
+    });
+
+    it('emits nothing without -Sync', () => {
+      expect(labels([repo('o/a')])).toEqual([]);
+    });
+
+    it('emits nothing for a state without repositories', () => {
+      expect(labels(undefined, '-Sync')).toEqual([]);
+      expect(labels([], '-Sync')).toEqual([]);
+    });
+
+    it('uses colour and description of publish.md section 5 for planned', () => {
+      const publish = fs.readFileSync(
+        path.resolve(
+          __dirname,
+          '../../../packages/delivery/.apm/skills/issue-planning/references/publish.md'
+        ),
+        'utf8'
+      );
+      expect(publish).toContain(
+        `gh label create planned --force --color ${PLANNED.color} --description "${PLANNED.description}"`
+      );
+    });
+  });
+
   describe('views', () => {
     it('creates only the missing standard views with field names and grouping', () => {
       const views = ALL_VIEWS.filter((v) => v.name !== 'Board' && v.name !== 'Backlog');
