@@ -1,6 +1,6 @@
 ---
 name: github-project
-description: 'Bring a GitHub Project (v2) to the standard (Status In release, Level, five views), sync labels to Level/Status, or create one from the template. Use for "/github-project apply|sync|new".'
+description: 'Bring a GitHub Project (v2) to the standard (In release, Level, Needs, eight views), sync labels, or create one from the template. Use for "/github-project apply|sync|new".'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'
@@ -16,10 +16,10 @@ One reproducible project standard for all GravionLabs repos. Paths are relative 
 
 | Invocation | Does |
 |:--|:--|
-| `apply <project-nr>` | Status gets `In release` before `Done`; field `Level`; the five standard views. |
-| `sync <project-nr>` | `apply` plus label sync (Level, `merged` ⇄ `In release`). |
+| `apply <project-nr>` | Status gets `In release` before `Done`; fields `Level` and `Needs`; the five standard views plus `Needs me`, `Ready for loop`, `Blocked`. |
+| `sync <project-nr>` | `apply` plus item sync (Level, `merged` ⇄ `In release`) and the labels `planned`, `needs-review` in the repositories linked to the project. |
 | `new <repo>` | Copy the template project, link it to the repo, run `sync`. |
-| `sprints <project-nr>` | `apply` plus the weekly iteration field `Sprint` and the views `Sprint` and `Sprint planning` (opt-in, `-Sprints`). |
+| `sprints <project-nr>` | `apply` plus the weekly iteration field `Sprint` and the views `Sprint` and `Sprint next` (opt-in, `-Sprints`). |
 | `sprint <project-nr> <owner/repo#n>...` | Put PBIs of any repository into a sprint and check the limits. |
 
 ## apply / sync
@@ -35,15 +35,16 @@ Always run `-DryRun` first, show the actions to the user, then run without it. `
 - Status: option `In release` (BLUE) goes directly before `Done`; every existing option keeps its id, so item values survive.
 - Level: created (Epic, Feature, PBI, Task, Bug) only when missing.
 - Sync, open issues only: Level from labels `epic|feature|pbi|task|bug` (first match in that order), fallback title prefix `[Epic]`, `[Feature]`, `[PBI]`, `[Task]`, only where Level is empty. Label `merged` → `In release`; `In release` without `merged` → `Todo`. Closed items are untouched.
+- Needs: single-select (Planning, Decision, Review, Blocked, Ready, In progress, Release review), created when missing; an existing field keeps its option ids and gets missing options appended.
 - Views are matched by name; missing ones are created, others are never touched (`references/views.md`).
-- `-RemoveDefaultViews` deletes `View <n>` and `Probe` views, only when all five standard views exist.
+- `-RemoveDefaultViews` deletes `View <n>` and `Probe` views, only when all five standard views exist; `Sprint planning` (old) only when `Needs me` and `Ready for loop` exist.
 - A second run reports `No changes.`
 
 Finish by telling the user the printed manual UI steps (no API): "Show hierarchy" in Hierarchy, sort Recently closed by Closed descending, enable the workflow "Item closed → Done".
 
 ## sprints
 
-One project for all repositories, one weekly sprint for all of them. Titles are ISO weeks `YYYY-Www` (`2026-W43`; the ISO year, so 2027-01-01 is `2026-W53`). `-Sprints` creates 12 iterations from this week (Monday start, 7 days) and the views `Sprint` (board, `sprint:@current`, no Epic/Feature/Task, rows per repository) and `Sprint planning` (open PBIs without a sprint). An existing field or view is never touched; more iterations are added in the project settings.
+One project for all repositories, one weekly sprint for all of them. Titles are ISO weeks `YYYY-Www` (`2026-W43`; the ISO year, so 2027-01-01 is `2026-W53`). `-Sprints` creates 12 iterations from this week (Monday start, 7 days) and the views `Sprint` (board, `sprint:@current`, no Epic/Feature/Task, rows per repository) and `Sprint next` (same for `sprint:@next`). Pick PBIs for `Set-Sprint.ps1` from `Backlog` or `Ready for loop`. An existing field or view is never touched; more iterations are added in the project settings.
 
 ```powershell
 pwsh scripts/Set-ProjectStandard.ps1 -Owner <login> -Number <n> -Sprints -DryRun
