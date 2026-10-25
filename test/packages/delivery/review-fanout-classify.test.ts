@@ -1,4 +1,7 @@
-import { ALWAYS_FULL, REFERENCE, hasPwsh } from '../../helpers/classify-fixture';
+import { spawnSync } from 'child_process';
+import { ALWAYS_FULL, REFERENCE } from '../../helpers/classify-reference';
+
+const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
 if (!hasPwsh) console.warn('pwsh not found: skipping Classify-Diff.ps1 tests');
 

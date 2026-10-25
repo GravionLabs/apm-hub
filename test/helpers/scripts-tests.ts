@@ -12,6 +12,7 @@ export const scriptsTests = [
   'test/packages/delivery/review-fanout-classify.size.test.ts',
   'test/packages/delivery/review-fanout-classify.skill-text.test.ts',
   'test/packages/delivery/review-fanout-classify.test-file-rule.test.ts',
+  'test/packages/delivery/review-fanout-classify.test.ts',
   'test/packages/delivery/review-fanout-package.test.ts',
   'test/packages/delivery/run-metrics.test.ts',
   'test/packages/github/add-ledger-line.test.ts',

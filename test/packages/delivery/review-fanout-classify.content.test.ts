@@ -12,7 +12,7 @@ import {
 
 describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
   const fx = createClassifyFixture();
-  const { run, git, write, read, classify, batched, body, editFirst } = fx;
+  const { git, write, read, classify, batched, body, editFirst } = fx;
 
   describe('content changes', () => {
     const batch = batched();

@@ -2,21 +2,13 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { ALWAYS_FULL, REFERENCE } from './classify-reference';
+
+export { ALWAYS_FULL, REFERENCE };
 
 const SKILL = path.resolve(__dirname, '../../packages/delivery/.apm/skills/review-fanout');
 export const SCRIPT = path.join(SKILL, 'scripts/Classify-Diff.ps1');
-export const REFERENCE = fs.readFileSync(
-  path.join(SKILL, 'references/mechanical-classifier.md'),
-  'utf8'
-);
 export const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
-
-// The always-full destination list lives in the reference; parse it so docs and tests cannot drift.
-export const ALWAYS_FULL = (
-  /Always-full rename destinations[^\n]*\n\n```text\n([\s\S]*?)\n```/.exec(REFERENCE)?.[1] ?? ''
-)
-  .split('\n')
-  .filter(Boolean);
 
 // Path triggers of $sensitive (reference "Dimensions"), each placed in an added docs file.
 export const SENSITIVE = [
@@ -134,7 +126,7 @@ export const TEST_BASE = [
 ].join('\n');
 
 /**
- * Registers the shared Classify-Diff fixture (one repository tagged `base`, hooks included) in the
+ * Uses Vitest globals (describe hooks) and must be called inside a describe. Registers the shared Classify-Diff fixture (one repository tagged `base`, hooks included) in the
  * calling describe and returns the helpers. All state is per call, so every test file gets its own
  * repository and, with it, its own Vitest worker. `batched()` runs all cases of a describe in one
  * pwsh process.
