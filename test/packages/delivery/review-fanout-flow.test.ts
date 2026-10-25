@@ -391,3 +391,64 @@ describe('review-fanout: size class and skipped dimensions (#534)', () => {
     );
   });
 });
+
+describe('review-fanout: review.json shape and ledger line (#534)', () => {
+  // Output template of SKILL.md, made parseable by quoting the bare field names.
+  const shapeLine = fanout.split('\n').find((l) => l.startsWith('`{"mode"'))!;
+  const template = /^`(\{.*\})`/
+    .exec(shapeLine)![1]
+    .replace(/\{(file,line,severity,issue,evidence)\}/, '"$1"')
+    .replace(/\{"dimension","reason"\}/, '{"dimension":"","reason":""}')
+    .replace(/"APPROVE\|CHANGES_REQUESTED"|"[a-z|]+\|[a-z|]+"/g, '""');
+  const shape = JSON.parse(template) as Record<string, unknown>;
+
+  it('the output template is valid JSON with skippedDimensions as {dimension,reason} array', () => {
+    expect(Object.keys(shape)).toEqual(
+      expect.arrayContaining([
+        'mode',
+        'dimensions',
+        'verdict',
+        'suppressed',
+        'skippedDimensions',
+        'package',
+      ])
+    );
+    expect(shape.skippedDimensions).toEqual([{ dimension: '', reason: '' }]);
+  });
+
+  // Mirror of the pipeline rule: render the ledger suffix from a review.json.
+  const ledgerLine = (sha: string, tokens: number, skipped: { dimension: string }[]) =>
+    `Phase review: complete — ${sha} — package ~${Math.round(tokens / 1000)}k tokens` +
+    (skipped.length ? ` — skipped ${skipped.map((d) => d.dimension).join(',')} (size small)` : '');
+  const template2 = /`(Phase review: complete[^`]*)`/.exec(pipeline)![1];
+  const pattern = new RegExp(
+    '^' +
+      template2
+        .replace(
+          /\[ — skipped <dim>,<dim> \(size small\)\]/,
+          '( — skipped \\w+(,\\w+)* \\(size small\\))?'
+        )
+        .replace('<sha>', '[0-9a-f]+')
+        .replace('<n>', '\\d+')
+        .replace(/[—~]/g, (c) => c) +
+      '$'
+  );
+
+  it('the ledger template accepts a line with and without skipped dimensions', () => {
+    expect(ledgerLine('abc1234', 12400, [])).toMatch(pattern);
+    const withSkip = ledgerLine('abc1234', 12400, [
+      { dimension: 'security' },
+      { dimension: 'conventions' },
+    ]);
+    expect(withSkip).toBe(
+      'Phase review: complete — abc1234 — package ~12k tokens — skipped security,conventions (size small)'
+    );
+    expect(withSkip).toMatch(pattern);
+  });
+
+  it('a re-review carries the earlier skippedDimensions forward', () => {
+    expect(fanout).toMatch(
+      /carries the `skippedDimensions` of the previous `review\.json` into its own \(union, no duplicates\)/
+    );
+  });
+});
