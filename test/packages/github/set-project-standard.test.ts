@@ -39,6 +39,8 @@ const PLAIN = [
   'Linked pull requests',
   'Parent issue',
   'Sub-issues progress',
+  'Repository',
+  'Milestone',
 ].map((n, i) => plain(n, i + 1));
 const DEFAULT_STATUS = ['Todo', 'In Progress', 'Done'].map((n) => opt(n));
 const HELIX_STATUS = ['Backlog', 'Ready', 'In progress', 'In review', 'Done'].map((n) => opt(n));
@@ -49,6 +51,25 @@ const LEVEL = select(
 const STANDARD_VIEWS = ['Hierarchy', 'Board', 'Release next', 'Backlog', 'Recently closed'].map(
   (name) => ({ id: `V-${name}`, name })
 );
+
+const NEEDS_NAMES = [
+  'Planning',
+  'Decision',
+  'Review',
+  'Blocked',
+  'Ready',
+  'In progress',
+  'Release review',
+];
+const NEEDS = select(
+  'Needs',
+  NEEDS_NAMES.map((n) => opt(n))
+);
+const NEEDS_VIEWS = ['Needs me', 'Ready for loop', 'Blocked'].map((name) => ({
+  id: `V-${name}`,
+  name,
+}));
+const ALL_VIEWS = [...STANDARD_VIEWS, ...NEEDS_VIEWS];
 
 type Item = {
   id: string;
@@ -74,8 +95,14 @@ interface State {
   items: Item[];
 }
 const state = (o: Partial<State> & { status?: Opt[] } = {}): State => ({
-  fields: [select('Status', o.status ?? DEFAULT_STATUS), LEVEL, ...PLAIN, ...(o.fields ?? [])],
-  views: o.views ?? STANDARD_VIEWS,
+  fields: [
+    select('Status', o.status ?? DEFAULT_STATUS),
+    LEVEL,
+    NEEDS,
+    ...PLAIN,
+    ...(o.fields ?? []),
+  ],
+  views: o.views ?? ALL_VIEWS,
   items: o.items ?? [],
 });
 
@@ -155,6 +182,57 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
     });
   });
 
+  describe('Needs', () => {
+    const withoutNeeds = () => {
+      const s = state();
+      s.fields = s.fields.filter((f: any) => f.name !== 'Needs');
+      return s;
+    };
+
+    it('creates the field with seven options in order when missing', () => {
+      const [a] = ofType(plan(withoutNeeds()), 'CreateField');
+      expect(a.name).toBe('Needs');
+      expect(a.options.map((o: Opt) => `${o.name}:${o.color}`)).toEqual([
+        'Planning:BLUE',
+        'Decision:ORANGE',
+        'Review:YELLOW',
+        'Blocked:RED',
+        'Ready:GREEN',
+        'In progress:PURPLE',
+        'Release review:PINK',
+      ]);
+    });
+
+    it('adds only the missing options, keeping existing ids first', () => {
+      const have = [opt('Ready', 'TEAL'), opt('Planning')];
+      const s = state();
+      s.fields = s.fields.map((f: any) => (f.name === 'Needs' ? select('Needs', have) : f));
+      const acts = plan(s).filter((a) => a.type === 'UpdateFieldOptions');
+      expect(acts).toHaveLength(1);
+      const names = acts[0].options.map((o: Opt) => o.name);
+      expect(names).toEqual([
+        'Ready',
+        'Planning',
+        'Decision',
+        'Review',
+        'Blocked',
+        'In progress',
+        'Release review',
+      ]);
+      expect(acts[0].field).toBe('Needs');
+      expect(acts[0].options[0]).toMatchObject(have[0]);
+      expect(acts[0].options[1]).toMatchObject(have[1]);
+      expect(acts[0].options[2].id).toBeUndefined();
+      expect(ofType(plan(s), 'CreateField')).toHaveLength(0);
+    });
+
+    it('does nothing for a complete field', () => {
+      const a = plan(state());
+      expect(ofType(a, 'UpdateFieldOptions')).toHaveLength(0);
+      expect(ofType(a, 'CreateField')).toHaveLength(0);
+    });
+  });
+
   describe('-Sync', () => {
     const sync = (items: Item[], status?: Opt[]) =>
       plan(state({ items, status }), '-Sync').filter((a) => a.type === 'SetItem');
@@ -215,7 +293,7 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
 
   describe('views', () => {
     it('creates only the missing standard views with field names and grouping', () => {
-      const views = STANDARD_VIEWS.filter((v) => v.name !== 'Board' && v.name !== 'Backlog');
+      const views = ALL_VIEWS.filter((v) => v.name !== 'Board' && v.name !== 'Backlog');
       const creates = ofType(
         plan(state({ views: [...views, { id: 'V-x', name: 'Mine' }] })),
         'CreateView'
@@ -229,9 +307,56 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
       expect(creates[1]).toMatchObject({ layout: 'table', groupBy: 'Parent issue' });
     });
 
+    it('creates the Needs views and groups Release next by Milestone', () => {
+      const s = state({ views: [] });
+      const creates = ofType(plan(s), 'CreateView');
+      const by = (n: string) => creates.find((c) => c.name === n)!;
+      expect(creates.map((c) => c.name)).toEqual([
+        'Hierarchy',
+        'Board',
+        'Release next',
+        'Backlog',
+        'Recently closed',
+        'Needs me',
+        'Ready for loop',
+        'Blocked',
+      ]);
+      expect(by('Release next')).toMatchObject({ groupBy: 'Milestone' });
+      expect(by('Needs me')).toMatchObject({
+        layout: 'board',
+        filter: 'is:open needs:Planning,Decision,Review,"Release review"',
+        groupBy: null,
+        verticalGroupBy: 'Needs',
+        visibleFields: ['Title', 'Repository', 'Level', 'Milestone', 'Linked pull requests'],
+      });
+      expect(by('Ready for loop')).toMatchObject({
+        layout: 'table',
+        filter: 'is:open needs:Ready -level:Epic,Feature,Task',
+        groupBy: 'Parent issue',
+        visibleFields: ['Title', 'Repository', 'Level', 'Milestone', 'Parent issue'],
+      });
+      expect(by('Blocked')).toMatchObject({
+        layout: 'table',
+        filter: 'is:open needs:Blocked',
+        groupBy: null,
+        visibleFields: ['Title', 'Repository', 'Level', 'Parent issue', 'Labels'],
+      });
+    });
+
+    it('lists the Release next manual step', () => {
+      const file = path.join(dir, 'm.json');
+      fs.writeFileSync(file, JSON.stringify({ projectId: 'P', ownerType: 'User', ...state() }));
+      const r = spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-StateFile', file, '-Json'], {
+        encoding: 'utf8',
+      });
+      expect(JSON.parse(r.stdout).manualSteps).toContain(
+        'Release next view (created before Milestone grouping): set Group by Milestone (existing views are not updated).'
+      );
+    });
+
     it('never deletes foreign views', () => {
       const a = plan(
-        state({ views: [...STANDARD_VIEWS, { id: 'V-x', name: 'Mine' }] }),
+        state({ views: [...ALL_VIEWS, { id: 'V-x', name: 'Mine' }] }),
         '-RemoveDefaultViews'
       );
       expect(ofType(a, 'DeleteView')).toHaveLength(0);
@@ -248,13 +373,13 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
     ];
 
     it('deletes View <n> and Probe when all standard views exist', () => {
-      const a = plan(state({ views: [...STANDARD_VIEWS, ...defaults] }), '-RemoveDefaultViews');
+      const a = plan(state({ views: [...ALL_VIEWS, ...defaults] }), '-RemoveDefaultViews');
       expect(ofType(a, 'DeleteView').map((d) => d.id)).toEqual(['V1', 'V2', 'V3', 'V4']);
     });
 
     it('plans the missing standard view before any deletion (it counts as existing afterwards)', () => {
       const guard = plan(
-        state({ views: [...STANDARD_VIEWS.slice(0, 4), ...defaults] }),
+        state({ views: [...ALL_VIEWS.slice(0, 4), ...ALL_VIEWS.slice(5), ...defaults] }),
         '-RemoveDefaultViews'
       );
       expect(guard.findIndex((a) => a.type === 'CreateView')).toBeLessThan(
@@ -264,9 +389,34 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
       expect(ofType(guard, 'DeleteView')).toHaveLength(4);
     });
 
+    describe('Sprint planning', () => {
+      const SP = { id: 'V-sp', name: 'Sprint planning' };
+      const del = (views: { id: string; name: string }[]) =>
+        ofType(plan(state({ views }), '-RemoveDefaultViews'), 'DeleteView').map((d) => d.id);
+
+      it('is deleted when both Needs views exist', () => {
+        expect(del([...ALL_VIEWS, SP])).toEqual(['V-sp']);
+      });
+
+      it('is deleted when the Needs views are only planned', () => {
+        expect(del([...STANDARD_VIEWS, SP])).toEqual(['V-sp']);
+      });
+
+      it('is kept without the flag', () => {
+        expect(ofType(plan(state({ views: [...ALL_VIEWS, SP] })), 'DeleteView')).toHaveLength(0);
+      });
+
+      it('never deletes Backlog, Hierarchy or Release next', () => {
+        const ids = del([...ALL_VIEWS, SP]);
+        expect(ids).not.toContain('V-Backlog');
+        expect(ids).not.toContain('V-Hierarchy');
+        expect(ids).not.toContain('V-Release next');
+      });
+    });
+
     it('deletes nothing without the flag', () => {
       expect(
-        ofType(plan(state({ views: [...STANDARD_VIEWS, ...defaults] })), 'DeleteView')
+        ofType(plan(state({ views: [...ALL_VIEWS, ...defaults] })), 'DeleteView')
       ).toHaveLength(0);
     });
   });
@@ -306,10 +456,10 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
       expect(a.iterations.slice(0, 2).map((i: any) => i.title)).toEqual(['2026-W53', '2027-W01']);
     });
 
-    it('adds the Sprint board (by repository, PBIs only) and the planning table, behind the field', () => {
+    it('adds the Sprint board and the Sprint next board, behind the field', () => {
       const a = sprints(state());
       const creates = ofType(a, 'CreateView');
-      expect(creates.map((c) => c.name)).toEqual(['Sprint', 'Sprint planning']);
+      expect(creates.map((c) => c.name)).toEqual(['Sprint', 'Sprint next']);
       expect(creates[0]).toMatchObject({
         layout: 'board',
         filter: 'sprint:@current -level:Epic,Feature,Task',
@@ -317,9 +467,10 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
         verticalGroupBy: 'Status',
       });
       expect(creates[1]).toMatchObject({
-        layout: 'table',
-        filter: 'is:open no:sprint -level:Epic,Feature,Task',
+        layout: 'board',
+        filter: 'sprint:@next -level:Epic,Feature,Task',
         groupBy: 'Repository',
+        verticalGroupBy: 'Status',
       });
       expect(a.findIndex((x) => x.type === 'CreateIterationField')).toBeLessThan(
         a.findIndex((x) => x.type === 'CreateView')
@@ -328,9 +479,9 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
 
     it('is idempotent and leaves an existing Sprint field and views alone', () => {
       const views = [
-        ...STANDARD_VIEWS,
+        ...ALL_VIEWS,
         { id: 'V-s', name: 'Sprint' },
-        { id: 'V-p', name: 'Sprint planning' },
+        { id: 'V-p', name: 'Sprint next' },
       ];
       expect(
         sprints(
