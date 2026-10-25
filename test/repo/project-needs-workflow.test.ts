@@ -22,6 +22,13 @@ describe('project-needs.yml (#639)', () => {
     expect(text).not.toContain('continue-on-error');
   });
 
+  it('cancels superseded runs per issue or PR only', () => {
+    expect(wf.concurrency['cancel-in-progress']).toBe(true);
+    expect(wf.concurrency.group).toContain('github.event.issue.number');
+    expect(wf.concurrency.group).toContain('github.event.pull_request.number');
+    expect(wf.concurrency.group).toContain('github.event_name');
+  });
+
   it('pins every action to a commit SHA', () => {
     const uses = steps.filter((s) => s.uses).map((s) => s.uses as string);
     expect(uses.length).toBeGreaterThan(0);
