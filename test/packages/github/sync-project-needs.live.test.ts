@@ -31,7 +31,9 @@ const HANDLER = `(call, ctx) => {
     return {};
   }
   if (q.includes('projectV2(number')) {
-    const nodes = d.noNeeds ? [] : [{ __typename: 'ProjectV2SingleSelectField', id: 'F-needs', name: 'Needs',
+    const status = { __typename: 'ProjectV2SingleSelectField', id: 'F-status', name: 'Status',
+      options: d.noStatusOption ? [{ id: 'O-todo', name: 'Todo' }] : [{ id: 'O-todo', name: 'Todo' }, { id: 'O-ip', name: 'In Progress' }] };
+    const nodes = d.noNeeds ? [status] : [status, { __typename: 'ProjectV2SingleSelectField', id: 'F-needs', name: 'Needs',
       options: ['Planning','Ready','In progress','Blocked','Review','Decision','Release review'].map((n) => ({ id: 'O-' + n, name: n })) }];
     return { repositoryOwner: { projectV2: { id: 'P1', fields: { nodes } } } };
   }
@@ -43,7 +45,10 @@ const HANDLER = `(call, ctx) => {
   }
   if (q.includes('pullRequests')) {
     const key = call.variables.o + '/' + call.variables.r;
-    return { repository: { pullRequests: { nodes: (d.prs[key] || []).map((h) => ({ headRefName: h })) } } };
+    const all = d.prs[key] || [];
+    const start = call.variables.cursor ? Number(call.variables.cursor) : 0;
+    return { repository: { pullRequests: { pageInfo: { hasNextPage: start + 100 < all.length, endCursor: String(start + 100) },
+      nodes: all.slice(start, start + 100).map((h) => ({ headRefName: h })) } } };
   }
   const out = {};
   for (const k of Object.keys(call.variables || {}).filter((x) => x[0] === 'n')) {
@@ -191,6 +196,118 @@ describe.skipIf(!hasPwsh || !hasNode || process.platform === 'win32')(
       expect(r.status).toBe(1);
       expect(r.stdout).toContain('Needs sync failed:');
       expect(mutations).toHaveLength(0);
+    });
+
+    it('a bare -Issue number takes the repository from the origin remote of the checkout', async () => {
+      spawnSync('git', ['init', '-q'], { cwd: tmp });
+      spawnSync('git', ['remote', 'add', 'origin', 'git@github.com:o/r.git'], { cwd: tmp });
+      const issues = {
+        'o/r#7': {
+          ...issueNode({ number: 7 }),
+          projectItems: {
+            nodes: [
+              {
+                id: 'I7',
+                project: { id: 'P1' },
+                status: null,
+                level: { name: 'PBI' },
+                needs: null,
+              },
+            ],
+          },
+        },
+      };
+      const { r, mutations } = await run({ issues }, ['-Issue', '7']);
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain('#7: (none) -> Ready');
+      expect(mutations).toHaveLength(1);
+      expect(mutations[0].variables!.i.itemId).toBe('I7');
+    });
+
+    it('reads every page of open PR heads', async () => {
+      const prs = Array.from({ length: 120 }, (_, i) => `feat/${1000 + i}-x`);
+      prs.push('feat/7-late');
+      const { r, calls } = await run({ items: [projectItem(7, null)], prs: { 'o/r': prs } });
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain('#7: (none) -> In progress');
+      expect(calls.filter((c) => c.query?.includes('pullRequests'))).toHaveLength(2);
+    });
+
+    describe('-SetStatus', () => {
+      const statusIssues = (project = 'P1') => ({
+        'o/r#7': {
+          ...issueNode({ number: 7 }),
+          projectItems: {
+            nodes: [{ id: 'I7', project: { id: project }, status: null, level: null, needs: null }],
+          },
+        },
+      });
+
+      it('sets the option with one mutation on the Status field', async () => {
+        const { r, mutations } = await run({ issues: statusIssues() }, [
+          '-Issue',
+          'o/r#7',
+          '-SetStatus',
+          'In Progress',
+        ]);
+        expect(r.status).toBe(0);
+        expect(r.stdout).toContain('#7: Status -> In Progress');
+        expect(mutations).toHaveLength(1);
+        expect(mutations[0].variables!.i).toEqual({
+          projectId: 'P1',
+          itemId: 'I7',
+          fieldId: 'F-status',
+          value: { singleSelectOptionId: 'O-ip' },
+        });
+      });
+
+      it('-DryRun sends no mutation', async () => {
+        const { r, mutations } = await run({ issues: statusIssues() }, [
+          '-Issue',
+          'o/r#7',
+          '-SetStatus',
+          'In Progress',
+          '-DryRun',
+        ]);
+        expect(r.status).toBe(0);
+        expect(r.stdout).toContain('(dry run)');
+        expect(mutations).toHaveLength(0);
+      });
+
+      it('a missing option is a note and exit 0', async () => {
+        const { r, mutations } = await run({ issues: statusIssues(), noStatusOption: true }, [
+          '-Issue',
+          'o/r#7',
+          '-SetStatus',
+          'In Progress',
+        ]);
+        expect(r.status).toBe(0);
+        expect(r.stdout).toContain("option 'In Progress' missing");
+        expect(mutations).toHaveLength(0);
+      });
+
+      it('an issue outside the project is a note and exit 0', async () => {
+        const { r, mutations } = await run({ issues: statusIssues('OTHER') }, [
+          '-Issue',
+          'o/r#7',
+          '-SetStatus',
+          'In Progress',
+        ]);
+        expect(r.status).toBe(0);
+        expect(r.stdout).toContain('#7 is not in the project');
+        expect(mutations).toHaveLength(0);
+      });
+
+      it('a failing mutation exits 1 with a Status not set line', async () => {
+        const { r } = await run({ issues: statusIssues(), failMutation: 99 }, [
+          '-Issue',
+          'o/r#7',
+          '-SetStatus',
+          'In Progress',
+        ]);
+        expect(r.status).toBe(1);
+        expect(r.stdout).toContain('Status not set:');
+      });
     });
 
     it('-Issue -IncludeParents also syncs the parent in a second query', async () => {

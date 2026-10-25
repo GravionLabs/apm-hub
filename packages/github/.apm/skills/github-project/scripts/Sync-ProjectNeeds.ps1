@@ -242,8 +242,15 @@ function Get-IssueNodes {
 
 function Get-OpenPrHeads([string]$RepoName) {
   $o, $r = $RepoName -split '/', 2
-  $q = 'query($o: String!, $r: String!) { repository(owner: $o, name: $r) { pullRequests(states: OPEN, first: 100) { nodes { headRefName } } } }'
-  @((Invoke-Graphql $q @{ o = $o; r = $r }).repository.pullRequests.nodes | ForEach-Object { $_.headRefName })
+  $q = 'query($o: String!, $r: String!, $cursor: String) { repository(owner: $o, name: $r) { pullRequests(states: OPEN, first: 100, after: $cursor) { pageInfo { hasNextPage endCursor } nodes { headRefName } } } }'
+  $heads = @(); $cursor = $null
+  do {
+    $page = (Invoke-Graphql $q @{ o = $o; r = $r; cursor = $cursor }).repository.pullRequests
+    $heads += @($page.nodes | ForEach-Object { $_.headRefName })
+    $more = [bool]($page.pageInfo -and $page.pageInfo.hasNextPage)
+    $cursor = if ($more) { $page.pageInfo.endCursor } else { $null }
+  } while ($more)
+  $heads
 }
 
 # Live state in the -StateFile shape, or $null when the project has no field Needs.
@@ -325,6 +332,11 @@ if ($StateFile) {
 $ref = Resolve-ProjectRef -Owner $Owner -Number $Number -Root "$root"
 if (-not $ref -and $state -and (Get-Prop $state 'owner') -and (Get-Prop $state 'number')) {
   $ref = @{ owner = "$($state.owner)"; number = [int]$state.number }
+}
+# Live run with bare issue numbers and no -Repo (loop and queue callers): the repository of the current checkout (origin remote).
+if (-not $state -and -not $Repo -and @($Issue | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '^#?\d+$' }).Count -gt 0) {
+  $url = "$(& git -C $root config --get remote.origin.url 2>$null)".Trim()
+  if ($url -match 'github\.com[:/]([^/\s]+/[^/\s]+?)(\.git)?/?\z') { $Repo = $Matches[1] }
 }
 if ($SetStatus) {
   $one = @(@($Issue | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ }))

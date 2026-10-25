@@ -287,6 +287,27 @@ describe.skipIf(!hasPwsh || spawnSync('node', ['-v']).status !== 0)(
       expect(gh.calls()).toHaveLength(0);
     });
 
+    it('in a worktree (main checkout busy) reads the worktree config and sets the status', () => {
+      fs.mkdirSync(path.join(f.repo, '.agents'), { recursive: true });
+      fs.writeFileSync(path.join(f.repo, '.agents/project.json'), '{"owner":"o","number":1}');
+      git(f.repo, 'add', '.agents/project.json');
+      git(f.repo, 'commit', '-q', '-m', 'project config');
+      git(f.repo, 'push', '-q', 'origin', 'main');
+      // a live lease of another issue keeps the main checkout busy
+      const other = run(
+        'Enter-Checkout.ps1',
+        ['-Issue', '3', '-Branch', 'feat/3', '-Base', 'main'],
+        f.repo,
+        { PROJECT_SYNC_OFF: '1' } as Record<string, string>
+      );
+      expect(other.status, other.stderr).toBe(0);
+      const { r, gh } = enter({ config: false });
+      expect(r.status, r.stderr).toBe(0);
+      expect(json(r).worktree).toBe(true);
+      expect(r.stderr).not.toContain('Project status:');
+      expect(gh.calls().filter((c) => c.query?.includes('mutation'))).toHaveLength(1);
+    });
+
     it('PROJECT_SYNC_OFF=1 makes no gh call', () => {
       const { r, gh } = enter({ env: { PROJECT_SYNC_OFF: '1' } });
       expect(r.status).toBe(0);

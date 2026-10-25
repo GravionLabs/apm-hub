@@ -136,7 +136,8 @@ function Set-ProjectStatus([string]$CheckoutPath) {
     if (-not (Test-Path -LiteralPath $script -PathType Leaf)) { throw 'Sync-ProjectNeeds.ps1 not found (install the github-project skill)' }
     $url = "$(& git -C $CheckoutPath config --get remote.origin.url 2>$null)".Trim()
     if ($url -notmatch 'github\.com[:/]([^/\s]+/[^/\s]+?)(\.git)?/?\z') { throw "cannot derive owner/repo from origin '$url'" }
-    $out = @(& pwsh -NoProfile -File $script -Issue "$($Matches[1])#$Issue" -SetStatus 'In Progress' 2>&1 | ForEach-Object { "$_" })
+    Push-Location -LiteralPath $CheckoutPath
+    try { $out = @(& pwsh -NoProfile -File $script -Issue "$($Matches[1])#$Issue" -SetStatus 'In Progress' 2>&1 | ForEach-Object { "$_" }) } finally { Pop-Location }
     if ($LASTEXITCODE -ne 0) { throw ($out -join ' ') }
   } catch {
     [Console]::Error.WriteLine("Project status: not set for #${Issue}: $($_ -replace '\s+', ' ')")
