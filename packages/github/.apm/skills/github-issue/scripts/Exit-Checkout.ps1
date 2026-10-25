@@ -7,7 +7,8 @@
   Counterpart of Enter-Checkout.ps1. Removes <state>/leases/<key>.json of the lease whose 'issue' is -Issue (state dir resolved like
   Add-LedgerLine.ps1; a symlinked leases directory or lease file is refused). When the leased checkout is a worktree (not the main checkout)
   and clean (git status --porcelain without output), Remove-Worktree.ps1 removes it ('removed' = true); a dirty worktree is kept and reported
-  ('kept' = its path, so the user can resume there). The main checkout is never touched. No lease for the issue: no-op ({released: false}).
+  ('kept' = its path, so the user can resume there).
+  The project Status is intentionally left as is: the PR state takes over through the Needs rules (Sync-ProjectNeeds.ps1). The main checkout is never touched. No lease for the issue: no-op ({released: false}).
 .PARAMETER Issue  Issue number.
 #>
 [CmdletBinding()]

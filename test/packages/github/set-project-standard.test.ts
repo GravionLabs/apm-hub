@@ -2,6 +2,7 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { createFakeGh } from '../../helpers/fake-gh';
 
 const SCRIPT = path.resolve(
   __dirname,
@@ -576,6 +577,69 @@ describe.skipIf(!hasPwsh)('Set-ProjectStandard.ps1 -StateFile', () => {
       item(3, { state: 'CLOSED', status: 'Done', level: 'Bug' }),
     ];
     const status = [opt('Todo'), opt('In release'), opt('Done')];
-    expect(plan(state({ status, items }), '-Sync', '-RemoveDefaultViews')).toEqual([]);
+    expect(
+      plan(state({ status, items }), '-Sync', '-RemoveDefaultViews').filter(
+        (a) => a.type !== 'syncNeeds'
+      )
+    ).toEqual([]);
+  });
+
+  describe('Needs sync', () => {
+    it('lists the syncNeeds action with -Sync', () => {
+      const a = plan(state({}), '-Sync', '-Owner', 'o', '-Number', '17');
+      expect(ofType(a, 'syncNeeds')).toEqual([{ type: 'syncNeeds', owner: 'o', number: 17 }]);
+    });
+
+    it('has no syncNeeds action without -Sync', () => {
+      expect(ofType(plan(state({})), 'syncNeeds')).toHaveLength(0);
+    });
   });
 });
+
+describe.skipIf(!hasPwsh || spawnSync('node', ['-v']).status !== 0 || process.platform === 'win32')(
+  'Set-ProjectStandard.ps1 -Sync live',
+  () => {
+    let dir: string;
+    beforeEach(() => {
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), 'projstd-live-'));
+    });
+    afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+    // Needs queries carry subIssues, the plain item/repository queries of Set-ProjectStandard do not.
+    const handler = (failNeeds: boolean) => `(call) => {
+      const q = call.query || '';
+      if (q.includes('projectV2(number')) return { repositoryOwner: { __typename: 'User', projectV2: { id: 'P1',
+        fields: { nodes: [{ __typename: 'ProjectV2SingleSelectField', id: 'F-status', name: 'Status', options: [] },
+          { __typename: 'ProjectV2SingleSelectField', id: 'F-needs', name: 'Needs', options: [] }] },
+        views: { nodes: [] } } } };
+      if (q.includes('items(first: 100')) {
+        ${failNeeds ? "if (q.includes('subIssues')) throw new Error('graphql down');" : ''}
+        return { node: { items: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [] } } };
+      }
+      if (q.includes('repositories(first')) return { node: { repositories: { nodes: [] } } };
+      return {};
+    }`;
+    const sync = (failNeeds: boolean) => {
+      const gh = createFakeGh(dir, handler(failNeeds));
+      const r = spawnSync(
+        'pwsh',
+        ['-NoProfile', '-File', SCRIPT, '-Owner', 'o', '-Number', '1', '-Sync', '-DryRun'],
+        { cwd: dir, encoding: 'utf8', env: gh.env() }
+      );
+      return { r, gh };
+    };
+
+    it('runs the Needs sync after its own plan', () => {
+      const { r, gh } = sync(false);
+      expect(r.status, r.stderr + r.stdout).toBe(0);
+      expect(r.stdout).not.toContain('Needs sync failed');
+      expect(gh.calls().some((c) => c.query?.includes('subIssues'))).toBe(true);
+    });
+
+    it('a failing Needs sync is one warning and the run still exits 0', () => {
+      const { r } = sync(true);
+      expect(r.status, r.stderr + r.stdout).toBe(0);
+      expect(r.stdout.match(/Warning: Needs sync failed/g)).toHaveLength(1);
+    });
+  }
+);

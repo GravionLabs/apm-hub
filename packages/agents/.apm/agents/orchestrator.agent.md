@@ -58,6 +58,13 @@ metadata:
         "pwsh ~/.claude/skills/github-issue/scripts/Get-TaskWaves.ps1 *": allow
         "pwsh ~/.agents/skills/github-issue/scripts/Get-TaskWaves.ps1 *": allow
         "pwsh ~/.config/opencode/skills/github-issue/scripts/Get-TaskWaves.ps1 *": allow
+        "pwsh .claude/skills/github-project/scripts/Sync-ProjectNeeds.ps1 *": allow
+        "pwsh .opencode/skills/github-project/scripts/Sync-ProjectNeeds.ps1 *": allow
+        "pwsh .agents/skills/github-project/scripts/Sync-ProjectNeeds.ps1 *": allow
+        "pwsh .github/skills/github-project/scripts/Sync-ProjectNeeds.ps1 *": allow
+        "pwsh ~/.claude/skills/github-project/scripts/Sync-ProjectNeeds.ps1 *": allow
+        "pwsh ~/.agents/skills/github-project/scripts/Sync-ProjectNeeds.ps1 *": allow
+        "pwsh ~/.config/opencode/skills/github-project/scripts/Sync-ProjectNeeds.ps1 *": allow
         "pwsh .claude/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
         "pwsh .opencode/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
         "pwsh .agents/skills/github-issue/scripts/Write-StatusTable.ps1 *": allow
