@@ -8,6 +8,31 @@ describe('subagent-ledger hook', () => {
   const fx = useLedgerFixture();
   const { cleanEnv, withLedger, run } = fx;
 
+  /** A PATH directory with the tools the hook needs but no git and no jq. */
+  const noGitBin = () => {
+    const bin = path.join(fx.dir, 'bin');
+    fs.mkdirSync(bin);
+    for (const c of [
+      'cat',
+      'sed',
+      'head',
+      'tail',
+      'cut',
+      'ls',
+      'dirname',
+      'tr',
+      'grep',
+      'find',
+      'sort',
+      'bash',
+      'cksum',
+    ]) {
+      const src = ['/usr/bin', '/bin'].map((d) => path.join(d, c)).find((f) => fs.existsSync(f));
+      if (src) fs.symlinkSync(src, path.join(bin, c));
+    }
+    return bin;
+  };
+
   describe('agent allowlist and branch binding', () => {
     const git = (...args: string[]) =>
       spawnSync(
@@ -172,26 +197,7 @@ describe('subagent-ledger hook', () => {
       repo('fix/7-x');
       const l7 = mk('7', new Date(2020, 1, 1));
       const l9 = mk('9');
-      const bin = path.join(fx.dir, 'bin');
-      fs.mkdirSync(bin);
-      for (const c of [
-        'cat',
-        'sed',
-        'head',
-        'tail',
-        'cut',
-        'ls',
-        'dirname',
-        'tr',
-        'grep',
-        'find',
-        'sort',
-        'bash',
-        'cksum',
-      ]) {
-        const src = ['/usr/bin', '/bin'].map((d) => path.join(d, c)).find((f) => fs.existsSync(f));
-        if (src) fs.symlinkSync(src, path.join(bin, c));
-      }
+      const bin = noGitBin();
       const r = spawnSync('bash', [SCRIPT], {
         input: JSON.stringify({
           cwd: fx.dir,
@@ -562,26 +568,7 @@ describe('subagent-ledger hook', () => {
 
     it('writes no status summary without jq', () => {
       withLedger();
-      const bin = path.join(fx.dir, 'bin');
-      fs.mkdirSync(bin);
-      for (const c of [
-        'cat',
-        'sed',
-        'head',
-        'tail',
-        'cut',
-        'ls',
-        'dirname',
-        'tr',
-        'grep',
-        'find',
-        'sort',
-        'bash',
-        'cksum',
-      ]) {
-        const src = ['/usr/bin', '/bin'].map((d) => path.join(d, c)).find((f) => fs.existsSync(f));
-        if (src) fs.symlinkSync(src, path.join(bin, c));
-      }
+      const bin = noGitBin();
       const r = spawnSync('bash', [SCRIPT], {
         input: JSON.stringify(runner({ status: 'DONE', pr: 'https://x/pull/9' })),
         encoding: 'utf8',

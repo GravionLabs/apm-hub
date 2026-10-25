@@ -4,8 +4,6 @@ import * as os from 'os';
 import * as path from 'path';
 import { gitCleanEnv } from '../packages/hooks/ledger-test-helpers';
 
-export { readLedger } from '../packages/hooks/ledger-test-helpers';
-
 export const SCRIPT = path.resolve(__dirname, '../../packages/hooks/.apm/hooks/subagent-ledger.sh');
 
 /**
