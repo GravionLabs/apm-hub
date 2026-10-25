@@ -1568,7 +1568,6 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
     for (const [what, line] of [
       ['a credential assignment', 'password: hunter2'],
       ['a destructive git command', 'Run git reset --hard'],
-      ['a private key header', '-----BEGIN RSA PRIVATE KEY'],
     ]) {
       batch(
         `${what} in docs prose keeps mode docs without a risky signal`,
@@ -1576,6 +1575,65 @@ describe.skipIf(!hasPwsh)('Classify-Diff.ps1', { timeout: 30000 }, () => {
         (r) => {
           expectDocs(r);
           expect(r.signals).toEqual([]);
+        }
+      );
+    }
+
+    for (const [what, line] of [
+      ['a private key header', '-----BEGIN RSA PRIVATE KEY-----'],
+      ['a GitHub token prefix', 'Use ghp_abcdefghijklmnopqrst here'],
+      ['an AWS key prefix', 'key AKIAABCDEFGHIJKLMNOP'],
+    ]) {
+      batch(
+        `${what} in a docs file is a risky signal: mechanical with security, not docs`,
+        () => write('CONTRIBUTING.md', body.replace('line 3', line)),
+        (r) => {
+          expectSec(r);
+          expect(r.signals).toEqual(['risky']);
+        }
+      );
+    }
+
+    batch(
+      'a token prefix in a manifest is a risky signal',
+      () => write('apm.yml', 'name: x\nkey: ghp_abcdefghijklmnopqrst\n'),
+      (r) => {
+        expectSec(r);
+        expect(r.signals).toEqual(['risky']);
+      }
+    );
+
+    batch(
+      'an identifier rename in a test file to a credential name is a risky signal (mechtest)',
+      () => write('src/m.test.ts', read('src/m.test.ts').replace(/\br\b/g, 'token')),
+      (r) => {
+        expectSec(r);
+        expect(r.signals).toEqual(['risky']);
+      }
+    );
+
+    batch(
+      'a destructive command in a test file under test/ is ignored: mode text stays',
+      () => write('test/helpers/h.ts', 'export const h = 1;\nrun("git reset --hard");\n'),
+      (r) => {
+        expectTests(r);
+        expect(r.signals).toEqual([]);
+      }
+    );
+
+    for (const [what, file, line] of [
+      ['a private key header', 'test/helpers/h.ts', 'const k = "-----BEGIN RSA PRIVATE KEY-----";'],
+      ['a GitHub token prefix', 'test/helpers/h.ts', 'const k = "ghp_abcdefghijklmnopqrst";'],
+      ['a GitHub token prefix', 'pkg/test_foo.py', 'k = "ghp_abcdefghijklmnopqrst"'],
+    ]) {
+      batch(
+        `${what} in test file ${file} is a risky signal (security kept)`,
+        () => write(file, (file.endsWith('.ts') ? 'export const h = 1;\n' : '') + line + '\n'),
+        (r) => {
+          expect(r.mode).toBe('full');
+          expect(r.size).toBe('small');
+          expect(r.signals).toEqual(['risky']);
+          expect(r.dimensions).toEqual(NO_CONV);
         }
       );
     }
