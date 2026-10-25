@@ -8,7 +8,8 @@ When several rows apply, the highest tier wins.
 
 | Attribute | Tier |
 |:--|:--|
-| Role `issue-reader`, `explorer`, Final-Verify (`verify-project`, only runs commands) | `fast` |
+| Role `issue-reader`, `explorer` | `fast` |
+| Final-Verify (`verify-project`; on Claude Code the skill's `context: fork` runs on the caller's model, so no `fast` pin) | `standard` |
 | Task: docs, mechanical change, `size: S` or `size: M` | `standard` |
 | Task: prose only (skill, agent or reference text) | `standard` (never below) |
 | Task: parser, security, concurrency, cross-package design or `size: L` | `strong` |
