@@ -6,6 +6,12 @@ author:
   name: Gravion
 license: MIT
 
+# Stack skills for working on this repository (installed into .claude/, gitignored).
+dependencies:
+  apm:
+    - GravionLabs/apm-hub/packages/ts#release/next
+  mcp: []
+
 marketplace:
   owner:
     name: Gravion
