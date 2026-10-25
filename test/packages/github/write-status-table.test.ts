@@ -2,12 +2,22 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { PwshWorker } from '../../helpers/pwsh-worker';
 
 const SCRIPT = path.resolve(
   __dirname,
   '../../../packages/github/.apm/skills/github-issue/scripts/Write-StatusTable.ps1'
 );
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
+
+// A gh that always fails: the Needs column then skips itself (one warning) and the legacy cases keep their exact output
+// without calling the real GitHub.
+const failingGhDir = fs.mkdtempSync(path.join(os.tmpdir(), 'statustable-gh-'));
+if (process.platform !== 'win32') {
+  fs.writeFileSync(path.join(failingGhDir, 'gh'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+}
+afterAll(() => fs.rmSync(failingGhDir, { recursive: true, force: true }));
+const pathWith = (dirName: string) => `${dirName}${path.delimiter}${process.env.PATH ?? ''}`;
 
 it('pwsh is installed in CI (the Write-StatusTable cases must not be skipped there)', () => {
   if (process.env.CI) expect(hasPwsh).toBe(true);
@@ -26,7 +36,11 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
       cwd: dir,
       encoding: 'utf8',
       input,
-      env: { ...process.env, DROMOS_STATE_DIR: path.join(dir, '.agents') },
+      env: {
+        ...process.env,
+        PATH: pathWith(failingGhDir),
+        DROMOS_STATE_DIR: path.join(dir, '.agents'),
+      },
     });
   const target = (issue: string) => path.join(dir, '.agents', `status-${issue}.md`);
   const withFile = (content: string) => {
@@ -50,7 +64,9 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
   it('overwrites an existing file instead of appending', () => {
     expect(run(['-Issue', '248', '-Path', withFile('old\n')]).status).toBe(0);
     expect(run(['-Issue', '248', '-Path', withFile('new\n')]).status).toBe(0);
-    expect(fs.readFileSync(target('248'), 'utf8')).toBe('new\n');
+    expect(fs.readFileSync(target('248'), 'utf8')).toBe(
+      'new\nNeeds me: 0 planning, 0 decisions, 0 release review\n'
+    );
     expect(fs.readdirSync(path.join(dir, '.agents'))).toEqual(['status-248.md']);
   });
 
@@ -129,13 +145,17 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1', () => {
     const dirty =
       '#1 a\tb \x1b[31mred\x1b[0m\n#2 \x1b]0;pwn\x07x \x1b]8;;u\x1b\\y\x1bZ z\x01\x7f\x85\r\nNext PBI: #3\n';
     expect(run(['-Issue', '5', '-Path', withFile(dirty)]).status).toBe(0);
-    expect(fs.readFileSync(target('5'), 'utf8')).toBe('#1 a\tb red\n#2 x y z\nNext PBI: #3\n');
+    expect(fs.readFileSync(target('5'), 'utf8')).toBe(
+      '#1 a\tb red\n#2 x y z\nNext PBI: #3\nNeeds me: 0 planning, 0 decisions, 0 release review\n'
+    );
   });
 
   it('keeps the following rows when one title has an unterminated OSC', () => {
     const dirty = '#1 \x1b]0;open title\n#2 second\n#3 third \x1b]0;t\x07end\n';
     expect(run(['-Issue', '6', '-Path', withFile(dirty)]).status).toBe(0);
-    expect(fs.readFileSync(target('6'), 'utf8')).toBe('#1 0;open title\n#2 second\n#3 third end\n');
+    expect(fs.readFileSync(target('6'), 'utf8')).toBe(
+      '#1 0;open title\n#2 second\n#3 third end\nNeeds me: 0 planning, 0 decisions, 0 release review\n'
+    );
   });
 });
 
@@ -147,7 +167,7 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1 state directory (#402)', () => 
   afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
   const run = (cwd: string, env: Record<string, string | undefined>) => {
     fs.writeFileSync(path.join(cwd, 't'), '#1 merged A\n');
-    const e = { ...process.env, ...env };
+    const e = { ...process.env, PATH: pathWith(failingGhDir), ...env };
     for (const k of Object.keys(e)) if (k.startsWith('GIT_')) delete e[k];
     if (env.DROMOS_STATE_DIR === undefined) delete e.DROMOS_STATE_DIR;
     return spawnSync('pwsh', ['-NoProfile', '-File', SCRIPT, '-Issue', '5', '-Path', 't'], {
@@ -221,7 +241,7 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1 live runners (#468)', () => {
       cwd: dir,
       encoding: 'utf8',
       input,
-      env: { ...process.env, DROMOS_STATE_DIR: state() },
+      env: { ...process.env, PATH: pathWith(failingGhDir), DROMOS_STATE_DIR: state() },
     });
   const lease = (key: string, issue: number, minutesAgo: number) => {
     fs.mkdirSync(path.join(state(), 'leases'), { recursive: true });
@@ -284,3 +304,251 @@ describe.skipIf(!hasPwsh)('Write-StatusTable.ps1 live runners (#468)', () => {
     expect(r.stdout.trim()).toBe('');
   });
 });
+
+describe.skipIf(!hasPwsh || process.platform === 'win32')(
+  'Write-StatusTable.ps1 Needs column (#598)',
+  () => {
+    let dir: string;
+    let worker: PwshWorker;
+    beforeAll(() => {
+      worker = new PwshWorker(SCRIPT);
+    });
+    afterAll(() => worker.close());
+    beforeEach(() => {
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), 'statustable-needs-'));
+    });
+    afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+    const state = () => path.join(dir, '.agents');
+    const out = () => fs.readFileSync(path.join(state(), 'status-9.md'), 'utf8');
+    const item = (number: number, over: Record<string, unknown> = {}) => ({
+      number,
+      state: 'OPEN',
+      level: 'PBI',
+      labels: [],
+      status: 'Todo',
+      blockedByOpen: 0,
+      subIssueLevels: ['Task'],
+      prHeads: [],
+      ...over,
+    });
+    const run = (table: string, items: unknown[], extra: string[] = []) => {
+      const sf = path.join(dir, 'state.json');
+      fs.writeFileSync(sf, JSON.stringify({ items }));
+      const tf = path.join(dir, 'table.md');
+      fs.writeFileSync(tf, table);
+      return worker.run(['-Issue', '9', '-Path', tf, '-StateFile', sf, ...extra], {
+        cwd: dir,
+        env: { ...process.env, DROMOS_STATE_DIR: state() },
+      });
+    };
+
+    it('adds the Needs value of every rule outcome after the state and the Needs me line last', async () => {
+      const table = [
+        '#1 open Plan me',
+        '#2 needs-decision Decide me',
+        '#3 open Review me',
+        '#4 blocked by #99 Blocked',
+        '#5 merged Merged one',
+        '#6 pr-open #50 In flight',
+        '#7 open Ready one',
+        '#8 open Done upstream',
+        'Next PBI: #7 Ready one',
+        '',
+      ].join('\n');
+      const r = await run(table, [
+        item(1, { subIssueLevels: [] }),
+        item(2, { labels: ['needs-decision'] }),
+        item(3, { labels: ['needs-review'] }),
+        item(4, { blockedByOpen: 1 }),
+        item(5, { labels: ['merged'] }),
+        item(6, { prHeads: ['feat/6-x'] }),
+        item(7),
+        item(8, { state: 'CLOSED' }),
+      ]);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toBe(
+        [
+          '#1 open | Planning | Plan me',
+          '#2 needs-decision | Decision | Decide me',
+          '#3 open | Review | Review me',
+          '#4 blocked by #99 | Blocked | Blocked',
+          '#5 merged | Release review | Merged one',
+          '#6 pr-open #50 | In progress | In flight',
+          '#7 open | Ready | Ready one',
+          '#8 open | - | Done upstream',
+          'Next PBI: #7 Ready one',
+          'Needs me: 1 planning, 1 decisions, 1 release review',
+          '',
+        ].join('\n')
+      );
+    });
+
+    it('counts several planning, decision and release review rows', async () => {
+      const r = await run('#1 open A\n#2 open B\n#3 open C\n#4 merged D\n#5 open E\n', [
+        item(1, { subIssueLevels: [] }),
+        item(2, { subIssueLevels: [] }),
+        item(3, { labels: ['needs-decision'] }),
+        item(4, { labels: ['merged'] }),
+        item(5, { status: 'In release' }),
+      ]);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out().trimEnd().split('\n').pop()).toBe(
+        'Needs me: 2 planning, 1 decisions, 2 release review'
+      );
+    });
+
+    it('writes Needs me with zeros when no row needs anything, and shows - for a row without item', async () => {
+      const r = await run('#1 open A\nNext PBI: #1 A\n', []);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toBe(
+        '#1 open | - | A\nNext PBI: #1 A\nNeeds me: 0 planning, 0 decisions, 0 release review\n'
+      );
+    });
+
+    it('keeps a row without title and leaves group headers alone', async () => {
+      const r = await run('Feature #4 open F\n#1 open\n', [item(1)]);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toBe(
+        'Feature #4 open F\n#1 open | Ready\nNeeds me: 0 planning, 0 decisions, 0 release review\n'
+      );
+    });
+
+    it('shows In progress for a PBI with a live lease and the runner state', async () => {
+      fs.mkdirSync(path.join(state(), 'leases'), { recursive: true });
+      const beat = new Date().toISOString();
+      fs.writeFileSync(
+        path.join(state(), 'leases', 'a.json'),
+        JSON.stringify({
+          path: '/w',
+          issue: 7,
+          branch: 'b',
+          host: 'h',
+          started: beat,
+          heartbeat: beat,
+        })
+      );
+      const r = await run('#7 open A\n', [item(7)]);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toContain('#7 in progress (runner) | In progress | A\n');
+    });
+
+    const leaseFor = (nr: number) => {
+      fs.mkdirSync(path.join(state(), 'leases'), { recursive: true });
+      const beat = new Date().toISOString();
+      fs.writeFileSync(
+        path.join(state(), 'leases', `l${nr}.json`),
+        JSON.stringify({
+          path: '/w',
+          issue: nr,
+          branch: 'b',
+          host: 'h',
+          started: beat,
+          heartbeat: beat,
+        })
+      );
+    };
+
+    it('a merged row counts as Release review without the merged label', async () => {
+      const r = await run('#5 merged M\n', [item(5, { status: null })]);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toBe(
+        '#5 merged | Release review | M\nNeeds me: 0 planning, 0 decisions, 1 release review\n'
+      );
+    });
+
+    it('a live lease keeps Decision and Blocked, turns Planning into In progress', async () => {
+      [2, 4, 1].forEach(leaseFor);
+      const r = await run('#2 open D\n#4 open B\n#1 open P\n', [
+        item(2, { labels: ['needs-decision'] }),
+        item(4, { blockedByOpen: 1 }),
+        item(1, { subIssueLevels: [] }),
+      ]);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toContain('#2 in progress (runner) | Decision | D\n');
+      expect(out()).toContain('#4 in progress (runner) | Blocked | B\n');
+      expect(out()).toContain('#1 in progress (runner) | In progress | P\n');
+      expect(out()).toContain('Needs me: 0 planning, 1 decisions, 0 release review');
+    });
+
+    it('a merged row with a live lease stays Release review', async () => {
+      leaseFor(5);
+      const r = await run('#5 merged M\n', [item(5)]);
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toContain('#5 merged | Release review | M\n');
+    });
+
+    it('reads GitHub with GET calls only and never writes the project', async () => {
+      const bin = path.join(dir, 'bin');
+      fs.mkdirSync(bin);
+      const log = path.join(dir, 'gh.log');
+      fs.writeFileSync(
+        path.join(bin, 'gh'),
+        `#!/bin/sh
+echo "$*" >> "${log}"
+case "$*" in
+  *pulls*) echo '[]' ;;
+  *sub_issues*) echo '[{"title":"[Task] t","type":{"name":"Task"}}]' ;;
+  *blocked_by*) echo '[]' ;;
+  *issues/7) echo '{"state":"open","title":"[PBI] x","labels":[{"name":"needs-decision"}],"type":{"name":"PBI"}}' ;;
+  *) exit 1 ;;
+esac
+`,
+        { mode: 0o755 }
+      );
+      const tf = path.join(dir, 'table.md');
+      fs.writeFileSync(tf, '#7 needs-decision A\n');
+      const r = await worker.run(['-Issue', '9', '-Path', tf], {
+        cwd: dir,
+        env: { ...process.env, PATH: pathWith(bin), DROMOS_STATE_DIR: state() },
+      });
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toBe(
+        '#7 needs-decision | Decision | A\nNeeds me: 0 planning, 1 decisions, 0 release review\n'
+      );
+      const calls = fs.readFileSync(log, 'utf8').trim().split('\n');
+      expect(calls.length).toBeGreaterThan(0);
+      for (const c of calls) {
+        expect(c).toMatch(/^api --method GET /);
+        expect(c).not.toMatch(/graphql|--input|-X|-f |-F |PATCH|POST|PUT|DELETE/);
+      }
+    });
+
+    it('warns once and keeps the rows when gh fails, exit 0', async () => {
+      const bin = path.join(dir, 'bin');
+      fs.mkdirSync(bin);
+      fs.writeFileSync(path.join(bin, 'gh'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+      const tf = path.join(dir, 'table.md');
+      fs.writeFileSync(tf, '#7 open A\n');
+      const r = await worker.run(['-Issue', '9', '-Path', tf], {
+        cwd: dir,
+        env: { ...process.env, PATH: pathWith(bin), DROMOS_STATE_DIR: state() },
+      });
+      expect(r.status).toBe(0);
+      expect(out()).toBe('#7 open A\n');
+    });
+
+    it('warns and keeps the rows when the module is missing, exit 0', () => {
+      const copy = path.join(dir, 'copy');
+      fs.mkdirSync(copy);
+      fs.copyFileSync(SCRIPT, path.join(copy, 'Write-StatusTable.ps1'));
+      const tf = path.join(dir, 'table.md');
+      fs.writeFileSync(tf, '#7 open A\n');
+      const r = spawnSync(
+        'pwsh',
+        [
+          '-NoProfile',
+          '-File',
+          path.join(copy, 'Write-StatusTable.ps1'),
+          '-Issue',
+          '9',
+          '-Path',
+          tf,
+        ],
+        { cwd: dir, encoding: 'utf8', env: { ...process.env, DROMOS_STATE_DIR: state() } }
+      );
+      expect(r.status).toBe(0);
+      expect(r.stderr).toContain('NeedsRules.psm1 not found');
+      expect(out()).toBe('#7 open A\n');
+    });
+  }
+);
