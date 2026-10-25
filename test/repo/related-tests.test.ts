@@ -15,6 +15,8 @@ const FILES = [
   'test/packages/ts/ts-pnpm-workflow.test.ts',
   'test/packages/ts/ts-package.test.ts',
   'test/packages/github/release-workflow.test.ts',
+  'test/packages/hooks/git-guardrails.test.ts',
+  'test/packages/hooks/git-guardrails.perf.test.ts',
   'test/repo/ci-workflow.test.ts',
   'test/repo/pages-workflow.test.ts',
   'test/repo/state-dir-resolver.test.ts',
@@ -71,6 +73,21 @@ describe('related-tests', () => {
       'test/repo/pages-workflow.test.ts',
       'test/repo/state-dir-resolver.test.ts',
     ]);
+  });
+
+  it('leaves perf tests out of a package change', () => {
+    expect(rel('packages/hooks/hooks.json')).toEqual([
+      'src/generators/agent-size-validator.test.ts',
+      'src/generators/skill-size-validator.test.ts',
+      'test/packages/hooks/git-guardrails.test.ts',
+    ]);
+  });
+
+  it('filters an explicit perf test path', () => {
+    expect(rel('test/packages/hooks/git-guardrails.perf.test.ts')).toEqual([]);
+    expect(
+      rel('test/packages/hooks/git-guardrails.perf.test.ts', 'test/repo/pages-workflow.test.ts')
+    ).toEqual(['test/repo/pages-workflow.test.ts']);
   });
 
   it('maps a test file to itself', () => {

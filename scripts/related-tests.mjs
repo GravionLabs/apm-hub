@@ -3,6 +3,7 @@
 //   node scripts/related-tests.mjs <path...>        explicit paths
 //   node scripts/related-tests.mjs --staged         staged files (git diff --cached --name-only)
 //   node scripts/related-tests.mjs --range a..b     files changed in a revision range
+// `*.perf.test.ts` files (Vitest project `perf`, wall-clock bounds) are never listed; run `pnpm run test:perf`.
 // Prints one test file per line (sorted, deduplicated), or the single word ALL when the
 // change can affect anything (shared helpers, config, lockfile, unknown paths). Exit code 0.
 import { execFileSync } from 'node:child_process';
@@ -60,7 +61,7 @@ export function relatedTests(paths, { root = REPO_ROOT } = {}) {
       return ['ALL'];
     }
   }
-  return [...out].sort();
+  return [...out].filter((f) => !f.endsWith('.perf.test.ts')).sort();
 }
 
 /** Resolves CLI arguments (paths, --staged, --range a..b) to changed paths. */

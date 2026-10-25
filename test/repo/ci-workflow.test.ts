@@ -14,7 +14,8 @@ describe('ci.yml parallel Vitest jobs (#502)', () => {
     const projects = ((config.test?.projects ?? []) as Array<{ test: { name: string } }>).map(
       (p) => p.test.name
     );
-    expect(projects).toEqual(['unit', 'scripts', 'integration']);
+    expect(projects).toEqual(['unit', 'scripts', 'integration', 'perf']);
+    expect(wf.jobs.test.strategy.matrix.project).toContain('perf');
     expect([...wf.jobs.test.strategy.matrix.project].sort()).toEqual([...projects].sort());
     expect(wf.jobs.test.strategy['fail-fast']).toBe(false);
   });
@@ -27,7 +28,13 @@ describe('ci.yml parallel Vitest jobs (#502)', () => {
     );
     const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'));
     expect(pkg.scripts['test:ci:project']).toContain('--project "$PROJECT"');
-    expect(pkg.scripts['test:ci']).toBe('vitest run --coverage');
+    expect(pkg.scripts['test:ci']).toBe(
+      'vitest run --coverage --project unit --project scripts --project integration'
+    );
+    expect(pkg.scripts['test:all']).toBe(
+      'vitest run --project unit --project scripts --project integration'
+    );
+    expect(pkg.scripts['test:perf']).toBe('vitest run --project perf');
     const artifacts = steps('test').filter((s) => s.uses?.startsWith('actions/upload-artifact'));
     expect(artifacts.length).toBe(2);
     for (const a of artifacts) expect(a.with?.name).toContain('${{ matrix.project }}');
