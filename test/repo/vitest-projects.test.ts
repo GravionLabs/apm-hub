@@ -18,42 +18,66 @@ const packageTests = walk('test/packages').filter((f) => f.endsWith('.test.ts'))
 // Same membership rule as the project definitions in vitest.config.ts.
 const projectOf = (file: string): string[] => {
   const projects = (config.test?.projects ?? []) as Array<{
-    test: { name: string; include: string[]; exclude?: string[] };
+    test: { name: string; include: string[]; exclude?: string[]; fileParallelism?: boolean };
   }>;
   return projects
     .filter(({ test }) => {
       const inc = test.include.some(
         (g) =>
           g === file ||
-          (g.endsWith('/**/*.test.ts') &&
-            file.startsWith(g.slice(0, -'**/*.test.ts'.length)) &&
-            file.endsWith('.test.ts'))
+          (g.includes('/**/*') &&
+            file.startsWith(g.slice(0, g.indexOf('**'))) &&
+            file.endsWith(g.slice(g.indexOf('**/*') + '**/*'.length)))
       );
-      return inc && !(test.exclude ?? []).includes(file);
+      // exclude entries are literal files or `**/*<suffix>` globs
+      const excluded = (test.exclude ?? []).some(
+        (g) => g === file || (g.startsWith('**/*.') && file.endsWith(g.slice('**/*'.length)))
+      );
+      return inc && !excluded;
     })
     .map(({ test }) => test.name);
 };
 
 describe('vitest projects', () => {
-  it('has the unit, scripts and integration projects', () => {
+  it('has the unit, scripts, integration and perf projects', () => {
     const names = (config.test?.projects as Array<{ test: { name: string } }>).map(
       (p) => p.test.name
     );
-    expect(names).toEqual(['unit', 'scripts', 'integration']);
+    expect(names).toEqual(['unit', 'scripts', 'integration', 'perf']);
+  });
+
+  it('runs the perf project one file at a time', () => {
+    const perf = (
+      config.test?.projects as Array<{ test: { name: string; fileParallelism?: boolean } }>
+    ).find((p) => p.test.name === 'perf');
+    expect(perf?.test.fileParallelism).toBe(false);
   });
 
   it('lists only existing test/packages files as scripts tests', () => {
     for (const f of scriptsTests) expect(packageTests).toContain(f);
   });
 
-  it.each(packageTests)('%s belongs to exactly one of unit and scripts', (file) => {
-    const projects = projectOf(file);
-    expect(projects).toHaveLength(1);
-    expect(['unit', 'scripts']).toContain(projects[0]);
-  });
+  it.each(packageTests.filter((f) => f.endsWith('.perf.test.ts')))(
+    '%s belongs to the perf project only',
+    (file) => {
+      expect(projectOf(file)).toEqual(['perf']);
+    }
+  );
 
-  it.each(packageTests)('%s is in the project matching its process use', (file) => {
-    const spawns = SPAWN.test(fs.readFileSync(path.join(ROOT, file), 'utf8'));
-    expect(projectOf(file)).toEqual([spawns ? 'scripts' : 'unit']);
-  });
+  it.each(packageTests.filter((f) => !f.endsWith('.perf.test.ts')))(
+    '%s belongs to exactly one of unit and scripts',
+    (file) => {
+      const projects = projectOf(file);
+      expect(projects).toHaveLength(1);
+      expect(['unit', 'scripts']).toContain(projects[0]);
+    }
+  );
+
+  it.each(packageTests.filter((f) => !f.endsWith('.perf.test.ts')))(
+    '%s is in the project matching its process use',
+    (file) => {
+      const spawns = SPAWN.test(fs.readFileSync(path.join(ROOT, file), 'utf8'));
+      expect(projectOf(file)).toEqual([spawns ? 'scripts' : 'unit']);
+    }
+  );
 });
