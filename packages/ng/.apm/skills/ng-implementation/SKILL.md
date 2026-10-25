@@ -33,6 +33,16 @@ Match the project's existing convention. New Angular 20+ projects follow the CLI
 - `ng-package.json`: `lib.entryFile` points to `public-api.ts`
 - Verify with `ng build <lib>` before the task is complete
 
+## Format
+
+- Extensions: prettier `.ts .tsx .js .mjs .cjs .json .html .scss .css`; eslint only `.ts .tsx .js .mjs .cjs` (never json, html, scss, css)
+- Format: `npx prettier --write {files}` then `npx eslint --fix {files}`
+- Check (read-only): `npx prettier --check {files}` and `npx eslint {files}`
+- Not configured: tool not in the project — the `-Requires` probe fails and the script prints `skipped: <tool> not configured`; note it in the report
+- Run after green tests, before the commit (`-Check` for the check commands; see `implementation` `references/format.md`):
+  `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Extensions .ts,.tsx,.js,.mjs,.cjs,.json,.html,.scss,.css -Requires 'npx --no-install prettier --version' -Command 'npx --no-install prettier --write {files}'`
+  `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Extensions .ts,.tsx,.js,.mjs,.cjs -Requires 'npx --no-install eslint --version' -Command 'npx --no-install eslint --fix {files}'`
+
 ## Tests
 
 Load `ng-test` for TestBed setup, signal testing, mocking and async patterns.
