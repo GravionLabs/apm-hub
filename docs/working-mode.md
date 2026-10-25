@@ -247,7 +247,7 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
   Documentation hunks (`docs`, `CHANGELOG.md`, `README*.md`, `site`) form a trailing `=== DOCUMENTATION ===` section that only
   `spec` and `conventions` read. `review.json` records `package {bytes, tokensEstimated, hunks, docsHunks}`; above 15k
   estimated tokens a size note names the largest files (the package is never split).
-- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec`. `correctness`
+- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec` (a small `full` diff runs fewer, see the size class in [orchestrator.md](orchestrator.md)). `correctness`
   also checks each `## Invariants` entry of the PBI, its Tasks and plan items without a Task issue (appended under
   `## Invariants (plan)`); a violated invariant is HIGH, quoted in `evidence`, and goes through verify. `spec` compares
   the diff with the originating issue: the number comes from the argument, the branch `<type>/<nr>-<slug>` or

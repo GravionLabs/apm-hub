@@ -348,3 +348,134 @@ describe('review-fanout: smaller package (#535)', () => {
     expect(pipeline).toMatch(/Phase review/);
   });
 });
+
+describe('review-fanout: size class and skipped dimensions (#534)', () => {
+  const orchestratorDoc = fs.readFileSync(path.join(root, 'docs/orchestrator.md'), 'utf-8');
+  const classifyLine = fanout
+    .split('\n')
+    .find((l) => l.includes('Classify-Diff.ps1 -Range') === false && l.includes('It prints'))!;
+
+  it('step 2 names the reduced full + small set and that a caller list replaces it', () => {
+    expect(classifyLine).toContain('{mode,dimensions,reason,size,signals,skippedDimensions}');
+    expect(classifyLine).toMatch(/`full` \+ `small`/);
+    expect(classifyLine).toMatch(/`correctness`, `tests`, `spec`/);
+    expect(classifyLine).toMatch(/`security` on the `risky` or `sensitive` signal/);
+    expect(classifyLine).toMatch(/`conventions` on the `source` signal/);
+    expect(classifyLine).toMatch(/a dimension list given by the caller replaces them/);
+    expect(classifyLine).toMatch(/`-Force full` runs all five/);
+    expect(classifyLine).toMatch(/invalid JSON is `full` with all five dimensions/);
+  });
+
+  it('output shape and review.json carry skippedDimensions', () => {
+    expect(fanout).toContain('"skippedDimensions":[{"dimension","reason"}]');
+    expect(fanout).toMatch(
+      /`skippedDimensions` = the dimensions the size class dropped, `\[\]` when none/
+    );
+  });
+
+  it('ledger review line lists skipped dimensions read from review.json', () => {
+    expect(pipeline).toContain('[ — skipped <dim>,<dim> (size small)]');
+    expect(pipeline).toMatch(/read from `skippedDimensions` of `review\.json`/);
+  });
+
+  it('a size-skipped dimension is never added back in a re-review', () => {
+    expect(pipeline).toMatch(/a dimension skipped for size is never added back/);
+    expect(fanout).toMatch(/never adds a size-skipped dimension back/);
+  });
+
+  it('docs mention the size class and skippedDimensions', () => {
+    expect(orchestratorDoc).toMatch(/The size class: a small diff/);
+    expect(orchestratorDoc).toContain('`skippedDimensions` in `review.json`');
+    expect(fs.readFileSync(path.join(root, 'docs/working-mode.md'), 'utf-8')).toMatch(
+      /a small `full` diff runs fewer/
+    );
+  });
+});
+
+describe('review-fanout: review.json shape and ledger line (#534)', () => {
+  // Output template of SKILL.md, made parseable by quoting the bare field names.
+  const shapeLine = fanout.split('\n').find((l) => l.startsWith('`{"mode"'))!;
+  const template = /^`(\{.*\})`/
+    .exec(shapeLine)![1]
+    .replace(/\{(file,line,severity,issue,evidence)\}/, '"$1"')
+    .replace(/\{"dimension","reason"\}/, '{"dimension":"","reason":""}')
+    .replace(/"APPROVE\|CHANGES_REQUESTED"|"[a-z|]+\|[a-z|]+"/g, '""');
+  const shape = JSON.parse(template) as Record<string, unknown>;
+
+  it('the output template is valid JSON with skippedDimensions as {dimension,reason} array', () => {
+    expect(Object.keys(shape)).toEqual(
+      expect.arrayContaining([
+        'mode',
+        'dimensions',
+        'verdict',
+        'suppressed',
+        'skippedDimensions',
+        'package',
+      ])
+    );
+    expect(shape.skippedDimensions).toEqual([{ dimension: '', reason: '' }]);
+  });
+
+  // Ledger template of pbi-pipeline.md as a regex: the optional skipped part becomes an optional group.
+  const ledgerTemplate = /`(Phase review: complete[^`]*)`/.exec(pipeline)![1];
+  const ledger = new RegExp(
+    '^' +
+      ledgerTemplate
+        .replace(
+          /\[ — skipped <dim>,<dim> \(size small\)\]/,
+          '( — skipped \\w+(,\\w+)* \\(size small\\))?'
+        )
+        .replace('<sha>', '[0-9a-f]+')
+        .replace('<n>', '\\d+') +
+      '$'
+  );
+
+  it('the ledger template accepts a review line with and without skipped dimensions', () => {
+    expect(ledgerTemplate).toBe(
+      'Phase review: complete — <sha> — package ~<n>k tokens[ — skipped <dim>,<dim> (size small)]'
+    );
+    expect('Phase review: complete — abc1234 — package ~12k tokens').toMatch(ledger);
+    expect(
+      'Phase review: complete — abc1234 — package ~12k tokens — skipped security,conventions (size small)'
+    ).toMatch(ledger);
+    expect(
+      'Phase review: complete — abc1234 — package ~3k tokens — skipped security (size small)'
+    ).toMatch(ledger);
+  });
+
+  it('the ledger template rejects an empty skipped list or a missing size note', () => {
+    expect(
+      'Phase review: complete — abc1234 — package ~12k tokens — skipped  (size small)'
+    ).not.toMatch(ledger);
+    expect('Phase review: complete — abc1234 — package ~12k tokens — skipped security').not.toMatch(
+      ledger
+    );
+    expect('Phase review: complete — abc1234 — skipped security (size small)').not.toMatch(ledger);
+  });
+
+  it('a re-review carries the earlier skippedDimensions forward along the whole dispatch chain', () => {
+    // The previous review.json travels pipeline -> review-lead -> review-fanout.
+    expect(pipeline).toMatch(
+      /`review-lead` gets range, dimension list, the previous round's `review\.json` path[^\n]*?passes them to `review-fanout`/
+    );
+    expect(lead).toMatch(
+      /Re-review: also pass the previous round's `review\.json` path to `review-fanout`/
+    );
+    expect(fanout).toMatch(
+      /\*\*Re-review\*\* after a fix round \(the caller passes the previous round's `review\.json`\)/
+    );
+    // The carried field is the one the output template defines, with the same entry shape.
+    const rule = fanout.split('\n').find((l) => l.includes('A re-review keeps the delta rule'))!;
+    const carried =
+      /carries the `(\w+)` of the previous `review\.json` into its own \(union, no duplicates\)/.exec(
+        rule
+      );
+    expect(carried?.[1]).toBe('skippedDimensions');
+    expect(shape).toHaveProperty(carried![1]);
+    expect(shape[carried![1]]).toEqual([{ dimension: '', reason: '' }]);
+    // Same sentence: nothing skipped is re-added, and the record survives the overwrite.
+    expect(rule).toMatch(
+      /never adds a size-skipped dimension back and carries the `skippedDimensions`[^\n]*?so the record survives the overwrite\./
+    );
+  });
+});

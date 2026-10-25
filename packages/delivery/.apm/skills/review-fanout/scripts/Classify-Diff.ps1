@@ -8,22 +8,32 @@
   `full` skips classification and returns full.
 .PARAMETER MaxLines
   Max changed lines (added + deleted) allowed in docs, manifests and renamed-identifier test files. Default 20.
+.PARAMETER SmallLines
+  Max changed lines (added + deleted, package-filter paths excluded) for size class "small". A full diff of
+  size small gets a reduced dimension set. Default 150.
 .OUTPUTS
-  JSON {"mode","dimensions","reason"}; always exit code 0 once parameters are bound.
+  JSON {"mode","dimensions","reason","size","signals","skippedDimensions"}; always exit code 0 once
+  parameters are bound. size is small|large (large whenever it cannot be measured), signals lists
+  risky|sensitive|source, skippedDimensions is [{dimension,reason}].
 .NOTES
   This script is authoritative; references/mechanical-classifier.md describes it.
 #>
 param(
   [string]$Range = 'HEAD',
   [ValidateSet('', 'full')][string]$Force = '',
-  [int]$MaxLines = 20
+  [int]$MaxLines = 20,
+  [int]$SmallLines = 150
 )
 
 $ErrorActionPreference = 'Stop'
 $all = @('correctness', 'security', 'conventions', 'tests', 'spec')
 
+# Fail closed: unless Set-Measure ran, the diff is large and has no signals.
+$size = 'large'
+$signals = @()
+$skipped = @()
 function Exit-WithResult([string]$mode, [string[]]$dims, [string]$reason) {
-  [ordered]@{ mode = $mode; dimensions = @($dims); reason = $reason } | ConvertTo-Json -Compress
+  [ordered]@{ mode = $mode; dimensions = @($dims); reason = $reason; size = $size; signals = @($signals); skippedDimensions = @($skipped) } | ConvertTo-Json -Compress -Depth 4
   exit 0
 }
 function Exit-WithFull([string]$reason) { Exit-WithResult 'full' $all $reason }
@@ -49,11 +59,18 @@ $riskyCore = '\b(curl|wget|eval|iex|iwr|irm|chmod|chown|sudo|ssh|scp|sftp|rsync|
 $riskyEsm = '^\+\s*(import|export)\s'
 $risky = "$riskyCore|$riskyEsm"
 # Skill text is read by agents: shell steps that destroy, force-push or carry credentials are security-relevant.
-$riskyText = $risky + '|\bgit\s+push\b[^\n]*(--force\b|--force-with-lease|\s-[a-z]*f\b)|\bgit\s+(reset\s+--hard|clean\s+-\w*f|branch\s+-D)\b|^\+\s*(\$\s*)?(rm|del|rmdir|Remove-Item)\s+\S|\bRemove-Item\b[^\n]*-Recurse|(pass(word|wd)?|secret|token|api[-_]?key|credentials?|private[-_]?key|bearer|authorization)\s*[:=]\s*\S|-----BEGIN [A-Z ]*PRIVATE KEY|\b(ghp|gho|ghs|github_pat|sk|AKIA)[_-]?[A-Za-z0-9]{16,}'
+# Leaked secrets (private key headers, token prefixes): risky in every file kind, docs and manifests included.
+$riskySecret = '-----BEGIN [A-Z ]*PRIVATE KEY|\b(ghp|gho|ghs|github_pat|sk|AKIA)[_-]?[A-Za-z0-9]{16,}'
+# Credential assignments plus leaked secrets: risky in text, source and test files (prose in docs may name a password field).
+$riskyCred = '(pass(word|wd)?|secret|token|api[-_]?key|credentials?|private[-_]?key|bearer|authorization)\s*[:=]\s*\S|' + $riskySecret
+$riskyText = $risky + '|\bgit\s+push\b[^\n]*(--force\b|--force-with-lease|\s-[a-z]*f\b)|\bgit\s+(reset\s+--hard|clean\s+-\w*f|branch\s+-D)\b|^\+\s*(\$\s*)?(rm|del|rmdir|Remove-Item)\s+\S|\bRemove-Item\b[^\n]*-Recurse|' + $riskyCred
 # Text-only classes (content paths, not rename classes): skill and agent text, and test-only files.
 $skillText = '(^|/)(SKILL|AGENTS|CLAUDE)\.md$|\.(agent|prompt)\.md$|(^|/)(references|templates|assets)/.+\.md$'
 $testsPath = '(^|/)test/|\.test\.ts$'
 $sensitive = 'auth|crypt|password|secret|token|oauth|login|http|network|socket|sql|query|database|jwt|session|cookie|permission|rbac|acl|cert|tls|ssl|cors|csrf|hash|api[-_]?key|\.github/workflows|hook|dockerfile|husky|\.mcp|makefile|\.npmrc|\.vscode|setup\.py|conftest|\.env|migration|(^|/)public/'
+
+# Paths excluded from review packages (references/package-filter.md): lockfiles, snapshots, goldens, generated, minified.
+$filtered = '(^|/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|Cargo\.lock|poetry\.lock|uv\.lock|packages\.lock\.json)$|(^|/)(__snapshots__|goldens|dist|coverage)/|\.snap$|(^|/)[^/]*\.golden[^/]*$|\.min\.(js|css)$|\.bundle\.js$|\.map$|^docs/.*-list\.md$'
 
 function Get-LocationClass([string]$p) {
   foreach ($c in $classes.Keys) { if ($p -imatch $classes[$c]) { return $c } }
@@ -197,6 +214,35 @@ function Get-FrontmatterChange([System.Collections.Generic.List[string]]$lines) 
   return $null
 }
 
+# First full-only reason of a measurable diff; the loop goes on so that size and signals are known.
+$deferred = $null
+function Defer([string]$reason) { if (-not $script:deferred) { $script:deferred = $reason } }
+
+# Size class and signals of the measured (unfiltered) paths; needs $sizeLines, $hasExecBuild, $hasSource, $measured, $hits.
+function Set-Measure {
+  $script:size = if ($sizeLines -le $SmallLines -and -not $hasExecBuild) { 'small' } else { 'large' }
+  $sg = @()
+  if ($hits.Count -gt 0) { $sg += 'risky' }
+  if (@($measured | Where-Object { $_ -imatch $sensitive }).Count -gt 0) { $sg += 'sensitive' }
+  if ($hasSource) { $sg += 'source' }
+  $script:signals = $sg
+}
+
+# Full with a measured size: small keeps correctness, tests, spec, plus security on risky/sensitive and conventions on source.
+function Exit-FullClassified([string]$reason) {
+  Set-Measure
+  if ($script:size -ne 'small') { Exit-WithResult 'full' $all $reason }
+  $keep = @('correctness', 'tests', 'spec')
+  if ($script:signals -contains 'risky' -or $script:signals -contains 'sensitive') { $keep += 'security' }
+  if ($script:signals -contains 'source') { $keep += 'conventions' }
+  $why = @{
+    security    = "size small: $sizeLines <= $SmallLines lines, no risky/sensitive trigger"
+    conventions = "size small: $sizeLines <= $SmallLines lines, no source file"
+  }
+  $script:skipped = @($all | Where-Object { $_ -notin $keep } | ForEach-Object { [ordered]@{ dimension = $_; reason = $why[$_] } })
+  Exit-WithResult 'full' @($all | Where-Object { $_ -in $keep }) $reason
+}
+
 try {
   if ($Force -eq 'full') { Exit-WithFull 'forced full by caller' }
 
@@ -227,6 +273,11 @@ try {
   if ($raw.Count -ne $num.Count) { Exit-WithFull 'unparseable diff' }
 
   $lines = 0
+  $sizeLines = 0
+  $hasExecBuild = $false
+  $hasSource = $false
+  $hits = @{}
+  $measured = @()
   $paths = @()
   $kindOf = [ordered]@{}
   $scanFiles = @()
@@ -253,6 +304,14 @@ try {
     if (@($files | Where-Object { $_.StartsWith('"') }).Count -gt 0) { Exit-WithFull "quoted path (tab, newline, quote or backslash): $path" }
     $cls = @($files | ForEach-Object { Get-LocationClass $_ })
     $cls1 = @($cls | Select-Object -Unique)
+    # An exec path (e.g. .github/actions/x/dist/index.js) is never dropped by the package filter.
+    $isFiltered = ($path -imatch $filtered) -and ($cls1 -notcontains 'exec')
+    if (-not $isFiltered) {
+      $sizeLines += $changed
+      $measured += $files
+      if (@($cls1 | Where-Object { $_ -in @('exec', 'build') }).Count -gt 0) { $hasExecBuild = $true }
+      if (@($files | Where-Object { $c0 = Get-LocationClass $_; $c0 -eq 'source' -or ($c0 -eq 'instruction' -and $_ -imatch $classes.source) }).Count -gt 0) { $hasSource = $true }
+    }
     $flow = "$($cls -join ' -> '): $($files -join ' -> ')"
     # Only docs and manifests may change their file name; elsewhere a rename is a directory move,
     # so it cannot turn into a tool-loaded name missing from the lists (composer.json, gulpfile.js).
@@ -277,20 +336,23 @@ try {
       } elseif (@($files | Where-Object { $_ -inotmatch $testsPath }).Count -eq 0) {
         $kind = 'tests'
       } else {
-        Exit-WithFull "test file change is not a pure rename of local identifiers: $path"
+        Defer "test file change is not a pure rename of local identifiers: $path"
+        if ($isFiltered) { continue }
+        $kind = 'tests'
       }
     } elseif ($c -eq 'instruction' -and @($files | Where-Object { $_ -inotmatch $skillText }).Count -eq 0) {
       $kind = 'text'
     } else {
-      Exit-WithFull "content change in $c file: $path"
+      Defer "content change in $c file: $path"
+      if ($isFiltered) { continue }
+      $kind = 'other'
     }
     $kindOf[$path] = $kind
     $scanFiles += $files
   }
-  if ($lines -gt $MaxLines) { Exit-WithFull "$lines changed lines exceed threshold $MaxLines" }
+  if ($lines -gt $MaxLines) { Defer "$lines changed lines exceed threshold $MaxLines" }
 
   # ONE diff over all content files: added lines are scanned per file kind.
-  $hits = @{}
   $diffs = @{}
   if ($scanFiles.Count -gt 0) {
     $d = @(git -c core.quotepath=off --literal-pathspecs diff --ignore-submodules=none -M -U0 --no-color $Range -- @($scanFiles | Select-Object -Unique) 2>$null)
@@ -298,19 +360,20 @@ try {
     $diffs = Read-Diff $d
     foreach ($p in $kindOf.Keys) {
       if (-not $diffs.ContainsKey($p)) { continue }
-      $re = switch ($kindOf[$p]) { 'text' { $riskyText } 'tests' { $riskyCore } 'mechtest' { $risky } default { $risky } }
+      $re = switch ($kindOf[$p]) { 'text' { $riskyText } 'other' { $riskyText } 'tests' { "$riskyCore|$riskyCred" } 'mechtest' { "$risky|$riskyCred" } default { "$risky|$riskySecret" } }
       if (@($diffs[$p].Lines | Where-Object { $_.StartsWith('+') -and $_ -imatch $re }).Count -gt 0) { $hits[$p] = $true }
     }
   }
+  if ($deferred) { Exit-FullClassified $deferred }
   $kinds = @($kindOf.Values | Select-Object -Unique)
   $sens = @($paths | Where-Object { $_ -imatch $sensitive })
   $textual = @($kinds | Where-Object { $_ -in @('text', 'tests') }).Count -gt 0
 
   if ($textual) {
     # Security triggers stay authoritative: a hit anywhere makes the whole diff full.
-    if ($kinds -contains 'manifest') { Exit-WithFull 'manifest change next to skill text or test changes' }
-    if ($hits.Count -gt 0) { Exit-WithFull "security trigger in added lines: $(@($hits.Keys)[0])" }
-    if ($sens.Count -gt 0) { Exit-WithFull "security-sensitive path: $($sens[0])" }
+    if ($kinds -contains 'manifest') { Exit-FullClassified 'manifest change next to skill text or test changes' }
+    if ($hits.Count -gt 0) { Exit-FullClassified "security trigger in added lines: $(@($hits.Keys)[0])" }
+    if ($sens.Count -gt 0) { Exit-FullClassified "security-sensitive path: $($sens[0])" }
     # Frontmatter (permission, tools, invocation flags): only name, description and license may change.
     # A whole-file diff is needed only when a hunk starts near the top of a skill text file.
     $fm = @($kindOf.Keys | Where-Object { $kindOf[$_] -eq 'text' -and $_ -imatch '\.md$' -and $diffs.ContainsKey($_) -and $diffs[$_].Start -le 60 })
@@ -320,7 +383,7 @@ try {
       $wholeDiff = Read-Diff $whole
       foreach ($p in $fm) {
         $bad = if ($wholeDiff.ContainsKey($p)) { Get-FrontmatterChange $wholeDiff[$p].Lines } else { $null }
-        if ($bad) { Exit-WithFull "frontmatter key '$bad' changed in $p" }
+        if ($bad) { Exit-FullClassified "frontmatter key '$bad' changed in $p" }
       }
     }
     $dims = @('spec')
@@ -328,9 +391,11 @@ try {
     if ($kinds -contains 'docs') { $dims += 'conventions' }
     if (@($kinds | Where-Object { $_ -in @('tests', 'mechtest') }).Count -gt 0) { $dims += @('correctness', 'tests') }
     $dims = @($all | Where-Object { $_ -in $dims })
+    Set-Measure
     Exit-WithResult 'text' $dims "only skill text, documentation and test changes (no security trigger, scripts or manifests): $(@($kindOf.Keys).Count) files"
   }
 
+  Set-Measure
   $dims = @('correctness', 'spec')
   $secure = ($hits.Count -gt 0) -or ($sens.Count -gt 0) -or ($kinds -contains 'manifest')
   if (-not $secure -and $kinds.Count -eq 1 -and $kinds[0] -eq 'docs') {
