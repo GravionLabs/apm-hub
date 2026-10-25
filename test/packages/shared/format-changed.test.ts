@@ -364,6 +364,8 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
       write('a.ts', 'x');
       cfg({ ts: { format: 'jb {files}' } });
       const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe('formatted: 1 files');
       expect(r.stderr).toContain('notice:');
       expect(r.stderr).toContain('.agents/format.json');
     });
@@ -381,27 +383,44 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
     it('substitutes an embedded {files} in the default -Command too', async () => {
       fake('dflt');
       write('a.ts', 'x');
-      await go(['-Extensions', '.ts', '-Command', 'dflt --include={files}']);
-      expect(logged()).toEqual(['--include=a.ts']);
+      write('b.ts', 'x');
+      const r = await go(['-Extensions', '.ts', '-Command', 'dflt --include={files}']);
+      expect(r.status).toBe(0);
+      expect(logged()).toEqual(['--include=a.ts;b.ts']);
+    });
+
+    it('keeps file names with a space or ; intact in an embedded {files}', async () => {
+      fake('jb');
+      write('a b.ts', 'x');
+      write('c;d.ts', 'x');
+      cfg({ ts: { format: 'jb --include={files}' } });
+      const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
+      expect(r.status).toBe(0);
+      expect(logged()).toEqual(['--include=a b.ts;c;d.ts']);
     });
 
     it.each([
       ['entry is not an object', { ts: 'jb {files}' }, /no 'format' command/],
       ['mode value is empty', { ts: { format: [] } }, /empty 'format' command/],
       ['mode value is blank', { ts: { format: ' ' } }, /empty 'format' command/],
-      ['file is not an object', [1], null],
     ])('errors when %s', async (_n, conf, re) => {
       fake('jb');
       write('a.ts', 'x');
       cfg(conf);
       const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'jb {files}']);
-      if (re) {
-        expect(r.status).toBe(1);
-        expect(r.stderr).toMatch(re);
-        expect(logged()).toEqual([]);
-      } else {
-        expect(r.stdout.trim()).toBe('formatted: 1 files'); // no entry: default applies
-      }
+      expect(r.status).toBe(1);
+      expect(r.stderr).toMatch(re);
+      expect(logged()).toEqual([]);
+    });
+
+    it('treats a file that is not an object as having no entry: the default applies', async () => {
+      fake('jb');
+      write('a.ts', 'x');
+      cfg([1]);
+      const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'jb {files}']);
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe('formatted: 1 files');
+      expect(logged()).toEqual(['a.ts']);
     });
 
     it('requires -Command and -Extensions when no entry applies', async () => {

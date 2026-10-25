@@ -15,7 +15,7 @@ describe('docs/usage/format-override.md', () => {
   });
   it('documents precedence, errors and the gitignore note', () => {
     expect(doc).toMatch(/replaces all default commands/i);
-    expect(doc).toMatch(/error/i);
+    expect(doc).toMatch(/not installed is an error/i);
     expect(doc).toMatch(/^\.agents\/\*$/m);
     expect(doc).toMatch(/^!\.agents\/format\.json$/m);
   });
