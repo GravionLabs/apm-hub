@@ -50,7 +50,11 @@ describe('project-needs.yml (#639)', () => {
   });
 
   it('syncs the issue with parents on issue events and the head-ref issue on PR events', () => {
-    expect(sync.run).toContain("'-Issue', $env:ISSUE_NUMBER, '-IncludeParents'");
+    expect(sync.run).toContain('$syncArgs.Issue = $env:ISSUE_NUMBER');
+    expect(sync.run).toContain('$syncArgs.IncludeParents = $true');
+    // a named hashtable splat; an array would bind '-Repo' positionally to -Owner
+    expect(sync.run).toContain('$syncArgs = @{ Repo = $env:GH_REPO }');
+    expect(sync.run).not.toMatch(/\$syncArgs\s*\+?=\s*@\('-/);
     expect(sync.run).toContain('(^|/)(\\d+)-');
     expect(sync.run).toContain('::notice::');
     expect(sync.env?.HEAD_REF).toBe('${{ github.event.pull_request.head.ref }}');
