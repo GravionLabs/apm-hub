@@ -50,7 +50,11 @@ The loop and the queue run a Feature or Epic without a human by default. Two hum
 | 7 | #584 | Feature/Epic digest, `attention FEATURE_DONE`, `--release-at` | M | #582 |
 | 8 | #585 | docs: unattended mode, review points, rollback | S | #582, #579 |
 
-Feature #574 closes with #581, Feature #575 with #585. Before the first unattended run of this repository: #583 protects `release/next` (today it has no required checks).
+| 9 | #596 | project standard: field `Needs`, views `Needs me`, `Ready for loop`, `Blocked`, `Sprint next`; label `planned` | S | — (Feature #595, parallel to the loop PBIs) |
+| 10 | #597 | `Sync-ProjectNeeds.ps1` at PBI boundaries and via `/github-project sync` | M | #596; serial with #579 (loop-mode.md, queue runner) |
+| 11 | #598 | `orchestrator status` and `queue -DryRun` print `Needs` | S | #597 |
+
+Feature #574 closes with #581, Feature #575 with #585, Feature #595 (project cockpit) with #598. Before the first unattended run of this repository: #583 protects `release/next` (today it has no required checks).
 
 ### 2.6.0 — Epic #387, Feature #388: dromos MVP
 
