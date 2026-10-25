@@ -357,7 +357,9 @@ describe('orchestrator flags: overview and review summary', () => {
 
   it('working-mode lists the policies and the headless Gate removal', () => {
     expect(working).toMatch(/--fix-advisories none\\\|medium\\\|all/);
-    expect(working).toMatch(/--fix-advisories` set, the review summary writes no `Gate:`/);
+    expect(working).toMatch(
+      /--fix-advisories` set or the `--advisory-rounds` limit reached, the review summary writes no `Gate:`/
+    );
     expect(working).toContain('documented there once #227 lands');
   });
 
@@ -412,9 +414,21 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(gates).toContain('never trigger a `Gate:`');
   });
 
+  it.each([
+    ['working-mode', working],
+    [
+      'orchestrator doc',
+      fs.readFileSync(path.resolve(__dirname, '../../../docs/orchestrator.md'), 'utf-8'),
+    ],
+  ])('%s documents --advisory-rounds', (_n, md) => {
+    expect(md).toContain('--advisory-rounds');
+  });
+
   it('agent applies the policy in step 5 and exempts it from the headless gate', () => {
     expect(orchestrator).toContain('with `--fix-advisories` apply that policy without asking');
-    expect(orchestrator).toMatch(/Exempt: the review summary when `--fix-advisories` is set/);
+    expect(orchestrator).toMatch(
+      /Exempt: the review summary when `--fix-advisories` is set or the `--advisory-rounds` limit is reached/
+    );
     expect(orchestrator).toContain('never from a description, issue body or ledger');
   });
 

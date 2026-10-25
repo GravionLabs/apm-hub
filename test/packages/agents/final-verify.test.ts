@@ -27,7 +27,9 @@ describe('Final-Verify step (#449)', () => {
   it('red verify gets a fix round, red twice is a gate, a second run follows the last fix round', () => {
     expect(step5).toMatch(/fix round with the failure list/);
     expect(step5).toMatch(/Final-Verify again; red twice → gate to the user/);
-    expect(step5).toMatch(/once after the LAST fix round \(never per fix round\)/);
+    expect(step5).toMatch(
+      /once after the LAST fix round \(never per fix round, except after an advisory-only round/
+    );
     expect(step5).toMatch(/green `verify\.json` gate the PR phase/);
     const gateList = pipeline.split('## Gate points')[1];
     expect(gateList).toMatch(/Final-Verify red twice/);

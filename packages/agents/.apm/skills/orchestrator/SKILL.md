@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: 'Run the orchestrator inline: /orchestrator [--no-overview] [--no-review-summary] [--fix-advisories none|medium|all] plan|implement|full|next|loop|status <issue>. Prefer claude --agent orchestrator.'
+description: 'Run the orchestrator inline: /orchestrator [--fix-advisories <p>] [--advisory-rounds <n>] [other flags] plan|implement|full|next|loop|status <issue>. Prefer claude --agent orchestrator.'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'
@@ -29,7 +29,7 @@ Read that file and follow everything below its frontmatter as your instructions 
 
 ## 3. Input
 
-`$ARGUMENTS`: optional flags (`--no-overview`, `--no-review-summary`, `--parallel <1-4>`: Tasks per wave, `--fix-advisories none|medium|all[:dim,dim]`: answers the advisory question up front, no `Gate:` for the review summary), the mode `plan|implement|full|next|loop|status` and the issue number (or a description for `plan|implement|full`; `next`, `loop` and `status` take no description). If empty, ask for the mode and the issue.
+`$ARGUMENTS`: optional flags (`--no-overview`, `--no-review-summary`, `--parallel <1-4>`: Tasks per wave, `--fix-advisories none|medium|all[:dim,dim]`: answers the advisory question up front, no `Gate:` for the review summary), `--advisory-rounds <0-5>`: advisory-only fix rounds after the first `APPROVE`, default 1), the mode `plan|implement|full|next|loop|status` and the issue number (or a description for `plan|implement|full`; `next`, `loop` and `status` take no description). If empty, ask for the mode and the issue.
 
 ## Differences from the primary agent
 
