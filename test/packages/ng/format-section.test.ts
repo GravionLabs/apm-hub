@@ -21,7 +21,16 @@ describe('ng-implementation ## Format', () => {
   });
   it('states the skip rule and the script call', () => {
     expect(line('Not configured:')).toContain('skip');
-    expect(section).toContain('Format-Changed.ps1 -Extensions');
+    expect(section).toContain('Format-Changed.ps1 -Language ng -Extensions');
+  });
+  it('passes -Language ng to every script call and explains the override', () => {
+    const calls = section.split('\n').filter((x) => x.includes('Format-Changed.ps1'));
+    expect(calls.length).toBeGreaterThan(0);
+    for (const c of calls) expect(c).toContain('Format-Changed.ps1 -Language ng ');
+    expect(line('Override:')).toContain('.agents/format.json');
+    expect(line('Override:')).toContain('entry for `ng` replaces');
+    expect(line('Override:')).toContain('`-Language ng` only');
+    expect(line('Override:')).toContain('error');
   });
   it('stays within 100 lines', () => {
     expect(skill.split('\n').length).toBeLessThanOrEqual(100);

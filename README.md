@@ -24,6 +24,7 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Common Workflows](docs/usage/common-workflows.md)**: End-to-end examples with the installed skills.
 - **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
 - **[Copilot CLI hooks](docs/usage/copilot-hooks.md)**: manual setup, upgrade cleanup.
+- **[Format override](docs/usage/format-override.md)**: replace the format and check commands per language with `.agents/format.json`.
 - **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
 
 ## 🚀 Quick Start
