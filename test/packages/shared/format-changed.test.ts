@@ -226,7 +226,8 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
   });
 
   describe('.agents/format.json override', () => {
-    const cfg = (o: unknown) => write('.agents/format.json', typeof o === 'string' ? o : JSON.stringify(o));
+    const cfg = (o: unknown) =>
+      write('.agents/format.json', typeof o === 'string' ? o : JSON.stringify(o));
 
     it('wins over -Command for format and for -Check, with {files}', async () => {
       fake('jb');
@@ -281,18 +282,32 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
       cfg({ ts: { format: ['one {files}', 'two {files}'], check: ['one {files}', 'bad', 'two'] } });
       const ok = await go(['-Language', 'ts', '-Extensions', '.ts']);
       expect(ok.status).toBe(0);
-      expect(fs.readFileSync(path.join(dir, 'order.log'), 'utf8').trim().split('\n')).toEqual(['one', 'two']);
+      expect(fs.readFileSync(path.join(dir, 'order.log'), 'utf8').trim().split('\n')).toEqual([
+        'one',
+        'two',
+      ]);
       fs.rmSync(path.join(dir, 'order.log'));
       const bad = await go(['-Language', 'ts', '-Extensions', '.ts', '-Check']);
       expect(bad.status).toBe(5);
-      expect(fs.readFileSync(path.join(dir, 'order.log'), 'utf8').trim().split('\n')).toEqual(['one', 'bad']);
+      expect(fs.readFileSync(path.join(dir, 'order.log'), 'utf8').trim().split('\n')).toEqual([
+        'one',
+        'bad',
+      ]);
     });
 
     it('errors when the mode key is missing, naming file, language and key', async () => {
       fake('jb');
       write('a.ts', 'x');
       cfg({ ts: { format: 'jb {files}' } });
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'jb {files}', '-Check']);
+      const r = await go([
+        '-Language',
+        'ts',
+        '-Extensions',
+        '.ts',
+        '-Command',
+        'jb {files}',
+        '-Check',
+      ]);
       expect(r.status).not.toBe(0);
       expect(r.stderr).toMatch(/format\.json.*ts.*check/);
       expect(logged()).toEqual([]);

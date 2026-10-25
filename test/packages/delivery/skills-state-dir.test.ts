@@ -20,7 +20,9 @@ describe('delivery and shared skills use <state>, not .agents/', () => {
   it('has no .agents state path except the .agents/skills install dir', () => {
     const offenders = files.filter((f) =>
       /\.agents(?!\/skills)/.test(
-        fs.readFileSync(f, 'utf8').replace(/\.opencode\|\.agents\||~\/\.agents|\.agents\/format\.json/g, '')
+        fs
+          .readFileSync(f, 'utf8')
+          .replace(/\.opencode\|\.agents\||~\/\.agents|\.agents\/format\.json/g, '')
       )
     );
     expect(offenders).toEqual([]);
