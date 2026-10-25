@@ -46,6 +46,31 @@ describe('vitest projects', () => {
     expect(names).toEqual(['unit', 'scripts', 'integration', 'perf']);
   });
 
+  it('keeps the perf file wired to the shared fixture (it is not run by pnpm test)', () => {
+    const perf = fs.readFileSync(
+      path.join(ROOT, 'test/packages/hooks/git-guardrails.perf.test.ts'),
+      'utf8'
+    );
+    const fixture = fs.readFileSync(
+      path.join(ROOT, 'test/helpers/git-guardrails-fixture.ts'),
+      'utf8'
+    );
+    expect(perf).toContain("from '../../helpers/git-guardrails-fixture'");
+    expect(fixture).toMatch(/export const createGuardFixture\b/);
+    // every helper the perf file takes from the fixture is part of what the fixture returns
+    const taken =
+      /const \{([^}]*)\} = fx;/
+        .exec(perf)?.[1]
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean) ?? [];
+    expect(taken.length).toBeGreaterThan(0);
+    const returned = fixture.slice(fixture.indexOf('return {'));
+    for (const name of taken) expect(returned).toMatch(new RegExp(`\\b${name}\\b`));
+    // the 44 timed and limit cases are all still declared there
+    expect(perf).toMatch(/describe\('performance and limits'/);
+  });
+
   it('runs the perf project one file at a time', () => {
     const perf = (
       config.test?.projects as Array<{ test: { name: string; fileParallelism?: boolean } }>

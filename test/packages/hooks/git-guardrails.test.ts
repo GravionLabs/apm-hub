@@ -623,7 +623,7 @@ describe('git-guardrails hook', () => {
         }
         expect(fs.existsSync(marker)).toBe(false);
       });
-      it('reads the branch of a bare fx.repo from its HEAD file for a force push', () => {
+      it('reads the branch of a bare repo from its HEAD file for a force push', () => {
         for (const fn of [run, runNoJq]) {
           expect(denied(fn(claude('git -C bare.git push -f')))).toBe(true);
           expect(denied(fn(claude('git -C link push -f origin HEAD')))).toBe(true);

@@ -7,8 +7,8 @@ import { scriptsTests } from './test/helpers/scripts-tests';
 //  - `integration`: pwsh-heavy queue tests with fake harness binaries and the launcher installer in test/integration/queue/,
 //    split over several files so they run in parallel.
 //  - `perf`: wall-clock cases in test/packages/**/*.perf.test.ts, serial (`pnpm run test:perf`, own CI matrix entry).
-// `pnpm test` runs unit + scripts, `pnpm run test:all` runs unit + scripts + integration; perf is never part of either. A new test/packages file is `unit`
-// unless it is listed in test/helpers/scripts-tests.ts; test/repo/vitest-projects.test.ts fails when a unit file spawns a process.
+// `pnpm test` runs unit + scripts, `pnpm run test:all` runs unit + scripts + integration; perf is never part of either.
+// A new test/packages file is `unit` unless it is listed in test/helpers/scripts-tests.ts; test/repo/vitest-projects.test.ts fails when a unit file spawns a process.
 // test/integration/skills/ is the separate Copilot SDK harness (`pnpm run test:integration`, own package.json), not a project.
 const worktrees = [...configDefaults.exclude, '**/.worktrees/**'];
 const shared = { globals: true, environment: 'node' } as const;
