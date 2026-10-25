@@ -33,6 +33,14 @@ Match the project's existing convention. New Angular 20+ projects follow the CLI
 - `ng-package.json`: `lib.entryFile` points to `public-api.ts`
 - Verify with `ng build <lib>` before the task is complete
 
+## Format
+
+- Extensions: `.ts .tsx .js .mjs .cjs .json .html .scss .css`
+- Format: `npx prettier --write {files}` then `npx eslint --fix {files}`
+- Check (read-only): `npx prettier --check {files}` and `npx eslint {files}`
+- Not configured: no prettier/eslint config or tool not in the project — skip, note it in the report
+- Run each format command after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Extensions .ts,.tsx,.js,.mjs,.cjs,.json,.html,.scss,.css -Command 'npx prettier --write {files}'` (`-Check` for the check commands; see `implementation` `references/format.md`)
+
 ## Tests
 
 Load `ng-test` for TestBed setup, signal testing, mocking and async patterns.

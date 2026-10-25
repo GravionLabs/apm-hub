@@ -19,6 +19,14 @@ The official `dotnet` plugin skills (dependency `dotnet/skills`) cover general C
 - XML docs on public API; `<summary>` is one sentence starting with a third-person verb
 - Upgrades: bump versions centrally in `Directory.Build.props` / `Directory.Packages.props`; no prerelease unless requested; build and test after each step
 
+## Format
+
+- Extensions: `.cs`
+- Format: `dotnet format --include {files}`
+- Check (read-only): `dotnet format --verify-no-changes --include {files}`
+- Not configured: no solution/project or `dotnet format` unavailable — skip, note it in the report
+- Run each format command after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Extensions .cs -Command 'dotnet format --include {files}'` (`-Check` for the check commands; see `implementation` `references/format.md`)
+
 ## EF Core
 
 - Fluent API in `IEntityTypeConfiguration<T>`, not data annotations

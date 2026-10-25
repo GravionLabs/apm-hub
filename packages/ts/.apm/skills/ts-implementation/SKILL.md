@@ -6,8 +6,16 @@ description: 'TypeScript implementation and test rules (Vitest) extending `imple
 ## Framework
 
 - **Tests**: Vitest — see `ts-test`
-- **Format/Lint**: ESLint (flat config) + Prettier — see `setup-prettier-eslint-husky`
+- **Format/Lint**: ESLint (flat config) + Prettier — see `setup-prettier-eslint-husky` and `## Format`
 - **Runtime**: Node.js 22 LTS
+
+## Format
+
+- Extensions: `.ts .tsx .js .mjs .cjs .json`
+- Format: `npx prettier --write {files}` then `npx eslint --fix {files}`
+- Check (read-only): `npx prettier --check {files}` and `npx eslint {files}`
+- Not configured: no prettier/eslint config or tool not in the project — skip, note it in the report
+- Run each format command after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Extensions .ts,.tsx,.js,.mjs,.cjs,.json -Command 'npx prettier --write {files}'` (`-Check` for the check commands; see `implementation` `references/format.md`)
 
 ## Imports
 
