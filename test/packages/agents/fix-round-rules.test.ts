@@ -68,3 +68,52 @@ describe('fix round rules (#459)', () => {
     }
   });
 });
+
+describe('fix rounds stay inside the issue scope (#481)', () => {
+  const implementer = read('agents/.apm/agents/implementer.agent.md');
+  const rule = (n: number) => implementer.split('\n').find((l) => l.startsWith(`${n}. `))!;
+
+  it('step 5 states the issue-wins rule, four deferral triggers and three statuses', () => {
+    expect(step5).toMatch(/the issue wins over a conflicting finding/);
+    for (const t of [
+      'a new module',
+      'a new fallback or retry path',
+      'new I/O',
+      'a new security mechanism',
+    ]) {
+      expect(step5).toContain(t);
+    }
+    expect(step5).toContain('`deferred`, not implemented');
+    expect(step5).toContain('fixed | declined: <reason> | deferred: out of scope — <need>');
+  });
+
+  it('implementer rules 3, 7 and 8 name the statuses for report and reply', () => {
+    expect(rule(3)).toMatch(/issue wins over a conflicting finding/);
+    expect(rule(3)).toMatch(/new module.*fallback or retry path.*new I\/O.*security mechanism/);
+    expect(rule(7)).toContain('`fixed`');
+    expect(rule(7)).toContain('`declined: <reason>`');
+    expect(rule(7)).toContain('`deferred: out of scope — <need>`');
+    expect(rule(8)).toContain('`Findings:`');
+    expect(rule(8)).toMatch(/declined or deferred findings by `file:line`/);
+    expect(rule(8)).toMatch(/at most 15 lines/);
+  });
+});
+
+describe('fix round review advisories (#481)', () => {
+  const impl = read('agents/.apm/agents/implementer.agent.md');
+
+  it('never defers a blocking security finding', () => {
+    expect(impl).toMatch(/except a blocking security finding/);
+    expect(pipeline).toMatch(/except a blocking security finding, which is never deferred/);
+  });
+
+  it('merges rulings across rounds and passes follow-up numbers to pr-writer', () => {
+    expect(pipeline).toMatch(/merge those statuses into `<state>\/<pbi>\/rulings\.json`/);
+    expect(pipeline).toMatch(/never overwrite the file/);
+    expect(pipeline).toMatch(/follow-up `#<n>` per deferred finding/);
+  });
+
+  it('keeps the implementer reply within the cap', () => {
+    expect(impl).toMatch(/at most 5 declined or deferred findings/);
+  });
+});

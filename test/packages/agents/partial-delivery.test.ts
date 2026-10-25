@@ -18,7 +18,7 @@ describe('partial PBI delivery', () => {
   });
 
   it('pr-writer passes the list on and reports refs instead of closes', () => {
-    expect(prWriter).toMatch(/`not_delivered` and `auto_merge: false`/);
+    expect(prWriter).toMatch(/`not_delivered`[^\n]*`auto_merge: false`/);
     expect(prWriter).toMatch(/"refs": <issue>` instead of `"closes"`/);
   });
 

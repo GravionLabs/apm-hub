@@ -131,6 +131,13 @@ describe('pbi-runner agent contract', () => {
     expect(Object.keys(refPins)).toHaveLength(9);
   });
 
+  it('asks nothing for deferred findings and only records the Ruling', () => {
+    expect(body).toContain(
+      'follow-up PBI question for deferred findings is not a runner gate: ask nothing'
+    );
+    expect(body).toContain('`Ruling: <k> deferred findings — follow-up candidates in PR body`');
+  });
+
   it('maps reader and pr-writer errors to FAILED and leaves a headless gate unresumed', () => {
     expect(body).toMatch(/`issue-reader` returned `\{error\}`/);
     expect(body).toMatch(/`pr-writer` failed again after its one retry/);
