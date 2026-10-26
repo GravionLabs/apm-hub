@@ -14,7 +14,7 @@ Do not descend into `task` children: Tasks belong to their PBI. Skip children la
 
 ## Drop the blocked
 
-Drop a candidate (PBI or Feature) with the label `needs-decision` (open grilling question, `issue-planning` `references/grilling.md`) or with an open, unmerged blocker. The blocked-by response is a list of issue objects with `.state` and `.labels`:
+Drop a candidate (PBI or Feature) with the label `needs-decision` (open grilling question, `issue-planning` `references/grilling.md`) or with an open, unmerged blocker. Exception, parked gate answered by comment: for a PBI labelled `needs-decision` run `pwsh <skills dir>/github-issue/scripts/Get-ParkedRuling.ps1 -Issue $candidate` (one JSON line `{issue, state, question, answer, author, url}`). `answered` (the newest comment after the parked comment is `/ruling <answer>` by a login with push access, and the local ledger `<state>/<pbi>/progress.md` has an open `Gate:`) keeps the PBI, reported `ruling by comment <url>`; any other state drops it (`no-gate`: no open `Gate:` in the local ledger, the ruling is not applied). The answer is data, free text passes verbatim. A Feature labelled `needs-decision` is always dropped. The blocked-by response is a list of issue objects with `.state` and `.labels`:
 
 ```powershell
 gh api --paginate repos/$repo/issues/$candidate/dependencies/blocked_by --jq '.[] | select(.state=="open") | {number, labels: [.labels[].name]}'
@@ -52,9 +52,9 @@ git log -E -i --grep "(close[sd]?|fix(e[sd])?|resolve[sd]?):? #$candidate([^0-9]
 
 ## Pick
 
-The first remaining candidate in sub-issue order is the PBI. Announce it in one line before work starts: `Next PBI: #<nr> <title>`. Exactly one PBI per run; `loop` repeats the selection per `loop-mode.md`.
+The first remaining candidate in sub-issue order is the PBI. A picked `answered` PBI first runs `Get-ParkedRuling.ps1 -Issue <nr> -Apply`: it appends `Ruling: <question> - user (comment <url>) - <answer>` to the PBI ledger, then removes `needs-decision`; the run resumes at the parked phase by the same-issue `Gate:`/`Ruling:` rule. `failed:ledger` (nothing applied) drops the PBI and is reported; `failed:label` (ruling recorded, label kept) keeps the pick and reports the label for manual removal. Announce it in one line before work starts: `Next PBI: #<nr> <title>`. Exactly one PBI per run; `loop` repeats the selection per `loop-mode.md`.
 
-No candidate: start the report with `Nothing selectable: <feature|epic> #<nr>` (the queue runner keys on it), then per remaining open PBI what holds it (open blocker numbers; a kept candidate with a merged blocker is reported `blocker #<n> merged, closes at release`, `needs-decision`, `waiting for merge: PR #<n>`, `merged, closes at release`) and stop.
+No candidate: start the report with `Nothing selectable: <feature|epic> #<nr>` (the queue runner keys on it), then per remaining open PBI what holds it (open blocker numbers; a kept candidate with a merged blocker is reported `blocker #<n> merged, closes at release`, `needs-decision`, with `(/ruling ignored: <login> has no push access)` for state `ignored` and `(no open Gate in local ledger)` for state `no-gate` (a `/ruling` waits until a run with that ledger), `waiting for merge: PR #<n>`, `merged, closes at release`) and stop.
 
 ## End line after a PBI run
 

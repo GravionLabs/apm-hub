@@ -54,6 +54,7 @@ describe('pbi-runner agent contract', () => {
     expect(body).toContain('`Gate: <question>`');
     expect(body).toContain('<state>/<pbi>/progress.md');
     expect(body).toContain('`Ruling: <question> - user - <answer>`');
+    expect(body).toContain('`Ruling: <question> - user (comment <url>) - <answer>`');
     expect(body).toMatch(/DONE: .*append `Ledger complete\.`/);
     expect(body).toMatch(/No `Ledger complete\.` on GATE, BLOCKED or FAILED/);
   });
