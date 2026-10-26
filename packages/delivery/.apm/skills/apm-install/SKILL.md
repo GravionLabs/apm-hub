@@ -38,8 +38,8 @@ The contributor tooling package is not offered. What each package brings: [packa
    A project install then runs `Enable-Worktrees.ps1` (apply mode, `detect-techstack/scripts/`): it makes `.gitignore` and the
    stack configs ignore `.worktrees/` and the result lists the changed files and open hints under `worktrees`. Tell the user
    to commit those files (not with `-Global`; a dry run lists the script as a step).
-4. Relay the `notes` and follow [after install](references/after-install.md): `apmw sanitize` for agents, the OpenCode
-   plugin copy, what to commit.
+4. Relay the `notes` and `sanitized` and follow [after install](references/after-install.md): the script ran
+   `apmw sanitize` for agents (or says why not), the OpenCode plugin copy, what to commit.
 
 ## Behavior of the script
 
@@ -69,5 +69,6 @@ The contributor tooling package is not offered. What each package brings: [packa
 ## Missing prerequisites
 
 `apm` missing: `curl -sSL https://aka.ms/apm-unix | sh` (macOS/Linux) or `winget install Microsoft.APM`. `apmw` is
-needed only for agent packages (`agents`, `core`, `all`); the script warns when it is missing but still installs, see
-[after install](references/after-install.md). Do not install tools for the user without asking.
+needed for agent packages (`agents`, `core`, `all`): the script installs without it but the agents then stay in the
+source format (Claude Code starts them without tools), see [after install](references/after-install.md). Do not install
+tools for the user without asking.

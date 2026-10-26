@@ -339,8 +339,8 @@ issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
   200-character per-skill limit. Token figures not marked as measured are AgentLens estimates from the 30-day, 79-session sample (as of 2026-10-14), not re-measured. The
   system prompt is prompt-cached. Per-project
   package installs remove more (≈ 10 skills in a single-stack repository).
-- Two-level install: globally `apm install GravionLabs/apm-hub/packages/core -g` (workflow skills
-  and agents, no stack skills); per project an `apm.yml` with the stack package (`ng`, `ts`, `py`,
+- Two-level install: globally `apmw install -g -p <client> GravionLabs/apm-hub/packages/core` (workflow skills
+  and agents, no stack skills; `apmw` runs `apm` and sanitizes the agents for the client); per project an `apm.yml` with the stack package (`ng`, `ts`, `py`,
   `dotnet`). `all@apm-hub` only on machines that mix stacks. Deployed skill folders are git-ignored,
   so a fresh clone runs `apm install` first. A workflow skill that needs a stack skill which is not
   installed says so once ("install `<stack>@apm-hub`") and continues with the language-agnostic rules.
