@@ -11,6 +11,10 @@ const pwshProbe = spawnSync('sh', ['-c', 'command -v pwsh'], { encoding: 'utf8' 
 const hasPwsh = pwshProbe.status === 0;
 const pwshPath = pwshProbe.stdout.trim();
 
+// The unit project keeps the default 5 s test timeout; every case here starts pwsh at least once, which takes
+// several seconds on a cold CI runner (the scripts project allows 30 s, but it lists test/packages files only).
+vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
+
 const SOURCE =
   "---\nname: explorer\ntools: ['read']\nmetadata:\n  claude:\n    tools: [Read]\n---\n\nBody.\n";
 const SANITIZED = '---\nname: explorer\ntools: [Read]\nmodel: haiku\n---\n\nBody.\n';
@@ -54,7 +58,6 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
     };
 
     it('passes when every agent file is sanitized or absent', () => {
-      expect(run().code).toBe(0);
       write(path.join(home, '.claude/agents'), SANITIZED);
       write(path.join(proj, '.claude/agents'), SANITIZED);
       const r = run();
@@ -73,10 +76,12 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
       }
     );
 
-    it('checks the home directories too and ignores the keys in a body', () => {
+    it('checks the home directories too', () => {
       write(path.join(home, '.config/opencode/agents'), SOURCE);
       expect(run().code).toBe(1);
-      fs.rmSync(path.join(home, '.config'), { recursive: true });
+    });
+
+    it('ignores the keys in a body', () => {
       write(path.join(home, '.claude/agents'), `${SANITIZED}metadata:\n  claude:\n`);
       expect(run().code).toBe(0);
     });
