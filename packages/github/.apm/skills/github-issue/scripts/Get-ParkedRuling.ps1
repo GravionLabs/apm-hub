@@ -62,8 +62,11 @@ if ($LASTEXITCODE -ne 0) { $res.state = 'failed:comments'; Out-Result }
 $comments = [Collections.Generic.List[object]]::new()
 try {
   foreach ($line in @($out)) {
-    if (-not "$line".Trim()) { continue }
-    foreach ($c in @(ConvertFrom-Json -InputObject "$line" -NoEnumerate)) { foreach ($x in @($c)) { $comments.Add($x) } }
+    $line = "$line".Trim()
+    if (-not $line) { continue }
+    # one JSON array per page; ConvertFrom-Json accepts a truncated array, so the brackets are checked first
+    if (-not ($line.StartsWith('[') -and $line.EndsWith(']'))) { throw 'malformed comments page' }
+    foreach ($c in @(ConvertFrom-Json -InputObject $line -NoEnumerate)) { foreach ($x in @($c)) { $comments.Add($x) } }
   }
 } catch { $res.state = 'failed:comments'; Out-Result }
 $parked = -1

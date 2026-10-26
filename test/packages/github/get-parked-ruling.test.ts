@@ -24,6 +24,8 @@ type Comment = { body: string; login: string; url?: string };
 type Scenario = {
   comments?: Comment[];
   commentsFail?: boolean;
+  /** raw stdout of the comments call (one JSON array per page, or malformed text) */
+  commentsRaw?: string;
   permissions?: Record<string, string>;
   editFail?: boolean;
 };
@@ -35,6 +37,7 @@ const HANDLER = `(call) => {
   const [a0, a1] = call.args;
   if (a0 === 'api' && call.args.includes('--paginate')) {
     if (s.commentsFail) throw new Error('HTTP 500');
+    if (s.commentsRaw !== undefined) { require('fs').writeSync(1, s.commentsRaw); process.exit(0); }
     return { rest: s.comments || [] };
   }
   if (a0 === 'api') {
@@ -137,6 +140,35 @@ describe.skipIf(!hasPwsh)('Get-ParkedRuling.ps1', () => {
       expect(r.answer).toBe('a b [31m @octocat $(rm -rf /) second line');
     });
 
+    it('accepts a [bot] login with push access', async () => {
+      ledger('Gate: Which store?');
+      scenario({
+        comments: ruling('/ruling sqlite', 'renovate[bot]'),
+        permissions: { 'renovate[bot]': 'write' },
+      });
+      expect(await run()).toMatchObject({ state: 'answered', author: 'renovate[bot]' });
+      expect(permCalls().map((c) => c.args[1])).toEqual([
+        'repos/{owner}/{repo}/collaborators/renovate[bot]/permission',
+      ]);
+    });
+
+    it('reads every page and takes the newest comment after the last parked comment', async () => {
+      ledger('Gate: Which store?');
+      const page1 = [
+        { body: PARKED, login: 'apm-bot', url: 'u1' },
+        { body: '/ruling old', login: 'alice', url: 'u2' },
+      ];
+      const page2 = [
+        { body: PARKED, login: 'apm-bot', url: 'u3' },
+        { body: '/ruling new', login: 'alice', url: URL },
+      ];
+      scenario({
+        commentsRaw: `${JSON.stringify(page1)}\n${JSON.stringify(page2)}\n`,
+        permissions: { alice: 'write' },
+      });
+      expect(await run()).toMatchObject({ state: 'answered', answer: 'new', url: URL });
+    });
+
     it('caps the answer at 500 characters', async () => {
       ledger('Gate: Which store?');
       scenario({ comments: ruling(`/ruling ${'x'.repeat(600)}`), permissions: { alice: 'write' } });
@@ -191,6 +223,20 @@ describe.skipIf(!hasPwsh)('Get-ParkedRuling.ps1', () => {
       expect(permCalls()).toEqual([]);
     });
 
+    it('a ruling before a newer parked comment does not count', async () => {
+      ledger('Gate: Which store?');
+      const page1 = [
+        { body: PARKED, login: 'apm-bot', url: 'u1' },
+        { body: '/ruling old', login: 'alice', url: 'u2' },
+      ];
+      scenario({
+        commentsRaw: `${JSON.stringify(page1)}\n${JSON.stringify([{ body: PARKED, login: 'apm-bot', url: 'u3' }])}\n`,
+        permissions: { alice: 'write' },
+      });
+      expect((await run()).state).toBe('waiting');
+      expect(permCalls()).toEqual([]);
+    });
+
     it('no comment after the parked comment', async () => {
       ledger('Gate: Which store?');
       scenario({
@@ -225,6 +271,17 @@ describe.skipIf(!hasPwsh)('Get-ParkedRuling.ps1', () => {
       ledger('Gate: Which store?');
       scenario({ commentsFail: true });
       expect((await run()).state).toBe('failed:comments');
+    });
+
+    it('malformed comments output is failed:comments without a permission call', async () => {
+      ledger('Gate: Which store?');
+      scenario({
+        commentsRaw: '[{"body": "/ruling x", "login": "alice"\n',
+        permissions: { alice: 'write' },
+      });
+      expect(await run(['-Apply'])).toMatchObject({ state: 'failed:comments', answer: null });
+      expect(permCalls()).toEqual([]);
+      expect(gh.calls().some((c) => c.args[0] === 'issue')).toBe(false);
     });
   });
 
@@ -263,6 +320,18 @@ describe.skipIf(!hasPwsh)('Get-ParkedRuling.ps1', () => {
       const calls = gh.calls().map((c) => c.args.join(' '));
       expect(calls[calls.length - 1]).toBe('issue edit 581 --remove-label needs-decision');
       expect(await run()).toMatchObject({ state: 'no-gate' });
+    });
+
+    it('a failing ledger write is failed:ledger and leaves the label', async () => {
+      // Add-LedgerLine.ps1 refuses a symlinked progress.md; the gate is still read through the link
+      const real = path.join(tmp, 'real-progress.md');
+      fs.writeFileSync(real, 'Gate: Which store?\n');
+      fs.mkdirSync(path.dirname(ledgerFile()), { recursive: true });
+      fs.symlinkSync(real, ledgerFile());
+      scenario({ comments: ruling('/ruling sqlite'), permissions: { alice: 'write' } });
+      expect((await run(['-Apply'])).state).toBe('failed:ledger');
+      expect(fs.readFileSync(real, 'utf8')).not.toContain('Ruling:');
+      expect(gh.calls().some((c) => c.args[0] === 'issue')).toBe(false);
     });
 
     it('a failing label removal is failed:label with the ruling written', async () => {
