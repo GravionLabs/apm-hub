@@ -163,6 +163,21 @@ describe('loop-mode reference', () => {
   it('applies --fix-advisories to every PBI and exempts the review summary from the gate', () => {
     expect(reference).toContain('applies to every PBI of the loop');
     expect(section(reference, 'Interactive gates')).toContain('--fix-advisories');
+    expect(reference).toContain('else the headless default `medium`');
+  });
+
+  it('runner mode answers a review-summary GATE with medium only without a question tool', () => {
+    const step = reference.split('\n').find((l) => l.startsWith('3. `GATE` reply:'));
+    expect(step).toBeDefined();
+    // the interactive case keeps asking; the medium answer is conditioned on a missing question tool
+    const askedIdx = step!.search(/review-summary `GATE` is asked/);
+    const mediumIdx = step!.search(/no question tool[^`]*review-summary `GATE`/);
+    expect(askedIdx).toBeGreaterThan(-1);
+    expect(mediumIdx).toBeGreaterThan(-1);
+    // `medium` is never offered outside that headless condition
+    const beforeCondition = step!.slice(0, mediumIdx);
+    expect(beforeCondition).not.toMatch(/answered `medium`/);
+    expect(step).toMatch(/answered `medium`/);
   });
 
   it('pauses on interactive gates and skips the clear-before-implement question', () => {

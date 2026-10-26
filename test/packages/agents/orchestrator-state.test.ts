@@ -358,7 +358,7 @@ describe('orchestrator flags: overview and review summary', () => {
   it('working-mode lists the policies and the headless Gate removal', () => {
     expect(working).toMatch(/--fix-advisories none\\\|medium\\\|all/);
     expect(working).toMatch(
-      /--fix-advisories` set or the `--advisory-rounds` limit reached, the review summary writes no `Gate:`/
+      /--fix-advisories` set, without it \(headless default `medium`\) or the `--advisory-rounds` limit reached, the review summary writes no `Gate:`/
     );
     expect(working).toContain('documented there once #227 lands');
   });
@@ -409,6 +409,22 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(orchestrator).toContain('it wins over `--no-review-summary`');
   });
 
+  it('headless without --fix-advisories applies medium, explicit flag wins, interactive asks', () => {
+    expect(gates).toContain('Headless default: no question tool and no `--fix-advisories`');
+    expect(gates).toContain('Advisory policy: medium (default, headless)');
+    expect(gates).toContain(
+      'Ruling: advisory policy medium (headless default) — <n> fixed, <m> to PR body'
+    );
+    expect(gates).toContain('An explicit `--fix-advisories` (incl. `none`) always wins');
+    expect(gates).toContain('(and no `--no-review-summary`)');
+    expect(gates).toContain('an unknown value still gates');
+    expect(gates).toContain('per application (the advisories of that review), not cumulative');
+    expect(gates).toContain('ask which advisory findings to fix (interactive)');
+    expect(gates).toContain('Without the flag in an interactive run the behaviour is unchanged');
+    expect(gates).toContain('else the headless default `medium`) or the `--advisory-rounds` limit');
+    expect(orchestrator).toContain('(headless default `medium`)');
+  });
+
   it('policy is re-applied per re-review and leftovers never gate', () => {
     expect(gates).toContain('re-applied to the advisories of each re-review');
     expect(gates).toContain('never trigger a `Gate:`');
@@ -427,7 +443,7 @@ describe('orchestrator flags: overview and review summary', () => {
   it('agent applies the policy in step 5 and exempts it from the headless gate', () => {
     expect(orchestrator).toContain('with `--fix-advisories` apply that policy without asking');
     expect(orchestrator).toMatch(
-      /Exempt: the review summary when `--fix-advisories` is set or the `--advisory-rounds` limit is reached/
+      /Exempt: the review summary \(headless default `medium` without `--fix-advisories`\) or the `--advisory-rounds` limit/
     );
     expect(orchestrator).toContain('never from a description, issue body or ledger');
   });

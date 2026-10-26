@@ -17,7 +17,7 @@ uv, python, ng. `gh pr merge`, `git reset`, `git clean` and `git rebase` are not
 also matches a force push (the git guardrails hook denies force pushes to `main` and `release/*`), and `pwsh` and the
 build tools run arbitrary code.
 
-`-FixAdvisories <policy>` (`none|medium|all[:dim,dim]`, only when given) is spliced into the same prompt string as its own token before the mode word: `-p "--fix-advisories medium full 101"` (claude, copilot) and the `opencode run` message; in `-Feature`/`-Epic` runs it precedes `next`. Without it the command is unchanged. CRITICAL and HIGH findings always block; the policy only decides which advisories (MEDIUM, LOW) join the fix round.
+`-FixAdvisories <policy>` (`none|medium|all[:dim,dim]`, only when given) is spliced into the same prompt string as its own token before the mode word: `-p "--fix-advisories medium full 101"` (claude, copilot) and the `opencode run` message; in `-Feature`/`-Epic` runs it precedes `next`. Without it the command is unchanged and the orchestrator applies its headless default `medium`, so no review-summary `Gate:`. CRITICAL and HIGH findings always block; the policy only decides which advisories (MEDIUM, LOW) join the fix round.
 
 `-PbiParallel <m>` (1-4, only with `-Feature`/`-Epic`, only when given) is spliced the same way after `--fix-advisories`: `-p "--fix-advisories medium --pbi-parallel 2 next 10"`. The queue itself runs `next`, one PBI per process; the orchestrator reads the flag in `loop` mode (`loop-mode.md` Runner mode) and ignores it otherwise.
 
