@@ -23,14 +23,15 @@ const events = manifests.flatMap((m) => Object.keys(m.json.hooks));
 
 // Expected: one Claude event per manifest, mapped to its script.
 const expected: Record<string, { event: string; matcher?: string; script: string }> = {
+  'agent-sanitize.json': { event: 'SessionStart', script: 'agent-sanitize.sh' },
   'context-warning.json': { event: 'UserPromptSubmit', script: 'context-warning.sh' },
   'git-guardrails.json': { event: 'PreToolUse', matcher: 'Bash', script: 'git-guardrails.sh' },
   'subagent-ledger.json': { event: 'SubagentStop', script: 'subagent-ledger.sh' },
 };
 
 describe('hook manifests: event set per harness', () => {
-  it('finds exactly the three hook manifests', () => {
-    expect(manifests).toHaveLength(3);
+  it('finds exactly the four hook manifests', () => {
+    expect(manifests).toHaveLength(4);
     expect(manifests.map((m) => m.file)).toEqual(Object.keys(expected));
   });
 
@@ -38,9 +39,10 @@ describe('hook manifests: event set per harness', () => {
     expect(events.filter((e) => !isClaude(e) && !isCopilot(e))).toEqual([]);
   });
 
-  it('Claude Code gets exactly SubagentStop, UserPromptSubmit, PreToolUse', () => {
+  it('Claude Code gets exactly SessionStart, SubagentStop, UserPromptSubmit, PreToolUse', () => {
     expect(events.filter(isClaude).sort()).toEqual([
       'PreToolUse',
+      'SessionStart',
       'SubagentStop',
       'UserPromptSubmit',
     ]);

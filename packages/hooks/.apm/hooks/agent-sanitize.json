@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./agent-sanitize.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

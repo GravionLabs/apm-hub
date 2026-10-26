@@ -384,13 +384,14 @@ flowchart TD
 
 ## Hooks
 
-The `hooks` package adds three hooks around the orchestrator. They are plain bash scripts that never fail a run: every path exits 0 and a payload they cannot parse is ignored. The orchestrator does not call them and does not depend on them; they make the state on disk more complete and protect against accidents.
+The `hooks` package adds four hooks around the orchestrator. They are plain bash scripts that never fail a run: every path exits 0 and a payload they cannot parse is ignored. The orchestrator does not call them and does not depend on them; they make the state on disk more complete, protect against accidents and heal an agent install that skipped `apmw sanitize`.
 
 | Hook | Event | Reads from the payload | Writes or blocks | Opt-out |
 |:--|:--|:--|:--|:--|
 | [`subagent-ledger.sh`](../packages/hooks/.apm/hooks/subagent-ledger.sh) | `SubagentStop` | `cwd`, `agent_type` (also `agentType`, `agentName`, `subagent_type`), `last_assistant_message` or `response`, `agent_transcript_path`, `agent_id` | appends `Subagent <name>: stopped — <first line, 120 chars>` for the orchestrator's own subagents to the ledger of the PBI bound by a running loop in the payload's checkout, else of the branch issue (allowlist, marker, branch and fallback rules below); only when that ledger exists, which the orchestrator creates. Agent name and `agent_id` are sanitised; a `pbi-runner` stop is summarised from the `status` of its JSON reply (`GATE <phase>`, `DONE <pr>`, `BLOCKED`, `FAILED`; needs `jq`). Dedupe per `agent_id` and payload in the sidecar `<state>/<issue>/.ledger-seen` (a regular file, never a symlink), so the stop events of nested agents and of a `SendMessage` resume are written once. With `DROMOS_URL` set, the appended line is also POSTed once (a deduplicated stop posts nothing) to `$DROMOS_URL/ingest` after the ledger write, as JSON `{type: "progress", source: "apm-hub/subagent-stop", issue, agentId: $DROMOS_AGENT_ID (else the payload's `agent_id`, else `null`), data: {line, agent}}`, with a 500 ms timeout; only `https` URLs are used (`http` only for `localhost`, `127.0.0.1`, `[::1]`; a URL with credentials is ignored) and the line contains the first 120 characters of the subagent's reply, so that text leaves the machine; failures are ignored and `DROMOS_URL` unset makes no network call | none; leave `DROMOS_URL` unset |
 | [`context-warning.sh`](../packages/hooks/.apm/hooks/context-warning.sh) | `UserPromptSubmit` | `transcript_path`, `session_id` | injects an `additionalContext` warning once the last request has at least 150k tokens (`CONTEXT_WARN_TOKENS`), again after +100k (`CONTEXT_WARN_STEP`) | none; raise `CONTEXT_WARN_TOKENS` to silence it |
 | [`git-guardrails.sh`](../packages/hooks/.apm/hooks/git-guardrails.sh) | `PreToolUse`, matcher `Bash` | `tool_name`, `cwd`, `tool_input.command` | prints a `permissionDecision: deny` JSON with the reason; nothing for allowed commands | `GIT_GUARDRAILS_OFF=1` or `<state>/guardrails.off` |
+| [`agent-sanitize.sh`](../packages/hooks/.apm/hooks/agent-sanitize.sh) | `SessionStart` | `cwd` | scans the frontmatter of `~/.claude/agents/*.md` and `<cwd>/.claude/agents/*.md` for the apm-hub source format (a top-level `metadata:` with a `claude:` key, which `apmw sanitize -p claude` always removes, so no run-state is needed: clean files mean the step ran). On a hit it runs `apmw sanitize -p claude` (`-g` for the home directory) and returns an `additionalContext` line with the count; without `apmw` on `PATH` the line names the install and the command to run. Subagents pick the rewritten files up at their next dispatch; a primary agent started with `claude --agent orchestrator` was loaded before the hook ran and needs a restart, which the line says. Clean files: no output, no process started | `AGENT_SANITIZE_OFF=1` |
 
 ```mermaid
 sequenceDiagram
@@ -398,6 +399,7 @@ sequenceDiagram
     participant O as orchestrator
     participant H as hooks
     participant S as subagent
+    H-->>O: SessionStart: apmw sanitize when agent files are in the source format
     U->>O: message
     H-->>O: UserPromptSubmit: context warning above 150k
     O->>H: Bash tool call (git ...)
@@ -421,11 +423,11 @@ Behaviour you should know about, verified against the scripts:
 
 Per client:
 
-| Client | Ledger | Context warning | Guardrails | Setup |
-|:--|:--|:--|:--|:--|
-| Claude Code | `SubagentStop` | `UserPromptSubmit` | `PreToolUse` on `Bash` | automatic with `apm install` |
-| Copilot CLI | `subagentStop` | `postToolUse` (reads `session-state/<id>/events.jsonl`) | `preToolUse` | manual, see [Copilot CLI hooks](usage/copilot-hooks.md) |
-| OpenCode | plugin, after a `task` tool call | plugin, on a new user message | none | copy the plugin [apm-hub-hooks.ts](../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts) to `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (global) |
+| Client | Ledger | Context warning | Guardrails | Agent sanitize | Setup |
+|:--|:--|:--|:--|:--|:--|
+| Claude Code | `SubagentStop` | `UserPromptSubmit` | `PreToolUse` on `Bash` | `SessionStart` | automatic with `apm install` |
+| Copilot CLI | `subagentStop` | `postToolUse` (reads `session-state/<id>/events.jsonl`) | `preToolUse` | none (Copilot reads the source format) | manual, see [Copilot CLI hooks](usage/copilot-hooks.md) |
+| OpenCode | plugin, after a `task` tool call | plugin, on a new user message | none | none | copy the plugin [apm-hub-hooks.ts](../packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts) to `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (global) |
 
 The OpenCode plugin writes the same ledger line format and applies the same allowlist, branch and fallback rules (above), with `<state>` resolved from the OpenCode project directory. It has no equivalent of the git guardrails; on OpenCode the `permission` block of the agent files and your own bash rules are the only guard.
 

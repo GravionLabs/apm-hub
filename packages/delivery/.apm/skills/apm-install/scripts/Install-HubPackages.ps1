@@ -30,8 +30,9 @@
   Print the commands in the JSON result, run nothing. The result lists `wouldInstall`, not `installed`.
 
 .OUTPUTS
-  JSON {dryRun, installed|wouldInstall, skipped, failed, notAttempted, commands, provides, dependencies, worktrees, notes}.
+  JSON {dryRun, installed|wouldInstall, skipped, failed, notAttempted, commands, sanitized, provides, dependencies, worktrees, notes}.
   Project installs then run Enable-Worktrees.ps1 (apply mode) and report {changed, hints} as `worktrees` (null on -Global, -DryRun or when nothing was installed).
+  After installing agents, core or all the script runs `apmw sanitize -p <client>` (-g under -Global) for every client with an agents directory and lists them as `sanitized`; a missing or failing apmw is a note, not a failure.
   Exit 1 when apm or pwsh 7 is missing, a package name is invalid or an install command fails.
 #>
 param(
@@ -259,10 +260,35 @@ if (-not $Global -and -not $failed -and $done.Count -gt 0) {
 
 $when = if ($DryRun) { 'After install: ' } else { '' }
 $g = if ($Global) { ' -g' } else { '' }
+# Agents: apm copies them in the source format; `apmw sanitize` rewrites the frontmatter per client. The script runs it itself
+# (a note alone gets forgotten and the orchestrator then starts without tools) for every client whose agents directory exists.
+$sanitized = [System.Collections.Generic.List[string]]::new()
 if ($done | Where-Object { $_ -in 'agents', 'core', 'all' }) {
-  $notes.Add("${when}run apmw sanitize$g -p claude|opencode|copilot to rewrite the agent frontmatter per client (required for OpenCode).")
-  if (-not (Get-Command apmw -ErrorAction SilentlyContinue)) {
-    $notes.Add('apmw not found: install it with pipx install apmw or uv tool install apmw before the sanitize step.')
+  $agentDirs = if ($Global) {
+    [ordered]@{ claude = "$userHome/.claude/agents"; copilot = "$userHome/.copilot/agents"; opencode = "$userHome/.config/opencode/agents" }
+  } else {
+    [ordered]@{ claude = '.claude/agents'; copilot = '.github/agents'; opencode = '.opencode/agents' }
+  }
+  $apmw = Get-Command apmw -ErrorAction SilentlyContinue
+  foreach ($client in $agentDirs.Keys) {
+    if (-not $DryRun -and -not (Test-Path -LiteralPath $agentDirs[$client])) { continue }
+    $sanArgs = @('sanitize') + $(if ($Global) { '-g' } else { @() }) + @('-p', $client)
+    $commands.Add('apmw ' + ($sanArgs -join ' '))
+    if ($DryRun -or -not $apmw) { continue }
+    # apmw output goes to stderr like apm output: stdout stays pure JSON
+    & apmw @sanArgs 2>&1 | ForEach-Object { [Console]::Error.WriteLine("$_") }
+    if ($LASTEXITCODE -ne 0) { $notes.Add("apmw sanitize$g -p $client failed (exit $LASTEXITCODE): run it by hand, the $client agents are still in the source format.") }
+    else { $sanitized.Add($client) }
+  }
+  if ($DryRun) {
+    $notes.Add("After install: apmw sanitize$g -p <client> runs for every client with an agents directory (claude, copilot, opencode); without it the agents stay in the source format and the orchestrator starts without tools.")
+    if (-not $apmw) { $notes.Add('apmw not found: install it first (uv tool install apmw, or pipx install apmw).') }
+  } elseif (-not $apmw) {
+    $notes.Add("apmw not found: the agents are still in the source format. Install it (uv tool install apmw, or pipx install apmw) and run apmw sanitize$g -p claude|opencode|copilot.")
+  } elseif ($sanitized.Count -gt 0) {
+    $notes.Add("apmw sanitize$g ran for: $($sanitized -join ', ').")
+  } else {
+    $notes.Add("apmw sanitize: no client agents directory found; run apmw sanitize$g -p <client> once the client has one.")
   }
 }
 if ($done | Where-Object { $_ -in 'hooks', 'core', 'all' }) {
@@ -281,6 +307,7 @@ $result.skipped = @($skipped)
 $result.failed = $failed
 $result.notAttempted = @($notAttempted)
 $result.commands = @($commands)
+$result.sanitized = @($sanitized)
 $result.provides = $prov
 $result.dependencies = $deps
 $result.worktrees = $(if ($worktrees) { [ordered]@{ changed = @($worktrees.changed); hints = @($worktrees.hints) } } else { $null })
