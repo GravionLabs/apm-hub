@@ -235,8 +235,22 @@ describe.skipIf(!hasPwsh || spawnSync('node', ['-v']).status !== 0)(
       labels: { nodes: [] }, subIssues: { nodes: [] }, closedByPullRequestsReferences: { nodes: [] },
       projectItems: { nodes: [{ id: 'ITEM7', project: { id: 'P1' } }] } } } };
   }`;
-    const enter = (opts: { config?: boolean; fail?: boolean; env?: Record<string, string> }) => {
-      if (opts.config !== false) {
+    const enter = (opts: {
+      config?: boolean;
+      workflow?: string;
+      workflowBody?: string;
+      fail?: boolean;
+      env?: Record<string, string>;
+    }) => {
+      if (opts.workflow) {
+        fs.mkdirSync(path.join(f.repo, '.github/workflows'), { recursive: true });
+        fs.writeFileSync(
+          path.join(f.repo, '.github/workflows', opts.workflow),
+          opts.workflowBody ??
+            'jobs:\n  a:\n    with:\n      project-url: https://github.com/orgs/o/projects/1\n'
+        );
+      }
+      if (opts.config !== false && !opts.workflow) {
         fs.mkdirSync(path.join(f.repo, '.agents'), { recursive: true });
         fs.writeFileSync(path.join(f.repo, '.agents/project.json'), '{"owner":"o","number":1}');
       }
@@ -270,6 +284,26 @@ describe.skipIf(!hasPwsh || spawnSync('node', ['-v']).status !== 0)(
         value: { singleSelectOptionId: 'O-ip' },
       });
       expect(fs.readFileSync(path.join(dir, 'lease-at-mutation'), 'utf8')).toBe('1');
+    });
+
+    it('a project-url in issue-events.yml alone configures the status call', () => {
+      const { r, gh } = enter({ workflow: 'issue-events.yml' });
+      expect(r.status, r.stderr).toBe(0);
+      expect(r.stderr).not.toContain('Project status:');
+      expect(gh.calls().filter((c) => c.query?.includes('mutation'))).toHaveLength(1);
+    });
+
+    it.each([
+      [
+        'a placeholder project-url',
+        'with:\n  project-url: https://github.com/orgs/<owner>/projects/<n>\n',
+      ],
+      ['no project-url', 'name: ci\non: push\n'],
+    ])('%s in a workflow makes no sync call', (_n, body) => {
+      const { r, gh } = enter({ workflow: 'issue-events.yml', workflowBody: body });
+      expect(r.status, r.stderr).toBe(0);
+      expect(r.stderr).not.toContain('Project status:');
+      expect(gh.calls()).toHaveLength(0);
     });
 
     it('a failing status call still exits 0, keeps the lease and prints one stderr line', () => {

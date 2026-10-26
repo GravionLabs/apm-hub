@@ -14,7 +14,7 @@
        'git fetch origin <base>', check out <branch> (created from origin/<base> when missing), lease, worktree=false
     3. otherwise New-Worktree.ps1 -> .worktrees/<nr> (an existing registered worktree of that name is reused), lease, worktree=true
   After the lease is written on the main-checkout and worktree paths, the project Status of the issue is set to 'In Progress' through
-  github-project/scripts/Sync-ProjectNeeds.ps1 -SetStatus (silent without .agents/project.json or add-to-project.yml; PROJECT_SYNC_OFF=1 disables;
+  github-project/scripts/Sync-ProjectNeeds.ps1 -SetStatus (silent without .agents/project.json or a .github/workflows/*.y(a)ml file with a 'project-url:' of a GitHub project; PROJECT_SYNC_OFF=1 disables;
   a failure is one 'Project status:' line on stderr, exit code unchanged).
   A lease older than -LeaseTtlMinutes is stale: it counts as free and is taken over (stderr: 'stale lease of #<n> taken over').
   Race safety: the lease of the main checkout is claimed BEFORE the dirty check and the checkout, by exclusive create (O_EXCL: it fails when
@@ -127,9 +127,12 @@ function Save-Lease([string]$CheckoutPath, [string]$LeaseBranch, $Existing, [swi
 # any failure is one 'Project status:' line on stderr (stdout stays the JSON result), never an exception.
 function Set-ProjectStatus([string]$CheckoutPath) {
   if ($env:PROJECT_SYNC_OFF -eq '1' -or $Issue -notmatch '\A[0-9]+\z') { return }
-  $configured = (Test-Path -LiteralPath (Join-Path $CheckoutPath '.agents/project.json') -PathType Leaf) -or
-    (Test-Path -LiteralPath (Join-Path $CheckoutPath '.github/workflows/add-to-project.yml') -PathType Leaf) -or
-    (Test-Path -LiteralPath (Join-Path $CheckoutPath '.github/workflows/add-to-project.yaml') -PathType Leaf)
+  $configured = Test-Path -LiteralPath (Join-Path $CheckoutPath '.agents/project.json') -PathType Leaf
+  if (-not $configured) {
+    $wfDir = Join-Path $CheckoutPath '.github/workflows'
+    $configured = [bool](Get-ChildItem -LiteralPath $wfDir -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in '.yml', '.yaml' } |
+      Where-Object { (Get-Content -LiteralPath $_.FullName -Raw) -match 'project-url:\s*["'']?https://github\.com/(?:users|orgs)/[^/\s"'']+/projects/\d+' } | Select-Object -First 1)
+  }
   if (-not $configured) { return }
   try {
     $script = Join-Path $PSScriptRoot '../../github-project/scripts/Sync-ProjectNeeds.ps1'

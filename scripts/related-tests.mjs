@@ -14,6 +14,13 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ALL_PATHS = new Set(['vitest.config.ts', 'package.json', 'pnpm-lock.yaml', 'tsconfig.json']);
 
+// Caller workflows of GravionLabs/ci; release-workflow.test.ts checks them besides the test/repo tests.
+const CALLER_WORKFLOWS = new Set([
+  '.github/workflows/release-branch.yml',
+  '.github/workflows/issue-events.yml',
+  '.github/workflows/project-needs.yml',
+]);
+
 /** Recursive list of repo-relative `*.test.ts` files below `dir` (posix separators). */
 function listTests(root, dir) {
   const abs = path.join(root, dir);
@@ -57,6 +64,7 @@ export function relatedTests(paths, { root = REPO_ROOT } = {}) {
       (narrow.length ? narrow : listTests(root, `test/packages/${domain}`)).forEach((f) => out.add(f));
     } else if (p.startsWith('.github/')) {
       listTests(root, 'test/repo').forEach((f) => out.add(f));
+      if (CALLER_WORKFLOWS.has(p)) out.add('test/packages/github/release-workflow.test.ts');
     } else {
       return ['ALL'];
     }
