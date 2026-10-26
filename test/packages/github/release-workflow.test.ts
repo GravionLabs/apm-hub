@@ -86,7 +86,7 @@ describe('In release status docs (#489)', () => {
   it('views.md no longer says CI never writes the project', () => {
     const doc = read('github-project/references/views.md');
     expect(doc).not.toMatch(/CI never writes/i);
-    expect(doc).toMatch(/Set project status In release/);
+    expect(doc).toMatch(/ci\/\.github\/workflows\/release-branch\.yml/);
   });
 });
 

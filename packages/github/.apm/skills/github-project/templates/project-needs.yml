@@ -1,68 +1,26 @@
-# Keeps the project field Needs current in this repository (copy of apm-hub's project-needs.yml).
-# Replace before use: __OWNER__ (project owner login), __PROJECT_NUMBER__ (project number), __TOKEN__ (name of the
-# secret holding a classic PAT with the `project` scope; a user-owned project rejects fine-grained tokens and the
-# GITHUB_TOKEN). No token: a warning and a green job. pull_request_target: the job checks out only a sparse copy of
-# Sync-ProjectNeeds.ps1 from GravionLabs/apm-hub@main; it never runs PR code. The script runs with your PAT: to stop
-# following main, set `ref:` of the checkout step to a release tag or commit SHA of apm-hub and bump it on updates.
+# Hourly full sync of the project field Needs, a caller of the reusable workflow issues.yml of GravionLabs/ci (mode full).
+# Copy to .github/workflows/project-needs.yml together with issue-events.yml and replace <owner> and <n> in project-url.
+# Inputs and token requirements: see the GravionLabs/ci README (issues.yml, project/needs).
+# PROJECT_TOKEN (optional, classic PAT with scope `project`) wins; it falls back to GH_PAT. No token: a warning and a green job.
 name: Project needs
 
 on:
-  issues:
-    types: [labeled, unlabeled, closed, reopened]
-  pull_request_target:
-    types: [opened, closed, ready_for_review]
   schedule:
     - cron: '0 * * * *'
   workflow_dispatch:
 
-permissions:
-  contents: read
-
-# One run per issue/PR (or per scheduled/manual event): a burst of label events on the same item runs once,
-# other items are never cancelled; the hourly schedule heals anything skipped.
-concurrency:
-  group: project-needs-${{ github.event.issue.number || github.event.pull_request.number || github.event_name }}
-  cancel-in-progress: true
+permissions: {}
 
 jobs:
-  sync-needs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          repository: GravionLabs/apm-hub
-          ref: main
-          sparse-checkout: packages/github/.apm/skills/github-project/scripts
-          path: .apm-hub
-      - name: Sync Needs
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.__TOKEN__ }}
-          GH_REPO: ${{ github.repository }}
-          EVENT_NAME: ${{ github.event_name }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: |
-          if (-not $env:GH_TOKEN) {
-            Write-Host '::warning::__TOKEN__ is empty: Needs sync skipped'
-            exit 0
-          }
-          # Hashtable splat: an array would pass '-Repo' positionally (into -Owner).
-          $script = '.apm-hub/packages/github/.apm/skills/github-project/scripts/Sync-ProjectNeeds.ps1'
-          $syncArgs = @{ Owner = '__OWNER__'; Number = __PROJECT_NUMBER__; Repo = $env:GH_REPO }
-          if ($env:EVENT_NAME -eq 'issues') {
-            $syncArgs.Issue = $env:ISSUE_NUMBER
-            $syncArgs.IncludeParents = $true
-            # dependents of the changed issue (a merged or closed blocker releases them)
-            $syncArgs.IncludeDependents = $true
-          } elseif ($env:EVENT_NAME -eq 'pull_request_target') {
-            if ($env:HEAD_REF -match '(^|/)(\d+)-') {
-              $syncArgs.Issue = $Matches[2]
-              $syncArgs.IncludeParents = $true
-            } else {
-              Write-Host "::notice::No issue number in head ref '$($env:HEAD_REF)': Needs sync skipped"
-              exit 0
-            }
-          }
-          & $script @syncArgs
-          exit $LASTEXITCODE
+  needs:
+    # GitHub validates every job of issues.yml at startup; its conventions job requests issues: write.
+    permissions:
+      issues: write
+    uses: GravionLabs/ci/.github/workflows/issues.yml@main
+    with:
+      project-url: https://github.com/users/<owner>/projects/<n>
+      needs: true
+      mode: full
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
