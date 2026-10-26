@@ -10,9 +10,9 @@
 # and reports the count as additionalContext. No `apmw`: reports the command to run. Claude Code watches the agent
 # directories, so subagents pick the rewritten files up at their next dispatch; a primary agent (`claude --agent orchestrator`)
 # was loaded before the hook ran and needs a restart, which the message says.
-# Opt-out AGENT_SANITIZE_OFF=1. Every path exits 0; no network. Needs bash, awk and grep; jq is optional.
+# Opt-out AGENT_SANITIZE_OFF=1. Every path exits 0; no network. Needs bash, awk, grep and sed; jq is optional.
 
-[ -n "${AGENT_SANITIZE_OFF:-}" ] && exit 0
+[ "${AGENT_SANITIZE_OFF:-}" = "1" ] && exit 0
 payload="$(cat 2>/dev/null || true)"
 
 # cwd from the payload (jq when present, else a plain scan); the process cwd is the fallback
@@ -28,7 +28,7 @@ fi
 unsanitized() {
   awk '
     { sub(/\r$/, "") }
-    NR == 1 { if ($0 != "---") exit 1; next }
+    NR == 1 { sub(/[[:space:]]+$/, ""); if ($0 != "---") exit 1; next }
     /^---[[:space:]]*$/ { exit (found ? 0 : 1) }
     /^metadata:[[:space:]]*$/ { m = 1; next }
     m && /^[^[:space:]]/ { m = 0 }
@@ -46,11 +46,15 @@ count() {
   done
   echo "$n"
 }
-jesc() { local s="$1"; s=${s//\\/\\\\}; s=${s//\"/\\\"}; printf '%s' "$s"; }
+jesc() { # JSON string body: backslash, quote and the control characters a path can carry
+  local s="$1"; s=${s//\\/\\\\}; s=${s//\"/\\\"}; s=${s//$'\n'/ }; s=${s//$'\r'/}; s=${s//$'\t'/ }; printf '%s' "$s"
+}
+squote() { local s="$1"; s=${s//\'/\'\\\'\'}; printf "'%s'" "$s"; } # single-quoted shell word
 
 gdir="$HOME/.claude/agents"
 pdir="$cwd/.claude/agents"
-[ "$pdir" = "$gdir" ] && pdir=""
+# the project directory is the home directory (session started in $HOME, symlinked or with a trailing slash): scan it once
+if [ -d "$pdir" ] && [ -d "$gdir" ] && [ "$(cd "$pdir" && pwd -P)" = "$(cd "$gdir" && pwd -P)" ]; then pdir=""; fi
 g="$(count "$gdir")"
 p=0; [ -n "$pdir" ] && p="$(count "$pdir")"
 [ "$g" -eq 0 ] && [ "$p" -eq 0 ] && exit 0
@@ -68,7 +72,7 @@ if command -v apmw >/dev/null 2>&1; then
     (cd "$cwd" && apmw sanitize -p claude >/dev/null 2>&1)
     after="$(count "$pdir")"
     healed=$((healed + p - after))
-    [ "$after" -gt 0 ] && left="$left (cd $(jesc "$cwd") && apmw sanitize -p claude);"
+    [ "$after" -gt 0 ] && left="$left (cd $(squote "$cwd") && apmw sanitize -p claude);"
   fi
   [ "$healed" -gt 0 ] && msg="apm-hub agents: $healed agent file(s) were in the unsanitized source format (apm ran without apmw); apmw sanitize -p claude rewrote them. Subagents use the rewritten files from their next dispatch; a primary agent started with --agent was loaded before this hook ran and needs a restart of Claude Code."
   [ -n "$left" ] && msg="${msg:+$msg }apmw sanitize failed for some files; run by hand:${left%;}"

@@ -151,13 +151,48 @@ exit 0
     expect(fs.readFileSync(path.join(pdir(), 'explorer.md'), 'utf8')).not.toContain('\nmetadata:');
   });
 
+  // PATH with the tools the hook needs (plus the fake apmw in `bin`) but without jq: forces the grep/sed fallback
+  const noJqPath = () => {
+    const lean = path.join(dir, 'lean');
+    fs.mkdirSync(lean, { recursive: true });
+    for (const tool of ['awk', 'grep', 'sed', 'head', 'cat', 'sh', 'mv']) {
+      const found = spawnSync('sh', ['-c', `command -v ${tool}`], {
+        encoding: 'utf8',
+      }).stdout.trim();
+      if (found && !fs.existsSync(path.join(lean, tool)))
+        fs.symlinkSync(found, path.join(lean, tool));
+    }
+    return `${bin}:${lean}`;
+  };
+
   it('handles both scopes in one run and reads cwd without jq', () => {
     fakeApmw();
     write(gdir(), 'explorer.md', SOURCE);
     write(pdir(), 'explorer.md', SOURCE);
-    const r = run({ PATH: `${bin}:/usr/bin:/bin` }, `{ "source": "startup", "cwd": "${proj}" }`);
+    const r = run({ PATH: noJqPath() }, `{ "source": "startup", "cwd": "${proj}" }`);
+    expect(r.err).toBe('');
     expect(context(r.out).additionalContext).toContain('2 agent file(s)');
-    expect(apmwCalls()).toHaveLength(2);
+    expect(apmwCalls()).toEqual([
+      `sanitize -g -p claude cwd=${real(dir)}`,
+      `sanitize -p claude cwd=${real(proj)}`,
+    ]);
+  });
+
+  it('scans a project directory that is the home directory only once', () => {
+    fakeApmw();
+    write(gdir(), 'explorer.md', SOURCE);
+    const r = run({}, JSON.stringify({ cwd: `${home}/` }));
+    expect(context(r.out).additionalContext).toContain('1 agent file(s)');
+    expect(apmwCalls()).toEqual([`sanitize -g -p claude cwd=${real(dir)}`]);
+  });
+
+  it('quotes the project path once in the run-by-hand hint', () => {
+    fakeApmw();
+    const odd = path.join(dir, "it's a dir");
+    write(path.join(odd, '.claude/agents'), 'explorer.md', SOURCE);
+    const r = run({ APMW_FAIL: '1' }, JSON.stringify({ cwd: odd }));
+    const text = context(r.out).additionalContext;
+    expect(text).toContain(`(cd '${odd.replace("'", "'\\''")}' && apmw sanitize -p claude)`);
   });
 
   it('reports the install hint and the commands when apmw is missing', () => {
@@ -183,11 +218,12 @@ exit 0
     expect(text).not.toContain('rewrote them');
   });
 
-  it('does nothing with AGENT_SANITIZE_OFF=1', () => {
+  it('does nothing with AGENT_SANITIZE_OFF=1, but 0 does not opt out', () => {
     fakeApmw();
     write(gdir(), 'explorer.md', SOURCE);
     expect(run({ AGENT_SANITIZE_OFF: '1' })).toEqual({ code: 0, out: '', err: '' });
     expect(apmwCalls()).toEqual([]);
+    expect(run({ AGENT_SANITIZE_OFF: '0' }).out).toContain('1 agent file(s)');
   });
 
   it('falls back to the process cwd on an empty or unparseable payload', () => {
@@ -198,10 +234,12 @@ exit 0
     expect(apmwCalls()).toEqual([`sanitize -p claude cwd=${real(dir)}`]);
   });
 
-  it('counts a CRLF source file and ignores a file without frontmatter', () => {
+  it('counts CRLF and trailing-space fences, ignores files without frontmatter or with the keys in the body', () => {
     write(gdir(), 'crlf.md', SOURCE.replace(/\n/g, '\r\n'));
+    write(gdir(), 'spaces.md', SOURCE.replace(/^---\n/, '---  \n'));
     write(gdir(), 'notes.md', 'metadata:\n  claude:\n');
+    write(gdir(), 'body.md', `${SANITIZED}\nmetadata:\n  claude:\n`);
     const text = context(run().out).additionalContext;
-    expect(text).toContain('1 agent file(s)');
+    expect(text).toContain('2 agent file(s)');
   });
 });
