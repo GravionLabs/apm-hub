@@ -181,6 +181,58 @@ describe.skipIf(!hasPwsh)('Sync-ProjectNeeds', () => {
     it('without -IncludeParents the parent stays out', async () => {
       expect(ids((await run(withParent, ['-Issue', '2'])).actions)).toEqual(['o/a#2']);
     });
+    describe('-IncludeDependents', () => {
+      const ref = (repo: string, number: number) => ({ repo, number });
+      const dep = [
+        base({
+          number: 5,
+          repo: 'o/a',
+          needs: 'Blocked',
+          blocking: [ref('o/a', 6), ref('o/a', 7), ref('o/b', 8)],
+        }),
+        base({ number: 6, repo: 'o/a', needs: 'Blocked' }),
+        base({ number: 7, repo: 'o/a', state: 'CLOSED', needs: 'Blocked' }),
+        base({ number: 8, repo: 'o/b', needs: 'Blocked' }),
+        base({ number: 9, repo: 'o/a', needs: 'Blocked' }),
+      ];
+      it('adds the open issues #5 blocks, skips closed ones and follows another repository', async () => {
+        const r = await run(dep, ['-Issue', 'o/a#5', '-IncludeDependents']);
+        expect(ids(r.actions)).toEqual(['o/a#5', 'o/a#6', 'o/b#8']);
+        expect(r.skipped.sort()).toEqual(['o/a#7', 'o/a#9']);
+      });
+      it('without the switch the dependents stay out', async () => {
+        expect(ids((await run(dep, ['-Issue', 'o/a#5'])).actions)).toEqual(['o/a#5']);
+      });
+      it('without -Issue the switch changes nothing', async () => {
+        const plain = await run(dep);
+        const withSwitch = await run(dep, ['-IncludeDependents']);
+        expect(withSwitch).toEqual(plain);
+      });
+      it('a dependent that is also the parent is synced once with -IncludeParents', async () => {
+        const items = [
+          base({ number: 5, repo: 'o/a', parent: 9, needs: 'Blocked', blocking: [ref('o/a', 9)] }),
+          base({
+            number: 9,
+            repo: 'o/a',
+            level: 'Feature',
+            subIssueLevels: ['PBI'],
+            needs: 'Planning',
+          }),
+        ];
+        const r = await run(items, ['-Issue', '5', '-IncludeParents', '-IncludeDependents']);
+        expect(ids(r.actions)).toEqual(['o/a#5', 'o/a#9']);
+        expect(r.actions).toHaveLength(2);
+      });
+      it('does not follow the dependents of a dependent', async () => {
+        const items = [
+          base({ number: 5, repo: 'o/a', needs: 'Blocked', blocking: [ref('o/a', 6)] }),
+          base({ number: 6, repo: 'o/a', needs: 'Blocked', blocking: [ref('o/a', 9)] }),
+          base({ number: 9, repo: 'o/a', needs: 'Blocked' }),
+        ];
+        const r = await run(items, ['-Issue', '5', '-IncludeDependents']);
+        expect(ids(r.actions)).toEqual(['o/a#5', 'o/a#6']);
+      });
+    });
     it('rejects an invalid issue reference', async () => {
       const file = path.join(tmp, 's.json');
       fs.writeFileSync(file, JSON.stringify({ owner: 'o', number: 1, items: [] }));

@@ -59,6 +59,11 @@ describe('project-needs.yml (#639)', () => {
   it('syncs the issue with parents on issue events and the head-ref issue on PR events', () => {
     expect(sync.run).toContain('$syncArgs.Issue = $env:ISSUE_NUMBER');
     expect(sync.run).toContain('$syncArgs.IncludeParents = $true');
+    // dependents only on issue events (until #519), never on the pull_request_target branch
+    const [issuesBranch, prBranch] = sync.run!.split('} elseif');
+    expect(issuesBranch).toContain('$syncArgs.IncludeDependents = $true');
+    expect(prBranch).not.toContain('IncludeDependents');
+    expect(sync.run).toContain('#519');
     // a named hashtable splat; an array would bind '-Repo' positionally to -Owner
     expect(sync.run).toContain('$syncArgs = @{ Repo = $env:GH_REPO }');
     expect(sync.run).not.toMatch(/\$syncArgs\s*\+?=\s*@\('-/);

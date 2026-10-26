@@ -59,6 +59,14 @@ describe('next-selection reference', () => {
     expect(reference).toMatch(/waiting for merge/);
   });
 
+  it('keeps candidates whose blockers are merged and reports them', () => {
+    const drop = reference.split(/^## Drop the blocked$/m)[1].split(/^## /m)[0];
+    expect(drop).toContain('Closed and merged blockers do not count');
+    expect(drop).toMatch(/labels: \[\.labels\[\]\.name\]/);
+    expect(drop).toMatch(/open, unmerged blocker/);
+    expect(reference).toContain('blocker #<n> merged, closes at release');
+  });
+
   it('covers announcement, empty result and end-line variants', () => {
     expect(reference).toContain('Next PBI: #<nr> <title>');
     expect(reference).toMatch(/No candidate/);

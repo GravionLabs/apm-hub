@@ -513,6 +513,35 @@ esac
       }
     });
 
+    it('shows Ready for a PBI whose only blocker is open but labelled merged, Blocked for an unmerged one', async () => {
+      const bin = path.join(dir, 'bin');
+      fs.mkdirSync(bin);
+      fs.writeFileSync(
+        path.join(bin, 'gh'),
+        `#!/bin/sh
+case "$*" in
+  *pulls*) echo '[]' ;;
+  *sub_issues*) echo '[{"title":"[Task] t","type":{"name":"Task"}}]' ;;
+  *issues/7/dependencies/blocked_by*) echo '[{"number":1,"state":"open","labels":[{"name":"merged"}]}]' ;;
+  *issues/8/dependencies/blocked_by*) echo '[{"number":2,"state":"open","labels":[{"name":"bug"}]}]' ;;
+  *issues/7) echo '{"state":"open","title":"[PBI] x","labels":[],"type":{"name":"PBI"}}' ;;
+  *issues/8) echo '{"state":"open","title":"[PBI] y","labels":[],"type":{"name":"PBI"}}' ;;
+  *) exit 1 ;;
+esac
+`,
+        { mode: 0o755 }
+      );
+      const tf = path.join(dir, 'table.md');
+      fs.writeFileSync(tf, '#7 open A\n#8 open B\n');
+      const r = await worker.run(['-Issue', '9', '-Path', tf], {
+        cwd: dir,
+        env: { ...process.env, PATH: pathWith(bin), DROMOS_STATE_DIR: state() },
+      });
+      expect(r.status, r.stderr).toBe(0);
+      expect(out()).toContain('#7 open | Ready | A\n');
+      expect(out()).toContain('#8 open | Blocked | B\n');
+    });
+
     it('warns once and keeps the rows when gh fails, exit 0', async () => {
       const bin = path.join(dir, 'bin');
       fs.mkdirSync(bin);
