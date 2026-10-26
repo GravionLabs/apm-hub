@@ -463,6 +463,22 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
         expect(o).toContain('Needs me: 1 planning');
       });
 
+      it('an unreadable or missing state keeps an open row open, no Needs me line, exit 0', async () => {
+        const tf = path.join(dir, 'table.md');
+        fs.writeFileSync(tf, '#1 open A\n');
+        const bad = path.join(dir, 'bad.json');
+        fs.writeFileSync(bad, '{ not json');
+        for (const sf of [bad, path.join(dir, 'absent.json')]) {
+          const r = await worker.run(['-Issue', '9', '-Path', tf, '-StateFile', sf], {
+            cwd: dir,
+            env: { ...process.env, DROMOS_STATE_DIR: state() },
+          });
+          expect(r.status, r.stderr).toBe(0);
+          // the worker does not capture [Console]::Error; the warning is covered by the module-missing spawn case
+          expect(out()).toBe('#1 open A\n');
+        }
+      });
+
       it('needs-decision, blocked and merged rows are not rewritten', async () => {
         const r = await run('#1 needs-decision A\n#2 blocked by #99 B\n#3 merged C\n', [
           item(1, { labels: ['needs-decision'], subIssueLevels: [] }),
