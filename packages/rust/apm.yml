@@ -1,5 +1,5 @@
 name: rust
-version: 2.5.3
+version: 2.5.4
 description: Rust skills. Implementation conventions and review rules (modules, thiserror/anyhow, clippy, rustfmt, unsafe, tokio) and cargo test / nextest testing with mockall and proptest.
 author:
   name: Gravion

@@ -1,5 +1,5 @@
 name: apm-hub
-version: 2.5.3
+version: 2.5.4
 description: 'Marketplace for GravionLabs apm-hub skill packages. Use individual packages
   (e.g. GravionLabs/apm-hub/packages/ng) in your projects, or core@apm-hub globally and all@apm-hub for every package.'
 author:
