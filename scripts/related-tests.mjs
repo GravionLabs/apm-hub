@@ -14,6 +14,13 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ALL_PATHS = new Set(['vitest.config.ts', 'package.json', 'pnpm-lock.yaml', 'tsconfig.json']);
 
+// Caller workflows of GravionLabs/ci; release-workflow.test.ts checks them besides the test/repo tests.
+const CALLER_WORKFLOWS = new Set([
+  '.github/workflows/release-branch.yml',
+  '.github/workflows/issue-events.yml',
+  '.github/workflows/project-needs.yml',
+]);
+
 /** Recursive list of repo-relative `*.test.ts` files below `dir` (posix separators). */
 function listTests(root, dir) {
   const abs = path.join(root, dir);
@@ -33,7 +40,8 @@ function listTests(root, dir) {
 export function relatedTests(paths, { root = REPO_ROOT } = {}) {
   const out = new Set();
   const srcTests = () => listTests(root, 'src');
-  const validators = () => listTests(root, 'src/generators').filter((f) => /validator[^/]*\.test\.ts$/.test(f));
+  const validators = () =>
+    listTests(root, 'src/generators').filter((f) => /validator[^/]*\.test\.ts$/.test(f));
 
   for (const raw of paths) {
     const p = raw.trim().replace(/\\/g, '/').replace(/^\.\//, '');
@@ -52,11 +60,16 @@ export function relatedTests(paths, { root = REPO_ROOT } = {}) {
       validators().forEach((f) => out.add(f));
       const skill = /^\.apm\/skills\/([^/]+)\//.exec(rest);
       const narrow = skill
-        ? listTests(root, `test/packages/${domain}`).filter((f) => path.posix.basename(f).startsWith(skill[1]))
+        ? listTests(root, `test/packages/${domain}`).filter((f) =>
+            path.posix.basename(f).startsWith(skill[1])
+          )
         : [];
-      (narrow.length ? narrow : listTests(root, `test/packages/${domain}`)).forEach((f) => out.add(f));
+      (narrow.length ? narrow : listTests(root, `test/packages/${domain}`)).forEach((f) =>
+        out.add(f)
+      );
     } else if (p.startsWith('.github/')) {
       listTests(root, 'test/repo').forEach((f) => out.add(f));
+      if (CALLER_WORKFLOWS.has(p)) out.add('test/packages/github/release-workflow.test.ts');
     } else {
       return ['ALL'];
     }
@@ -67,9 +80,7 @@ export function relatedTests(paths, { root = REPO_ROOT } = {}) {
 /** Resolves CLI arguments (paths, --staged, --range a..b) to changed paths. */
 export function pathsFromArgs(args, cwd = REPO_ROOT) {
   const git = (...a) =>
-    execFileSync('git', a, { cwd, encoding: 'utf8' })
-      .split('\n')
-      .filter(Boolean);
+    execFileSync('git', a, { cwd, encoding: 'utf8' }).split('\n').filter(Boolean);
   const paths = [];
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--') continue;
