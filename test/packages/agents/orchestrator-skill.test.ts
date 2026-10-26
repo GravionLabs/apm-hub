@@ -57,7 +57,7 @@ describe('orchestrator launcher skill', () => {
 
   it('recommends the primary agent and the install hint', () => {
     expect(skill).toContain('--agent orchestrator');
-    expect(skill).toContain('apm install GravionLabs/apm-hub/packages/agents');
+    expect(skill).toContain('apmw install -p <client> GravionLabs/apm-hub/packages/agents');
   });
 
   it('documents --fix-advisories in the description and the input list', () => {

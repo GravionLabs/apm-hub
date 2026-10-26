@@ -62,9 +62,10 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    apm install dotnet@apm-hub
    ```
 
-   Globally, install the workflow skills and agents without any stack skills:
+   Globally, install the workflow skills and agents without any stack skills (`apmw` wraps `apm` and sanitizes the agent
+   frontmatter for the client; `uv tool install apmw` once):
    ```bash
-   apm install GravionLabs/apm-hub/packages/core -g
+   apmw install -g -p claude GravionLabs/apm-hub/packages/core
    ```
 
    Or install **all packages** at once (machines that mix stacks):

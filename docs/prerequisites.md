@@ -35,7 +35,7 @@ brew install powershell/tap/powershell     # macOS
 | `ng` | Node.js 22 LTS, Angular CLI 21+ (`npm i -g @angular/cli`) |
 | `py` | Python 3.14, [uv](https://docs.astral.sh/uv/) |
 | `dotnet` | .NET SDK 10 (libraries multi-target `net10.0;net9.0;net8.0`) |
-| `agents` (also `core`, `all`) | [apmw](https://github.com/GravionLabs/apmw) (`pipx install apmw` or `uv tool install apmw`; prebuilt executables on its [releases](https://github.com/GravionLabs/apmw/releases)), required for OpenCode, recommended for Claude Code and Copilot (rewrites the agent frontmatter per client), see [apmw sanitize](#apmw-sanitize-agents-package) |
+| `agents` (also `core`, `all`) | [apmw](https://github.com/GravionLabs/apmw) (`uv tool install apmw` or `pipx install apmw`; prebuilt executables on its [releases](https://github.com/GravionLabs/apmw/releases)): `apmw install`/`apmw update` run `apm` and rewrite the agent frontmatter per client. Required for OpenCode and Claude Code (without it Claude Code starts the agents without tools), Copilot reads the source format, see [below](#apmw-sanitize-agents-package) |
 | `shared`, `apm-tooling` | PowerShell and Git only |
 
 Install the runtimes with your platform's package manager, for example:

@@ -613,14 +613,15 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   });
 
   describe('apmw sanitize after an agent install', () => {
-    // private bin per case: the fake apm plus a fake apmw that logs `apmw: <args>` into the same log (exit code per `body`)
+    // private bin per case: the fake apm plus a fake apmw that logs `apmw: <args>` into the same log, prints noise like the
+    // real one (stdout must stay pure JSON, which `run` enforces) and exits per `body`
     const ownBin = (body = 'exit 0') => {
       const own = path.join(S.dir, 'own-bin');
       fs.mkdirSync(own, { recursive: true });
       fs.copyFileSync(path.join(bin, 'apm'), path.join(own, 'apm'));
       fs.writeFileSync(
         path.join(own, 'apmw'),
-        `#!/bin/sh\necho "apmw: $*" >> "$APM_LOG"\n${body}\n`,
+        `#!/bin/sh\necho "apmw: $*" >> "$APM_LOG"\necho "apmw noise: $*"\n${body}\n`,
         {
           mode: 0o755,
         }
