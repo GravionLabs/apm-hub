@@ -5,7 +5,7 @@
   Parks a PBI at a headless gate: label, comment, loop ledger line, lease release (-Keep), attention event; prints {parked, label, comment, ledger, checkout} as JSON.
 .DESCRIPTION
   In this order: (1) 'gh issue edit <pbi> --add-label needs-decision'; (2) 'gh issue comment' rendered from templates/parked-gate.md through a body file
-  (question and options are data, control characters are stripped), skipped when the newest comment already carries the marker and the same question;
+  (question and options are data: control characters are stripped, '@' mentions neutralized, the question is quoted), skipped when the newest comment already carries the marker and the same question;
   (3) with -Loop the ledger line 'Loop: PBI #<pbi> parked - <question>' in loop-<nr>; (4) Exit-Checkout.ps1 -Issue <pbi> -Keep; (5) with DROMOS_URL set an
   'attention' event to $DROMOS_URL/ingest (https, http only to loopback, no credentials, 500 ms timeout, failures ignored).
   A failing step is reported in the JSON ('failed:<step>') and the remaining steps still run, so the lease is always freed. Never writes the 'Gate:' line (the caller did).
@@ -57,15 +57,19 @@ try { & gh issue edit $Issue --add-label needs-decision *> $null; if ($LASTEXITC
 
 # (2) comment, once per question
 $marker = '<!-- apm-hub:parked-gate -->'
+# comment text is data, never a command or a ping: '@name' gets a zero-width space after the '@' (no mention); the template quotes the
+# question and every option is a list item, so no line of the comment starts with '/ruling' from the gate text
+function Get-CommentText([string]$t) { $t -replace '@(?=[A-Za-z0-9])', "@$([char]0x200B)" }
+$qc = Get-CommentText $q
 try {
   $last = "$(& gh issue view $Issue --json comments --jq '.comments[-1].body // empty' 2>$null)"
   if ($LASTEXITCODE -ne 0) { $last = '' }
-  if ($last.Contains($marker) -and $last.Contains($q)) { $res.comment = 'exists' }
+  if ($last.Contains($marker) -and $last.Contains($qc)) { $res.comment = 'exists' }
   else {
     $tpl = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../templates/parked-gate.md') -Raw
-    $list = if ($opts.Count) { ($opts | ForEach-Object { "- $_" }) -join "`n" } else { '- (free text)' }
+    $list = if ($opts.Count) { ($opts | ForEach-Object { "- $(Get-CommentText $_)" }) -join "`n" } else { '- (free text)' }
     $body = $tpl.Replace('{{question}}', '{{Q}}').Replace('{{options}}', '{{O}}').Replace('{{checkout}}', '{{C}}').Replace('{{pbi}}', $Issue)
-    $body = $body.Replace('{{Q}}', $q).Replace('{{O}}', $list).Replace('{{C}}', $Checkout)
+    $body = $body.Replace('{{Q}}', $qc).Replace('{{O}}', $list).Replace('{{C}}', $Checkout)
     $tmp = Join-Path ([IO.Path]::GetTempPath()) ("parked-gate-$([guid]::NewGuid().ToString('N')).md")
     try {
       [IO.File]::WriteAllText($tmp, $body, [Text.UTF8Encoding]::new($false))

@@ -29,7 +29,8 @@
     'Nothing selectable' (next-selection.md)         -> state blocked, exit 3: open PBIs are held by blockers/decisions
     a failed run, the same PBI selected twice in a row without progress, or a parked PBI selected again -> state failed, exit 1
   At the end, one or more parked PBIs turn exit 0 or 3 into state gate, exit 2 ('#<n> parked - <question>' per PBI and
-  'Parked in <kind> #<nr>: answer with /ruling <option> on each PBI, then run the queue again'); a failure (exit 1) still wins.
+  'Parked in <kind> #<nr>: answer with /ruling <option> on each PBI, then run the queue again'); a failure (exit 1, also an earlier
+  one under -ContinueOnError) still wins.
   -ContinueOnError continues after a failed PBI only if the next iteration selects a different PBI; the same PBI again
   stops the run. This is a process-level loop; it does NOT use the orchestrator 'loop' mode and its ledger
   <state>/loop-<nr>/progress.md. State is cached in <state>/queue-<nr>.json (GitHub stays the source of truth),
@@ -486,8 +487,11 @@ if ($Feature -or $Epic) {
       }
       $stop = $true
     }
-    # deferred exit of parked PBIs: from the parked list, never from the last entry; a failure (1) or a terminal gate (2) stays
-    if ($stop -and ($exit -in @(0, 3)) -and $parked.Count -gt 0) { $exit = 2 }
+    # deferred exit: an earlier failed PBI (-ContinueOnError) wins with 1, else parked PBIs give 2; from the lists, never from the last entry
+    if ($stop -and ($exit -in @(0, 3))) {
+      if (@($pbis | Where-Object { $_.outcome -eq 'failed' }).Count) { $exit = 1 }
+      elseif ($parked.Count -gt 0) { $exit = 2 }
+    }
     $state = switch ($exit) { 0 { 'done' } 2 { 'gate' } 3 { 'blocked' } default { 'failed' } }
     Save-Queue $(if ($stop) { $state } else { 'running' }) $exit
     if ($stop) { break }

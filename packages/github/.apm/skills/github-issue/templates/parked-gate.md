@@ -1,7 +1,7 @@
 <!-- apm-hub:parked-gate -->
 **Parked: PBI #{{pbi}} waits for a decision.**
 
-{{question}}
+> {{question}}
 
 Options:
 

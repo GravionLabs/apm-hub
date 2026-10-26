@@ -82,6 +82,10 @@ describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 parked gates (
     args: ['-Feature', '10', '-ContinueOnError'],
     steps: [gated(11, 'Gate: Q'), 'echo "Next PBI: #12 T"; exit 1', none],
   });
+  const contBlocked = reg('continue-fail-blocked', {
+    args: ['-Feature', '10', '-ContinueOnError'],
+    steps: ['echo "Next PBI: #12 T"; exit 1', none],
+  });
   const noPbiGate = reg('gate-no-pbi', { steps: ['echo "Gate: which PBI?"'] });
   // the real Set-ParkedGate.ps1 (default lookup in the repository layout) against a fake gh
   const real = reg('real-script', {
@@ -219,15 +223,20 @@ sh "${dir}/steps/$c"
     expect(queue(laterFail).parked).toEqual([{ number: 11, question: 'Q' }]);
   });
 
-  it('with -ContinueOnError runs past the failure; the end rule (Nothing selectable + parked) decides: exit 2', () => {
-    // pre-existing: the terminal 'Nothing selectable' iteration sets the exit code (3 without parked PBIs)
-    expect(R[laterFailCont].status).toBe(2);
+  it('with -ContinueOnError runs past the failure, and the earlier failure still wins with exit 1 over parked and blocked', () => {
+    expect(R[laterFailCont].status).toBe(1);
+    expect(queue(laterFailCont)).toMatchObject({ state: 'failed', exitCode: 1 });
     expect(calls(laterFailCont)).toBe(3);
     expect(outcomes(laterFailCont)).toEqual([
       [11, 'parked'],
       [12, 'failed'],
       [null, 'blocked'],
     ]);
+  });
+
+  it('with -ContinueOnError a failure followed by Nothing selectable exits 1, not 3', () => {
+    expect(R[contBlocked].status).toBe(1);
+    expect(queue(contBlocked)).toMatchObject({ state: 'failed', exitCode: 1, parked: [] });
   });
 
   it('a gate without a selected PBI stays terminal (exit 2) and parks nothing', () => {

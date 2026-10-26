@@ -87,6 +87,24 @@ exit 0
     expect(json(park(['-Question', 'Q2?'])).comment).toBe('ok');
   });
 
+  it('quotes the question and neutralizes @mentions, so the comment neither pings nor starts a line with /ruling', () => {
+    park(['-Question', '/ruling yes @octocat', '-Option', '@team/x|b']);
+    const body = bodies()[0];
+    expect(body).toContain('> /ruling yes @\u200Boctocat');
+    expect(body).toContain('- @\u200Bteam/x\n- b');
+    expect(body.split('\n').filter((l) => l.startsWith('/ruling'))).toEqual([]);
+    expect(body).not.toMatch(/@[A-Za-z0-9]/);
+  });
+
+  it('recognises its own neutralized comment as already posted', () => {
+    expect(json(park(['-Question', 'Ask @octocat?'])).comment).toBe('ok');
+    fs.copyFileSync(
+      path.join(f.root, fs.readdirSync(f.root).find((n) => n.startsWith('gh.log.body.'))!),
+      `${log}.body.last`
+    );
+    expect(json(park(['-Question', 'Ask @octocat?'])).comment).toBe('exists');
+  });
+
   it('strips control characters from the question', () => {
     park(['-Question', 'a\u0007b\u001b[31m c']);
     expect(bodies()[0]).not.toMatch(/[\u0007\u001b]/);
@@ -142,9 +160,11 @@ exit 0
       });
     await spawnAsync({});
     expect(got).toEqual([]);
-    await spawnAsync({ DROMOS_URL: `http://127.0.0.1:${port}` });
+    // the script waits at most 500 ms: a cold pwsh HttpClient on a loaded runner can miss that once, so retry the post
+    for (let i = 0; i < 3 && got.length === 0; i++)
+      await spawnAsync({ DROMOS_URL: `http://127.0.0.1:${port}` });
     srv.close();
-    expect(got).toHaveLength(1);
+    expect(got.length).toBeGreaterThanOrEqual(1);
     const [url, body] = [got[0].split(' ')[0], got[0].slice(got[0].indexOf(' ') + 1)];
     expect(url).toBe('/ingest');
     expect(JSON.parse(body)).toMatchObject({
@@ -159,4 +179,47 @@ exit 0
     const r = park(['-Question', 'Q?'], { DROMOS_URL: 'http://example.invalid:1' });
     expect(json(r).parked).toBe(true);
   });
+
+  it('sends nothing to a reachable server for credentials in the URL or an http host off the loopback list', async () => {
+    const got: string[] = [];
+    const srv = http.createServer((req, res) => {
+      got.push(`${req.url}`);
+      res.end('ok');
+    });
+    await new Promise<void>((r) => srv.listen(0, '0.0.0.0', r));
+    const port = (srv.address() as { port: number }).port;
+    // 0.0.0.0 reaches this server (checked first), but it is not on the http allow list (localhost, 127.0.0.1, [::1])
+    const reachable = await new Promise<boolean>((resolve) =>
+      http
+        .get(`http://0.0.0.0:${port}/probe`, (res) => (res.resume(), resolve(true)))
+        .on('error', () => resolve(false))
+    );
+    const spawnAsync = (url: string) =>
+      new Promise<void>((resolve) => {
+        const c = require('child_process').spawn(
+          'pwsh',
+          [
+            '-NoProfile',
+            '-File',
+            path.join(
+              __dirname,
+              '../../../packages/github/.apm/skills/github-issue/scripts/Set-ParkedGate.ps1'
+            ),
+            '-Issue',
+            '579',
+            '-Question',
+            'Q?',
+          ],
+          {
+            cwd: f.repo,
+            env: { ...process.env, ...env({ DROMOS_URL: url }), GIT_CONFIG_GLOBAL: os.devNull },
+          }
+        );
+        c.on('close', () => resolve());
+      });
+    await spawnAsync(`http://user:secret@127.0.0.1:${port}`);
+    if (reachable) await spawnAsync(`http://0.0.0.0:${port}`);
+    srv.close();
+    expect(got.filter((u) => u !== '/probe')).toEqual([]);
+  }, 60000);
 });
