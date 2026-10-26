@@ -22,6 +22,13 @@ describe('project-needs.yml (#639)', () => {
     expect(text).not.toContain('continue-on-error');
   });
 
+  it('cancels superseded runs per issue or PR only', () => {
+    expect(wf.concurrency['cancel-in-progress']).toBe(true);
+    expect(wf.concurrency.group).toContain('github.event.issue.number');
+    expect(wf.concurrency.group).toContain('github.event.pull_request.number');
+    expect(wf.concurrency.group).toContain('github.event_name');
+  });
+
   it('pins every action to a commit SHA', () => {
     const uses = steps.filter((s) => s.uses).map((s) => s.uses as string);
     expect(uses.length).toBeGreaterThan(0);
@@ -50,7 +57,11 @@ describe('project-needs.yml (#639)', () => {
   });
 
   it('syncs the issue with parents on issue events and the head-ref issue on PR events', () => {
-    expect(sync.run).toContain("'-Issue', $env:ISSUE_NUMBER, '-IncludeParents'");
+    expect(sync.run).toContain('$syncArgs.Issue = $env:ISSUE_NUMBER');
+    expect(sync.run).toContain('$syncArgs.IncludeParents = $true');
+    // a named hashtable splat; an array would bind '-Repo' positionally to -Owner
+    expect(sync.run).toContain('$syncArgs = @{ Repo = $env:GH_REPO }');
+    expect(sync.run).not.toMatch(/\$syncArgs\s*\+?=\s*@\('-/);
     expect(sync.run).toContain('(^|/)(\\d+)-');
     expect(sync.run).toContain('::notice::');
     expect(sync.env?.HEAD_REF).toBe('${{ github.event.pull_request.head.ref }}');

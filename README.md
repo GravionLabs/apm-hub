@@ -62,9 +62,10 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    apm install dotnet@apm-hub
    ```
 
-   Globally, install the workflow skills and agents without any stack skills:
+   Globally, install the workflow skills and agents without any stack skills (`apmw` wraps `apm` and sanitizes the agent
+   frontmatter for the client; `uv tool install apmw` once):
    ```bash
-   apm install GravionLabs/apm-hub/packages/core -g
+   apmw install -g -p claude GravionLabs/apm-hub/packages/core
    ```
 
    Or install **all packages** at once (machines that mix stacks):
@@ -143,12 +144,13 @@ six subagents each have their own model and tool set:
 | `pr-writer`    | git and `gh` only, runs `github-pull-request` for the PBI's one PR, returns `{number, url}` as JSON                   |
 
 ```powershell
-apm install GravionLabs/apm-hub/packages/core -g   # deploys the agents to ~/.claude/agents, ~/.copilot/agents, ~/.config/opencode/agents
-apmw sanitize -g -p claude; apmw sanitize -g -p opencode; apmw sanitize -g -p copilot   # per-platform frontmatter (required for OpenCode)
+uv tool install apmw                                # once per machine (or pipx install apmw)
+apmw install -g -p claude                           # apm install + per-platform frontmatter; add -p opencode / -p copilot for those clients
+apmw update -g -p claude                            # later updates; apm update alone leaves the agents in the source format
 claude --agent orchestrator "full 123"     # Copilot: copilot --agent orchestrator · OpenCode: opencode --agent orchestrator
 ```
 
-Skills install with the single `apm install` command. The agents need the extra `apmw sanitize` step (install `apmw` with `pipx install apmw` or `uv tool install apmw`, or use `apmw install -p <client>` instead of `apm install`, with `-g` for a global install): **required for OpenCode**, recommended for Claude Code (applies the per-agent model and tools) and for Copilot (only strips the `metadata` block; loading the unsanitized files is not verified). APM lifecycle scripts can automate it per consumer, see [prerequisites](docs/prerequisites.md#can-the-sanitize-run-automatically).
+Skills install with `apm install` alone. The agents do not: `apm install`/`apm update` copy them in the source format (Copilot tool aliases plus a `metadata` block) and every client except Copilot then loads them without tools or rejects them, so **the command for a package with agents is `apmw install` / `apmw update`** (`uv tool install apmw` or `pipx install apmw`), which runs `apm` and then `apmw sanitize -p <client>`. Already ran `apm` directly? `apmw sanitize -g -p claude|opencode|copilot` repairs the installed files. Safety nets: the `/apm-install` skill runs the sanitize itself, the `hooks` package heals Claude Code at session start, and an APM lifecycle hook in `~/.apm/apm.yml` makes every `apm` call sanitize, see [prerequisites](docs/prerequisites.md#can-the-sanitize-run-automatically).
 
 Source format and the `metadata` block: [docs/concepts/agent-frontmatter.md](docs/concepts/agent-frontmatter.md).
 [`apmw`](https://github.com/GravionLabs/apmw) does the per-platform rewrite.

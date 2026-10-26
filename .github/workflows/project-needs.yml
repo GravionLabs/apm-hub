@@ -16,6 +16,12 @@ on:
 permissions:
   contents: read
 
+# One run per issue/PR (or per scheduled/manual event): a burst of label events on the same item runs once,
+# other items are never cancelled; the hourly schedule heals anything skipped.
+concurrency:
+  group: project-needs-${{ github.event.issue.number || github.event.pull_request.number || github.event_name }}
+  cancel-in-progress: true
+
 jobs:
   sync-needs:
     runs-on: ubuntu-latest
@@ -34,13 +40,16 @@ jobs:
             Write-Host '::warning::PROJECT_TOKEN and GH_PAT are empty: Needs sync skipped'
             exit 0
           }
+          # Hashtable splat: an array would pass '-Repo' positionally (into -Owner).
           $script = 'packages/github/.apm/skills/github-project/scripts/Sync-ProjectNeeds.ps1'
-          $syncArgs = @('-Repo', $env:GH_REPO)
+          $syncArgs = @{ Repo = $env:GH_REPO }
           if ($env:EVENT_NAME -eq 'issues') {
-            $syncArgs += @('-Issue', $env:ISSUE_NUMBER, '-IncludeParents')
+            $syncArgs.Issue = $env:ISSUE_NUMBER
+            $syncArgs.IncludeParents = $true
           } elseif ($env:EVENT_NAME -eq 'pull_request_target') {
             if ($env:HEAD_REF -match '(^|/)(\d+)-') {
-              $syncArgs += @('-Issue', $Matches[2], '-IncludeParents')
+              $syncArgs.Issue = $Matches[2]
+              $syncArgs.IncludeParents = $true
             } else {
               Write-Host "::notice::No issue number in head ref '$($env:HEAD_REF)': Needs sync skipped"
               exit 0

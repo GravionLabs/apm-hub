@@ -35,7 +35,7 @@ brew install powershell/tap/powershell     # macOS
 | `ng` | Node.js 22 LTS, Angular CLI 21+ (`npm i -g @angular/cli`) |
 | `py` | Python 3.14, [uv](https://docs.astral.sh/uv/) |
 | `dotnet` | .NET SDK 10 (libraries multi-target `net10.0;net9.0;net8.0`) |
-| `agents` (also `core`, `all`) | [apmw](https://github.com/GravionLabs/apmw) (`pipx install apmw` or `uv tool install apmw`; prebuilt executables on its [releases](https://github.com/GravionLabs/apmw/releases)), required for OpenCode, recommended for Claude Code and Copilot (rewrites the agent frontmatter per client), see [apmw sanitize](#apmw-sanitize-agents-package) |
+| `agents` (also `core`, `all`) | [apmw](https://github.com/GravionLabs/apmw) (`uv tool install apmw` or `pipx install apmw`; prebuilt executables on its [releases](https://github.com/GravionLabs/apmw/releases)): `apmw install`/`apmw update` run `apm` and rewrite the agent frontmatter per client. Required for OpenCode and Claude Code (without it Claude Code starts the agents without tools), Copilot reads the source format, see [below](#apmw-sanitize-agents-package) |
 | `shared`, `apm-tooling` | PowerShell and Git only |
 
 Install the runtimes with your platform's package manager, for example:
@@ -53,13 +53,15 @@ Language servers for Copilot CLI are described in [LSP configuration](lsp-config
 
 ## apmw sanitize (agents package)
 
-`apm install` copies the agent files of the `agents` package verbatim. Each client reads different frontmatter, so [`apmw sanitize`](https://github.com/GravionLabs/apmw) rewrites them per client (`apmw sanitize -g -p claude|opencode|copilot`, or `apmw install -p <client>` to install and sanitize in one step; add `-g` for a global install). Skills need no such step.
+`apm install` and `apm update` copy the agent files of the `agents` package verbatim, in the source format. Each client reads different frontmatter, so [`apmw`](https://github.com/GravionLabs/apmw) rewrites them per client. The command for a package with agents is therefore `apmw install -p <client>` resp. `apmw update -p <client>` (`-g` for the global install), which run `apm` and then `apmw sanitize -p <client>`. After a plain `apm install`/`apm update`, `apmw sanitize -g -p claude|opencode|copilot` repairs the files. Skills need no such step.
 
-| Client | Extra step | Why |
+| Client | Without sanitize | Why |
 | :-- | :-- | :-- |
-| OpenCode | required | rejects the list-form `tools` and the unknown top-level keys of the source format |
-| Claude Code | recommended | without it the per-agent `model` and Claude tool names under `metadata.claude` are not applied |
-| GitHub Copilot | recommended | the source is Copilot style; sanitize only strips `metadata` and the OpenCode keys. Whether Copilot loads the unsanitized files without complaint is not verified here |
+| OpenCode | agents rejected | rejects the list-form `tools` and the unknown top-level keys of the source format |
+| Claude Code | agents start without tools | the Copilot aliases `agent, read, search, execute` resolve to no Claude tool: a subagent fails to launch ("would be spawned with zero tools"), a primary agent prints its tool calls as text; the per-agent `model` under `metadata.claude` is not applied either |
+| GitHub Copilot | works | the source is Copilot style; sanitize only strips `metadata` and the OpenCode keys. Whether Copilot loads the unsanitized files without complaint is not verified here |
+
+Three safety nets catch a forgotten sanitize: the `apm-install` skill runs `apmw sanitize` itself after installing `agents`, `core` or `all`; the `hooks` package heals the Claude Code agent directories at session start (`agent-sanitize.sh`, [orchestrator § Hooks](orchestrator.md#hooks)); and the lifecycle hook below makes every `apm install`/`apm update` sanitize.
 
 ### Can the sanitize run automatically?
 
@@ -77,7 +79,7 @@ lifecycle:
 
 For a project install, put the hook in the project `apm.yml` instead and drop `-g` (sanitizes the project agent directories, e.g. `-p claude` only for Claude Code). `-g` targets the user-level agent directories; without it only the project ones are rewritten.
 
-This was read from the APM docs, not run end to end here. The supported alternative is `apmw install` / `apmw update`, which wrap `apm` and sanitize afterwards.
+Verified on 2026-10-26 with apm 0.35.0: the user-level block in `~/.apm/apm.yml` fires on `apm install -g` (tested in a separate home directory with a marker command); project blocks need `apm lifecycle trust` once. The log is `~/.apm/logs/scripts.log`. `apmw install` / `apmw update` remain the one-command form without the hook.
 
 ## Troubleshooting
 

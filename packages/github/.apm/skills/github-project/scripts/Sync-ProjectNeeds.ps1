@@ -234,7 +234,7 @@ function Get-NeedsState {
   param([string]$Owner, [int]$Number, [string]$Repo, [string[]]$Issue, [bool]$IncludeParents)
   $p = (Invoke-Graphql $script:FieldsQuery @{ login = $Owner; n = $Number }).repositoryOwner.projectV2
   if (-not $p) { throw "Project $Owner/$Number not found (or scope 'project' missing: gh auth refresh -s project)." }
-  $field = @($p.fields.nodes) | Where-Object { $_.name -eq 'Needs' -and $_.PSObject.Properties['options'] } | Select-Object -First 1
+  $field = @($p.fields.nodes) | Where-Object { $_.PSObject.Properties['options'] -and $_.name -eq 'Needs' } | Select-Object -First 1
   if (-not $field) { return $null }
   $options = [ordered]@{}
   foreach ($o in $field.options) { $options[$o.name] = $o.id }
@@ -330,7 +330,7 @@ if ($SetStatus) {
   try {
     $p = (Invoke-Graphql $script:FieldsQuery @{ login = $ref.owner; n = $ref.number }).repositoryOwner.projectV2
     if (-not $p) { throw "Project $($ref.owner)/$($ref.number) not found." }
-    $field = @($p.fields.nodes) | Where-Object { $_.name -eq 'Status' -and $_.PSObject.Properties['options'] } | Select-Object -First 1
+    $field = @($p.fields.nodes) | Where-Object { $_.PSObject.Properties['options'] -and $_.name -eq 'Status' } | Select-Object -First 1
     $opt = if ($field) { @($field.options) | Where-Object { $_.name -eq $SetStatus } | Select-Object -First 1 }
     if (-not $opt) { Write-Output "Status not set: option '$SetStatus' missing in the project"; exit 0 }
     $node = @(Get-IssueNodes -ProjectId $p.id -Refs @($r)) | Select-Object -First 1

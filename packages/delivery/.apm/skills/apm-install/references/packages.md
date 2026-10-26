@@ -7,7 +7,7 @@ Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]` (direct path
 | `shared` | `implementation`, `detect-techstack`, `diagnose`, `code-review` | project |
 | `github` | `github-issue`, `github-pull-request`, `github-release` | project |
 | `delivery` | review fan-out, verify, planning, retro, handoff, queue, `apm-install`; depends on `github` and `shared` | project |
-| `agents` | `orchestrator` launcher skill and the nine agents (needs `apmw sanitize`) | project or `-g` |
+| `agents` | `orchestrator` launcher skill and the nine agents (the script runs `apmw sanitize` after the install; `apmw` must be installed) | project or `-g` |
 | `hooks` | Claude Code hooks (ledger, context warning, git guardrails), OpenCode plugin | project or `-g` |
 | `ts`, `py` | `<lang>-implementation`, `<lang>-test`, project scaffolding | per project |
 | `rust` | `rust-implementation`, `rust-test` | per project |
