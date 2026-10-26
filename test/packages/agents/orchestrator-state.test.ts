@@ -418,6 +418,7 @@ describe('orchestrator flags: overview and review summary', () => {
     expect(gates).toContain('An explicit `--fix-advisories` (incl. `none`) always wins');
     expect(gates).toContain('(and no `--no-review-summary`)');
     expect(gates).toContain('an unknown value still gates');
+    expect(gates).toContain('per application (the advisories of that review), not cumulative');
     expect(gates).toContain('ask which advisory findings to fix (interactive)');
     expect(gates).toContain('Without the flag in an interactive run the behaviour is unchanged');
     expect(gates).toContain('else the headless default `medium`) or the `--advisory-rounds` limit');

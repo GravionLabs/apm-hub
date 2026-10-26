@@ -164,8 +164,18 @@ describe('loop-mode reference', () => {
     expect(reference).toContain('applies to every PBI of the loop');
     expect(section(reference, 'Interactive gates')).toContain('--fix-advisories');
     expect(reference).toContain('else the headless default `medium`');
-    expect(reference).toContain(
-      'is answered `medium` (headless default, ruling q1) without stopping'
+  });
+
+  it('runner mode answers a review-summary GATE with medium only without a question tool', () => {
+    const gate = reference.split('3. `GATE` reply:')[1].split('\n')[0];
+    expect(gate).toContain('With a question tool a review-summary `GATE` is asked like any other');
+    expect(gate).toMatch(
+      /Only when the primary has no question tool, a review-summary `GATE`[^.]*`medium`/
+    );
+    expect(gate).not.toContain('ruling q1');
+    // consistent with the pipeline gate list: default medium is headless only
+    expect(read('packages/github/.apm/skills/github-issue/references/pbi-pipeline.md')).toContain(
+      'headless without the flag: the default `medium`'
     );
   });
 
