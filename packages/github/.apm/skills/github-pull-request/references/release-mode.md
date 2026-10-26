@@ -17,6 +17,6 @@ Release of `<branch>` into `<base>`.
 Closes #<feature_number>
 ```
 
-- `Closes #<feature_number>` only when `feature_number` is passed; otherwise no footer. Never `Closes #<issue_number>`.
+- `Closes #<feature_number>` only when `feature_number` is passed, else none. Never `Closes #<issue_number>`.
 - Reviewer (step 5) unchanged. `auto_merge` is forced false (step 6 never runs).
-- Output (step 7): PR number, URL, footer `none` when absent.
+- Output (step 7): PR number, URL, footer `none` in release mode without `feature_number`.

@@ -4,48 +4,62 @@ import * as path from 'path';
 const read = (p: string) => fs.readFileSync(path.resolve(__dirname, '../../..', p), 'utf-8');
 const prDir = 'packages/github/.apm/skills/github-pull-request';
 const prSkill = read(`${prDir}/SKILL.md`);
-const releaseRef = fs.existsSync(
-  path.resolve(__dirname, '../../..', `${prDir}/references/release-mode.md`)
-)
-  ? read(`${prDir}/references/release-mode.md`)
-  : '';
-const prAll = `${prSkill}\n${releaseRef}`;
+const prAll = `${prSkill}\n${read(`${prDir}/references/release-mode.md`)}`;
 const releaseSkill = read('packages/github/.apm/skills/github-release/SKILL.md');
 const step8 = releaseSkill.slice(releaseSkill.indexOf('\n8. '), releaseSkill.indexOf('\n9. '));
 
+// the head pattern as written in the skill, executed against sample branches
+const headPattern = /`(\^release\/\(next\|\[0-9\]\+\\\.\[0-9\]\+\)\$)`/.exec(prSkill)?.[1];
+
 // #668: github-release finish needs a PR path for release heads without an issue number
 describe('github-pull-request release mode', () => {
-  it('defines release mode by head regex and default-branch base, no issue_number needed', () => {
-    expect(prAll).toContain('^release/(next|[0-9]+\\.[0-9]+)$');
-    expect(prAll).toMatch(/defaultBranchRef/);
-    expect(prAll).toMatch(
-      /release mode[^\n]*no `issue_number`|no `issue_number`[^\n]*release mode/i
+  it('the documented head pattern matches release heads only', () => {
+    expect(headPattern).toBeDefined();
+    const re = new RegExp(headPattern as string);
+    expect(re.test('release/next')).toBe(true);
+    expect(re.test('release/2.5')).toBe(true);
+    expect(re.test('feature/x')).toBe(false);
+    expect(re.test('release/foo')).toBe(false);
+    expect(re.test('release/2.5.1')).toBe(false);
+  });
+
+  it('requires the default branch as base and no issue_number', () => {
+    expect(prSkill).toMatch(
+      /`<base>` is the default branch \(`gh repo view --json defaultBranchRef/
     );
+    expect(prSkill).toMatch(/Release mode needs no `issue_number`/);
+    expect(prSkill).toMatch(/stop when neither exists, except in release mode/);
   });
 
-  it('closes only the Feature, and only when feature_number is passed', () => {
-    expect(prAll).toMatch(/`Closes #<feature_number>` only when `feature_number` is passed/);
-    expect(prAll).toMatch(/no footer/);
-    expect(prAll).toMatch(/footer `none`/);
+  it('closes only the Feature, only when passed, and reports none otherwise', () => {
+    expect(prAll).toMatch(
+      /`Closes #<feature_number>` only when `feature_number` is passed, else none/
+    );
+    expect(prAll).toMatch(/Never `Closes #<issue_number>`/);
+    expect(prAll).toMatch(/`none` in release mode without `feature_number`/);
   });
 
-  it('still stops for a non-release head without a number', () => {
-    expect(prSkill).toMatch(/stop when neither exists/);
-    expect(prAll).toMatch(/Every other head without a number still stops/);
+  it('still stops for any other head without a number', () => {
+    expect(prSkill).toMatch(/Every other head without a number still stops/);
+    expect(prSkill).toMatch(/the head is not `release\/\*`[^\n]*stop and report/);
   });
 
   it('keeps auto_merge false, non-empty PR, pushed branch and CHANGELOG.md untouched', () => {
-    expect(prAll).toMatch(/release mode[^\n]*`auto_merge` (is )?forced false/i);
-    expect(prSkill).toMatch(/Never create an empty PR/);
+    expect(prSkill).toMatch(/In release mode `auto_merge` is forced false/);
+    expect(prSkill).toMatch(/Never create an empty PR[^\n]*also in release mode/);
     expect(prSkill).toMatch(/Branch must be pushed/);
-    expect(prAll).toMatch(/Release mode never modifies `CHANGELOG\.md`/);
+    expect(prSkill).toMatch(/Release mode never modifies `CHANGELOG\.md`/);
+  });
+
+  it('bounds the merged_prs default to unreleased PRs', () => {
+    expect(prSkill).toMatch(/--limit 200[^\n]*merged:>=/);
   });
 
   it('github-release step 8 passes release-mode inputs and forbids gh pr create', () => {
     expect(step8).toMatch(/`title: release: <branch>`/);
-    expect(step8).toMatch(/merged_prs/);
-    expect(step8).toMatch(/`feature_number: <nr>`[^\n]*(only|if)/);
+    expect(step8).toMatch(/`merged_prs`/);
+    expect(step8).toMatch(/`feature_number: <nr>` only when\s+recorded/);
     expect(step8).toMatch(/`auto_merge: false`/);
-    expect(step8).toMatch(/never[^\n]*`gh pr create`/i);
+    expect(step8).toMatch(/Never open the release PR with a direct `gh pr create`/);
   });
 });

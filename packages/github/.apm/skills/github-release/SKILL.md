@@ -71,7 +71,7 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
    `versioning/release-pr`): `gh pr list --base <default> --head <branch> --state open --json number,url`.
    None found (no workflow in this repo, or it has not run) → open it with `github-pull-request` in
    release mode: `branch: <branch>`, `base_branch: <default>`, `title: release: <branch>`, `merged_prs`
-   (from `gh pr list --base <branch> --state merged --json number,title`), `feature_number: <nr>` only when
+   (per the `merged_prs` default of `github-pull-request`: bounded, only PRs merged since the last tag), `feature_number: <nr>` only when
    recorded, `auto_merge: false`. Never open the release PR with a direct `gh pr create`; if
    `github-pull-request` stops, stop and report. Do not touch `CHANGELOG.md`: the
    release job on `main` regenerates it with git-cliff, tags, publishes the GitHub Release and closes
