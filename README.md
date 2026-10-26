@@ -120,7 +120,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                             |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
 | `agents`      | `orchestrator`, `issue-reader`, `explorer`, `planner`, `reviewer`, `implementer`, `pr-writer` (subagents), `/orchestrator` skill — see below   |
-| `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails); OpenCode plugin                                          |
+| `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails, agent sanitize on session start); OpenCode plugin         |
 | `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                                       |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                               |
 | `all`         | every package above except `apm-tooling`                                                                                                       |
