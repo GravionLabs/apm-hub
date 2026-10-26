@@ -338,7 +338,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   tc('phrases install-only notes as future steps in a dry run', async () => {
     fakeApm();
     const dry = await run(['-Packages', 'core', '-DryRun']);
-    expect(notes(dry)).toContain('After install: run apmw sanitize');
+    expect(notes(dry)).toContain('After install: apmw sanitize -p <client> runs');
     expect(notes(dry)).toContain('After install: OpenCode: copy');
     const real = await run(['-Packages', 'core']);
     expect(notes(real)).not.toContain('After install');
@@ -610,6 +610,105 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     const r = await run(['-Packages', 'core', '-Global']);
     expect(apmCalls()).toEqual(['install GravionLabs/apm-hub/packages/core -g']);
     expect(notes(r)).toContain('apmw sanitize -g');
+  });
+
+  describe('apmw sanitize after an agent install', () => {
+    // private bin per case: the fake apm plus a fake apmw that logs `apmw: <args>` into the same log (exit code per `body`)
+    const ownBin = (body = 'exit 0') => {
+      const own = path.join(S.dir, 'own-bin');
+      fs.mkdirSync(own, { recursive: true });
+      fs.copyFileSync(path.join(bin, 'apm'), path.join(own, 'apm'));
+      fs.writeFileSync(
+        path.join(own, 'apmw'),
+        `#!/bin/sh\necho "apmw: $*" >> "$APM_LOG"\n${body}\n`,
+        {
+          mode: 0o755,
+        }
+      );
+      return `${own}:${process.env.PATH}`;
+    };
+    const apmwCalls = () => apmCalls().filter((l) => l.startsWith('apmw: '));
+    const agentsDir = (root: string, client: string) =>
+      fs.mkdirSync(path.join(root, client, 'agents'), { recursive: true });
+
+    tc('runs it for every client with a project agents directory, in order', async () => {
+      fakeApm();
+      agentsDir(S.proj, '.claude');
+      agentsDir(S.proj, '.opencode');
+      const r = await run(['-Packages', 'agents'], ownBin());
+      expect(r.status).toBe(0);
+      expect(apmwCalls()).toEqual(['apmw: sanitize -p claude', 'apmw: sanitize -p opencode']);
+      expect(r.json.sanitized).toEqual(['claude', 'opencode']);
+      expect(r.json.commands).toContain('apmw sanitize -p claude');
+      expect(r.json.commands).not.toContain('apmw sanitize -p copilot');
+      expect(notes(r)).toContain('apmw sanitize ran for: claude, opencode');
+    });
+
+    tc('uses -g and the home directories under -Global', async () => {
+      fakeApm();
+      agentsDir(S.home, '.claude');
+      agentsDir(S.home, '.copilot');
+      agentsDir(S.proj, '.claude'); // project directory must not count under -Global
+      const r = await run(['-Packages', 'core', '-Global'], ownBin());
+      expect(apmwCalls()).toEqual(['apmw: sanitize -g -p claude', 'apmw: sanitize -g -p copilot']);
+      expect(r.json.sanitized).toEqual(['claude', 'copilot']);
+    });
+
+    tc('does not run it for packages without agents or when the install failed', async () => {
+      fakeApm();
+      agentsDir(S.proj, '.claude');
+      await run(['-Packages', 'ts,shared'], ownBin());
+      expect(apmwCalls()).toEqual([]);
+      fakeApm('packages/agents');
+      const r = await run(['-Packages', 'agents'], ownBin());
+      expect(r.status).toBe(1);
+      expect(apmwCalls()).toEqual([]);
+    });
+
+    tc('a failing apmw is a note and the install still counts', async () => {
+      fakeApm();
+      agentsDir(S.proj, '.claude');
+      const r = await run(['-Packages', 'agents'], ownBin('exit 2'));
+      expect(r.status).toBe(0);
+      expect(r.json.installed).toEqual(['agents']);
+      expect(r.json.sanitized).toEqual([]);
+      expect(notes(r)).toContain('apmw sanitize -p claude failed (exit 2)');
+    });
+
+    tc('a missing apmw leaves the agents in the source format and says so', async () => {
+      fakeApm();
+      agentsDir(S.proj, '.claude');
+      const lean = fs.mkdtempSync(path.join(S.dir, 'lean-'));
+      fs.symlinkSync(pwshPath, path.join(lean, 'pwsh'));
+      const own = path.join(S.dir, 'own-bin');
+      fs.mkdirSync(own);
+      fs.copyFileSync(path.join(bin, 'apm'), path.join(own, 'apm'));
+      const r = await run(['-Packages', 'agents'], `${own}:${lean}`);
+      expect(r.status).toBe(0);
+      expect(r.json.sanitized).toEqual([]);
+      expect(r.json.commands).toContain('apmw sanitize -p claude');
+      expect(notes(r)).toContain('apmw not found: the agents are still in the source format');
+      expect(notes(r)).toContain('uv tool install apmw');
+    });
+
+    tc('without any client agents directory it notes the command to run later', async () => {
+      fakeApm();
+      const r = await run(['-Packages', 'agents'], ownBin());
+      expect(apmwCalls()).toEqual([]);
+      expect(notes(r)).toContain('no client agents directory found');
+    });
+
+    tc('a dry run lists the three sanitize commands and runs nothing', async () => {
+      fakeApm();
+      const r = await run(['-Packages', 'agents', '-DryRun'], ownBin());
+      expect(apmwCalls()).toEqual([]);
+      expect(r.json.commands.filter((c: string) => c.startsWith('apmw '))).toEqual([
+        'apmw sanitize -p claude',
+        'apmw sanitize -p copilot',
+        'apmw sanitize -p opencode',
+      ]);
+      expect(r.json.sanitized).toEqual([]);
+    });
   });
 });
 

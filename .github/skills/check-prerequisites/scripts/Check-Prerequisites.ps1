@@ -5,7 +5,8 @@
 
 .DESCRIPTION
     Verifies that required tools are installed: PowerShell, Git, Node.js, npm.
-    Optionally checks for optional tools (gh, curl, jq, yq, ast-grep, python, apmw).
+    Optionally checks for optional tools (gh, curl, jq, yq, ast-grep, python, apmw). apmw counts as required
+    when an installed agent file is still in the apm-hub source format (never sanitized).
     Can auto-install missing tools using platform-specific package managers.
 
 .PARAMETER Full
@@ -154,6 +155,31 @@ if (Test-Tool 'npm') {
     $results.missing += 'npm'
 }
 
+# ===== apmw (required once agent files in the apm-hub source format are installed) =====
+# apm copies the agents of the agents package verbatim; a file whose frontmatter still has a top-level `metadata:` key was
+# never rewritten by `apmw sanitize` and Claude Code starts it without tools, OpenCode rejects it.
+function Test-SourceFormatAgents {
+    $dirs = @('.claude/agents', '.opencode/agents', '.github/agents')
+    $userHome = if ($env:HOME) { $env:HOME } else { $env:USERPROFILE }
+    if ($userHome) { $dirs += @("$userHome/.claude/agents", "$userHome/.config/opencode/agents", "$userHome/.copilot/agents") }
+    foreach ($d in $dirs) {
+        if (-not (Test-Path -LiteralPath $d)) { continue }
+        foreach ($f in Get-ChildItem -LiteralPath $d -Filter *.md -File -ErrorAction SilentlyContinue) {
+            $lines = Get-Content -LiteralPath $f.FullName -TotalCount 200 -ErrorAction SilentlyContinue
+            if (-not $lines -or $lines[0].TrimEnd() -ne '---') { continue }
+            $end = [Array]::IndexOf($lines, '---', 1)
+            $front = if ($end -gt 0) { $lines[1..($end - 1)] } else { $lines[1..($lines.Count - 1)] }
+            if ($front -match '^metadata:\s*$') { return $f.FullName }
+        }
+    }
+    return $null
+}
+$sourceAgent = Test-SourceFormatAgents
+if ($sourceAgent -and -not (Test-Tool 'apmw')) {
+    Write-Host "`n  ✗ apmw: NOT FOUND, but $sourceAgent is in the apm-hub source format (never sanitized)" -ForegroundColor Red
+    $results.missing += 'apmw'
+}
+
 # ===== OPTIONAL Prerequisites =====
 if ($Full) {
     Write-Host "`n=== OPTIONAL Prerequisites ===" -ForegroundColor Cyan
@@ -195,6 +221,7 @@ if ($results.missing.Count -eq 0) {
         'Git'        = @{ windows = 'winget install Git.Git';              macos = 'brew install git';        linux = 'sudo apt-get install git' }
         'Node.js'    = @{ windows = 'winget install OpenJS.NodeJS';        macos = 'brew install node';       linux = 'sudo apt-get install nodejs' }
         'npm'        = @{ windows = 'included with Node.js';               macos = 'brew install node';       linux = 'sudo apt-get install npm' }
+        'apmw'       = @{ windows = 'uv tool install apmw (or pipx install apmw), then apmw sanitize -g -p claude'; macos = 'uv tool install apmw (or pipx install apmw), then apmw sanitize -g -p claude'; linux = 'uv tool install apmw (or pipx install apmw), then apmw sanitize -g -p claude' }
     }
 
     $installers = @{
