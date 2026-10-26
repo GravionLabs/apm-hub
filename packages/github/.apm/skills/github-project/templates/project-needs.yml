@@ -2,7 +2,8 @@
 # Replace before use: __OWNER__ (project owner login), __PROJECT_NUMBER__ (project number), __TOKEN__ (name of the
 # secret holding a classic PAT with the `project` scope; a user-owned project rejects fine-grained tokens and the
 # GITHUB_TOKEN). No token: a warning and a green job. pull_request_target: the job checks out only a sparse copy of
-#  Sync-ProjectNeeds.ps1 from GravionLabs/apm-hub@main; it never runs PR code.
+# Sync-ProjectNeeds.ps1 from GravionLabs/apm-hub@main; it never runs PR code. The script runs with your PAT: to stop
+# following main, set `ref:` of the checkout step to a release tag or commit SHA of apm-hub and bump it on updates.
 name: Project needs
 
 on:

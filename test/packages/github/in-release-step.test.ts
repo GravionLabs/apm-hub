@@ -35,6 +35,7 @@ case "$all" in
     [ "$FAIL" = items ] && exit 1
     [ "$FAIL" = scope ] && { echo "gh: Resource not accessible by personal access token" >&2; exit 1; }
     issue=$(grep -oE 'issue=[0-9]+' <<<"$all" | head -1 | cut -d= -f2)
+    [ -n "$SCOPE_ISSUE" ] && [ "$issue" = "$SCOPE_ISSUE" ] && { echo "gh: Resource not accessible by personal access token" >&2; exit 1; }
     var="STATUS_$issue"; status="\${!var-__none}"
     opts='[{"id":"o1","name":"Todo"},{"id":"o2","name":"In release"}]'
     [ -n "$NO_OPTION" ] && opts='[{"id":"o1","name":"Todo"}]'
@@ -104,9 +105,21 @@ describe('In release status step behavior (#489)', () => {
     expect(none.issues).toEqual(['']);
   });
 
-  it('keeps the issues set before a project-scope failure (#626)', () => {
+  it('writes an empty issues= when the project scope fails on the first issue (#626)', () => {
     const r = runStep({ CLOSING: '[11]', STATUS_11: 'Todo', FAIL: 'scope' });
     expect(r.issues).toEqual(['']);
+  });
+
+  it('keeps the issues already set when a later issue hits the project-scope failure (#626)', () => {
+    const r = runStep({
+      CLOSING: '[11, 12]',
+      STATUS_11: 'Todo',
+      STATUS_12: 'Todo',
+      SCOPE_ISSUE: '12',
+    });
+    expect(r.status).toBe(0);
+    expect(items(r)).toEqual(['i11']);
+    expect(r.issues).toEqual(['11']);
   });
 
   it('sets closed, keyword-listed and Refs-only issues, skips Done and word-glued keywords', () => {

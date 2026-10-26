@@ -91,7 +91,7 @@ describe.each([
     'release-pr',
     'Sync Needs of In release issues',
   ],
-])('Needs sync wiring in %s (#626)', (name, file, job, stepName) => {
+])('Needs sync wiring in %s (#626)', (_name, file, job, stepName) => {
   const w = parse(fs.readFileSync(file, 'utf-8'));
   const all: SyncStep[] = w.jobs[job].steps;
   const step = all.find((s) => s.name === stepName)!;
@@ -114,7 +114,6 @@ describe.each([
     expect(step.run).toContain('IncludeParents = $true');
     expect(step.run).toContain('& $script @syncArgs');
     expect(step.run).not.toContain('${{');
-    expect(name).toBeTruthy();
   });
 
   it('pins every action to a commit SHA except GravionLabs/ci@main', () => {
@@ -133,6 +132,10 @@ describe('add-to-project.yml Needs sync (#626)', () => {
   it('syncs after actions/add-to-project, on issue events only, without failing the job', () => {
     expect(all.findIndex((s) => s.uses?.startsWith('actions/add-to-project@'))).toBeLessThan(idx);
     expect(all[idx].if).toBe("github.event_name == 'issues'");
+    // the checkout (default branch, never PR code) carries the same gate as the step that needs it
+    const co = all.find((s) => s.uses?.startsWith('actions/checkout@'))!;
+    expect(all.indexOf(co)).toBeLessThan(idx);
+    expect(co.if).toBe("github.event_name == 'issues'");
     expect(all[idx]['continue-on-error']).toBe(true);
     expect(all[idx].env?.ISSUE_NUMBER).toBe('${{ github.event.issue.number }}');
   });
@@ -149,10 +152,14 @@ describe('release-pr.yml Needs sync (#626)', () => {
 
   it('skips without the script so the copied template is a no-op', () => {
     expect(step.run).toMatch(/if \(-not \(Test-Path \$script\)\) \{\s*Write-Host '::notice::/);
+    const co = all.find((s) => s.uses?.startsWith('actions/checkout@'))!;
+    expect(all.indexOf(co)).toBeLessThan(all.indexOf(step));
+    expect(co.if).toBe("${{ !cancelled() && steps.in-release.outputs.issues != '' }}");
+    expect(step.if).toBe(co.if);
     expect(step.run).toContain("Issue = ($env:ISSUES -split '\\s+' | Where-Object { $_ })");
   });
 
-  it('is not part of the project-needs.yml expectations: no EVENT_NAME', () => {
+  it('receives the issues set by the In release step', () => {
     expect(step.env?.ISSUES).toBe('${{ steps.in-release.outputs.issues }}');
   });
 });
