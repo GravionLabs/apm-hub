@@ -1,7 +1,7 @@
 ---
 name: Feature
 about: A user-facing capability, grouping PBIs under an Epic
-title: 'Feature: '
+title: '[Feature] '
 labels: feature
 assignees: ''
 ---

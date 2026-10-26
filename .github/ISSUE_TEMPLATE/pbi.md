@@ -1,7 +1,7 @@
 ---
 name: PBI
 about: Product backlog item — a shippable increment under a Feature
-title: 'feat: '
+title: '[PBI] '
 labels: pbi
 assignees: ''
 ---
