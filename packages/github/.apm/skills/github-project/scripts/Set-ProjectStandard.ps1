@@ -228,48 +228,80 @@ function Invoke-Gh {
 }
 function Invoke-Graphql($Query, $Variables) { (Invoke-Gh -GhArgs @('api', 'graphql') -Body @{ query = $Query; variables = $Variables }).data }
 
+$FieldNodes = 'nodes { __typename
+    ... on ProjectV2Field { id name databaseId dataType }
+    ... on ProjectV2SingleSelectField { id name databaseId dataType options { id name color description } }
+    ... on ProjectV2IterationField { id name databaseId dataType } }'
+$ViewNodes = 'nodes { id name layout filter }'
 $FieldsQuery = @'
 query($login: String!, $n: Int!) { repositoryOwner(login: $login) { __typename ... on ProjectV2Owner { projectV2(number: $n) {
   id
-  fields(first: 50) { nodes { __typename
-    ... on ProjectV2Field { id name databaseId dataType }
-    ... on ProjectV2SingleSelectField { id name databaseId dataType options { id name color description } }
-    ... on ProjectV2IterationField { id name databaseId dataType } } }
-  views(first: 50) { nodes { id name layout filter } } } } } }
-'@
+  fields(first: 50) { pageInfo { hasNextPage endCursor } __FIELDS__ }
+  views(first: 50) { pageInfo { hasNextPage endCursor } __VIEWS__ } } } } }
+'@ -replace '__FIELDS__', $FieldNodes -replace '__VIEWS__', $ViewNodes
+# Follow-up pages of a connection whose first page had hasNextPage (fields, views, labels).
+$ProjectFieldsQuery = 'query($id: ID!, $cursor: String) { node(id: $id) { ... on ProjectV2 { fields(first: 50, after: $cursor) { pageInfo { hasNextPage endCursor } ' + $FieldNodes + ' } } } }'
+$ProjectViewsQuery = 'query($id: ID!, $cursor: String) { node(id: $id) { ... on ProjectV2 { views(first: 50, after: $cursor) { pageInfo { hasNextPage endCursor } ' + $ViewNodes + ' } } } }'
 $ReposQuery = @'
-query($id: ID!) { node(id: $id) { ... on ProjectV2 { repositories(first: 50) { nodes { nameWithOwner
-  labels(first: 100) { nodes { name color description } } } } } } }
+query($id: ID!, $cursor: String) { node(id: $id) { ... on ProjectV2 { repositories(first: 50, after: $cursor) {
+  pageInfo { hasNextPage endCursor }
+  nodes { id nameWithOwner labels(first: 100) { pageInfo { hasNextPage endCursor } nodes { name color description } } } } } } }
+'@
+$RepoLabelsQuery = @'
+query($id: ID!, $cursor: String) { node(id: $id) { ... on Repository { labels(first: 100, after: $cursor) {
+  pageInfo { hasNextPage endCursor } nodes { name color description } } } } }
 '@
 $ItemsQuery = @'
 query($id: ID!, $cursor: String) { node(id: $id) { ... on ProjectV2 { items(first: 100, after: $cursor) {
   pageInfo { hasNextPage endCursor }
-  nodes { id content { __typename ... on Issue { number title state labels(first: 50) { nodes { name } } } }
+  nodes { id content { __typename ... on Issue { id number title state labels(first: 50) { pageInfo { hasNextPage endCursor } nodes { name } } } }
     status: fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
     level: fieldValueByName(name: "Level") { ... on ProjectV2ItemFieldSingleSelectValue { name } } } } } } }
 '@
+$IssueLabelsQuery = @'
+query($id: ID!, $cursor: String) { node(id: $id) { ... on Issue { labels(first: 100, after: $cursor) {
+  pageInfo { hasNextPage endCursor } nodes { name } } } } }
+'@
+
+# All nodes of a connection: $Page is the page already read, $Connection picks the connection out of a follow-up reply.
+# A page without pageInfo (or hasNextPage false) ends the loop.
+function Get-AllNodes($Page, $Query, [hashtable]$Variables, [scriptblock]$Connection) {
+  $nodes = [System.Collections.Generic.List[object]]::new()
+  while ($true) {
+    foreach ($n in @($Page.nodes)) { if ($null -ne $n) { $nodes.Add($n) } }
+    if (-not $Page.pageInfo.hasNextPage) { break }
+    $Page = & $Connection (Invoke-Graphql $Query ($Variables + @{ cursor = $Page.pageInfo.endCursor }))
+  }
+  , @($nodes)
+}
 
 function Get-ProjectState {
   param([bool]$WithItems)
   $d = Invoke-Graphql $FieldsQuery @{ login = $Owner; n = $Number }
   $p = $d.repositoryOwner.projectV2
   if (-not $p) { throw "Project $Owner/$Number not found (or scope 'project' missing: gh auth refresh -s project)." }
+  $fields = Get-AllNodes $p.fields $ProjectFieldsQuery @{ id = $p.id } { param($r) $r.node.fields }
+  $views = Get-AllNodes $p.views $ProjectViewsQuery @{ id = $p.id } { param($r) $r.node.views }
   $state = [ordered]@{ owner = $Owner; number = $Number; projectId = $p.id; ownerType = $d.repositoryOwner.__typename
-    fields = @($p.fields.nodes); views = @($p.views.nodes); items = @(); repositories = @() }
+    fields = @($fields); views = @($views); items = @(); repositories = @() }
   if ($WithItems) {
     $items = [System.Collections.Generic.List[object]]::new(); $cursor = $null
     do {
       $page = (Invoke-Graphql $ItemsQuery @{ id = $p.id; cursor = $cursor }).node.items
       foreach ($n in $page.nodes) {
         if ($n.content.__typename -ne 'Issue') { continue }
+        $labels = Get-AllNodes $n.content.labels $IssueLabelsQuery @{ id = $n.content.id } { param($r) $r.node.labels }
         $items.Add([ordered]@{ id = $n.id; number = $n.content.number; title = $n.content.title; state = $n.content.state
-            labels = @($n.content.labels.nodes | ForEach-Object { $_.name }); status = $n.status.name; level = $n.level.name })
+            labels = @($labels | ForEach-Object { $_.name }); status = $n.status.name; level = $n.level.name })
       }
       $cursor = $page.pageInfo.endCursor
     } while ($page.pageInfo.hasNextPage)
     $state.items = @($items)
-    $state.repositories = @((Invoke-Graphql $ReposQuery @{ id = $p.id }).node.repositories.nodes | ForEach-Object {
-        [ordered]@{ nameWithOwner = $_.nameWithOwner; labels = @($_.labels.nodes) } })
+    $first = (Invoke-Graphql $ReposQuery @{ id = $p.id; cursor = $null }).node.repositories
+    $repos = Get-AllNodes $first $ReposQuery @{ id = $p.id } { param($r) $r.node.repositories }
+    $state.repositories = @($repos | ForEach-Object {
+        $labels = Get-AllNodes $_.labels $RepoLabelsQuery @{ id = $_.id } { param($r) $r.node.labels }
+        [ordered]@{ nameWithOwner = $_.nameWithOwner; labels = @($labels) } })
   }
   $state
 }
