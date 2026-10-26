@@ -27,6 +27,10 @@ process.env.DROMOS_STATE_DIR = '.agents';
 // The Needs sync (Invoke-NeedsSync) spawns a real pwsh script per PBI boundary; off by default so -Feature/-Epic batches stay fast
 // and never reach gh. queue.needs.integration.test.ts turns it on per case (env PROJECT_SYNC_OFF: null removes the variable).
 process.env.PROJECT_SYNC_OFF = '1';
+// A parked gate (-Feature/-Epic) runs Set-ParkedGate.ps1, which calls gh: every queue test gets the fake park script
+// (records '<issue>|<question>' in <cwd>/park.log); queue.parked.integration.test.ts removes it for the real-script case.
+export const FAKE_PARK = path.resolve(__dirname, 'fake-park.ps1');
+process.env.PARK_SCRIPT = FAKE_PARK;
 
 if (!hasPwsh && process.env.CI)
   throw new Error(

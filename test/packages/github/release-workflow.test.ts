@@ -37,7 +37,7 @@ describe.each(Object.entries(files))('release-branch caller %s (#358)', (_name, 
 });
 
 describe('issue-events.yml (#358)', () => {
-  const wf = parse(fs.readFileSync(path.join(root, '.github/workflows/issue-events.yml'), 'utf-8'));
+  const wf = parse(fs.readFileSync(path.join(root, '.github/workflows/issues.yml'), 'utf-8'));
   const job = wf.jobs.issues;
 
   it('calls issues.yml of GravionLabs/ci with the Needs sync and explicit secrets', () => {

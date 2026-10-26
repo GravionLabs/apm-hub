@@ -8,7 +8,7 @@
   Files live in the state dir (DROMOS_STATE_DIR, else <git common dir>/agents, shared by all worktrees), shown as <state>/.
   The ledger <state>/<issue>/progress.md is the source of truth, not the exit code:
     last line 'Ledger complete.'        -> done (before the run: skipped, nothing is started)
-    new 'Gate: <question>' line         -> gate: the queue stops, the question is printed, exit 2
+    new 'Gate: <question>' line         -> gate: the queue stops, the question is printed, exit 2 (issue-list mode; -Feature/-Epic park it, see below)
     neither                             -> failed: the queue stops (exit 1) unless -ContinueOnError
   Output of every run is appended to <state>/<issue>/run.log. The runner never merges (unless the opt-in -MergeApproved is given) and never answers a gate.
   Feature/Epic mode runs github-project/scripts/Sync-ProjectNeeds.ps1 -Issue <pbi> -IncludeParents after each 'Next PBI:' and after the PBI entry is decided
@@ -21,17 +21,23 @@
   -Feature <nr> / -Epic <nr> (queue mode): loops '<harness> --agent orchestrator -p "next <nr>"', one fresh process per
   iteration (selection stays in the orchestrator, github-issue/references/next-selection.md). Stops on:
     '<Feature|Epic> #<nr> is done.' (child exit 0)  -> state done, exit 0
-    a 'Gate:' line or a new gate in the PBI ledger   -> state gate, exit 2 (a complete PBI ledger wins over a gate, as in
-                                                         positional mode)
+    a 'Gate:' line or a new gate in the PBI ledger   -> the PBI is parked and the queue continues: github-issue/scripts/Set-ParkedGate.ps1
+                                                         -Issue <pbi> -Question <gate text> (PARK_SCRIPT overrides; a failure is the entry note),
+                                                         outcome parked, listed under 'parked' in queue-<nr>.json before the next child starts
+                                                         (a complete PBI ledger wins over a gate, as in positional mode)
+    a gate without a 'Next PBI:' line                -> state gate, exit 2 (terminal)
     'Nothing selectable' (next-selection.md)         -> state blocked, exit 3: open PBIs are held by blockers/decisions
-    a failed run, or the same PBI selected twice in a row without progress -> state failed, exit 1
+    a failed run, the same PBI selected twice in a row without progress, or a parked PBI selected again -> state failed, exit 1
+  At the end, one or more parked PBIs turn exit 0 or 3 into state gate, exit 2 ('#<n> parked - <question>' per PBI and
+  'Parked in <kind> #<nr>: answer with /ruling <option> on each PBI, then run the queue again'); a failure (exit 1, also an earlier
+  one under -ContinueOnError) still wins.
   -ContinueOnError continues after a failed PBI only if the next iteration selects a different PBI; the same PBI again
   stops the run. This is a process-level loop; it does NOT use the orchestrator 'loop' mode and its ledger
   <state>/loop-<nr>/progress.md. State is cached in <state>/queue-<nr>.json (GitHub stays the source of truth),
   output in <state>/queue-<nr>.log and per PBI in <state>/<pbi>/run.log.
   AGENTS_LEDGER is cleared before every child (also an inherited value) and set to the PBI ledger only in the runner after
   'Next PBI: #<n>' is parsed (a running child cannot be changed); the caller's value is restored at the end.
-  A 'Gate:' line (at line start, may be markdown-wrapped: '**Gate**:', '> Gate:'; case-sensitive) in the output stops the queue even when the ledger has no new gate (the question must reach a human).
+  A 'Gate:' line (at line start, may be markdown-wrapped: '**Gate**:', '> Gate:'; case-sensitive) in the output parks the PBI (or, without a selected PBI, stops the queue) even when the ledger has no new gate (the question must reach a human).
   -MergeApproved: after a done PBI (child exit 0) whose last 'Verdict:' line is exactly 'Verdict: APPROVE', merge the PBI's open PR (found via the ledger
   line 'Phase pull-request: complete - <url>' and 'gh pr list', head branch must contain '/<pbi>-') with
   'gh pr merge <pr> --squash --match-head-commit <sha>'. Base must be release/*, head must not be release/*
@@ -165,6 +171,32 @@ function Invoke-NeedsSync([string]$Pbi, [string]$LogFile) {
     try { Add-Content -LiteralPath $LogFile -Value "Needs sync failed for #${Pbi}: $($_.Exception.Message)" -Encoding utf8 } catch { }
   }
 }
+# Parks a gated PBI of the Feature/Epic queue: Set-ParkedGate.ps1 of the github-issue skill (installed beside this skill, or the
+# repository layout; PARK_SCRIPT overrides). Output goes to the PBI run.log. Returns $null on success, else a note; never throws.
+function Invoke-ParkGate([string]$Pbi, [string]$Question, [string]$LogFile) {
+  try {
+    $f = $env:PARK_SCRIPT
+    if (-not $f) {
+      foreach ($d in @((Join-Path $PSScriptRoot '../../github-issue/scripts'), (Join-Path $PSScriptRoot '../../../../../github/.apm/skills/github-issue/scripts'))) {
+        $c = Join-Path $d 'Set-ParkedGate.ps1'
+        if (Test-Path -LiteralPath $c -PathType Leaf) { $f = (Resolve-Path -LiteralPath $c).Path; break }
+      }
+    }
+    if (-not $f -or -not (Test-Path -LiteralPath $f -PathType Leaf)) { return 'park script failed: Set-ParkedGate.ps1 not found' }
+    $q = if ($Question) { $Question } else { '(no question text)' }
+    $o = @(& pwsh -NoProfile -File $f -Issue $Pbi -Question $q 2>&1 | ForEach-Object { "$_" })
+    $c = $LASTEXITCODE
+    Add-Content -LiteralPath $LogFile -Value (@("Park #${Pbi} (exit code $c):") + $o) -Encoding utf8
+    if ($c -ne 0) { return "park script failed (exit code $c)" }
+    $res = $null
+    try { $res = @($o | Where-Object { $_.Trim() })[-1] | ConvertFrom-Json } catch { return 'park script failed: no JSON result' }
+    $bad = @(foreach ($k in 'label', 'comment', 'ledger', 'checkout') { if ($res.PSObject.Properties[$k] -and "$($res.$k)" -eq 'failed') { $k } })
+    if ($bad) { return "park script failed: $($bad -join ', ')" }
+    $null
+  } catch {
+    "park script failed: $($_.Exception.Message)"
+  }
+}
 
 if ($Status) {
   $bad = [ordered]@{ 'issue numbers' = ($Issue.Count -gt 0); '-IssueFile' = [bool]$IssueFile; '-Label' = [bool]$Label; '-Feature/-Epic' = [bool]($Feature -or $Epic)
@@ -291,9 +323,10 @@ if ($Feature -or $Epic) {
   Test-NotSymlink $log
   $started = Get-Date -Format o
   $pbis = [System.Collections.Generic.List[object]]::new()
+  $parked = [System.Collections.Generic.List[object]]::new()
   function Save-Queue([string]$State, [int]$Code) {
     $o = [ordered]@{ queue = [long]$nr; kind = $kind; harness = $Harness; state = $State; exitCode = $Code; started = $started
-      ended = (Get-Date -Format o); mergeApproved = [bool]$MergeApproved; pbis = @($pbis) }
+      ended = (Get-Date -Format o); mergeApproved = [bool]$MergeApproved; pbis = @($pbis); parked = @($parked) }
     Set-Content -LiteralPath $queueFile -Value ($o | ConvertTo-Json -Depth 6) -Encoding utf8
   }
   # right after PR creation GitHub may still compute mergeability (UNKNOWN): poll a bounded number of times.
@@ -377,9 +410,16 @@ if ($Feature -or $Epic) {
       $lp = Get-LastMatch $after '\APhase pull-request: complete\b.*?/pull/(\d+)'
       $pr = if ($lp) { [long]$lp.Groups[1].Value } else { $null }
       $entry = [ordered]@{ number = [long]$pbi; outcome = 'failed'; pr = $pr; ledger = (Join-Path (Join-Path (Get-StateDir) $pbi) 'progress.md'); gate = $gate; started = $iterStart; ended = $null; note = $null }
-      if ($prev -eq $pbi) { $entry.note = 'selected twice in a row without progress; stopped'; $stop = $true; $exit = 1 }
+      if (@($parked | Where-Object { "$($_.number)" -eq $pbi }).Count) { $entry.note = 'parked PBI selected again (needs-decision label missing?)'; $stop = $true; $exit = 1 }
+      elseif ($prev -eq $pbi) { $entry.note = 'selected twice in a row without progress; stopped'; $stop = $true; $exit = 1 }
       elseif (Test-Complete $after) { $entry.outcome = if ($completeBefore -contains $pbi) { 'skipped' } else { 'done' }; $entry.gate = $null }
-      elseif ($gate) { $entry.outcome = 'gate'; $stop = $true; $exit = 2 }
+      elseif ($gate) {
+        # park instead of stopping: label, comment, lease release (-Keep), attention; the exit 2 is deferred to the end of the queue
+        $entry.outcome = 'parked'
+        $question = ($gate -creplace ($GatePattern + '[\s*`_]*'), '').Trim()
+        $entry.note = Invoke-ParkGate $pbi $question (Join-Path $pbiDir 'run.log')
+        $parked.Add([pscustomobject][ordered]@{ number = [long]$pbi; question = $question })
+      }
       else { $entry.note = "run ended without 'Ledger complete.' (exit code $code)" }
       if ($entry.outcome -eq 'done' -and $MergeApproved) {
         $vm = Get-LastMatch $out '\A\W*Verdict:.*'
@@ -447,6 +487,11 @@ if ($Feature -or $Epic) {
       }
       $stop = $true
     }
+    # deferred exit: an earlier failed PBI (-ContinueOnError) wins with 1, else parked PBIs give 2; from the lists, never from the last entry
+    if ($stop -and ($exit -in @(0, 3))) {
+      if (@($pbis | Where-Object { $_.outcome -eq 'failed' }).Count) { $exit = 1 }
+      elseif ($parked.Count -gt 0) { $exit = 2 }
+    }
     $state = switch ($exit) { 0 { 'done' } 2 { 'gate' } 3 { 'blocked' } default { 'failed' } }
     Save-Queue $(if ($stop) { $state } else { 'running' }) $exit
     if ($stop) { break }
@@ -459,8 +504,12 @@ if ($Feature -or $Epic) {
   } finally {
     [Environment]::SetEnvironmentVariable('AGENTS_LEDGER', $callerLedger)
   }
-  foreach ($e in $pbis) { Write-Host "$(if ($e.number) { "#$($e.number)" } else { '-' }) $($e.outcome)$(if ($e.pr) { " (PR #$($e.pr))" })$(if ($e.note) { " - $($e.note)" })" }
-  if ($exit -eq 2) { Write-Host "Gate on ${kind} #${nr}, queue stopped (answer it, then run the queue again): $($pbis[-1].gate)" }
+  foreach ($e in $pbis) {
+    if ($e.outcome -eq 'parked') { $pq = @($parked | Where-Object { "$($_.number)" -eq "$($e.number)" })[0].question; Write-Host "#$($e.number) parked - $(Remove-ControlChar $pq)$(if ($e.note) { " ($($e.note))" })"; continue }
+    Write-Host "$(if ($e.number) { "#$($e.number)" } else { '-' }) $($e.outcome)$(if ($e.pr) { " (PR #$($e.pr))" })$(if ($e.note) { " - $($e.note)" })"
+  }
+  if ($exit -eq 2 -and $pbis.Count -and $pbis[-1].outcome -eq 'gate') { Write-Host "Gate on ${kind} #${nr}, queue stopped (answer it, then run the queue again): $($pbis[-1].gate)" }
+  if ($parked.Count -gt 0) { Write-Host "Parked in ${kind} #${nr}: answer with /ruling <option> on each PBI, then run the queue again" }
   if ($exit -eq 3) { Write-Host "Nothing selectable in ${kind} #${nr}: open PBIs are held by blockers or decisions, see the output above." }
   if ($exit -eq 0) { Write-Host "$kind #$nr is done." }
   exit $exit

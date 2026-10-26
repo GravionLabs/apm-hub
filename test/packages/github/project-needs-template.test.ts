@@ -20,7 +20,9 @@ describe.each([
 ])('template %s (#519)', (file, jobName) => {
   const text = read(path.join(tplDir, file));
   const tpl = parse(text) as Wf;
-  const own = parse(read(path.join(root, '.github/workflows', file))) as Wf;
+  const own = parse(
+    read(path.join(root, '.github/workflows', file === 'issue-events.yml' ? 'issues.yml' : file))
+  ) as Wf;
 
   it('equals the own workflow except comments and the project URL', () => {
     expect(strip(tpl)).toEqual(strip(own));

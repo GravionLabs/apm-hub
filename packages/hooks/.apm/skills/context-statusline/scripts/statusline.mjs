@@ -9,6 +9,7 @@ import { hostname, userInfo } from 'node:os';
 const c = (code, s) => `\x1b[${code}m${s}\x1b[00m`;
 const pct = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
 const tok = (n) => (n >= 999500 ? `${Math.floor((n + 5e4) / 1e5) / 10}M`.replace('.0M', 'M') : `${Math.floor((n + 500) / 1000)}k`);
+const light = (p) => (p < 50 ? '32' : p < 80 ? '33' : '31'); // traffic light: green <50%, yellow <80%, red otherwise
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
 // Tokens in the context: sum of current_usage input fields (matches the percentage), else derived from pct * size.
 function usedTokens(cw, ctx, size) {
@@ -38,7 +39,7 @@ function render(input) {
   if (ctx !== null) {
     const size = num(input.context_window?.context_window_size);
     const detail = size ? ` (${tok(usedTokens(input.context_window, rawCtx, size))}/${tok(size)})` : '';
-    out += ` ${c('33', `ctx:${ctx}%${detail}`)}`;
+    out += ` ${c(light(ctx), `ctx:${ctx}%${detail}`)}`;
   }
 
   if (existsSync(dir)) {
@@ -49,7 +50,7 @@ function render(input) {
   // Each limit in its own traffic-light colour (<50% green, <80% yellow, else red), like the subagent rows; grey was unreadable.
   for (const [label, key] of [['5h', 'five_hour'], ['7d', 'seven_day']]) {
     const used = pct(input.rate_limits?.[key]?.used_percentage);
-    if (used !== null) out += ` ${c(used < 50 ? '32' : used < 80 ? '33' : '31', `${label}:${used}%`)}`;
+    if (used !== null) out += ` ${c(light(used), `${label}:${used}%`)}`;
   }
   return out;
 }

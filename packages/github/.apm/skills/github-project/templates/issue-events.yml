@@ -4,7 +4,7 @@
 # GH_PAT is a classic PAT with the scopes `repo`, `workflow` and `project`; the GITHUB_TOKEN cannot write to a user-owned
 # project. PROJECT_TOKEN (optional, classic PAT with scope `project`) is used by the needs job; it falls back to GH_PAT.
 # pull_request_target: Dependabot and fork PRs get the secrets too; issues.yml never checks out PR code.
-name: Issue events
+name: Issues
 
 on:
   issues:
