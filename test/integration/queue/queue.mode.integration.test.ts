@@ -164,6 +164,8 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
       (...steps: string[]) =>
       (t: Tools) =>
         t.fakeQueue(steps);
+    // last iteration after a parked PBI: nothing else is selectable
+    const noneStep = 'echo "Nothing selectable: Feature #10"';
 
     beforeAll(async () => {
       root = fs.mkdtempSync(path.join(os.tmpdir(), 'queue-mode-'));
@@ -337,20 +339,21 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
       fq(
         pbiRun(11),
         `mkdir -p .agents/12; echo "Next PBI: #12 T"; echo "Gate: Approve the plan?" >> .agents/12/progress.md`,
-        doneStep
+        'echo "Epic #10 is done."'
       )
     );
-    it('stops at a Gate: line with exit 2 and records the gate text', () => {
+    it('parks a PBI at a ledger gate, runs on and ends with exit 2 even after "is done."', () => {
       const { r, t } = got(gateStop);
       expect(r.status).toBe(2);
-      expect(t.calls()).toHaveLength(2);
+      expect(t.calls()).toHaveLength(3);
       expect(t.queue().state).toBe('gate');
       expect(t.queue().pbis[1]).toMatchObject({
         number: 12,
-        outcome: 'gate',
+        outcome: 'parked',
         gate: 'Gate: Approve the plan?',
       });
-      expect(r.stdout).toContain('Approve the plan?');
+      expect(r.stdout).toContain('#12 parked - Approve the plan?');
+      expect(r.stdout).toContain('Parked in Epic #10: answer with /ruling <option> on each PBI');
     });
 
     describe('gate line in the output', () => {
@@ -358,17 +361,16 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
         reg(
           `gate-${kind}-${i}`,
           F10,
-          fq(`mkdir -p .agents/11; echo "Next PBI: #11 T"; printf '%s\\n' '${line}'`)
+          fq(`mkdir -p .agents/11; echo "Next PBI: #11 T"; printf '%s\\n' '${line}'`, noneStep)
         );
       GATE_ACCEPT.forEach((line, i) => {
         const k = gateRun(i, 'accept', line);
-        it(`accepts ${line}: exit 2, state gate, gate text recorded`, () => {
+        it(`accepts ${line}: PBI parked with question x, exit 2, gate text recorded`, () => {
           const { r, t } = got(k);
           expect(r.status).toBe(2);
-          expect(t.queue().pbis[0]).toMatchObject({ number: 11, outcome: 'gate', gate: line });
-          expect(r.stdout).toContain(
-            `Gate on Feature #10, queue stopped (answer it, then run the queue again): ${line}`
-          );
+          expect(t.queue().pbis[0]).toMatchObject({ number: 11, outcome: 'parked', gate: line });
+          expect(t.queue().parked).toEqual([{ number: 11, question: 'x' }]);
+          expect(r.stdout).toContain('#11 parked - x');
         });
       });
       GATE_REJECT.forEach((line, i) => {
@@ -394,7 +396,8 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
         'gate-ledger-only',
         F10,
         fq(
-          `mkdir -p .agents/11; echo "Next PBI: #11 T"; echo '**Gate**: ledger only' >> .agents/11/progress.md`
+          `mkdir -p .agents/11; echo "Next PBI: #11 T"; echo '**Gate**: ledger only' >> .agents/11/progress.md`,
+          noneStep
         )
       );
       it('counts a wrapped gate written only to the PBI ledger', () => {
@@ -408,6 +411,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
       t.ledger(12, 'Gate: old question', 'Phase read: complete');
       t.fakeQueue([
         'mkdir -p .agents/12; echo "Next PBI: #12 T"; echo "Gate: new question" >> .agents/12/progress.md',
+        noneStep,
       ]);
     });
     it('detects a gate that exists only in the ledger as a count increase, ignoring an old Gate: line', () => {
@@ -974,6 +978,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
         t.ghFake([defaultPr]);
         t.fakeQueue([
           `mkdir -p .agents/11; echo "Next PBI: #11 T"; ${approve}; echo "Gate: ok?" >> .agents/11/progress.md`,
+          noneStep,
         ]);
       });
       it('does not merge on a gate', () => {
