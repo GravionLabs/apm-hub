@@ -75,10 +75,12 @@ const NEEDS_REVIEW = {
 };
 
 type Label = { name: string; color?: string; description?: string };
+type Item = { number: number; status: string | null; labels: Label[][] }; // label pages, cursor `l<i>`
 type Config = {
   fields: object[][]; // pages; page i > 0 is answered for cursor `f<i>`
   views: object[][]; // cursor `v<i>`
-  items?: { number: number; status: string | null; labels: Label[][] }[]; // label pages, cursor `l<i>`
+  items?: Item[]; // one item page
+  itemPages?: Item[][]; // item pages (cursor `i<i>`), instead of items
   repos?: { name: string; labels: Label[][] }[][]; // repository pages (cursor `c<i>`), label pages per repo (cursor `l<i>`)
   labelFail?: string[]; // `<name> <repo>` of `gh label create` calls that fail
 };
@@ -104,11 +106,15 @@ const handler = (c: Config) => `(call) => {
     fields: page(C.fields, null, 'f'), views: page(C.views, null, 'v') } } };
   if (q.includes('fields(first: 50, after')) return { node: { fields: page(C.fields, v.cursor, 'f') } };
   if (q.includes('views(first: 50, after')) return { node: { views: page(C.views, v.cursor, 'v') } };
-  const items = C.items || [];
-  if (q.includes('items(first: 100')) return { node: { items: { pageInfo: { hasNextPage: false, endCursor: null },
-    nodes: items.map((it) => ({ id: 'PVTI-' + it.number, content: { __typename: 'Issue', id: 'I-' + it.number, number: it.number,
-      title: 'issue ' + it.number, state: 'OPEN', labels: page(it.labels, null, 'l') },
-      status: it.status ? { name: it.status } : null, level: { name: 'PBI' } })) } } };
+  const itemPages = C.itemPages || [C.items || []];
+  const items = itemPages.flat();
+  if (q.includes('items(first: 100')) {
+    const p = page(itemPages, v.cursor, 'i');
+    return { node: { items: { pageInfo: p.pageInfo,
+      nodes: p.nodes.map((it) => ({ id: 'PVTI-' + it.number, content: { __typename: 'Issue', id: 'I-' + it.number, number: it.number,
+        title: 'issue ' + it.number, state: 'OPEN', labels: page(it.labels, null, 'l') },
+        status: it.status ? { name: it.status } : null, level: { name: 'PBI' } })) } } };
+  }
   if (q.includes('... on Issue { labels')) {
     const it = items.find((x) => 'I-' + x.number === v.id);
     return { node: { labels: page(it.labels, v.cursor, 'l') } };
@@ -143,8 +149,8 @@ describe.skipIf(!hasPwsh || spawnSync('node', ['-v']).status !== 0 || process.pl
     });
     afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-    const run = async (c: Config, args: string[]) => {
-      const gh = createFakeGh(dir, handler(c));
+    const run = async (c: Config | string, args: string[]) => {
+      const gh = createFakeGh(dir, typeof c === 'string' ? c : handler(c));
       const r = await worker.run(['-Owner', 'o', '-Number', '1', ...args], {
         cwd: dir,
         env: gh.env(),
@@ -165,7 +171,7 @@ describe.skipIf(!hasPwsh || spawnSync('node', ['-v']).status !== 0 || process.pl
       );
       return { r, calls: gh.calls() };
     };
-    const planned = async (c: Config, sync = true) => {
+    const planned = async (c: Config | string, sync = true) => {
       const { r, calls } = await run(c, [...(sync ? ['-Sync'] : []), '-DryRun', '-Json']);
       expect(r.status, r.stderr + r.stdout).toBe(0);
       return { actions: JSON.parse(r.stdout).actions as Action[], calls };
@@ -259,6 +265,62 @@ describe.skipIf(!hasPwsh || spawnSync('node', ['-v']).status !== 0 || process.pl
           { id: 'I-7', cursor: 'l1' },
         ]);
       });
+
+      it('pairs the issue label cursor with its issue across item pages', async () => {
+        const { actions, calls } = await planned({
+          ...BASE,
+          itemPages: [
+            [{ number: 7, status: 'Todo', labels: [[{ name: 'pbi' }], [{ name: 'merged' }]] }],
+            [{ number: 8, status: 'Todo', labels: [[{ name: 'task' }], [], [{ name: 'merged' }]] }],
+          ],
+        });
+        expect(queries(calls, 'items(first: 100').map((c) => c.variables)).toEqual([
+          { id: 'P1', cursor: null },
+          { id: 'P1', cursor: 'i1' },
+        ]);
+        expect(queries(calls, '... on Issue { labels').map((c) => c.variables)).toEqual([
+          { id: 'I-7', cursor: 'l1' },
+          { id: 'I-8', cursor: 'l1' },
+          { id: 'I-8', cursor: 'l2' },
+        ]);
+        expect(
+          ofType(actions, 'SetItem').map((a) => `#${a.number} ${a.field} ${a.option}`)
+        ).toEqual(['#7 Status In release', '#8 Status In release']);
+      });
+
+      // Replies without pageInfo, with null nodes or without a nested connection end the paging instead of failing.
+      const sparse = `(call) => {
+        const q = call.query || '';
+        if (!call.query) return { rest: {} };
+        if (q.includes('subIssues')) return { node: { items: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [] } } };
+        if (q.includes('projectV2(number')) return { repositoryOwner: { __typename: 'User', projectV2: { id: 'P1',
+          fields: { nodes: [...${JSON.stringify(BASE.fields[0])}, null] }, views: { nodes: ${JSON.stringify(VIEWS)} } } } };
+        if (q.includes('items(first: 100')) return { node: { items: { pageInfo: { hasNextPage: false, endCursor: null },
+          nodes: [{ id: 'PVTI-9', content: { __typename: 'Issue', id: 'I-9', number: 9, title: 'issue 9', state: 'OPEN', labels: null },
+            status: { name: 'In release' }, level: { name: 'PBI' } }] } } };
+        if (q.includes('repositories(first')) return { node: { repositories: { nodes: [{ id: 'R-o/a', nameWithOwner: 'o/a' }, null] } } };
+        throw new Error('unexpected gh call: ' + q);
+      }`;
+
+      it('a reply without pageInfo, with a null node or without the labels connection ends the paging', async () => {
+        const { actions, calls } = await planned(sparse);
+        expect(ofType(actions, 'CreateField')).toEqual([]);
+        expect(ofType(actions, 'EnsureLabel').map((a) => `${a.repo} ${a.name}`)).toEqual([
+          'o/a planned',
+          'o/a needs-review',
+        ]);
+        expect(
+          ofType(actions, 'SetItem').map((a) => `#${a.number} ${a.field} ${a.option}`)
+        ).toEqual(['#9 Status Todo']);
+        expect(queries(calls, 'repositories(first')).toHaveLength(1);
+        const followUps = [
+          'fields(first: 50, after',
+          'views(first: 50, after',
+          '... on Repository { labels',
+          '... on Issue { labels',
+        ];
+        expect(followUps.flatMap((n) => queries(calls, n))).toEqual([]);
+      });
     });
 
     describe('executor', () => {
@@ -341,7 +403,7 @@ describe.skipIf(!hasPwsh || spawnSync('node', ['-v']).status !== 0 || process.pl
         ]);
       });
 
-      it('a failing gh label create warns, the remaining actions still run, and the run exits non-zero', async () => {
+      it('a failing gh label create is reported, the remaining actions still run, and the run exits 1', async () => {
         const { r, calls } = spawnRun(
           {
             ...twoRepos,
@@ -350,13 +412,14 @@ describe.skipIf(!hasPwsh || spawnSync('node', ['-v']).status !== 0 || process.pl
           },
           ['-Sync']
         );
-        expect(r.status).not.toBe(0);
-        expect(r.stdout + r.stderr).toMatch(
-          /WARNING: gh label create planned --repo o\/a failed: HTTP 403/
-        );
-        expect(r.stderr + r.stdout).toContain(
-          '1 label(s) could not be created; all other actions were applied.'
-        );
+        const out = r.stdout + r.stderr;
+        expect(r.status, out).toBe(1);
+        // the failing label and gh's own error are named; the other labels are not reported as failed
+        const failed = out.split('\n').filter((l) => l.includes('HTTP 403'));
+        expect(failed.length, out).toBeGreaterThan(0);
+        expect(failed.every((l) => l.includes('planned') && l.includes('o/a'))).toBe(true);
+        expect(out).not.toMatch(/needs-review[^\n]*HTTP 403/);
+        expect(out).toContain('1 label(s) could not be created; all other actions were applied.');
         expect(labelCalls(calls).map((c) => `${c.args[2]} ${c.args[4]}`)).toEqual([
           'planned o/a',
           'needs-review o/a',
