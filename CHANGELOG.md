@@ -5,7 +5,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.5.4] — 2026-10-26
+
+### Features
+- Merged blockers stop blocking; needs sync includes dependents (#662) (#666)
+
+
 ## [2.5.3] — 2026-10-26
+
+### Documentation
+- Update CHANGELOG.md for v2.5.3 [skip ci]
+
 
 ### Features
 - **delivery**: Apm-install runs apmw sanitize itself; one canonical install command (#653) (#655)
