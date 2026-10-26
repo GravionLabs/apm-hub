@@ -71,6 +71,8 @@ The `development-workflow` package was a clean rename with no alias (#178, relea
 
 Use the templates in `.github/ISSUE_TEMPLATE/` (Epic → Feature → PBI → Task, Bug). Children are linked as native GitHub sub-issues; see `packages/github/.apm/skills/github-issue/references/sub-issues.md`.
 
+The title of an issue starts with its level: `[Epic]`, `[Feature]`, `[PBI]`, `[Task]` or `[Bug]`, then the summary (`[PBI] feat: short summary`). The shared `issues.yml` workflow of `GravionLabs/ci` sets the prefix from the level label.
+
 ## Releases
 
 Releases are cut from a single rolling branch, `release/next`. GitVersion increments the minor version by default on that branch (`GitVersion.yml`).

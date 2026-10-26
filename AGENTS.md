@@ -64,6 +64,10 @@ Every language package provides `<lang>-implementation` (conventions + `## Revie
 - An agent is justified only by a model per role, a host-enforced tool set, an output contract or a primary-agent entry point. Everything procedural is a skill.
 - After changing an agent, copy it to `apmw/tests/fixtures/agents/` and regenerate the goldens there.
 
+## Issues
+
+The title of an issue starts with its level: `[Epic]`, `[Feature]`, `[PBI]`, `[Task]` or `[Bug]`, then the summary (`[PBI] feat: short summary`). The shared `issues.yml` workflow of `GravionLabs/ci` sets the prefix from the level label.
+
 ## Tests
 
 - Code in `src/`: unit test next to it as `<name>.test.ts`.
