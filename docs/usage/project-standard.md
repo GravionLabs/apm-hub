@@ -36,6 +36,18 @@ One reproducible GitHub Project (v2) layout for all GravionLabs repositories. `p
 
 The project comes from `-Owner`/`-Number`, else `.agents/project.json` (`{"owner": "...", "number": 17}`), else `project-url:` in `.github/workflows/add-to-project.yml`. A failing Needs sync prints one warning; the run still exits 0.
 
+`add-to-project.yml` syncs a new issue right away and `release-pr.yml` syncs the issues it sets to `In release`; `project-needs.yml` covers label, close and pull request events and the hourly schedule.
+
+### Needs sync in other repositories
+
+Other repositories of the project keep Needs current with the template `packages/github/.apm/skills/github-project/templates/project-needs.yml`:
+
+1. Copy it to `.github/workflows/project-needs.yml`.
+2. Replace `__OWNER__` (project owner login), `__PROJECT_NUMBER__` (project number) and `__TOKEN__` (name of the secret).
+3. Store a classic PAT with scope `project` as that secret; a fine-grained token or the `GITHUB_TOKEN` cannot write a user-owned project. Without the secret the job warns and stays green.
+
+The workflow fetches `Sync-ProjectNeeds.ps1` from `GravionLabs/apm-hub@main` by sparse checkout and never runs pull request code.
+
 ## Views
 
 Views are matched by name. Missing ones are created, existing ones are never touched. Sorting cannot be set through the API.

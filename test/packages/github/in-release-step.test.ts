@@ -35,6 +35,7 @@ case "$all" in
     [ "$FAIL" = items ] && exit 1
     [ "$FAIL" = scope ] && { echo "gh: Resource not accessible by personal access token" >&2; exit 1; }
     issue=$(grep -oE 'issue=[0-9]+' <<<"$all" | head -1 | cut -d= -f2)
+    [ -n "$SCOPE_ISSUE" ] && [ "$issue" = "$SCOPE_ISSUE" ] && { echo "gh: Resource not accessible by personal access token" >&2; exit 1; }
     var="STATUS_$issue"; status="\${!var-__none}"
     opts='[{"id":"o1","name":"Todo"},{"id":"o2","name":"In release"}]'
     [ -n "$NO_OPTION" ] && opts='[{"id":"o1","name":"Todo"}]'
@@ -56,6 +57,7 @@ function runStep(env: Record<string, string> = {}) {
   dirs.push(dir);
   const log = path.join(dir, 'log');
   const calls = path.join(dir, 'calls');
+  const output = path.join(dir, 'output');
   fs.writeFileSync(path.join(dir, 'gh'), FAKE_GH, { mode: 0o755 });
   const r = spawnSync('bash', ['-c', run], {
     encoding: 'utf-8',
@@ -63,6 +65,7 @@ function runStep(env: Record<string, string> = {}) {
       PATH: `${dir}:${process.env.PATH}`,
       GH_LOG: log,
       GH_CALLS: calls,
+      GITHUB_OUTPUT: output,
       GH_TOKEN: 't',
       GITHUB_REPOSITORY: 'o/r',
       GITHUB_SHA: 'abc',
@@ -72,7 +75,10 @@ function runStep(env: Record<string, string> = {}) {
   });
   const lines = (f: string) =>
     fs.existsSync(f) ? fs.readFileSync(f, 'utf-8').trim().split('\n') : [];
-  return { ...r, mutations: lines(log), calls: lines(calls) };
+  const issues = lines(output)
+    .filter((l) => l.startsWith('issues='))
+    .map((l) => l.slice('issues='.length));
+  return { ...r, mutations: lines(log), calls: lines(calls), issues };
 }
 
 const items = (r: ReturnType<typeof runStep>) =>
@@ -84,6 +90,36 @@ describe('In release status step behavior (#489)', () => {
     expect(r.status).toBe(0);
     expect(r.stdout).toMatch(/::warning::no token with scope project/);
     expect(r.calls).toEqual([]);
+    expect(r.issues).toEqual([]);
+  });
+
+  it('writes issues= with only the issues set to In release (#626)', () => {
+    const r = runStep({
+      CLOSING: '[11, 12, 14]',
+      STATUS_11: 'In progress',
+      STATUS_12: 'Done',
+      STATUS_14: 'In release',
+    });
+    expect(r.issues).toEqual(['11']);
+    const none = runStep({ CLOSING: '[12]', STATUS_12: 'Done' });
+    expect(none.issues).toEqual(['']);
+  });
+
+  it('writes an empty issues= when the project scope fails on the first issue (#626)', () => {
+    const r = runStep({ CLOSING: '[11]', STATUS_11: 'Todo', FAIL: 'scope' });
+    expect(r.issues).toEqual(['']);
+  });
+
+  it('keeps the issues already set when a later issue hits the project-scope failure (#626)', () => {
+    const r = runStep({
+      CLOSING: '[11, 12]',
+      STATUS_11: 'Todo',
+      STATUS_12: 'Todo',
+      SCOPE_ISSUE: '12',
+    });
+    expect(r.status).toBe(0);
+    expect(items(r)).toEqual(['i11']);
+    expect(r.issues).toEqual(['11']);
   });
 
   it('sets closed, keyword-listed and Refs-only issues, skips Done and word-glued keywords', () => {

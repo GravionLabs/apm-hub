@@ -26,8 +26,10 @@ describe.each(Object.entries(files))('merged-label %s (#358)', (_name, rel) => {
     expect(steps.map((s) => s.uses)).toEqual([
       'GravionLabs/ci/versioning/release-pr@main',
       'GravionLabs/ci/versioning/mark-merged-issues@main',
+      'actions/checkout@11d5960a326750d5838078e36cf38b85af677262', // pinned, for the Needs sync (#626)
     ]);
-    for (const s of steps) expect(s.with.token).toBe('${{ secrets.GH_PAT || github.token }}');
+    for (const s of steps.filter((x) => x.uses?.startsWith('GravionLabs/ci/')))
+      expect(s.with.token).toBe('${{ secrets.GH_PAT || github.token }}');
   });
 });
 
@@ -60,6 +62,23 @@ describe.each(Object.entries(files))('In release status step %s (#489)', (_name,
   it('runs after earlier failures, with pipefail', () => {
     expect(step.if).toBe('${{ !cancelled() }}');
     expect(step.run).toMatch(/^set -o pipefail$/m);
+  });
+});
+
+describe.each(Object.entries(files))('Needs sync step %s (#626)', (_name, rel) => {
+  const wf = parse(fs.readFileSync(path.join(root, rel), 'utf-8'));
+  const all = wf.jobs['release-pr'].steps as {
+    id?: string;
+    name?: string;
+    if?: string;
+    'continue-on-error'?: boolean;
+  }[];
+  const idx = all.findIndex((s) => s.name === 'Sync Needs of In release issues');
+
+  it('follows in-release, never fails the job and only runs with issues set', () => {
+    expect(idx).toBeGreaterThan(all.findIndex((s) => s.id === 'in-release'));
+    expect(all[idx]['continue-on-error']).toBe(true);
+    expect(all[idx].if).toContain('steps.in-release.outputs.issues');
   });
 });
 

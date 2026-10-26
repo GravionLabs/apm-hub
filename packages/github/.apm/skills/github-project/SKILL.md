@@ -43,6 +43,8 @@ Always run `-DryRun` first, show the actions to the user, then run without it. `
 
 Finish by telling the user the printed manual UI steps (no API): "Show hierarchy" in Hierarchy, sort Recently closed by Closed descending, enable the workflow "Item closed → Done".
 
+Other repositories of the project copy `templates/project-needs.yml` (placeholders `__OWNER__`, `__PROJECT_NUMBER__`, `__TOKEN__`) to `.github/workflows/` to keep Needs current.
+
 ## sprints
 
 One project for all repositories, one weekly sprint for all of them. Titles are ISO weeks `YYYY-Www` (`2026-W43`; the ISO year, so 2027-01-01 is `2026-W53`). `-Sprints` creates 12 iterations from this week (Monday start, 7 days) and the views `Sprint` (board, `sprint:@current`, no Epic/Feature/Task, rows per repository) and `Sprint next` (same for `sprint:@next`). Pick PBIs for `Set-Sprint.ps1` from `Backlog` or `Ready for loop`. An existing field or view is never touched; more iterations are added in the project settings.
