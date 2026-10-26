@@ -57,7 +57,7 @@ before a non-default `-Dir`. Details: [launcher and shell function](references/s
 |:--|:--|
 | 0 | every issue done or skipped (queue mode: `Feature #<nr> is done`; `-Status`: the status file was written) |
 | 1 | a run failed (stops, unless `-ContinueOnError`), a harness binary or adapter is missing, or `-Status` wrote no fresh file |
-| 2 | a gate: the orchestrator needs a decision; the question is printed and the queue stops (`-Status`: also a gate) |
+| 2 | a gate: the orchestrator needs a decision; the question is printed and the queue stops (`-Status`: also a gate; queue mode: at the end, one or more parked PBIs) |
 | 3 | queue mode only: `Nothing selectable`, every open PBI is held by blockers or decisions (state `blocked`) |
 
 ## The ledger is the truth, not the exit code
@@ -74,8 +74,8 @@ The orchestrator appends `Ledger complete.` only after a successful run, never a
 ## Feature and Epic queues
 
 `-Feature <nr>` / `-Epic <nr>` loops `next <nr>` in a fresh process per iteration; selection stays in the
-orchestrator (`github-issue/references/next-selection.md`). It stops on `Feature #<nr> is done`, a gate (exit 2), a
-failure (exit 1), `Nothing selectable` (exit 3) or when the same PBI is selected twice in a row; `-ContinueOnError`
+orchestrator (`github-issue/references/next-selection.md`). A gate of a selected PBI parks it (`github-issue/scripts/Set-ParkedGate.ps1`: `needs-decision` label, comment, lease freed, attention; `PARK_SCRIPT` overrides; a failure is only the entry note), lists it under `parked` in the JSON before the next child and the queue goes on; at the end `#<n> parked - <question>` per PBI and exit 2 (instead of 0 or 3; a failure, exit 1, wins): answer with `/ruling <option>` on each PBI, then rerun.
+It stops on `Feature #<nr> is done`, a gate without a selected PBI (exit 2), a failure (exit 1), `Nothing selectable` (exit 3), the same PBI selected twice in a row or a parked PBI selected again (exit 1, label missing?); `-ContinueOnError`
 continues after a failed PBI only if `next` then picks a different one. Epics end on `Epic #<nr> is done.`. A complete
 PBI ledger wins over a `Gate:` line, as in list mode. State is cached in `<state>/queue-<nr>.json`
 (GitHub stays the source of truth), output in `<state>/queue-<nr>.log`. It does not use the orchestrator `loop` mode.
@@ -86,7 +86,7 @@ belong to the PBI (`/<pbi>-`), its base must be `release/*` and its head must no
 `gh pr merge --squash --match-head-commit <sha>`. Fork PRs, PRs that are not mergeable/clean (UNKNOWN is polled 3 times,
 `QUEUE_POLL_SECONDS`), failing or missing checks ("no checks reported") and a head that differs from the local branch tip (or,
 without a local branch, from the tip on origin; unverifiable also skips) are skipped with a note; set branch protection with required checks.
-A `Gate:` line in the output stops the queue even without a new ledger gate. Never after a gate, a block or a failure.
+A `Gate:` line in the output parks the PBI (no PBI selected: stops the queue) even without a new ledger gate. Never after a gate, a block or a failure.
 
 ## Rules
 

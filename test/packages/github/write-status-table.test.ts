@@ -477,6 +477,54 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
       expect(out()).toContain('#5 merged | Release review | M\n');
     });
 
+    describe('parked gates (#579)', () => {
+      const ledger = (nr: number, lines: string[]) => {
+        fs.mkdirSync(path.join(state(), String(nr)), { recursive: true });
+        fs.writeFileSync(path.join(state(), String(nr), 'progress.md'), lines.join('\n') + '\n');
+      };
+      const dec = (n: number) => item(n, { labels: ['needs-decision'] });
+
+      it('turns needs-decision into parked (<question>) for an unanswered Gate: and keeps Decision', async () => {
+        ledger(2, ['Phase plan: complete', '2026-10-26T10:00:00Z Gate: Which db?']);
+        const r = await run('#2 needs-decision Decide me\n', [dec(2)]);
+        expect(r.status, r.stderr).toBe(0);
+        expect(out()).toBe(
+          '#2 parked (Which db?) | Decision | Decide me\nNeeds me: 0 planning, 1 decisions, 0 release review\n'
+        );
+      });
+
+      it('keeps needs-decision when a Ruling: follows, or with no ledger', async () => {
+        ledger(2, ['Gate: Which db?', 'Ruling: use sqlite']);
+        const r = await run('#2 needs-decision A\n#3 needs-decision B\n', [dec(2), dec(3)]);
+        expect(r.status, r.stderr).toBe(0);
+        expect(out()).toContain('#2 needs-decision | Decision | A\n');
+        expect(out()).toContain('#3 needs-decision | Decision | B\n');
+      });
+
+      it('uses the last Gate: and shows a newer Gate: after a Ruling:', async () => {
+        ledger(2, ['Gate: first', 'Ruling: x', 'Gate: second']);
+        await run('#2 needs-decision A\n', [dec(2)]);
+        expect(out()).toContain('#2 parked (second) | Decision | A\n');
+      });
+
+      it('strips control characters, collapses to one line, cuts at 80 chars and replaces the closing parenthesis', async () => {
+        ledger(2, ['Gate: a\u001b[31mb\u0007c\t\td (x) ' + 'z'.repeat(100)]);
+        await run('#2 needs-decision A\n', [dec(2)]);
+        const row = out().split('\n')[0];
+        const q = /^#2 parked \((.*)\) \| Decision \| A$/.exec(row)?.[1] ?? '';
+        expect(q.startsWith('ab c d (x] zzz')).toBe(true);
+        expect(q.length).toBe(80);
+      });
+
+      it('ignores a symlinked ledger', async () => {
+        fs.mkdirSync(path.join(state(), '2'), { recursive: true });
+        fs.writeFileSync(path.join(dir, 'real.md'), 'Gate: leak\n');
+        fs.symlinkSync(path.join(dir, 'real.md'), path.join(state(), '2', 'progress.md'));
+        await run('#2 needs-decision A\n', [dec(2)]);
+        expect(out()).toContain('#2 needs-decision | Decision | A\n');
+      });
+    });
+
     it('reads GitHub with GET calls only and never writes the project', async () => {
       const bin = path.join(dir, 'bin');
       fs.mkdirSync(bin);

@@ -95,7 +95,7 @@ describe('releasing the checkout (#466)', () => {
       /`Loop: PBI #<nr> done — <pr>`, `Ledger complete\.` in the PBI's ledger, then `Exit-Checkout\.ps1 -Issue <pbi>`/
     );
     expect(loop).toMatch(
-      /A gate stop, `runner blocked` and `runner failed` keep the lease and print `Checkout kept: <path>`/
+      /`runner blocked` and `runner failed` keep the lease and print `Checkout kept: <path>`/
     );
   });
 });

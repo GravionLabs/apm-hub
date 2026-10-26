@@ -71,17 +71,23 @@ describe('loop-mode reference: parallel runners', () => {
     expect(q).toMatch(/waits at the end of the queue/);
   });
 
-  it('stops headless at the first gate after the other runners finished, keeping every Gate: in its own ledger', () => {
+  it('parks only the gated runner headless: no stop, no SendMessage to the others, slot refilled, cap counts done only', () => {
     const h = bullet('Headless');
+    expect(h).toMatch(/parks only that runner's PBI/);
     expect(h).toMatch(
-      /first `GATE`[^.]*stops the loop: no new runner, no slot filled, nothing resumed/
+      /`Set-ParkedGate\.ps1` with the reply's `question`, `options` and `checkout`/
     );
-    expect(h).toMatch(/Every other live runner gets `SendMessage`/);
-    expect(h).toMatch(/Each `Gate:` line stays in the ledger of its own PBI, without `Ruling:`/);
-    expect(h.indexOf('After the last runner returned')).toBeGreaterThan(
-      h.indexOf('Every other live runner')
-    );
-    expect(h).toContain('Loop: stopped — headless gate: <question of the first gate>');
+    expect(h).toMatch(/the other runners are not stopped and get no `SendMessage`/);
+    expect(h).toMatch(/free slot is filled like after `DONE`/);
+    expect(h).toMatch(/The cap counts only `done` PBIs/);
+    expect(h).not.toMatch(/Every other live runner gets/);
+    expect(h).not.toContain('Loop: stopped — headless gate');
+  });
+
+  it('keeps the finish-and-stop message for BLOCKED, FAILED and user stop', () => {
+    const b = bullet('`BLOCKED`, `FAILED`, user stop');
+    expect(b).toMatch(/every other live runner gets `SendMessage`/);
+    expect(b).toMatch(/nothing resumed/);
   });
 
   it('fills a free slot after a DONE: done line, release, reselect without live runners, until cap or warning', () => {
@@ -106,7 +112,7 @@ describe('loop-mode reference: parallel runners', () => {
     expect(s).toMatch(/exactly once, after the last runner returned/);
     expect(s).toContain('-Unbind');
     expect(s).toMatch(/never interleave inside a line/);
-    expect(bullet('`BLOCKED`, `FAILED`, user stop')).toMatch(/like the headless gate/);
+    expect(bullet('`BLOCKED`, `FAILED`, user stop')).toMatch(/reasons `runner blocked`/);
   });
 
   it('documents the other-clients line', () => {
@@ -131,10 +137,10 @@ describe('docs and status', () => {
 
   it('adds the runner state from the leases to status.md before the ledger-based in progress', () => {
     expect(status).toMatch(
-      /5\. `in progress \(runner\)`: the PBI holds a live checkout lease \(`<state>\/leases\/\*\.json`, `heartbeat` within 120 minutes/
+      /6\. `in progress \(runner\)`: the PBI holds a live checkout lease \(`<state>\/leases\/\*\.json`, `heartbeat` within 120 minutes/
     );
     expect(status.indexOf('`in progress (runner)`')).toBeLessThan(
-      status.indexOf('6. `in progress (<detail>)`')
+      status.indexOf('7. `in progress (<detail>)`')
     );
     expect(status).toContain('Write-StatusTable.ps1 -Live');
   });

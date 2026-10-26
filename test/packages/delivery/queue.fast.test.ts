@@ -533,6 +533,19 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       );
     });
 
+    it('documents parked gates of the Feature/Epic queue in SKILL.md and the script help', () => {
+      const skill = fs.readFileSync(path.resolve(path.dirname(SCRIPT), '..', 'SKILL.md'), 'utf-8');
+      const help = fs.readFileSync(SCRIPT, 'utf-8');
+      expect(skill).toContain(
+        'A gate of a selected PBI parks it (`github-issue/scripts/Set-ParkedGate.ps1`'
+      );
+      expect(skill).toContain('a parked PBI selected again (exit 1');
+      expect(help).toContain('-> the PBI is parked and the queue continues');
+      expect(help).toContain(
+        "'Parked in <kind> #<nr>: answer with /ruling <option> on each PBI, then run the queue again'"
+      );
+    });
+
     it('accepts the bare all policy and dimension lists', () => {
       expect(R.advAll.status).toBe(0);
       expect(R.advAll.stdout).toContain('-p "--fix-advisories all full 12"');
