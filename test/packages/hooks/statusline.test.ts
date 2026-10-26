@@ -196,6 +196,24 @@ describe('statusline.mjs', () => {
     expect(r.stdout).not.toContain('\x1b[90m');
   });
 
+  it.each([
+    [0, '32'],
+    [49, '32'],
+    [50, '33'],
+    [79, '33'],
+    [80, '31'],
+    [100, '31'],
+  ])('colours %i% context with code %s', (used, code) => {
+    const r = run(
+      STATUS,
+      JSON.stringify({
+        workspace: { current_dir: tmp },
+        context_window: { used_percentage: used, context_window_size: 200000 },
+      })
+    );
+    expect(r.stdout).toContain(`\x1b[${code}mctx:${used}%`);
+  });
+
   it('shows only the 7d limit when 5h is missing', () => {
     const out = strip(
       run(
