@@ -5,10 +5,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.5.3] — 2026-10-26
+
+### Features
+- **delivery**: Apm-install runs apmw sanitize itself; one canonical install command (#653) (#655)
+- **hooks**: SessionStart hook sanitizes unsanitized agent files (#652) (#654)
+
+
 ## [2.5.2] — 2026-10-25
 
 ### Bug Fixes
 - **github**: Check options before name in Sync-ProjectNeeds field lookup
+
+
+### Documentation
+- Update CHANGELOG.md for v2.5.2 [skip ci]
 
 
 ## [2.5.1] — 2026-10-25
