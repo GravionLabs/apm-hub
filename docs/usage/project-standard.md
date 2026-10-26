@@ -36,7 +36,7 @@ One reproducible GitHub Project (v2) layout for all GravionLabs repositories. `p
 
 The project comes from `-Owner`/`-Number`, else `.agents/project.json` (`{"owner": "...", "number": 17}`), else `project-url:` in `.github/workflows/add-to-project.yml`. A failing Needs sync prints one warning; the run still exits 0.
 
-`add-to-project.yml` syncs a new issue right away and `release-pr.yml` syncs the issues it sets to `In release`; `project-needs.yml` covers label, close and pull request events and the hourly schedule.
+`issue-events.yml` (reusable `issues.yml` of GravionLabs/ci) adds new issues to the project and syncs them right away and `release-branch.yml` (reusable `release-branch.yml`) syncs the issues it sets to `In release`; `project-needs.yml` covers label, close and pull request events and the hourly schedule.
 
 ### Needs sync in other repositories
 

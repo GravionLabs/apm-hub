@@ -4,88 +4,63 @@ import { parse } from 'yaml';
 
 const root = path.resolve(__dirname, '../../..');
 const files = {
-  workflow: '.github/workflows/release-pr.yml',
+  workflow: '.github/workflows/release-branch.yml',
   template: 'packages/github/.apm/skills/github-release/templates/release-branch.yml',
 };
 
-describe.each(Object.entries(files))('merged-label %s (#358)', (_name, rel) => {
-  const text = fs.readFileSync(path.join(root, rel), 'utf-8');
-  const wf = parse(text);
-  const allSteps = wf.jobs['release-pr'].steps as { uses?: string; with: { token: string } }[];
-  const steps = allSteps.filter((s) => s.uses);
+describe.each(Object.entries(files))('release-branch caller %s (#358)', (_name, rel) => {
+  const wf = parse(fs.readFileSync(path.join(root, rel), 'utf-8'));
+  const job = wf.jobs['release-branch'];
 
   it('is valid YAML triggered by release branches', () => {
     expect(wf.on.push.branches).toEqual(['release/**']);
   });
 
-  it('grants issues: write and keeps the existing permissions', () => {
-    expect(wf.permissions).toEqual({ contents: 'read', issues: 'write', 'pull-requests': 'write' });
+  it('has no permissions at the top and grants the job what the reusable workflow requests', () => {
+    expect(wf.permissions).toEqual({});
+    expect(job.permissions).toEqual({
+      contents: 'read',
+      issues: 'write',
+      'pull-requests': 'write',
+    });
   });
 
-  it('runs release-pr then mark-merged-issues with the PAT fallback', () => {
-    expect(steps.map((s) => s.uses)).toEqual([
-      'GravionLabs/ci/versioning/release-pr@main',
-      'GravionLabs/ci/versioning/mark-merged-issues@main',
-      'actions/checkout@11d5960a326750d5838078e36cf38b85af677262', // pinned, for the Needs sync (#626)
-    ]);
-    for (const s of steps.filter((x) => x.uses?.startsWith('GravionLabs/ci/')))
-      expect(s.with.token).toBe('${{ secrets.GH_PAT || github.token }}');
-  });
-});
-
-describe.each(Object.entries(files))('In release status step %s (#489)', (_name, rel) => {
-  const wf = parse(fs.readFileSync(path.join(root, rel), 'utf-8'));
-  const all = wf.jobs['release-pr'].steps as {
-    uses?: string;
-    id?: string;
-    name?: string;
-    run?: string;
-    env?: Record<string, string>;
-    if?: string;
-    'continue-on-error'?: boolean;
-  }[];
-  const idx = all.findIndex((s) => s.id === 'in-release');
-  const step = all[idx];
-
-  it('is a run step after mark-merged-issues', () => {
-    expect(idx).toBeGreaterThan(-1);
-    expect(all[idx - 1].uses).toBe('GravionLabs/ci/versioning/mark-merged-issues@main');
-    expect(step.uses).toBeUndefined();
-    expect(step.name).toBe('Set project status In release');
-  });
-
-  it('never fails the job and reads PROJECT_TOKEN || GH_PAT', () => {
-    expect(step['continue-on-error']).toBe(true);
-    expect(step.env?.GH_TOKEN).toBe('${{ secrets.PROJECT_TOKEN || secrets.GH_PAT }}');
-  });
-
-  it('runs after earlier failures, with pipefail', () => {
-    expect(step.if).toBe('${{ !cancelled() }}');
-    expect(step.run).toMatch(/^set -o pipefail$/m);
+  it('calls the reusable release-branch.yml of GravionLabs/ci with explicit secrets and a project', () => {
+    expect(job.uses).toBe('GravionLabs/ci/.github/workflows/release-branch.yml@main');
+    expect(job.with['project-url']).toMatch(/^https:\/\/github\.com\/users\//);
+    expect(job.secrets).toEqual({
+      GH_PAT: '${{ secrets.GH_PAT }}',
+      PROJECT_TOKEN: '${{ secrets.PROJECT_TOKEN }}',
+    });
+    expect(job.steps).toBeUndefined();
   });
 });
 
-describe.each(Object.entries(files))('Needs sync step %s (#626)', (_name, rel) => {
-  const wf = parse(fs.readFileSync(path.join(root, rel), 'utf-8'));
-  const all = wf.jobs['release-pr'].steps as {
-    id?: string;
-    name?: string;
-    if?: string;
-    'continue-on-error'?: boolean;
-  }[];
-  const idx = all.findIndex((s) => s.name === 'Sync Needs of In release issues');
+describe('issue-events.yml (#358)', () => {
+  const wf = parse(fs.readFileSync(path.join(root, '.github/workflows/issue-events.yml'), 'utf-8'));
+  const job = wf.jobs.issues;
 
-  it('follows in-release, never fails the job and only runs with issues set', () => {
-    expect(idx).toBeGreaterThan(all.findIndex((s) => s.id === 'in-release'));
-    expect(all[idx]['continue-on-error']).toBe(true);
-    expect(all[idx].if).toContain('steps.in-release.outputs.issues');
+  it('calls issues.yml of GravionLabs/ci with the Needs sync and explicit secrets', () => {
+    expect(job.uses).toBe('GravionLabs/ci/.github/workflows/issues.yml@main');
+    expect(job.with.needs).toBe(true);
+    expect(job.permissions).toEqual({ issues: 'write' });
+    expect(job.secrets).toEqual({
+      GH_PAT: '${{ secrets.GH_PAT }}',
+      PROJECT_TOKEN: '${{ secrets.PROJECT_TOKEN }}',
+    });
   });
 });
 
-describe('release workflow and template stay identical (#489)', () => {
-  it('are byte-identical', () => {
-    const read = (f: string) => fs.readFileSync(path.join(root, f), 'utf-8').replace(/\r\n/g, '\n');
-    expect(read(files.workflow)).toBe(read(files.template));
+describe('release workflow and template call the same reusable workflow (#489)', () => {
+  it('differ only in the project URL, the comments and the project-url placeholder', () => {
+    const [w, t] = [files.workflow, files.template].map((f) =>
+      parse(fs.readFileSync(path.join(root, f), 'utf-8'))
+    );
+    const strip = (x: { jobs: Record<string, { with?: unknown }> }) => ({
+      ...x,
+      jobs: { 'release-branch': { ...x.jobs['release-branch'], with: undefined } },
+    });
+    expect(strip(w)).toEqual(strip(t));
   });
 });
 
@@ -121,7 +96,7 @@ describe('github-release skill (#358)', () => {
       path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'),
       'utf-8'
     );
-    expect(skill).toContain('mark-merged-issues');
+    expect(skill).toContain('ci/.github/workflows/release-branch.yml');
     expect(skill).toContain('never silently');
     expect(
       fs.existsSync(

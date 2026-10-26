@@ -84,13 +84,6 @@ type SyncStep = Step & { name?: string; if?: string; 'continue-on-error'?: boole
 
 describe.each([
   ['project-needs.yml', path.join(wfDir, 'project-needs.yml'), 'sync-needs', 'Sync Needs'],
-  ['add-to-project.yml', path.join(wfDir, 'add-to-project.yml'), 'add-to-project', 'Sync Needs'],
-  [
-    'release-pr.yml',
-    path.join(wfDir, 'release-pr.yml'),
-    'release-pr',
-    'Sync Needs of In release issues',
-  ],
 ])('Needs sync wiring in %s (#626)', (_name, file, job, stepName) => {
   const w = parse(fs.readFileSync(file, 'utf-8'));
   const all: SyncStep[] = w.jobs[job].steps;
@@ -121,46 +114,6 @@ describe.each([
       if (s.uses!.startsWith('GravionLabs/ci/')) expect(s.uses).toMatch(/@main$/);
       else expect(s.uses).toMatch(/@[0-9a-f]{40}( |$)/);
     }
-  });
-});
-
-describe('add-to-project.yml Needs sync (#626)', () => {
-  const w = parse(fs.readFileSync(path.join(wfDir, 'add-to-project.yml'), 'utf-8'));
-  const all: SyncStep[] = w.jobs['add-to-project'].steps;
-  const idx = all.findIndex((s) => s.name === 'Sync Needs');
-
-  it('syncs after actions/add-to-project, on issue events only, without failing the job', () => {
-    expect(all.findIndex((s) => s.uses?.startsWith('actions/add-to-project@'))).toBeLessThan(idx);
-    expect(all[idx].if).toBe("github.event_name == 'issues'");
-    // the checkout (default branch, never PR code) carries the same gate as the step that needs it
-    const co = all.find((s) => s.uses?.startsWith('actions/checkout@'))!;
-    expect(all.indexOf(co)).toBeLessThan(idx);
-    expect(co.if).toBe("github.event_name == 'issues'");
-    expect(all[idx]['continue-on-error']).toBe(true);
-    expect(all[idx].env?.ISSUE_NUMBER).toBe('${{ github.event.issue.number }}');
-  });
-
-  it('reads contents only', () => {
-    expect(w.permissions).toEqual({ contents: 'read' });
-  });
-});
-
-describe('release-pr.yml Needs sync (#626)', () => {
-  const w = parse(fs.readFileSync(path.join(wfDir, 'release-pr.yml'), 'utf-8'));
-  const all: SyncStep[] = w.jobs['release-pr'].steps;
-  const step = all.find((s) => s.name === 'Sync Needs of In release issues')!;
-
-  it('skips without the script so the copied template is a no-op', () => {
-    expect(step.run).toMatch(/if \(-not \(Test-Path \$script\)\) \{\s*Write-Host '::notice::/);
-    const co = all.find((s) => s.uses?.startsWith('actions/checkout@'))!;
-    expect(all.indexOf(co)).toBeLessThan(all.indexOf(step));
-    expect(co.if).toBe("${{ !cancelled() && steps.in-release.outputs.issues != '' }}");
-    expect(step.if).toBe(co.if);
-    expect(step.run).toContain("Issue = ($env:ISSUES -split '\\s+' | Where-Object { $_ })");
-  });
-
-  it('receives the issues set by the In release step', () => {
-    expect(step.env?.ISSUES).toBe('${{ steps.in-release.outputs.issues }}');
   });
 });
 
