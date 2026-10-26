@@ -46,7 +46,7 @@ Written to `<state>/<issue>/plan.json` by the planning step, read by the primary
 | `level` | `feature` (from epic), `pbi` (from feature), `task` (from pbi, bug, description) |
 | `depth` | `quick`, `standard`, `deep` (exploration budget only) |
 | `items[].id` | Unique plan id (`p1`, `p2`, …) |
-| `items[].title` | Conventional per level: `Feature: …`, `feat: …` / `fix: …`, `chore: …` |
+| `items[].title` | Summary without level prefix: capability for `feature`, `feat: …` / `fix: …` for `pbi`, `chore: …` for `task`; publish adds `[Feature] `, `[PBI] ` or `[Task] ` by `level` |
 | `items[].body` | Issue body; for levels `feature` and `pbi` the first line is `Parent Epic: #N` / `Parent Feature: #N` (the parent number, as in `parent_issue`) followed by the sections of the matching issue template (see the `github-issue` skill). For `task`, the Task issue body (Parent PBI line, or `Parent Bug: #<bug>` for a Bug parent; Overview, Implementation Notes, agent-ready block with Context, Depends on, Files, Done when; Done when names the interface(s) under test). Optional `## Invariants` section for async/stateful items (`invariants.md`): before `## Definition of Done` for `pbi`, before the agent-ready block for `task` |
 | `items[].size` | `S`, `M`, `L` (see `slicing.md`) |
 | `items[].tier` | `fast`, `standard`, `strong`, chosen per `references/model-policy.md` in `github-issue`; the item body states `Tier: <tier> — <reason>`. Migration: a legacy `model` maps `haiku` to `fast`, `sonnet` to `standard`, `inherit` to `strong`; readers apply the same mapping to existing plans, new plans carry only `tier` |
