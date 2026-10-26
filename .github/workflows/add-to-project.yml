@@ -2,7 +2,9 @@
 # GH_PAT is a classic PAT with the scopes `repo`, `workflow` and `project` (`workflow` for ci.yml and release-pr.yml, which
 # push workflow files). It must be classic: the GITHUB_TOKEN cannot write to a user-owned project and fine-grained tokens
 # have no Projects permission for user accounts (only for organizations), so they fail with "Resource not accessible".
-# pull_request_target: Dependabot and fork PRs get the secret too; the job never checks out PR code.
+# pull_request_target: Dependabot and fork PRs get the secret too; the job never checks out PR code (the checkout
+# below is the default branch, only for Sync-ProjectNeeds.ps1). After adding an issue the job syncs its Needs field
+# (PROJECT_TOKEN wins over GH_PAT; no token: a warning); PR events are covered by project-needs.yml.
 name: Add to project
 
 on:
@@ -11,7 +13,8 @@ on:
   pull_request_target:
     types: [opened, reopened]
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   add-to-project:
@@ -21,3 +24,23 @@ jobs:
         with:
           project-url: https://github.com/users/GravionLabs/projects/17
           github-token: ${{ secrets.GH_PAT }}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: github.event_name == 'issues'
+      - name: Sync Needs
+        if: github.event_name == 'issues'
+        continue-on-error: true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN || secrets.GH_PAT }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          if (-not $env:GH_TOKEN) {
+            Write-Host '::warning::PROJECT_TOKEN and GH_PAT are empty: Needs sync skipped'
+            exit 0
+          }
+          $script = 'packages/github/.apm/skills/github-project/scripts/Sync-ProjectNeeds.ps1'
+          # Hashtable splat: an array would pass '-Repo' positionally (into -Owner).
+          $syncArgs = @{ Repo = $env:GH_REPO; Issue = $env:ISSUE_NUMBER; IncludeParents = $true }
+          & $script @syncArgs
+          exit $LASTEXITCODE

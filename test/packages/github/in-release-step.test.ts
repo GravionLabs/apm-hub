@@ -56,6 +56,7 @@ function runStep(env: Record<string, string> = {}) {
   dirs.push(dir);
   const log = path.join(dir, 'log');
   const calls = path.join(dir, 'calls');
+  const output = path.join(dir, 'output');
   fs.writeFileSync(path.join(dir, 'gh'), FAKE_GH, { mode: 0o755 });
   const r = spawnSync('bash', ['-c', run], {
     encoding: 'utf-8',
@@ -63,6 +64,7 @@ function runStep(env: Record<string, string> = {}) {
       PATH: `${dir}:${process.env.PATH}`,
       GH_LOG: log,
       GH_CALLS: calls,
+      GITHUB_OUTPUT: output,
       GH_TOKEN: 't',
       GITHUB_REPOSITORY: 'o/r',
       GITHUB_SHA: 'abc',
@@ -72,7 +74,10 @@ function runStep(env: Record<string, string> = {}) {
   });
   const lines = (f: string) =>
     fs.existsSync(f) ? fs.readFileSync(f, 'utf-8').trim().split('\n') : [];
-  return { ...r, mutations: lines(log), calls: lines(calls) };
+  const issues = lines(output)
+    .filter((l) => l.startsWith('issues='))
+    .map((l) => l.slice('issues='.length));
+  return { ...r, mutations: lines(log), calls: lines(calls), issues };
 }
 
 const items = (r: ReturnType<typeof runStep>) =>
@@ -84,6 +89,24 @@ describe('In release status step behavior (#489)', () => {
     expect(r.status).toBe(0);
     expect(r.stdout).toMatch(/::warning::no token with scope project/);
     expect(r.calls).toEqual([]);
+    expect(r.issues).toEqual([]);
+  });
+
+  it('writes issues= with only the issues set to In release (#626)', () => {
+    const r = runStep({
+      CLOSING: '[11, 12, 14]',
+      STATUS_11: 'In progress',
+      STATUS_12: 'Done',
+      STATUS_14: 'In release',
+    });
+    expect(r.issues).toEqual(['11']);
+    const none = runStep({ CLOSING: '[12]', STATUS_12: 'Done' });
+    expect(none.issues).toEqual(['']);
+  });
+
+  it('keeps the issues set before a project-scope failure (#626)', () => {
+    const r = runStep({ CLOSING: '[11]', STATUS_11: 'Todo', FAIL: 'scope' });
+    expect(r.issues).toEqual(['']);
   });
 
   it('sets closed, keyword-listed and Refs-only issues, skips Done and word-glued keywords', () => {

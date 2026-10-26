@@ -74,3 +74,115 @@ describe('project-needs.yml (#639)', () => {
     expect(sync.run).not.toContain('${{');
   });
 });
+
+const wfDir = path.resolve(__dirname, '../../.github/workflows');
+const tplDir = path.resolve(
+  __dirname,
+  '../../packages/github/.apm/skills/github-project/templates'
+);
+type SyncStep = Step & { name?: string; if?: string; 'continue-on-error'?: boolean };
+
+describe.each([
+  ['project-needs.yml', path.join(wfDir, 'project-needs.yml'), 'sync-needs', 'Sync Needs'],
+  ['add-to-project.yml', path.join(wfDir, 'add-to-project.yml'), 'add-to-project', 'Sync Needs'],
+  [
+    'release-pr.yml',
+    path.join(wfDir, 'release-pr.yml'),
+    'release-pr',
+    'Sync Needs of In release issues',
+  ],
+])('Needs sync wiring in %s (#626)', (name, file, job, stepName) => {
+  const w = parse(fs.readFileSync(file, 'utf-8'));
+  const all: SyncStep[] = w.jobs[job].steps;
+  const step = all.find((s) => s.name === stepName)!;
+
+  it('runs Sync-ProjectNeeds.ps1 with PROJECT_TOKEN falling back to GH_PAT', () => {
+    expect(step.run).toContain(
+      'packages/github/.apm/skills/github-project/scripts/Sync-ProjectNeeds.ps1'
+    );
+    expect(step.env?.GH_TOKEN).toBe('${{ secrets.PROJECT_TOKEN || secrets.GH_PAT }}');
+  });
+
+  it('warns and exits 0 on an empty token', () => {
+    expect(step.run).toMatch(
+      /if \(-not \$env:GH_TOKEN\) \{\s*Write-Host '::warning::[^']*'\s*exit 0\s*\}/
+    );
+  });
+
+  it('passes a hashtable splat with the parents and no expression in run', () => {
+    expect(step.run).toContain('$syncArgs = @{ Repo = $env:GH_REPO');
+    expect(step.run).toContain('IncludeParents = $true');
+    expect(step.run).toContain('& $script @syncArgs');
+    expect(step.run).not.toContain('${{');
+    expect(name).toBeTruthy();
+  });
+
+  it('pins every action to a commit SHA except GravionLabs/ci@main', () => {
+    for (const s of all.filter((x) => x.uses)) {
+      if (s.uses!.startsWith('GravionLabs/ci/')) expect(s.uses).toMatch(/@main$/);
+      else expect(s.uses).toMatch(/@[0-9a-f]{40}( |$)/);
+    }
+  });
+});
+
+describe('add-to-project.yml Needs sync (#626)', () => {
+  const w = parse(fs.readFileSync(path.join(wfDir, 'add-to-project.yml'), 'utf-8'));
+  const all: SyncStep[] = w.jobs['add-to-project'].steps;
+  const idx = all.findIndex((s) => s.name === 'Sync Needs');
+
+  it('syncs after actions/add-to-project, on issue events only, without failing the job', () => {
+    expect(all.findIndex((s) => s.uses?.startsWith('actions/add-to-project@'))).toBeLessThan(idx);
+    expect(all[idx].if).toBe("github.event_name == 'issues'");
+    expect(all[idx]['continue-on-error']).toBe(true);
+    expect(all[idx].env?.ISSUE_NUMBER).toBe('${{ github.event.issue.number }}');
+  });
+
+  it('reads contents only', () => {
+    expect(w.permissions).toEqual({ contents: 'read' });
+  });
+});
+
+describe('release-pr.yml Needs sync (#626)', () => {
+  const w = parse(fs.readFileSync(path.join(wfDir, 'release-pr.yml'), 'utf-8'));
+  const all: SyncStep[] = w.jobs['release-pr'].steps;
+  const step = all.find((s) => s.name === 'Sync Needs of In release issues')!;
+
+  it('skips without the script so the copied template is a no-op', () => {
+    expect(step.run).toMatch(/if \(-not \(Test-Path \$script\)\) \{\s*Write-Host '::notice::/);
+    expect(step.run).toContain("Issue = ($env:ISSUES -split '\\s+' | Where-Object { $_ })");
+  });
+
+  it('is not part of the project-needs.yml expectations: no EVENT_NAME', () => {
+    expect(step.env?.ISSUES).toBe('${{ steps.in-release.outputs.issues }}');
+  });
+});
+
+describe('templates/project-needs.yml wiring (#626)', () => {
+  const text = fs.readFileSync(path.join(tplDir, 'project-needs.yml'), 'utf-8');
+  const w = parse(text);
+  const all: SyncStep[] = w.jobs['sync-needs'].steps;
+  const step = all.find((s) => s.run)!;
+
+  it('uses the token placeholder, sparse-checks out apm-hub and passes Owner and Number', () => {
+    expect(step.env?.GH_TOKEN).toBe('${{ secrets.__TOKEN__ }}');
+    expect(step.run).toContain(
+      '.apm-hub/packages/github/.apm/skills/github-project/scripts/Sync-ProjectNeeds.ps1'
+    );
+    expect(step.run).toMatch(
+      /\$syncArgs = @\{ Owner = '__OWNER__'; Number = __PROJECT_NUMBER__; Repo = /
+    );
+    expect(step.run).toMatch(
+      /if \(-not \$env:GH_TOKEN\) \{\s*Write-Host '::warning::[^']*'\s*exit 0\s*\}/
+    );
+    expect(step.run).not.toContain('${{');
+    const co = all.find((s) => s.uses?.startsWith('actions/checkout@')) as SyncStep & {
+      with?: Record<string, string>;
+    };
+    expect(co.uses).toMatch(/@[0-9a-f]{40}( |$)/);
+    expect(co.with).toMatchObject({
+      repository: 'GravionLabs/apm-hub',
+      ref: 'main',
+      path: '.apm-hub',
+    });
+  });
+});
