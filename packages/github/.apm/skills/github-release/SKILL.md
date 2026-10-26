@@ -33,8 +33,8 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
    is on origin (`git ls-remote --tags origin "refs/tags/v<x.y>.0"` prints a line) was released and must not
    be reused. Report each as stale with `git push origin --delete release/<x.y>` and continue with the cut; the
    owner runs the delete (the git guardrail blocks it for `release/<x.y>` in a session, only `release/next` is allowed).
-2a. `grep -l mark-merged-issues .github/workflows/*.yml` finds nothing → tell the user the repo does not label
-   merged issues and offer to copy `templates/release-branch.yml` to `.github/workflows/release-pr.yml`
+2a. `grep -l 'ci/.github/workflows/release-branch.yml' .github/workflows/*.yml` finds nothing → tell the user the repo does not label
+   merged issues and offer to copy `templates/release-branch.yml` to `.github/workflows/release-branch.yml`
    (never silently; one PR per repo, see `references/merged-label.md`).
    A GitHub Project mirrors the label as status `In release`: `github-project sync`.
 3. If `--feature <nr>` → insert `Release branch: release/next` as the second line of that issue's
@@ -67,7 +67,7 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
    `git log origin/<default>..HEAD -F --grep '+semver: major'` is empty. A `release/<x.y>` branch has no
    GitVersion Minor config: add `+semver: minor|major` the same way (message `chore: release minor|major`)
    when `origin/<default>..HEAD` has no `+semver:` commit.
-8. The release PR is created and kept current by CI (`release-pr.yml`, GravionLabs/ci
+8. The release PR is created and kept current by CI (`release-branch.yml`, GravionLabs/ci
    `versioning/release-pr`): `gh pr list --base <default> --head <branch> --state open --json number,url`.
    None found (no workflow in this repo, or it has not run) → open it with `github-pull-request` in
    release mode: `branch: <branch>`, `base_branch: <default>`, `title: release: <branch>`, `merged_prs`
