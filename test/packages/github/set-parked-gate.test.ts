@@ -54,7 +54,7 @@ exit 0
       run('Enter-Checkout.ps1', ['-Issue', '579', '-Branch', 'feat/579', '-Base', 'main'], f.repo)
         .status
     ).toBe(0);
-    const r = park(['-Question', 'Which store?', '-Option', 'sqlite', '-Loop', '12']);
+    const r = park(['-Question', 'Which store?', '-Option', 'sqlite|files', '-Loop', '12']);
     expect(r.status).toBe(0);
     expect(json(r)).toMatchObject({
       parked: true,
@@ -67,7 +67,7 @@ exit 0
     const [body] = bodies();
     expect(body.split('\n')[0]).toBe('<!-- apm-hub:parked-gate -->');
     expect(body).toContain('Which store?');
-    expect(body).toContain('- sqlite\n\nCheckout');
+    expect(body).toContain('- sqlite\n- files\n\nCheckout');
     expect(body).toContain(`Checkout kept: ${wt}`);
     expect(body).toContain('/ruling <option>');
     const ledger = fs.readFileSync(path.join(f.state, 'loop-12', 'progress.md'), 'utf8');

@@ -11,7 +11,7 @@
   A failing step is reported in the JSON ('failed:<step>') and the remaining steps still run, so the lease is always freed. Never writes the 'Gate:' line (the caller did).
 .PARAMETER Issue     PBI number.
 .PARAMETER Question  The gate question.
-.PARAMETER Option    Answer options.
+.PARAMETER Option    Answer options: an array in-process, or one string with options separated by '|' (works with pwsh -File).
 .PARAMETER Loop      Loop number for the loop ledger.
 .PARAMETER Checkout  Kept checkout path shown in the comment; default: the path of the lease of -Issue, else the current directory.
 #>
@@ -38,7 +38,7 @@ if ($Issue -notmatch '\A[0-9]{1,10}\z') { throw "Invalid -Issue '$Issue': expect
 if ($Loop -and $Loop -notmatch '\A[0-9]{1,10}\z') { throw "Invalid -Loop '$Loop': expected the loop number." }
 function Get-PlainText([string]$t) { (($t -replace '[\p{Cc}\p{Cf}]+', ' ') -replace '\s+', ' ').Trim() }
 $q = Get-PlainText $Question
-$opts = @($Option | ForEach-Object { Get-PlainText $_ } | Where-Object { $_ })
+$opts = @($Option | ForEach-Object { $_ -split '\|' } | ForEach-Object { Get-PlainText $_ } | Where-Object { $_ })
 $res = [ordered]@{ parked = $true; label = 'ok'; comment = 'ok'; ledger = 'skipped'; checkout = $null }
 $state = Resolve-StateDir
 if (-not $Checkout) {

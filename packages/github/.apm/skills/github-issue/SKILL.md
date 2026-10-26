@@ -53,7 +53,7 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
 
    **Batch user requests** ("implement all PBIs in feature #12", "work through these issues"): collect the target issues, then process each one sequentially with the appropriate workflow above.
 
-**Parked gate** (headless gate in a loop or queue): `pwsh scripts/Set-ParkedGate.ps1 -Issue <pbi> -Question <text> [-Option ...] [-Loop <nr>]` adds `needs-decision`, posts `templates/parked-gate.md` once, writes the `Loop: ... parked` line, frees the lease with `Exit-Checkout.ps1 -Keep` (worktree stays) and sends the `attention` event.
+**Parked gate** (headless gate in a loop or queue): `pwsh scripts/Set-ParkedGate.ps1 -Issue <pbi> -Question <text> [-Option 'a|b'] [-Loop <nr>]` adds `needs-decision`, posts `templates/parked-gate.md` once, writes the `Loop: ... parked` line, frees the lease with `Exit-Checkout.ps1 -Keep` (worktree stays) and sends the `attention` event.
 
 ## Shared constraints (all workflows)
 
