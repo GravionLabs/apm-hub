@@ -2,18 +2,21 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-  Releases the checkout lease of an issue and removes its worktree when that is clean; prints {released, path, worktree, removed, kept} as JSON.
+  Releases the checkout lease of an issue and removes its worktree when that is clean (never with -Keep); prints {released, path, worktree, removed, kept} as JSON.
 .DESCRIPTION
   Counterpart of Enter-Checkout.ps1. Removes <state>/leases/<key>.json of the lease whose 'issue' is -Issue (state dir resolved like
   Add-LedgerLine.ps1; a symlinked leases directory or lease file is refused). When the leased checkout is a worktree (not the main checkout)
   and clean (git status --porcelain without output), Remove-Worktree.ps1 removes it ('removed' = true); a dirty worktree is kept and reported
   ('kept' = its path, so the user can resume there).
+  -Keep (parked gate): the lease is freed as above but the worktree is never removed, clean or dirty ('removed' = false, 'kept' = its path); the main checkout only loses the lease.
   The project Status is intentionally left as is: the PR state takes over through the Needs rules (Sync-ProjectNeeds.ps1). The main checkout is never touched. No lease for the issue: no-op ({released: false}).
 .PARAMETER Issue  Issue number.
+.PARAMETER Keep   Free the lease but never remove the worktree.
 #>
 [CmdletBinding()]
 param(
-  [string]$Issue
+  [string]$Issue,
+  [switch]$Keep
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -65,6 +68,7 @@ foreach ($l in $mine) {
     Write-Result $true $l.Path $true $false $null
     continue
   }
+  if ($Keep) { Write-Result $true $l.Path $true $false $l.Path; continue }
   $dirty = @(& git -C $l.Path status --porcelain)
   if ($LASTEXITCODE -ne 0 -or $dirty.Count -gt 0 -or -not [string]::Equals($l.Path, $expected, $cmp)) { Write-Result $true $l.Path $true $false $l.Path; continue }
   & (Join-Path $PSScriptRoot 'Remove-Worktree.ps1') -Issue $Issue | Out-Null

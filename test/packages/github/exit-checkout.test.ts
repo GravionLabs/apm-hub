@@ -40,6 +40,30 @@ describe.skipIf(!hasPwsh)('Exit-Checkout.ps1', () => {
     expect(readLeases(f.state).map((l) => l.issue)).toEqual([3]);
   });
 
+  it('-Keep frees the lease but keeps a clean worktree, and Enter-Checkout reuses it', () => {
+    busy();
+    const r = run('Exit-Checkout.ps1', ['-Issue', '7', '-Keep'], f.repo);
+    expect(r.status).toBe(0);
+    expect(json(r)).toMatchObject({
+      released: true,
+      worktree: true,
+      removed: false,
+      kept: wt('7'),
+    });
+    expect(fs.existsSync(wt('7'))).toBe(true);
+    expect(readLeases(f.state).map((l) => l.issue)).toEqual([3]);
+    const again = enter('7');
+    expect(again.status).toBe(0);
+    expect(json(again).path).toBe(wt('7'));
+  });
+
+  it('-Keep on the main checkout only frees the lease', () => {
+    expect(enter('7').status).toBe(0);
+    const r = run('Exit-Checkout.ps1', ['-Issue', '7', '-Keep'], f.repo);
+    expect(json(r)).toMatchObject({ released: true, worktree: false, removed: false, kept: null });
+    expect(readLeases(f.state)).toEqual([]);
+  });
+
   it('keeps a dirty worktree, removes the lease and reports {kept}', () => {
     busy();
     fs.appendFileSync(path.join(wt('7'), 'a.txt'), 'x\n');
