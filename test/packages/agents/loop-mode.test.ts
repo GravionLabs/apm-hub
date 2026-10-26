@@ -25,15 +25,37 @@ const LEDGER = '<state>/loop-<nr>/progress.md';
 const HEADER = '# orchestrator ledger — loop #<nr> — branch <branch>';
 const DONE_LINE = 'Loop: PBI #<nr> done — <pr>';
 const STOP_LINE = 'Loop: stopped — <reason>';
-const STOP_REASONS = [
-  'nothing selectable',
-  'headless gate: <question>',
-  'context warning',
-  'pbi cap',
-  'user stop',
-];
+const STOP_REASONS = ['nothing selectable', 'context warning', 'pbi cap', 'user stop'];
 const RUNNER_REASONS = ['runner blocked', 'runner failed'];
 const RESUME_LINE = 'orchestrator loop <feature> after /clear';
+
+describe('parked gates in loop mode', () => {
+  const ledger = section(reference, 'Loop ledger');
+  it('writes the parked ledger line and drops the headless-gate stop reason', () => {
+    expect(ledger).toContain('Loop: PBI #<nr> parked — <question>');
+    expect(ledger).not.toContain('headless gate: <question>');
+    expect(ledger).toMatch(
+      /Loop: stopped[^\n]*`nothing selectable` \(also when only parked `needs-decision` PBIs remain\)/
+    );
+  });
+
+  it('frees a parked lease with Exit-Checkout -Keep and keeps blocked/failed leases', () => {
+    expect(ledger).toMatch(/Exit-Checkout\.ps1 -Keep/);
+    expect(ledger).toMatch(/`runner blocked` and `runner failed` keep the lease/);
+  });
+
+  it('lists parked PBIs in the end report and in the agent rule', () => {
+    expect(reference).toContain('`#<pbi> parked — <question>`');
+    expect(body).toMatch(/headless gate parks the PBI/);
+    expect(body).toMatch(/in `loop` park the PBI per `loop-mode\.md`/);
+  });
+
+  it('gives the GATE JSON a checkout and has the primary park the runner', () => {
+    const rule = read('packages/agents/.apm/agents/pbi-runner.agent.md');
+    expect(rule).toContain('"checkout": "<path>"');
+    expect(rule).toMatch(/primary without a question tool parks the PBI and never resumes you/);
+  });
+});
 
 describe('orchestrator agent: loop mode', () => {
   it('lists loop as the fifth mode in the description', () => {
@@ -156,7 +178,12 @@ describe('loop-mode reference', () => {
     );
     expect(stops).toMatch(/fallback for clients where the warning cannot fire mid-loop/);
     expect(stops).toContain('Gate: <question>');
-    expect(stops).toContain('Loop: stopped — headless gate: <question>');
+    expect(stops).not.toContain('Loop: stopped — headless gate');
+    expect(stops).toMatch(
+      /Set-ParkedGate\.ps1 -Issue <pbi> -Question <question> -Option 'a\|b' -Loop <nr> -Checkout <path>/
+    );
+    expect(stops).toMatch(/run the Needs sync, then the stop checks and reselection/);
+    expect(stops).toMatch(/every gate except the review summary/);
     expect(stops).toMatch(/finish the current step first/);
   });
 
@@ -234,8 +261,10 @@ describe('loop-mode reference: runner mode', () => {
     expect(runner).toMatch(/primary makes no `Ruling:` itself/);
   });
 
-  it('stops headless at a gate and records the runner reasons', () => {
-    expect(runner).toContain('Loop: stopped — headless gate: <question>');
+  it('parks headless at a gate and records the runner reasons', () => {
+    expect(runner).not.toContain('Loop: stopped — headless gate');
+    expect(runner).toMatch(/the primary parks that PBI \(`Set-ParkedGate\.ps1`[^)]*`-Loop <nr>`\)/);
+    expect(runner).toMatch(/goes on as after `DONE`/);
     expect(runner).toContain('`DONE` → `Loop: PBI #<nr> done — <pr>`');
     expect(runner).toContain('`Loop: stopped — runner blocked`');
     expect(runner).toContain('`Loop: stopped — runner failed`');

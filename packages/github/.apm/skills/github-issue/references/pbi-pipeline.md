@@ -31,6 +31,6 @@ Each of these is an approval gate: it goes to the user (a runner returns it as a
 5. `NEEDS_CONTEXT` from a bug implementer that has no feedback loop (step 4).
 6. Any other question at a gate with no question tool: append `Gate: <question>` to the ledger and stop.
 
-A runner appends `Gate: <question>` for every item above before it returns the `GATE` reply, and `Ruling: <question> - user - <answer>` when it is resumed with the answer.
+A runner appends `Gate: <question>` for every item above before it returns the `GATE` reply, and `Ruling: <question> - user - <answer>` when it is resumed with the answer. A headless primary does not resume it: it parks the PBI per `loop-mode.md`.
 
 Not a gate: the follow-up PBI question for deferred findings (step 6) is asked in interactive runs only, once per PBI and only with ≥ 1 deferred finding; never a runner reply and never a `Gate:` line.
