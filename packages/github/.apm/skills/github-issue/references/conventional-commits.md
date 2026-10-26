@@ -34,9 +34,9 @@ Always use conventional commit format.
 
 ## Branch Naming
 
-`<type>/<issue-nr>-<slug>` — `<type>` is the conventional-commit type of the issue title (`feat`, `fix`, `docs`, `refactor`, `chore`, …). Epics and Features have no commit type in their title: use `feat`. A batch over several epics: `feat/epics-<nrs>-<slug>`.
+`<type>/<issue-nr>-<slug>` — `<type>` is the conventional-commit type of the issue title after stripping the level prefix `^\[(Epic|Feature|PBI|Task|Bug)\] ` (case-insensitive) and the legacy `Epic: ` / `Feature: ` (`feat`, `fix`, `docs`, `refactor`, `chore`, …). Epics and Features have no commit type in their title: use `feat`. A batch over several epics: `feat/epics-<nrs>-<slug>`.
 
-Examples: `feat/42-add-pr-skill`, `fix/43-pr-title`, `chore/44-update-deps`.
+Examples: `[Bug] fix: x` → `fix/<nr>-x`, `[PBI] feat(github): y` → `feat/<nr>-y`, `feat/42-add-pr-skill`, `fix/43-pr-title`, `chore/44-update-deps`.
 
 ## Issue footer
 
