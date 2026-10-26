@@ -46,7 +46,6 @@ Other repositories of the project keep Needs current with the two callers of the
 2. Replace `<owner>` and `<n>` in `project-url` (`https://github.com/users/<owner>/projects/<n>`).
 3. Store a classic PAT with scopes `repo`, `workflow` and `project` as the secret `GH_PAT` (optional `PROJECT_TOKEN` with scope `project`); a fine-grained token or the `GITHUB_TOKEN` cannot write a user-owned project. Inputs and tokens: GravionLabs/ci README (`issues.yml`).
 
-
 ## Views
 
 Views are matched by name. Missing ones are created, existing ones are never touched. Sorting cannot be set through the API.

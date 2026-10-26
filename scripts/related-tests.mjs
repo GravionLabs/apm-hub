@@ -40,8 +40,7 @@ function listTests(root, dir) {
 export function relatedTests(paths, { root = REPO_ROOT } = {}) {
   const out = new Set();
   const srcTests = () => listTests(root, 'src');
-  const validators = () =>
-    listTests(root, 'src/generators').filter((f) => /validator[^/]*\.test\.ts$/.test(f));
+  const validators = () => listTests(root, 'src/generators').filter((f) => /validator[^/]*\.test\.ts$/.test(f));
 
   for (const raw of paths) {
     const p = raw.trim().replace(/\\/g, '/').replace(/^\.\//, '');
@@ -60,13 +59,9 @@ export function relatedTests(paths, { root = REPO_ROOT } = {}) {
       validators().forEach((f) => out.add(f));
       const skill = /^\.apm\/skills\/([^/]+)\//.exec(rest);
       const narrow = skill
-        ? listTests(root, `test/packages/${domain}`).filter((f) =>
-            path.posix.basename(f).startsWith(skill[1])
-          )
+        ? listTests(root, `test/packages/${domain}`).filter((f) => path.posix.basename(f).startsWith(skill[1]))
         : [];
-      (narrow.length ? narrow : listTests(root, `test/packages/${domain}`)).forEach((f) =>
-        out.add(f)
-      );
+      (narrow.length ? narrow : listTests(root, `test/packages/${domain}`)).forEach((f) => out.add(f));
     } else if (p.startsWith('.github/')) {
       listTests(root, 'test/repo').forEach((f) => out.add(f));
       if (CALLER_WORKFLOWS.has(p)) out.add('test/packages/github/release-workflow.test.ts');
@@ -80,7 +75,9 @@ export function relatedTests(paths, { root = REPO_ROOT } = {}) {
 /** Resolves CLI arguments (paths, --staged, --range a..b) to changed paths. */
 export function pathsFromArgs(args, cwd = REPO_ROOT) {
   const git = (...a) =>
-    execFileSync('git', a, { cwd, encoding: 'utf8' }).split('\n').filter(Boolean);
+    execFileSync('git', a, { cwd, encoding: 'utf8' })
+      .split('\n')
+      .filter(Boolean);
   const paths = [];
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--') continue;
