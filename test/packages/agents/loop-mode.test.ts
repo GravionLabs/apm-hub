@@ -163,6 +163,10 @@ describe('loop-mode reference', () => {
   it('applies --fix-advisories to every PBI and exempts the review summary from the gate', () => {
     expect(reference).toContain('applies to every PBI of the loop');
     expect(section(reference, 'Interactive gates')).toContain('--fix-advisories');
+    expect(reference).toContain('else the headless default `medium`');
+    expect(reference).toContain(
+      'is answered `medium` (headless default, ruling q1) without stopping'
+    );
   });
 
   it('pauses on interactive gates and skips the clear-before-implement question', () => {

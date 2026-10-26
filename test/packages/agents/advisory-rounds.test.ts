@@ -91,7 +91,9 @@ describe('--advisory-rounds (#480)', () => {
 
   it('headless exemption names both the policy and the limit', () => {
     const headless = gates.split(/^Headless \(no question tool\)/m)[1].split('\n')[0];
-    expect(headless).toMatch(/`--fix-advisories` is set[^.]*`--advisory-rounds` limit is reached/);
+    expect(headless).toMatch(
+      /`--fix-advisories` policy, else the headless default `medium`\)[^.]*`--advisory-rounds` limit is reached/
+    );
   });
 
   it('flag, range and default agree across agents, skill, loop and docs', () => {

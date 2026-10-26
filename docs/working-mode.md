@@ -51,7 +51,7 @@ Two defaults, each switched off by a flag, and one flag that answers the advisor
 | `--fix-advisories none\|medium\|all[:dim,dim]` | Decides the advisory question up front: `none` sends all advisories to the PR body, `medium` fixes MEDIUM and above, `all` fixes every advisory; `:dim,dim` limits the policy to those `review-fanout` dimensions (other advisories go to the PR body). Blocking findings are always fixed. Prints `Advisory policy: <policy> — fixing <n>, PR body <m>` and writes a `Ruling:` ledger line |
 | `--advisory-rounds <0-5>` | Caps the fix rounds that hold only advisories after the first `APPROVE` (default `1`). At the limit the remaining advisories go to the PR body without a question or `Gate:` and a `Ruling:` ledger line is written; `0` sends them all there right after the first `APPROVE`. Blocking findings always get fix rounds. Details: `github-issue` `references/orchestrator-gates.md` |
 
-Headless runs write `Gate: <question>` to the ledger and stop; with `--fix-advisories` set or the `--advisory-rounds` limit reached, the review summary writes no `Gate:` line (policy ruling instead). The queue runner forwards the policy as `-FixAdvisories none|medium|all`, documented there once #227 lands. Details: `github-issue` `references/orchestrator-gates.md`.
+Headless runs write `Gate: <question>` to the ledger and stop; with `--fix-advisories` set, without it (headless default `medium`) or the `--advisory-rounds` limit reached, the review summary writes no `Gate:` line (policy ruling instead). The queue runner forwards the policy as `-FixAdvisories none|medium|all`, documented there once #227 lands. Details: `github-issue` `references/orchestrator-gates.md`.
 
 ### Setup
 

@@ -523,6 +523,16 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       expect(R['adapter copilot'].stdout).not.toContain('--fix-advisories');
     });
 
+    it('documents the orchestrator headless default medium when omitted', () => {
+      const skillDir = path.resolve(path.dirname(SCRIPT), '..');
+      const skill = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf-8');
+      const flags = fs.readFileSync(path.join(skillDir, 'references/harness-flags.md'), 'utf-8');
+      expect(skill).toContain("omitted: the orchestrator's headless default `medium`");
+      expect(flags).toContain(
+        'applies its headless default `medium`, so no review-summary `Gate:`'
+      );
+    });
+
     it('accepts the bare all policy and dimension lists', () => {
       expect(R.advAll.status).toBe(0);
       expect(R.advAll.stdout).toContain('-p "--fix-advisories all full 12"');
