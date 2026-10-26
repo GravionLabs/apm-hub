@@ -12,6 +12,7 @@
   needs-decision and blocked rows keep their state (first match wins, as in status.md). -Live prints the issue numbers of the live leases, one per line,
   and writes nothing (interactive status: the model marks the rows itself). Control characters and escape sequences are stripped from the content. The content comes from -Path (a file) or, without -Path, from stdin. The write is atomic:
   a temp file in the state directory is moved over the target.
+  Parked: a needs-decision row whose ledger <state>/<nr>/progress.md has a last Gate: line without a later Ruling: line becomes `parked (<question>)` (question: one line, at most 80 chars; a symlinked ledger is ignored).
   Needs: every PBI row `#<nr> <state> <title>` becomes `#<nr> <state> | <Needs> | <title>` (`-` when the rule clears the value) and the last line is
   `Needs me: <n> planning, <m> decisions, <k> release review`. The value comes from Get-NeedsValue of NeedsRules.psm1 (the rule of Sync-ProjectNeeds.ps1,
   no second implementation); the issue state is read with gh GET calls only (or from -StateFile), the project is never written. A merged row counts as project Status `In release` and a live-lease row as `In Progress`
@@ -74,8 +75,27 @@ $base = Resolve-StateDir
 foreach ($nr in Get-LiveLeaseIssue $base) {
   $text = [regex]::Replace($text, "(?m)^(\s*#$nr )(?:open|in progress \([^)\n]*\))(?=[ \t]|$)", '${1}in progress (runner)')
 }
+# Parked: a 'needs-decision' row whose ledger ends with a Gate: line without a later Ruling: line becomes 'parked (<question>)'.
+foreach ($m in [regex]::Matches($text, '(?m)^\s*#([1-9][0-9]{0,9}) needs-decision(?=[ \t]|$)')) {
+  $nr = $m.Groups[1].Value
+  $dir = Join-Path $base $nr
+  $ledger = Join-Path $dir 'progress.md'
+  $di = Get-Item -LiteralPath $dir -Force -ErrorAction SilentlyContinue
+  $li = Get-Item -LiteralPath $ledger -Force -ErrorAction SilentlyContinue
+  if (-not $li -or $li.LinkTarget -or ($di -and $di.LinkTarget)) { continue }
+  $question = $null
+  foreach ($line in [IO.File]::ReadAllLines($ledger)) {
+    if ($line -match '^(?:\S+\s+)?Gate: ?(.*)$') { $question = $Matches[1] }
+    elseif ($line -match '^(?:\S+\s+)?Ruling:') { $question = $null }
+  }
+  if ($null -eq $question) { continue }
+  $q = [regex]::Replace($question, '\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b\r\n]*(\x07|\x1b\\)|\x1b.?', '')
+  $q = ([regex]::Replace($q, '[\x00-\x1f\x7f-\x9f\s]+', ' ').Trim() -replace '\)', ']')
+  if ($q.Length -gt 80) { $q = $q.Substring(0, 80).TrimEnd() }
+  $text = [regex]::Replace($text, "(?m)^(\s*#$nr )needs-decision(?=[ \t]|$)", { param($x) $x.Groups[1].Value + "parked ($q)" })
+}
 # Needs column and closing summary (read-only; never fails the status).
-$stateRe = '(?:merged|pr-open #\d+|needs-decision|blocked by #\d+(?:, #\d+)*|in progress \([^)\n]*\)|open)'
+$stateRe = '(?:merged|pr-open #\d+|parked \([^)\n]*\)|needs-decision|blocked by #\d+(?:, #\d+)*|in progress \([^)\n]*\)|open)'
 try {
   $mod = Join-Path $PSScriptRoot 'NeedsRules.psm1'
   if (-not (Test-Path -LiteralPath $mod -PathType Leaf)) { throw "NeedsRules.psm1 not found: $mod" }
