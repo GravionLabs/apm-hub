@@ -69,9 +69,11 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
    when `origin/<default>..HEAD` has no `+semver:` commit.
 8. The release PR is created and kept current by CI (`release-pr.yml`, GravionLabs/ci
    `versioning/release-pr`): `gh pr list --base <default> --head <branch> --state open --json number,url`.
-   None found (no workflow in this repo, or it has not run) → open it with `github-pull-request`
-   (`base_branch: <default>`, `auto_merge: false`, title `release: <branch>`, body: the PRs merged into the
-   release branch plus `Closes #<nr>` for the Feature if recorded). Do not touch `CHANGELOG.md`: the
+   None found (no workflow in this repo, or it has not run) → open it with `github-pull-request` in
+   release mode: `branch: <branch>`, `base_branch: <default>`, `title: release: <branch>`, `merged_prs`
+   (from `gh pr list --base <branch> --state merged --json number,title`), `feature_number: <nr>` only when
+   recorded, `auto_merge: false`. Never open the release PR with a direct `gh pr create`; if
+   `github-pull-request` stops, stop and report. Do not touch `CHANGELOG.md`: the
    release job on `main` regenerates it with git-cliff, tags, publishes the GitHub Release and closes
    every issue the release's PRs reference with `Closes #n` (GravionLabs/ci `gh-release`).
 9. Report the PR URL and `gh pr merge <nr> --merge`; the owner merges with a merge commit, never squash.

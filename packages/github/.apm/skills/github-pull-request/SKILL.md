@@ -8,7 +8,10 @@ Create a PR from the current branch. No dialogue — tool calls only. On Claude 
 
 ## Input
 
-- `issue_number` (default: the number in the branch name `<type>/<nr>-<slug>`; stop when neither exists)
+- `issue_number` (default: the number in the branch name `<type>/<nr>-<slug>`; stop when neither exists, except in release mode)
+- `title` (default: computed per step 2; required in release mode, e.g. `release: <branch>`)
+- `merged_prs` (release mode: `#<n> <title>` lines merged into the release branch; default: `gh pr list --base <branch> --state merged --json number,title`)
+- `feature_number` (release mode only, optional)
 - `branch` (default: `git branch --show-current`)
 - `base_branch` (default: the integration branch per the `github-issue` skill's `references/release-branches.md`: `release/next`, or `main` only when the head is `release/*` or the user asked for a hotfix; `<base>` below)
 - `not_delivered` (default: empty): Task numbers `#<task>` or acceptance-criterion text this PR leaves open
@@ -19,8 +22,8 @@ Create a PR from the current branch. No dialogue — tool calls only. On Claude 
 
 ## Steps
 
-1. **Gather context** (parallel): `git branch --show-current`, `git log origin/<base>..HEAD --oneline`, `git diff --stat origin/<base>...HEAD`, `gh issue view <nr> --json title,body,labels`
-2. **Title**: `<type>: <description> (#<issue_number>)` — type from the commits (`feat`, `fix`, `docs`, `refactor`, `perf`); mixed → dominant type or the issue's labels. Description: from the issue title, ≤ 60 chars, lowercase, imperative.
+1. **Gather context** (parallel): `git branch --show-current`, `git log origin/<base>..HEAD --oneline`, `git diff --stat origin/<base>...HEAD`, `gh issue view <nr> --json title,body,labels` (skipped in release mode)
+2. **Title**: release mode uses the caller `title`. Otherwise `<type>: <description> (#<issue_number>)` — type from the commits (`feat`, `fix`, `docs`, `refactor`, `perf`); mixed → dominant type or the issue's labels. Description: from the issue title, ≤ 60 chars, lowercase, imperative.
 3. **Body**:
    ```markdown
    ## Summary
@@ -41,6 +44,10 @@ Create a PR from the current branch. No dialogue — tool calls only. On Claude 
 6. **Auto-merge** (if `auto_merge` and `<base>` is not `main`): `gh pr merge <pr> --auto --squash`. A PR into `main` is merged by the owner with `--merge` (release) or `--squash` (hotfix), never automatically.
 7. **Output**: PR number, URL, and which footer the body carries (`Closes` or `Refs #<issue_number>`)
 
+## Release mode
+
+Active when the head matches `^release/(next|[0-9]+\.[0-9]+)$` and `<base>` is the default branch (`gh repo view --json defaultBranchRef --jq .defaultBranchRef.name`). Release mode needs no `issue_number`. Every other head without a number still stops. Body, footer and output: `references/release-mode.md`. In release mode `auto_merge` is forced false.
+
 ## Rules
 
 - Never create an empty PR (no commits beyond the base branch)
@@ -48,3 +55,4 @@ Create a PR from the current branch. No dialogue — tool calls only. On Claude 
 - Branch must be pushed: if `git log origin/<branch>..HEAD` is non-empty, run `git push -u origin HEAD` first
 - Never write `Closes` for an issue with an undelivered acceptance criterion or open Task; that is `Refs` plus `## Not delivered`
 - Never claim verification that was not run; if nothing was run, say so in the body
+- Release mode never modifies `CHANGELOG.md`
