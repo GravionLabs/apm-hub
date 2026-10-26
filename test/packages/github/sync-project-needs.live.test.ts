@@ -363,6 +363,63 @@ describe.skipIf(!hasPwsh || !hasNode || process.platform === 'win32')(
       expect(calls.filter((c) => c.query?.includes('pullRequests'))).toHaveLength(1);
     });
 
+    it('treats merged blockers (label, Status In release) as resolved and open cross-repo ones as blocking', async () => {
+      const inRelease = { project: { id: 'P1' }, status: { name: 'In release' } };
+      const items = [
+        projectItem(21, null, {
+          blockedBy: { nodes: [{ state: 'OPEN', labels: { nodes: [{ name: 'merged' }] } }] },
+        }),
+        projectItem(22, null, {
+          blockedBy: { nodes: [{ state: 'OPEN', projectItems: { nodes: [inRelease] } }] },
+        }),
+        projectItem(23, null, {
+          blockedBy: {
+            nodes: [
+              { state: 'OPEN', repository: { nameWithOwner: 'o/other' }, labels: { nodes: [] } },
+            ],
+          },
+        }),
+        projectItem(24, null, {
+          blockedBy: {
+            nodes: [
+              {
+                state: 'OPEN',
+                projectItems: {
+                  nodes: [{ project: { id: 'P2' }, status: { name: 'In release' } }],
+                },
+              },
+            ],
+          },
+        }),
+      ];
+      const { r, calls } = await run({ items });
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain('#21: (none) -> Ready');
+      expect(r.stdout).toContain('#22: (none) -> Ready');
+      expect(r.stdout).toContain('#23: (none) -> Blocked');
+      expect(r.stdout).toContain('#24: (none) -> Blocked');
+      const q = calls.find((c) => c.query?.includes('items(first: 100'))!.query!;
+      expect(q).toMatch(/blockedBy\(first: 20\) \{ nodes \{ number state repository/);
+    });
+
+    it('REST fallback: merged-label blocker is resolved, open unmerged blocks', async () => {
+      const merged = await run({
+        noBlockedBy: true,
+        items: [projectItem(5, null)],
+        rest: [{ number: 2, state: 'open', labels: [{ name: 'Merged' }] }],
+      });
+      expect(merged.r.stdout).toContain('#5: (none) -> Ready');
+      const open = await run({
+        noBlockedBy: true,
+        items: [projectItem(5, null)],
+        rest: [
+          { number: 2, state: 'open', labels: [{ name: 'merged' }] },
+          { number: 3, state: 'open', labels: [{ name: 'bug' }] },
+        ],
+      });
+      expect(open.r.stdout).toContain('#5: (none) -> Blocked');
+    });
+
     it('falls back to the REST dependencies endpoint when GraphQL has no blockedBy', async () => {
       const { r, calls } = await run({
         noBlockedBy: true,

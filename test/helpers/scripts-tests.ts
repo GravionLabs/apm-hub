@@ -26,6 +26,7 @@ export const scriptsTests = [
   'test/packages/github/remove-worktree.test.ts',
   'test/packages/github/set-project-standard.test.ts',
   'test/packages/github/set-sprint.test.ts',
+  'test/packages/github/needs-rules.test.ts',
   'test/packages/github/sync-project-needs.test.ts',
   'test/packages/github/sync-project-needs.live.test.ts',
   'test/packages/github/task-waves.test.ts',

@@ -145,7 +145,7 @@ $script:IssueFrag = '... on Issue { number title state issueType { name } reposi
 
 # Runs a query containing __BLOCKED__; when GraphQL lacks blockedBy the field is dropped and REST is used instead.
 function Invoke-ItemsGraphql([string]$Template, $Variables) {
-  $blocked = if ($script:RestBlocked) { '' } else { 'blockedBy(first: 20) { nodes { state } }' }
+  $blocked = if ($script:RestBlocked) { '' } else { 'blockedBy(first: 20) { nodes { number state repository { nameWithOwner } labels(first: 20) { nodes { name } } projectItems(first: 10) { nodes { project { id } status: fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } } } } } }' }
   try { return Invoke-Graphql ($Template -replace '__BLOCKED__', $blocked) $Variables }
   catch {
     if ($script:RestBlocked -or "$_" -notmatch 'blockedBy') { throw }
@@ -168,7 +168,13 @@ function ConvertTo-NeedsItem($Content, $ItemNode, [string]$ProjectId) {
       $lv = (Get-Prop (Get-Prop $_ 'projectItems') 'nodes') | Where-Object { $_.project.id -eq $ProjectId } | ForEach-Object { (Get-Prop $_.level 'name') } | Select-Object -First 1
       Get-LevelOf $lv (Get-Prop (Get-Prop $_ 'issueType') 'name') "$(Get-Prop $_ 'title')"
     } | Where-Object { $_ })
-  $blocked = if ($Content.PSObject.Properties['blockedBy'] -and $Content.blockedBy) { @($Content.blockedBy.nodes | Where-Object { $_.state -eq 'OPEN' }).Count } else { 0 }
+  # a blocker blocks only while open and not merged (label merged or Status In release in this project)
+  $blocked = if ($Content.PSObject.Properties['blockedBy'] -and $Content.blockedBy) {
+    @($Content.blockedBy.nodes | Where-Object { $_ } | Where-Object {
+        $st = @(Get-Prop (Get-Prop $_ 'projectItems') 'nodes') | Where-Object { $_ -and $_.project.id -eq $ProjectId } | ForEach-Object { Get-Prop $_.status 'name' } | Select-Object -First 1
+        Test-BlockerUnresolved ([pscustomobject]@{ state = $_.state; labels = @((Get-Prop (Get-Prop $_ 'labels') 'nodes') | Where-Object { $_ } | ForEach-Object { $_.name }); status = $st })
+      }).Count
+  } else { 0 }
   # a linked open PR counts as work in progress whatever its branch is called
   $nr = $Content.number
   $heads = @($Content.closedByPullRequestsReferences.nodes | Where-Object { $_.state -eq 'OPEN' } |
@@ -264,7 +270,7 @@ function Get-NeedsState {
     $it.prHeads = @($it.prHeads) + @($heads[$it.repo] | Where-Object { $_ -match "(^|/)$nr-" })
     if ($script:RestBlocked) {
       $links = @(Invoke-Gh -GhArgs @('api', "repos/$($it.repo)/issues/$nr/dependencies/blocked_by?per_page=100"))
-      $it.blockedByOpen = @($links | Where-Object { $_.state -eq 'open' }).Count
+      $it.blockedByOpen = @($links | Where-Object { Test-BlockerUnresolved $_ }).Count
     }
   }
   [pscustomobject][ordered]@{ owner = $Owner; number = $Number; projectId = $p.id; needsField = [ordered]@{ id = $field.id; options = $options }
