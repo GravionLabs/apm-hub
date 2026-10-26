@@ -63,11 +63,24 @@ Only with ≥ 1 deferred finding in `<state>/<pbi>/rulings.json` and a question 
 
 Final-Verify (`pbi-pipeline.md` step 5) writes `<state>/<pbi>/verify.json`. `status: fail` → one fix round with the failure list, then Final-Verify again. Red a second time: stop, show `summary` and `tests` and ask how to proceed (fix by hand, change scope, abandon); headless: append `Gate: Final-Verify red twice — <summary>` and stop. Never open the PR without a green `verify.json`.
 
+## Plan gate (`plan <feature>` ends with Tasks; `--no-tasks`, `--tasks`)
+
+Interactive part; `plan <pbi>` is unchanged (`pbi-pipeline.md` step 3: one plan, one grilling cycle, publish).
+
+1. Feature plan gate: `planner` plans the Feature into PBIs, grilling per `issue-planning` `references/grilling.md`, approval, then publish the PBIs per `references/publish.md`.
+2. Per-PBI breakdown, for each published PBI in plan order (the order of `items[]`), one PBI at a time: dispatch `planner` (strong) with that PBI; it writes `<state>/<pbi>/plan.json`. Run one grilling cycle for this PBI alone (its open `questions[]`, then the final approval of its breakdown); never batch the questions of several PBIs into one round. Then publish: ≥ 2 tasks become `[Task]` sub-issues, a single task gets the label `planned` (`publish.md` § 5). Append `Phase plan: complete — PBI #<pbi> <k> tasks` (`<k>` = published Tasks, `1` for a single task) to the Feature ledger `<state>/<feature>/progress.md`.
+3. Skip rule: a PBI that already has a Task sub-issue (open or closed) or the label `planned` is skipped, no planner and no grilling; append `Phase plan: complete — PBI #<pbi> skipped (already planned)`.
+4. `--no-tasks`: stop after step 1 (the behaviour before the breakdown existed). `--tasks` (backfill): skip step 1 and run step 2 only for the open PBI sub-issues of the Feature that the skip rule does not exclude.
+5. `plan <epic>`: the same per Feature when the user asks to plan a Feature down to PBIs in that run; `--no-tasks` and `--tasks` apply to each such Feature.
+6. On a PBI or a description `--no-tasks` and `--tasks` do nothing: say so in one line and ignore them. Outside `plan` mode they are ignored the same way.
+
+The closing line of a `plan <feature>` run names the Feature: `Next: /clear, then orchestrator next <feature>` (or `loop <feature>`).
+
 ## Clear before implement (closing line after a plan)
 
 Why: after an idle gap the prompt cache is rewritten, and that cost grows with the context. Planning (exploration, grilling, `AskUserQuestion`) fills it; the implement run needs only `<state>/<issue>/plan.json` and the Task issues.
 
-- `plan` mode: the closing line of the report is `Next: /clear, then orchestrator implement <issue>`. Always, no threshold.
+- `plan` mode: the closing line of the report is `Next: /clear, then orchestrator implement <issue>` (`plan <feature>`: see "Plan gate"). Always, no threshold.
 - `full` mode: after the plan is approved, when the session context is above 100k tokens (`/context`, or the `hooks` warning already fired), ask once whether to stop here and continue with `/clear` then `orchestrator implement <issue>`; below 100k continue without asking. Headless: continue.
 - Never clear for the user; the recommendation is the whole gate. Not shown for `implement` or `next` runs, and not asked in `loop`: the context-warning and PBI-cap stops of `loop-mode.md` replace it.
 

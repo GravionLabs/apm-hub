@@ -240,3 +240,70 @@ describe('fix-round escalation (#251)', () => {
     expect(pipelineRef).toMatch(/at fix round 2 the escalated one so `retro` sees the escalation/);
   });
 });
+
+describe('plan <feature> ends with Tasks (#580)', () => {
+  const gates = fs.readFileSync(
+    path.resolve(
+      __dirname,
+      '../../../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md'
+    ),
+    'utf-8'
+  );
+  const planGate = gates.split('## Plan gate')[1]?.split('\n## ')[0] ?? '';
+
+  it('lists --no-tasks and --tasks in the description and the flag list', () => {
+    expect(fs.readFileSync(agentPath, 'utf-8')).toMatch(/description:.*--no-tasks and --tasks/);
+    expect(body).toMatch(/`--no-tasks` and `--tasks` \(`plan` on a Feature or Epic only/);
+  });
+
+  it('the mode paragraph points to the Plan gate and keeps plan <pbi> unchanged', () => {
+    expect(body).toMatch(/`plan <feature>` ends with Tasks[^\n]*"Plan gate"/);
+    expect(body).toContain('`plan <pbi>` is unchanged');
+  });
+
+  it('orchestrator-gates.md has a Plan gate section', () => {
+    expect(gates).toMatch(/^## Plan gate/m);
+    expect(planGate.length).toBeGreaterThan(0);
+  });
+
+  it('runs the planner per PBI at strong with its own plan.json', () => {
+    expect(planGate).toMatch(/dispatch `planner` \(strong\) with that PBI/);
+    expect(planGate).toContain('`<state>/<pbi>/plan.json`');
+  });
+
+  it('runs one grilling cycle per PBI and never batches questions of several PBIs', () => {
+    expect(planGate).toMatch(/one grilling cycle for this PBI alone/);
+    expect(planGate).toMatch(/never batch the questions of several PBIs/);
+  });
+
+  it('publishes Tasks or sets planned and writes a ledger line per PBI', () => {
+    expect(planGate).toMatch(
+      /≥ 2 tasks become `\[Task\]` sub-issues, a single task gets the label `planned`/
+    );
+    expect(planGate).toContain('`Phase plan: complete — PBI #<pbi> <k> tasks`');
+  });
+
+  it('skips a PBI that already has Tasks or planned', () => {
+    expect(planGate).toMatch(
+      /already has a Task sub-issue \(open or closed\) or the label `planned` is skipped/
+    );
+  });
+
+  it('--no-tasks stops after the PBIs, --tasks only backfills', () => {
+    expect(planGate).toMatch(/`--no-tasks`: stop after step 1/);
+    expect(planGate).toMatch(/`--tasks` \(backfill\): skip step 1 and run step 2 only/);
+  });
+
+  it('keeps plan <pbi> unchanged and ignores the flags on a PBI or description', () => {
+    expect(planGate).toMatch(/`plan <pbi>` is unchanged/);
+    expect(planGate).toMatch(/On a PBI or a description `--no-tasks` and `--tasks` do nothing/);
+  });
+
+  it('pipeline step 3 skips the planner for a PBI with Tasks or planned', () => {
+    const step3 = pipelineRef.split('\n').find((l) => /^3\.\s/.test(l))!;
+    expect(step3).toMatch(
+      /a PBI with Task sub-issues, or with the label `planned` and its `plan\.json`, skips the planner/
+    );
+    expect(step3).toContain('`plan <pbi>` is unchanged');
+  });
+});

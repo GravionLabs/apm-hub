@@ -4,6 +4,8 @@ Run by the primary agent (it can ask and write) after the user approved `plan.md
 
 Resolve `{owner}/{repo}`. The run is idempotent: skip items whose `issue` is already non-null, and repeat only what is missing. Create items in dependency order (an item after everything in its `blocked_by`), so each blocker has an issue number first.
 
+After a level `pbi` publish the orchestrator breaks each new PBI down into Tasks in the same session (unless `--no-tasks`): `github-issue` `references/orchestrator-gates.md` "Plan gate"; each PBI's plan is then published here as level `task`.
+
 ## 1. Create
 
 If any question has `deferred: true`, first ensure the label exists (idempotent):
