@@ -9,8 +9,8 @@ metadata:
 # queue
 
 `scripts/Invoke-OrchestratorQueue.ps1` starts one fresh headless `orchestrator` process per issue (own context, no
-cache rewrite from a long session). Plan interactively first: the plan gate needs you, a headless run only
-implements an already planned issue. PowerShell 7+, run from the repository root.
+cache rewrite from a long session). `orchestrator plan <feature>` (PBIs and their Tasks) is the whole preparation, the
+gate needs you; `status <feature>` and `-DryRun` show `unplanned` PBIs. PowerShell 7+, run from the repository root.
 
 ## Usage
 

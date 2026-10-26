@@ -16,7 +16,7 @@
   Needs: every PBI row `#<nr> <state> <title>` becomes `#<nr> <state> | <Needs> | <title>` (`-` when the rule clears the value) and the last line is
   `Needs me: <n> planning, <m> decisions, <k> release review`. The value comes from Get-NeedsValue of NeedsRules.psm1 (the rule of Sync-ProjectNeeds.ps1,
   no second implementation); the issue state is read with gh GET calls only (or from -StateFile), the project is never written. A merged row counts as project Status `In release` and a live-lease row as `In Progress`
-  (facts handed to Get-NeedsValue, which keeps the precedence). -StateFile exists so tests and offline runs need no GitHub. Module missing or state unreadable: one warning, rows stay as given, no summary line, exit 0.
+  (facts handed to Get-NeedsValue, which keeps the precedence). Unplanned: a row whose state is `open` and whose Needs value is `Planning` (no Task sub-issue, no label `planned`) becomes `unplanned`; other states keep theirs. -StateFile exists so tests and offline runs need no GitHub. Module missing or state unreadable: one warning, rows stay as given, no summary line, exit 0.
 .PARAMETER Issue Feature or Epic number.
 .PARAMETER Path  File that holds the table. Without it the table is read from stdin.
 .PARAMETER Live  Print the issue numbers of the live leases and exit; no -Issue, no content, no file.
@@ -95,7 +95,7 @@ foreach ($m in [regex]::Matches($text, '(?m)^\s*#([1-9][0-9]{0,9}) needs-decisio
   $text = [regex]::Replace($text, "(?m)^(\s*#$nr )needs-decision(?=[ \t]|$)", { param($x) $x.Groups[1].Value + "parked ($q)" })
 }
 # Needs column and closing summary (read-only; never fails the status).
-$stateRe = '(?:merged|pr-open #\d+|parked \([^)\n]*\)|needs-decision|blocked by #\d+(?:, #\d+)*|in progress \([^)\n]*\)|open)'
+$stateRe = '(?:merged|pr-open #\d+|parked \([^)\n]*\)|needs-decision|blocked by #\d+(?:, #\d+)*|in progress \([^)\n]*\)|unplanned|open)'
 try {
   $mod = Join-Path $PSScriptRoot 'NeedsRules.psm1'
   if (-not (Test-Path -LiteralPath $mod -PathType Leaf)) { throw "NeedsRules.psm1 not found: $mod" }
@@ -120,7 +120,10 @@ try {
   }
   $text = [regex]::Replace($text, "(?m)^([ \t]*#(\d+) $stateRe)(?=[ \t]|$)[ \t]*(\S?)", {
       param($m) $v = $needs[[int]$m.Groups[2].Value]
-      "$($m.Groups[1].Value) | $(if ($v) { $v } else { '-' })" + $(if ($m.Groups[3].Value) { " | $($m.Groups[3].Value)" } else { '' }) })
+      $head = $m.Groups[1].Value
+      # Unplanned: an open row whose Needs value is Planning (no Task sub-issue, no label planned); same rule, no second one.
+      if ($v -eq 'Planning' -and $head -match '(?<=#\d+ )open$') { $head = $head -replace 'open$', 'unplanned' }
+      "$head | $(if ($v) { $v } else { '-' })" + $(if ($m.Groups[3].Value) { " | $($m.Groups[3].Value)" } else { '' }) })
   $vals = @($needs.Values)
   $text += "Needs me: $(@($vals | Where-Object { $_ -eq 'Planning' }).Count) planning, $(@($vals | Where-Object { $_ -eq 'Decision' }).Count) decisions, $(@($vals | Where-Object { $_ -eq 'Release review' }).Count) release review`n"
 } catch { [Console]::Error.WriteLine("Warning: Needs column skipped: $($_.Exception.Message)") }

@@ -286,13 +286,16 @@ function Write-DryRunNeeds([string]$Root) {
     }
     if ($pbis.Count -eq 0) { Write-Host '[dry-run] No open PBIs found.'; return }
     $items = @(Get-IssueNeedsItem -Number @($pbis | ForEach-Object { [int]$_.number } | Sort-Object -Unique))
+    $unplanned = [System.Collections.Generic.List[string]]::new()
     foreach ($p in @($pbis | Sort-Object { [int]$_.number })) {
       $it = $items | Where-Object { $_.number -eq [int]$p.number } | Select-Object -First 1
       $needs = Get-NeedsValue $it
       $label = $needs ? $needs : '-'
       $skip = $needs -in 'Planning', 'Decision', 'Blocked'
+      if ($needs -eq 'Planning') { $unplanned.Add("#$($p.number)") }
       Write-Host "#$($p.number) $label $(Remove-ControlChar "$($p.title)")$(if ($skip) { ' (skip)' })"
     }
+    Write-Host "[dry-run] Unplanned: $(if ($unplanned.Count) { $unplanned -join ', ' } else { 'none' })"
   }
   catch { Write-Host "[dry-run] Needs unavailable: $(Remove-ControlChar "$($_.Exception.Message)")" }
 }
