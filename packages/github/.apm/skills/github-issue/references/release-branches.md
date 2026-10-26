@@ -9,8 +9,8 @@ builds rare, day-to-day work never targets `main` directly.
 | `<type>/<nr>-<slug>` | the integration branch | the integration branch | squash | none: `verify-project` and `review-fanout` before the PR are the gate |
 | `fix/<nr>-<slug>` hotfix | `main` | `main` | squash | Linux checks on the PR |
 
-The release PR to `main` is created and refreshed by the `release-pr` workflow on every push to the
-release branch (GravionLabs/ci `versioning/release-pr`); the owner only merges it.
+The release PR to `main` is created and refreshed by the caller of the reusable `release-branch.yml` (GravionLabs/ci, step `versioning/release-pr`) on every push to the
+release branch; the owner only merges it.
 
 One rolling branch, `release/next`, serves every release. `github-release cut` creates it from `main`, or
 deletes and recreates it from `main` when it is released, i.e. its head is an ancestor of `main` and not equal to it (no force push; the git guardrail allows the remote delete of exactly `release/next`). A head equal to `main` is fresh and usable: `cut` is a no-op. While it holds unreleased work (not an ancestor of `main`), `cut` never resets it. `cut --feature` always only records `Release branch: release/next` when the branch is fresh or unreleased. After its
