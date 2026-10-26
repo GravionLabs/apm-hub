@@ -17,7 +17,7 @@ One state per PBI, first match wins (merged first, like `next-selection.md`):
 1. `merged`: `next-selection.md` `## Merged (closes at release)`, including the partial-delivery exception; the rule is not restated here.
 2. `pr-open #<n>`: the open-PR check of `next-selection.md` `## Drop the in flight`.
 3. `needs-decision`: the label.
-4. `blocked by #<a>, #<b>`: the open blockers from the blocked-by endpoint of `next-selection.md` `## Drop the blocked`.
+4. `blocked by #<a>, #<b>`: the open, unmerged blockers from the blocked-by endpoint of `next-selection.md` `## Drop the blocked`.
 5. `in progress (runner)`: the PBI holds a live checkout lease (`<state>/leases/*.json`, `heartbeat` within 120 minutes; a stale lease does not count), i.e. a `pbi-runner` of a parallel `loop` (or any run) works on it now. `Write-StatusTable.ps1 -Live` prints the issue numbers of the live leases. Placed before the ledger/branch detail, after `blocked`.
 6. `in progress (<detail>)`: a local `<state>/<nr>/progress.md` exists and its last non-empty line is not `Ledger complete.` (ignore the optional leading timestamp) -> detail is the last `Phase <name>: complete` phase, or `started`. Otherwise a remote branch matching `/<nr>-` in the fetched refs (`git fetch --prune`, then `git branch -r --list '*/<nr>-*'`) -> `in progress (branch <name>)`. A ledger whose last non-empty line is `Ledger complete.` does not count and falls through to this branch clause, then to `open`.
 7. `open`: none of the above.

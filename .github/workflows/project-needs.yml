@@ -46,6 +46,8 @@ jobs:
           if ($env:EVENT_NAME -eq 'issues') {
             $syncArgs.Issue = $env:ISSUE_NUMBER
             $syncArgs.IncludeParents = $true
+            # dependents of the changed issue (a merged or closed blocker releases them) until GravionLabs/apm-hub#519 replaces this workflow
+            $syncArgs.IncludeDependents = $true
           } elseif ($env:EVENT_NAME -eq 'pull_request_target') {
             if ($env:HEAD_REF -match '(^|/)(\d+)-') {
               $syncArgs.Issue = $Matches[2]

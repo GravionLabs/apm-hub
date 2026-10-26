@@ -22,9 +22,13 @@ const HANDLER = `(call, ctx) => {
   const fs = require('fs');
   const d = JSON.parse(fs.readFileSync(process.env.FAKE_DATA, 'utf8'));
   const q = call.query || '';
+  if (call.args[0] === 'api' && call.args[1] !== 'graphql' && String(call.args[1]).includes('/dependencies/blocking')) {
+    return { rest: (d.restBlocking || {})[call.args[1].split('/dependencies')[0]] || [] };
+  }
   if (call.args[0] === 'api' && call.args[1] !== 'graphql') {
     return { rest: d.rest || [] };
   }
+  if (q.includes('blocking(') && d.noBlocking) throw new Error("Field 'blocking' doesn't exist on type 'Issue'");
   if (q.includes('blockedBy') && d.noBlockedBy) throw new Error("Field 'blockedBy' doesn't exist on type 'Issue'");
   if (q.includes('mutation')) {
     if (d.failMutation && ctx.count('mut') <= d.failMutation) throw new Error('secondary rate limit');
@@ -336,6 +340,66 @@ describe.skipIf(!hasPwsh || !hasNode || process.platform === 'win32')(
       expect(r.stdout).toContain('#3: (none) -> Planning');
     });
 
+    describe('-IncludeDependents', () => {
+      const pItem = (nr: number, content: object) => ({
+        ...issueNode({ number: nr, ...content }),
+        projectItems: {
+          nodes: [
+            {
+              id: `I${nr}`,
+              project: { id: 'P1' },
+              status: { name: 'Todo' },
+              level: { name: 'PBI' },
+              needs: null,
+            },
+          ],
+        },
+      });
+      const dep = (nr: number, repo = 'o/r', state = 'OPEN') => ({
+        number: nr,
+        state,
+        repository: { nameWithOwner: repo },
+      });
+      const issues = () => ({
+        'o/r#7': pItem(7, {
+          blocking: { nodes: [dep(8), dep(9, 'o/r', 'CLOSED'), dep(10, 'o/x'), dep(11)] },
+        }),
+        'o/r#8': pItem(8, {}),
+        'o/x#10': pItem(10, { repository: { nameWithOwner: 'o/x' } }),
+      });
+      it('syncs the open dependents, cross-repository ones included; outside-project ones drop out', async () => {
+        const { r, mutations, calls } = await run({ issues: issues() }, [
+          '-Issue',
+          'o/r#7',
+          '-IncludeDependents',
+        ]);
+        expect(r.status).toBe(0);
+        expect(mutations.map((m) => m.variables!.i.itemId).sort()).toEqual(['I10', 'I7', 'I8']);
+        const first = calls.find((c) => c.query?.includes('repository(owner'))!;
+        expect(first.query).toContain('blocking(first: 50)');
+      });
+      it('does not ask for blocking without the switch', async () => {
+        const { calls, mutations } = await run({ issues: issues() }, ['-Issue', 'o/r#7']);
+        expect(calls.some((c) => c.query?.includes('blocking('))).toBe(false);
+        expect(mutations.map((m) => m.variables!.i.itemId)).toEqual(['I7']);
+      });
+      it('falls back to the REST blocking endpoint when GraphQL has no blocking field', async () => {
+        const restBlocking = {
+          'repos/o/r/issues/7': [
+            { number: 8, state: 'open' },
+            { number: 9, state: 'closed' },
+          ],
+        };
+        const { r, mutations, calls } = await run(
+          { issues: issues(), noBlocking: true, restBlocking },
+          ['-Issue', 'o/r#7', '-IncludeDependents']
+        );
+        expect(r.status).toBe(0);
+        expect(mutations.map((m) => m.variables!.i.itemId).sort()).toEqual(['I7', 'I8']);
+        expect(calls.some((c) => c.args.join(' ').includes('/dependencies/blocking'))).toBe(true);
+      });
+    });
+
     it('prints the skip line and exits 0 when the field Needs is missing', async () => {
       const { r, calls } = await run({ noNeeds: true, items: [projectItem(1, null)] });
       expect(r.stdout.trim()).toBe(
@@ -361,6 +425,63 @@ describe.skipIf(!hasPwsh || !hasNode || process.platform === 'win32')(
       expect(r.stdout).toContain('#9: (none) -> Ready');
       expect(r.stdout).toContain('#10: (none) -> In progress');
       expect(calls.filter((c) => c.query?.includes('pullRequests'))).toHaveLength(1);
+    });
+
+    it('treats merged blockers (label, Status In release) as resolved and open cross-repo ones as blocking', async () => {
+      const inRelease = { project: { id: 'P1' }, status: { name: 'In release' } };
+      const items = [
+        projectItem(21, null, {
+          blockedBy: { nodes: [{ state: 'OPEN', labels: { nodes: [{ name: 'merged' }] } }] },
+        }),
+        projectItem(22, null, {
+          blockedBy: { nodes: [{ state: 'OPEN', projectItems: { nodes: [inRelease] } }] },
+        }),
+        projectItem(23, null, {
+          blockedBy: {
+            nodes: [
+              { state: 'OPEN', repository: { nameWithOwner: 'o/other' }, labels: { nodes: [] } },
+            ],
+          },
+        }),
+        projectItem(24, null, {
+          blockedBy: {
+            nodes: [
+              {
+                state: 'OPEN',
+                projectItems: {
+                  nodes: [{ project: { id: 'P2' }, status: { name: 'In release' } }],
+                },
+              },
+            ],
+          },
+        }),
+      ];
+      const { r, calls } = await run({ items });
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain('#21: (none) -> Ready');
+      expect(r.stdout).toContain('#22: (none) -> Ready');
+      expect(r.stdout).toContain('#23: (none) -> Blocked');
+      expect(r.stdout).toContain('#24: (none) -> Blocked');
+      const q = calls.find((c) => c.query?.includes('items(first: 100'))!.query!;
+      expect(q).toMatch(/blockedBy\(first: 20\) \{ nodes \{ number state repository/);
+    });
+
+    it('REST fallback: merged-label blocker is resolved, open unmerged blocks', async () => {
+      const merged = await run({
+        noBlockedBy: true,
+        items: [projectItem(5, null)],
+        rest: [{ number: 2, state: 'open', labels: [{ name: 'Merged' }] }],
+      });
+      expect(merged.r.stdout).toContain('#5: (none) -> Ready');
+      const open = await run({
+        noBlockedBy: true,
+        items: [projectItem(5, null)],
+        rest: [
+          { number: 2, state: 'open', labels: [{ name: 'merged' }] },
+          { number: 3, state: 'open', labels: [{ name: 'bug' }] },
+        ],
+      });
+      expect(open.r.stdout).toContain('#5: (none) -> Blocked');
     });
 
     it('falls back to the REST dependencies endpoint when GraphQL has no blockedBy', async () => {

@@ -134,6 +134,9 @@ describe('loop-mode reference', () => {
     expect(sel).toContain('waiting for merge: PR #<n>');
     expect(sel).toContain('merged, closes at release');
     expect(sel).toMatch(/closed without merge is selected again/);
+    expect(sel).toMatch(/open, unmerged blocker/);
+    expect(sel).toContain('blocker #<n> merged, closes at release');
+    expect(sel).toMatch(/first PBI of the chain is merged, the next one is selectable/);
     expect(sel).toMatch(/Never merge a PR/);
     expect(sel).toMatch(/blocked-by chain[^\n]*normal `nothing selectable` stop[^\n]*not an error/);
   });

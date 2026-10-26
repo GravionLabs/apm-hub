@@ -5,6 +5,7 @@
 .DESCRIPTION
   Imported by github-project/scripts/Sync-ProjectNeeds.ps1 (writes the field), github-issue/scripts/Write-StatusTable.ps1 (status table)
   and the queue dry run. Get-NeedsValue is the only implementation of the rule; callers never restate it.
+  Test-BlockerUnresolved is the one definition of a blocking blocker: open and not merged (label merged or Status 'In release'); closed or merged blockers count as resolved.
   Get-IssueNeedsItem reads an issue with gh GET calls only (never a mutation) and returns an item in the Sync-ProjectNeeds -StateFile shape;
   the project Status is not readable that way, so a read item has status $null.
 #>
@@ -18,10 +19,19 @@ function Get-Prop($Obj, [string]$Name) {
 }
 
 # Pure rule function: Needs option name, or $null to clear the field. First match wins:
-# closed -> clear; label needs-decision -> Decision; needs-review -> Review; open blocked-by -> Blocked;
+# closed -> clear; label needs-decision -> Decision; needs-review -> Review; unresolved blocked-by (open and not merged) -> Blocked;
 # label merged or Status 'In release' -> Release review; open PR head (^|/)<nr>- or Status 'In Progress' -> In progress;
 # Epic without Feature, Feature without PBI, PBI-level without Task sub-issues and without label planned -> Planning;
 # else Ready for PBI-level items and clear for Epics and Features.
+# True when a blocker still blocks: state OPEN (any case), no label merged (strings or {name}) and Status not 'In release'.
+# A blocker without state counts as resolved. blockedByOpen of an item counts the unresolved blockers.
+function Test-BlockerUnresolved($Blocker) {
+  if ("$(Get-Prop $Blocker 'state')".ToUpperInvariant() -ne 'OPEN') { return $false }
+  $labels = @(Get-Prop $Blocker 'labels' | ForEach-Object { "$(if ($_ -is [string]) { $_ } else { Get-Prop $_ 'name' })".ToLowerInvariant() })
+  if ($labels -contains 'merged') { return $false }
+  "$(Get-Prop $Blocker 'status')" -ne 'In release'
+}
+
 function Get-NeedsValue($Item) {
   if ("$(Get-Prop $Item 'state')".ToUpperInvariant() -eq 'CLOSED') { return $null }
   $labels = @(Get-Prop $Item 'labels' | ForEach-Object { "$_".ToLowerInvariant() })
@@ -72,11 +82,11 @@ function Get-IssueNeedsItem {
       level = Get-IssueLevelName (Get-Prop (Get-Prop $i 'type') 'name') "$($i.title)"
       labels = @($i.labels | ForEach-Object { if ($_ -is [string]) { $_ } else { $_.name } })
       status = $null; needs = $null
-      blockedByOpen = @($blockers | Where-Object { "$($_.state)" -eq 'open' }).Count
+      blockedByOpen = @($blockers | Where-Object { Test-BlockerUnresolved $_ }).Count
       subIssueLevels = @($subs | ForEach-Object { Get-IssueLevelName (Get-Prop (Get-Prop $_ 'type') 'name') "$($_.title)" } | Where-Object { $_ })
       prHeads = @($heads | Where-Object { "$_" -match "(^|/)$n-" }); parent = $null
     }
   }
 }
 
-Export-ModuleMember -Function Get-Prop, Get-NeedsValue, Get-IssueNeedsItem
+Export-ModuleMember -Function Get-Prop, Get-NeedsValue, Test-BlockerUnresolved, Get-IssueNeedsItem
