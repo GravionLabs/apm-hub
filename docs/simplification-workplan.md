@@ -98,7 +98,7 @@ Done when: `dromos run epic <nr> --harness claude|copilot` plans missing PBIs an
 | # | PBI | Size | Done when | Depends on |
 |---|---|---|---|---|
 | B2 | `[PBI] feat: Harness interface, RunEvent schema and runner config` | M | `src/runner/harness.ts` defines `Harness.runPhase(input) → {result, events, usage}` as in plan section 3.4 (`prompt, cwd, model, skills, allow, schema, timeoutMs`), with Zod for the schema; `schema/events.schema.json` gains `phase.started`, `phase.finished`, `phase.failed` with `issue, runId, phase, harness {name, version, sdk}, model, durationMs, usage`; `src/runner/config.ts` loads `.dromos/config.json` from the target repository: `harness`, `models` per role (`planner`, `implementer`, `implementerRound2`, `reviewer`, `retro`), `skills` per role (default `planner`, `implementation`, `code-review`, `retro`), `test.related` (optional) and `test.full` commands (without `test.related` the runner uses `test.full`), `parallel` (default 3), `allow` extensions; defaults when the file is missing; unit tests for loading, defaults and validation errors | B1 |
-| B3 | `[PBI] feat: permission callback with allowlist and git guardrails` | M | `src/runner/permissions.ts`: one allowlist (git, gh, pwsh, pnpm, npm, npx, node, dotnet, uv, python, ng subcommands) ported from apm-hub `packages/hooks/.apm/hooks/` `allowed-commands.ps1` at `v2.5.4`; git guardrails ported from the apm-hub git-guardrails hook (deny: force push to `main`/`release/*` except `release/next`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .`/`restore .`, remote delete of `main`/`release/*`); `Decision = {allow: true} or {allow: false, reason}`; config `allow` extends the list; every deny is a `permission.denied` event; table-driven tests with at least every guardrail case of the apm-hub hook tests | B2 |
+| B3 | `[PBI] feat: permission callback with allowlist and git guardrails` | M | `src/runner/permissions.ts`: one allowlist (git, gh, pwsh, pnpm, npm, npx, node, dotnet, uv, python, ng subcommands) ported from apm-hub `packages/delivery/.apm/skills/queue/scripts/harness/allowed-commands.ps1` at tag `v2.5.4`; git guardrails ported from apm-hub `packages/hooks/.apm/hooks/git-guardrails.sh` and `test/packages/hooks/git-guardrails.test.ts` (deny: force push to `main`/`release/*` except `release/next`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .`/`restore .`, remote delete of `main`/`release/*`); `Decision = {allow: true} or {allow: false, reason}`; config `allow` extends the list; every deny is a `permission.denied` event; table-driven tests with at least every guardrail case of the apm-hub hook tests | B2 |
 | B6 | `[PBI] feat: spike command — implement one Task through the harness CLIs` | M | `src/runner/harness/cli.ts`: a minimal `Harness` for both clients on top of their headless CLIs (`claude -p --output-format json`, `copilot -p` with `--allow-tool` per allowlist entry); `dromos run task <nr> --harness claude|copilot [--repo <path>]`: creates a worktree, runs one implementer phase ("implement this Task and commit"), checks a new commit exists, writes the `phase.*` events; unit tests with a fake CLI binary on `PATH`; `docs/spike.md` describes how to run the measurement (B6b) | B2, B3 |
 | B6b | `[PBI] chore: spike measurement and harness decision` | S | `dromos run task` run three times per harness against a throwaway repository; results (wall time, JSON validity, permission stalls, usage availability) recorded in `docs/spike.md`; decision recorded there and in dromos#131: Copilot via SDK (B5 as written), via the CLI adapter only, or Claude-only for 0.4.0; B5 is edited to match before it starts | B6 |
 | B4 | `[PBI] feat: Claude adapter on the Claude Agent SDK` | M | `src/runner/harness/claude.ts` runs a phase with the Claude Agent SDK (`@anthropic-ai/claude-agent-sdk`, version pinned in `package.json`): model, permission callback from B3, skills directory, JSON output validated against the phase schema, one retry on invalid JSON with the validation error appended; the CLI adapter from B6 stays as fallback behind `harness: "claude-cli"`; version detection (`claude --version`, SDK package version) into the run header event; tests with recorded SDK message fixtures; one opt-in live test (`DROMOS_LIVE=claude`) | B6 |
@@ -227,3 +227,72 @@ From A3 until B10b there is no automated pipeline. The intended mode:
 ## 7. Issues
 
 Created 2026-10-27. Every PBI body has Overview, Parent, Acceptance Criteria (the Done-when line split into checkboxes), Technical Notes (branch, commands, context, out of scope) and Definition of Done; size in the body. Blocked-by links are native, also across the two repositories.
+
+Issue numbers (`#n` = apm-hub, `dromos#n` = GravionLabs/dromos):
+
+| Item | Issue |
+|---|---|
+| Epic Stage A | #714 |
+| Feature F1 | #716 |
+| Feature F2 | #717 |
+| Feature F3 | #718 |
+| Feature F4 | #719 |
+| Epic Stage B (dromos) | dromos#205 |
+| Feature F5 | dromos#207 |
+| Feature F6 | dromos#208 |
+| Feature F7 | dromos#209 |
+| Feature F8 | dromos#210 |
+| Feature F9 | dromos#211 |
+| Epic apm-hub 3.1.0 | #715 |
+| Feature F10 | #720 |
+| Feature F11 | #721 |
+| Epic Stage C | dromos#206 |
+| Feature F12 | dromos#212 |
+| A1 | #722 |
+| A2 | #723 |
+| A3 | #724 |
+| A4 | #725 |
+| A5 | #726 |
+| A6 | #727 |
+| A7 | #728 |
+| A8 | #729 |
+| A9 | #730 |
+| A10 | #731 |
+| A11 | #732 |
+| A12 | #733 |
+| A13 | #734 |
+| A14 | #735 |
+| A15 | #736 |
+| P1 | #737 |
+| P2 | #738 |
+| P3 | #739 |
+| P4 | #740 |
+| P5 | #741 |
+| P6 | #742 |
+| P7 | #744 |
+| P8 | #745 |
+| P9 | #743 |
+| B1 | dromos#213 |
+| B2 | dromos#214 |
+| B3 | dromos#215 |
+| B4 | dromos#218 |
+| B5 | dromos#219 |
+| B6 | dromos#216 |
+| B6b | dromos#217 |
+| B7 | dromos#220 |
+| B8 | dromos#221 |
+| B9 | dromos#222 |
+| B10 | dromos#223 |
+| B10b | dromos#225 |
+| B11 | dromos#224 |
+| B12 | dromos#226 |
+| B13 | dromos#227 |
+| B13b | dromos#228 |
+| B14 | dromos#229 |
+| B15 | dromos#230 |
+| B16 | dromos#231 |
+| B17 | dromos#232 |
+| B18 | dromos#233 |
+| B19 | dromos#234 |
+| B20 | dromos#235 |
+| B21 | dromos#236 |
