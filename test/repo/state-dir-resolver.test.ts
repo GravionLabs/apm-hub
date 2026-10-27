@@ -3,9 +3,7 @@ import * as path from 'path';
 
 const ROOT = path.resolve(__dirname, '../..');
 /** Every pwsh file that defines Resolve-StateDir (later tasks extend this list). */
-const PWSH_FILES = [
-  'scripts/Invoke-HeadlessSmoke.ps1',
-];
+const PWSH_FILES = ['scripts/Invoke-HeadlessSmoke.ps1'];
 
 const extract = (rel: string): string => {
   const text = fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
