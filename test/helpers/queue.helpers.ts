@@ -11,10 +11,6 @@ export const INSTALLER = path.resolve(
   __dirname,
   '../../packages/delivery/.apm/skills/queue/scripts/Install-QueueLauncher.ps1'
 );
-export const AGENT = path.resolve(
-  __dirname,
-  '../../packages/agents/.apm/agents/orchestrator.agent.md'
-);
 export const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 export const posix = process.platform !== 'win32';
 // Gate-line forms the queue must detect (markdown-wrapped at line start) and must ignore (mid-line, prefixed, wrong case).

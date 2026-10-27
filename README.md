@@ -121,41 +121,12 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                             |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
-| `agents`      | `orchestrator`, `issue-reader`, `explorer`, `planner`, `reviewer`, `implementer`, `pr-writer` (subagents), `/orchestrator` skill — see below   |
 | `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails, agent sanitize on session start); OpenCode plugin         |
-| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                                       |
+| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks` (no stack skills)                                       |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                               |
 | `all`         | every package above except `apm-tooling`                                                                                                       |
 
-📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[Browse All Agents](docs/agent-list.md)** · 📄 **[Working mode](docs/working-mode.md)** (small contexts, one issue per session) · 📄 **[External frameworks](docs/frameworks.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
-
-## 🤖 Agents
-
-Skills are the primary artifact; the `agents` package adds the seven agents skills cannot replace.
-`orchestrator` runs as the **primary agent** and keeps only phase summaries in its context; the
-six subagents each have their own model and tool set:
-
-| Agent          | Role                                                                                                                  |
-| :------------- | :-------------------------------------------------------------------------------------------------------------------- |
-| `orchestrator` | `plan\|implement\|full\|next\|loop <issue>` (or `/orchestrator`): plan → implement → review → PR; gates stay with you |
-| `issue-reader` | read-only `gh` and `git` (haiku), resolves issue type, integration branch, digest and Task merged state as one JSON   |
-| `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                                                |
-| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `<state>/<issue>/plan.json`, returns path + summary      |
-| `reviewer`     | read-only (diff, log and show only, never the test suite), returns the `review-fanout` findings JSON                  |
-| `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |
-| `pr-writer`    | git and `gh` only, runs `github-pull-request` for the PBI's one PR, returns `{number, url}` as JSON                   |
-
-```powershell
-uv tool install apmw                                # once per machine (or pipx install apmw)
-apmw install -g -p claude                           # apm install + per-platform frontmatter; add -p opencode / -p copilot for those clients
-apmw update -g -p claude                            # later updates; apm update alone leaves the agents in the source format
-claude --agent orchestrator "full 123"     # Copilot: copilot --agent orchestrator · OpenCode: opencode --agent orchestrator
-```
-
-Skills install with `apm install` alone. The agents do not: `apm install`/`apm update` copy them in the source format (Copilot tool aliases plus a `metadata` block) and every client except Copilot then loads them without tools or rejects them, so **the command for a package with agents is `apmw install` / `apmw update`** (`uv tool install apmw` or `pipx install apmw`), which runs `apm` and then `apmw sanitize -p <client>`. Already ran `apm` directly? `apmw sanitize -g -p claude|opencode|copilot` repairs the installed files. Safety nets: the `/apm-install` skill runs the sanitize itself, the `hooks` package heals Claude Code at session start, and an APM lifecycle hook in `~/.apm/apm.yml` makes every `apm` call sanitize, see [prerequisites](docs/prerequisites.md#can-the-sanitize-run-automatically).
-
-Source format and the `metadata` block: [docs/concepts/agent-frontmatter.md](docs/concepts/agent-frontmatter.md).
-[`apmw`](https://github.com/GravionLabs/apmw) does the per-platform rewrite.
+📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[Working mode](docs/working-mode.md)** (small contexts, one issue per session) · 📄 **[External frameworks](docs/frameworks.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
 
 ## 🤝 Contributing
 
