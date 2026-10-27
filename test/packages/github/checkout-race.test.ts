@@ -14,7 +14,12 @@ import {
 type Out = { code: number | null; stdout: string; stderr: string };
 
 /** Starts Enter-Checkout.ps1 as a separate process; all are spawned in the same tick, a "go" file would only delay the pwsh start-up. */
-const enter = (f: Fixture, issue: number, extra: string[] = []): Promise<Out> =>
+const enter = (
+  f: Fixture,
+  issue: number,
+  extra: string[] = [],
+  env: Record<string, string> = {}
+): Promise<Out> =>
   new Promise((resolve) => {
     const p = spawn(
       'pwsh',
@@ -37,6 +42,8 @@ const enter = (f: Fixture, issue: number, extra: string[] = []): Promise<Out> =>
           GIT_CONFIG_GLOBAL: '/dev/null',
           GIT_CONFIG_NOSYSTEM: '1',
           DROMOS_STATE_DIR: '',
+          ENTER_CHECKOUT_TEST_PAUSE: '',
+          ...env,
         },
       }
     );
@@ -46,6 +53,29 @@ const enter = (f: Fixture, issue: number, extra: string[] = []): Promise<Out> =>
     p.stderr.on('data', (d) => (stderr += d));
     p.on('exit', (code) => resolve({ code, stdout, stderr }));
   });
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Resolves true once `file` exists, false once `done()` is true first (the paused run finished without reaching the point). */
+const reached = async (file: string, done: () => boolean = () => false): Promise<boolean> => {
+  for (let i = 0; i < 1200; i++) {
+    if (fs.existsSync(file)) return true;
+    if (done()) return false;
+    await sleep(50);
+  }
+  throw new Error(`pause point not reached: ${file}`);
+};
+
+/** Parsed JSON results; asserts exit 0 for every run. */
+const parse = (outs: Out[]) => {
+  for (const o of outs) expect(o.code, o.stderr).toBe(0);
+  return outs.map((o) => JSON.parse(o.stdout.trim()) as { path: string; worktree: boolean });
+};
+
+const noLeftovers = (f: Fixture) =>
+  expect(fs.readdirSync(path.join(f.state, 'leases')).filter((x) => !x.endsWith('.json'))).toEqual(
+    []
+  );
 
 describe('Enter-Checkout.ps1 lease creation is race-safe (#466)', () => {
   let f: Fixture;
@@ -80,19 +110,117 @@ describe('Enter-Checkout.ps1 lease creation is race-safe (#466)', () => {
     120_000
   );
 
-  it('two runs racing for a stale main-checkout lease: exactly one takes it over', async () => {
+  it.each([2, 3])(
+    '%i runs racing for a stale main-checkout lease: exactly one takes it over',
+    async (n) => {
+      const old = new Date(Date.now() - 6 * 3600_000).toISOString().replace(/\.\d+Z$/, 'Z');
+      plantLease(f.state, { path: f.repo, issue: 55, heartbeat: old, started: old });
+      const issues = Array.from({ length: n }, (_, i) => 201 + i);
+      const outs = await Promise.all(issues.map((i) => enter(f, i)));
+      const results = parse(outs);
+      expect(
+        results.filter((r) => !r.worktree),
+        JSON.stringify(outs)
+      ).toHaveLength(1);
+      const leases = readLeases(f.state);
+      expect(leases).toHaveLength(n);
+      const onMain = leases.filter((l) => l.path === f.repo);
+      expect(onMain).toHaveLength(1);
+      expect(issues).toContain(onMain[0].issue);
+      expect(new Set(results.map((r) => r.path)).size).toBe(n);
+      noLeftovers(f);
+    },
+    120_000
+  );
+
+  it('a lease created after a run looked is never taken over by that run (race A)', async () => {
+    const pause = fs.mkdtempSync(path.join(f.root, 'pause-'));
+    // B looks at a free main checkout and stops right after the look
+    const b = enter(f, 402, [], { ENTER_CHECKOUT_TEST_PAUSE: pause });
+    await reached(path.join(pause, 'after-snapshot.reached'));
+    // A claims the main checkout in that window
+    const [a] = parse([await enter(f, 401)]);
+    expect(a.worktree).toBe(false);
+    fs.writeFileSync(path.join(pause, 'after-snapshot.go'), '');
+    const [rb] = parse([await b]);
+    expect(rb.worktree, JSON.stringify(rb)).toBe(true);
+    const onMain = readLeases(f.state).filter((l) => l.path === f.repo);
+    expect(onMain.map((l) => l.issue)).toEqual([401]);
+    expect(readLeases(f.state)).toHaveLength(2);
+    noLeftovers(f);
+  }, 120_000);
+
+  it('a third run claiming during a stale takeover never costs a live lease (race B)', async () => {
     const old = new Date(Date.now() - 6 * 3600_000).toISOString().replace(/\.\d+Z$/, 'Z');
     plantLease(f.state, { path: f.repo, issue: 55, heartbeat: old, started: old });
-    const outs = await Promise.all([enter(f, 201), enter(f, 202)]);
-    for (const o of outs) expect(o.code, o.stderr).toBe(0);
-    const results = outs.map((o) => JSON.parse(o.stdout.trim()) as { worktree: boolean });
+    const pause = fs.mkdtempSync(path.join(f.root, 'pause-'));
+    // B sees the stale lease and stops before it acts on it
+    let bDone = false;
+    const b = enter(f, 502, [], { ENTER_CHECKOUT_TEST_PAUSE: pause }).then((o) => {
+      bDone = true;
+      return o;
+    });
+    await reached(path.join(pause, 'after-snapshot.reached'));
+    // A takes the stale lease over in that window
+    const [a] = parse([await enter(f, 501)]);
+    expect(a.worktree).toBe(false);
+    fs.writeFileSync(path.join(pause, 'after-snapshot.go'), '');
+    // should B move A's fresh lease aside, C claims the then free path before B puts it back
+    const inRestore = await reached(path.join(pause, 'before-restore.reached'), () => bDone);
+    const c = inRestore ? await enter(f, 503) : undefined;
+    fs.writeFileSync(path.join(pause, 'before-restore.go'), '');
+    const outs = [await b, c ?? (await enter(f, 503))];
+    const results = parse(outs);
     expect(
       results.filter((r) => !r.worktree),
       JSON.stringify(outs)
-    ).toHaveLength(1);
-    const onMain = readLeases(f.state).filter((l) => l.path === f.repo);
-    expect(onMain).toHaveLength(1);
-    expect([201, 202]).toContain(onMain[0].issue);
+    ).toHaveLength(0);
+    const leases = readLeases(f.state);
+    expect(leases.filter((l) => l.path === f.repo).map((l) => l.issue)).toEqual([501]);
+    expect(leases).toHaveLength(3);
+    noLeftovers(f);
+  }, 120_000);
+
+  it('a lease renewed during a takeover and then displaced by a newer claim is kept, not deleted', async () => {
+    const old = new Date(Date.now() - 6 * 3600_000).toISOString().replace(/\.\d+Z$/, 'Z');
+    const file = plantLease(f.state, { path: f.repo, issue: 55, heartbeat: old, started: old });
+    const pause = fs.mkdtempSync(path.join(f.root, 'pause-'));
+    fs.writeFileSync(path.join(pause, 'after-snapshot.go'), '');
+    const b = enter(f, 602, [], { ENTER_CHECKOUT_TEST_PAUSE: pause });
+    await reached(path.join(pause, 'before-move.reached'));
+    // the owner of #55 renews its heartbeat after B checked the lease under the takeover lock
+    const renewed = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+    fs.writeFileSync(
+      file,
+      JSON.stringify({
+        path: f.repo,
+        issue: 55,
+        branch: 'feat/55',
+        host: 'h',
+        started: old,
+        heartbeat: renewed,
+      })
+    );
+    fs.writeFileSync(path.join(pause, 'before-move.go'), '');
+    await reached(path.join(pause, 'before-restore.reached'));
+    // C claims the path B has just emptied, so B cannot put the renewed lease back
+    const [c] = parse([await enter(f, 603)]);
+    expect(c.worktree).toBe(false);
+    fs.writeFileSync(path.join(pause, 'before-restore.go'), '');
+    const ob = await b;
+    const [rb] = parse([ob]);
+    expect(rb.worktree).toBe(true);
+    expect(ob.stderr).toContain('lease of #55 renewed during a takeover and displaced');
+    const leaseNames = fs.readdirSync(path.join(f.state, 'leases'));
+    const displaced = leaseNames.filter((x) => x.startsWith(`${leaseKey(f.repo)}.json.displaced-`));
+    expect(displaced).toHaveLength(1);
+    const kept = JSON.parse(fs.readFileSync(path.join(f.state, 'leases', displaced[0]), 'utf8'));
+    expect(kept).toMatchObject({ issue: 55, heartbeat: renewed });
+    expect(
+      readLeases(f.state)
+        .filter((l) => l.path === f.repo)
+        .map((l) => l.issue)
+    ).toEqual([603]);
   }, 120_000);
 
   it('a dirty main checkout releases the claimed lease again and gets a worktree', async () => {

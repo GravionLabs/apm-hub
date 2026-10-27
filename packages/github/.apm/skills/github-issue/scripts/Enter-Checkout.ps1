@@ -18,9 +18,11 @@
   a failure is one 'Project status:' line on stderr, exit code unchanged).
   A lease older than -LeaseTtlMinutes is stale: it counts as free and is taken over (stderr: 'stale lease of #<n> taken over').
   Race safety: the lease of the main checkout is claimed BEFORE the dirty check and the checkout, by exclusive create (O_EXCL: it fails when
-  <key>.json exists; a file younger than 10 s that cannot be parsed yet counts as a lease being written). A stale lease is first moved away
-  (only one taker wins the move). The loser re-evaluates, sees the winner's live lease and gets a worktree: two runs starting at the same instant cannot both
-  take the free main checkout.
+  <key>.json exists; a file younger than 10 s that was not in the attempt's snapshot counts as a lease being written and is never moved).
+  A stale lease is taken over only under the takeover lock <state>/leases.lock and only while it is byte-equal to what the attempt saw; it is
+  moved away before it is deleted, a lease renewed in that window is put back (or, when a newer claim took the path, kept as
+  <key>.json.displaced-<pid>: a live lease is never deleted). The loser re-evaluates, sees the winner's live lease and gets a worktree: two
+  runs starting at the same instant cannot both take the free main checkout. ENTER_CHECKOUT_TEST_PAUSE is a test-only hook (Wait-TestPause).
 .PARAMETER Issue           Issue number.
 .PARAMETER Branch          Branch of the run.
 .PARAMETER Base            Integration branch on origin the branch starts from.
@@ -74,6 +76,15 @@ function Write-Lease([string]$File, $Lease, [switch]$Exclusive) {
   Move-Item -LiteralPath $tmp -Destination $File -Force
   return $true
 }
+# Test-only (deterministic race tests): with ENTER_CHECKOUT_TEST_PAUSE=<dir> the run writes <dir>/<point>.reached at a named point of the claim
+# loop and waits until <dir>/<point>.go exists (at most 60 s). Unset in normal runs: no effect.
+function Wait-TestPause([string]$Point) {
+  $dir = $env:ENTER_CHECKOUT_TEST_PAUSE
+  if (-not $dir) { return }
+  [IO.File]::WriteAllText((Join-Path $dir "$Point.reached"), "$PID")
+  $until = [DateTime]::UtcNow.AddSeconds(60)
+  while (-not (Test-Path -LiteralPath (Join-Path $dir "$Point.go")) -and [DateTime]::UtcNow -lt $until) { Start-Sleep -Milliseconds 25 }
+}
 function Test-Same([string]$A, [string]$B) {
   $cmp = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
   [string]::Equals([IO.Path]::TrimEndingDirectorySeparator($A), [IO.Path]::TrimEndingDirectorySeparator($B), $cmp)
@@ -114,6 +125,14 @@ function Get-Leases {
     } | Where-Object { $_ })
 }
 $leases = Get-Leases
+# true for an unreadable lease text or one that is not live for another issue (the busy rule of the claim loop)
+function Test-Takeable([string]$Raw) {
+  try {
+    $o = $Raw | ConvertFrom-Json
+    $live = ([DateTime]::UtcNow - (ConvertTo-Utc $o.heartbeat)).TotalMinutes -lt $LeaseTtlMinutes
+    -not ($live -and "$($o.issue)" -ne $Issue)
+  } catch { $true }
+}
 
 function Save-Lease([string]$CheckoutPath, [string]$LeaseBranch, $Existing, [switch]$Exclusive) {
   $file = Join-Path $leaseDir ((Get-LeaseKey $CheckoutPath) + '.json')
@@ -170,26 +189,57 @@ for ($attempt = 0; $attempt -lt 5 -and -not $claimed -and -not $From; $attempt++
   $onRoot = @($leases | Where-Object { Test-Same $_.Path $root })
   if (@($onRoot | Where-Object { $_.Live -and $_.Issue -ne $Issue }).Count -gt 0) { break } # busy
   $previous = @($onRoot | Where-Object { $_.File -eq $rootFile } | Select-Object -First 1)
-  if (-not $previous.Count -and (Test-Path -LiteralPath $rootFile) -and ([DateTime]::UtcNow - (Get-Item -LiteralPath $rootFile -Force).LastWriteTimeUtc).TotalSeconds -lt 10) {
-    Start-Sleep -Milliseconds 150 # a lease being written by a concurrent run: look again, it is live by then
+  # One look per attempt: only what this look saw may be taken over (a second existence check could see a lease created after the snapshot).
+  $seen = [IO.FileInfo]::new($rootFile) # Exists and LastWriteTimeUtc are read once, on first access
+  if (-not $seen.Exists) { $seen = $null }
+  Wait-TestPause 'after-snapshot'
+  $existing = if ($previous.Count) { $previous[0].Data } else { $null }
+  if (-not $seen) {
+    $claimed = Save-Lease $root $Branch $existing -Exclusive # free: exclusive create, a concurrent creator wins and is seen next attempt
     continue
   }
-  $existing = if ($previous.Count) { $previous[0].Data } else { $null }
-  if (Test-Path -LiteralPath $rootFile) {
-    # a stale (or unreadable) lease: move it away first, only one taker wins the move; a lease that changed meanwhile is put back
-    if (Test-Link $rootFile) { throw "Refusing symlinked path: $rootFile" }
-    $before = if ($previous.Count) { $previous[0].Raw } else { $null }
+  if (Test-Link $rootFile) { throw "Refusing symlinked path: $rootFile" }
+  if (-not $previous.Count -and ([DateTime]::UtcNow - $seen.LastWriteTimeUtc).TotalSeconds -lt 10) {
+    Start-Sleep -Milliseconds 150 # not in the snapshot and young: a lease being written or created after the look; never moved, read again
+    continue
+  }
+  # A stale lease (or an unreadable file older than 10 s): taken over under the takeover lock only. Rules:
+  # - the lock (FileShare.None on <state>/leases.lock: flock on Unix, released at process exit) serialises takers, so no taker moves a lease
+  #   another taker has just claimed: under the lock the file must still be byte-equal to this look and still not live for another issue;
+  # - the file is moved aside before it is deleted; when it changed in that window (its owner renewed the heartbeat) it is put back;
+  # - a live lease is never deleted: when putting it back fails (a run created a new lease in the window), the newer claim stays and the
+  #   moved lease is kept as <key>.json.displaced-<pid> with a stderr line naming its issue, so its owner stays detectable.
+  $before = if ($previous.Count) { $previous[0].Raw } else { try { Get-Content -LiteralPath $rootFile -Raw } catch { $null } }
+  $lockPath = Join-Path $state 'leases.lock'
+  if (Test-Link $lockPath) { throw "Refusing symlinked path: $lockPath" }
+  $lock = $null
+  $deadline = [DateTime]::UtcNow.AddSeconds(10)
+  while (-not $lock -and [DateTime]::UtcNow -lt $deadline) {
+    try { $lock = [IO.File]::Open($lockPath, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None) }
+    catch [IO.IOException] { Start-Sleep -Milliseconds (Get-Random -Minimum 5 -Maximum 40) }
+  }
+  if (-not $lock) { continue }
+  try {
+    $recheck = try { Get-Content -LiteralPath $rootFile -Raw } catch { $null }
+    if (-not (Test-Path -LiteralPath $rootFile) -or $recheck -ne $before -or -not (Test-Takeable $recheck)) { continue } # changed since the look: read again
+    Wait-TestPause 'before-move'
     $gone = "$rootFile.$PID.stale"
     try { [IO.File]::Move($rootFile, $gone) } catch [IO.IOException] { continue }
     $after = try { Get-Content -LiteralPath $gone -Raw } catch { $null }
-    if ($null -ne $before -and $after -ne $before) {
-      try { [IO.File]::Move($gone, $rootFile, $false) } catch [IO.IOException] { Remove-Item -LiteralPath $gone -Force -ErrorAction SilentlyContinue }
+    if ($after -ne $before) {
+      Wait-TestPause 'before-restore'
+      try { [IO.File]::Move($gone, $rootFile, $false) } catch [IO.IOException] {
+        $kept = "$rootFile.displaced-$PID"
+        [IO.File]::Move($gone, $kept, $false)
+        $who = try { "#$(($after | ConvertFrom-Json).issue)" } catch { 'an unknown issue' }
+        [Console]::Error.WriteLine("lease of $who renewed during a takeover and displaced by a newer claim: kept as $kept")
+      }
       continue
     }
     Remove-Item -LiteralPath $gone -Force -ErrorAction SilentlyContinue
     foreach ($l in @($onRoot | Where-Object { -not $_.Live -and $_.Issue -ne $Issue })) { [Console]::Error.WriteLine("stale lease of #$($l.Issue) taken over") }
-  }
-  $claimed = Save-Lease $root $Branch $existing -Exclusive
+    $claimed = Save-Lease $root $Branch $existing -Exclusive
+  } finally { $lock.Dispose() }
 }
 if ($claimed) {
   $dirty = @(& git -C $root status --porcelain --untracked-files=no)
