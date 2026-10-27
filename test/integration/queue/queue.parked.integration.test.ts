@@ -29,6 +29,9 @@ const featureDone = 'echo "Feature #10 is done."';
 // copies the queue cache as the next child sees it (invariant: parked entry saved before the next child starts)
 const snap = 'cp .agents/queue-10.json snapshot.json; ';
 
+// the whole case batch runs inside the beforeAll hook: far above the 30 s default on a loaded CI runner
+const SETUP_TIMEOUT = 120_000;
+
 describe.skipIf(!hasPwsh || !posix)('Invoke-OrchestratorQueue.ps1 parked gates (#579)', () => {
   let root: string;
   const defs = new Map<string, Def>();
@@ -127,7 +130,7 @@ sh "${dir}/steps/$c"
     });
     const results = await runBatchParallel(cases);
     cases.forEach((c, i) => (R[c.key] = results[i]));
-  });
+  }, SETUP_TIMEOUT);
   afterAll(() => fs.rmSync(root, { recursive: true, force: true }));
 
   it('parks the gated PBI, runs the next PBI, lists it as parked and exits 2', () => {

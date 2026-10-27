@@ -118,6 +118,9 @@ type Def = {
   path?: (t: Tools) => string; // replaces the PATH of the case (default: the case's bin dir plus the PATH of the test run)
 };
 
+// the whole case batch runs inside this hook: far above the 30 s default on a loaded CI runner
+const SETUP_TIMEOUT = 120_000;
+
 describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
   describe.skipIf(!posix)('Feature and Epic queue mode', () => {
     let root: string;
@@ -205,7 +208,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
       });
       const results = await runBatchParallel(cases);
       cases.forEach((c, i) => (R[c.key] = results[i]));
-    });
+    }, SETUP_TIMEOUT);
     afterAll(() => fs.rmSync(root, { recursive: true, force: true }));
 
     const loop = reg('loop', F10, fq(pbiRun(11, { pr: 101 }), pbiRun(12), doneStep));
