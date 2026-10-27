@@ -25,6 +25,7 @@ case "$*" in
   *issues/20/sub_issues*) echo '[{"number":10,"state":"open","title":"[Feature] F","type":{"name":"Feature"}}]' ;;
   *issues/10/sub_issues*) echo '[{"number":11,"state":"open","title":"[PBI] plan me","type":{"name":"PBI"}},{"number":12,"state":"open","title":"[PBI] decide\\u001b[31m me","type":{"name":"PBI"}},{"number":13,"state":"open","title":"[PBI] blocked","type":{"name":"PBI"}},{"number":14,"state":"open","title":"[PBI] ready","type":{"name":"PBI"}},{"number":15,"state":"open","title":"[PBI] merged","type":{"name":"PBI"}},{"number":16,"state":"closed","title":"[PBI] closed","type":{"name":"PBI"}},{"number":17,"state":"open","title":"[Task] a task","type":{"name":"Task"}}]' ;;
   *issues/30/sub_issues*) echo '[]' ;;
+  *issues/50/sub_issues*) echo '[{"number":14,"state":"open","title":"[PBI] ready","type":{"name":"PBI"}}]' ;;
   *issues/40/sub_issues*) echo '[{"number":40,"state":"open","title":"[Feature] self","type":{"name":"Feature"}},{"number":41,"state":"open","title":"[Feature] f","type":{"name":"Feature"}}]' ;;
   *issues/41/sub_issues*) echo '[{"number":42,"state":"open","title":"[Feature] g","type":{"name":"Feature"}}]' ;;
   *issues/42/sub_issues*) echo '[{"number":43,"state":"open","title":"[Feature] too deep","type":{"name":"Feature"}}]' ;;
@@ -57,6 +58,7 @@ describe.skipIf(!hasPwsh || !posix)(
     };
 
     reg('feature', { args: ['-DryRun', '-Feature', '10'] });
+    reg('allplanned', { args: ['-DryRun', '-Feature', '50'] });
     reg('epic', { args: ['-DryRun', '-Epic', '20'] });
     reg('empty', { args: ['-DryRun', '-Feature', '30'] });
     reg('cycle', { args: ['-DryRun', '-Epic', '40'] });
@@ -98,6 +100,17 @@ describe.skipIf(!hasPwsh || !posix)(
       expect(out).toContain('#15 Release review [PBI] merged');
       expect(out.some((l) => l.startsWith('#16') || l.startsWith('#17'))).toBe(false);
       expect(out[0]).toMatch(/^\[dry-run\] Feature #10: /);
+    });
+
+    it('ends the list with the unplanned PBIs, or none (#580)', () => {
+      expect(lines('feature')).toContain('[dry-run] Unplanned: #11');
+      expect(R.allplanned.status, R.allplanned.stdout + R.allplanned.stderr).toBe(0);
+      expect(lines('allplanned')).toContain('[dry-run] Unplanned: none');
+      expect(lines('allplanned')).not.toContain('[dry-run] Unplanned: #14');
+    });
+
+    it('a failing gh prints no Unplanned line (#580)', () => {
+      expect(R.ghfail.stdout).not.toContain('Unplanned');
     });
 
     it('strips control characters from titles', () => {

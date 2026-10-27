@@ -70,6 +70,10 @@ describe('orchestrator launcher skill', () => {
     expect(skill).toMatch(/## 3\. Input[\s\S]*--advisory-rounds <0-5>/);
   });
 
+  it('documents --no-tasks and --tasks in the input list (#580)', () => {
+    expect(skill).toMatch(/## 3\. Input[\s\S]*`--no-tasks` \/ `--tasks`/);
+  });
+
   it('is listed in the agents package manifest', () => {
     const manifest = parse(read('agents/apm.yml'));
     expect(manifest.skills).toContain('orchestrator');

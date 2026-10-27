@@ -533,6 +533,12 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       );
     });
 
+    it('names plan <feature> as the whole preparation and unplanned PBIs (#580)', () => {
+      const skill = fs.readFileSync(path.resolve(path.dirname(SCRIPT), '..', 'SKILL.md'), 'utf-8');
+      expect(skill).toContain('`orchestrator plan <feature>`');
+      expect(skill).toContain('`unplanned`');
+    });
+
     it('documents parked gates of the Feature/Epic queue in SKILL.md and the script help', () => {
       const skill = fs.readFileSync(path.resolve(path.dirname(SCRIPT), '..', 'SKILL.md'), 'utf-8');
       const help = fs.readFileSync(SCRIPT, 'utf-8');
