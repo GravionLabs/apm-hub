@@ -1,0 +1,9 @@
+# Known false positives of Get-SkillReport.ps1, one `skill: ref` per line as printed in danglingCandidates.
+# Put a comment line above each entry that says why it is not a dangling reference.
+
+# apm-tooling is a package name, not a skill
+apm-install: apm-tooling
+# issue-reader is a retired v2.5.4 agent named in the upgrade note
+apm-install: issue-reader
+# ng-template is the Angular element, not a skill
+ng-implementation: ng-template
