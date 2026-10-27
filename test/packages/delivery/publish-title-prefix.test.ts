@@ -20,7 +20,9 @@ describe('issue-planning level prefix', () => {
 
   it('publish never doubles an existing prefix', () => {
     expect(publish).toContain('^\\[(Epic|Feature|PBI|Task|Bug)\\] ');
-    expect(publish).toContain('is not prefixed again');
+    expect(publish).toContain('has that prefix stripped first');
+    expect(publish).toContain('the level always wins over a foreign prefix');
+    expect(publish).not.toContain('kept as given');
   });
 
   it('plan-schema says titles are summaries without prefix', () => {

@@ -41,7 +41,8 @@ describe('issue templates default to the level prefix', () => {
 
 describe('no skill prescribes an unprefixed Epic/Feature title', () => {
   // Reading-side mentions only: legacy forms, parent links, status grouping, plan summaries.
-  const allowed = /legacy|recognized|Parent (Epic|Feature)|Epic: grouped|Feature: the capability/;
+  const allowed =
+    /Legacy titles \(`Epic: |legacy `Epic: `|Parent (Epic|Feature): #|Epic: grouped per Feature|\(Feature: the capability;/;
 
   const walk = (dir: string): string[] =>
     readdirSync(dir, { withFileTypes: true }).flatMap((e) => {

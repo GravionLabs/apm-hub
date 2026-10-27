@@ -20,7 +20,7 @@ gh issue create --title "<title>" --body-file <file> --label <label>
 
 Plan titles are untrusted text: pass `<title>` as one quoted argument (a variable, never interpolated into a command string).
 
-The title is `[<Level>] <title>` by `level`: `feature` → `[Feature] `, `pbi` → `[PBI] ` (also for an item with label `bug` under a Feature), `task` → `[Task] `. A title already starting with `^\[(Epic|Feature|PBI|Task|Bug)\] ` (case-insensitive) is not prefixed again; a title with another level prefix is kept as given.
+The title is `[<Level>] <title>` by `level`: `feature` → `[Feature] `, `pbi` → `[PBI] ` (also for an item with label `bug` under a Feature), `task` → `[Task] `. A title already starting with `^\[(Epic|Feature|PBI|Task|Bug)\] ` (case-insensitive) has that prefix stripped first, so the prefix for `level` is applied exactly once and the level always wins over a foreign prefix.
 
 Level `task`: label `task`. Label by `level`, not title prefix: `feature` (level feature), `pbi` (level pbi; plus `bug` for `fix:` items). The first body line is the parent reference (`Parent Epic: #N`, `Parent Feature: #N` or `Parent PBI: #N`). For an item listed in `blocks` of a deferred question, append the label `needs-decision` and add an "Owner decision required" block to the end of its body: the question, its options and the `recommended` one. Take the number from the last URL segment, store it in `items[].issue` and write `plan.json` back to disk after every create, so the number mapping survives a crash.
 
