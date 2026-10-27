@@ -28,15 +28,15 @@ flowchart LR
 
 | Agent | Model | Tools | Returns |
 |:--|:--|:--|:--|
-| [`orchestrator`](../packages/agents/.apm/agents/orchestrator.agent.md) | sonnet (override: [Models and cost](#models-and-cost)) | Agent, Read, Grep, Glob, Bash, Skill, AskUserQuestion, SendMessage | phase summaries, PR URL, rulings |
-| [`issue-reader`](../packages/agents/.apm/agents/issue-reader.agent.md) | haiku | Read, Grep, Glob, Bash (read-only `gh` and `git`) | one JSON object: type, title, digest, path of the saved `issue.md`, integration branch (`null` or `stale` when a cut is needed), parent, bug flag, Task sub-issues with merged state and sha, ledger `none` or `resume`; `{error}` on a bad reference |
-| [`explorer`](../packages/agents/.apm/agents/explorer.agent.md) | haiku | Read, Grep, Glob | summary with `file:line` references |
-| [`planner`](../packages/agents/.apm/agents/planner.agent.md) | opus | Read, Grep, Glob, Bash, Skill, Agent | path of `plan.json`, summary, open question count |
-| [`implementer`](../packages/agents/.apm/agents/implementer.agent.md) | sonnet (overridable per task) | Read, Edit, Write, Grep, Glob, Bash, Skill | report file and a reply of 15 lines or less |
-| [`reviewer`](../packages/agents/.apm/agents/reviewer.agent.md) | sonnet | Read, Grep, Glob, Bash | findings JSON for one dimension |
-| [`review-lead`](../packages/agents/.apm/agents/review-lead.agent.md) | sonnet | Agent, Read, Grep, Glob, Bash, Skill | verdict, findings list (severity, file, line, title, blocking), package and `review.json` paths; Claude Code only, other clients run `review-fanout` inline |
-| [`pbi-runner`](../packages/agents/.apm/agents/pbi-runner.agent.md) | sonnet | Agent, Read, Grep, Glob, Bash, Skill, SendMessage | `{status, pbi, pr, summary}` for one PBI, dispatched by `loop` on Claude Code |
-| [`pr-writer`](../packages/agents/.apm/agents/pr-writer.agent.md) | sonnet | Read, Grep, Glob, Bash (git, gh), Skill | `{number, url, closes}` for the one PR of the PBI |
+| `orchestrator` | sonnet (override: [Models and cost](#models-and-cost)) | Agent, Read, Grep, Glob, Bash, Skill, AskUserQuestion, SendMessage | phase summaries, PR URL, rulings |
+| `issue-reader` | haiku | Read, Grep, Glob, Bash (read-only `gh` and `git`) | one JSON object: type, title, digest, path of the saved `issue.md`, integration branch (`null` or `stale` when a cut is needed), parent, bug flag, Task sub-issues with merged state and sha, ledger `none` or `resume`; `{error}` on a bad reference |
+| `explorer` | haiku | Read, Grep, Glob | summary with `file:line` references |
+| `planner` | opus | Read, Grep, Glob, Bash, Skill, Agent | path of `plan.json`, summary, open question count |
+| `implementer` | sonnet (overridable per task) | Read, Edit, Write, Grep, Glob, Bash, Skill | report file and a reply of 15 lines or less |
+| `reviewer` | sonnet | Read, Grep, Glob, Bash | findings JSON for one dimension |
+| `review-lead` | sonnet | Agent, Read, Grep, Glob, Bash, Skill | verdict, findings list (severity, file, line, title, blocking), package and `review.json` paths; Claude Code only, other clients run `review-fanout` inline |
+| `pbi-runner` | sonnet | Agent, Read, Grep, Glob, Bash, Skill, SendMessage | `{status, pbi, pr, summary}` for one PBI, dispatched by `loop` on Claude Code |
+| `pr-writer` | sonnet | Read, Grep, Glob, Bash (git, gh), Skill | `{number, url, closes}` for the one PR of the PBI |
 
 An agent exists only for a model per role, a host-enforced tool set, an output contract or a primary-agent entry point. Everything procedural is a skill: `issue-planning`, `implementation`, `review-fanout`, `code-review`, `detect-techstack` and `github-pull-request` do the work, the agents only carry the model, tools and return contract. The `orchestrator` runs `detect-techstack` inline; every other phase is a subagent, and the `planner` may start an `explorer` itself when it gets no exploration summary.
 
@@ -86,7 +86,7 @@ flowchart TD
 5. **Final-Verify, then review.** After the last task one `verify-project` run (Claude Code: the skill invoked directly, its `context: fork` is the only context and runs on the caller's model, one build and one full suite run, no `Agent` wrapper; OpenCode/Copilot: a read-only subagent) writes `<state>/<pbi>/verify.json` `{status, summary, tests}` and the ledger gets `Phase verify: <ok|fail> — tests <n>/<m>`. Red: a fix round with the failure list, then Final-Verify again; red twice is a gate. It runs once more after the last fix round, never per fix round, and the review verdict plus a green `verify.json` gate the pull request. Then one `review-fanout` over everything the run changed. On Claude Code the orchestrator dispatches `review-lead`, which runs `review-fanout` in its own context and returns the verdict and a findings list; elsewhere the orchestrator runs `review-fanout` inline.
 6. **Pull request.** The `pr-writer` runs `github-pull-request` in its own context, into the integration branch, and returns the PR number and URL as JSON; the orchestrator records the URL and never merges. Before this the PR phase ran inline, at the moment the context was largest.
 
-What enters the orchestrator's context: the stack JSON and the explorer summary once each, the reader's JSON (digest and `task` sub-issue numbers, never the issue body), the plan path and summary, each implementer's reply, the review verdict and finding lines, and the PR URL. What stays outside: files read, `context.md` once written, `plan.json`, `task-<nr>.md`, the diff, logs, task reports and the review package. Step wording: [orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md); planning: [issue-planning](../packages/delivery/.apm/skills/issue-planning/SKILL.md); review: [review-fanout](../packages/delivery/.apm/skills/review-fanout/SKILL.md); branch choice: [release-branches.md](../packages/github/.apm/skills/github-issue/references/release-branches.md).
+What enters the orchestrator's context: the stack JSON and the explorer summary once each, the reader's JSON (digest and `task` sub-issue numbers, never the issue body), the plan path and summary, each implementer's reply, the review verdict and finding lines, and the PR URL. What stays outside: files read, `context.md` once written, `plan.json`, `task-<nr>.md`, the diff, logs, task reports and the review package. Step wording: orchestrator.agent.md; planning: [issue-planning](../packages/delivery/.apm/skills/issue-planning/SKILL.md); review: [review-fanout](../packages/delivery/.apm/skills/review-fanout/SKILL.md); branch choice: [release-branches.md](../packages/github/.apm/skills/github-issue/references/release-branches.md).
 
 ### Who talks to whom in a full run
 
@@ -211,7 +211,7 @@ These always go to you; the orchestrator never decides them itself.
 A gate and a ruling look alike but differ:
 
 - A **gate** is a decision that belongs to you: approving the plan (and grilling its open questions), choosing which review advisories to fix, a review that stays blocked after the fix rounds, and tests that fail twice. The orchestrator always asks; it never decides a gate itself.
-- A **ruling** is a call the orchestrator makes alone inside its remit, for example the stack guess after an invalid `detect-techstack` report or the model for a docs task. It records the decision, the reason and the cost if wrong as a `Ruling:` ledger line and repeats every ruling in the final report ([orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md)). A ruling never replaces a gate.
+- A **ruling** is a call the orchestrator makes alone inside its remit, for example the stack guess after an invalid `detect-techstack` report or the model for a docs task. It records the decision, the reason and the cost if wrong as a `Ruling:` ledger line and repeats every ruling in the final report (orchestrator.agent.md). A ruling never replaces a gate.
 
 Without a question tool (a headless run) the orchestrator appends `Gate: <question>` to the ledger, reports it and stops; it never guesses. The issue overview and the review summary are the two default outputs that end in such a question; flags switch them off, and a set `--fix-advisories` policy, the headless default `medium` or a reached `--advisory-rounds` limit removes the review-summary `Gate:` in headless runs (queue runner: `-FixAdvisories none|medium|all`, documented there once #227 lands) ([orchestrator-gates.md](../packages/github/.apm/skills/github-issue/references/orchestrator-gates.md)).
 
@@ -422,7 +422,7 @@ Per client:
 
 ## End of run
 
-The final report has a fixed shape (defined in [orchestrator.agent.md](../packages/agents/.apm/agents/orchestrator.agent.md)):
+The final report has a fixed shape (defined in orchestrator.agent.md):
 
 - one line per phase,
 - the PR URL,
@@ -472,4 +472,4 @@ Spike for the per-PBI runner ([#340](https://github.com/GravionLabs/apm-hub/issu
 
 Consequences for the runner: nothing is blocked. The runner may start `reviewer`, `explorer` and `implementer` (depth 2) and resume them; the ledger hook sees these stops and cannot tell the depth from the payload, so it must key on `agent_type` and `agent_id`.
 
-Started as a subagent, the orchestrator stops and asks the caller to start it as the primary agent: it needs the question tool for its gates. Agent source format: [Agent frontmatter](concepts/agent-frontmatter.md).
+Started as a subagent, the orchestrator stops and asks the caller to start it as the primary agent: it needs the question tool for its gates. Agent source format: Agent frontmatter.

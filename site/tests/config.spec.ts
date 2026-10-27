@@ -33,14 +33,16 @@ describe('the VitePress config', () => {
     expect((await loadConfig()).base).toBe('/apm-hub/');
   });
 
-  it('exempts only localhost addresses from the dead-link check', async () => {
+  it('exempts localhost addresses and, until A14 (#735), links into packages/ from the dead-link check', async () => {
     const ignore = (await loadConfig()).ignoreDeadLinks;
-    expect(ignore).toHaveLength(1);
-    const [localhost] = ignore as RegExp[];
+    expect(ignore).toHaveLength(2);
+    const [localhost, packages] = ignore as RegExp[];
     expect(localhost.test('http://localhost:5173/')).toBe(true);
     expect(localhost.test('https://localhost')).toBe(true);
     expect(localhost.test('https://example.com/localhost')).toBe(false);
     expect(localhost.test('./usage/missing')).toBe(false);
+    expect(packages.test('./../packages/agents/.apm/skills/orchestrator/SKILL')).toBe(true);
+    expect(packages.test('./usage/missing')).toBe(false);
   });
 
   it('has local search, the edit link, the GitHub link, the MIT footer and the sidebar', async () => {

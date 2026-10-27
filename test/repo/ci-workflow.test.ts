@@ -70,6 +70,7 @@ describe('ci.yml parallel Vitest jobs (#502)', () => {
       | (Step & { if?: string })
       | undefined;
     expect(summary?.if).toContain("hashFiles('coverage/cobertura-coverage.xml') != ''");
+    expect((summary as Step & { 'continue-on-error'?: boolean })?.['continue-on-error']).toBe(true);
   });
 
   it('publishes a per-project report and coverage summary from the vitest outputs', () => {
