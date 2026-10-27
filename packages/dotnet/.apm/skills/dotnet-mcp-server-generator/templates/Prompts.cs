@@ -32,7 +32,7 @@ public class MyPrompts
         return new PromptMessage
         {
             Role = Role.User,
-            Content = new TextContent
+            Content = new TextContentBlock
             {
                 Text = $"Please review the following {language} code and suggest improvements:\n\n```{fenceLanguage}\n{sanitizedCode}\n```"
             }

@@ -24,7 +24,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 
 ## Phase 3 — Verify + PR
 
-9. Two-stage verify (load `detect-techstack` if commands are unknown). Per commit: build only when the stack compiles and compiled sources changed, plus targeted tests (test files of the changed paths and direct neighbours; unknown mapping: the project's fast/unit group, never the full suite). Before the review: ONE full build + test suite run, and again after the last fix round. Fix failures; never commit red.
+9. Verify per `implementation`: targeted tests per commit, ONE full build + test suite run before the review, and again after the last fix round. Fix failures; never commit red.
 10. Run the `code-review` skill once on `git diff origin/<base>...HEAD`; fix every 🔴 finding before the pull request.
 11. Push: `git push -u origin HEAD`
 12. Create the PR with the `github-pull-request` skill (`base_branch: <base>`, title `<type>: <desc> (#<nr>)` without level prefix, body ends with `Closes #<nr>`)

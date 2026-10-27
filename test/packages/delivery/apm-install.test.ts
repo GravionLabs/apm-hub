@@ -530,4 +530,98 @@ describe('apm-install SKILL.md', () => {
       expect(fs.existsSync(path.join(dir, m[1]))).toBe(true);
     }
   });
+
+  it('stays within 50 lines and keeps only inputs, output fields, -TrustProject and -Ref', () => {
+    expect(text.split('\n').length).toBeLessThanOrEqual(50);
+    expect(text).not.toContain('## Behavior of the script');
+    expect(text).not.toContain('Hardening beyond the original task');
+    for (const k of ['-TrustProject', '-Ref', 'wouldInstall', 'notAttempted', 'dependencies']) {
+      expect(text).toContain(k);
+    }
+  });
+
+  it('lists exactly the packages the script accepts ($valid)', () => {
+    const script = fs.readFileSync(
+      path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),
+      'utf-8'
+    );
+    const valid = /^\$valid = (.+)$/m
+      .exec(script)![1]
+      .match(/'([^']+)'/g)!
+      .map((x) => x.slice(1, -1));
+    const line = /Valid packages: (.+?); anything else/s.exec(text)![1];
+    const documented = [...line.matchAll(/`([a-z]+)`/g)].map((m) => m[1]);
+    expect(documented).toEqual(valid);
+    expect(valid).toContain('statusline');
+  });
+
+  it('moved the behavior details into the script help', () => {
+    const script = fs.readFileSync(
+      path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),
+      'utf-8'
+    );
+    const help = script.slice(0, script.indexOf('param('));
+    expect(help).toContain('Behavior in detail');
+    expect(help.replace(/\s+/g, ' ')).toContain('hardening beyond the original task');
+  });
+});
+
+describe('upgrade note for v2 installs (#773)', () => {
+  const root = path.resolve(__dirname, '../../..');
+  const note = fs.readFileSync(
+    path.join(root, 'packages/delivery/.apm/skills/apm-install/references/after-install.md'),
+    'utf-8'
+  );
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf-8');
+
+  it('names both options, the leftover agents and skills and the paths', () => {
+    expect(note).toContain('## Upgrading from 2.x');
+    expect(note).toContain('`#v2.5.4`');
+    expect(note).toContain('apm uninstall -g GravionLabs/apm-hub/packages/agents');
+    for (const a of [
+      'orchestrator',
+      'pbi-runner',
+      'implementer',
+      'issue-reader',
+      'explorer',
+      'planner',
+      'pr-writer',
+      'review-lead',
+      'reviewer',
+    ]) {
+      expect(note).toContain(`\`${a}\``);
+    }
+    for (const sk of [
+      'review-fanout',
+      'queue',
+      'handoff',
+      'orch-pipeline',
+      'orch',
+      'verify-project',
+    ]) {
+      expect(note).toContain(`\`${sk}\``);
+    }
+    expect(note).toContain('~/.claude/agents/<name>.md');
+    expect(note).toContain('~/.copilot/agents/<name>.agent.md');
+  });
+
+  it('documents what apm cleans itself', () => {
+    expect(note).toMatch(/apm\.lock\.yaml/);
+    expect(note).toMatch(/Cleaned \d+ files from packages no longer in apm\.yml/);
+  });
+
+  it('README points to the upgrade note', () => {
+    expect(readme).toContain('## Upgrading from 2.x');
+    expect(readme).toContain('references/after-install.md');
+    expect(readme).toContain('#v2.5.4');
+    for (const n of [
+      'verify-project',
+      'review-fanout',
+      'orch-pipeline',
+      'pbi-runner',
+      'reviewer',
+    ]) {
+      expect(readme).toContain(`\`${n}\``);
+    }
+  });
 });

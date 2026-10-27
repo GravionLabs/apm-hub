@@ -6,7 +6,10 @@ const prDir = 'packages/github/.apm/skills/github-pull-request';
 const prSkill = read(`${prDir}/SKILL.md`);
 const prAll = `${prSkill}\n${read(`${prDir}/references/release-mode.md`)}`;
 const releaseSkill = read('packages/github/.apm/skills/github-release/SKILL.md');
-const step8 = releaseSkill.slice(releaseSkill.indexOf('\n8. '), releaseSkill.indexOf('\n9. '));
+const step8 = releaseSkill.slice(
+  releaseSkill.indexOf('\n3. `releasePr` set'),
+  releaseSkill.indexOf('\n4. Report')
+);
 
 // the head pattern as written in the skill, executed against sample branches
 const headPattern = /`(\^release\/\(next\|\[0-9\]\+\\\.\[0-9\]\+\)\$)`/.exec(prSkill)?.[1];
@@ -55,11 +58,11 @@ describe('github-pull-request release mode', () => {
     expect(prSkill).toMatch(/--limit 200[^\n]*merged:>=/);
   });
 
-  it('github-release step 8 passes release-mode inputs and forbids gh pr create', () => {
+  it('github-release finish step 3 passes release-mode inputs and forbids gh pr create', () => {
     expect(step8).toMatch(/`title: release: <branch>`/);
     expect(step8).toMatch(/`merged_prs`/);
-    expect(step8).toMatch(/`feature_number: <nr>` only when\s+recorded/);
+    expect(step8).toMatch(/`feature_number` only when recorded/);
     expect(step8).toMatch(/`auto_merge: false`/);
-    expect(step8).toMatch(/Never open the release PR with a direct `gh pr create`/);
+    expect(step8).toMatch(/Never use a direct `gh pr create`/);
   });
 });

@@ -7,8 +7,8 @@ const skill = readFileSync(
   'utf8'
 );
 const section = /^## Format$([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(skill)?.[1] ?? '';
-const line = (label: string): string =>
-  section.split('\n').find((l) => l.startsWith('- ' + label)) ?? '';
+const lines = section.split('\n').filter((l) => l.trim());
+const line = (label: string): string => lines.find((l) => l.startsWith('- ' + label)) ?? '';
 
 describe('dotnet-implementation ## Format', () => {
   it('has the section with extensions', () => {
@@ -19,25 +19,20 @@ describe('dotnet-implementation ## Format', () => {
     expect(line('Format:')).toContain('{files}');
     expect(line('Check (read-only):')).toContain('{files}');
   });
-  it('states the skip rule and the script call', () => {
-    expect(line('Not configured:')).toContain('skip');
-    expect(section).toContain('Format-Changed.ps1 -Language dotnet -Extensions');
+  it('calls the script with -Language dotnet only and points to format.md', () => {
+    const calls = lines.filter((x) => x.includes('Format-Changed.ps1'));
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toContain('Format-Changed.ps1 -Language dotnet`');
+    expect(calls[0]).not.toContain('-Extensions');
+    expect(calls[0]).not.toContain('-Command');
+    expect(calls[0]).toContain('references/format.md');
   });
-  it('passes -Language dotnet to every script call and explains the override', () => {
-    const calls = section.split('\n').filter((x) => x.includes('Format-Changed.ps1'));
-    expect(calls.length).toBeGreaterThan(0);
-    for (const c of calls) expect(c).toContain('Format-Changed.ps1 -Language dotnet ');
-    expect(line('Override:')).toContain('.agents/format.json');
-    expect(line('Override:')).toContain('entry for `dotnet` replaces');
-    expect(line('Override:')).toContain('`-Language dotnet` only');
-    expect(line('Override:')).toContain('error');
-  });
-  it('points to the JetBrains example', () => {
-    expect(line('JetBrains:')).toContain('jb cleanupcode');
-    expect(line('JetBrains:')).toContain('jb inspectcode');
-    expect(line('JetBrains:')).toContain('docs/usage/format-override.md');
-  });
-  it('stays within 100 lines', () => {
+  it('stays within 5 lines and 100 lines of skill', () => {
+    expect(lines.length).toBeLessThanOrEqual(5);
     expect(skill.split('\n').length).toBeLessThanOrEqual(100);
+  });
+  it('no longer repeats the shared override text', () => {
+    expect(section).not.toContain('.agents/format.json');
+    expect(section).not.toContain('-Requires');
   });
 });

@@ -32,19 +32,19 @@ The input type decides it (`labels`, else title prefix `[Epic]`/`[Feature]`/`[PB
 
 1. Resolve owner/repo from `git remote get-url origin` (SSH or HTTPS). Never ask the user.
 2. Load `detect-techstack`; keep the JSON.
-3. Read the input: `gh issue view <nr> --json title,body,labels`, or the description. Read ALL children, open and closed, with `gh api --paginate repos/{owner}/{repo}/issues/<nr>/sub_issues --jq '.[]|{number,state,title,labels:[.labels[].name]}'`; closed Tasks count as existing and are never re-planned ("Open vs. all tasks" in `github-issue` `references/task-issues.md`). Plan only what is missing; skip open Task issues already merged ("Task merged", same file) and close them.
-4. Explore per the depth through the `explorer` agent: one call per affected area with the file budget and the question; keep only its ≤ 300-word summaries (Claude Code `Agent` with `subagent_type: explorer`, OpenCode `task`, VS Code Copilot `runSubagent`). A runner that cannot spawn agents (a subagent) explores inline with Read/Grep/Glob under the same budget; dispatching `explorer` is then the caller's job.
+3. Read the input: `gh issue view <nr> --json title,body,labels`, or the description. Read ALL children, open and closed, with `gh api --paginate repos/{owner}/{repo}/issues/<nr>/sub_issues --jq '.[]|{number,state,title,labels:[.labels[].name]}'`; closed Tasks count as existing and are never re-planned ("Open vs. all tasks" in `github-issue` `references/task-issues.md`). Plan only what is missing; skip open Task issues already merged ("Task merged", same file) and list them in the return summary as `already merged: #<task> (<sha>)` for the caller to close.
+4. Explore per the depth with a subagent per affected area, given the file budget and the question; keep only its ≤ 300-word summaries (Claude Code built-in `Explore` subagent, OpenCode `task`, VS Code Copilot `runSubagent`). Without subagents, explore inline with Read/Grep/Glob under the same budget.
 5. Slice per `references/slicing.md`. Per item set `blocked_by`, `size` (S/M/L), `tier` (fast/standard/strong, see ## Tier) and `files`. Items whose files or exploration summary show background/async work, persistence or a state machine get an `## Invariants` section per `references/invariants.md` (load it only then).
 6. Collect open decisions as `questions[]` per `references/questions.md`; resolve anything the repo can answer yourself.
 7. Build the plan per `references/plan-schema.md`.
 
 ## Tier
 
-Set `tier` per `references/model-policy.md` in the `github-issue` skill (attributes to tier, tier to model id per client). Every item body carries one line `Tier: <tier> — <reason>`. Size L is `strong` unless split.
+Set `tier` per the table in `references/plan-schema.md`. Every item body carries one line `Tier: <tier> — <reason>`. Size L is `strong` unless split.
 
 ## Return
 
-The plan JSON per `references/plan-schema.md`, then a summary of ≤ 10 lines: input type and level, item count by size, the first unblocked item, open questions (id and one line each).
+The plan JSON per `references/plan-schema.md`, then a summary of ≤ 10 lines: input type and level, item count by size, the first unblocked item, `already merged:` lines, open questions (id and one line each).
 
 ## Rules
 
