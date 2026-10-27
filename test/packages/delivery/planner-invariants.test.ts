@@ -3,9 +3,9 @@ import * as path from 'path';
 
 const pk = path.resolve(__dirname, '../../../packages');
 const read = (p: string) => fs.readFileSync(path.join(pk, p), 'utf-8');
-const skillDir = 'delivery/.apm/skills/issue-planning';
+const skillDir = 'delivery/.apm/skills/planner';
 
-describe('issue-planning invariants section (#484)', () => {
+describe('planner invariants section (#484)', () => {
   const ref = read(`${skillDir}/references/invariants.md`);
   const skill = read(`${skillDir}/SKILL.md`);
 

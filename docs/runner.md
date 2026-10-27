@@ -6,7 +6,7 @@ Until the runner is released you work interactively, see [Working mode](working-
 
 ## What the runner does
 
-`dromos run task|pbi|feature|epic <nr> --harness claude|copilot` starts harness sessions (Claude Code or Copilot CLI) and gives each phase a skill from this hub: `issue-planning` for planning, `implementation` with the stack skills for the change, `code-review` for the review, `github-pull-request` for the PR. Control flow, state and events belong to dromos; the skills stay the same whether you call them by hand or through the runner.
+`dromos run task|pbi|feature|epic <nr> --harness claude|copilot` starts harness sessions (Claude Code or Copilot CLI) and gives each phase a skill from this hub: `planner` for planning, `implementation` with the stack skills for the change, `code-review` for the review, `github-pull-request` for the PR. Control flow, state and events belong to dromos; the skills stay the same whether you call them by hand or through the runner.
 
 ## Install
 
