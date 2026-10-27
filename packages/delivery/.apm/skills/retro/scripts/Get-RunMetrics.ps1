@@ -11,8 +11,8 @@
 .PARAMETER SubagentsDir
   Default: <transcript without .jsonl>/subagents.
 .PARAMETER Loop
-  Multi-run: the PBIs of the loop ledger <state>/loop-<nr>/progress.md (every '#<n>' of a 'Loop: PBI #<n> started|done|parked|merged|merge skipped'
-  line, in order of first appearance). Missing loop ledger: error.
+  Multi-run: the PBIs of the loop ledger <state>/loop-<nr>/progress.md (every '#<n>' of a 'Loop: PBI #<n> ...' line, whatever the state word,
+  in order of first appearance). Missing loop ledger: error.
 .PARAMETER Issues
   Multi-run: the given issue numbers in the given order ('-Issues 1,2,3').
 .PARAMETER Since
@@ -29,8 +29,8 @@
   in seconds, from the optional ISO-8601 UTC prefix of ledger lines ('2026-10-21T15:19:46Z <text>'; lines without it are still read). A phase ends at its
   'Phase <name>: complete' line (verify: 'Phase verify: ok|fail — tests <n>/<m>') and starts at the previous such line (the first timestamped line for the first phase); a Task or Fix round ends at its own line and
   starts at the previous Phase-complete, Task or Fix round line. A missing timestamp, phase or a negative span gives null, never an error.
-  runs[]: per PBI {issue, ledger, fixRounds, escalations (escalated tasks), gates (count), parked (a 'Loop: PBI #<n> parked' line in a loop ledger;
-  -Loop reads only that loop ledger), rulings, durations, cost, source}; cost is null in multi-run mode, in the single-issue output (one run) the
+  runs[]: per PBI {issue, ledger, fixRounds, escalations (escalated tasks), gates (count), parked (the PBI's last 'Loop: PBI #<n> ...' line is
+  'parked'; across loop ledgers the newest such line wins; -Loop reads only that loop ledger), rulings, durations, cost, source}; cost is null in multi-run mode, in the single-issue output (one run) the
   main plus subagents cost. aggregate: {fixRoundsPerPbi, escalationShare (escalated / all tasks of all runs), gateCount, parkedCount,
   repeatedRulings: [{text, count}] (rulings normalised by Get-RulingKey seen in >= 2 runs; count = runs)}.
 #>
@@ -324,13 +324,25 @@ function Get-LoopLedgers($stateDir) {
   return , @(Get-ChildItem -LiteralPath $stateDir -Directory -Filter 'loop-*' | ForEach-Object { Join-Path $_.FullName 'progress.md' } | Where-Object { Test-Path -LiteralPath $_ })
 }
 
-# True when one of the loop ledgers parks the PBI (`Loop: PBI #<n> parked — <question>`, written by Set-ParkedGate.ps1).
+# True when the PBI's last state is parked (`Loop: PBI #<n> parked — <question>`, written by Set-ParkedGate.ps1): the last
+# `Loop: PBI #<n> <state>` line of a loop ledger wins, so a later started/done/merged line clears it. Across several loop ledgers
+# the one whose last such line is newest wins (its timestamp, else the file's write time).
 function Test-Parked($n, [AllowEmptyCollection()][string[]]$loopFiles) {
   if ($null -eq $n) { return $false }
+  $best = $null; $parked = $false
   foreach ($f in $loopFiles) {
-    foreach ($raw in Get-Content -LiteralPath $f) { if ((Get-LineText $raw) -match "^Loop: PBI #$n\s+parked\b") { return $true } }
+    $last = $null; $at = $null
+    foreach ($raw in Get-Content -LiteralPath $f) {
+      if ((Get-LineText $raw) -notmatch "^Loop: PBI #$n(?!\d)\s*(\S.*)?$") { continue }
+      $last = "$($Matches[1])"; $at = $null
+      $ts = [DateTimeOffset]::MinValue
+      if ($raw -match $tsRe -and [DateTimeOffset]::TryParse($Matches[1], [cultureinfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeUniversal, [ref]$ts)) { $at = $ts }
+    }
+    if ($null -eq $last) { continue }
+    if ($null -eq $at) { $at = [DateTimeOffset](Get-Item -LiteralPath $f).LastWriteTimeUtc }
+    if ($null -eq $best -or $at -gt $best) { $best = $at; $parked = $last -match '^parked\b' }
   }
-  return $false
+  return $parked
 }
 
 # Comparable ruling: the decision before the first ' — ' (drops ' — <why> — <cost>'), then paths -> PATH, SHAs -> SHA, #<n> -> #N, numbers -> N.
@@ -398,7 +410,7 @@ if ($multi.Count -eq 1) {
     $loopFiles = @($lf)
     $order = [System.Collections.Generic.List[int]]::new()
     foreach ($raw in Get-Content -LiteralPath $lf) {
-      if ((Get-LineText $raw) -match '^Loop: PBI #(\d+)\s+(started|done|parked|merged|merge skipped)\b' -and -not $order.Contains([int]$Matches[1])) { $order.Add([int]$Matches[1]) }
+      if ((Get-LineText $raw) -match '^Loop: PBI #(\d+)\b' -and -not $order.Contains([int]$Matches[1])) { $order.Add([int]$Matches[1]) }
     }
     foreach ($n in $order) { $selected.Add([pscustomobject]@{ n = $n; led = $null }) }
   } elseif ($bound.ContainsKey('Issues')) {

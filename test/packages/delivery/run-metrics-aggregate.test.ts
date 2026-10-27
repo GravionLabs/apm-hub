@@ -105,7 +105,48 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1 multi-run', () => {
     it('fails when the loop ledger is missing', async () => {
       const r = await run(['-Loop', '4']);
       expect(r.status).toBe(1);
-      expect(r.stderr).toContain('Loop ledger not found');
+      expect(r.stderr).toContain(
+        `Loop ledger not found: ${path.join(state, 'loop-4', 'progress.md')}`
+      );
+    });
+
+    it('takes every Loop: PBI line whatever its state word, merge skipped included', async () => {
+      ledger('loop-2', [
+        'Loop: PBI #21 merge skipped — not approved',
+        'Loop: PBI #22 resumed',
+        'Loop: PBI #210 started',
+        'Loop: stopped — user stop',
+      ]);
+      const { json } = await run(['-Loop', '2']);
+      expect(json.runs.map((r: any) => r.issue)).toEqual([21, 22, 210]);
+    });
+
+    it('clears the parked flag when a later line of the loop ledger finishes the PBI', async () => {
+      ledger('loop-6', [
+        'Loop: PBI #31 parked — q',
+        'Loop: PBI #31 started',
+        'Loop: PBI #31 done — https://example.test/pull/2',
+        'Loop: PBI #32 started',
+        'Loop: PBI #32 parked — q2',
+      ]);
+      const { json } = await run(['-Loop', '6']);
+      expect(json.runs.map((r: any) => r.parked)).toEqual([false, true]);
+      expect(json.aggregate.parkedCount).toBe(1);
+    });
+
+    it('counts a legacy fix round >= 3 without model as an escalation', async () => {
+      ledger('loop-7', ['Loop: PBI #41 started']);
+      ledger('41', [
+        '# ledger',
+        'Task #401: DONE',
+        'Fix round 1: DONE',
+        'Fix round 2: DONE',
+        'Fix round 3: DONE',
+        'Task #402: DONE',
+      ]);
+      const { json } = await run(['-Loop', '7']);
+      expect(json.runs[0].escalations).toBe(1);
+      expect(json.aggregate.escalationShare).toBe(0.5);
     });
 
     it('reads the parked flag only from the selected loop ledger', async () => {
@@ -131,9 +172,40 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1 multi-run', () => {
       expect(json.warnings).toEqual([]);
     });
 
+    it('applies the newest loop ledger line across loop ledgers', async () => {
+      ledger('3', ['# ledger']);
+      ledger('4', ['# ledger']);
+      ledger('loop-1', [
+        '2026-10-01T08:00:00Z Loop: PBI #3 parked — q',
+        '2026-10-01T08:00:00Z Loop: PBI #4 done — pr',
+      ]);
+      ledger('loop-2', [
+        '2026-10-02T08:00:00Z Loop: PBI #3 done — pr',
+        '2026-10-02T08:00:00Z Loop: PBI #4 parked — q',
+      ]);
+      const { json } = await run(['-Issues', '3,4']);
+      expect(json.runs.map((r: any) => r.parked)).toEqual([false, true]);
+    });
+
+    it('gives a missing ledger a null run and a warning', async () => {
+      ledger('1', ['# ledger', 'Gate: go?']);
+      const { status, json } = await run(['-Issues', '1,5']);
+      expect(status).toBe(0);
+      expect(json.runs[1]).toMatchObject({
+        issue: 5,
+        ledger: null,
+        fixRounds: 0,
+        gates: 0,
+        parked: false,
+      });
+      expect(json.warnings).toEqual(['Ledger not found for #5']);
+      expect(json.aggregate.gateCount).toBe(1);
+    });
+
     it('rejects a non-numeric entry', async () => {
       const r = await run(['-Issues', '1,x']);
       expect(r.status).toBe(1);
+      expect(r.stderr).toContain('-Issues takes issue numbers: x');
     });
   });
 
@@ -164,6 +236,13 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1 multi-run', () => {
       });
     });
 
+    it('excludes a ledger whose first timestamp equals -Since', async () => {
+      ledger('1', ['2026-10-02T00:00:00Z # ledger']);
+      ledger('2', ['2026-10-02T00:00:01Z # ledger']);
+      const { json } = await run(['-Since', '2026-10-02T00:00:00Z']);
+      expect(json.runs.map((r: any) => r.issue)).toEqual([2]);
+    });
+
     it('rejects an unparsable date', async () => {
       const r = await run(['-Since', 'yesterday-ish']);
       expect(r.status).toBe(1);
@@ -185,6 +264,7 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1 multi-run', () => {
     it('rejects two multi-run parameters together', async () => {
       const r = await run(['-Loop', '9', '-Issues', '1']);
       expect(r.status).toBe(1);
+      expect(r.stderr).toContain('-Loop, -Issues and -Since exclude each other');
     });
   });
 
@@ -215,6 +295,18 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1 multi-run', () => {
       ledger('2', ['# ledger', 'Ruling: use 4 workers']);
       const { json } = await run(['-Issues', '1,2']);
       expect(json.aggregate.repeatedRulings).toEqual([{ text: 'use N workers', count: 2 }]);
+    });
+
+    it.each([
+      ['different decisions', 'use the cache', 'drop the cache'],
+      ['a number inside a word', 'pin v2 of the api', 'pin v3 of the api'],
+      ['hex letters without a digit', 'keep defaced flag', 'keep acceded flag'],
+      ['the same why after different decisions', 'split it — too big', 'merge it — too big'],
+    ])('keeps %s apart', async (_label, a, b) => {
+      ledger('1', ['# ledger', `Ruling: ${a}`]);
+      ledger('2', ['# ledger', `Ruling: ${b}`]);
+      const { json } = await run(['-Issues', '1,2']);
+      expect(json.aggregate.repeatedRulings).toEqual([]);
     });
 
     it('sorts by count, then text', async () => {
@@ -248,10 +340,10 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1 multi-run', () => {
       );
       ledger('8', ['# ledger', 'Task #81: DONE — model sonnet', 'Gate: go?', 'Ruling: go']);
       ledger('loop-1', ['Loop: PBI #8 parked — go?']);
-      // PATH without agentlens: the cost comes from the script's price table
-      const { status, json } = await run(['-Transcript', t, '-Issue', '8'], {
-        PATH: '/usr/bin:/bin',
-      });
+      // PATH of one empty directory (no agentlens): the cost comes from the script's price table
+      const bin = path.join(dir, 'bin');
+      fs.mkdirSync(bin);
+      const { status, json } = await run(['-Transcript', t, '-Issue', '8'], { PATH: bin });
       expect(status).toBe(0);
       for (const k of [
         'source',
