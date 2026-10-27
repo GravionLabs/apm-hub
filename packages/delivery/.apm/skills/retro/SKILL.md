@@ -10,7 +10,7 @@ Retrospective on a finished run. You improve the agent **environment** (steering
 
 ## Input
 
-Issue number (`retro 197`), session id, or nothing = the newest ledger `<state>/<issue>/progress.md`. Ledger lines used: `Ruling:`, `Fix round`, `Gate:`, `Subagent <role>: stopped`, `Phase <name>: complete`, `Task #<nr>:`. Each may start with an ISO-8601 UTC timestamp (`2026-10-21T15:19:46Z `); older ledgers have none.
+Issue number (`retro 197`), session id, or nothing = the newest ledger `<state>/<issue>/progress.md`. Ledger lines used: `Ruling:`, `Fix round`, `Gate:`, `Subagent <role>: stopped`, `Phase <name>: complete`, `Task #<nr>:`, and `Loop: PBI #<n> parked` in `<state>/loop-<nr>/progress.md`. Each may start with an ISO-8601 UTC timestamp (`2026-10-21T15:19:46Z `); older ledgers have none.
 
 ## Steps
 
@@ -19,7 +19,12 @@ Issue number (`retro 197`), session id, or nothing = the newest ledger `<state>/
 ```powershell
 pwsh scripts/Get-RunMetrics.ps1 -Issue 197                       # newest transcript of this project
 pwsh scripts/Get-RunMetrics.ps1 -Transcript <session>.jsonl -Ledger <state>/197/progress.md
+pwsh scripts/Get-RunMetrics.ps1 -Loop 576                        # all PBIs of a loop; or -Issues 1,2,3
+pwsh scripts/Get-RunMetrics.ps1 -Since 2026-10-01                # all PBI ledgers started after the date
 ```
+
+   Multi-run mode (`-Loop`, `-Issues`, `-Since`; mutually exclusive) reads ledgers only (`source: ledger`, cost null); `-Transcript`, `-Issue` and `-Ledger` apply to a single issue.
+   Across runs, render one row per `runs[]` entry (issue, fix rounds, escalations, gates, parked, duration, cost), then an aggregate row from `aggregate` and one line per `repeatedRulings[]`; the seven-column table stays for `-Issue`.
 
    The metrics table has exactly these seven columns: cost, main peak, requests, roles by cost, review rounds, fix rounds, gates. Cost is measured when `source` is `agentlens`, an estimate when `source` is `transcript`. Roles by cost come from `roles[]` (`role`, `runs`, `requests`, `usd`, `measured`), highest `usd` first.
    - `agentlens` >= 0.11.0 on PATH: the script runs `agentlens cost --by session --format json` and `agentlens efficiency --section roles --format json` for the session itself and reports `source: agentlens`. Do not call agentlens by hand.

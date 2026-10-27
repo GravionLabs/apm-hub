@@ -284,3 +284,23 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1 multi-run', () => {
     });
   });
 });
+
+describe('retro SKILL.md multi-run', () => {
+  const skill = fs.readFileSync(
+    path.resolve(__dirname, '../../../packages/delivery/.apm/skills/retro/SKILL.md'),
+    'utf8'
+  );
+
+  it.each(['-Loop', '-Issues', '-Since', 'repeatedRulings', 'Loop: PBI #<n> parked'])(
+    'mentions %s',
+    (term) => {
+      expect(skill).toContain(term);
+    }
+  );
+
+  it('keeps the step anchors and stays within 47 lines', () => {
+    expect(skill).toContain('1. **Metrics.**');
+    expect(skill).toContain('2. **Read primary sources.**');
+    expect(skill.trimEnd().split('\n').length).toBeLessThanOrEqual(47);
+  });
+});
