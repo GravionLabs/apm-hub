@@ -25,3 +25,7 @@ Test behavior through the public interface, never internals; expected values com
 ## Language dispatch
 
 Run `detect-techstack`, then load each `<lang>-implementation` and `<lang>-test` skill from the report. A listed skill that is not installed: say "install `<stack>@apm-hub` in this project's `apm.yml`" once and continue with these rules.
+
+## Runner contract
+
+Started by a runner for one Task (input is the Task body, PBI criteria and a worktree): load `references/runner-contract.md`. It fixes the commit rule (`Refs #<task>`), forbids `gh` and push, and defines the JSON result of `schema/implementer.schema.json`.
