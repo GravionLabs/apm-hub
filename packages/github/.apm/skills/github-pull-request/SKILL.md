@@ -49,6 +49,10 @@ Create a PR from the current branch. No dialogue — tool calls only. On Claude 
 
 Active when the head matches `^release/(next|[0-9]+\.[0-9]+)$` and `<base>` is the default branch (`gh repo view --json defaultBranchRef --jq .defaultBranchRef.name`). Release mode needs no `issue_number`. Every other head without a number still stops. Body, footer and output: `references/release-mode.md`. In release mode `auto_merge` is forced false. Release mode never modifies `CHANGELOG.md`.
 
+## Scripts
+
+- `pwsh scripts/Merge-ApprovedPr.ps1 -Issue <pbi> -Ledger <state>/<pbi>/progress.md [-WhatIf] [-NoMerge]`: the only unattended merge of a PBI PR. Merges with `gh pr merge <n> --squash --match-head-commit <oid>` only when `review.json` next to the ledger says `verdict: APPROVE` and `incomplete: false`, the PR is open, head `/<pbi>-` (not `release/*`), base `release/*`, same repository, `MERGEABLE`/`CLEAN`, checks green and the head matches the local or origin branch tip. Prints one line, `merged <sha>` or `skipped: <reason>`; a skip (also `-NoMerge`) labels the PBI `needs-review` and comments the reason with the PR URL once, a merge removes the label. `-WhatIf` prints the line only. Exit 0, or 1 when `gh pr merge` fails or `gh`/`git` is missing.
+
 ## Rules
 
 - Never create an empty PR (no commits beyond the base branch, also in release mode)

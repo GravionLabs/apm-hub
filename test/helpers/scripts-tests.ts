@@ -21,6 +21,7 @@ export const scriptsTests = [
   'test/packages/github/enter-checkout.test.ts',
   'test/packages/github/exit-checkout.test.ts',
   'test/packages/github/get-parked-ruling.test.ts',
+  'test/packages/github/merge-approved-pr.test.ts',
   'test/packages/github/new-worktree.test.ts',
   'test/packages/github/release-guards.test.ts',
   'test/packages/github/remove-worktree.test.ts',
