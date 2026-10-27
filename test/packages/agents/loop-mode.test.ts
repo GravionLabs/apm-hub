@@ -50,6 +50,24 @@ describe('parked gates in loop mode', () => {
     expect(body).toMatch(/in `loop` park the PBI per `loop-mode\.md`/);
   });
 
+  it('answers a parked gate with a /ruling comment at reselection', () => {
+    const drop = section(selection, 'Drop the blocked');
+    expect(drop).toContain('Get-ParkedRuling.ps1 -Issue $candidate');
+    expect(drop).toMatch(/`answered`[^\n]*keeps the PBI, reported `ruling by comment <url>`/);
+    expect(drop).toContain('A Feature labelled `needs-decision` is always dropped.');
+    const pick = section(selection, 'Pick');
+    expect(pick).toContain('Get-ParkedRuling.ps1 -Issue <nr> -Apply');
+    expect(pick).toContain('`Ruling: <question> - user (comment <url>) - <answer>`');
+    expect(pick).toContain('`(/ruling ignored: <login> has no push access)`');
+    expect(pick).toContain('`(no open Gate in local ledger)`');
+    expect(section(reference, 'Selection and reselection')).toMatch(
+      /parked earlier in the same loop run becomes selectable again once answered/
+    );
+    expect(gates).toMatch(
+      /`\/ruling <answer>`[^\n]*newest comment after the parked comment[^\n]*push access/
+    );
+  });
+
   it('gives the GATE JSON a checkout and has the primary park the runner', () => {
     const rule = read('packages/agents/.apm/agents/pbi-runner.agent.md');
     expect(rule).toContain('"checkout": "<path>"');

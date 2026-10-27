@@ -69,7 +69,8 @@ exit 0
     expect(body).toContain('Which store?');
     expect(body).toContain('- sqlite\n- files\n\nCheckout');
     expect(body).toContain(`Checkout kept: ${wt}`);
-    expect(body).toContain('/ruling <option>');
+    expect(body).toContain('/ruling <option or free text>');
+    expect(body).toMatch(/newest comment after this one[^\n]*push access/);
     const ledger = fs.readFileSync(path.join(f.state, 'loop-12', 'progress.md'), 'utf8');
     expect(ledger).toContain('Loop: PBI #579 parked — Which store?');
     expect(fs.existsSync(wt)).toBe(true);
