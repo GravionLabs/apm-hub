@@ -107,7 +107,7 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     write('apps/web/package.json', '{"dependencies":{"react":"^19"}}');
     write('apps/ng/angular.json', '{}');
     write('apps/ng/package.json', '{"dependencies":{"@angular/core":"^20"}}');
-    expect((await detect()).frameworks).toEqual(['angular', 'react']);
+    expect((await detect()).frameworks).toEqual(['react', 'angular']);
   });
 
   it('reports react for a js project and ignores unrelated or empty dependencies', async () => {
