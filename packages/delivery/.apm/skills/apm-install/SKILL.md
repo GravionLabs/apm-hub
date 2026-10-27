@@ -51,7 +51,7 @@ The contributor tooling package is not offered. What each package brings: [packa
   asking for `-Packages`. Ask the user which stack packages they want.
 - `-Global` without `-Packages` proposes only the base packages, with no stack detection; stack packages need `-Packages`.
   Each base package is checked separately (`shared` via `detect-techstack`, `github` via `github-issue`, `delivery` via
-  `review-fanout`) and only the missing ones are proposed.
+  `issue-planning`) and only the missing ones are proposed.
 - Installed state comes from the manifest (`apm.yml`, `~/.apm/apm.yml` with `-Global`; comments ignored, `core` and `all`
   cover their members, `<pkg>@apm-hub` is recognised) and from `apm_modules/`. Those packages land in `skipped`.
 - No `apm.yml` yet: `apm install` creates it; the script only notes it.

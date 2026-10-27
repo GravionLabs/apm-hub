@@ -84,7 +84,7 @@ $allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust'
 $provides = @{
   shared   = 'skills: implementation, detect-techstack, diagnose, code-review'
   github   = 'skills: github-issue, github-pull-request, github-release'
-  delivery = 'skills: review-fanout, verify-project, issue-planning, retro, handoff, queue, apm-install'
+  delivery = 'skills: issue-planning, retro, apm-install'
   agents   = 'orchestrator skill and agents: orchestrator, issue-reader, explorer, planner, reviewer, review-lead, implementer, pr-writer, pbi-runner'
   hooks    = 'hooks: git guardrails'
   statusline = 'skills: context-statusline'
@@ -100,7 +100,7 @@ $externalDeps = @{ ng = 'angular/skills (angular-developer)'; dotnet = 'dotnet/s
 
 # Base packages already present in the user's client skill directories (one marker skill each)
 function Get-MissingBase {
-  $marker = [ordered]@{ shared = 'detect-techstack'; github = 'github-issue'; delivery = 'review-fanout' }
+  $marker = [ordered]@{ shared = 'detect-techstack'; github = 'github-issue'; delivery = 'issue-planning' }
   $missing = [System.Collections.Generic.List[string]]::new()
   foreach ($k in $marker.Keys) {
     $found = $false

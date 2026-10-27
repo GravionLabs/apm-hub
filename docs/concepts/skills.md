@@ -67,8 +67,7 @@ The complete rule set is in `packages/apm-tooling/.apm/skills/skill-write/refere
 - `implementation` enforces "every change has tests" and dispatches to the language skill from that report.
 - `code-review` reads the `## Review rules` section of each detected `<lang>-implementation` skill and rates findings 🔴 / 🟡 / 🟢.
 - `diagnose` is loaded for bug fixes: it builds a red-capable feedback loop (commands from `<lang>-test`) before any hypothesis.
-- `verify-project` runs build, tests and lint with the detected package manager.
-- The `orchestrator` agent chains plan, TDD, `review-fanout` and PR; `orch-pipeline` is a deprecated stub.
+- The `orchestrator` agent chains plan, TDD, review and PR.
 - `github-issue` routes issue work by label and sub-issue shape; `github-pull-request` opens the PR.
 
 ## Skills vs. prompts

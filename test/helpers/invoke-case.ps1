@@ -1,10 +1,10 @@
-# Test helper, dot-sourced by queue-batch.ps1 and pwsh-worker.ps1: runs one script invocation (a "case") inside the current pwsh process.
+# Test helper, dot-sourced by pwsh-worker.ps1: runs one script invocation (a "case") inside the current pwsh process.
 # case: { key, args: string[], cwd, path?, env?: { NAME: string | null }, fullEnv?: { NAME: string } }
 #   env      per-case overrides on top of the queue clean slate (QUEUE_*, OPENCODE_PERMISSION removed, QUEUE_POLL_SECONDS=0)
 #   fullEnv  replaces the whole environment (exactly what a spawn with that env would see); no queue clean slate
 # Returns { status, stdout, stderr } like a spawned `pwsh -File`; the environment is restored afterwards.
 function Invoke-ScriptCase {
-  # -FileExitCode: report the code like `pwsh -File` (worker only; queue-batch keeps its historical LASTEXITCODE rule)
+  # -FileExitCode: report the code like `pwsh -File`
   param([string]$Script, $Params, [string]$BasePath, $Case, [switch]$FileExitCode)
   $c = $Case
   $saved = $null

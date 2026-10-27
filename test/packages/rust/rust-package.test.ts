@@ -12,12 +12,8 @@ describe('rust package', () => {
     expect(/^description: (.*)$/m.exec(text)![1].length).toBeGreaterThan(60);
   });
 
-  it('README and verify-project know rust', () => {
+  it('README knows rust', () => {
     expect(read('README.md')).toMatch(/^\| `rust`\s+\| `rust-implementation`, `rust-test`/m);
-    const v = read('packages/delivery/.apm/skills/verify-project/SKILL.md');
-    expect(v).toContain('cargo clippy --all-targets --all-features -- -D warnings');
-    expect(v).toContain('cargo fmt --all -- --check');
-    expect(v).not.toContain('cargo test');
   });
 
   it.each(skills)('%s has valid frontmatter and size', (name) => {
@@ -119,16 +115,6 @@ describe('rust package', () => {
       expect(line).toContain('frameworks: ["tauri"]');
       expect(line).toContain('pure functions');
       expect(line).toContain('`ts-test`');
-    });
-
-    it('verify-project step 5 runs cargo in src-tauri and builds with tauri build', () => {
-      const line = read('packages/delivery/.apm/skills/verify-project/SKILL.md')
-        .split('\n')
-        .find((l) => l.startsWith('5. Rust'))!;
-      expect(line).toContain('src-tauri/');
-      expect(line).toContain('`pnpm tauri build`');
-      expect(line).toContain('packageManager');
-      expect(line).not.toContain('cargo test');
     });
   });
 });

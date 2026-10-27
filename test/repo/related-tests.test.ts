@@ -229,12 +229,6 @@ describe('related-tests CLI', () => {
     }
   });
 
-  it('lists the queue integration tests for --project integration', () => {
-    const r = run(SCRIPT, '--project', 'integration', QUEUE_SCRIPT);
-    expect(r.status).toBe(0);
-    expect(r.stdout.split('\n')).toContain('test/integration/queue/queue.mode.integration.test.ts');
-  });
-
   it('runner prints "No related tests." and exits 0 for an empty selection', () => {
     const r = run(
       RUNNER,

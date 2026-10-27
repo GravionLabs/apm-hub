@@ -15,7 +15,7 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | Package       | What it covers                                                                                                                    |
 | :------------ | :-------------------------------------------------------------------------------------------------------------------------------- |
 | `shared`      | `implementation` (tests per change), `detect-techstack`, `code-review` (severity-rated), `diagnose` (bug diagnosis)               |
-| `delivery`    | `review-fanout`, `verify-project`, `issue-planning`                                                                               |
+| `delivery`    | `issue-planning`, `retro`, `apm-install`                                                                            |
 | `github`      | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`                              |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
@@ -34,7 +34,7 @@ The full list with descriptions is generated into [skill-list.md](skill-list.md)
 ## How the skills fit together
 
 - Every language package has a `<lang>-implementation` skill (conventions plus a `## Review rules` section) and a `<lang>-test` skill.
-- `detect-techstack` inspects the project and returns the names of those skills, so `implementation`, `code-review` and `verify-project` dispatch to the right language without hard-coded lists.
+- `detect-techstack` inspects the project and returns the names of those skills, so `implementation` and `code-review` dispatch to the right language without hard-coded lists.
 - The `orchestrator` agent composes the rest: it plans tasks, runs test-driven implementation per task, fans out a parallel review and opens the PR after approval gates.
 - `github-issue` is the entry point for issue work. It reads the issue labels and sub-issues and routes to the matching reference workflow.
 

@@ -6,7 +6,7 @@ Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]` (direct path
 |:--|:--|:--|
 | `shared` | `implementation`, `detect-techstack`, `diagnose`, `code-review` | project |
 | `github` | `github-issue`, `github-pull-request`, `github-release` | project |
-| `delivery` | review fan-out, verify, planning, retro, handoff, queue, `apm-install`; depends on `github` and `shared` | project |
+| `delivery` | planning, retro, `apm-install`; depends on `github` and `shared` | project |
 | `agents` | `orchestrator` launcher skill and the nine agents (the script runs `apmw sanitize` after the install; `apmw` must be installed) | project or `-g` |
 | `hooks` | Claude Code git guardrails hook | project or `-g` |
 | `statusline` | `context-statusline` skill (status line and subagent status line) | project or `-g` |
