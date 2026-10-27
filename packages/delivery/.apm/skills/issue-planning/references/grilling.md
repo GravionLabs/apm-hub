@@ -13,6 +13,10 @@ Adapted from the `grilling` skill of [mattpocock/skills](https://github.com/matt
 5. Re-dispatch `planner` only when an answer changes item structure (split, merge, new item). Pass the answers in its prompt as final input; it keeps answered questions removed and may add new ones. Then start the next round.
 6. Repeat until no unanswered question is left. Then the final round: the user approves `plan.md` (granularity, blocking edges, merge or split, which items to publish). With zero questions this final approval still runs. Only then run `publish.md`.
 
+## Per-PBI breakdown
+
+In the Task breakdown after a Feature plan (`github-issue` `references/orchestrator-gates.md` "Plan gate") run one grilling cycle per PBI: its rounds and its final approval, then its publish, before the next PBI's planner. Never batch the questions of several PBIs into one round.
+
 ## Clients
 
 - Claude Code: `AskUserQuestion`, at most 4 questions per call; split a larger round into several calls of the same round.

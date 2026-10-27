@@ -75,6 +75,18 @@ describe('related-tests', () => {
     ]);
   });
 
+  it.each(['release-branch', 'issue-events', 'project-needs'])(
+    'maps the caller workflow %s.yml also to release-workflow.test.ts',
+    (name) => {
+      expect(rel(`.github/workflows/${name}.yml`)).toEqual([
+        'test/packages/github/release-workflow.test.ts',
+        'test/repo/ci-workflow.test.ts',
+        'test/repo/pages-workflow.test.ts',
+        'test/repo/state-dir-resolver.test.ts',
+      ]);
+    }
+  );
+
   it('leaves perf tests out of a package change', () => {
     expect(rel('packages/hooks/hooks.json')).toEqual([
       'src/generators/agent-size-validator.test.ts',

@@ -5,7 +5,7 @@
   Computes the project field Needs of open issues from GitHub state (labels, sub-issues, blocked-by links, pull requests, Status).
 .DESCRIPTION
   1. Resolves the project: -Owner/-Number, else .agents/project.json {owner, number} at the repository root, else
-     'project-url: https://github.com/(users|orgs)/<owner>/projects/<n>' in .github/workflows/add-to-project.yml (or .yaml).
+     'project-url: https://github.com/(users|orgs)/<owner>/projects/<n>' in .github/workflows/add-to-project.yml (or .yaml) first, else in the other .github/workflows/*.yml|yaml files in name order (first match).
      None found: prints 'Needs sync skipped: no project configured' and exits 0.
   2. A pure function (Get-NeedsValue) computes the value per item, first match wins:
        closed -> clear; label needs-decision -> Decision; label needs-review -> Review; open blocked-by -> Blocked;
@@ -71,8 +71,11 @@ function Resolve-ProjectRef {
     $o = Get-Prop $j 'owner'; $n = Get-Prop $j 'number'
     if ($o -and $n) { return @{ owner = "$o"; number = [int]$n } }
   }
-  foreach ($name in 'add-to-project.yml', 'add-to-project.yaml') {
-    $wf = Join-Path $Root ".github/workflows/$name"
+  $dir = Join-Path $Root '.github/workflows'
+  $files = @('add-to-project.yml', 'add-to-project.yaml') + @(Get-ChildItem -LiteralPath $dir -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Extension -in '.yml', '.yaml' -and $_.Name -notin 'add-to-project.yml', 'add-to-project.yaml' } | Sort-Object Name | ForEach-Object Name)
+  foreach ($name in $files) {
+    $wf = Join-Path $dir $name
     if (-not (Test-Path -LiteralPath $wf -PathType Leaf)) { continue }
     $m = [regex]::Match((Get-Content -LiteralPath $wf -Raw), 'project-url:\s*["'']?https://github\.com/(?:users|orgs)/([^/\s"'']+)/projects/(\d+)')
     if ($m.Success) { return @{ owner = $m.Groups[1].Value; number = [int]$m.Groups[2].Value } }

@@ -46,7 +46,7 @@ The first word of the first message is the mode. Without a mode word the run is 
 
 | Mode | What it does |
 |:--|:--|
-| `plan` | Explore, plan, grill you on open questions, create the next-level issues, stop |
+| `plan` | Explore, plan, grill you on open questions, create the next-level issues, stop. `plan <feature>` also breaks each approved PBI into Tasks (one grilling cycle per PBI); `--no-tasks` stops after the PBIs, `--tasks` only backfills PBIs without Tasks or `planned` |
 | `implement` | Implement, review and open the PR for an issue that is already planned |
 | `full` | `plan` + `implement` in one run, for a PBI |
 | `next <feature or epic>` | Pick the next open, unblocked PBI and run it as `full` |

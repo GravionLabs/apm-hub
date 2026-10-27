@@ -368,7 +368,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
       expect(r.status, r.stderr).toBe(0);
       expect(out()).toBe(
         [
-          '#1 open | Planning | Plan me',
+          '#1 unplanned | Planning | Plan me',
           '#2 needs-decision | Decision | Decide me',
           '#3 open | Review | Review me',
           '#4 blocked by #99 | Blocked | Blocked',
@@ -447,6 +447,54 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
         })
       );
     };
+
+    describe('unplanned (#580)', () => {
+      it('an open row with Needs Planning becomes unplanned; planned label or Task keeps open', async () => {
+        const r = await run('#1 open A\n#2 open B\n#3 open C\n', [
+          item(1, { subIssueLevels: [] }),
+          item(2, { subIssueLevels: [], labels: ['planned'] }),
+          item(3, { subIssueLevels: ['Task'] }),
+        ]);
+        expect(r.status, r.stderr).toBe(0);
+        const o = out();
+        expect(o).toContain('#1 unplanned | Planning | A\n');
+        expect(o).toContain('#2 open | Ready | B\n');
+        expect(o).toContain('#3 open | Ready | C\n');
+        expect(o).toContain('Needs me: 1 planning');
+      });
+
+      it('an unreadable or missing state keeps an open row open, no Needs me line, exit 0', async () => {
+        const tf = path.join(dir, 'table.md');
+        fs.writeFileSync(tf, '#1 open A\n');
+        const bad = path.join(dir, 'bad.json');
+        fs.writeFileSync(bad, '{ not json');
+        for (const sf of [bad, path.join(dir, 'absent.json')]) {
+          const r = await worker.run(['-Issue', '9', '-Path', tf, '-StateFile', sf], {
+            cwd: dir,
+            env: { ...process.env, DROMOS_STATE_DIR: state() },
+          });
+          expect(r.status, r.stderr).toBe(0);
+          // the worker does not capture [Console]::Error; the warning is covered by the module-missing spawn case
+          expect(out()).toBe('#1 open A\n');
+        }
+      });
+
+      it('needs-decision, blocked and merged rows are not rewritten', async () => {
+        const r = await run('#1 needs-decision A\n#2 blocked by #99 B\n#3 merged C\n', [
+          item(1, { labels: ['needs-decision'], subIssueLevels: [] }),
+          item(2, { blockedByOpen: 1, subIssueLevels: [] }),
+          item(3, { labels: ['merged'], subIssueLevels: [] }),
+        ]);
+        expect(r.status, r.stderr).toBe(0);
+        expect(out()).not.toContain('unplanned');
+      });
+
+      it('an already unplanned row is kept and gets the Needs value', async () => {
+        const r = await run('#1 unplanned A\n', [item(1, { subIssueLevels: [] })]);
+        expect(r.status, r.stderr).toBe(0);
+        expect(out()).toContain('#1 unplanned | Planning | A\n');
+      });
+    });
 
     it('a merged row counts as Release review without the merged label', async () => {
       const r = await run('#5 merged M\n', [item(5, { status: null })]);

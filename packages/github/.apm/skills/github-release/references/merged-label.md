@@ -14,10 +14,11 @@ Labels can be edited by hand, so skills treat `merged` as a fast path only (`nex
 
 ## Rollout to existing repos
 
-One PR per repo: copy `templates/release-branch.yml` to `.github/workflows/release-branch.yml` (replace an existing inline `release-pr.yml`; set `project-url`) and open the PR with `github-pull-request`. `cut` offers this when no workflow in `.github/workflows/` calls `release-branch.yml` of GravionLabs/ci.
+One PR per repo: copy `templates/release-branch.yml` to `.github/workflows/release-branch.yml` (replace an inline copy of the workflow; set `project-url`) and open the PR with `github-pull-request`. `cut` offers this when no workflow in `.github/workflows/` calls `release-branch.yml` of GravionLabs/ci.
 
 ## Permissions
 
+- Token requirements are documented in the README of GravionLabs/ci (`release-branch.yml`): a classic PAT with scopes `repo`, `workflow` and `project`. Summary below.
 - The workflow needs `contents: read`, `issues: write`, `pull-requests: write` (the calling job grants them to the reusable workflow, `permissions: {}` at the top).
 - Secrets are passed explicitly (`GH_PAT` required, `PROJECT_TOKEN` optional), not `secrets: inherit`. Without `GH_PAT` the workflow falls back to `github.token`: a PAT is needed so PRs created by CI trigger the required checks; labelling works with `github.token`.
 - Project status: the project status and Needs calls need a classic PAT with scope `project` in secret `PROJECT_TOKEN`, else `GH_PAT`. A fine-grained token does not work for a user-owned project: its `Projects` permission exists only under organization permissions, there is none under account permissions, so every project call fails with `Resource not accessible by personal access token` (the workflow then emits one warning and stops). Only an organization-owned project accepts a fine-grained token (resource owner the organization, Projects: read and write). The token also needs read access to the repository (pull requests and issues) besides scope `project`; a fallback `GH_PAT` that already serves the release PR has it. Without it the job sets only the label and emits a warning. Issues without a project entry or already `Done`/`In release` are skipped; failures per issue are warnings and never fail the job.
@@ -25,4 +26,4 @@ One PR per repo: copy `templates/release-branch.yml` to `.github/workflows/relea
 
 ## Known limit
 
-`release-pr` accepts only `release/<x.y>` and ignores `release/next` (GravionLabs/ci#55). The labelling step is a separate action and is not affected. Checked 2026-10-22: GravionLabs/ci#55 is OPEN (current state: `gh issue view 55 -R GravionLabs/ci --json state`). The status is set by `mark-merged-issues` and independent of `release-pr`.
+The release PR step of the reusable `release-branch.yml` (`versioning/release-pr`) accepts only `release/<x.y>` and ignores `release/next` (GravionLabs/ci#55). The labelling step is a separate action and is not affected. Checked 2026-10-26: GravionLabs/ci#55 is OPEN (current state: `gh issue view 55 -R GravionLabs/ci --json state`). The status is set by `mark-merged-issues` and independent of the release PR step.

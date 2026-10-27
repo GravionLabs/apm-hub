@@ -34,19 +34,17 @@ One reproducible GitHub Project (v2) layout for all GravionLabs repositories. `p
 7. Epic without Feature, Feature without PBI, PBI without Task and without label `planned`: Planning.
 8. Otherwise Ready (Epics and Features: cleared).
 
-The project comes from `-Owner`/`-Number`, else `.agents/project.json` (`{"owner": "...", "number": 17}`), else `project-url:` in `.github/workflows/add-to-project.yml`. A failing Needs sync prints one warning; the run still exits 0.
+The project comes from `-Owner`/`-Number`, else `.agents/project.json` (`{"owner": "...", "number": 17}`), else `project-url:` in `.github/workflows/add-to-project.yml`, else in the first other `.github/workflows/*.yml|yaml` (name order) that has one, e.g. `issue-events.yml`. A failing Needs sync prints one warning; the run still exits 0.
 
-`issue-events.yml` (reusable `issues.yml` of GravionLabs/ci) adds new issues to the project and syncs them right away and `release-branch.yml` (reusable `release-branch.yml`) syncs the issues it sets to `In release`; `project-needs.yml` covers label, close and pull request events and the hourly schedule.
+`issue-events.yml` (reusable `issues.yml` of GravionLabs/ci) adds new issues to the project and syncs Needs on label, close and pull request events and `release-branch.yml` (reusable `release-branch.yml`) syncs the issues it sets to `In release`; `project-needs.yml` is the hourly full sync (reusable `issues.yml`, mode `full`).
 
 ### Needs sync in other repositories
 
-Other repositories of the project keep Needs current with the template `packages/github/.apm/skills/github-project/templates/project-needs.yml`:
+Other repositories of the project keep Needs current with the two callers of the reusable `issues.yml` of GravionLabs/ci in `packages/github/.apm/skills/github-project/templates/`:
 
-1. Copy it to `.github/workflows/project-needs.yml`.
-2. Replace `__OWNER__` (project owner login), `__PROJECT_NUMBER__` (project number) and `__TOKEN__` (name of the secret).
-3. Store a classic PAT with scope `project` as that secret; a fine-grained token or the `GITHUB_TOKEN` cannot write a user-owned project. Without the secret the job warns and stays green.
-
-The workflow fetches `Sync-ProjectNeeds.ps1` from `GravionLabs/apm-hub@main` by sparse checkout and never runs pull request code.
+1. Copy `issue-events.yml` (label, close and pull request events, `needs: true`) and `project-needs.yml` (hourly full sync, `mode: full`) to `.github/workflows/`.
+2. Replace `<owner>` and `<n>` in `project-url` (`https://github.com/users/<owner>/projects/<n>`).
+3. Store a classic PAT with scopes `repo`, `workflow` and `project` as the secret `GH_PAT` (optional `PROJECT_TOKEN` with scope `project`); a fine-grained token or the `GITHUB_TOKEN` cannot write a user-owned project. Inputs and tokens: GravionLabs/ci README (`issues.yml`).
 
 ## Views
 

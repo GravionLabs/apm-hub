@@ -284,6 +284,43 @@ describe.skipIf(!hasPwsh)('Sync-ProjectNeeds', () => {
         expect(JSON.parse(r.stdout).project).toEqual({ owner: 'GravionLabs', number: 17 });
       }
     );
+    const projectOf = async (files: Record<string, string>) => {
+      git(tmp);
+      fs.mkdirSync(path.join(tmp, '.github/workflows'), { recursive: true });
+      for (const [n, c] of Object.entries(files))
+        fs.writeFileSync(path.join(tmp, '.github/workflows', n), c);
+      const file = path.join(tmp, 'state.json');
+      fs.writeFileSync(file, JSON.stringify({ items: [] }));
+      const r = await worker.run(['-StateFile', file, '-Json'], { cwd: tmp });
+      return r.stdout.startsWith('Needs sync skipped') ? null : JSON.parse(r.stdout).project;
+    };
+    const url = (o: string, n: number) =>
+      `jobs:\n  a:\n    with:\n      project-url: https://github.com/orgs/${o}/projects/${n}\n`;
+    it('parses project-url from a reusable-workflow caller such as issue-events.yml', async () => {
+      expect(await projectOf({ 'issue-events.yml': url('GravionLabs', 17) })).toEqual({
+        owner: 'GravionLabs',
+        number: 17,
+      });
+    });
+    it('add-to-project.yml wins over another workflow file', async () => {
+      expect(
+        await projectOf({ 'a-first.yml': url('Other', 2), 'add-to-project.yml': url('Mine', 5) })
+      ).toEqual({ owner: 'Mine', number: 5 });
+    });
+    it('other workflow files are scanned in name order', async () => {
+      expect(await projectOf({ 'b.yml': url('B', 2), 'a.yaml': url('A', 1) })).toEqual({
+        owner: 'A',
+        number: 1,
+      });
+    });
+    it('a placeholder project-url is not a match', async () => {
+      expect(
+        await projectOf({
+          'issue-events.yml':
+            'with:\n  project-url: https://github.com/orgs/<owner>/projects/<n>\n',
+        })
+      ).toBeNull();
+    });
     it('prints the skip line and exits 0 when no project is configured', async () => {
       git(tmp);
       const file = path.join(tmp, 'state.json');

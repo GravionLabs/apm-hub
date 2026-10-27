@@ -43,7 +43,7 @@ Always run `-DryRun` first, show the actions to the user, then run without it. `
 
 Finish by telling the user the printed manual UI steps (no API): "Show hierarchy" in Hierarchy, sort Recently closed by Closed descending, enable the workflow "Item closed → Done".
 
-Other repositories of the project copy `templates/project-needs.yml` (placeholders `__OWNER__`, `__PROJECT_NUMBER__`, `__TOKEN__`) to `.github/workflows/` to keep Needs current.
+Other repositories of the project copy `templates/issue-events.yml` and `templates/project-needs.yml` (callers of the reusable `issues.yml` of GravionLabs/ci; replace `<owner>` and `<n>` in `project-url`) to `.github/workflows/` to keep Needs current; tokens: GravionLabs/ci README.
 
 ## sprints
 
