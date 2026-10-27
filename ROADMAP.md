@@ -1,5 +1,18 @@
 # Roadmap
 
+## Superseded by simplification-plan.md
+
+As of 2026-10-27 this roadmap is frozen. The [simplification plan](docs/simplification-plan.md) replaces it, and the [simplification work plan](docs/simplification-workplan.md) sets the order of work: apm-hub becomes a content-only repository (3.0.0) and the control flow moves to dromos. The sections below are kept as history only. The following roadmap items are removed; merged work stays on `release/next` until Stage A deletes it, and the rest was closed as not planned:
+
+| Epic | Features |
+| --- | --- |
+| #300 Orchestrator: smaller per-PBI footprint and multi-PBI sessions | #301, #302, #547 |
+| #384 Orchestrator: extensions | #248, #385, #432, #455, #457, #478, #479, #499, #568 (and PBI #566) |
+| #387 Report orchestrator state to dromos for dromos-mux | #388, #390, #398 |
+| #573 Unattended orchestrator loops with a retro feedback loop | #574, #575, #576, #577, #595 |
+
+Feature #661 (lessons contract) under Epic #573 stays open in the backlog.
+
 Order of work and release assignment for the open issues. Created 2026-10-18, last release `v2.4.0` (2026-10-24), updated 2026-10-25 for Epic #573 (unattended loops, see the analysis document "dromos + apm-hub: Analyse und selbstlernendes Agent-System") and for Feature #595 (project cockpit, pulled into 2.5.0). Checked against GitHub state on 2026-10-25 (`v2.4.0` shipped #389 and Feature #388; the Rust Feature #412 and #571 are merged). Each release has a GitHub milestone of the same name. Work runs one PBI at a time on `release/next` (several PBIs edit `orchestrator.agent.md` or the ledger hook).
 
 ## Unattended path — self-learning workflow (Epic #573)

@@ -20,6 +20,8 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Skills](docs/concepts/skills.md)**: What skills are and how they work across platforms.
 - **[Skill Frontmatter Convention](docs/concepts/skill-frontmatter.md)**: The spec-compliant frontmatter every skill follows.
 - **[The orchestrator](docs/orchestrator.md)**: Agents, pipeline, state, gates, hooks and end of run.
+- **[Simplification plan](docs/simplification-plan.md)**: why apm-hub becomes a content-only repository and the pipeline moves to dromos.
+- **[Simplification work plan](docs/simplification-workplan.md)**: order of work, PBIs and milestones for that change.
 - **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
 - **[Common Workflows](docs/usage/common-workflows.md)**: End-to-end examples with the installed skills.
 - **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
