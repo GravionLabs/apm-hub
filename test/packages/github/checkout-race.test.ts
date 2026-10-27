@@ -4,6 +4,7 @@ import * as path from 'path';
 import {
   SCRIPTS,
   Fixture,
+  Lease,
   git,
   leaseKey,
   makeRepo,
@@ -181,7 +182,8 @@ describe('Enter-Checkout.ps1 lease creation is race-safe (#466)', () => {
     noLeftovers(f);
   }, 120_000);
 
-  it('a lease renewed during a takeover and then displaced by a newer claim is kept, not deleted', async () => {
+  /** B takes a stale #55 lease over; its owner renews it after B's check, C claims the emptied path before B can put it back. */
+  const displace = async (onRestore: (pid: string) => void = () => {}) => {
     const old = new Date(Date.now() - 6 * 3600_000).toISOString().replace(/\.\d+Z$/, 'Z');
     const file = plantLease(f.state, { path: f.repo, issue: 55, heartbeat: old, started: old });
     const pause = fs.mkdtempSync(path.join(f.root, 'pause-'));
@@ -206,21 +208,39 @@ describe('Enter-Checkout.ps1 lease creation is race-safe (#466)', () => {
     // C claims the path B has just emptied, so B cannot put the renewed lease back
     const [c] = parse([await enter(f, 603)]);
     expect(c.worktree).toBe(false);
+    onRestore(fs.readFileSync(path.join(pause, 'before-restore.reached'), 'utf8').trim());
     fs.writeFileSync(path.join(pause, 'before-restore.go'), '');
     const ob = await b;
     const [rb] = parse([ob]);
     expect(rb.worktree).toBe(true);
     expect(ob.stderr).toContain('lease of #55 renewed during a takeover and displaced');
-    const leaseNames = fs.readdirSync(path.join(f.state, 'leases'));
-    const displaced = leaseNames.filter((x) => x.startsWith(`${leaseKey(f.repo)}.json.displaced-`));
-    expect(displaced).toHaveLength(1);
-    const kept = JSON.parse(fs.readFileSync(path.join(f.state, 'leases', displaced[0]), 'utf8'));
-    expect(kept).toMatchObject({ issue: 55, heartbeat: renewed });
     expect(
       readLeases(f.state)
         .filter((l) => l.path === f.repo)
         .map((l) => l.issue)
     ).toEqual([603]);
+    return { renewed, names: fs.readdirSync(path.join(f.state, 'leases')) };
+  };
+  const leaseFile = (name: string) =>
+    JSON.parse(fs.readFileSync(path.join(f.state, 'leases', name), 'utf8')) as Lease;
+
+  it('a lease renewed during a takeover and then displaced by a newer claim is kept, not deleted', async () => {
+    const { renewed, names } = await displace();
+    const displaced = names.filter((x) => x.startsWith(`${leaseKey(f.repo)}.json.displaced-`));
+    expect(displaced).toHaveLength(1);
+    expect(leaseFile(displaced[0])).toMatchObject({ issue: 55, heartbeat: renewed });
+  }, 120_000);
+
+  it('a displaced lease whose .displaced-<pid> name is taken stays in its .stale file', async () => {
+    let blocker = '';
+    const { renewed, names } = await displace((pid) => {
+      blocker = `${leaseKey(f.repo)}.json.displaced-${pid}`;
+      fs.writeFileSync(path.join(f.state, 'leases', blocker), 'other\n');
+    });
+    expect(fs.readFileSync(path.join(f.state, 'leases', blocker), 'utf8')).toBe('other\n');
+    const stale = names.filter((x) => /\.json\.\d+\.stale$/.test(x));
+    expect(stale).toHaveLength(1);
+    expect(leaseFile(stale[0])).toMatchObject({ issue: 55, heartbeat: renewed });
   }, 120_000);
 
   it('a dirty main checkout releases the claimed lease again and gets a worktree', async () => {
@@ -270,3 +290,75 @@ const enterBadBase = (f: Fixture): Promise<Out> =>
     p.stderr.on('data', (d) => (stderr += d));
     p.on('exit', (code) => resolve({ code, stdout: '', stderr }));
   });
+
+describe('Enter-Checkout.ps1 handles takeover leftovers', () => {
+  let f: Fixture;
+  beforeEach(() => {
+    f = makeRepo();
+  });
+  afterEach(() => fs.rmSync(f.root, { recursive: true, force: true }));
+
+  const stamp = (msAgo: number) =>
+    new Date(Date.now() - msAgo).toISOString().replace(/\.\d+Z$/, 'Z');
+  /** Writes a leftover lease file in the leases directory, mtime `ageS` seconds ago. */
+  const leftover = (
+    name: string,
+    issue: number,
+    heartbeatMsAgo: number,
+    ageS = 0,
+    body?: string
+  ) => {
+    const dir = path.join(f.state, 'leases');
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, name);
+    const hb = stamp(heartbeatMsAgo);
+    fs.writeFileSync(
+      file,
+      body ??
+        JSON.stringify({
+          path: '/elsewhere',
+          issue,
+          branch: 'b',
+          host: 'h',
+          started: hb,
+          heartbeat: hb,
+        })
+    );
+    const t = new Date(Date.now() - ageS * 1000);
+    fs.utimesSync(file, t, t);
+    return file;
+  };
+  const key = () => leaseKey(f.repo);
+
+  it('a live displaced lease is named on stderr and kept; stale and unreadable leftovers are removed', async () => {
+    const live = leftover(`${key()}.json.displaced-11`, 71, 60_000);
+    const gone = leftover(`${key()}.json.displaced-12`, 72, 6 * 3600_000);
+    const junk = leftover(`${key()}.json.displaced-13`, 0, 0, 0, '{not json');
+    const orphan = leftover(`${key()}.json.14.stale`, 74, 6 * 3600_000, 120);
+    const o = await enter(f, 701);
+    const [r] = parse([o]);
+    expect(r.worktree).toBe(false);
+    expect(o.stderr).toContain(
+      `displaced lease of #71 on /elsewhere is still live: kept as ${live}`
+    );
+    expect(fs.existsSync(live)).toBe(true);
+    expect([gone, junk, orphan].filter((x) => fs.existsSync(x))).toEqual([]);
+  }, 120_000);
+
+  it('a .stale file younger than 60 s belongs to a takeover in flight and is left alone', async () => {
+    const young = leftover(`${key()}.json.15.stale`, 75, 6 * 3600_000, 5);
+    const o = await enter(f, 702);
+    parse([o]);
+    expect(fs.existsSync(young)).toBe(true);
+    expect(o.stderr).not.toContain('#75');
+  }, 120_000);
+
+  it('a live orphaned .stale lease is kept and named, files outside the leftover pattern are untouched', async () => {
+    const orphan = leftover(`${key()}.json.16.stale`, 76, 60_000, 120);
+    const other = leftover('notes.txt', 77, 6 * 3600_000);
+    const o = await enter(f, 703);
+    parse([o]);
+    expect(o.stderr).toContain('displaced lease of #76');
+    expect([orphan, other].every((x) => fs.existsSync(x))).toBe(true);
+  }, 120_000);
+});

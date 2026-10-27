@@ -124,6 +124,20 @@ function Get-Leases {
       } catch { $null }
     } | Where-Object { $_ })
 }
+# Leftovers of a takeover: <key>.json.displaced-<pid> (a renewed lease displaced by a newer claim) and <key>.json.<pid>.stale older than 60 s
+# (a taker that died between move-aside and delete; a younger one belongs to a takeover in flight). Get-Leases does not see them, so each run
+# names a live one on stderr (kept until it is no longer live) and removes one that is no longer live or unreadable.
+function Clear-LeaseLeftovers {
+  foreach ($f in @(Get-ChildItem -LiteralPath $leaseDir -File -Force | Where-Object { $_.Name -match '\A[0-9a-f]{16}\.json\.(displaced-[0-9]+|[0-9]+\.stale)\z' })) {
+    if (Test-Link $f.FullName) { continue }
+    if ($f.Name.EndsWith('.stale') -and ([DateTime]::UtcNow - $f.LastWriteTimeUtc).TotalSeconds -lt 60) { continue }
+    $o = try { Get-Content -LiteralPath $f.FullName -Raw | ConvertFrom-Json } catch { $null }
+    $live = try { $o -and ([DateTime]::UtcNow - (ConvertTo-Utc $o.heartbeat)).TotalMinutes -lt $LeaseTtlMinutes } catch { $false }
+    if ($live) { [Console]::Error.WriteLine("displaced lease of #$($o.issue) on $($o.path) is still live: kept as $($f.FullName)") }
+    else { Remove-Item -LiteralPath $f.FullName -Force -ErrorAction SilentlyContinue }
+  }
+}
+Clear-LeaseLeftovers
 $leases = Get-Leases
 # true for an unreadable lease text or one that is not live for another issue (the busy rule of the claim loop)
 function Test-Takeable([string]$Raw) {
@@ -228,9 +242,10 @@ for ($attempt = 0; $attempt -lt 5 -and -not $claimed -and -not $From; $attempt++
     $after = try { Get-Content -LiteralPath $gone -Raw } catch { $null }
     if ($after -ne $before) {
       Wait-TestPause 'before-restore'
-      try { [IO.File]::Move($gone, $rootFile, $false) } catch [IO.IOException] {
+      try { [IO.File]::Move($gone, $rootFile, $false) } catch {
+        # never deleted: kept as .displaced-<pid>; when that rename fails too, the lease stays in $gone (both are leftovers, see Clear-LeaseLeftovers)
         $kept = "$rootFile.displaced-$PID"
-        [IO.File]::Move($gone, $kept, $false)
+        try { [IO.File]::Move($gone, $kept, $false) } catch { $kept = $gone }
         $who = try { "#$(($after | ConvertFrom-Json).issue)" } catch { 'an unknown issue' }
         [Console]::Error.WriteLine("lease of $who renewed during a takeover and displaced by a newer claim: kept as $kept")
       }
