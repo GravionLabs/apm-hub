@@ -168,3 +168,23 @@ describe('issue-planning references', () => {
     expect(md).not.toMatch(/<state>|publish\.md|grilling/);
   });
 });
+
+describe('issue-planning without removed dependencies', () => {
+  const skill = path.resolve(refs, '..');
+  const md = fs.readFileSync(path.join(skill, 'SKILL.md'), 'utf-8');
+
+  it('names no model-policy and dispatches no explorer agent', () => {
+    expect(md + doc).not.toMatch(/model-policy|subagent_type: explorer/);
+    expect(md).not.toMatch(/`explorer` agent/);
+  });
+
+  it('defines the three tiers inline in plan-schema.md', () => {
+    const tiers = doc.slice(doc.indexOf('## Tiers'));
+    for (const t of ['fast', 'standard', 'strong']) expect(tiers).toContain(`\`${t}\``);
+  });
+
+  it('has no instruction to close, edit or create an issue and reports merged tasks', () => {
+    expect(md).not.toMatch(/gh issue (close|edit|create)|\bclose them\b/);
+    expect(md).toContain('already merged: #<task> (<sha>)');
+  });
+});
