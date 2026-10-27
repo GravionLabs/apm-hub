@@ -41,6 +41,7 @@ export const scriptsTests = [
   'test/packages/hooks/context-warning.test.ts',
   'test/packages/hooks/git-guardrails.test.ts',
   'test/packages/hooks/git-guardrails-targets.test.ts',
+  'test/packages/hooks/git-guardrails-nojq.test.ts',
   'test/packages/hooks/git-guardrails-hardening.test.ts',
   'test/packages/hooks/opencode-plugin.test.ts',
   'test/packages/hooks/statusline.test.ts',
