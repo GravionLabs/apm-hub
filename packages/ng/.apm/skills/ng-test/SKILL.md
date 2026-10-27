@@ -13,19 +13,19 @@ description: 'Angular test rules with Vitest and TestBed (components, signals, m
 - **Framework**: Vitest for Angular v21+ (replaces Karma/Jasmine); Jest for Angular v20 and earlier
 - **Run all**: `<pm> test` (package manager from `detect-techstack`); projects using the CLI builder without a config file run `ng test`
 - **Run single**: `npx vitest run <path>`, or `ng test --include <path>` with the CLI builder
-- **Targeted run** (per commit): `npx vitest run <paths>` for the spec files of the changed paths, or `ng test --include <path>` with the CLI builder; unknown mapping: the project's fast/unit script, never the full suite
+- **Targeted run** (per commit): `npx vitest run <paths>` for the spec files of the changed paths, or `ng test --include <path>` with the CLI builder; unknown mapping: the project's fast/unit script
 
 ## Component Testing
 
 ```typescript
 import { TestBed } from '@angular/core/testing';
-import { MyComponent } from './my.component';
+import { My } from './my';
 
-describe('MyComponent', () => {
-  beforeEach(() => TestBed.configureTestingModule({ imports: [MyComponent] }));
+describe('My', () => {
+  beforeEach(() => TestBed.configureTestingModule({ imports: [My] }));
 
   it('renders with input', () => {
-    const fixture = TestBed.createComponent(MyComponent);
+    const fixture = TestBed.createComponent(My);
     fixture.componentRef.setInput('value', 'test');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('test');
@@ -37,10 +37,10 @@ describe('MyComponent', () => {
 
 ```typescript
 import { TestBed } from '@angular/core/testing';
-import { MyService } from './my.service';
+import { MyStore } from './my-store';
 
 it('updates signal on action', () => {
-  const service = TestBed.inject(MyService);
+  const service = TestBed.inject(MyStore);
   service.updateValue('new');
   expect(service.value()).toBe('new');
 });
@@ -64,7 +64,6 @@ TestBed.configureTestingModule({
 
 ## Gotchas
 
-- Angular standalone components don't need `NgModule` wrapping
 - Use `provideHttpClient(withFetch())` for HTTP testing
-- Async operations: use `fakeAsync` + `tick()` or `waitForAsync`
+- Async operations (zoneless, Angular 21): `vi.useFakeTimers()` for timers, `await fixture.whenStable()` for pending work; `fakeAsync`/`tick()` only when the project still uses zone.js
 - Set signal inputs with `fixture.componentRef.setInput('name', value)`
