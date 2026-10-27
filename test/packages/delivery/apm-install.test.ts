@@ -108,7 +108,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   // fake detect emitting the names the real script emits (ts, js, py, dotnet)
   const fakeDetect = (report: object, root = S.home, client = '.claude/skills') =>
     fs.writeFileSync(detectDir(root, client), `param($ProjectRoot)\n'${JSON.stringify(report)}'\n`);
-  const globalBase = (skills = ['detect-techstack', 'github-issue', 'review-fanout']) =>
+  const globalBase = (skills = ['detect-techstack', 'github-issue', 'issue-planning']) =>
     skills.forEach((n) =>
       fs.mkdirSync(path.join(S.home, '.claude/skills', n), { recursive: true })
     );
@@ -467,7 +467,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     fakeApm();
     globalBase(['github-issue']);
     expect((await run(['-Global', '-DryRun'])).json.wouldInstall).toEqual(['shared', 'delivery']);
-    globalBase(['detect-techstack', 'review-fanout']);
+    globalBase(['detect-techstack', 'issue-planning']);
     const r = await run(['-Global', '-DryRun']);
     expect(r.json.wouldInstall).toEqual([]);
     expect(notes(r)).toContain('already installed globally');

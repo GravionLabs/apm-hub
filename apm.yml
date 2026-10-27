@@ -33,7 +33,7 @@ marketplace:
     description: "apm-hub contributor tooling for the skill and agent lifecycle: write, audit, update and slim SKILL.md files; write and audit agent source files."
     source: ./packages/apm-tooling
   - name: delivery
-    description: "Issue-driven development workflow: review fan-out, project verification, package installer (apm-install), issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project."
+    description: "Issue-driven development workflow: run retrospective (retro), package installer (apm-install), issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project."
     source: ./packages/delivery
   - name: dotnet
     description: "C#/.NET skills: implementation conventions and review rules, NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, MCP server generation."

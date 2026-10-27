@@ -2,7 +2,9 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { hasPwsh, posix } from '../../helpers/queue.helpers';
+
+const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
+const posix = process.platform !== 'win32';
 
 const DIR = path.resolve(
   __dirname,

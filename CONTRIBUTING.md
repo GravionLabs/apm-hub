@@ -61,8 +61,6 @@ Legacy names kept for compatibility:
 |:--|:--|:--|
 | `# lead ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | next major (currently expected as 3.0.0) |
 | `# dev-workflow ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | next major (currently expected as 3.0.0) |
-| `orch-pipeline` skill | deprecated stub in `packages/delivery` | 3.0.0 (follow-up #280) |
-| `/orch` prompt | `orch.prompt.md` in `packages/delivery`, deprecated | 3.0.0 (follow-up #280) |
 | `<state>/current` (one loop marker per repository) | still read by `subagent-ledger.sh`, the Copilot CLI hook and the OpenCode plugin while `<state>/current.d/` does not exist; `Add-LedgerLine.ps1 -Unbind` removes it; `-Bind` writes `<state>/current.d/<key>` since #466 | 3.0.0 |
 | `.agents/<issue>/` (working-tree state dir) | replaced by `<git-common-dir>/agents/` in 2.4.0, not read, manual move ([orchestrator.md](docs/orchestrator.md#state-on-disk)) | none kept (cut-over) |
 
