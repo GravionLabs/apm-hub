@@ -10,7 +10,7 @@ keywords:
   - implementation
   - techstack
   - testing
-skills:
+x-skills:
   - code-review
   - detect-techstack
   - diagnose

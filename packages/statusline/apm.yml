@@ -4,7 +4,7 @@ description: "Status line and subagent status line showing context usage: the co
 author:
   name: Gravion
 license: MIT
-skills:
+x-skills:
   - context-statusline
 keywords:
   - statusline

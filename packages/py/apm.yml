@@ -11,7 +11,7 @@ keywords:
   - typing
   - mcp
   - debugging
-skills:
+x-skills:
   - py-create-project
   - py-implementation
   - py-test

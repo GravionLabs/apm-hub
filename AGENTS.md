@@ -6,7 +6,7 @@ apm-hub is a marketplace of **skills** (agentskills.io `SKILL.md` format) distri
 
 ```
 packages/<domain>/
-├── apm.yml                    # name, version, description, skills list
+├── apm.yml                    # name, version, description, x-skills list (x- keeps apm from warning)
 └── .apm/
     ├── skills/<name>/         # SKILL.md (+ scripts/ references/ templates/ assets/)
     ├── prompts/               # *.prompt.md (delivery only)
@@ -16,7 +16,7 @@ packages/<domain>/
 src/                                  # TypeScript generators for docs/*.md, unit tests next to the code (*.test.ts)
 test/packages/<domain>/               # Vitest tests of package content (skills, scripts, hooks)
 test/repo/ test/helpers/              # repository checks (workflows), shared test helpers
-scripts/check-manifests.mjs           # apm.yml skills list ⇄ directories on disk
+scripts/check-manifests.mjs           # apm.yml x-skills list ⇄ directories on disk
 site/                                 # VitePress docs site: renders docs/ in place, README as home via docs/index.md (see site/README.md)
 apm.yml                               # marketplace: lists all packages
 ```
@@ -71,7 +71,7 @@ The title of an issue starts with its level: `[Epic]`, `[Feature]`, `[PBI]`, `[T
 ```powershell
 pnpm install
 pnpm run build; pnpm test                 # all tests (includes the skill size check)
-node scripts/check-manifests.mjs --fix    # sync apm.yml skills lists after adding/removing skills
+node scripts/check-manifests.mjs --fix    # sync apm.yml x-skills lists after adding/removing skills
 pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .   # sizes, dangling refs, duplicates
 ```
 

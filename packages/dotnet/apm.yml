@@ -14,7 +14,7 @@ dependencies:
   apm:
     # tag v1.0.0
     - dotnet/skills/plugins/dotnet#cb7c10bd32b250459632df9e6fa1350cdaf00b18
-skills:
+x-skills:
   - dotnet-create-solution
   - dotnet-implementation
   - dotnet-mcp-server-generator

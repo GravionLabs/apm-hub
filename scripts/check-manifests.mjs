@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Verifies that each packages/<domain>/apm.yml `skills:` and `agents:` list
+ * Verifies that each packages/<domain>/apm.yml `x-skills:` and `x-agents:` list
  * matches the artifacts on disk (.apm/skills/<name>/SKILL.md, .apm/agents/<name>.agent.md).
  *
  * Usage:
@@ -17,7 +17,7 @@ let drift = false;
 /** The artifact kinds a package manifest lists, with how to find them on disk. */
 const KINDS = [
   {
-    key: 'skills',
+    key: 'x-skills',
     dir: ['.apm', 'skills'],
     onDisk: (dir) =>
       fs
@@ -26,7 +26,7 @@ const KINDS = [
         .map((d) => d.name),
   },
   {
-    key: 'agents',
+    key: 'x-agents',
     dir: ['.apm', 'agents'],
     onDisk: (dir) =>
       fs

@@ -5,7 +5,7 @@ apm-hub is a marketplace of agent **skills** distributed as APM packages. Read [
 ## Where things are
 
 - Skills: `packages/<domain>/.apm/skills/<name>/SKILL.md` (+ `scripts/`, `references/`, `templates/`, `assets/`)
-- Package manifest: `packages/<domain>/apm.yml` (`skills:` list must match the directories; `node scripts/check-manifests.mjs --fix`)
+- Package manifest: `packages/<domain>/apm.yml` (`x-skills:` list must match the directories; `node scripts/check-manifests.mjs --fix`)
 - Generators and tests: `src/` (TypeScript, Vitest). `pnpm run build; pnpm test`
 - Generated docs (`docs/skill-list.md`, `docs/template-list.md`, `docs/instruction-list.md`) are rebuilt by CI on `main`. Do not commit them in a branch.
 
