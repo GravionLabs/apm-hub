@@ -2,7 +2,8 @@
 export const scriptsTests = [
   'test/packages/agents/next-modes.test.ts',
   'test/packages/agents/orchestrator-permissions.test.ts',
-  'test/packages/agents/orchestrator-state.test.ts',
+  'test/packages/agents/orchestrator-state-merged-task.test.ts',
+  'test/packages/agents/orchestrator-state-techstack-cache.test.ts',
   'test/packages/agents/task-flow.test.ts',
   'test/packages/delivery/apm-install.test.ts',
   'test/packages/delivery/queue.fast.test.ts',
