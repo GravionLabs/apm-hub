@@ -27,7 +27,7 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
 - **[Copilot CLI hooks](docs/usage/copilot-hooks.md)**: manual setup, upgrade cleanup.
 - **[Format override](docs/usage/format-override.md)**: replace the format and check commands per language with `.agents/format.json`.
-- **[Project standard](docs/usage/project-standard.md)**: the GitHub Project layout: fields Status, Level, Needs and Sprint, the ten views and the labels `planned` and `needs-review`.
+- **Project standard** (`github-project`): ships from [GravionLabs/ci](https://github.com/GravionLabs/ci) (`apm install GravionLabs/ci`), see its `docs/project-standard.md`.
 - **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
 
 ## 🚀 Quick Start

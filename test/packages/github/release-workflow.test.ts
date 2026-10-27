@@ -82,12 +82,6 @@ describe('In release status docs (#489)', () => {
     expect(doc).toMatch(/Checked \d{4}-\d{2}-\d{2}: GravionLabs\/ci#55 is \w+/);
     expect(doc).toMatch(/gh issue view 55 -R GravionLabs\/ci/);
   });
-
-  it('views.md no longer says CI never writes the project', () => {
-    const doc = read('github-project/references/views.md');
-    expect(doc).not.toMatch(/CI never writes/i);
-    expect(doc).toMatch(/ci\/\.github\/workflows\/release-branch\.yml/);
-  });
 });
 
 describe('github-release skill (#358)', () => {
