@@ -1,6 +1,6 @@
 name: apm-tooling
 version: 2.5.4
-description: apm-hub contributor tooling for the skill lifecycle. Write, audit, update and slim SKILL.md files and their companion directories.
+description: apm-hub contributor tooling for the skill lifecycle. Write, audit (with apply) and slim SKILL.md files and their companion directories.
 author:
   name: Gravion
 license: MIT
@@ -11,5 +11,4 @@ keywords:
 x-skills:
   - skill-audit
   - skill-slim
-  - skill-update
   - skill-write

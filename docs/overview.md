@@ -25,7 +25,7 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | `hooks`       | Claude Code and Copilot CLI git guardrails hook                                                                                   |
 | `statusline`  | `context-statusline` skill: status line and subagent status line                                                                  |
 | `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills)                      |
-| `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not in `all`)                                    |
+| `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling, not in `all`)                                    |
 | `all`         | every package except `apm-tooling`                                                                                                |
 
 The full list with descriptions is generated into [skill-list.md](skill-list.md).

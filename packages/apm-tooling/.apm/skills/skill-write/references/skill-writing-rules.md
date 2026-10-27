@@ -1,6 +1,6 @@
 ## Skill Writing Rules
 
-Single source of truth for how a skill is shaped. `skill-audit`, `skill-update` and `skill-slim` check against this file; do not restate these rules elsewhere.
+Single source of truth for how a skill is shaped. `skill-audit` and `skill-slim` check against this file; do not restate these rules elsewhere.
 
 ### Load it when
 

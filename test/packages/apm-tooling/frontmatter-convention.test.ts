@@ -61,7 +61,6 @@ describe('apm-tooling enforces the skill frontmatter convention', () => {
       'skill-write/references/skill-writing-rules.md',
       'skill-audit/SKILL.md',
       'skill-audit/references/audit-checklist.md',
-      'skill-update/SKILL.md',
       'skill-slim/SKILL.md',
     ]) {
       expect(read(file), file).not.toContain('skill-size-validator.ts');
