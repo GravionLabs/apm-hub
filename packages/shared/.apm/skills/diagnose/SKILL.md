@@ -41,7 +41,7 @@ Then tighten it: faster, sharper assertion on the exact symptom, deterministic (
 
 A human-in-the-loop script (loop 10) is allowed only when the user is present; as a subagent with no user, stop with `NEEDS_CONTEXT`.
 
-**No loop possible:** stop. Report what you tried and ask for (a) access to a reproducing environment, (b) a redacted artifact (log, HAR, dump), (c) permission for temporary instrumentation. As implementer return `NEEDS_CONTEXT` with that list. Do not hypothesise without a loop.
+**No loop possible:** stop. Report what you tried and ask for (a) access to a reproducing environment, (b) a redacted artifact (log, HAR, dump), (c) permission for temporary instrumentation. As a subagent return `NEEDS_CONTEXT` with that list. Do not hypothesise without a loop.
 
 ## Phase 2: Reproduce and minimise
 

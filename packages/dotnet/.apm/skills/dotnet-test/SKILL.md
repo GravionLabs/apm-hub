@@ -1,8 +1,8 @@
 ---
 name: dotnet-test
 description: >
-  .NET / C# test rules using NUnit with NSubstitute and Shouldly. Covers
-  test structure, mocking, assertions, coverage, and test-writing methodology.
+  .NET / C# test rules using NUnit with NSubstitute and Shouldly (structure, mocking,
+  assertions, coverage). Use when writing or running tests in a .NET project.
 ---
 
 ## Prerequisites
@@ -15,7 +15,7 @@ description: >
 - **Framework**: NUnit · **Mocking**: NSubstitute · **Assertions**: Shouldly
 - **Run all**: `dotnet test`
 - **Run single**: `dotnet test --filter "FullyQualifiedName~Namespace.Tests.ClassName"`
-- **Targeted run** (per commit): `dotnet test --filter "FullyQualifiedName~<Name>"` for the test classes of the changed code (`--no-build` after an own build); unknown mapping: the unit group (`--filter "TestCategory=Unit"`), never the full suite
+- **Targeted run** (per commit): `dotnet test --filter "FullyQualifiedName~<Name>"` for the test classes of the changed code (`--no-build` after an own build); unknown mapping: the unit group (`--filter "TestCategory=UnitTest"`)
 - **Coverage**: `dotnet test --collect:"XPlat Code Coverage"` writes `coverage.cobertura.xml` to `TestResults/`; convert with `reportgenerator`
 
 ## Conventions
@@ -29,39 +29,18 @@ description: >
 ## Test structure
 
 ```csharp
-using NUnit.Framework;
-using NSubstitute;
-using Shouldly;
-
-[TestFixture]
-public class UserServiceTests
+[Test]
+[Category("UnitTest")]
+public async Task Should_return_user_when_valid_id()
 {
-    [Test]
-    [Category("UnitTest")]
-    public async Task Should_return_user_when_valid_id()
-    {
-        var repo = Substitute.For<IUserRepository>();
-        repo.GetByIdAsync("123", Arg.Any<CancellationToken>()).Returns(new User { Id = "123" });
-        var sut = new UserService(repo);
-
-        var result = await sut.GetUserAsync("123");
-
-        result.ShouldNotBeNull();
-        result.Id.ShouldBe("123");
-    }
+    repo.GetByIdAsync("123", Arg.Any<CancellationToken>()).Returns(new User { Id = "123" });
+    var result = await sut.GetUserAsync("123");
+    result.ShouldNotBeNull();
+    result.Id.ShouldBe("123");
 }
 ```
 
-## Writing Tests
-
-1. Read target code to understand dependencies and behaviour
-2. Identify test cases: happy path, boundary values, null inputs, error paths
-3. Keep tests independent and deterministic — no shared mutable state
-4. Make assertions specific, not just `ShouldNotBeNull`
-
 ## Gotchas
 
-- Use `[SetUp]` for shared arrangement, `[TearDown]` for cleanup
-- Avoid `async void` — use `async Task` for async tests
 - Always set a `[Category(...)]` so test filtering stays consistent
 - Put the test project under `test/<ProjectName>.Tests`, not alongside the source project

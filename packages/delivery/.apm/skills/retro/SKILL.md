@@ -1,6 +1,6 @@
 ---
 name: retro
-description: 'Retrospective on an orchestrator run or session: metrics, ranked environment improvements, draft PBIs. Use for "retro #<issue>" or "analyse this run"; creates no issue without approval.'
+description: 'Retrospective on a run or session: metrics, ranked environment improvements, draft PBIs. Use for "retro #<issue>" or "analyse this run"; creates no issue without approval.'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'

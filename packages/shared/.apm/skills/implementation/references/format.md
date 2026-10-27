@@ -1,21 +1,27 @@
 # Format changed files
 
-`scripts/Format-Changed.ps1` formats (or checks) the changed files of a task. It holds no language knowledge: the caller passes extensions and the command, normally taken from the `## Format` section of the `<lang>-implementation` skill.
+`scripts/Format-Changed.ps1` formats (or checks) the changed files of a task. For `ts`, `ng`, `py`, `dotnet` and `rust` it knows the default commands; a `-Language` call needs no further parameters. The `## Format` section of each `<lang>-implementation` skill names the extensions and commands.
 
 ```powershell
-pwsh scripts/Format-Changed.ps1 -Language ts -Extensions .ts,.tsx -Command 'npx prettier --write {files}'
-pwsh scripts/Format-Changed.ps1 -Language ts -Extensions .ts,.tsx -Command 'npx prettier --check {files}' -Check
+pwsh scripts/Format-Changed.ps1 -Language ts
+pwsh scripts/Format-Changed.ps1 -Language ts -Check
+pwsh scripts/Format-Changed.ps1 -Extensions .ts,.tsx -Command 'npx prettier --write {files}'   # any other tool
 ```
+
+Defaults, in order: ts/ng prettier then eslint (eslint only on `.ts .tsx .js .mjs .cjs`), or in a Biome project (`biome.json`/`biome.jsonc` at the git toplevel) `npx biome check --write {files}` alone on the same extensions (probe `npx --no-install biome --version`), py `uv run ruff format` then `uv run ruff check --fix`, dotnet `dotnet format --include`, rust `cargo fmt -- {files}`. `-Check` runs the read-only variants. Precedence: `.agents/format.json` entry, then explicit `-Extensions`/`-Command`, then these defaults.
+
+Not configured: a tool that is missing or whose `-Requires` probe fails is skipped with `skipped: <tool> not configured` (`ruff`, `prettier`, `eslint`, `biome`, `dotnet`, `cargo`); note it in the report. A tool configured in `.agents/format.json` that is missing is an error. The override and a JetBrains example (`jb cleanupcode`): https://github.com/GravionLabs/apm-hub/blob/main/docs/usage/format-override.md.
 
 ## Parameters
 
 | Parameter | Meaning |
 |:--|:--|
-| `-Language` | Optional key into `.agents/format.json` (`ts`, `ng`, `py`, `dotnet`, ...). With an entry, `-Extensions`/`-Command` become optional. |
+| `-Language` | Key into `.agents/format.json` and into the built-in defaults (`ts`, `ng`, `py`, `dotnet`, `rust`). With an entry or a default, `-Extensions`/`-Command` become optional. |
 | `-Extensions` | Extensions to keep (`.ts`, `.tsx`; comma-separated string or array; the dot is optional). |
 | `-Command` | Command line with a `{files}` placeholder (files appended when absent). Each file is its own argument, repo-relative; never `.` or a directory. |
 | `-Requires` | Optional probe command that must exit 0 (e.g. `npx --no-install prettier --version`); otherwise `skipped: <tool> not configured`, exit 0. Makes "tool not configured" skip even behind `npx`/`uv`/`dotnet`. |
 | `-Check` | Read-only intent: the command is the check command; success prints `checked`. |
+| `-WhatIf` | Prints the resolved steps as JSON (`tool`, `extensions`, `requires`, `commands`; `-Check` selects the check commands) and runs nothing. |
 | `-Base <ref>` | Also include files changed in `<ref>...HEAD`. Default: uncommitted changes only (staged, unstaged, untracked). Deleted files are dropped. |
 
 ## Outcomes
@@ -49,4 +55,4 @@ With `-Language <lang>` the script reads `<git toplevel>/.agents/format.json`:
 
 ## From a `## Format` section
 
-The section names the extensions, the format command and the check command. Run the format command with `-Extensions`/`-Command` after green tests and before the commit; the check command (with `-Check`) is what `verify-project` runs read-only.
+The section names the extensions, the format command and the check command. Run `Format-Changed.ps1 -Language <lang>` after green tests and before the commit; the check command (with `-Check`) is what CI or the caller runs read-only.

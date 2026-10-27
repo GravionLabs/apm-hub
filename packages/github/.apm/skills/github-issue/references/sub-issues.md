@@ -49,6 +49,26 @@ gh api graphql -f query=$query -f parentId=$oldParentId -f childId=$childId
 
 Then `addSubIssue` against the new parent, and update the child's `Parent …: #N` body line to match.
 
+## Blocked-by links
+
+"<nr> is blocked by <blocker>" is a native REST dependency. The calls take the blocker's **database
+id** (`.id` of the REST issue, an integer), not the GraphQL node id and not the issue number:
+
+```powershell
+$blockerId = gh api repos/{owner}/{repo}/issues/<blocker-nr> --jq .id
+
+# add
+gh api -X POST repos/{owner}/{repo}/issues/<nr>/dependencies/blocked_by -F issue_id=$blockerId
+# read
+gh api repos/{owner}/{repo}/issues/<nr>/dependencies/blocked_by --jq '.[] | "\(.number) \(.state)"'
+# remove
+gh api -X DELETE repos/{owner}/{repo}/issues/<nr>/dependencies/blocked_by/$blockerId
+```
+
+`-F` (capital) sends `issue_id` as the integer the API expects. Adding an existing link
+fails with HTTP 422 "Target issue has already been taken": read the links first or treat that error
+as done, so a resumed run stays safe. The `Depends on` / `Blocked by #N` body line documents the link.
+
 ## Verify
 
 After any batch that creates or moves issues, confirm the two sources agree — the native link and
@@ -57,6 +77,7 @@ the body line — and that every non-Epic issue has exactly one parent:
 ```powershell
 gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq 'length'
 gh issue view <child-nr> --json body --jq '.body | split("\n")[0]'
+gh api repos/{owner}/{repo}/issues/<child-nr>/dependencies/blocked_by --jq '[.[].number]'
 ```
 
 An issue that was created but never linked looks completely normal in `gh issue list`. Silent
@@ -72,4 +93,4 @@ the create step linked anything.
   (for example from a scratch directory).
 - `gh issue create` prints the new issue URL; take the number from its last path segment.
 
-The plan returned by `issue-planning` (`references/plan-schema.md`) is the input for creating and linking the sub-issues.
+The plan returned by `issue-planning` (`references/plan-schema.md`) is the input for creating and linking the sub-issues: `create-from-plan.md`.

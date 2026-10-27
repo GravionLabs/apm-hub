@@ -5,7 +5,7 @@ description: 'Detect the project tech stack and return a JSON report with its la
 
 Run the detection script from the project root and hand the JSON to the caller; load `<lang>-test` and `<lang>-implementation` from its `test` and `implementation` lists.
 
-Return contract: the JSON object below and nothing else — no file listings, no reasoning. The skill runs in the caller's context (the script needs a shell, which forked `explorer`/`reviewer` agents do not reliably have).
+Return contract: the JSON object below and nothing else — no file listings, no reasoning. The skill runs in the caller's context (the script needs a shell, which forked read-only subagents do not reliably have).
 
 Paths to `scripts/` are relative to this skill's directory.
 

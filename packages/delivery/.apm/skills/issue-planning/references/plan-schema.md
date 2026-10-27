@@ -49,7 +49,7 @@ The only output contract of `issue-planning`: one JSON object, returned to the c
 | `items[].title` | Summary without level prefix: capability for `feature`, `feat: …` / `fix: …` for `pbi`, `chore: …` for `task`; the caller adds `[Feature] `, `[PBI] ` or `[Task] ` by `level` |
 | `items[].body` | Issue body; for levels `feature` and `pbi` the first line is `Parent Epic: #N` / `Parent Feature: #N` (the parent number, as in `parent_issue`) followed by the sections of the matching issue template (see the `github-issue` skill). For `task`, the Task issue body (Parent PBI line, or `Parent Bug: #<bug>` for a Bug parent; Overview, Implementation Notes, agent-ready block with Context, Depends on, Files, Done when; Done when names the interface(s) under test). Optional `## Invariants` section for async/stateful items (`invariants.md`): before `## Definition of Done` for `pbi`, before the agent-ready block for `task` |
 | `items[].size` | `S`, `M`, `L` (see `slicing.md`) |
-| `items[].tier` | `fast`, `standard`, `strong`, chosen per `references/model-policy.md` in `github-issue`; the item body states `Tier: <tier> — <reason>`. Migration: a legacy `model` maps `haiku` to `fast`, `sonnet` to `standard`, `inherit` to `strong`; readers apply the same mapping to existing plans, new plans carry only `tier` |
+| `items[].tier` | `fast`, `standard`, `strong`, chosen per the tier table below; the item body states `Tier: <tier> — <reason>`. Migration: a legacy `model` maps `haiku` to `fast`, `sonnet` to `standard`, `inherit` to `strong`; readers apply the same mapping to existing plans, new plans carry only `tier` |
 | `items[].blocked_by` | Plan ids or existing issue numbers (integers); acyclic; `[]` when free |
 | `items[].files`, `skills` | Files to touch; `<lang>-implementation` names from detect-techstack |
 | `questions[]` | `id`, `question`, `options` (≥ 2), `recommended` (one of `options`), `why`, `blocks` (item ids, may be empty); only decisions the repo cannot answer, see `questions.md` |
@@ -59,3 +59,13 @@ The only output contract of `issue-planning`: one JSON object, returned to the c
 - Ids are unique. Every string in `blocked_by` and every id in `blocks` resolves to an item; integers are existing issues. `blocked_by` has no cycles and no self-reference.
 - `recommended` is one of `options`; `options` has at least 2 distinct entries.
 - A plan has no issue numbers of its own: the caller creates the issues from it.
+
+## Tiers
+
+| Tier | When |
+|:--|:--|
+| `fast` | mechanical or docs-only change of size S |
+| `strong` | size L, cross-package change, security-relevant code, persistence or a state machine |
+| `standard` | everything else |
+
+The tier carries no model id; the runner maps it.

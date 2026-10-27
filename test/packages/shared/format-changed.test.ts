@@ -429,4 +429,226 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
       expect((await go(['-Command', 'x {files}'])).status).not.toBe(0);
     });
   });
+
+  describe('built-in defaults per language (#770)', () => {
+    // fake tool logging one line per call (probes with --version included); `probe` makes the version probe fail
+    const tool = (name: string, probe = true) =>
+      fs.writeFileSync(
+        path.join(bin, name),
+        `#!/bin/sh\n${probe ? '' : 'case "$*" in *--version*) exit 1;; esac\n'}echo "${name} $*" >> calls.log\n`,
+        { mode: 0o755 }
+      );
+    const calls = () =>
+      fs.existsSync(path.join(dir, 'calls.log'))
+        ? fs
+            .readFileSync(path.join(dir, 'calls.log'), 'utf8')
+            .trim()
+            .split('\n')
+            .filter((l) => !l.includes('--version'))
+        : [];
+    const cfg = (o: unknown) => write('.agents/format.json', JSON.stringify(o));
+
+    it('ts: prettier first, then eslint only on code files (json goes to prettier alone)', async () => {
+      tool('npx');
+      write('a.ts', 'x');
+      write('b.json', 'x');
+      write('c.md', 'x');
+      const r = await go(['-Language', 'ts']);
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe('formatted: 2 files');
+      expect(calls()).toEqual([
+        'npx --no-install prettier --write a.ts b.json',
+        'npx --no-install eslint --fix a.ts',
+      ]);
+    });
+
+    it('ts -Check: read-only variants in the same order', async () => {
+      tool('npx');
+      write('a.ts', 'x');
+      const r = await go(['-Language', 'ts', '-Check']);
+      expect(r.stdout.trim()).toBe('checked: 1 files');
+      expect(calls()).toEqual([
+        'npx --no-install prettier --check a.ts',
+        'npx --no-install eslint a.ts',
+      ]);
+    });
+
+    it('ng: prettier also takes html, scss and css, eslint does not', async () => {
+      tool('npx');
+      write('a.html', 'x');
+      write('b.scss', 'x');
+      write('c.ts', 'x');
+      await go(['-Language', 'ng']);
+      expect(calls()).toEqual([
+        'npx --no-install prettier --write a.html b.scss c.ts',
+        'npx --no-install eslint --fix c.ts',
+      ]);
+    });
+
+    it('py: ruff format, then ruff check --fix; -Check uses the read-only pair', async () => {
+      tool('uv');
+      write('a.py', 'x');
+      await go(['-Language', 'py']);
+      expect(calls()).toEqual(['uv run ruff format a.py', 'uv run ruff check --fix a.py']);
+      fs.rmSync(path.join(dir, 'calls.log'));
+      await go(['-Language', 'py', '-Check']);
+      expect(calls()).toEqual(['uv run ruff format --check a.py', 'uv run ruff check a.py']);
+    });
+
+    it('py: names ruff, not uv, when the probe fails', async () => {
+      tool('uv', false);
+      write('a.py', 'x');
+      const r = await go(['-Language', 'py']);
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe('skipped: ruff not configured');
+      expect(calls()).toEqual([]);
+    });
+
+    it('dotnet: dotnet format --include, -Check verifies', async () => {
+      tool('dotnet');
+      write('A.cs', 'x');
+      await go(['-Language', 'dotnet']);
+      await go(['-Language', 'dotnet', '-Check']);
+      expect(calls()).toEqual([
+        'dotnet format --include A.cs',
+        'dotnet format --verify-no-changes --include A.cs',
+      ]);
+    });
+
+    it('rust: cargo fmt -- <files>, -Check adds --check', async () => {
+      tool('cargo');
+      write('src/lib.rs', 'x');
+      await go(['-Language', 'rust']);
+      await go(['-Language', 'rust', '-Check']);
+      expect(calls()).toEqual(['cargo fmt -- src/lib.rs', 'cargo fmt -- --check src/lib.rs']);
+    });
+
+    it('skips with no changed files when no file of the language changed', async () => {
+      tool('cargo');
+      write('a.ts', 'x');
+      const r = await go(['-Language', 'rust']);
+      expect(r.stdout.trim()).toBe('skipped: no changed files');
+      expect(calls()).toEqual([]);
+    });
+
+    it('a missing tool is skipped by name', async () => {
+      write('a.rs', 'x');
+      const r = await worker.run(['-Language', 'rust'], {
+        cwd: dir,
+        env: { ...process.env, PATH: `${bin}:/usr/bin:/bin` },
+      });
+      expect(r.stdout.trim()).toBe('skipped: cargo not found');
+    });
+
+    it('explicit -Extensions/-Command win over the defaults', async () => {
+      tool('npx');
+      fake('fmt');
+      write('a.ts', 'x');
+      await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'fmt {files}']);
+      expect(calls()).toEqual([]);
+      expect(logged()).toEqual(['a.ts']);
+    });
+
+    it('.agents/format.json wins over the defaults', async () => {
+      tool('npx');
+      fake('jb');
+      write('a.ts', 'x');
+      cfg({ ts: { extensions: ['.ts'], format: 'jb {files}' } });
+      const r = await go(['-Language', 'ts']);
+      expect(r.stdout.trim()).toBe('formatted: 1 files');
+      expect(calls()).toEqual([]);
+      expect(logged()).toEqual(['a.ts']);
+    });
+
+    it('ts in a Biome project (biome.json): biome check --write only, never prettier or eslint', async () => {
+      tool('npx');
+      write('biome.json', '{}');
+      git('add', 'biome.json');
+      git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'biome');
+      write('a.ts', 'x');
+      write('b.json', 'x');
+      write('c.md', 'x');
+      const r = await go(['-Language', 'ts']);
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe('formatted: 2 files');
+      expect(calls()).toEqual(['npx biome check --write a.ts b.json']);
+    });
+
+    it('ng -Check in a Biome project (biome.jsonc): read-only biome check on the ng extensions', async () => {
+      tool('npx');
+      write('biome.jsonc', '{}');
+      write('a.html', 'x');
+      write('b.ts', 'x');
+      const r = await go(['-Language', 'ng', '-Check']);
+      expect(r.stdout.trim()).toBe('checked: 2 files');
+      expect(calls()).toEqual(['npx biome check a.html b.ts']);
+    });
+
+    it('a Biome project whose biome probe fails is skipped as biome not configured', async () => {
+      tool('npx', false);
+      write('biome.json', '{}');
+      write('a.ts', 'x');
+      const r = await go(['-Language', 'ts']);
+      expect(r.stdout.trim()).toBe('skipped: biome not configured');
+      expect(calls()).toEqual([]);
+    });
+
+    it('biome.json in a subdirectory is not a Biome project: prettier then eslint', async () => {
+      tool('npx');
+      write('sub/biome.json', '{}');
+      write('a.ts', 'x');
+      await go(['-Language', 'ts']);
+      expect(calls()).toEqual([
+        'npx --no-install prettier --write a.ts sub/biome.json',
+        'npx --no-install eslint --fix a.ts',
+      ]);
+    });
+
+    it('.agents/format.json still wins over the biome default', async () => {
+      tool('npx');
+      fake('jb');
+      write('biome.json', '{}');
+      write('a.ts', 'x');
+      cfg({ ts: { extensions: ['.ts'], format: 'jb {files}' } });
+      await go(['-Language', 'ts']);
+      expect(calls()).toEqual([]);
+      expect(logged()).toEqual(['a.ts']);
+    });
+
+    it('-WhatIf prints the resolved steps as JSON and runs nothing', async () => {
+      tool('npx');
+      write('a.ts', 'x');
+      const r = await go(['-Language', 'ts', '-Check', '-WhatIf']);
+      expect(r.status).toBe(0);
+      expect(JSON.parse(r.stdout)).toEqual([
+        {
+          tool: 'prettier',
+          extensions: ['.ts', '.tsx', '.js', '.mjs', '.cjs', '.json'],
+          requires: 'npx --no-install prettier --version',
+          commands: ['npx --no-install prettier --check {files}'],
+        },
+        {
+          tool: 'eslint',
+          extensions: ['.ts', '.tsx', '.js', '.mjs', '.cjs'],
+          requires: 'npx --no-install eslint --version',
+          commands: ['npx --no-install eslint {files}'],
+        },
+      ]);
+      expect(fs.existsSync(path.join(dir, 'calls.log'))).toBe(false);
+    });
+
+    it('-WhatIf with an explicit -Command prints that single step', async () => {
+      const r = await go(['-Extensions', '.ts', '-Command', 'fmt {files}', '-WhatIf']);
+      expect(JSON.parse(r.stdout)).toEqual([
+        { tool: null, extensions: ['.ts'], requires: null, commands: ['fmt {files}'] },
+      ]);
+    });
+
+    it('an unknown language without parameters still needs -Command', async () => {
+      write('a.ts', 'x');
+      const r = await go(['-Language', 'cobol']);
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain('-Command is required');
+    });
+  });
 });

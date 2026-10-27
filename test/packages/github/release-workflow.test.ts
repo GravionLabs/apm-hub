@@ -84,27 +84,43 @@ describe('In release status docs (#489)', () => {
   });
 });
 
-describe('github-release skill (#358)', () => {
+const skillDir = path.join(root, 'packages/github/.apm/skills/github-release');
+const skill = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf-8');
+
+describe('github-release skill (#358, #769)', () => {
   it('cut checks for mark-merged-issues and never adds the template silently', () => {
-    const skill = fs.readFileSync(
-      path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'),
-      'utf-8'
-    );
-    expect(skill).toContain('ci/.github/workflows/release-branch.yml');
+    expect(skill).toContain('releaseWorkflow');
+    expect(skill).toContain('templates/release-branch.yml');
     expect(skill).toContain('never silently');
-    expect(
-      fs.existsSync(
-        path.join(root, 'packages/github/.apm/skills/github-release/references/merged-label.md')
-      )
-    ).toBe(true);
+    expect(fs.existsSync(path.join(skillDir, 'references/merged-label.md'))).toBe(true);
+  });
+
+  it('is at most 60 lines and has no shell control flow, grep, $( or &&', () => {
+    expect(skill.split('\n').length).toBeLessThanOrEqual(60);
+    expect(skill).not.toMatch(/\bfor\b[ \t]+\w+[ \t]+in\b|\bgrep\b|\$\(|&&/);
+    const fences = skill.match(/```\w*/g) ?? [];
+    expect(fences.filter((f) => f !== '```').every((f) => f === '```powershell')).toBe(true);
+  });
+
+  it('runs the state script in both modes and decides per state', () => {
+    expect(fs.existsSync(path.join(skillDir, 'scripts/Get-ReleaseState.ps1'))).toBe(true);
+    expect(skill).toContain('scripts/Get-ReleaseState.ps1 -Mode cut');
+    expect(skill).toContain('-Mode finish');
+    for (const state of [
+      'absent',
+      'fresh',
+      'unreleased',
+      'behind',
+      'merged',
+      'released',
+      'released-continued',
+    ]) {
+      expect(skill).toContain(`\`${state}\``);
+    }
   });
 });
 
 describe('github-release skill refuses a released branch (#252)', () => {
-  const skill = fs.readFileSync(
-    path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'),
-    'utf-8'
-  );
   const reference = fs.readFileSync(
     path.join(root, 'packages/github/.apm/skills/github-issue/references/release-branches.md'),
     'utf-8'
@@ -115,41 +131,23 @@ describe('github-release skill refuses a released branch (#252)', () => {
     if (start < 0 || end < 0) throw new Error(`marker missing: ${from} … ${to}`);
     return text.slice(start, end);
   };
-  const cut = section(skill, '### 1. cut', '### 2. finish');
-  const finish = section(skill, '### 2. finish', '## Gotchas');
+  const cut = section(skill, '## cut', '## finish');
+  const finish = section(skill, '## finish', '## Gotchas');
 
-  it('finish stops on the v<x.y>.0 tag and reports "already released; cut a new release branch"', () => {
-    expect(finish).toContain('git ls-remote --tags origin "refs/tags/v<x.y>.0"');
-    expect(finish).toContain('already released; cut a new release branch');
-    expect(finish).toContain('git fetch origin --tags');
+  it('finish stops with "already released; cut a new release branch" for released states', () => {
+    expect(skill).toContain('already released; cut a new release branch');
+    expect(skill).toMatch(/`released-continued`/);
   });
 
-  it('finish guards run merged → released → behind (a merged or continued branch is always behind <default>)', () => {
-    const merged = finish.indexOf('git merge-base --is-ancestor HEAD origin/<default>');
-    const released = finish.indexOf('git ls-remote --tags origin "refs/tags/v<x.y>.0"');
-    const behind = finish.indexOf('git merge-base --is-ancestor origin/<default> HEAD');
-    expect(merged).toBeGreaterThan(-1);
-    expect(released).toBeGreaterThan(merged);
-    expect(behind).toBeGreaterThan(released);
-  });
-
-  it('finish names the branch delete and deletes release/next once the merge is confirmed', () => {
+  it('finish names the branch delete, never waits for the merge and leaves the delete to a later finish', () => {
     expect(finish).toContain('git push origin --delete <branch>');
-    expect(finish).toContain('gh pr view <nr> --json merged');
-    expect(finish).toContain('delete `release/next` yourself');
-  });
-
-  it('a later finish on the merged branch deletes release/next only for a merge-commit tip without open PRs', () => {
-    expect(finish).toContain('git log --merges --first-parent origin/<default> --format=%P');
-    expect(finish).toContain(
-      '`gh pr list --base <branch> --state open` is empty; deleting would close them'
-    );
-    expect(finish).toContain('git push origin --delete release/next');
+    expect(finish).toContain('never wait for the merge');
+    expect(finish).not.toContain('gh pr view <nr> --json merged');
+    expect(finish).toContain('`delete-branch`');
   });
 
   it('cut reports a stale release/<x.y> with the delete command before cutting', () => {
-    expect(cut).toContain('git ls-remote --tags origin "refs/tags/v<x.y>.0"');
-    expect(cut).toContain('stale');
+    expect(cut).toContain('staleLines');
     expect(cut).toContain('git push origin --delete release/<x.y>');
     expect(cut).toContain('guardrail');
     expect(skill).not.toContain('GIT_GUARDRAILS_OFF');
@@ -158,7 +156,8 @@ describe('github-release skill refuses a released branch (#252)', () => {
   it('resolver step 4 ignores release branches whose .0 tag exists', () => {
     const step4 = section(reference, '4. `release/next` on origin', '5. None exists');
     expect(step4).toContain('whose tag `v<x.y>.0` is not on origin');
-    expect(step4).toContain('git ls-remote --tags origin');
+    expect(step4).toContain('Get-ReleaseState.ps1 -Mode base');
+    expect(step4).not.toContain('git ls-remote');
     expect(reference).toContain('already released');
   });
 });

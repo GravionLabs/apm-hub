@@ -31,6 +31,10 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **Project standard** (`github-project`): ships from [GravionLabs/ci](https://github.com/GravionLabs/ci) (`apm install GravionLabs/ci`), see its `docs/project-standard.md`.
 - **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
 
+## Upgrading from 2.x
+
+3.0.0 is content-only: the agents and the orchestration skills (`orchestrator`, `review-fanout`, `verify-project`, `queue`, `handoff`, `orch-pipeline`, `orch`) and the agents (`orchestrator`, `pbi-runner`, `implementer`, `issue-reader`, `explorer`, `planner`, `pr-writer`, `review-lead`, `reviewer`) are gone; the runner is [dromos](docs/runner.md). If you still want the old pipeline, pin `agents`, `github` and `delivery` together at `#v2.5.4`; otherwise remove the `agents` entry and run `apm update -g`. What apm cleans itself and what can remain: [after install](packages/delivery/.apm/skills/apm-install/references/after-install.md).
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -124,7 +128,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `hooks`       | Claude Code git guardrails hook (denies destructive git commands)                                                                              |
 | `statusline`  | `context-statusline` skill: status line and subagent status line                                                                               |
 | `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills)                                   |
-| `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                               |
+| `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling)                                                               |
 | `all`         | every package above except `apm-tooling`                                                                                                       |
 
 📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[Working mode](docs/working-mode.md)** (small contexts, one issue per session) · 📄 **[External frameworks](docs/frameworks.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions

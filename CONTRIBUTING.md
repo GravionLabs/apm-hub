@@ -59,6 +59,7 @@ Legacy names kept for compatibility:
 
 | Legacy name | Where | Removed in |
 |:--|:--|:--|
+| `skill-update` -> `skill-audit` | skill, merged into `skill-audit` (#786), no alias | n/a |
 
 The `development-workflow` package was a clean rename with no alias (#178, released in 2.2.0), a record of a past decision, so there is nothing to remove; the note in `README.md` stays for searchability.
 

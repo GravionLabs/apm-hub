@@ -8,8 +8,6 @@ keywords:
   - ng
   - ngrx
   - signals
-  - primeng
-  - sakai-ui
   - ag-grid
   - ts
 dependencies:

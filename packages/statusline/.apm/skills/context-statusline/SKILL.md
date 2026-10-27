@@ -8,8 +8,7 @@ metadata:
 
 # context-statusline
 
-Claude Code (status line and subagent line) and GitHub Copilot CLI (status line only, experimental). Two Node scripts (Node >= 22, no dependencies, same on Linux, macOS and Windows) and an installer
-that points `~/.claude/settings.json` at them. PowerShell 7+ is needed for the installer only.
+Claude Code (status line and subagent line) and GitHub Copilot CLI (status line only, experimental). Two Node scripts (Node >= 22, no dependencies) and an installer (PowerShell 7+) that points the client settings at them.
 
 ## Install
 
@@ -21,15 +20,7 @@ pwsh scripts/Install-Statusline.ps1 -Force      # replace a statusLine / subagen
 pwsh scripts/Install-Statusline.ps1 -Uninstall  # remove only our entries (and copies of older versions)
 ```
 
-The installer:
-
-- makes no copy: `statusLine` and `subagentStatusLine` become `{"type":"command","command":"node <scripts>/<file>.mjs"}` with `<scripts>` the skill's own `scripts/` directory (written as `~/...` under `$HOME`), so `apm update` refreshes the status line
-- derives `<scripts>` from where it runs: in a `~/.claude/skills/` or `~/.agents/skills/` deployment each client gets its own copy (Claude Code `~/.claude/skills/context-statusline/scripts`, Copilot CLI `~/.agents/skills/context-statusline/scripts`); anywhere else (project checkout) the directory it runs from. It refuses when that script is missing (skill deployed for the other client only)
-- keeps every other settings key, writes `settings.json.bak-<timestamp>` before changing, uses 2-space indent
-- is idempotent; entries of older versions (`apm-hub/statusline/` copies) are migrated and their copies removed; a foreign entry is refused without `-Force`
-- `-Client copilot` writes `$COPILOT_HOME` (else `~/.copilot`) `settings.json`: only `statusLine` (padding 1) and `STATUS_LINE` added to `feature_flags.enabled`. `-Uninstall` leaves the flag in place and never touches the skill files
-
-Restart Claude Code (or open a new session) to see the lines.
+The installer points `statusLine` and `subagentStatusLine` at the skill's own scripts (no copy, so `apm update` refreshes them), keeps every other settings key, writes a backup first and is idempotent. A foreign entry is refused without `-Force`. Restart Claude Code to see the lines. Details (paths, `-Client copilot`, migration, `-Uninstall`): https://github.com/GravionLabs/apm-hub/blob/main/docs/usage/statusline.md.
 
 ## What you get
 
@@ -38,11 +29,7 @@ Restart Claude Code (or open a new session) to see the lines.
 | `statusline.mjs` | `user@host:dir`, model, `ctx:<pct>% (<used>k/<size>k)` (no size part without a window size), `(git branch)`, `5h:<pct>% 7d:<pct>%` (`ctx` and each limit green below 50 %, yellow below 80 %, red above). Fields that are null or missing are skipped |
 | `subagent-statusline.mjs` | one row per subagent: `<agentType> <model> ctx:<pct>% (<k>k/<size>k) · <label>` (`1M` for a 1,000,000 window); green below 50 %, yellow below 80 %, red above; only `<k>k` when the context window size is unknown |
 
-Both scripts run on every refresh tick: no network, git with `--no-optional-locks` and a 1 s timeout, always exit 0;
-unparseable input gives the defaults (status line) or no output (subagent line).
-
 ## Rules
 
-- Never edit other `settings.json` keys by hand-rolled text replacement; use the installer.
-- Windows: `~` and forward slashes are expanded by Claude Code in the command, Git Bash or PowerShell.
+- Both scripts run on every refresh: no network, always exit 0. Use the installer, never hand-edit `settings.json`.
 - Copilot CLI has no subagent status line, and sends no `rate_limits` (the `5h`/`7d` part stays empty); its payload fields are from community guides, not official docs. OpenCode has no equivalent.
