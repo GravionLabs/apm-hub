@@ -57,6 +57,15 @@ describe('ci.yml test job', () => {
   });
 });
 
+describe('ci.yml checks', () => {
+  it('runs manifest check and skill report once, in build-test', () => {
+    const runs = steps('build-test').map((s) => s.run ?? '');
+    expect(runs.filter((r) => r.includes('check-manifests.mjs')).length).toBe(1);
+    expect(runs.filter((r) => r.includes('Get-SkillReport.ps1')).length).toBe(1);
+    expect(JSON.stringify(wf)).not.toContain('integration');
+  });
+});
+
 describe('ci.yml formatting check and triggers', () => {
   it('runs on pull requests into main and release/next', () => {
     expect(wf.on.pull_request.branches).toEqual(['main', 'release/next']);

@@ -21,7 +21,7 @@ pnpm install
 pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1 -Full
 ```
 
-The repo uses pnpm (`pnpm-lock.yaml`) only. `test/integration` is the exception: it is an isolated Vitest harness with its own `package-lock.json`, installed with `npm` by the `test:integration` script, so keep that lockfile.
+The repo uses pnpm (`pnpm-lock.yaml`) only. The Copilot SDK harness that lived in `test/integration` is kept at tag `v2.5.4`.
 
 ## Adding or changing a skill
 
@@ -34,7 +34,7 @@ The repo uses pnpm (`pnpm-lock.yaml`) only. `test/integration` is the exception:
    pnpm run build; pnpm test
    pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .
    ```
-   Tests live in three places: unit tests of the TypeScript tools next to their code (`src/**/*.test.ts`), tests of package content (skills, agents, scripts, hooks) in `test/packages/<domain>/` (repository checks in `test/repo/`, shared helpers in `test/helpers/`), and pwsh-heavy tests in `test/integration/queue/`.
+   Tests live in two places: unit tests of the TypeScript tools next to their code (`src/**/*.test.ts`), tests of package content (skills, agents, scripts, hooks) in `test/packages/<domain>/` (repository checks in `test/repo/`, shared helpers in `test/helpers/`).
    Vitest has one project (`vitest.config.ts`): `src/**/*.test.ts`, `test/repo/` and `test/packages/`. `pnpm test` runs it, `pnpm run test:ci` adds coverage (CI), a single file runs with `pnpm vitest run <path>`.
 5. Update the package `description` in `packages/<domain>/apm.yml` and the root `apm.yml` when the package scope changed, and the skill table in AGENTS.md.
 6. Open a PR with a conventional-commit title (`feat(py): …`, `fix(github): …`). The changelog is generated from commit messages with git-cliff.
