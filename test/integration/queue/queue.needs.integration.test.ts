@@ -58,6 +58,8 @@ fi
 `,
         { mode: 0o755 }
       );
+      // a done PBI makes the runner call Merge-ApprovedPr.ps1: never the real gh
+      fs.writeFileSync(path.join(bin, 'gh'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
       return {
         key,
         args: ['-Feature', '10'],

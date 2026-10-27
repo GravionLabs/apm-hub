@@ -26,7 +26,7 @@ pwsh scripts/Invoke-OrchestratorQueue.ps1 -Status 248                   # one-sh
 
 Start with `-DryRun`. With `-Feature`/`-Epic` it also lists each open PBI as `#<nr> <Needs> <title>` and marks the PBIs the queue skips (Needs `Planning`, `Decision`, `Blocked`) with `(skip)`; read-only `gh` calls (needs the `github` package beside this skill: it imports `github-issue/scripts/NeedsRules.psm1`; the list approximates the orchestrator's `next` selection), and without `gh` or on failure one `[dry-run] Needs unavailable: <reason>` line, exit 0. Parameters: `-Harness claude|copilot|opencode` (default `claude`), `-Mode plan|implement|full`
 (not with `-Feature`/`-Epic`: the mode is always `next`, the adapters forward it as `next <nr>`), `-ContinueOnError`,
-`-AllowAll` (see [harness flags](references/harness-flags.md)), `-MergeApproved` (opt-in, otherwise the runner never merges), `-TrustedOnly` (with `-Label`),
+`-AllowAll` (see [harness flags](references/harness-flags.md)), `-NoMerge` (no merge; `-MergeApproved` is the accepted old alias of the default), `-TrustedOnly` (with `-Label`),
 `-Status <nr>` (alone: no other selector or option), `-FixAdvisories none|medium|all[:dim,dim]` (lowercase dimensions; optional, forwarded as `--fix-advisories <policy>`, no review-summary gate; omitted: the orchestrator's headless default `medium`; CRITICAL/HIGH always block), `-PbiParallel 1-4` (only with `-Feature`/`-Epic`; forwarded as `--pbi-parallel <m>`, read by the orchestrator `loop` mode), `-Parallel 1..4` (Task wave width, forwarded as `--parallel <n>`; omitted: the default of `task-waves.md`).
 
 ## Slash usage
@@ -35,7 +35,7 @@ Start with `-DryRun`. With `-Feature`/`-Epic` it also lists each open PBI as `#<
 `/queue install`, `/queue uninstall`. Examples: `/queue 101` (default mode full), `/queue full 324`, `/queue dry-run implement 101 102`, `/queue dry-run feature 248`, `/queue epic 300`. Mapping: `dry-run` is `-DryRun` (recommend it first) and may be followed by the mode word; a mode word `full|implement|plan`
 is `-Mode <word>` (none: the runner default `full`); `status <nr>` is `-Status` (no mode word, no `fix=`); `feature <nr>` / `epic <nr>` is `-Feature` / `-Epic` and takes no
 mode (`/queue implement feature 248` is rejected with a message, the mode is always `next`); remaining numbers are
-positional issues. `fix=medium|all|none[:dim]` is `-FixAdvisories <policy>`, `parallel=<1-4>` is `-Parallel <n>`, each only when the user gives it. Pass `-AllowAll` or `-MergeApproved` through only when the user asks for it explicitly. `install` /
+positional issues. `fix=medium|all|none[:dim]` is `-FixAdvisories <policy>`, `parallel=<1-4>` is `-Parallel <n>`, each only when the user gives it. `no-merge` is `-NoMerge`. Pass `-AllowAll` through only when the user asks for it explicitly. `install` /
 `uninstall` runs the installer (below), not the runner. Run `pwsh scripts/Invoke-OrchestratorQueue.ps1 ...` from the
 repository root, print the summary lines and the exit code, and never answer a gate. Every child is a fresh process;
 start long runs from a plain terminal, see [launcher and shell function](references/shell-function.md).
@@ -80,12 +80,10 @@ continues after a failed PBI only if `next` then picks a different one. Epics en
 PBI ledger wins over a `Gate:` line, as in list mode. State is cached in `<state>/queue-<nr>.json`
 (GitHub stays the source of truth), output in `<state>/queue-<nr>.log`. It does not use the orchestrator `loop` mode.
 
-`-MergeApproved` (default off) merges the PR of a done PBI when the last `Verdict:` line of the run is exactly
-`APPROVE` (the whole line, no suffix) and the child exited 0. The PR comes from the ledger line `Phase pull-request: complete — <url>` and `gh pr list`, its head branch must
-belong to the PBI (`/<pbi>-`), its base must be `release/*` and its head must not be `release/*` (the release PR). It runs
-`gh pr merge --squash --match-head-commit <sha>`. Fork PRs, PRs that are not mergeable/clean (UNKNOWN is polled 3 times,
-`QUEUE_POLL_SECONDS`), failing or missing checks ("no checks reported") and a head that differs from the local branch tip (or,
-without a local branch, from the tip on origin; unverifiable also skips) are skipped with a note; set branch protection with required checks.
+With `-Feature`/`-Epic` the runner merges by default: after a done PBI (child exit 0) it runs `github-pull-request/scripts/Merge-ApprovedPr.ps1 -Issue <pbi> -Ledger <state>/<pbi>/progress.md`
+(`MERGE_SCRIPT` overrides), which owns every precondition (`review.json` APPROVE, one open PR into `release/*`, mergeable/clean, green checks, head verification; `QUEUE_POLL_SECONDS` for the UNKNOWN polls).
+`merged <sha>` gives outcome `merged`; `skipped: <reason>` keeps the PBI `done` with the note `not merged: <reason>` (the script labels it `needs-review` and comments); exit 1 gives `failed` and stops the queue.
+`-NoMerge` never merges and still calls the script with `-NoMerge` (label and comment); `-MergeApproved` with `-NoMerge` is an error. The JSON has `merge` (`auto`|`off`) and, for one more release, `mergeApproved`. Set branch protection with required checks.
 A `Gate:` line in the output parks the PBI (no PBI selected: stops the queue) even without a new ledger gate. Never after a gate, a block or a failure.
 
 ## Rules

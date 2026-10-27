@@ -192,6 +192,8 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
         fs.mkdirSync(bin);
         const t = (T[key] = toolsFor(dir, bin));
         def.setup(t);
+        // a done PBI makes the runner call Merge-ApprovedPr.ps1: never the real gh
+        if (!fs.existsSync(path.join(bin, 'gh'))) t.ghFake([]);
         return {
           key,
           args: def.args,
@@ -217,7 +219,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
         kind: 'Feature',
         state: 'done',
         exitCode: 0,
-        mergeApproved: false,
+        merge: 'auto',
       });
       expect(t.outcomes()).toEqual([
         [11, 'done'],
@@ -640,364 +642,109 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
       expect(t.calls()).toHaveLength(0);
     });
 
-    describe('-MergeApproved', () => {
-      const MA = [...F10, '-MergeApproved'];
+    // The preconditions of a merge are tested with Merge-ApprovedPr.ps1 (test/packages/github/merge-approved-pr.test.ts);
+    // here only the wiring: the call, its arguments and how its one-line result lands in the queue entry.
+    describe('merge wiring (Merge-ApprovedPr.ps1)', () => {
       // every case starts from a copy of the template repository (origin has feat/11-x at oid)
-      const mreg = (key: string, args: string[], setup: (t: Tools) => void) =>
-        reg(key, args, setup, { repo: true });
-      const pbiApprove = (pr = 101) => pbiRun(11, { pr, out: approve });
+      const mreg = (
+        key: string,
+        args: string[],
+        setup: (t: Tools) => void,
+        opts: Partial<Def> = {}
+      ) => reg(key, args, setup, { repo: true, ...opts });
+      const review = (verdict = 'APPROVE', incomplete = false) =>
+        `echo '${JSON.stringify({ verdict, incomplete })}' > .agents/11/review.json`;
+      const pbiApprove = (pr = 101) => pbiRun(11, { pr, out: review() });
+      const mergeLine = () => `pr merge 101 --squash --match-head-commit ${oid}`;
 
-      const byDefault = mreg('no-merge-default', F10, (t) => {
+      const byDefault = mreg('merge-default', F10, (t) => {
         t.ghFake([defaultPr]);
         t.fakeQueue([pbiApprove(), doneStep]);
       });
-      it('does not merge by default, even with an APPROVE verdict', () => {
+      it('merges the approved PBI PR in a run without flags', () => {
         const { r, t } = got(byDefault);
         expect(r.status).toBe(0);
-        expect(t.ghCalls()).toBe('');
-        expect(t.outcomes()).toEqual([[11, 'done']]);
-      });
-
-      const absPath = mreg('ledger-path', MA, (t) => {
-        t.ghFake([defaultPr]);
-        t.fakeQueue([pbiApprove(), doneStep]);
-      });
-      it('exposes the PBI ledger as one absolute path to runner-side tools (no cwd prefix on an absolute state dir)', () => {
-        const { r, t } = got(absPath);
-        expect(r.status).toBe(0);
-        const seen = [
-          ...new Set(fs.readFileSync(path.join(t.dir, 'gh-env.log'), 'utf8').trim().split('\n')),
-        ];
-        expect(seen).toEqual([path.join(fs.realpathSync(t.dir), '.agents', '11', 'progress.md')]);
-        expect(fs.existsSync(seen[0])).toBe(true);
-      });
-
-      const squash = mreg('squash', MA, (t) => {
-        t.ghFake([defaultPr]);
-        t.fakeQueue([pbiApprove(), doneStep]);
-      });
-      it('squash-merges the PBI PR pinned to its head commit', () => {
-        const { r, t } = got(squash);
-        expect(r.status).toBe(0);
-        expect(t.lines()).toContain(`pr merge 101 --squash --match-head-commit ${oid}`);
+        expect(t.lines()).toContain(mergeLine());
         expect(t.outcomes()).toEqual([[11, 'merged']]);
+        expect(t.queue()).toMatchObject({ state: 'done', merge: 'auto', mergeApproved: true });
         expect(t.queue().pbis[0].pr).toBe(101);
-        expect(t.queue().state).toBe('done');
         expect(t.calls()).toHaveLength(2);
       });
 
-      const byBranch = mreg('find-by-branch', MA, (t) => {
+      const alias = mreg('merge-alias', [...F10, '-MergeApproved'], (t) => {
         t.ghFake([defaultPr]);
-        t.fakeQueue([pbiRun(11, { out: approve }), doneStep]);
-      });
-      it('finds the PR by the PBI head branch when the ledger has no PR line', () => {
-        const { t } = got(byBranch);
-        expect(t.lines()).toContain(`pr merge 101 --squash --match-head-commit ${oid}`);
-      });
-
-      const noMergeRows: [string, string, object | null, string][] = [
-        [
-          'CHANGES_REQUESTED verdict',
-          'echo "Verdict: CHANGES_REQUESTED"',
-          defaultPr,
-          'verdict is not a plain APPROVE',
-        ],
-        [
-          'a later non-APPROVE verdict wins',
-          'echo "Verdict: APPROVE"; echo "Verdict: CHANGES_REQUESTED"',
-          defaultPr,
-          'verdict is not a plain APPROVE',
-        ],
-        [
-          'lower-case verdict',
-          'echo "Verdict: approve"',
-          defaultPr,
-          'verdict is not a plain APPROVE',
-        ],
-        [
-          'APPROVE with a suffix after a dash',
-          'echo "Verdict: APPROVE - but 2 HIGH findings"',
-          defaultPr,
-          'verdict is not a plain APPROVE',
-        ],
-        [
-          'APPROVE with a trailing comment',
-          'echo "Verdict: APPROVE, see below"',
-          defaultPr,
-          'verdict is not a plain APPROVE',
-        ],
-        [
-          'prose that mentions approve',
-          'echo "I would APPROVE this"; echo "approve"',
-          defaultPr,
-          'no Verdict: line',
-        ],
-        ['no verdict at all', 'echo ok', defaultPr, 'no Verdict: line'],
-        [
-          'release head with a non-main base',
-          approve,
-          { ...defaultPr, headRefName: 'release/11-x', baseRefName: 'develop' },
-          'release PR',
-        ],
-        [
-          'main base with a non-release head',
-          approve,
-          { ...defaultPr, baseRefName: 'main' },
-          'is not the integration branch',
-        ],
-        [
-          'base that is not release/*',
-          approve,
-          { ...defaultPr, baseRefName: 'develop' },
-          'is not the integration branch',
-        ],
-        ['a PR that is not open', approve, { ...defaultPr, state: 'MERGED' }, 'state MERGED'],
-        [
-          'a PR of another PBI branch',
-          approve,
-          { ...defaultPr, headRefName: 'feat/99-other' },
-          'no single open PR of PBI #11',
-        ],
-        [
-          'a cross-repository PR',
-          approve,
-          { ...defaultPr, isCrossRepository: true },
-          'fork or cross-repository PR',
-        ],
-        [
-          'unknown cross-repository status',
-          approve,
-          { ...defaultPr, isCrossRepository: undefined },
-          'fork or cross-repository PR',
-        ],
-        [
-          'a missing head commit',
-          approve,
-          { ...defaultPr, headRefOid: undefined },
-          'head commit unknown',
-        ],
-        [
-          'failing checks',
-          approve,
-          {
-            ...defaultPr,
-            statusCheckRollup: [{ conclusion: 'SUCCESS' }, { conclusion: 'FAILURE' }],
-          },
-          'checks are not green',
-        ],
-        [
-          'pending checks',
-          approve,
-          { ...defaultPr, statusCheckRollup: [{ state: 'PENDING' }] },
-          'checks are not green',
-        ],
-        [
-          'an empty check list',
-          approve,
-          { ...defaultPr, statusCheckRollup: [] },
-          'no checks reported',
-        ],
-        [
-          'a missing check list',
-          approve,
-          { ...defaultPr, statusCheckRollup: undefined },
-          'no checks reported',
-        ],
-        [
-          'a PR that is not clean',
-          approve,
-          { ...defaultPr, mergeStateStatus: 'BLOCKED' },
-          'not mergeable/clean (MERGEABLE/BLOCKED)',
-        ],
-        [
-          'a conflicting PR',
-          approve,
-          { ...defaultPr, mergeable: 'CONFLICTING', mergeStateStatus: 'DIRTY' },
-          'not mergeable/clean (CONFLICTING/DIRTY)',
-        ],
-        ['APPROVE without any PR', approve, null, 'no single open PR of PBI #11'],
-      ];
-      noMergeRows.forEach(([name, out, pr, note], i) => {
-        const k = mreg(`no-merge-${i}`, MA, (t) => {
-          t.ghFake(pr ? [pr] : []);
-          t.fakeQueue([pbiRun(11, { pr: pr ? 101 : undefined, out }), doneStep]);
-        });
-        it(`does not merge: ${name}`, () => {
-          const { r, t } = got(k);
-          expect(r.status).toBe(0);
-          expect(t.ghCalls()).not.toContain('pr merge');
-          expect(t.outcomes()).toEqual([[11, 'done']]);
-          expect(t.queue().state).toBe('done');
-          expect(t.queue().pbis[0].note).toContain(note);
-        });
-      });
-
-      describe('UNKNOWN mergeability right after PR creation', () => {
-        const unknown = () => ({
-          ...defaultPr,
-          mergeable: 'UNKNOWN',
-          mergeStateStatus: 'UNKNOWN',
-          statusCheckRollup: [],
-        });
-        const polls = mreg('unknown-merges', MA, (t) => {
-          t.ghFake([unknown()], {
-            view: {
-              mergeable: 'MERGEABLE',
-              mergeStateStatus: 'CLEAN',
-              statusCheckRollup: [{ conclusion: 'SUCCESS' }],
-            },
-          });
-          t.fakeQueue([pbiApprove(), doneStep]);
-        });
-        it('polls gh pr view and merges once GitHub has computed MERGEABLE/CLEAN', () => {
-          const { t } = got(polls);
-          expect(t.lines()).toContain(
-            'pr view 101 --json mergeable,mergeStateStatus,statusCheckRollup'
-          );
-          expect(t.lines()).toContain(`pr merge 101 --squash --match-head-commit ${oid}`);
-        });
-        const stays = mreg('unknown-stays', MA, (t) => {
-          t.ghFake([unknown()], {
-            view: { mergeable: 'UNKNOWN', mergeStateStatus: 'UNKNOWN', statusCheckRollup: [] },
-          });
-          t.fakeQueue([pbiApprove(), doneStep]);
-        });
-        it('skips the merge after three polls that stay UNKNOWN', () => {
-          const { r, t } = got(stays);
-          expect(r.status).toBe(0);
-          expect(t.lines().filter((l) => l.startsWith('pr view'))).toHaveLength(3);
-          expect(t.ghCalls()).not.toContain('pr merge');
-          expect(t.queue().pbis[0].note).toContain('mergeability still UNKNOWN after 3 polls');
-        });
-      });
-
-      const childFail = mreg('child-nonzero', MA, (t) => {
-        t.ghFake([defaultPr]);
-        t.fakeQueue([pbiRun(11, { pr: 101, out: `${approve}; exit 1` }), doneStep]);
-      });
-      it('does not merge when the child exited non-zero even with a complete ledger and APPROVE', () => {
-        const { r, t } = got(childFail);
-        expect(t.ghCalls()).not.toContain('pr merge');
-        expect(t.outcomes()).toEqual([[11, 'done']]);
-        expect(t.queue().pbis[0].note).toContain('child exit code 1');
-        expect(r.status).toBe(0); // ledger wins for the outcome, only the merge is withheld
-      });
-
-      const twoPrs = mreg('two-prs', MA, (t) => {
-        t.ghFake([defaultPr, { ...defaultPr, number: 102, headRefName: 'fix/11-again' }]);
-        t.fakeQueue([pbiRun(11, { out: approve }), doneStep]);
-      });
-      it('does not merge when two open PRs match the PBI branch and the ledger names none', () => {
-        const { t } = got(twoPrs);
-        expect(t.ghCalls()).not.toContain('pr merge');
-        expect(t.queue().pbis[0].note).toContain('PBI #11');
-      });
-
-      const pbi1 = mreg('pbi-1', MA, (t) => {
-        t.ghFake([defaultPr]);
-        t.fakeQueue([pbiRun(1, { out: approve }), 'echo "Feature #10 is done."']);
-      });
-      it('does not let PBI 1 match a feat/11-x branch', () => {
-        expect(got(pbi1).t.ghCalls()).not.toContain('pr merge');
-      });
-
-      const notJson = mreg('list-not-json', MA, (t) => {
-        t.ghFake([defaultPr]);
-        fs.writeFileSync(path.join(t.dir, 'gh-list.json'), 'not json at all');
         t.fakeQueue([pbiApprove(), doneStep]);
       });
-      it('does not merge when gh pr list returns something that is not JSON', () => {
-        const { t } = got(notJson);
-        expect(t.ghCalls()).not.toContain('pr merge');
-        expect(t.outcomes()).toEqual([[11, 'done']]);
+      it('accepts the old -MergeApproved flag as an alias of the default', () => {
+        const { r, t } = got(alias);
+        expect(r.status).toBe(0);
+        expect(t.lines()).toContain(mergeLine());
+        expect(t.outcomes()).toEqual([[11, 'merged']]);
       });
 
-      describe('head verification', () => {
-        const other = 'ffffffffffffffffffffffffffffffffffffffff';
-        const sameTip = mreg('head-same', MA, (t) => {
-          gitIn(t.dir, 'branch', 'feat/11-x');
-          t.ghFake([{ ...defaultPr, headRefOid: oid }]);
-          t.fakeQueue([pbiApprove(), doneStep]);
-        });
-        it('merges when the local branch tip equals the PR head', () => {
-          expect(got(sameTip).t.ghCalls()).toContain(
-            `pr merge 101 --squash --match-head-commit ${oid}`
-          );
-        });
-        const localDiffers = mreg('head-local-differs', MA, (t) => {
-          gitIn(t.dir, 'branch', 'feat/11-x');
-          t.ghFake([{ ...defaultPr, headRefOid: other }]);
-          t.fakeQueue([pbiApprove(), doneStep]);
-        });
-        it('skips the merge when the local branch tip differs from the PR head', () => {
-          const { t } = got(localDiffers);
-          expect(t.ghCalls().includes('pr merge')).toBe(false);
-          expect(t.queue().pbis[0].note).toContain(`differs from local branch tip ${oid}`);
-        });
-        const originDiffers = mreg('head-origin-differs', MA, (t) => {
-          t.ghFake([{ ...defaultPr, headRefOid: other }]);
-          t.fakeQueue([pbiApprove(), doneStep]);
-        });
-        it('without a local branch, skips when the origin branch tip differs from the PR head', () => {
-          const { t } = got(originDiffers);
-          expect(t.ghCalls().includes('pr merge')).toBe(false);
-          expect(t.queue().pbis[0].note).toContain(`differs from origin branch tip ${oid}`);
-        });
-        const noOrigin = mreg('head-no-origin', MA, (t) => {
-          gitIn(t.dir, 'remote', 'remove', 'origin');
-          t.ghFake([defaultPr]);
-          t.fakeQueue([pbiApprove(), doneStep]);
-        });
-        it('without a local branch and without a reachable origin, skips because the head cannot be verified', () => {
-          const { t } = got(noOrigin);
-          expect(t.ghCalls().includes('pr merge')).toBe(false);
-          expect(t.queue().pbis[0].note).toContain('cannot be verified');
-        });
-      });
-
-      const notAmong = mreg('ledger-pr-not-open', MA, (t) => {
-        t.ghFake([{ ...defaultPr, number: 555 }]);
+      const noMerge = mreg('merge-off', [...F10, '-NoMerge'], (t) => {
+        t.ghFake([defaultPr]);
         t.fakeQueue([pbiApprove(), doneStep]);
       });
-      it('does not merge when the ledger PR is not among the open PRs of the PBI', () => {
-        expect(got(notAmong).t.ghCalls()).not.toContain('pr merge');
-      });
-
-      const listFails = mreg('list-fails', MA, (t) => {
-        t.ghFake([defaultPr], { listFails: true });
-        t.fakeQueue([pbiApprove(), doneStep]);
-      });
-      it('does not merge when gh pr list fails', () => {
-        const { r, t } = got(listFails);
+      it('with -NoMerge never calls gh pr merge but labels the PBI needs-review', () => {
+        const { r, t } = got(noMerge);
         expect(r.status).toBe(0);
         expect(t.ghCalls()).not.toContain('pr merge');
-        expect(t.queue().pbis[0].note).toContain('gh pr list failed');
+        expect(t.lines()).toContain('issue edit 11 --add-label needs-review');
+        expect(t.outcomes()).toEqual([[11, 'done']]);
+        expect(t.queue()).toMatchObject({ merge: 'off', mergeApproved: false });
+        expect(t.queue().pbis[0].note).toContain('not merged: merge disabled');
       });
 
-      const onGate = mreg('on-gate', MA, (t) => {
+      const skipped = mreg('merge-skipped', F10, (t) => {
+        t.ghFake([defaultPr]);
+        t.fakeQueue([pbiRun(11, { pr: 101, out: review('CHANGES_REQUESTED') }), doneStep]);
+      });
+      it('records a skipped merge as "not merged: <reason>" and keeps the PBI done', () => {
+        const { r, t } = got(skipped);
+        expect(r.status).toBe(0);
+        expect(t.ghCalls()).not.toContain('pr merge');
+        expect(t.outcomes()).toEqual([[11, 'done']]);
+        expect(t.queue().pbis[0].note).toContain('not merged: verdict is not a plain APPROVE');
+        expect(t.queue().state).toBe('done');
+      });
+
+      const noReview = mreg('merge-no-review', F10, (t) => {
+        t.ghFake([defaultPr]);
+        t.fakeQueue([pbiRun(11, { pr: 101 }), doneStep]);
+      });
+      it('does not merge a PBI without review.json', () => {
+        const { t } = got(noReview);
+        expect(t.ghCalls()).not.toContain('pr merge');
+        expect(t.queue().pbis[0].note).toBe('not merged: no review.json');
+      });
+
+      const childFail = mreg('merge-child-nonzero', F10, (t) => {
+        t.ghFake([defaultPr]);
+        t.fakeQueue([pbiRun(11, { pr: 101, out: `${review()}; exit 1` }), doneStep]);
+      });
+      it('does not call the script when the child exited non-zero', () => {
+        const { r, t } = got(childFail);
+        expect(r.status).toBe(0); // ledger wins for the outcome, only the merge is withheld
+        expect(t.ghCalls()).toBe('');
+        expect(t.outcomes()).toEqual([[11, 'done']]);
+        expect(t.queue().pbis[0].note).toContain('child exit code 1');
+      });
+
+      const onGate = mreg('merge-on-gate', F10, (t) => {
         t.ghFake([defaultPr]);
         t.fakeQueue([
-          `mkdir -p .agents/11; echo "Next PBI: #11 T"; ${approve}; echo "Gate: ok?" >> .agents/11/progress.md`,
+          `mkdir -p .agents/11; echo "Next PBI: #11 T"; ${review()}; echo "Gate: ok?" >> .agents/11/progress.md`,
           noneStep,
         ]);
       });
-      it('does not merge on a gate', () => {
+      it('does not merge a gated PBI', () => {
         const { r, t } = got(onGate);
         expect(r.status).toBe(2);
         expect(t.ghCalls()).not.toContain('pr merge');
       });
 
-      const failedApprove = mreg('failed-approve', MA, (t) => {
-        t.ghFake([defaultPr]);
-        t.fakeQueue([`echo "Next PBI: #11 T"; ${approve}; exit 1`]);
-      });
-      it('does not merge a failed iteration that printed APPROVE', () => {
-        const { r, t } = got(failedApprove);
-        expect(r.status).toBe(1);
-        expect(t.ghCalls()).not.toContain('pr merge');
-      });
-
-      const mergeFails = mreg('merge-fails', MA, (t) => {
+      const mergeFails = mreg('merge-fails', F10, (t) => {
         t.ghFake([defaultPr], { mergeExit: 1 });
         t.fakeQueue([pbiApprove(), doneStep]);
       });
@@ -1006,9 +753,82 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
         expect(r.status).toBe(1);
         expect(t.ghCalls()).toContain('pr merge 101');
         expect(t.outcomes()).toEqual([[11, 'failed']]);
-        expect(t.queue().pbis[0].note).toContain('merge');
         expect(t.queue().state).toBe('failed');
         expect(t.calls()).toHaveLength(1);
+      });
+
+      // MERGE_SCRIPT: a stand-in that records its arguments and prints a canned line
+      const stub = (t: Tools, line: string, code = 0) => {
+        const p = path.join(t.dir, 'merge-stub.ps1');
+        fs.writeFileSync(
+          p,
+          `param([string]$Issue, [string]$Ledger, [switch]$NoMerge)\n` +
+            `Add-Content -LiteralPath '${path.join(t.dir, 'merge-args.log')}' -Value "$Issue|$Ledger|$($NoMerge.IsPresent)"\n` +
+            `Write-Output '${line}'\nexit ${code}\n`
+        );
+        return p;
+      };
+      const argsCase = mreg(
+        'merge-args',
+        [...F10, '-NoMerge'],
+        (t) => {
+          t.ghFake([]);
+          t.fakeQueue([pbiRun(11), doneStep]);
+        },
+        {
+          env: (t) => ({ MERGE_SCRIPT: stub(t, 'skipped: PR #7: state MERGED') }),
+        }
+      );
+      it('passes -Issue, the absolute PBI ledger and -NoMerge to the script and maps its skipped line', () => {
+        const { t } = got(argsCase);
+        const logged = fs.readFileSync(path.join(t.dir, 'merge-args.log'), 'utf8').trim();
+        expect(logged).toBe(
+          `11|${path.join(fs.realpathSync(t.dir), '.agents', '11', 'progress.md')}|True`
+        );
+        expect(t.queue().pbis[0].note).toBe('not merged: PR #7: state MERGED');
+      });
+
+      const merged = mreg('merge-stub-merged', F10, (t) => t.fakeQueue([pbiRun(11), doneStep]), {
+        env: (t) => ({ MERGE_SCRIPT: stub(t, 'merged abc1234') }),
+      });
+      it('maps "merged <sha>" to the outcome merged, without -NoMerge', () => {
+        const { r, t } = got(merged);
+        expect(r.status).toBe(0);
+        expect(t.outcomes()).toEqual([[11, 'merged']]);
+        expect(fs.readFileSync(path.join(t.dir, 'merge-args.log'), 'utf8').trim()).toMatch(
+          /\|False$/
+        );
+      });
+
+      const garbage = mreg('merge-stub-garbage', F10, (t) => t.fakeQueue([pbiRun(11), doneStep]), {
+        env: (t) => ({ MERGE_SCRIPT: stub(t, 'something else') }),
+      });
+      it('does not count an unrecognised script output as a merge', () => {
+        const { t } = got(garbage);
+        expect(t.outcomes()).toEqual([[11, 'done']]);
+        expect(t.queue().pbis[0].note).toContain('no result line');
+      });
+
+      const missing = mreg(
+        'merge-script-missing',
+        F10,
+        (t) => t.fakeQueue([pbiRun(11), doneStep]),
+        { env: (t) => ({ MERGE_SCRIPT: path.join(t.dir, 'nope.ps1') }) }
+      );
+      it('fails the PBI when the merge script cannot be found', () => {
+        const { r, t } = got(missing);
+        expect(r.status).toBe(1);
+        expect(t.outcomes()).toEqual([[11, 'failed']]);
+        expect(t.queue().pbis[0].note).toContain('Merge-ApprovedPr.ps1 not found');
+      });
+
+      const exit1 = mreg('merge-stub-exit1', F10, (t) => t.fakeQueue([pbiRun(11), doneStep]), {
+        env: (t) => ({ MERGE_SCRIPT: stub(t, 'merged abc1234', 1) }),
+      });
+      it('treats a script exit code 1 as failed even when it printed a merged line', () => {
+        const { r, t } = got(exit1);
+        expect(r.status).toBe(1);
+        expect(t.outcomes()).toEqual([[11, 'failed']]);
       });
     });
   });

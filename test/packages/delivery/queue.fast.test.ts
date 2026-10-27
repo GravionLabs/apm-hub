@@ -141,6 +141,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       Feature: ['-Feature', '1'],
       Mode: ['-Mode', 'plan'],
       Merge: ['-MergeApproved'],
+      NoMerge: ['-NoMerge'],
       Continue: ['-ContinueOnError'],
       Fix: ['-FixAdvisories', 'all'],
       Label: ['-Label', 'x'],
@@ -149,6 +150,9 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       add(`statusWith${k}`, ['-Status', '248', ...extra, '-DryRun']);
     }
     add('statusBad', ['-Status', 'abc', '-DryRun']);
+    add('featureMergeAlias', ['-Feature', '1', '-MergeApproved', '-DryRun']);
+    add('featureNoMerge', ['-Feature', '1', '-NoMerge', '-DryRun']);
+    add('mergeBoth', ['-Feature', '1', '-MergeApproved', '-NoMerge', '-DryRun']);
     add('featureWithMode', ['-Feature', '1', '-Mode', 'plan', '-DryRun']);
     add('advAll', ['12', '-FixAdvisories', 'all', '-DryRun']);
     add('advOneDim', ['12', '-FixAdvisories', 'medium:security', '-DryRun']);
@@ -670,6 +674,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
       ['statusWithFeature', '-Feature/-Epic'],
       ['statusWithMode', '-Mode'],
       ['statusWithMerge', '-MergeApproved'],
+      ['statusWithNoMerge', '-NoMerge'],
       ['statusWithContinue', '-ContinueOnError'],
       ['statusWithFix', '-FixAdvisories'],
       ['statusWithLabel', '-Label'],
@@ -682,6 +687,19 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1 (batched, one pwsh proce
 
     it('rejects a non-numeric number', () => {
       expect(R.statusBad.status).not.toBe(0);
+    });
+  });
+
+  describe('-NoMerge and the -MergeApproved alias', () => {
+    it('accepts -NoMerge and the old -MergeApproved flag in a dry run', () => {
+      expect(R.featureNoMerge.status).toBe(0);
+      expect(R.featureMergeAlias.status).toBe(0);
+      expect(R.featureNoMerge.stdout).toContain('[dry-run] Feature #1: ');
+    });
+
+    it('rejects -MergeApproved together with -NoMerge', () => {
+      expect(R.mergeBoth.status).not.toBe(0);
+      expect(R.mergeBoth.stderr).toContain('-MergeApproved cannot be combined with -NoMerge');
     });
   });
 

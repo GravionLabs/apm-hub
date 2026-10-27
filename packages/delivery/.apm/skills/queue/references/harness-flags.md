@@ -12,7 +12,7 @@ A headless run cannot answer permission prompts, so each adapter passes a narrow
 The allowed prefixes live in `scripts/harness/allowed-commands.ps1` (one list for all adapters): `git` status, diff, log,
 show, add, commit, checkout, switch, branch, fetch, push, rev-parse, rev-list, merge-base, ls-files, remote; `gh` issue
 view/list/create/edit/close/comment, pr create/view/list/diff, repo view, api; plus pwsh, pnpm, npm, npx, node, dotnet,
-uv, python, ng. `gh pr merge`, `git reset`, `git clean` and `git rebase` are not on the list, but that is not a guarantee:
+uv, python, ng. `gh pr merge` (the runner's own merge via `Merge-ApprovedPr.ps1` runs outside this set), `git reset`, `git clean` and `git rebase` are not on the list, but that is not a guarantee:
 `gh api` stays allowed (sub-issue and blocked-by linking need it, including POST and GraphQL) and can merge a PR, `git push`
 also matches a force push (the git guardrails hook denies force pushes to `main` and `release/*`), and `pwsh` and the
 build tools run arbitrary code.

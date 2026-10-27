@@ -111,12 +111,12 @@ sh "${dir}/steps/$c"
 `,
         { mode: 0o755 }
       );
-      if (def.gh)
-        fs.writeFileSync(
-          path.join(bin, 'gh'),
-          `#!/bin/sh\nfor a in "$@"; do printf '[%s]' "$a" >> "${dir}/gh.log"; done; echo >> "${dir}/gh.log"\nexit 0\n`,
-          { mode: 0o755 }
-        );
+      // always a fake gh: a done PBI makes the runner call Merge-ApprovedPr.ps1
+      fs.writeFileSync(
+        path.join(bin, 'gh'),
+        `#!/bin/sh\nfor a in "$@"; do printf '[%s]' "$a" >> "${dir}/gh.log"; done; echo >> "${dir}/gh.log"\nexit 0\n`,
+        { mode: 0o755 }
+      );
       return {
         key,
         args: def.args ?? ['-Feature', '10'],

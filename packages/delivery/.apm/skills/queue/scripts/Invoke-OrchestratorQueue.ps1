@@ -10,7 +10,7 @@
     last line 'Ledger complete.'        -> done (before the run: skipped, nothing is started)
     new 'Gate: <question>' line         -> gate: the queue stops, the question is printed, exit 2 (issue-list mode; -Feature/-Epic park it, see below)
     neither                             -> failed: the queue stops (exit 1) unless -ContinueOnError
-  Output of every run is appended to <state>/<issue>/run.log. The runner never merges (unless the opt-in -MergeApproved is given) and never answers a gate.
+  Output of every run is appended to <state>/<issue>/run.log. In -Feature/-Epic mode the runner merges the approved PR of every done PBI (unless -NoMerge) and never answers a gate.
   Feature/Epic mode runs github-project/scripts/Sync-ProjectNeeds.ps1 -Issue <pbi> -IncludeParents after each 'Next PBI:' and after the PBI entry is decided
   (best effort, result in <state>/<pbi>/run.log, never changes the exit code; PROJECT_SYNC_OFF=1 disables, NEEDS_SYNC_SCRIPT overrides the script path).
   Run it from the repository root. Exit codes: 0 all done/skipped, 1 failed, 2 gate, 3 nothing selectable (queue mode only).
@@ -38,13 +38,11 @@
   AGENTS_LEDGER is cleared before every child (also an inherited value) and set to the PBI ledger only in the runner after
   'Next PBI: #<n>' is parsed (a running child cannot be changed); the caller's value is restored at the end.
   A 'Gate:' line (at line start, may be markdown-wrapped: '**Gate**:', '> Gate:'; case-sensitive) in the output parks the PBI (or, without a selected PBI, stops the queue) even when the ledger has no new gate (the question must reach a human).
-  -MergeApproved: after a done PBI (child exit 0) whose last 'Verdict:' line is exactly 'Verdict: APPROVE', merge the PBI's open PR (found via the ledger
-  line 'Phase pull-request: complete - <url>' and 'gh pr list', head branch must contain '/<pbi>-') with
-  'gh pr merge <pr> --squash --match-head-commit <sha>'. Base must be release/*, head must not be release/*
-  (the release PR), not a fork PR, mergeable and CLEAN with green checks (configure branch protection with required
-  checks so CLEAN means reviewed and tested). The reviewed commit is not recorded by the orchestrator; if the PBI
-  branch exists locally its tip must equal the PR head, else the tip on origin (git ls-remote) must; unverifiable -> no merge.
-  UNKNOWN mergeability is polled up to 3 times (QUEUE_POLL_SECONDS, default 5); an empty check list is skipped ('no checks reported').
+  Merge (default in -Feature/-Epic mode): after a done PBI (child exit 0) the runner calls github-pull-request/scripts/Merge-ApprovedPr.ps1
+  -Issue <pbi> -Ledger <state>/<pbi>/progress.md (MERGE_SCRIPT overrides). That script owns every precondition (review.json APPROVE, one open PR,
+  release/* base, mergeable and CLEAN, green checks, head verification). 'merged <sha>' -> outcome merged; 'skipped: <reason>' -> note 'not merged: <reason>'
+  (label needs-review and a comment are set on the PBI); exit 1 -> outcome failed, the queue stops. -NoMerge never merges but still calls the script with
+  -NoMerge (label and comment). -MergeApproved is the old opt-in flag, accepted as an alias (no-op); with -NoMerge it is an error.
   Issue-list mode inside a repository: per issue Enter-Checkout.ps1 (github-issue/scripts) chooses the working directory of the child (the main
   checkout when no live lease of another issue holds it and no tracked file is modified, else .worktrees/<nr>) and Exit-Checkout.ps1 releases it after the
   ledger verdict (a clean worktree is removed, a dirty one kept). A gate keeps lease and worktree and prints the path to resume in. Outside a repository
@@ -58,7 +56,8 @@
 .PARAMETER Feature         Queue mode: loop 'next <nr>' for this Feature.
 .PARAMETER Epic            Queue mode: same for an Epic.
 .PARAMETER Status          One-shot: run 'status <nr>' headless and print <state>/status-<nr>.md. Exit 0 written, 1 missing or stale, 2 gate. No ledger.
-.PARAMETER MergeApproved   Queue mode: squash-merge the PBI's open PR on an APPROVE verdict (default off).
+.PARAMETER MergeApproved   Alias of the default: queue mode merges the approved PR of a done PBI (error together with -NoMerge).
+.PARAMETER NoMerge         Queue mode: never merge; the script still labels needs-review and comments.
 .PARAMETER TrustedOnly     With -Label: only issues authored by OWNER, MEMBER or COLLABORATOR (issue text is untrusted input).
 .PARAMETER ContinueOnError Continue with the next issue after a failed run.
 .PARAMETER FixAdvisories Optional advisory policy (none, medium, all; optionally `:dim,dim`) passed to the orchestrator as `--fix-advisories <policy>` before the mode word.
@@ -79,6 +78,7 @@ param(
   [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string]$Epic,
   [ValidatePattern('\A#?[1-9][0-9]{0,9}\z')][string]$Status,
   [switch]$MergeApproved,
+  [switch]$NoMerge,
   [switch]$TrustedOnly,
   [ValidatePattern('\A[a-z]{1,20}\z')][string]$Harness = 'claude',
   [switch]$ContinueOnError,
@@ -198,9 +198,39 @@ function Invoke-ParkGate([string]$Pbi, [string]$Question, [string]$LogFile) {
   }
 }
 
+# Merges the approved PR of a done PBI: Merge-ApprovedPr.ps1 of the github-pull-request skill (installed beside this skill, or the
+# repository layout; MERGE_SCRIPT overrides). Output goes to the PBI run.log. Never throws; returns @{ Merged; Failed; Note }.
+# The script prints 'merged <sha>' or 'skipped: <reason>' (its exit 1 is a failed 'gh pr merge').
+function Invoke-MergeApproved([string]$Pbi, [string]$LedgerFile, [string]$LogFile) {
+  try {
+    $f = $env:MERGE_SCRIPT
+    if (-not $f) {
+      foreach ($d in @((Join-Path $PSScriptRoot '../../github-pull-request/scripts'), (Join-Path $PSScriptRoot '../../../../../github/.apm/skills/github-pull-request/scripts'))) {
+        $c = Join-Path $d 'Merge-ApprovedPr.ps1'
+        if (Test-Path -LiteralPath $c -PathType Leaf) { $f = (Resolve-Path -LiteralPath $c).Path; break }
+      }
+    }
+    if (-not $f -or -not (Test-Path -LiteralPath $f -PathType Leaf)) { return @{ Merged = $false; Failed = $true; Note = 'not merged: Merge-ApprovedPr.ps1 not found' } }
+    $a = @('-NoProfile', '-File', $f, '-Issue', $Pbi, '-Ledger', $LedgerFile)
+    if ($NoMerge) { $a += '-NoMerge' }
+    $o = @(& pwsh @a 2>&1 | ForEach-Object { "$_" })
+    $c = $LASTEXITCODE
+    Add-Content -LiteralPath $LogFile -Value (@("Merge #${Pbi} (exit code $c):") + $o) -Encoding utf8
+    $o | Out-Host
+    if ($c -ne 0) { return @{ Merged = $false; Failed = $true; Note = "merge of PBI #$Pbi failed (exit code $c)" } }
+    $res = @($o | Where-Object { $_ -cmatch '\A(merged [0-9a-f]{7,64}|skipped: .+)\z' }) | Select-Object -Last 1
+    if (-not $res) { return @{ Merged = $false; Failed = $false; Note = 'not merged: no result line from Merge-ApprovedPr.ps1' } }
+    if ($res.StartsWith('merged ')) { return @{ Merged = $true; Failed = $false; Note = $null } }
+    @{ Merged = $false; Failed = $false; Note = 'not merged: ' + $res.Substring(9) }
+  } catch {
+    @{ Merged = $false; Failed = $true; Note = "merge script failed: $($_.Exception.Message)" }
+  }
+}
+
+if ($MergeApproved -and $NoMerge) { throw '-MergeApproved cannot be combined with -NoMerge.' }
 if ($Status) {
   $bad = [ordered]@{ 'issue numbers' = ($Issue.Count -gt 0); '-IssueFile' = [bool]$IssueFile; '-Label' = [bool]$Label; '-Feature/-Epic' = [bool]($Feature -or $Epic)
-    '-Mode' = $PSBoundParameters.ContainsKey('Mode'); '-MergeApproved' = [bool]$MergeApproved; '-ContinueOnError' = [bool]$ContinueOnError; '-FixAdvisories' = [bool]$FixAdvisories; '-PbiParallel' = $PSBoundParameters.ContainsKey('PbiParallel'); '-Parallel' = [bool]$Parallel; '-TrustedOnly' = [bool]$TrustedOnly }
+    '-Mode' = $PSBoundParameters.ContainsKey('Mode'); '-MergeApproved' = [bool]$MergeApproved; '-NoMerge' = [bool]$NoMerge; '-ContinueOnError' = [bool]$ContinueOnError; '-FixAdvisories' = [bool]$FixAdvisories; '-PbiParallel' = $PSBoundParameters.ContainsKey('PbiParallel'); '-Parallel' = [bool]$Parallel; '-TrustedOnly' = [bool]$TrustedOnly }
   $bad = @($bad.Keys | Where-Object { $bad[$_] })
   if ($bad) { throw "-Status cannot be combined with $($bad -join ', ')." }
   $nr = ConvertTo-IssueNumber $Status 'status'
@@ -316,7 +346,7 @@ if ($Feature -or $Epic) {
   }
   $bin = Get-Command $cmd.Executable -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
   if (-not $bin) { throw "'$($cmd.Executable)' not found on PATH (harness '$Harness'). Install it or pick another -Harness." }
-  if ($MergeApproved -and -not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)) { throw "'gh' not found on PATH (needed for -MergeApproved)." }
+  if (-not $NoMerge -and -not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)) { throw "'gh' not found on PATH (needed to merge approved PBIs; use -NoMerge to skip)." }
 
   Test-NotSymlink (Get-StateDir)
   New-Item -ItemType Directory -Path (Get-StateDir) -Force | Out-Null
@@ -329,41 +359,12 @@ if ($Feature -or $Epic) {
   $parked = [System.Collections.Generic.List[object]]::new()
   function Save-Queue([string]$State, [int]$Code) {
     $o = [ordered]@{ queue = [long]$nr; kind = $kind; harness = $Harness; state = $State; exitCode = $Code; started = $started
-      ended = (Get-Date -Format o); mergeApproved = [bool]$MergeApproved; pbis = @($pbis); parked = @($parked) }
+      ended = (Get-Date -Format o); merge = $(if ($NoMerge) { 'off' } else { 'auto' }); mergeApproved = (-not $NoMerge); pbis = @($pbis); parked = @($parked) }
     Set-Content -LiteralPath $queueFile -Value ($o | ConvertTo-Json -Depth 6) -Encoding utf8
-  }
-  # right after PR creation GitHub may still compute mergeability (UNKNOWN): poll a bounded number of times.
-  # QUEUE_POLL_SECONDS (default 5) is the sleep between polls; 0 disables sleeping (tests).
-  function Wait-PrState($P) {
-    $sec = if ($env:QUEUE_POLL_SECONDS -match '\A[0-9]{1,3}\z') { [int]$env:QUEUE_POLL_SECONDS } else { 5 }
-    for ($i = 0; $i -lt 3 -and ($P.mergeable -eq 'UNKNOWN' -or $P.mergeStateStatus -eq 'UNKNOWN'); $i++) {
-      if ($sec) { Start-Sleep -Seconds $sec }
-      $j = & gh pr view "$($P.number)" --json mergeable,mergeStateStatus,statusCheckRollup 2>$null | Out-String
-      if ($LASTEXITCODE -ne 0) { continue }
-      try { $v = $j | ConvertFrom-Json } catch { continue }
-      if (-not $v) { continue }
-      foreach ($f in 'mergeable', 'mergeStateStatus', 'statusCheckRollup') {
-        if ($v.PSObject.Properties[$f]) { $P | Add-Member -NotePropertyName $f -NotePropertyValue $v.$f -Force }
-      }
-    }
-    $P
   }
   function Get-LastMatch([string[]]$Lines, [string]$Pattern) {
     $m = @($Lines | Select-String -CaseSensitive -Pattern $Pattern)
     if ($m.Count) { $m[-1].Matches[0] } else { $null }
-  }
-  # The PBI's open PR: from the ledger line 'Phase pull-request: complete - <url>' and 'gh pr list', never from free text.
-  # Returns @{ Pr = <object|null>; Note = <string|null> }.
-  function Resolve-PbiPr([string]$Pbi, [string[]]$LedgerLines) {
-    $lm = Get-LastMatch $LedgerLines '\APhase pull-request: complete\b.*?/pull/(\d+)'
-    $ledgerPr = if ($lm) { [long]$lm.Groups[1].Value } else { $null }
-    $json = & gh pr list --state open --limit 100 --json number,state,headRefName,baseRefName,headRefOid,isCrossRepository,mergeable,mergeStateStatus,statusCheckRollup 2>&1 | Out-String
-    if ($LASTEXITCODE -ne 0) { return @{ Pr = $null; Note = 'not merged: gh pr list failed' } }
-    try { $all = @($json | ConvertFrom-Json) } catch { return @{ Pr = $null; Note = 'not merged: gh pr list returned no JSON' } }
-    $mine = @($all | Where-Object { $_.headRefName -match "(\A|/)$Pbi-" })
-    $pick = if ($ledgerPr) { @($mine | Where-Object { $_.number -eq $ledgerPr }) } else { $mine }
-    if ($pick.Count -ne 1) { return @{ Pr = $null; Note = "not merged: no single open PR of PBI #$Pbi found (ledger PR: $(if ($ledgerPr) { "#$ledgerPr" } else { 'none' }))" } }
-    @{ Pr = $pick[0]; Note = $null }
   }
   $callerLedger = $env:AGENTS_LEDGER
   $exit = 0; $state = 'running'; $prev = $null
@@ -424,46 +425,13 @@ if ($Feature -or $Epic) {
         $parked.Add([pscustomobject][ordered]@{ number = [long]$pbi; question = $question })
       }
       else { $entry.note = "run ended without 'Ledger complete.' (exit code $code)" }
-      if ($entry.outcome -eq 'done' -and $MergeApproved) {
-        $vm = Get-LastMatch $out '\A\W*Verdict:.*'
+      if ($entry.outcome -eq 'done') {
         if ($code -ne 0) { $entry.note = "not merged: child exit code $code" }
-        elseif (-not $vm) { $entry.note = 'not merged: no Verdict: line in the output' }
-        elseif ($vm.Value -cnotmatch '\A[\s*`>#_-]*Verdict:\s*APPROVE[\s*`_]*\z') { $entry.note = "not merged: verdict is not a plain APPROVE ($($vm.Value.Trim()))" }
         else {
-          $res = Resolve-PbiPr $pbi $after
-          $p = $res.Pr
-          if ($p -and ($p.mergeable -eq 'UNKNOWN' -or $p.mergeStateStatus -eq 'UNKNOWN')) { $p = Wait-PrState $p }
-          $why = $null
-          if (-not $p) { $why = $res.Note }
-          elseif ($p.state -ne 'OPEN') { $why = "PR #$($p.number) not merged: state $($p.state)" }
-          elseif ($p.headRefName -match '\Arelease/') { $why = "PR #$($p.number) not merged: release PR" }
-          elseif ($p.baseRefName -notmatch '\Arelease/') { $why = "PR #$($p.number) not merged: base $($p.baseRefName) is not the integration branch (release/*)" }
-          elseif ($p.isCrossRepository -ne $false -or $p.headRefName -match ':') { $why = "PR #$($p.number) not merged: fork or cross-repository PR" }
-          elseif (-not $p.headRefOid) { $why = "PR #$($p.number) not merged: head commit unknown" }
-          elseif ($p.mergeable -eq 'UNKNOWN' -or $p.mergeStateStatus -eq 'UNKNOWN') { $why = "PR #$($p.number) not merged: mergeability still UNKNOWN after 3 polls" }
-          elseif ($p.mergeable -ne 'MERGEABLE' -or $p.mergeStateStatus -ne 'CLEAN') { $why = "PR #$($p.number) not merged: not mergeable/clean ($($p.mergeable)/$($p.mergeStateStatus))" }
-          elseif (-not $p.statusCheckRollup -or @($p.statusCheckRollup).Count -eq 0) { $why = "PR #$($p.number) not merged: no checks reported" }
-          elseif (@($p.statusCheckRollup | Where-Object { $_ -and -not (($_.conclusion -in 'SUCCESS', 'NEUTRAL', 'SKIPPED') -or ($_.state -eq 'SUCCESS')) }).Count) { $why = "PR #$($p.number) not merged: checks are not green" }
-          else {
-            # The reviewed commit is not recorded by the orchestrator: compare with the local branch tip when it exists,
-            # otherwise with the tip of the branch on origin. Not verifiable -> no merge.
-            $tip = (& git rev-parse --verify --quiet "refs/heads/$($p.headRefName)" 2>$null)
-            if ($LASTEXITCODE -eq 0 -and $tip) { $where = 'local branch'; $tip = $tip.Trim() }
-            else {
-              $where = 'origin branch'
-              $rl = @(& git ls-remote origin "refs/heads/$($p.headRefName)" 2>$null)
-              $tip = if ($LASTEXITCODE -eq 0 -and $rl.Count -eq 1 -and "$($rl[0])" -match '\A([0-9a-f]{40,64})\s') { $Matches[1] } else { $null }
-            }
-            if (-not $tip) { $why = "PR #$($p.number) not merged: head $($p.headRefOid) cannot be verified (no local branch, not found on origin)" }
-            elseif ($tip -ne $p.headRefOid) { $why = "PR #$($p.number) not merged: head $($p.headRefOid) differs from $where tip $tip" }
-          }
-          if ($why) { $entry.note = $why }
-          else {
-            $entry.pr = [long]$p.number
-            & gh pr merge "$($p.number)" --squash --match-head-commit $p.headRefOid 2>&1 | Out-Host
-            if ($LASTEXITCODE -eq 0) { $entry.outcome = 'merged' }
-            else { $entry.outcome = 'failed'; $entry.note = "gh pr merge #$($p.number) failed"; $stop = $true; $exit = 1 }
-          }
+          $mr = Invoke-MergeApproved $pbi $entry.ledger (Join-Path $pbiDir 'run.log')
+          if ($mr.Merged) { $entry.outcome = 'merged' }
+          elseif ($mr.Failed -and -not $NoMerge) { $entry.outcome = 'failed'; $entry.note = $mr.Note; $stop = $true; $exit = 1 }
+          else { $entry.note = $mr.Note }
         }
       }
       Invoke-NeedsSync $pbi (Join-Path $pbiDir 'run.log')
