@@ -121,6 +121,19 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1 multi-run', () => {
       expect(json.runs.map((r: any) => r.issue)).toEqual([21, 22, 210]);
     });
 
+    it('does not mark #21 parked when only #210 is parked', async () => {
+      ledger('loop-8', [
+        'Loop: PBI #21 started',
+        'Loop: PBI #210 started',
+        'Loop: PBI #210 parked — q',
+      ]);
+      const { json } = await run(['-Loop', '8']);
+      expect(json.runs.map((r: any) => [r.issue, r.parked])).toEqual([
+        [21, false],
+        [210, true],
+      ]);
+    });
+
     it('clears the parked flag when a later line of the loop ledger finishes the PBI', async () => {
       ledger('loop-6', [
         'Loop: PBI #31 parked — q',
@@ -185,6 +198,27 @@ describe.skipIf(!hasPwsh)('Get-RunMetrics.ps1 multi-run', () => {
       ]);
       const { json } = await run(['-Issues', '3,4']);
       expect(json.runs.map((r: any) => r.parked)).toEqual([false, true]);
+    });
+
+    it('falls back to the file write time for loop lines without timestamp', async () => {
+      ledger('3', ['# ledger']);
+      ledger('loop-1', ['Loop: PBI #3 done — pr']);
+      ledger('loop-2', ['Loop: PBI #3 parked — q']);
+      const older = new Date('2026-10-01T08:00:00Z');
+      const newer = new Date('2026-10-02T08:00:00Z');
+      fs.utimesSync(path.join(state, 'loop-1', 'progress.md'), older, older);
+      fs.utimesSync(path.join(state, 'loop-2', 'progress.md'), newer, newer);
+      expect((await run(['-Issues', '3'])).json.runs[0].parked).toBe(true);
+      fs.utimesSync(path.join(state, 'loop-1', 'progress.md'), newer, newer);
+      fs.utimesSync(path.join(state, 'loop-2', 'progress.md'), older, older);
+      expect((await run(['-Issues', '3'])).json.runs[0].parked).toBe(false);
+    });
+
+    it('keeps the first loop ledger in name order on a timestamp tie', async () => {
+      ledger('3', ['# ledger']);
+      ledger('loop-1', ['2026-10-01T08:00:00Z Loop: PBI #3 parked — q']);
+      ledger('loop-2', ['2026-10-01T08:00:00Z Loop: PBI #3 done — pr']);
+      expect((await run(['-Issues', '3'])).json.runs[0].parked).toBe(true);
     });
 
     it('gives a missing ledger a null run and a warning', async () => {
@@ -401,16 +435,16 @@ describe('retro SKILL.md multi-run', () => {
   it('keeps the step anchors and adds at most 5 lines to the base file', () => {
     expect(skill).toContain('1. **Metrics.**');
     expect(skill).toContain('2. **Read primary sources.**');
-    const base = spawnSync(
-      'git',
-      ['show', 'fd1950ad:packages/delivery/.apm/skills/retro/SKILL.md'],
-      {
-        cwd: path.resolve(__dirname, '../../..'),
-        encoding: 'utf8',
-      }
-    );
+    const git = (...args: string[]) =>
+      spawnSync('git', args, { cwd: path.resolve(__dirname, '../../..'), encoding: 'utf8' });
+    // base = where the branch left the integration branch, not a pinned SHA
+    const mb = git('merge-base', 'HEAD', 'origin/release/next');
+    const base =
+      mb.status === 0
+        ? git('show', `${mb.stdout.trim()}:packages/delivery/.apm/skills/retro/SKILL.md`)
+        : mb;
     const lines = (t: string) => t.trimEnd().split('\n').length;
-    // base commit unavailable (shallow clone): fall back to the absolute cap
+    // no merge base or no file there (shallow clone, no remote): fall back to the absolute cap
     const cap = base.status === 0 ? lines(base.stdout) + 5 : 47;
     expect(lines(skill)).toBeLessThanOrEqual(cap);
   });

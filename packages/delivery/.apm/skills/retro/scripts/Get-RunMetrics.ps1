@@ -321,12 +321,12 @@ function Get-LineText([string]$raw) { if ($raw -match $tsRe) { return $Matches[2
 # Loop ledgers <state>/loop-*/progress.md (none without a state dir).
 function Get-LoopLedgers($stateDir) {
   if (-not $stateDir -or -not (Test-Path -LiteralPath $stateDir)) { return , @() }
-  return , @(Get-ChildItem -LiteralPath $stateDir -Directory -Filter 'loop-*' | ForEach-Object { Join-Path $_.FullName 'progress.md' } | Where-Object { Test-Path -LiteralPath $_ })
+  return , @(Get-ChildItem -LiteralPath $stateDir -Directory -Filter 'loop-*' | Sort-Object Name | ForEach-Object { Join-Path $_.FullName 'progress.md' } | Where-Object { Test-Path -LiteralPath $_ })
 }
 
 # True when the PBI's last state is parked (`Loop: PBI #<n> parked — <question>`, written by Set-ParkedGate.ps1): the last
 # `Loop: PBI #<n> <state>` line of a loop ledger wins, so a later started/done/merged line clears it. Across several loop ledgers
-# the one whose last such line is newest wins (its timestamp, else the file's write time).
+# the one whose last such line is newest wins (its timestamp, else the file's write time); a tie keeps the first ledger in name order.
 function Test-Parked($n, [AllowEmptyCollection()][string[]]$loopFiles) {
   if ($null -eq $n) { return $false }
   $best = $null; $parked = $false
