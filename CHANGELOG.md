@@ -5,6 +5,28 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.0.0] — Unreleased
+
+Breaking: apm-hub ships skills only. The orchestration pipeline moved to the dromos runner (see `docs/simplification-plan.md`).
+
+### Removed
+- **Package `agents`** with the agents `orchestrator`, `pbi-runner`, `issue-reader`, `explorer`, `planner`, `implementer`, `pr-writer`, `review-lead`, `reviewer` and the skill `orchestrator`
+- **Entry point `/orch`**: prompt `orch.prompt.md` and skill `orch-pipeline`
+- **Skills of `delivery`**: `queue`, `review-fanout`, `verify-project`, `handoff`
+- **Skills of `apm-tooling`**: `agent-write`, `agent-audit`
+- **Skill `github-project`**: moved to GravionLabs/ci
+- **Hooks**: `subagent-ledger`, `context-warning`, `agent-sanitize` (package `hooks` keeps the git guardrails); the status line moved to the new package `statusline`
+- **`github-issue`**: references `loop-mode`, `model-policy`, `next-selection`, `orchestrator-gates`, `pbi-pipeline`, `status`, `task-waves`; scripts `Add-LedgerLine`, `Enter-Checkout`, `Exit-Checkout`, `Get-TaskWaves`, `NeedsRules`, `New-Worktree`, `Remove-Worktree`, `Write-StatusTable`
+- **`issue-planning`**: references `grilling` and `publish`; **`retro`**: script `Get-RunMetrics.ps1`; **`detect-techstack`**: script `Enable-Worktrees.ps1`, the state directory in the report
+- **Repository tooling**: agent list and size validators, `New-AgentsMd.ps1`, `related-tests.mjs`, `run-related-tests.mjs`, workflows `add-to-project.yml` and `release-pr.yml`, the perf test project and the CI test matrix
+
+### Changed
+- Package `statusline` (skill `context-statusline`) is part of `core`; `hooks` contains the git guardrails only
+- Manifest keys `skills` are renamed to `x-skills` (#658)
+
+### Migration
+- Remove `agents` from the `apm.yml` of consuming repositories; install `core` or `statusline` for the status line
+
 ## [2.5.4] — 2026-10-26
 
 ### Features
