@@ -18,14 +18,14 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
    - **Task**: Definition of Done (+ Implementation Notes)
    - **Bug**: Expected Behavior must be restored; Definition of Done requires a regression test
    - **Feature**: Definition of Done (scope)
-6. Explore: delegate to the `explorer` agent with the issue text and the "done" criteria; it returns ≤ 300 words of `path:line` findings. Keep only that summary in context — never read the files it names in full yourself unless you are about to edit them. Claude Code: `Agent` with `subagent_type: explorer` · OpenCode: `task` with agent `explorer` · VS Code Copilot: `runSubagent` with agent `explorer` · Copilot CLI or no agents installed: explore inline with the same word limit.
+6. Explore: read the files the issue names and their direct neighbours before changing anything.
 7. Write code + tests per project conventions (load the `implementation` skill or its language sub-skill)
 8. Atomic commits per the conventional-commits reference
 
 ## Phase 3 — Verify + PR
 
-9. Two-stage verify (load `detect-techstack` if commands are unknown). Per commit: build only when the stack compiles and compiled sources changed, plus targeted tests (test files of the changed paths and direct neighbours; unknown mapping: the project's fast/unit group, never the full suite). Once before the review: ONE full build + test suite run (Final-Verify), and again after the last fix round. Fix failures; never commit red.
-10. Run `review-fanout` on `git diff origin/<base>...HEAD`; fix blocking findings before committing. `CHANGES_REQUESTED` with `incomplete: true` is not approval.
+9. Two-stage verify (load `detect-techstack` if commands are unknown). Per commit: build only when the stack compiles and compiled sources changed, plus targeted tests (test files of the changed paths and direct neighbours; unknown mapping: the project's fast/unit group, never the full suite). Before the review: ONE full build + test suite run, and again after the last fix round. Fix failures; never commit red.
+10. Run the `code-review` skill once on `git diff origin/<base>...HEAD`; fix every 🔴 finding before the pull request.
 11. Push: `git push -u origin HEAD`
 12. Create the PR with the `github-pull-request` skill (`base_branch: <base>`, title `<type>: <desc> (#<nr>)` without level prefix, body ends with `Closes #<nr>`)
 13. If the issue has a parent: confirm it is actually linked as a native sub-issue —
@@ -35,6 +35,6 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 
 ## Constraints
 
-- CI does not run on PRs into a release branch: the local build, tests and `review-fanout` are the gate
+- CI does not run on PRs into a release branch: the local build, tests and `code-review` are the gate
 - Bug issues require a regression test in the PR — do not close without one
 - If asked to also merge: `gh pr merge <nr> --squash` into `<base>` (`gh pr checks <nr> --watch` first when the base is `main`)

@@ -10,7 +10,7 @@
 
 The project status `In release` is set by that workflow; `github-project sync` stays the repair path. The label stays the source of truth.
 
-Labels can be edited by hand, so skills treat `merged` as a fast path only (`next-selection.md` in `github-issue`).
+Labels can be edited by hand, so skills treat `merged` as a fast path only.
 
 ## Rollout to existing repos
 

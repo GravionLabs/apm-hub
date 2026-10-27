@@ -4,11 +4,6 @@ import * as path from 'path';
 const ROOT = path.resolve(__dirname, '../..');
 /** Every pwsh file that defines Resolve-StateDir (later tasks extend this list). */
 const PWSH_FILES = [
-  'packages/github/.apm/skills/github-issue/scripts/Add-LedgerLine.ps1',
-  'packages/github/.apm/skills/github-issue/scripts/Write-StatusTable.ps1',
-  'packages/github/.apm/skills/github-issue/scripts/Enter-Checkout.ps1',
-  'packages/github/.apm/skills/github-issue/scripts/Exit-Checkout.ps1',
-  'packages/github/.apm/skills/github-issue/scripts/Get-ParkedRuling.ps1',
   'packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1',
   'packages/delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1',
   'scripts/Invoke-HeadlessSmoke.ps1',

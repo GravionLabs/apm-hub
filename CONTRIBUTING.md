@@ -49,7 +49,7 @@ The repo uses pnpm (`pnpm-lock.yaml`) only. `test/integration` is the exception:
 
 ## Public surface and renames
 
-Public surface is everything a consumer can depend on: package names (install names in `apm.yml` and the marketplace), skill names, agent names, entry points (`orchestrator`; `/orch` is deprecated and removed in 3.0.0), ledger and state paths (`<state>/<issue>/progress.md`, `plan.json`; `<state>` is `DROMOS_STATE_DIR` or `<git-common-dir>/agents`), the worktree location `<repo-root>/.worktrees/<nr>` the loop markers `<state>/current.d/<key>`, and the checkout leases `<state>/leases/<key>.json` (`Enter-Checkout.ps1`, `Exit-Checkout.ps1`, `New-Worktree.ps1`, `Remove-Worktree.ps1`) and ledger headers.
+Public surface is everything a consumer can depend on: package names (install names in `apm.yml` and the marketplace), skill names, agent names, entry points (`/orch` is deprecated and removed in 3.0.0).
 
 - Announce every rename in the PR body and in the release notes.
 - Where an alias or compat path is cheap, add it and announce it as deprecated in the PR body and release notes. It lives at most until the next major, and gets a removal version in the legacy table below at the moment it is added.
@@ -59,10 +59,6 @@ Legacy names kept for compatibility:
 
 | Legacy name | Where | Removed in |
 |:--|:--|:--|
-| `# lead ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | next major (currently expected as 3.0.0) |
-| `# dev-workflow ledger` | ledger header accepted on resume (`orchestrator.agent.md`) | next major (currently expected as 3.0.0) |
-| `<state>/current` (one loop marker per repository) | still read by `subagent-ledger.sh`, the Copilot CLI hook and the OpenCode plugin while `<state>/current.d/` does not exist; `Add-LedgerLine.ps1 -Unbind` removes it; `-Bind` writes `<state>/current.d/<key>` since #466 | 3.0.0 |
-| `.agents/<issue>/` (working-tree state dir) | replaced by `<git-common-dir>/agents/` in 2.4.0, not read, manual move ([orchestrator.md](docs/orchestrator.md#state-on-disk)) | none kept (cut-over) |
 
 The `development-workflow` package was a clean rename with no alias (#178, released in 2.2.0), a record of a past decision, so there is nothing to remove; the note in `README.md` stays for searchability.
 

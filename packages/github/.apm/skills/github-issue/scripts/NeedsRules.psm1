@@ -3,8 +3,7 @@
 .SYNOPSIS
   Shared Needs rule of the project field Needs: one rule function and a read-only issue reader.
 .DESCRIPTION
-  Imported by github-project/scripts/Sync-ProjectNeeds.ps1 (writes the field), github-issue/scripts/Write-StatusTable.ps1 (status table)
-  and the queue dry run. Get-NeedsValue is the only implementation of the rule; callers never restate it.
+  Imported by github-project/scripts/Sync-ProjectNeeds.ps1 (writes the field), and the queue dry run. Get-NeedsValue is the only implementation of the rule; callers never restate it.
   Test-BlockerUnresolved is the one definition of a blocking blocker: open and not merged (label merged or Status 'In release'); closed or merged blockers count as resolved.
   Get-IssueNeedsItem reads an issue with gh GET calls only (never a mutation) and returns an item in the Sync-ProjectNeeds -StateFile shape;
   the project Status is not readable that way, so a read item has status $null.

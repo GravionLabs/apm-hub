@@ -57,7 +57,7 @@ $ErrorActionPreference = 'Stop'
 
 $script:Usage = 'Usage: Sync-ProjectNeeds.ps1 [-Owner <login> -Number <n>] [-Repo owner/repo] [-Issue 12,13|owner/repo#12] [-IncludeParents] [-IncludeDependents] [-DryRun] [-StateFile <json>] [-SetStatus <option>] [-Json]'
 
-# Shared rule module (Get-Prop, Get-NeedsValue), also used by Write-StatusTable.ps1 and the queue dry run.
+# Shared rule module (Get-Prop, Get-NeedsValue), also used by the queue dry run.
 $script:NeedsModule = Join-Path $PSScriptRoot '../../github-issue/scripts/NeedsRules.psm1'
 if (-not (Test-Path -LiteralPath $script:NeedsModule -PathType Leaf)) { throw "NeedsRules.psm1 not found (install the github package: $script:NeedsModule)." }
 Import-Module -Name $script:NeedsModule -Global
