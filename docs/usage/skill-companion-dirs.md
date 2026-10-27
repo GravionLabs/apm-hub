@@ -27,7 +27,7 @@ Only create the directories you need. Paths inside `SKILL.md` are relative to th
 A reference is read only when needed. The skill says when:
 
 ```markdown
-For batch work (several issues at once) read `references/batch-workflow.md`.
+For release branches read `references/release-branches.md`.
 ```
 
 Keep the decision in `SKILL.md` and the detail in the reference. This is how skills stay under the size limit without losing information.

@@ -1,11 +1,11 @@
 ---
 name: github-issue
-description: 'Implement GitHub issues by type (Epic, Feature, PBI, Task), single or batch. Use for any GitHub issue work.'
+description: 'GitHub issue conventions: types, [Level] titles, branches, commits, native sub-issues, Task issues. Use for any GitHub issue work.'
 ---
 
 ## Overview
 
-Single entry point for the GitHub issue lifecycle. Detect the issue type and shape of the input, then strictly follow the matching reference document. One issue per session.
+Conventions for the GitHub issue lifecycle. Detect the issue type, then follow the matching reference document. One issue per session; running several issues is the runner's job.
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ Single entry point for the GitHub issue lifecycle. Detect the issue type and sha
 
 ## Issue Types
 
-Issues follow this hierarchy (defined in `issue-templates/`):
+Issues follow this hierarchy (the repository's `.github/ISSUE_TEMPLATE/` holds the templates when present; this table is the definition):
 
 | Label     | Title (always `[<Level>] <summary>`)                  | Sub-issues    |
 | --------- | ----------------------------------------------------- | ------------- |
@@ -34,18 +34,7 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
 
 1. Read the issue(s): `gh issue view <nr> --json title,body,labels`
 2. Detect type from the `labels` field (`epic` / `feature` / `pbi` / `task` / `bug`)
-3. Check whether it has children:
-   `gh api repos/{owner}/{repo}/issues/<nr>/sub_issues --jq 'length'`
-4. Pick the workflow:
-
-   | Issue type              | Has sub-issues | Workflow reference                                  |
-   | ----------------------- | -------------- | --------------------------------------------------- |
-   | `epic`                  | yes (always)   | `references/batch-workflow.md` (use the `epic` row)    |
-   | `feature`, `pbi`, `bug` | yes            | `references/batch-workflow.md` (row for the type)      |
-   | any                     | no             | `references/standalone-issue.md`                       |
-   | `task`                  | —              | `references/standalone-issue.md`                       |
-
-   **Batch user requests** ("implement all PBIs in feature #12", "work through these issues"): collect the target issues, then process each one sequentially with the appropriate workflow above.
+3. Follow `references/standalone-issue.md`; Task sub-issues of a PBI follow `references/task-issues.md`.
 
 ## Shared constraints (all workflows)
 
