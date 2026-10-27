@@ -88,6 +88,37 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     expect(r.packageManager).toEqual(['pnpm', 'cargo']);
   });
 
+  it.each([
+    ['react', { dependencies: { react: '^19' } }, ['react']],
+    ['next', { dependencies: { next: '^15', react: '^19' } }, ['react', 'next']],
+    ['vue', { devDependencies: { vue: '^3' } }, ['vue']],
+    ['svelte', { devDependencies: { svelte: '^5' } }, ['svelte']],
+  ])('reports %s from package.json dependencies, skills stay ts', async (_n, deps, expected) => {
+    write('package.json', JSON.stringify(deps));
+    write('tsconfig.json', '{}');
+    const r = await detect();
+    expect(r.frameworks).toEqual(expected);
+    expect(r.languages).toEqual(['ts']);
+    expect(r.test).toEqual(['ts-test']);
+    expect(r.implementation).toEqual(['ts-implementation']);
+  });
+
+  it('reports react next to angular in a monorepo and js without tsconfig', async () => {
+    write('apps/web/package.json', '{"dependencies":{"react":"^19"}}');
+    write('apps/ng/angular.json', '{}');
+    write('apps/ng/package.json', '{"dependencies":{"@angular/core":"^20"}}');
+    expect((await detect()).frameworks).toEqual(['angular', 'react']);
+  });
+
+  it('reports react for a js project and ignores unrelated or empty dependencies', async () => {
+    write('package.json', '{"dependencies":{"react":"^19"}}');
+    const r = await detect();
+    expect(r.languages).toEqual(['js']);
+    expect(r.frameworks).toEqual(['react']);
+    write('package.json', '{"dependencies":{"react-dom":"^19","preact":"^10"},"devDependencies":null}');
+    expect((await detect()).frameworks).toEqual([]);
+  });
+
   it('detects tauri.conf.json5', async () => {
     write('src-tauri/Cargo.toml', '[package]\n');
     write('src-tauri/tauri.conf.json5', '{}');
