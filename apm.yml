@@ -30,7 +30,7 @@ marketplace:
     description: "Status line and subagent status line showing context usage: the context-statusline skill installs a cross-platform Node status line for Claude Code and Copilot CLI, plus a Claude Code subagent status line."
     source: ./packages/statusline
   - name: apm-tooling
-    description: "apm-hub contributor tooling for the skill and agent lifecycle: write, audit, update and slim SKILL.md files; write and audit agent source files."
+    description: "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files."
     source: ./packages/apm-tooling
   - name: delivery
     description: "Issue-driven development workflow: run retrospective (retro), package installer (apm-install), issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project."

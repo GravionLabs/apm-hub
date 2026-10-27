@@ -31,7 +31,7 @@
     },
     {
       "name": "apm-tooling",
-      "description": "apm-hub contributor tooling for the skill and agent lifecycle: write, audit, update and slim SKILL.md files; write and audit agent source files.",
+      "description": "apm-hub contributor tooling for the skill lifecycle: write, audit, update and slim SKILL.md files.",
       "version": "2.5.4",
       "source": "./packages/apm-tooling"
     },

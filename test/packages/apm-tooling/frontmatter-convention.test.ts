@@ -63,73 +63,8 @@ describe('apm-tooling enforces the skill frontmatter convention', () => {
       'skill-audit/references/audit-checklist.md',
       'skill-update/SKILL.md',
       'skill-slim/SKILL.md',
-      'agent-write/SKILL.md',
-      'agent-audit/SKILL.md',
-      'agent-audit/references/audit-checklist.md',
     ]) {
       expect(read(file), file).not.toContain('skill-size-validator.ts');
     }
-  });
-});
-
-const AGENT_FORBIDDEN_KEYS = ['model', 'mode', 'permission', 'color', 'steps', 'agents'];
-const AGENT_TOP_LEVEL = [
-  'name',
-  'description',
-  'tools',
-  'user-invocable',
-  'disable-model-invocation',
-  'metadata',
-];
-
-const frontmatter = (text: string): string => {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
-  expect(match).not.toBeNull();
-  return match![1];
-};
-const topLevelKeys = (fm: string): string[] =>
-  [...fm.matchAll(/^([A-Za-z][\w/-]*):/gm)].map((m) => m[1]);
-
-describe('apm-tooling enforces the agent frontmatter convention', () => {
-  it.each([
-    'agent-audit/SKILL.md',
-    'agent-audit/references/audit-checklist.md',
-    'agent-write/SKILL.md',
-  ])('%s names every forbidden top-level agent key', (file) => {
-    const text = read(file);
-    for (const key of AGENT_FORBIDDEN_KEYS) {
-      expect(text, `${file} lacks ${key}`).toContain(`\`${key}\``);
-    }
-  });
-
-  it('agent-audit rates forbidden top-level agent keys critical', () => {
-    const line = read('agent-audit/references/audit-checklist.md')
-      .split('\n')
-      .find((l) => l.includes('`model`, `mode`, `permission`, `color`, `steps`, `agents`'));
-    expect(line).toBeDefined();
-    expect(line).toContain('🔴');
-  });
-
-  it.each(['agent-write/SKILL.md', 'agent-audit/SKILL.md'])(
-    '%s points to the agent convention doc',
-    (file) => {
-      expect(read(file)).toContain('docs/concepts/agent-frontmatter.md');
-    }
-  );
-
-  it('agent-write template keeps platform keys under metadata', () => {
-    const fm = frontmatter(read('agent-write/assets/agent-template.md'));
-    const keys = topLevelKeys(fm);
-    expect(keys).toEqual(['name', 'description', 'tools', 'user-invocable', 'metadata']);
-    for (const key of keys) expect(AGENT_TOP_LEVEL).toContain(key);
-    expect(fm).toMatch(/^ {2}claude:$/m);
-    expect(fm).toMatch(/^ {2}opencode:$/m);
-    expect(fm).toContain('model: anthropic/claude-haiku-5-5');
-  });
-
-  it('agent-write template body stays within 40 lines', () => {
-    const text = read('agent-write/assets/agent-template.md');
-    const body = text.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trimEnd();
-    expect(body.split('\n').length).toBeLessThanOrEqual(40);
   });
 });
