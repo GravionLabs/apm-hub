@@ -7,7 +7,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 ## Phase 1 — Read + Branch
 
 1. Read issue: `gh issue view <nr> --json title,body,labels`
-2. Derive the branch name `<type>/<nr>-<slug>` per `conventional-commits.md` (type from the issue title)
+2. Derive the branch name `<type>/<nr>-<slug>` per `conventional-commits.md` (type from the issue title after stripping the level prefix)
 3. Resolve the integration branch `<base>` once per `release-branches.md` (`release/next`, else a `release/<x.y>`; cut one with `github-release` if none exists). Create branch: `git fetch origin <base>; git checkout -b <branch> origin/<base>`
 4. Note the parent from the body's first line (`Parent Epic: #N` / `Parent Feature: #N` / `Parent PBI: #N`), if present. Closing this issue updates the parent's progress automatically via its native sub-issue link — there is nothing to tick afterwards.
 
@@ -27,7 +27,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 9. Two-stage verify (load `detect-techstack` if commands are unknown). Per commit: build only when the stack compiles and compiled sources changed, plus targeted tests (test files of the changed paths and direct neighbours; unknown mapping: the project's fast/unit group, never the full suite). Once before the review: ONE full build + test suite run (Final-Verify), and again after the last fix round. Fix failures; never commit red.
 10. Run `review-fanout` on `git diff origin/<base>...HEAD`; fix blocking findings before committing. `CHANGES_REQUESTED` with `incomplete: true` is not approval.
 11. Push: `git push -u origin HEAD`
-12. Create the PR with the `github-pull-request` skill (`base_branch: <base>`, title `<type>: <desc> (#<nr>)`, body ends with `Closes #<nr>`)
+12. Create the PR with the `github-pull-request` skill (`base_branch: <base>`, title `<type>: <desc> (#<nr>)` without level prefix, body ends with `Closes #<nr>`)
 13. If the issue has a parent: confirm it is actually linked as a native sub-issue —
     `gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq '.[].number'` should include `<nr>`.
     If it is missing, link it per `sub-issues.md`. An unlinked child looks normal in `gh issue list`,

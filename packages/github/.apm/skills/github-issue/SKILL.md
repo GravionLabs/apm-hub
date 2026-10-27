@@ -17,17 +17,15 @@ Single entry point for the GitHub issue lifecycle. Detect the issue type and sha
 
 Issues follow this hierarchy (defined in `issue-templates/`):
 
-| Label     | Title convention                                      | Sub-issues    |
+| Label     | Title (always `[<Level>] <summary>`)                  | Sub-issues    |
 | --------- | ----------------------------------------------------- | ------------- |
-| `epic`    | Per the repo's Epic template                          | Features      |
-| `feature` | Per the repo's Feature template                       | PBIs          |
-| `pbi`     | Conventional commit: `feat: …`, `refactor: …`, …     | Tasks (opt.)  |
-| `task`    | Conventional commit: `chore: …`, `feat: …`, …         | —             |
-| `bug`     | `fix: <symptom>`                                      | Tasks (opt.)  |
+| `epic`    | `[Epic] <outcome>`                                    | Features      |
+| `feature` | `[Feature] <capability>`                              | PBIs          |
+| `pbi`     | `[PBI] feat(scope): …`, `[PBI] refactor: …`           | Tasks (opt.)  |
+| `task`    | `[Task] chore: …`, `[Task] feat: …`                   | —             |
+| `bug`     | `[Bug] fix: <symptom>`                                | Tasks (opt.)  |
 
-Epic and Feature title conventions vary by repo — some use a `Epic: ` prefix, others `[Epic] `.
-Read `.github/ISSUE_TEMPLATE/` in the target repo and match what is already there rather than
-assuming. Never mix two conventions within one repo.
+Titles are always written with the bracket prefix. Legacy titles (`Epic: …`, `Feature: …`, `[EPIC] …`) are still recognized when reading, never written.
 
 Parent/child links are **native GitHub sub-issues** — see `references/sub-issues.md` for how to
 read, create, move and verify them. Markdown checklists are not used. Task sub-issues of a PBI follow `references/task-issues.md` and never become separate branches or PRs.
@@ -58,7 +56,7 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
 ## Shared constraints (all workflows)
 
 - Work branches are cut from and merged into the integration branch (`release/next` by default, explicit `release/<x.y>` only for parallel lines), never `main` (`references/release-branches.md`); `github-release` cuts and finishes it.
-- Branch name `<type>/<nr>-<slug>` per `references/conventional-commits.md`; `<slug>` from the issue title (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
+- Branch name `<type>/<nr>-<slug>` per `references/conventional-commits.md`; `<slug>` from the issue title after stripping `^\[(Epic|Feature|PBI|Task|Bug)\] ` (case-insensitive) and the legacy `Epic: ` / `Feature: `, then the conventional type and scope (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
 - One logical change per commit; commit format per `references/conventional-commits.md`.
 - Commit and PR titles reference the issue: `<type>: <description> (#<nr>)`; the PR body contains `Closes #<nr>` for every issue it completes (only partly delivered: `Refs #<nr>` and `## Not delivered`, see `github-pull-request`).
 - Two-stage verify (load the `detect-techstack` skill if the project's commands are unknown): per Task or commit run the build only when the stack compiles and compiled sources changed, plus targeted tests (test files of the changed paths and their direct neighbours; unknown mapping: the project's fast/unit group, never the full suite). Per PBI ONE full run (Final-Verify) after the last Task and again after the last fix round, before the review and before the PR. Never commit or move on with a red run.

@@ -1,7 +1,7 @@
 ---
 name: Task
 about: A concrete technical step under a PBI or Bug
-title: 'chore: '
+title: '[Task] '
 labels: task
 assignees: ''
 ---

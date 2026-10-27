@@ -17,7 +17,7 @@ per phase in its own context and hands the rest to `issue-reader`, `explorer`, `
 
 ### Modes and natural requests
 
-The first word of the message is the mode; the issue type (Epic, Feature, PBI) comes from its label or title prefix. The first word must be the mode word (the table below is what to type, or what the `/orchestrator` command should translate your request to); a plain sentence without it runs `full`, which is for a PBI only. After `/clear`, start with `orchestrator status <feature|epic>`: it shows where the work stands and what `next` would pick, and runs nothing.
+The first word of the message is the mode; the issue type (Epic, Feature, PBI) comes from its label or title prefix (titles are written `[<Level>] <summary>`, e.g. `[PBI] feat: short summary`). The first word must be the mode word (the table below is what to type, or what the `/orchestrator` command should translate your request to); a plain sentence without it runs `full`, which is for a PBI only. After `/clear`, start with `orchestrator status <feature|epic>`: it shows where the work stands and what `next` would pick, and runs nothing.
 
 | Mode | On | Does |
 | :-- | :-- | :-- |
