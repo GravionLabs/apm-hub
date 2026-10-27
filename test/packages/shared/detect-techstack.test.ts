@@ -115,7 +115,10 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     const r = await detect();
     expect(r.languages).toEqual(['js']);
     expect(r.frameworks).toEqual(['react']);
-    write('package.json', '{"dependencies":{"react-dom":"^19","preact":"^10"},"devDependencies":null}');
+    write(
+      'package.json',
+      '{"dependencies":{"react-dom":"^19","preact":"^10"},"devDependencies":null}'
+    );
     expect((await detect()).frameworks).toEqual([]);
   });
 
