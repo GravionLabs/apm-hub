@@ -61,7 +61,7 @@ Language servers for Copilot CLI are described in [LSP configuration](lsp-config
 | Claude Code | agents start without tools | the Copilot aliases `agent, read, search, execute` resolve to no Claude tool: a subagent fails to launch ("would be spawned with zero tools"), a primary agent prints its tool calls as text; the per-agent `model` under `metadata.claude` is not applied either |
 | GitHub Copilot | works | the source is Copilot style; sanitize only strips `metadata` and the OpenCode keys. Whether Copilot loads the unsanitized files without complaint is not verified here |
 
-Three safety nets catch a forgotten sanitize: the `apm-install` skill runs `apmw sanitize` itself after installing `agents`, `core` or `all`; the `hooks` package heals the Claude Code agent directories at session start (`agent-sanitize.sh`, [orchestrator § Hooks](orchestrator.md#hooks)); and the lifecycle hook below makes every `apm install`/`apm update` sanitize.
+Two safety nets catch a forgotten sanitize: the `apm-install` skill runs `apmw sanitize` itself after installing `agents`, `core` or `all`; and the lifecycle hook below makes every `apm install`/`apm update` sanitize.
 
 ### Can the sanitize run automatically?
 

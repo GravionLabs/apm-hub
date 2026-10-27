@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { PwshWorker } from '../../helpers/pwsh-worker';
-import { readLedger, gitCleanEnv } from '../hooks/ledger-test-helpers';
+import { readLedger, gitCleanEnv } from '../../helpers/ledger-test-helpers';
 
 const SCRIPT = path.resolve(
   __dirname,

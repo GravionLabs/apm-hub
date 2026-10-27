@@ -217,20 +217,7 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
 
 ## 3. During a session
 
-- On Claude Code the `hooks` package warns on the next prompt once the context passes 150k tokens:
-  - `CONTEXT_WARN_TOKENS`: threshold, default 150000; a non-numeric, empty, negative or overlong value falls back to the default
-  - lower it to be warned earlier, e.g. `export CONTEXT_WARN_TOKENS=100000`
-  - `CONTEXT_WARN_STEP`: growth before the next warning, default 100000; it also falls back to the default on invalid values
-  - then finish the step, note the hand-off in the ledger, `/clear`.
-  - The hook parses the payload with `jq` when installed and with a
-    bash fallback otherwise (escapes, pretty-printed JSON and any field order work either way). It never blocks and
-    stays silent when parsing fails; set `CONTEXT_WARN_DEBUG=1` to get a one-line note on stderr instead.
-- On Copilot CLI (manual setup, not installed by apm: see [Copilot CLI hooks](usage/copilot-hooks.md)) the same script runs as `postToolUse` (`userPromptSubmitted` cannot inject context), so the warning
-  arrives after the next tool call, not on the next prompt. `postToolUse` has no `transcriptPath`; the hook reads
-  `~/.copilot/session-state/<sessionId>/events.jsonl` (`COPILOT_HOME` overrides the directory) and takes `inputTokens`
-  of the last `session.usage_record` event (it already contains cache reads and writes). Same thresholds, throttle
-  and exit-0 behavior. Copilot versions that do not write `session.usage_record` stay silent: check `/context`
-  or `/usage` yourself before a long step.
+- Watch the context yourself (`/context`, or the [status line](usage/statusline.md)); at about 150k tokens finish the step, note the hand-off in the ledger and `/clear`.
 - The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code; `preToolUse` on
   Copilot CLI after the manual setup): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them (except the rolling `release/next`, which `github-release cut` deletes and recreates),
   `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
@@ -259,8 +246,6 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
 - `/compact <focus>` is a brake, not a habit: it loses detail you may need. Prefer `/clear` plus a
   short hand-off note in the issue. A `orchestrator` run keeps its own hand-off note: the ledger
   `<state>/<issue>/progress.md` (phases done, fix rounds, rulings); a new session resumes from it.
-  The `hooks` package adds a `Subagent <name>: stopped — <first line>` line for
-  every finished orchestrator subagent to the branch issue's ledger (`SubagentStop` on Claude Code via apm, `subagentStop` on Copilot CLI after the manual setup; rules in [orchestrator.md § Hooks](orchestrator.md#hooks)).
 - **`handoff` or the ledger alone.** One issue: the ledger is the hand-off; `/clear` and resume with the orchestrator
   end line (`orchestrator next <feature>`). Work that spans several issues or several repositories, or that has open
   decisions the ledgers do not hold: run `handoff <focus of the next session>` before `/clear`. It writes
@@ -283,19 +268,9 @@ Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
 
 | Hook | Claude Code | Copilot CLI | OpenCode |
 | :-- | :-- | :-- | :-- |
-| Subagent ledger line | `SubagentStop` | `subagentStop` (manual) | plugin `tool.execute.after` for `task`, same rules (`packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`) |
-| Context warning | `UserPromptSubmit` | `postToolUse` (manual) | same plugin: `message.updated` token usage, warning added as a synthetic part by `chat.message`; unknown until the first assistant reply after a restart |
 | Git guardrails | `PreToolUse` | `preToolUse` (manual) | not available yet |
 
-Each harness gets only its own events: `apm install` writes the Claude Code events (the manifests carry no camelCase events, which apm 0.33.0 would copy into Claude settings too); Copilot CLI hooks are a manual step, see [docs/usage/copilot-hooks.md](usage/copilot-hooks.md).
-
-The OpenCode plugin is a single file that exports only its plugin function (OpenCode calls every function export as a
-plugin and fails to load the file on other exports). `apm install` copies the whole package verbatim under `apm_modules`; the source path is
-`packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts` (a local-path install gives
-`apm_modules/_local/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`; a marketplace install gives
-`apm_modules/<owner>/apm-hub/packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts`). OpenCode loads it only from a plugins directory: `apmw sanitize -p opencode` is meant to place it there, but
-that needs an apmw release with GravionLabs/apmw#38 (open). Until then copy the file by hand to `.opencode/plugins/`
-(project) or `~/.config/opencode/plugins/` (global).
+Each harness gets only its own events: `apm install` writes the Claude Code event (the manifests carry no camelCase events, which apm 0.33.0 would copy into Claude settings too); Copilot CLI hooks are a manual step, see [docs/usage/copilot-hooks.md](usage/copilot-hooks.md).
 
 ### Subagent context by harness
 

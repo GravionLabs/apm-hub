@@ -17,11 +17,6 @@ itself for every client with an agents directory (`-g` under `-Global`) and list
 
 Later updates: `apmw update -p <client>` (`-g` global), never `apm update` alone.
 
-## OpenCode plugin (hooks, core or all)
-
-Copy `packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts` (in `apm_modules`) to `.opencode/plugins/` (project) or
-`~/.config/opencode/plugins/` (global) by hand, until an apmw release with GravionLabs/apmw#38 does it.
-
 ## What to commit
 
 | Path | Action |

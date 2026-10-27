@@ -18,7 +18,6 @@ const FILES = [
   'test/packages/ts/ts-package.test.ts',
   'test/packages/github/release-workflow.test.ts',
   'test/packages/hooks/git-guardrails.test.ts',
-  'test/packages/hooks/git-guardrails.perf.test.ts',
   'test/repo/ci-workflow.test.ts',
   'test/repo/pages-workflow.test.ts',
   'test/repo/state-dir-resolver.test.ts',
@@ -109,7 +108,7 @@ describe('related-tests', () => {
     }
   );
 
-  it('leaves perf tests out of a package change', () => {
+  it('maps a hooks package change to the guardrail tests only', () => {
     expect(rel('packages/hooks/hooks.json')).toEqual([
       'src/generators/agent-size-validator.test.ts',
       'src/generators/skill-size-validator.test.ts',
@@ -118,9 +117,9 @@ describe('related-tests', () => {
   });
 
   it('filters an explicit perf test path', () => {
-    expect(rel('test/packages/hooks/git-guardrails.perf.test.ts')).toEqual([]);
+    expect(rel('test/packages/delivery/queue.perf.test.ts')).toEqual([]);
     expect(
-      rel('test/packages/hooks/git-guardrails.perf.test.ts', 'test/repo/pages-workflow.test.ts')
+      rel('test/packages/delivery/queue.perf.test.ts', 'test/repo/pages-workflow.test.ts')
     ).toEqual(['test/repo/pages-workflow.test.ts']);
   });
 
@@ -180,7 +179,7 @@ describe('related-tests with a project', () => {
   });
 
   it('lists an explicit perf test only for project perf', () => {
-    const f = 'test/packages/hooks/git-guardrails.perf.test.ts';
+    const f = 'test/packages/delivery/queue.perf.test.ts';
     expect(relIn('perf', f)).toEqual([f]);
     expect(relIn('unit', f)).toEqual([]);
   });
@@ -236,18 +235,13 @@ describe('related-tests CLI', () => {
     expect(r.stdout.split('\n')).toContain('test/integration/queue/queue.mode.integration.test.ts');
   });
 
-  it('lists perf files for --project perf', () => {
-    const r = run(SCRIPT, '--project', 'perf', 'packages/hooks/.apm/hooks.json');
-    expect(r.stdout).toContain('test/packages/hooks/git-guardrails.perf.test.ts');
-  });
-
   it('runner prints "No related tests." and exits 0 for an empty selection', () => {
     const r = run(
       RUNNER,
       '--project',
       'unit',
       '--coverage',
-      'test/packages/hooks/git-guardrails.perf.test.ts'
+      'test/packages/delivery/queue.perf.test.ts'
     );
     expect(r.status).toBe(0);
     expect(r.stdout).toContain('No related tests.');
