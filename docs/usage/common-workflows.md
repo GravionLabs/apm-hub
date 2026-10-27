@@ -33,7 +33,7 @@ apm install shared@apm-hub
    Review the current diff.
    ```
 
-   `code-review` applies the `## Review rules` of `dotnet-implementation` and reports 🔴 / 🟡 / 🟢 findings. It never edits.
+   `code-review` applies the `## Review rules` of `dotnet-implementation` and reports blocking findings and notes. It never edits.
 
 The same pattern works with `ts`, `py` and `ng`: `<lang>-create-project` or `ng-create-project` to scaffold, `implementation` to build, `code-review` to check.
 
@@ -69,7 +69,7 @@ One issue per session, see [Working mode](../working-mode.md).
    Review the current diff.
    ```
 
-   `code-review` rates findings 🔴 / 🟡 / 🟢. Fix the 🔴 ones; the pull request is the second review.
+   `code-review` lists blocking findings and notes. Fix the blocking ones; the pull request is the second review.
 
 4. **Open the pull request**
 

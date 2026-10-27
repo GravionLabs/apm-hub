@@ -65,7 +65,7 @@ The complete rule set is in `packages/apm-tooling/.apm/skills/skill-write/refere
 
 - `detect-techstack` returns a JSON report naming the `<lang>-implementation` and `<lang>-test` skills for the project.
 - `implementation` enforces "every change has tests" and dispatches to the language skill from that report.
-- `code-review` reads the `## Review rules` section of each detected `<lang>-implementation` skill and rates findings 🔴 / 🟡 / 🟢.
+- `code-review` reads the `## Review rules` section of each detected `<lang>-implementation` skill and reports blocking findings and notes.
 - `diagnose` is loaded for bug fixes: it builds a red-capable feedback loop (commands from `<lang>-test`) before any hypothesis.
 - `planner` plans an issue one level down; the runner in [dromos](../runner.md) can chain the skills without a person in the loop.
 - `github-issue` routes issue work by label and sub-issue shape; `github-pull-request` opens the PR.
