@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 // @ts-expect-error plain .mjs script without type declarations
+import { buildVitestArgs } from '../../scripts/run-related-tests.mjs';
 import { pathsFromArgs, relatedTests } from '../../scripts/related-tests.mjs';
 
 const FILES = [
@@ -250,5 +251,53 @@ describe('related-tests CLI', () => {
     );
     expect(r.status).toBe(0);
     expect(r.stdout).toContain('No related tests.');
+  });
+});
+
+describe('run-related-tests', () => {
+  const RUNNER_PATH = path.resolve(__dirname, '../../scripts/run-related-tests.mjs');
+
+  it('passes the files straight to vitest without a project', () => {
+    expect(buildVitestArgs(['a.test.ts'])).toEqual(['--passWithNoTests', 'a.test.ts']);
+  });
+
+  it('runs unit and scripts for ALL without a project', () => {
+    expect(buildVitestArgs(['ALL'])).toEqual([
+      '--passWithNoTests',
+      '--project',
+      'unit',
+      '--project',
+      'scripts',
+    ]);
+  });
+
+  it('runs the whole project for ALL with a project, plus coverage', () => {
+    expect(buildVitestArgs(['ALL'], { project: 'perf', coverage: true })).toEqual([
+      '--passWithNoTests',
+      '--coverage',
+      '--project',
+      'perf',
+    ]);
+  });
+
+  it('adds the project in front of the files', () => {
+    expect(buildVitestArgs(['a.test.ts', 'b.test.ts'], { project: 'integration' })).toEqual([
+      '--passWithNoTests',
+      '--project',
+      'integration',
+      'a.test.ts',
+      'b.test.ts',
+    ]);
+  });
+
+  it('rejects an unknown project with a non-zero exit', () => {
+    expect(() => relatedTests(['src/util.ts'], { root, project: 'unt' })).toThrow(
+      /Unknown --project 'unt'/
+    );
+    const r = spawnSync(process.execPath, [RUNNER_PATH, '--project', 'unt', 'src/index.ts'], {
+      encoding: 'utf8',
+    });
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('Unknown --project');
   });
 });

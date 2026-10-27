@@ -35,6 +35,8 @@ function listTests(root, dir) {
   });
 }
 
+export const PROJECTS = ['unit', 'scripts', 'integration', 'perf'];
+
 // Skill/script areas whose changes can affect the queue integration tests.
 const INTEGRATION_AREAS = [
   'packages/delivery/.apm/skills/queue/',
@@ -69,6 +71,9 @@ export function projectOf(file, scripts) {
  * @returns {string[]} sorted unique test files, or ['ALL']
  */
 export function relatedTests(paths, { root = REPO_ROOT, project } = {}) {
+  if (project !== undefined && !PROJECTS.includes(project)) {
+    throw new Error(`Unknown --project '${project}' (expected one of ${PROJECTS.join(', ')})`);
+  }
   const out = new Set();
   const srcTests = () => listTests(root, 'src');
   const validators = () =>
@@ -135,6 +140,12 @@ export function pathsFromArgs(args, cwd = REPO_ROOT) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const argv = process.argv.slice(2);
   const pi = argv.indexOf('--project');
-  const lines = relatedTests(pathsFromArgs(argv), { project: pi >= 0 ? argv[pi + 1] : undefined });
+  let lines;
+  try {
+    lines = relatedTests(pathsFromArgs(argv), { project: pi >= 0 ? argv[pi + 1] : undefined });
+  } catch (e) {
+    console.error(e.message);
+    process.exit(1);
+  }
   if (lines.length) console.log(lines.join('\n'));
 }
