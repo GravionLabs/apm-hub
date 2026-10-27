@@ -26,17 +26,20 @@ describe('github-issue without batch routing', () => {
   });
 });
 
-describe('github-pull-request reviewer fallback', () => {
-  const step = read('github-pull-request/SKILL.md')
-    .split('\n')
-    .find((l) => l.startsWith('5. '))!;
+describe('github-pull-request reviewer is opt-in', () => {
+  const skill = read('github-pull-request/SKILL.md');
+  const step = skill.split('\n').find((l) => l.startsWith('5. '))!;
 
-  it('falls back to the REST requested_reviewers endpoint', () => {
-    expect(step).toContain('gh pr edit <pr> --add-reviewer @copilot');
-    expect(step).toContain('pulls/<pr>/requested_reviewers');
+  it('requests no reviewer unless the caller asks for one', () => {
+    expect(skill).toContain('`add_reviewer` (default: false)');
   });
 
-  it('continues with "reviewer not added" when both fail', () => {
+  it('uses only gh pr edit, without the REST fallback that never requested a reviewer', () => {
+    expect(step).toContain('gh pr edit <pr> --add-reviewer @copilot');
+    expect(step).not.toContain('requested_reviewers');
+  });
+
+  it('continues with "reviewer not added" on failure', () => {
     expect(step).toContain('reviewer not added');
     expect(step).toMatch(/never fails the PR creation/);
   });
