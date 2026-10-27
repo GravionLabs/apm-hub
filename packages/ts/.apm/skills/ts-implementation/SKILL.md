@@ -19,7 +19,7 @@ description: 'TypeScript implementation and test rules (Vitest) extending `imple
 ## Imports
 
 - ES modules only — `import` not `require`
-- Relative paths with `.js` extension: `import { foo } from "../foo.js"`
+- Relative imports carry the `.js` extension (`import { foo } from "../foo.js"`) only when `moduleResolution` is `NodeNext`/`Node16`; with `bundler` (Vite, Angular) follow the project
 
 ## Conventions
 

@@ -1,6 +1,6 @@
 ---
 name: rust-implementation
-description: 'Rust implementation rules (clippy, rustfmt) extending `implementation`.'
+description: 'Rust implementation rules (clippy, rustfmt) extending `implementation`. Use when writing or changing Rust code.'
 ---
 
 ## Framework

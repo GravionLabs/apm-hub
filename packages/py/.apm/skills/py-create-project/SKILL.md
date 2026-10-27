@@ -1,6 +1,6 @@
 ---
 name: py-create-project
-description: 'Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, asyncio support, and a GitHub Actions CI workflow.'
+description: 'Scaffold a new Python 3.14 project using uv with src layout, ruff, pytest, asyncio support, and a GitHub Actions CI workflow. Use when asked to create or scaffold a new Python project.'
 disable-model-invocation: true
 metadata:
   opencode/autoinvoke: 'false'
