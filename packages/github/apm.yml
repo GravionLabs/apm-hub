@@ -1,5 +1,5 @@
 name: github
-version: 2.5.4
+version: 3.0.0
 description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, pull request creation, release branches (cut, finish)."
 author:
   name: Gravion

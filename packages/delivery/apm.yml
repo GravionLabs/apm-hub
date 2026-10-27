@@ -1,5 +1,5 @@
 name: delivery
-version: 2.5.4
+version: 3.0.0
 description: "Issue-driven development workflow: run retrospective (retro), package installer (apm-install), and issue planning with native sub-issues. Pulls in github and shared; stack packages are installed per project."
 dependencies:
   apm:

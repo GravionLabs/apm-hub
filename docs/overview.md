@@ -1,7 +1,7 @@
 # Overview
 
 <!-- AUTO:start version -->
-Welcome to **apm-hub** v2.5.4 👋
+Welcome to **apm-hub** v3.0.0 👋
 <!-- AUTO:end version -->
 
 apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The automated runner that chains them lives in [dromos](runner.md).
@@ -25,7 +25,7 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | `hooks`       | Claude Code and Copilot CLI git guardrails hook                                                                                   |
 | `statusline`  | `context-statusline` skill: status line and subagent status line                                                                  |
 | `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills)                      |
-| `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling, not in `all`)                                    |
+| `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling, not in `all`)                                                    |
 | `all`         | every package except `apm-tooling`                                                                                                |
 
 The full list with descriptions is generated into [skill-list.md](skill-list.md).
