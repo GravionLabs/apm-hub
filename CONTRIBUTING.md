@@ -12,6 +12,7 @@ What does not belong here:
 - Generic best practices the model already knows (tool basics, language tutorials, flag tables).
 - Secrets, internal URLs, project-specific identifiers in public packages.
 - Agents. Workflows are skills; see AGENTS.md.
+- New pipeline features: agents, hooks, queue, ledger, gates, loop. The pipeline is frozen by the [simplification plan](docs/simplification-plan.md); only bug fixes are accepted until Stage A of the [work plan](docs/simplification-workplan.md) removes it.
 
 ## Setup
 
