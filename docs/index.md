@@ -22,7 +22,7 @@ features:
   - title: Installable packages
     details: Domain bundles for GitHub, delivery, .NET, TypeScript, Python and Angular, installed into any repository with one apm command.
   - title: Workflows are skills
-    details: Issue planning, implementation, review and release are skills that compose, and the orchestrator agent runs them end to end.
-  - title: Orchestrator and subagents
-    details: A primary agent keeps only phase summaries and delegates to explorer, planner, implementer and reviewer, each with its own model and tools.
+    details: Issue planning, implementation, review and release are skills that compose; each one owns a workflow and the others delegate to it by name.
+  - title: Runner in dromos
+    details: The automated pipeline lives in dromos and calls these skills; apm-hub stays content only.
 ---

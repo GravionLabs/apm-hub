@@ -1,337 +1,37 @@
 # Working mode: small contexts, one issue at a time
 
-The cost of an agent session is its context size, not the skills it loads. In a 30-day sample
-(AgentLens, 79 sessions) issue sessions averaged 365k tokens per request and skill text made up
-about 1 % of it; PR and release skills ran at 500k because they were started at the end of long
-sessions. This page is the operating procedure that keeps contexts small. The skills and agents in
-this hub assume it.
+The cost of an agent session is its context size, not the skills it loads. In a 30-day sample (AgentLens, 79 sessions) issue sessions averaged 365k tokens per request and skill text made up about 1 % of it; PR and release skills ran at 500k because they were started at the end of long sessions. This page is the operating procedure that keeps contexts small. The skills in this hub assume it.
 
-## 1. Default: the orchestrator
+Everything here is interactive: you start a Claude Code, Copilot CLI or OpenCode session and name the skill or describe the task. The automated runner is described in [The runner](runner.md).
 
-This page covers usage. For how the orchestrator works internally (agents, state, gates, hooks) see [The orchestrator](orchestrator.md).
+## 1. One issue per session
 
-`<state>` in the paths below is the state directory: `DROMOS_STATE_DIR` when set, else `<git-common-dir>/agents/` (shared by all worktrees, outside the working tree; see [State on disk](orchestrator.md#state-on-disk)).
+1. Start a fresh session in the repository.
+2. Plan if the issue is large: `Plan issue #42.` (`issue-planning` writes the plan one level down; after you approve, `github-issue` creates the sub-issues).
+3. Implement: `Implement #42.` (`github-issue` reads the issue, `implementation` dispatches to the stack skill, tests change with the code).
+4. Verify with the build and test commands of the project.
+5. Review once: `Review the current diff.` (`code-review`). Fix 🔴 findings; the pull request is the second review.
+6. Open the PR: `Create a PR for this branch.` (`github-pull-request`).
+7. `/clear` (or close the session) before the next issue.
 
-Start issue work as the `orchestrator` agent ([Setup](#setup) has the start commands). It runs as the primary agent, keeps at most 300 words
-per phase in its own context and hands the rest to `issue-reader`, `explorer`, `planner`, `implementer`, `reviewer` and `pr-writer`.
+Title and labels follow the hierarchy `[Epic]`, `[Feature]`, `[PBI]`, `[Task]`, `[Bug]`; see `github-issue`.
 
-### Modes and natural requests
+## 2. Model choice
 
-The first word of the message is the mode; the issue type (Epic, Feature, PBI) comes from its label or title prefix (titles are written `[<Level>] <summary>`, e.g. `[PBI] feat: short summary`). The first word must be the mode word (the table below is what to type, or what the `/orchestrator` command should translate your request to); a plain sentence without it runs `full`, which is for a PBI only. After `/clear`, start with `orchestrator status <feature|epic>`: it shows where the work stands and what `next` would pick, and runs nothing.
+Sonnet is enough for every PBI without the label `interactive`. Use a larger model for planning large Epics and for work labelled `interactive`.
 
-| Mode | On | Does |
-| :-- | :-- | :-- |
-| `plan <nr>` | Epic / Feature / PBI | Epic → Features, Feature → PBIs (on request in the same run), PBI → tasks; one grilling cycle per level |
-| `implement <nr>` | PBI | explore → implement → review → PR for a planned PBI |
-| `full <nr>` | PBI | plan if needed, then implement |
-| `next <nr>` | Feature / Epic | picks the first open PBI without open blocker, `needs-decision`, open PR (`waiting for merge`) or merge into the integration branch (`merged, closes at release`) (sub-issue order, recursive for an Epic), runs it like `full` |
-| `status <nr>` | Feature / Epic | per-PBI state table (`merged`, `pr-open`, `needs-decision`, `blocked by`, `in progress`, `open`) and the line `next` would pick; read-only, nothing runs, no ledger; rules in `github-issue` `references/status.md` |
-| `loop <nr>` | Feature / Epic | repeats `next` in one session until nothing is selectable, a gate needs you (interactive gates pause, headless stops), the context warning fired or 3 PBIs are done (the cap, 10 on Claude Code where `pbi-runner` runs each PBI; the warning fires mid-loop only on Copilot CLI); loop ledger `<state>/loop-<nr>/progress.md` |
+## 3. Keep the context small
 
-Exactly one PBI per run, except loop. The end line after a PBI of a Feature is defined in `github-issue` `references/next-selection.md`.
+- Watch the context yourself (`/context`, or the [status line](usage/statusline.md)). At about 150k tokens finish the step, leave a short hand-off note in the issue (what is done, what is next) and `/clear`.
+- Start PR and release skills in a fresh session, never at the end of a long one.
+- Load skills by name when the task is clear; descriptions alone already trigger them.
+- Let the agent read files itself instead of pasting diffs or logs into the prompt.
+- Do not run two issues in one session.
 
-| You say | Mode |
-| :-- | :-- |
-| "implementiere das nächste Feature" / "implement the next PBI of #81" | `next <feature>` |
-| "work on the next PBI under epic #81" | `next <epic>` |
-| "where are we on #81" / "wie ist der Stand von #81" | `status 81` |
-| "implement all remaining PBIs of #81" / "arbeite Feature #81 ab" | `loop <feature>` |
-| "plan all open features under #81" | `plan 81`, then one `plan <feature>` per open Feature, each in its own session |
-| "plan #123" / "plane Feature #123" | `plan 123` |
-| "do #123" / "implement #123" | `full 123` / `implement 123` |
+## 4. Guardrails
 
-### Flags: overview, review summary and advisory policy
+The `hooks` package installs a `PreToolUse` hook that denies destructive git commands (force push to `main`/`release/*`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .` on a dirty tree). Opt out with `GIT_GUARDRAILS_OFF=1`. Copilot CLI needs a manual setup, see [Copilot CLI hooks](usage/copilot-hooks.md).
 
-Two defaults, each switched off by a flag, and one flag that answers the advisory question up front. All go in the first message (also for `/orchestrator`):
+## 5. Releases
 
-| Flag | Default without it |
-| :-- | :-- |
-| `--no-overview` | Started with neither an issue number nor a description, the orchestrator first lists the open issues of the integration branch (`#<nr> <type> <status> <title>`; status open / in progress / merged (in progress as defined in `github-issue` `references/status.md`), merged ones per the "Task merged" rule for Tasks and `Merged (closes at release)` in `next-selection.md` for PBIs and Features) and you pick one |
-| `--no-review-summary` | After `review-fanout` it shows one line per finding (`severity file:line issue`, blocking first, MEDIUM/LOW included) and asks which advisories to fix; the rest go to the PR body. With the flag only blocking findings trigger fix rounds |
-| `--fix-advisories none\|medium\|all[:dim,dim]` | Decides the advisory question up front: `none` sends all advisories to the PR body, `medium` fixes MEDIUM and above, `all` fixes every advisory; `:dim,dim` limits the policy to those `review-fanout` dimensions (other advisories go to the PR body). Blocking findings are always fixed. Prints `Advisory policy: <policy> — fixing <n>, PR body <m>` and writes a `Ruling:` ledger line |
-| `--advisory-rounds <0-5>` | Caps the fix rounds that hold only advisories after the first `APPROVE` (default `1`). At the limit the remaining advisories go to the PR body without a question or `Gate:` and a `Ruling:` ledger line is written; `0` sends them all there right after the first `APPROVE`. Blocking findings always get fix rounds. Details: `github-issue` `references/orchestrator-gates.md` |
-| `--no-tasks` | `plan <feature>` ends with Tasks: after the PBIs are approved and published, the planner runs per PBI with one grilling cycle each and its Tasks are published (or the label `planned` is set for a single task). With the flag the run stops after the PBIs. `plan` on a Feature or Epic only; on a PBI or a description it is ignored with a one-line notice. Details: `github-issue` `references/orchestrator-gates.md` "Plan gate" |
-| `--tasks` | Without it `plan <feature>` plans the Feature first. With the flag it skips the Feature plan and only breaks down the open PBIs of the Feature that have no Task sub-issue and no label `planned` (backfill). Same scope as `--no-tasks` |
-
-Headless runs write `Gate: <question>` to the ledger and stop; with `--fix-advisories` set, without it (headless default `medium`) or the `--advisory-rounds` limit reached, the review summary writes no `Gate:` line (policy ruling instead). The queue runner forwards the policy as `-FixAdvisories none|medium|all`, documented there once #227 lands. Details: `github-issue` `references/orchestrator-gates.md`.
-
-### Setup
-
-Start the orchestrator as the primary agent of a new session:
-
-```powershell
-claude --agent orchestrator "full 123"        # plan → implement → review → PR
-claude --agent orchestrator "plan 123"        # plan file (plan.json) and next-level sub-issues after approval
-copilot --agent orchestrator                  # GitHub Copilot CLI, then type: full 123
-opencode --agent orchestrator                 # OpenCode
-```
-
-A shell alias saves typing (`~/.zshrc` or the PowerShell profile):
-
-```powershell
-alias claude-orchestrator='claude --agent orchestrator'     # then: claude-orchestrator "plan 123"
-```
-
-The `orchestrator` skill ships with the `agents` package. In a running session (Claude Code, VS Code Copilot) `/orchestrator [flags] <mode> <issue>` starts the agent inline: it finds the installed agent file (project first, then global) and follows it.
-If you still have a local `~/.claude/commands/orchestrator.md`, delete it: a command and a skill of the same name both answer `/orchestrator`.
-
-The skill runs the agent **inline**: the agent's tool restrictions and model are not enforced and the
-session context keeps growing, so prefer `claude --agent orchestrator` for real work.
-
-### Model of the main thread
-
-The `orchestrator` agent runs on sonnet by default; the main thread only relays phase summaries, rulings and gates, and every phase that needs more reasoning names its own model per dispatch. Override it explicitly:
-
-```powershell
-claude --model <id> --agent orchestrator "full 123"   # Claude Code
-opencode --model <provider/id> --agent orchestrator   # OpenCode, or set `model` in the agent file
-```
-
-Copilot CLI uses the session model (`--model`, `/model`); the agent file sets none. The inline `/orchestrator` skill does not enforce the model. Measured cost per model: [Models and cost](orchestrator.md#models-and-cost).
-
-### Model policy and tiers
-
-Roles and tasks map to the tiers `fast`, `standard` and `strong` ([model policy](../packages/github/.apm/skills/github-issue/references/model-policy.md)); the planner sets a `tier` with a reason per plan item. A task still blocked after its second `CHANGES_REQUESTED` with a blocking finding (fix round 2) gets a fresh implementer one tier up; advisory-only rounds never escalate. Per-dispatch tiers are Claude Code only: OpenCode and Copilot CLI use the model of the agent file until `apmw sanitize` generates `implementer-strong` and `reviewer-strong`.
-
-### Copilot CLI
-
-`copilot --agent orchestrator` runs with the same modes, gates and ledger and delegates the phases with Copilot CLI's `task` tool (own context window per subagent, `subagentStop` hook). Copilot subagents are stateless, so fix rounds start a fresh `implementer` instead of resuming one. Only a session without the `task` tool falls back to running the phases inline. Client matrix: [Clients](orchestrator.md#clients). The `/orch` prompt (skill `orch-pipeline`) is deprecated and removed in 3.0.0; use the orchestrator agent instead.
-
-### Start from a description
-
-Instead of an issue number the orchestrator also accepts `<mode> <description>` (for example `full add a dark mode toggle`). It creates the PBI at the plan gate and then continues as `full`.
-
-### One session per plan, one per PBI
-
-Start a new session for each plan and for each PBI: `plan <issue>`, `/clear`, then `implement <issue>`.
-The reason is cost: after an idle gap the prompt cache is rewritten, and a rewrite costs more the larger the
-context is (in one measured session four such requests cost 0.17 to 0.39 USD each against 0.01 to 0.03 USD for a
-normal request). Planning fills the context with exploration and answers that the implement run does not need;
-it reads `<state>/<issue>/plan.json` and the Task issues. `plan` mode therefore ends with
-`Next: /clear, then orchestrator implement <issue>`, and `full` mode offers the same stop after an approved plan
-when the context is above 100k tokens.
-
-### One session per issue, implement headless
-
-The plan gate needs you, so plan interactively (`plan 123`, see [Setup](#setup)); an already planned issue runs headless, each issue in
-its own session with a fresh context. `orchestrator` ends every run with its ledger, so the next issue never
-inherits the previous one.
-
-```powershell
-claude --agent orchestrator -p "implement 123"          # headless: explore → implement → review → PR
-copilot --agent orchestrator -p "implement 123"         # GitHub Copilot CLI
-opencode run --agent orchestrator "implement 123"       # OpenCode
-pwsh <skills dir>/queue/scripts/Invoke-OrchestratorQueue.ps1 -Mode implement 101 102 103   # queue runner, see below
-```
-
-### Queue runner
-
-The `queue` skill (package `delivery`) replaces the shell loop: `Invoke-OrchestratorQueue.ps1` starts a fresh
-headless orchestrator per issue, reads the ledger `<state>/<issue>/progress.md` as the truth (`Ledger complete.` = done, a new
-`Gate:` line = stop with exit 2, otherwise failed with exit 1), and never answers a gate. `-Feature <nr>` / `-Epic <nr>`
-loops `next` until the Feature is done. The runners never merge unless the opt-in `-MergeApproved` is given, which squash-merges
-APPROVE PRs into the integration branch (off by default). Exit codes: 0 all done, 1 a failure, 2 a gate that needs your
-answer, 3 (queue mode) nothing selectable, every open PBI is held by blockers or decisions. `pwsh <skills dir>/queue/scripts/Install-QueueLauncher.ps1`
-(or `/queue install`) installs a `queue` command that works from any repository directory; the project-local runner wins
-over the global one and runs with your rights, so do not use it in an untrusted repository (`QUEUE_RUNNER` overrides the lookup).
-Start with `-DryRun`. Check `status <nr>` (sibling PBI; until then `<state>/<nr>/progress.md`) before and after a queue run.
-Sequential only; `-Parallel` is a follow-up. Permissions per harness: the skill's `references/harness-flags.md`.
-
-A headless run cannot answer permission prompts: allow `git`, `gh`, the build and test commands and
-edits for the project beforehand (Claude: `permissions.allow` in the project settings). OpenCode needs nothing
-extra for the ledger: the orchestrator's permission map allows `git`, `gh`, the tech-stack scan and one ledger
-command, `pwsh <skills dir>/github-issue/scripts/Add-LedgerLine.ps1 -Issue <issue|adhoc> -Line '<text>'`, which creates
-`<state>/<issue>/` and appends one line after validating the path (positive integer or `adhoc`, no line breaks, path under
-`<state>/`, a symlinked `<state>` is refused). The patterns pin the installed skill paths (`.claude/skills`, `.opencode/skills`,
-`.agents/skills`, `.github/skills` in the project; `~/.claude/skills`, `~/.agents/skills`, `~/.config/opencode/skills` globally,
-written literally with `~`: OpenCode does not expand `~` or `$HOME` in a pattern, so a model that writes the absolute home path gets a
-prompt). The trailing `*` lets `pwsh` receive further arguments after the pinned script path; those are the script's own parameters
-and are validated by the script. It keeps `edit: deny` and asks for every other shell command, which `opencode run` auto-rejects.
-Claude Code has no per-agent bash list: allow `Bash(pwsh .claude/skills/github-issue/scripts/Add-LedgerLine.ps1 *)` and
-`Bash(pwsh .claude/skills/detect-techstack/scripts/Detect-TechStack.ps1 *)` (or the global path).
-
-Limits: a shell redirect is not part of the command OpenCode matches, so `pwsh .../Add-LedgerLine.ps1 ... > src/a.ts` would be allowed and could
-truncate or create a file (it writes no content; a raw `echo *` rule would have allowed arbitrary content and was rejected).
-`git *` and `gh *` are auto-allowed on OpenCode and can write files (`git diff --output=`, `git apply`, `gh api -X`), so the write
-guard is not a boundary against a prompt-injected model in a headless OpenCode run. Other ledger-area writes are not covered
-by the helper and still prompt, which a headless OpenCode run auto-rejects, or end in a `Gate:` stop: `<state>/overview.md`,
-`<state>/adhoc/description.txt`, moving `<state>/adhoc` to `<state>/<issue>/`.
-Prefer an interactive or pre-prepared setup for description input and the issue overview.
-
-The `planner` (`mkdir -p`, `cat >` for `plan.json`/`plan.md`) and `issue-reader` (`mkdir -p`, `gh issue view … >` for `issue.md`) write
-rules are rooted on the cwd-relative default state dir `.git/agents/` (`mkdir -p .git/agents/*`, `cat > .git/agents/*/plan.json`,
-`gh issue view * > .git/agents/*/issue.md`). The orchestrator therefore passes these two agents `<state>` cwd-relative when it lies
-under the cwd (a normal checkout: `.git/agents`), so their commands (`mkdir -p .git/agents/402`, `cat > .git/agents/402/plan.json`)
-match; every other subagent gets the absolute path. No allow rule starts with `*`, because `*` matches any characters including
-`/` and `..`; rules after the allows (the last match wins) deny a `..` or a second argument behind the root. The rules do not cover
-a linked worktree (its common dir is outside the working tree), a `DROMOS_STATE_DIR` override outside the cwd or a model that
-writes the absolute path: those writes prompt (headless: auto-rejected; see [#424](https://github.com/GravionLabs/apm-hub/issues/424)).
-Neither are they a write boundary: a redirect is not part of the matched command (spike below), so `gh issue view *` alone decides
-the `issue.md` write, and `cat > …` is then matched as a bare `cat`, which no rule allows: on OpenCode the planner's `plan.json`
-write still prompts (not checked live; a validating writer like `Add-LedgerLine.ps1` would close it). The boundary is the agent rule (only `<state>/<nr>/`, no `..`, no chaining).
-
-It cannot answer a gate either: at a blocked review or a twice-red suite it appends `Gate: <question>` to
-`<state>/<issue>/progress.md`, reports it and stops. Answer in an interactive `orchestrator` session, which
-resumes from the ledger.
-
-#### Headless smoke test and spike result (#222)
-
-`pwsh scripts/Invoke-HeadlessSmoke.ps1 [-Client opencode|claude|both] [-Stage ledger|plan|all] [-Keep]` creates a throwaway
-git repo without a remote (no GitHub writes) per client and stage and starts `opencode run --agent orchestrator` and
-`claude -p --agent orchestrator`. Stage `ledger` (default) runs the ledger helper and asserts the header line in
-`<state>/999/progress.md` and no permission prompt. Stage `plan` runs `plan <description>` with the full agent body and asserts
-no permission prompt and a `Gate:` line or a completed phase in the ledger. A missing CLI is skipped (exit 2 when all are
-skipped, 1 on a failure). It needs the CLIs and a model and is not run in CI. The OpenCode run uses the permission map of
-`orchestrator.agent.md` in a project agent and an empty user config.
-
-Spike (OpenCode 1.18.3, Claude Code, 2026-10-14/15):
-
-- OpenCode before the fix (`"git *"`, `"gh *"` allow, `"*"` ask last): the ledger writes hit `ask`; `opencode run` printed
-  `permission requested: bash (...); auto-rejecting` and no ledger was written. OpenCode lets the last matching rule win, so
-  the trailing `"*": ask` also overrode `git *`/`gh *`; it is now first.
-- OpenCode after the fix: the ledger helper runs, `rm -rf <state>/999` is still auto-rejected. Facts that shaped the rules:
-  `[0-9]` is not a character class in a pattern (use `*`), and a redirect is not part of the matched command. Raw `mkdir`/`echo`/`tee`
-  rules therefore cannot be made safe, so ledger writes go through the validating helper.
-- Claude Code: without allow rules the run stops ("needs approval"); with `--allowedTools "Bash(pwsh .claude/skills/github-issue/scripts/Add-LedgerLine.ps1 *)"` the
-  ledger helper completes. A project `.claude/settings.json` in a `/tmp` fixture was ignored.
-- Plan stage (`plan <description>`, no remote): partially met. OpenCode ran the skill load and the tech-stack scan (allowed after adding the
-  `Detect-TechStack.ps1` rules; before that it stopped there on a permission prompt), then the model issued `ls -la` outside the
-  contract and it was auto-rejected. Claude Code reached the planner and a plan, then stopped at a `mkdir` under the state directory the model chose
-  instead of the helper ("needs approval"). Neither run reached a `Gate:` line or a completed phase, so the plan/implement part of the
-  acceptance criterion is only partially covered; the stage is opt-in because it depends on the model following the contract. An
-  `implement` run needs a real issue and branch (GitHub) and was not run.
-
-## 2. Without the orchestrator: one session per issue
-
-- `claude "/github-issue 123"` — a fresh session per issue; `/clear` before the next one.
-- Batch: `pwsh <skills dir>/queue/scripts/Invoke-OrchestratorQueue.ps1 -Mode implement 101 102 103` — each issue in its own headless session (see [Queue runner](#queue-runner)).
-- Parallel issues: a run works in the main checkout while it is free and in `<repo-root>/.worktrees/<nr>` when it is busy
-  (a live lease of another issue in `<state>/leases/`, or a modified tracked file). `Enter-Checkout.ps1 -Issue <nr> -Branch <name> -Base <ref>`
-  (`github-issue/scripts/`, works on Claude Code, Copilot CLI and OpenCode) decides, writes the lease and prints `{path, worktree, branch, base, lease}`;
-  `Add-LedgerLine.ps1` renews its heartbeat, `Exit-Checkout.ps1` releases it and removes a clean worktree (a dirty one is kept and reported);
-  a lease older than 120 minutes is taken over. The orchestrator does this in pipeline step 1b (and releases the checkout after `Ledger complete.`; a gate keeps it), the queue runner per issue. Once per repository run `Enable-Worktrees.ps1`
-  (`detect-techstack/scripts/`; `apm-install` runs it, `verify-project` checks it) so `.gitignore` and the stack configs ignore `.worktrees/`.
-  Never run `git clean -ffdx` in the main checkout: it deletes the nested worktrees.
-- `.claude/worktrees/` is Claude Code's own location for manual `claude --worktree <name>` sessions; the `implementer` no longer takes `isolation: worktree`.
-- Copilot: a new chat per task in VS Code; `/clear` in the CLI. OpenCode: `/new`.
-
-## 3. During a session
-
-- Watch the context yourself (`/context`, or the [status line](usage/statusline.md)); at about 150k tokens finish the step, note the hand-off in the ledger and `/clear`.
-- The `hooks` package denies destructive git commands before they run (`PreToolUse` on Claude Code; `preToolUse` on
-  Copilot CLI after the manual setup): force push (`--force`, `-f`, `--force-with-lease`) to `main` or `release/*`, `git push --delete` of them (except the rolling `release/next`, which `github-release cut` deletes and recreates),
-  `git reset --hard`, `git clean -f`, `git branch -D`, and `git checkout -- .`/`git restore .` while the tree has
-  uncommitted changes, also inside `env`, `sudo`, `bash -c`, `xargs` and similar wrappers, `git -c alias.*` values
-  and `echo …`/heredocs piped into a shell. Every other command passes. Opt out per repo with
-  `GIT_GUARDRAILS_OFF=1` in the environment or an (empty) file `<state>/guardrails.off`. OpenCode is not covered
-  (it needs a plugin, see #182/#183). It is a guardrail against accidents, not a security boundary: it runs git
-  only in the session's own repository (`git -C <other repo> checkout .` counts as dirty without looking, also for a
-  nested or bare repo inside it), fails open on malformed payloads and on commands above 24 KB, and does not
-  resolve variables (`$cmd`, `g${x}it`).
-- `/context` before a long step shows what fills the window; the skill list and large tool outputs
-  are the usual culprits.
-- Ask the `explorer` agent instead of reading files yourself; keep its summary, not the files.
-- Reviews read a package file (`<state>/<issue>/review-<n>.diff`: commit list, stat, `git diff -U3`)
-  written by `review-fanout`; the diff is never pasted into a prompt, so it does not repeat per dimension.
-  Documentation hunks (`docs`, `CHANGELOG.md`, `README*.md`, `site`) form a trailing `=== DOCUMENTATION ===` section that only
-  `spec` and `conventions` read. `review.json` records `package {bytes, tokensEstimated, hunks, docsHunks}`; above 15k
-  estimated tokens a size note names the largest files (the package is never split).
-- `review-fanout` runs five dimensions: `correctness`, `security`, `conventions`, `tests` and `spec` (a small `full` diff runs fewer, see the size class in [orchestrator.md](orchestrator.md)). `correctness`
-  also checks each `## Invariants` entry of the PBI, its Tasks and plan items without a Task issue (appended under
-  `## Invariants (plan)`); a violated invariant is HIGH, quoted in `evidence`, and goes through verify. `spec` compares
-  the diff with the originating issue: the number comes from the argument, the branch `<type>/<nr>-<slug>` or
-  `Closes #n` in the range, and the issue body plus its Task sub-issue bodies are appended to the same package
-  file. It reports missing, partial or wrong criteria (HIGH) and scope creep (MEDIUM), never merged with
-  `conventions` findings. No issue found: one advisory "no spec available", never a failure.
-- `/compact <focus>` is a brake, not a habit: it loses detail you may need. Prefer `/clear` plus a
-  short hand-off note in the issue. A `orchestrator` run keeps its own hand-off note: the ledger
-  `<state>/<issue>/progress.md` (phases done, fix rounds, rulings); a new session resumes from it.
-- **`handoff` or the ledger alone.** One issue: the ledger is the hand-off; `/clear` and resume with the orchestrator
-  end line (`orchestrator next <feature>`). Work that spans several issues or several repositories, or that has open
-  decisions the ledgers do not hold: run `handoff <focus of the next session>` before `/clear`. It writes
-  `<state>/handoff-<date>.md` (outside the working tree) with state per issue, gates, ordered commands and suggested skills,
-  linking the ledgers instead of copying them. Start the next session with `Read <state>/handoff-<date>.md and continue`.
-- OpenCode: `compaction: { auto: true, prune: true }` in `opencode.json` drops old tool output.
-
-### Parallel and long sessions
-
-- All sessions share one limit. `/usage` shows what drove it: the share of usage above 150k context,
-  subagent-heavy sessions, 4+ sessions in parallel and sessions older than 8 hours.
-- Queue instead of running four or more sessions at once; one issue per session, one session at a time,
-  unless the issues are independent and each is small.
-- One window for long runs: run `loop` in a herdr pane; it shows `blocked` at every gate
-  and keeps running when you detach.
-- A session older than 8 hours needs a reason (a watch, a loop). Otherwise write the hand-off into the
-  ledger or a memory note and start a new session.
-
-### Hooks by harness
-
-| Hook | Claude Code | Copilot CLI | OpenCode |
-| :-- | :-- | :-- | :-- |
-| Git guardrails | `PreToolUse` | `preToolUse` (manual) | not available yet |
-
-Each harness gets only its own events: `apm install` writes the Claude Code event (the manifests carry no camelCase events, which apm 0.33.0 would copy into Claude settings too); Copilot CLI hooks are a manual step, see [docs/usage/copilot-hooks.md](usage/copilot-hooks.md).
-
-### Subagent context by harness
-
-| | Claude Code | Copilot (VS Code) | Copilot CLI | OpenCode |
-| :-- | :-- | :-- | :-- | :-- |
-| Does a subagent inherit the conversation? | only the `fork` type; every typed agent starts fresh (about 6k tokens, measured) | no, fresh and stateless | unverified | unverified |
-| Resume a finished subagent | `SendMessage` to its agent id | no | unverified | unverified |
-| `orchestrator` cannot be dispatched as a subagent by | the rule in its body | `disable-model-invocation: true` | unverified | `mode: primary` |
-
-`fork` is the expensive one: it starts with the whole session, so in a 700k-token session every fork
-re-reads 700k tokens. In four days of the owner's usage 22 model-started `fork` calls made up 23 % of
-usage. Rule: no `fork` above ~100k context; start a typed agent (`explorer`, `general-purpose`) with a
-self-contained prompt instead. Put the rule into the global instruction file of each client
-(Claude `~/.claude/CLAUDE.md`, Copilot `.github/copilot-instructions.md` or the VS Code user instructions,
-OpenCode `~/.config/opencode/AGENTS.md`):
-
-```text
-Subagents: write a self-contained prompt (goal, context, expected result).
-Never use the `fork` subagent type once the session is above ~100k tokens; use `explorer`, `general-purpose` or another typed agent.
-Run `orchestrator` only as the primary agent, never as a subagent.
-```
-
-## 4. PR and release in a fresh session
-
-Commit and push, then `/clear`, then `/github-pull-request`. `/github-release finish` likewise. Both
-skills read everything they need from `git` and `gh`; they never depend on the session history,
-and on Claude Code they run with `context: fork`, so even at the end of a long session they start
-with a fresh context.
-The release PR itself is opened and refreshed by CI on every push to `release/next`. After it is merged, CI writes the changelog, tags, publishes the release and closes the
-issues the merged PRs reference with `Closes #n`; nothing is closed by hand.
-
-## 5. Keep the skill list short
-
-- Skills that create a project or set up tooling once carry `disable-model-invocation: true` (see
-  [skill-frontmatter.md](concepts/skill-frontmatter.md)); their descriptions leave the model's list.
-  Nothing used during an implementation or at the end of a feature is gated: `github-release` stays
-  model-invocable, and mid-task references (uv flags, component or signal-store scaffolding) live in
-  `references/` of `py-implementation` and `ng-implementation`.
-- Gating is the smallest lever: the 19 consumer-visible model-invocable descriptions are held to a
-  budget of 2,600 characters in total (≈ 650 tokens at chars/4, currently 2,443 ≈ 611 tokens, measured 2026-10-14 with the budget check),
-  enforced by `src/generators/skill-size-validator.test.ts`. `packages/apm-tooling` (contributor
-  tooling, not in `all`, never loaded by consumers) is excluded from the budget and keeps only the
-  200-character per-skill limit. Token figures not marked as measured are AgentLens estimates from the 30-day, 79-session sample (as of 2026-10-14), not re-measured. The
-  system prompt is prompt-cached. Per-project
-  package installs remove more (≈ 10 skills in a single-stack repository).
-- Two-level install: globally `apmw install -g -p <client> GravionLabs/apm-hub/packages/core` (workflow skills
-  and agents, no stack skills; `apmw` runs `apm` and sanitizes the agents for the client); per project an `apm.yml` with the stack package (`ng`, `ts`, `py`,
-  `dotnet`). `all@apm-hub` only on machines that mix stacks. Deployed skill folders are git-ignored,
-  so a fresh clone runs `apm install` first. A workflow skill that needs a stack skill which is not
-  installed says so once ("install `<stack>@apm-hub`") and continues with the language-agnostic rules.
-- Weekly: `/skill-doctor` in Claude Code and `agentlens skills --since <date>`; a skill unused for
-  a month is a candidate for gating or removal.
-
-## 6. Where context goes (reference numbers)
-
-| Item                                   | Tokens per request | Lever                                   |
-| :------------------------------------- | -----------------: | :-------------------------------------- |
-| 19 model-invocable skill descriptions  |       ≈611 (computed: 2,443 characters / 4) | shorter descriptions (done: 2,600-character budget, 2,443 characters used, measured 2026-10-14), per-project installs |
-| CLAUDE.md / AGENTS.md of the project   |         500–3,000 | keep under 200 lines, move rules to skills |
-| one full file read (300 lines)         |          3,000–5,000 | `explorer` summary instead (≤ 400)     |
-| one build or test log                  |         2,000–20,000 | `verify-project` runs forked           |
-| conversation history after 2 hours     |      150,000–500,000 | one issue per session                   |
-
-The 19-description row is computed from the characters (chars/4); an earlier AgentLens estimate of ≈470 tokens covered 18 descriptions and was not re-measured. Rows 2 to 5 are AgentLens estimates (ranges) from the 30-day, 79-session sample, as of 2026-10-14; they were not re-measured.
+`github-release cut` creates the rolling `release/next` branch, PBI pull requests target it, and `github-release finish` opens the release PR into `main` with the changelog.

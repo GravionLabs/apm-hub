@@ -18,7 +18,7 @@ otherwise). Run from the project root.
 `/apm-install` (detect and propose), `/apm-install ts py` (named packages, no detection), `/apm-install core -g`
 (user-wide), `/apm-install dry-run ...` (print the commands only). Mapping: `dry-run` is `-DryRun`, `-g` is `-Global`,
 remaining words are `-Packages` (comma-separated on the command line: `-Packages ts,py`). Valid packages: `shared`,
-`github`, `delivery`, `agents`, `hooks`, `core`, `all`, `ts`, `py`, `ng`, `dotnet`, `rust`; anything else makes the script exit 1.
+`github`, `delivery`, `hooks`, `core`, `all`, `ts`, `py`, `ng`, `dotnet`, `rust`; anything else makes the script exit 1.
 The contributor tooling package is not offered. What each package brings: [packages](references/packages.md).
 
 ## Steps
@@ -35,8 +35,7 @@ The contributor tooling package is not offered. What each package brings: [packa
 3. Run the same command without `-DryRun`. The result lists `installed`, `skipped`, `failed`, `notAttempted`, `provides`
    (what each installed package brings), `dependencies` (`angular/skills` for `ng`, `dotnet/skills` for `dotnet`) and
    `notes`. Tell the user what was installed, which dependencies came along, and any failed or not-attempted package.
-4. Relay the `notes` and `sanitized` and follow [after install](references/after-install.md): the script ran
-   `apmw sanitize` for agents (or says why not), what to commit.
+4. Relay the `notes` and follow [after install](references/after-install.md): what to commit.
 
 ## Behavior of the script
 
@@ -65,7 +64,5 @@ The contributor tooling package is not offered. What each package brings: [packa
 
 ## Missing prerequisites
 
-`apm` missing: `curl -sSL https://aka.ms/apm-unix | sh` (macOS/Linux) or `winget install Microsoft.APM`. `apmw` is
-needed for agent packages (`agents`, `core`, `all`): the script installs without it but the agents then stay in the
-source format (Claude Code starts them without tools), see [after install](references/after-install.md). Do not install
+`apm` missing: `curl -sSL https://aka.ms/apm-unix | sh` (macOS/Linux) or `winget install Microsoft.APM`. Do not install
 tools for the user without asking.

@@ -8,7 +8,7 @@ Documentation site: **[gravionlabs.github.io/apm-hub](https://gravionlabs.github
 
 ## What is apm-hub?
 
-**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the `agents` package adds the `orchestrator` primary agent and its `issue-reader`, `explorer`, `planner`, `reviewer`, `implementer` and `pr-writer` subagents. The entry point beyond skill names is the `orchestrator` agent (`/orch` is deprecated and removed in 3.0.0).
+**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the runner that chains them lives in [dromos](docs/runner.md).
 
 Skills are the primary artifact: one `SKILL.md` source file loads unchanged on GitHub Copilot, Claude Code, and OpenCode. See the [skill frontmatter convention](docs/concepts/skill-frontmatter.md) for how that is guaranteed.
 
@@ -19,7 +19,8 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Overview](docs/overview.md)**: Introduction, core concepts, and guiding principles.
 - **[Skills](docs/concepts/skills.md)**: What skills are and how they work across platforms.
 - **[Skill Frontmatter Convention](docs/concepts/skill-frontmatter.md)**: The spec-compliant frontmatter every skill follows.
-- **[The orchestrator](docs/orchestrator.md)**: Agents, pipeline, state, gates, hooks and end of run.
+- **[Working mode](docs/working-mode.md)**: one issue per session, small contexts.
+- **[The runner](docs/runner.md)**: the automated pipeline lives in dromos.
 - **[Simplification plan](docs/simplification-plan.md)**: why apm-hub becomes a content-only repository and the pipeline moves to dromos.
 - **[Simplification work plan](docs/simplification-workplan.md)**: order of work, PBIs and milestones for that change.
 - **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
@@ -64,10 +65,9 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    apm install dotnet@apm-hub
    ```
 
-   Globally, install the workflow skills and agents without any stack skills (`apmw` wraps `apm` and sanitizes the agent
-   frontmatter for the client; `uv tool install apmw` once):
+   Globally, install the workflow skills without any stack skills:
    ```bash
-   apmw install -g -p claude GravionLabs/apm-hub/packages/core
+   apm install -g GravionLabs/apm-hub/packages/core
    ```
 
    Or install **all packages** at once (machines that mix stacks):
@@ -113,16 +113,17 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 
 | Package       | Contents                                                                                                                                       |
 | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| `shared`      | `implementation`, `detect-techstack`, `code-review`                                                                                            |
-| `delivery`    | `issue-planning`, `retro`, `apm-install`; formerly `development-workflow`                                                           |
-| `github`      | `github-issue`, `github-pull-request`                                                                                                          |
+| `shared`      | `implementation`, `detect-techstack`, `diagnose`, `code-review`                                                                                |
+| `delivery`    | `issue-planning`, `retro`, `apm-install`                                                                                                       |
+| `github`      | `github-issue`, `github-pull-request`, `github-release`                                                                                        |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`) |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`              |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                             |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
-| `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails, agent sanitize on session start); OpenCode plugin         |
-| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks` (no stack skills)                                       |
+| `hooks`       | Claude Code git guardrails hook (denies destructive git commands)                                                                              |
+| `statusline`  | `context-statusline` skill: status line and subagent status line                                                                               |
+| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills)                                   |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                               |
 | `all`         | every package above except `apm-tooling`                                                                                                       |
 

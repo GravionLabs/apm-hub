@@ -23,7 +23,7 @@ Verify the guardrail: in a repository with uncommitted changes ask Copilot CLI t
 
 ## Upgrading from an earlier version
 
-- Copilot CLI users who set up the ledger or context warning hooks by hand: delete those entries, the scripts `subagent-ledger.sh` and `context-warning.sh` are gone.
+- Copilot CLI users who set up the subagent or context warning hooks by hand: delete those entries, their scripts are gone.
 - Earlier versions wrote Copilot events into `~/.claude/settings.json`; apm may not remove them. Delete the stale entries `subagentStop`, `PostToolUse` with matcher `*` and the `PreToolUse` entry with matcher `*` (keep the `Bash` one). Check `~/.claude/settings.json` by hand, or with jq (writes a copy; review it, then replace the original):
 
 ```powershell

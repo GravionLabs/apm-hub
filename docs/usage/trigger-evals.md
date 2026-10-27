@@ -9,7 +9,7 @@ pnpm install; pnpm run build                       # the scorer lives in dist/
 pwsh scripts/Invoke-TriggerEvals.ps1 -DryRun       # lists prompts and the command, calls nothing (also -WhatIf)
 pwsh scripts/Invoke-TriggerEvals.ps1 -Runs 3 -Out evals/results/trigger-results.json
 pwsh scripts/Invoke-TriggerEvals.ps1 -Baseline evals/baseline/2026-10-14.json -Out evals/results/latest.json
-pwsh scripts/Invoke-TriggerEvals.ps1 -Skill review-fanout,verify-project   # subset
+pwsh scripts/Invoke-TriggerEvals.ps1 -Skill code-review,diagnose   # subset
 ```
 
 Install the skills first (`apm install` in the directory you run from) so `claude` sees them. Each prompt goes to `claude -p <prompt> --output-format stream-json --verbose --model sonnet --max-turns 4 --tools Skill,Read,Glob,Grep --disallowedTools Edit Write MultiEdit Bash NotebookEdit Task WebFetch WebSearch` (a read-only allow-list plus a deny list keeps the model from changing the repo); Skill `tool_use` calls in the transcript are the chosen skills (a `plugin:skill` name counts as `skill`). A session without a `result` event or with an error result (auth, rate limit, crash; hitting `--max-turns` is fine) is retried once and then recorded with `failed: true`; failed runs are excluded from all rates and reported, and the scorer exits 2 when more than 10 % of the sessions failed. Exit codes: 0 ok, 1 threshold or baseline regression, 2 crash, bad input or too many failed sessions.
