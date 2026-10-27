@@ -2,7 +2,6 @@
 name: apm-install
 description: '/apm-install: detect the stack and install the matching apm-hub packages into this project or globally (-g). Use for "install apm-hub", "set up the skills here".'
 disable-model-invocation: true
-user-invocable: true
 metadata:
   opencode/autoinvoke: 'false'
 ---

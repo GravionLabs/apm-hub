@@ -511,10 +511,10 @@ describe('apm-install SKILL.md', () => {
   const text = fs.readFileSync(skillPath, 'utf-8');
   const fm = parse(text.split(/^---$/m)[1]);
 
-  it('is a gated, user-invocable skill', () => {
+  it('is a gated skill without a user-invocable key', () => {
     expect(fm.name).toBe('apm-install');
     expect(fm['disable-model-invocation']).toBe(true);
-    expect(fm['user-invocable']).toBe(true);
+    expect(fm['user-invocable']).toBeUndefined();
     expect(fm.metadata['opencode/autoinvoke']).toBe('false');
   });
 

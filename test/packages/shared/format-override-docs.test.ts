@@ -28,4 +28,18 @@ describe('docs/usage/format-override.md', () => {
     expect(s).toContain('.agents/format.json');
     expect(s.split('\n').length).toBeLessThanOrEqual(100);
   });
+  it('implementation Before commit has separate targeted and full-run items', () => {
+    const s = read('packages/shared/.apm/skills/implementation/SKILL.md');
+    expect(s).toMatch(/^- \[ \] Build passes .*never the full suite\)$/m);
+    expect(s).toMatch(
+      /^- \[ \] One full run before the pull request, and again after the last fix round$/m
+    );
+  });
+  it('skills link the override doc by full URL, not a relative docs/ path', () => {
+    const f = read('packages/shared/.apm/skills/implementation/references/format.md');
+    expect(f).toContain(
+      'https://github.com/GravionLabs/apm-hub/blob/main/docs/usage/format-override.md'
+    );
+    expect(f).not.toMatch(/(^|[^/])docs\/usage\//m);
+  });
 });
