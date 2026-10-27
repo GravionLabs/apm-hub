@@ -28,8 +28,8 @@ merge the branch is reset by the next `cut`, never continued, so it can never be
   `main` (equal to it too: a fresh branch has nothing to release), when the branch was already released
   (tag `v<x.y>.0` on origin, or a release tag's merge commit is missing from HEAD while its second parent is
   in it: the branch was continued after its merge; "cut a new release branch"), or when open PRs target it.
-  After the merge the branch is deleted (`finish` names `git push origin --delete <branch>` and deletes
-  `release/next` itself once the merge is confirmed and no open PR targets it), never continued.
+  After the merge the branch is deleted, never continued: `finish` only names `git push origin --delete <branch>`
+  and never waits; a later `finish` on the merged branch returns `delete-branch` from `Get-ReleaseState.ps1` and deletes `release/next`.
 - **Known limitation:** GravionLabs/ci `versioning/release-pr` may title the release PR with the branch name
   (`release/next`) rather than the computed version; the tag and GitHub Release carry the real version.
 
@@ -43,11 +43,17 @@ first hit:
    `Parent Feature: #N` / `Parent Epic: #N` lines, one level at a time).
 3. The current branch, if it is `release/*`.
 4. `release/next` on origin if it exists, else the highest `release/<x.y>` whose tag `v<x.y>.0` is not on origin
-   (released, the branch is stale: `github-release cut` reports it; other `release/*` names are legacy, ignore them):
-   `h=$(git ls-remote --heads origin 'release/*' | sed 's|.*refs/heads/||'); t=$(git ls-remote --tags origin 'v*' | sed 's|.*refs/tags/||;s|\^{}$||'); printf '%s\n' "$h" | grep -x 'release/next' || for b in $(printf '%s\n' "$h" | grep -E '^release/[0-9]+\.[0-9]+$' | sort -V); do printf '%s\n' "$t" | grep -Fqx "v${b#release/}.0" || echo "$b"; done | tail -1`
-   A `release/next` whose head is an ancestor of `main` but not equal to it (released, not yet reset:
-   `git merge-base --is-ancestor origin/release/next origin/main` succeeds and the two SHAs differ) must not
-   receive new work: run `github-release cut` first. A head equal to `main` is fresh and usable.
+   (released, the branch is stale: `github-release cut` reports it; other `release/*` names are legacy, ignore them).
+   A `release/next` whose head is an ancestor of `main` but not equal to it is released, not yet reset, and
+   must not receive new work: run `github-release cut` first. A head equal to `main` is fresh and usable.
+
+   Steps 2-4 are one call; it prints `{ "base", "source": "input|issue|current|origin|none", "warning" }`,
+   `none` (base `null`, exit 0) means step 5, a non-null `warning` means run `github-release cut` first:
+
+   ```powershell
+   pwsh <github-release dir>/scripts/Get-ReleaseState.ps1 -Mode base [-Issue <nr>] [-Branch <base_branch>]
+   ```
+
 5. None exists → cut one with `github-release cut` (it records the line from step 2 in the Feature
    issue) and use it. Target `main` only when the user explicitly asks for a hotfix.
 

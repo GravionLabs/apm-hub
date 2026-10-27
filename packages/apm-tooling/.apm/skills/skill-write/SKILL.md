@@ -9,7 +9,7 @@ description: 'Create or edit a SKILL.md that loads unchanged on Copilot, Claude 
 - Read `references/skill-writing-rules.md` and apply it throughout
 - For a new skill, start from `assets/skill-template-optimized.md`
 
-Paths to `scripts/`, `references/` and `assets/` are relative to this skill's directory.
+Paths to `references/` and `assets/` are relative to this skill's directory.
 
 ## Instructions
 

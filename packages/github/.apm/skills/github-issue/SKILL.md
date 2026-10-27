@@ -35,6 +35,7 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
 1. Read the issue(s): `gh issue view <nr> --json title,body,labels`
 2. Detect type from the `labels` field (`epic` / `feature` / `pbi` / `task` / `bug`)
 3. Follow `references/standalone-issue.md`; Task sub-issues of a PBI follow `references/task-issues.md`.
+4. A plan from `issue-planning` (`plan.json`) → `references/create-from-plan.md`: create the issues, sub-issue and blocked-by links.
 
 ## Shared constraints (all workflows)
 

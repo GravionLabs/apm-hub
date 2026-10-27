@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -61,10 +61,34 @@ describe('apm-tooling enforces the skill frontmatter convention', () => {
       'skill-write/references/skill-writing-rules.md',
       'skill-audit/SKILL.md',
       'skill-audit/references/audit-checklist.md',
-      'skill-update/SKILL.md',
       'skill-slim/SKILL.md',
     ]) {
       expect(read(file), file).not.toContain('skill-size-validator.ts');
     }
+  });
+
+  it('no skill in any package writes user-invocable: true (the default)', () => {
+    const packages = path.resolve(__dirname, '../../../packages');
+    const offenders: string[] = [];
+    for (const pkg of readdirSync(packages)) {
+      const dir = path.join(packages, pkg, '.apm/skills');
+      let names: string[] = [];
+      try {
+        names = readdirSync(dir);
+      } catch {
+        continue;
+      }
+      for (const name of names) {
+        let text: string;
+        try {
+          text = readFileSync(path.join(dir, name, 'SKILL.md'), 'utf8');
+        } catch {
+          continue;
+        }
+        const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1] ?? '';
+        if (/^user-invocable:\s*true\s*$/m.test(fm)) offenders.push(`${pkg}/${name}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });

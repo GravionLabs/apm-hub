@@ -139,10 +139,10 @@ describe('github-release skill refuses a released branch (#252)', () => {
     expect(skill).toMatch(/`released-continued`/);
   });
 
-  it('finish names the branch delete and deletes release/next once the merge is confirmed', () => {
+  it('finish names the branch delete, never waits for the merge and leaves the delete to a later finish', () => {
     expect(finish).toContain('git push origin --delete <branch>');
-    expect(finish).toContain('gh pr view <nr> --json merged');
-    expect(finish).toContain('delete `release/next` yourself');
+    expect(finish).toContain('never wait for the merge');
+    expect(finish).not.toContain('gh pr view <nr> --json merged');
     expect(finish).toContain('`delete-branch`');
   });
 
@@ -156,7 +156,8 @@ describe('github-release skill refuses a released branch (#252)', () => {
   it('resolver step 4 ignores release branches whose .0 tag exists', () => {
     const step4 = section(reference, '4. `release/next` on origin', '5. None exists');
     expect(step4).toContain('whose tag `v<x.y>.0` is not on origin');
-    expect(step4).toContain('git ls-remote --tags origin');
+    expect(step4).toContain('Get-ReleaseState.ps1 -Mode base');
+    expect(step4).not.toContain('git ls-remote');
     expect(reference).toContain('already released');
   });
 });

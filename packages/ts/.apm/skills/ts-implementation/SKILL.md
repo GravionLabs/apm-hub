@@ -1,19 +1,19 @@
 ---
 name: ts-implementation
-description: 'TypeScript implementation and test rules (Vitest) extending `implementation`. Loaded when `implementation` dispatches to ts-implementation.'
+description: 'TypeScript implementation and test rules (Vitest) extending `implementation`. Use when writing or changing TypeScript or Node.js code.'
 ---
 
 ## Framework
 
 - **Tests**: Vitest — see `ts-test`
 - **Format/Lint**: ESLint (flat config) + Prettier — see `setup-prettier-eslint-husky` and `## Format`
-- **Runtime**: Node.js 22 LTS
 
 ## Format
 
 - Extensions: prettier `.ts .tsx .js .mjs .cjs .json`; eslint only `.ts .tsx .js .mjs .cjs`
-- Format: `npx prettier --write {files}` then `npx eslint --fix {files}`
-- Check (read-only): `npx prettier --check {files}` and `npx eslint {files}`
+- Format: `npx --no-install prettier --write {files}` then `npx --no-install eslint --fix {files}`
+- Check (read-only): `npx --no-install prettier --check {files}` and `npx --no-install eslint {files}`
+- Biome project (`biome.json[c]`): `npx biome check --write {files}` / check `npx biome check {files}`
 - Run after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Language ts` (`-Check` for the check commands; not-configured, override: references/format.md of `implementation`)
 
 ## Imports

@@ -20,7 +20,7 @@ pwsh scripts/Install-Statusline.ps1 -Force      # replace a statusLine / subagen
 pwsh scripts/Install-Statusline.ps1 -Uninstall  # remove only our entries (and copies of older versions)
 ```
 
-The installer points `statusLine` and `subagentStatusLine` at the skill's own scripts (no copy, so `apm update` refreshes them), keeps every other settings key, writes a backup first and is idempotent. A foreign entry is refused without `-Force`. Restart Claude Code to see the lines. Details (paths, `-Client copilot`, migration, `-Uninstall`): `docs/usage/statusline.md` in the apm-hub repository.
+The installer points `statusLine` and `subagentStatusLine` at the skill's own scripts (no copy, so `apm update` refreshes them), keeps every other settings key, writes a backup first and is idempotent. A foreign entry is refused without `-Force`. Restart Claude Code to see the lines. Details (paths, `-Client copilot`, migration, `-Uninstall`): https://github.com/GravionLabs/apm-hub/blob/main/docs/usage/statusline.md.
 
 ## What you get
 

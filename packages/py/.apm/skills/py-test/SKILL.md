@@ -7,7 +7,7 @@ description: >
 
 ## Prerequisites
 
-- Python 3.14+, uv installed (`uv sync` before running tests)
+- the project's Python (`.python-version` or `requires-python`), uv installed (`uv sync` before running tests)
 - Project root with `pyproject.toml`
 
 ## Test Runner
@@ -33,13 +33,6 @@ description: >
 Reference files (load when needed):
 - `references/marks-and-naming.md` — directory structure, marks, naming and parametrize patterns
 - `references/mocking-python.md` — `pytest-mock`, `unittest.mock`, respx, freezegun examples
-
-## Improving Coverage
-
-1. Run the coverage command above and review the `term-missing` output
-2. Prioritise uncovered branches > error handlers > happy paths
-3. Write a focused test per uncovered line or branch (`pytest.raises` for errors, `@pytest.mark.parametrize` for multiple inputs)
-4. Re-run with `--cov-fail-under=<target>`; details and HTML reports in `references/coverage.md`
 
 ## Gotchas
 

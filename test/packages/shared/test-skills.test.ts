@@ -77,3 +77,38 @@ describe('language test skills (#771)', () => {
     expect(t).not.toContain("don't need `NgModule`");
   });
 });
+
+describe('language skills: triggers and no generic content (#784)', () => {
+  it.each(langs)('%s-implementation description contains "Use when"', (l) => {
+    const fm = /^---\n([\s\S]*?)\n---/.exec(
+      read(`${l}/.apm/skills/${l}-implementation/SKILL.md`)
+    )![1];
+    expect(fm).toMatch(/Use when/);
+  });
+
+  it('no runtime pin in test, implementation, pnpm-workflow and mcp-generator skills', () => {
+    const files = [
+      ...langs.flatMap((l) => [
+        testSkill(l),
+        read(`${l}/.apm/skills/${l}-implementation/SKILL.md`),
+      ]),
+      read('ts/.apm/skills/ts-pnpm-workflow/SKILL.md'),
+      read('ts/.apm/skills/ts-mcp-server-generator/SKILL.md'),
+    ];
+    for (const t of files) expect(t).not.toMatch(/Node\.js 22|Python 3\.14\+/);
+    expect(testSkill('py')).toContain('`.python-version` or `requires-python`');
+  });
+
+  it('ng-test has no Signal Testing or Service Mocking, py-test no Improving Coverage', () => {
+    expect(testSkill('ng')).not.toMatch(/## (Signal Testing|Service Mocking)/);
+    expect(testSkill('ng')).toContain('## TestBed rules');
+    expect(testSkill('py')).not.toContain('## Improving Coverage');
+  });
+
+  it('dotnet-test keeps only the three non-obvious lines in its example', () => {
+    const t = testSkill('dotnet');
+    expect(t).toContain('Arg.Any<CancellationToken>()');
+    expect(t).toContain('.ShouldBe(');
+    expect(t).not.toContain('[TestFixture]');
+  });
+});
