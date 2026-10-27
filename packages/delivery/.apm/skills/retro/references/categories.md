@@ -2,7 +2,7 @@
 
 Adapted from mattpocock/skills `skills/engineering/retro/SKILL.md` (MIT), commit 49dd158d1076134a641b33efb035946536778336 (default branch HEAD when fetched; the upstream file was not pinned to an older revision). Categories 7-9 are ours.
 
-Goal: improve the agent **environment**, not the code under review. Rank candidates by severity (cost or rework caused). Each candidate cites evidence: a ledger line, a transcript turn or a metric.
+Goal: improve the agent **environment**, not the code under review. Rank candidates by severity (cost or rework caused). Each candidate cites evidence: a transcript turn, a review finding or a metric.
 
 1. **Navigation** - did the agent take long to find the right files? Hidden dependencies between files? A navigation pointer (one line in `AGENTS.md` to a doc) fixes it. Use when exploration dominated the run.
 2. **Automated checks** - could lint, types, tests or a filesystem check have caught a mistake? Read the repo's own check command and CI first: an existing check that is unwired or broken is the finding. A repo with no guardrail (no hook, no CI job) is itself a finding. Mechanical mistakes (fixed pattern, banned API, import shape, file location) get a deterministic check, never a prose rule.

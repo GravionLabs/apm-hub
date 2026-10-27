@@ -4,7 +4,6 @@ import * as path from 'path';
 const ROOT = path.resolve(__dirname, '../..');
 /** Every pwsh file that defines Resolve-StateDir (later tasks extend this list). */
 const PWSH_FILES = [
-  'packages/delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1',
   'scripts/Invoke-HeadlessSmoke.ps1',
 ];
 

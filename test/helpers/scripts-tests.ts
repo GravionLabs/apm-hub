@@ -1,7 +1,6 @@
 /** test/packages files that spawn processes; every other test/packages file is `unit`. */
 export const scriptsTests = [
   'test/packages/delivery/apm-install.test.ts',
-  'test/packages/delivery/run-metrics.test.ts',
   'test/packages/github/release-guards.test.ts',
   'test/packages/hooks/git-guardrails.test.ts',
   'test/packages/hooks/git-guardrails-targets.test.ts',
