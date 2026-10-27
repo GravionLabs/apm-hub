@@ -31,11 +31,6 @@ describe('github-issue level-prefixed titles', () => {
     expect(cc).toContain('`[Bug] fix: x` → `fix/<nr>-x`');
   });
 
-  it('prescribes [PBI] titles for follow-up and ad-hoc PBIs', () => {
-    const gates = read('references/orchestrator-gates.md');
-    expect(gates.match(/`\[PBI\] <conventional summary>`/g)?.length).toBe(2);
-  });
-
   it('keeps PR titles without level prefix and task titles prefixed', () => {
     expect(read('references/standalone-issue.md')).toContain('without level prefix');
     expect(read('references/task-issues.md')).toContain('`[Task] <conventional title>`');

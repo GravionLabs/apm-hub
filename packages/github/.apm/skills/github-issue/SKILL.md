@@ -5,7 +5,7 @@ description: 'Implement GitHub issues by type (Epic, Feature, PBI, Task), single
 
 ## Overview
 
-Single entry point for the GitHub issue lifecycle. Detect the issue type and shape of the input, then strictly follow the matching reference document. One issue per session; the `orchestrator` agent is the preferred entry point (see the hub's `docs/working-mode.md`).
+Single entry point for the GitHub issue lifecycle. Detect the issue type and shape of the input, then strictly follow the matching reference document. One issue per session.
 
 ## Prerequisites
 
@@ -45,13 +45,7 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
    | any                     | no             | `references/standalone-issue.md`                       |
    | `task`                  | —              | `references/standalone-issue.md`                       |
 
-   **Next open PBI of a Feature or Epic** (orchestrator `next` mode, end-line suggestion): `references/next-selection.md`; running them one after another until a gate (orchestrator `loop` mode, loop ledger, stop conditions): `references/loop-mode.md`. Per-PBI state table of a Feature or Epic (orchestrator `status` mode): `references/status.md`. Orchestrator issue overview, review summary and description input (PBI created at the plan gate): `references/orchestrator-gates.md`.
-
-   **PBI pipeline** (orchestrator steps 0–6, per-PBI rules, gate points): `references/pbi-pipeline.md`; parallel Task waves (`--parallel`, worktrees, integration): `references/task-waves.md`.
-
    **Batch user requests** ("implement all PBIs in feature #12", "work through these issues"): collect the target issues, then process each one sequentially with the appropriate workflow above.
-
-**Parked gate** (headless gate in a loop or queue): `pwsh scripts/Set-ParkedGate.ps1 -Issue <pbi> -Question <text> [-Option 'a|b'] [-Loop <nr>]` adds `needs-decision`, posts `templates/parked-gate.md` once, writes the `Loop: ... parked` line, frees the lease with `Exit-Checkout.ps1 -Keep` (worktree stays) and sends the `attention` event.
 
 ## Shared constraints (all workflows)
 
@@ -59,6 +53,6 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
 - Branch name `<type>/<nr>-<slug>` per `references/conventional-commits.md`; `<slug>` from the issue title after stripping `^\[(Epic|Feature|PBI|Task|Bug)\] ` (case-insensitive) and the legacy `Epic: ` / `Feature: `, then the conventional type and scope (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
 - One logical change per commit; commit format per `references/conventional-commits.md`.
 - Commit and PR titles reference the issue: `<type>: <description> (#<nr>)`; the PR body contains `Closes #<nr>` for every issue it completes (only partly delivered: `Refs #<nr>` and `## Not delivered`, see `github-pull-request`).
-- Two-stage verify (load the `detect-techstack` skill if the project's commands are unknown): per Task or commit run the build only when the stack compiles and compiled sources changed, plus targeted tests (test files of the changed paths and their direct neighbours; unknown mapping: the project's fast/unit group, never the full suite). Per PBI ONE full run (Final-Verify) after the last Task and again after the last fix round, before the review and before the PR. Never commit or move on with a red run.
+- Two-stage verify (load `detect-techstack` if the project's commands are unknown): per commit run the build only when the stack compiles and compiled sources changed, plus targeted tests (test files of the changed paths and their direct neighbours; unknown mapping: the project's fast/unit group, never the full suite). Before the pull request ONE full run, and again after the last fix round. Never commit or move on with a red run.
 - Never merge a PR with failing checks.
 - Closing a child is all that's needed — the native sub-issue link updates the parent's progress automatically. There is no checklist to tick. If a child turns out not to be linked to its parent, link it (`references/sub-issues.md`) instead of adding a checklist.
