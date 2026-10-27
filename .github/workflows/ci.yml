@@ -135,20 +135,10 @@ jobs:
       - name: Audit APM packages
         run: apm audit --ci
 
-  # One job per Vitest project, run in parallel. GravionLabs/ci/node/test@main is not
-  # used: its artifact and check names are fixed, so a matrix would lose all but one result.
-  # Required checks: the old single test step is now `Test (unit)`, `Test (scripts)`,
-  # `Test (integration)` and `Test (perf)` (wall-clock cases, `pnpm run test:perf`);
-  # the repo owner must add them to branch protection ('Build & Test' stays).
-  # Each matrix job runs on its own runner, so the vitest.config.ts outputs (test-results/junit.xml,
-  # coverage/cobertura-coverage.xml) never clash. Coverage is per project; merging it is #503.
+  # One Vitest project, one job. GravionLabs/ci/node/test@main is not used: its artifact and check names are fixed.
   test:
-    name: Test (${{ matrix.project }})
+    name: Test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project: [unit, scripts, integration, perf]
     # Least privilege: the mutable node/build@main ref gets no pull-requests write.
     permissions:
       checks: write
@@ -173,32 +163,14 @@ jobs:
           package-manager-version: '11.6.0'
           build-command: pnpm run build
 
-      # Pull requests run only the tests related to their diff (label `ci:full` forces the full run);
-      # pushes to main and release/**, and workflow_dispatch run the whole project.
-      - name: Test (related)
-        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci:full')
-        shell: bash
-        env:
-          PROJECT: ${{ matrix.project }}
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          {
-            echo "### Related tests (${PROJECT})"
-            node scripts/related-tests.mjs --project "$PROJECT" --base "origin/$BASE_REF"
-          } >> "$GITHUB_STEP_SUMMARY"
-          node scripts/run-related-tests.mjs --project "$PROJECT" --base "origin/$BASE_REF" --coverage
-
-      - name: Test (full)
-        if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full')
-        env:
-          PROJECT: ${{ matrix.project }}
-        run: pnpm run test:ci:project
+      - name: Test
+        run: pnpm run test:ci
 
       - name: Upload test results
         if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.project }}
+          name: test-results
           path: test-results/
           if-no-files-found: ignore
 
@@ -206,7 +178,7 @@ jobs:
         if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-${{ matrix.project }}
+          name: coverage
           path: coverage/
           if-no-files-found: ignore
 
@@ -214,13 +186,12 @@ jobs:
         if: success() || failure()
         uses: dorny/test-reporter@v1
         with:
-          name: Test Results (${{ matrix.project }})
+          name: Test Results
           path: test-results/junit.xml
           reporter: jest-junit
           fail-on-error: false
           fail-on-empty: false
 
-      # Informational only: a PR without related tests in this project writes an empty report, which the action rejects.
       - name: Coverage summary
         if: (success() || failure()) && hashFiles('coverage/cobertura-coverage.xml') != ''
         continue-on-error: true

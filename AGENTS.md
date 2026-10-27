@@ -17,7 +17,6 @@ src/                                  # TypeScript generators for docs/*.md, uni
 test/packages/<domain>/               # Vitest tests of package content (skills, scripts, hooks)
 test/repo/ test/helpers/              # repository checks (workflows), shared test helpers
 test/integration/skills/              # Copilot SDK harness, own package.json (`pnpm run test:integration`)
-scripts/related-tests.mjs             # changed paths → test files (`pnpm run test:related`)
 scripts/check-manifests.mjs           # apm.yml skills list ⇄ directories on disk
 site/                                 # VitePress docs site: renders docs/ in place, README as home via docs/index.md (see site/README.md)
 apm.yml                               # marketplace: lists all packages
@@ -64,11 +63,10 @@ The title of an issue starts with its level: `[Epic]`, `[Feature]`, `[PBI]`, `[T
 - Code in `src/`: unit test next to it as `<name>.test.ts`.
 - Package content (skills, scripts, hooks): `test/packages/<domain>/<topic>.test.ts`, `<domain>` is the package of the file under test.
 - Repository files outside `packages/` (workflows, `.github/`): `test/repo/`. Helpers shared by several test directories: `test/helpers/` (no `.test.ts` suffix).
-- Vitest projects: `unit` (`src/`, `test/repo/`, `test/packages/` files that spawn no process), `scripts` (`test/packages/` files that spawn pwsh, bash or git, listed in `test/helpers/scripts-tests.ts`; add a new spawning test there, `test/repo/vitest-projects.test.ts` enforces it), `integration`, `perf` (`test/packages/**/*.perf.test.ts`, `fileParallelism: false`; a case belongs there when it asserts a wall-clock bound; skipped by `pnpm test`, `test:all`, `test:ci` and `test:related`; own CI matrix job). `pnpm test` = unit + scripts, `test:unit` = unit, `test:all` = unit + scripts + integration, `test:ci` = the same with coverage, `test:perf` = perf.
-- A `test/packages` file above ≈ 50 s in `test-results/junit.xml` is split along its `describe`s (shared fixture in `test/helpers/`) before new cases are added.
-- Targeted run: `pnpm run test:related -- <paths|--staged|--range a..b>` runs only the tests mapped by `scripts/related-tests.mjs` (the script alone prints the list; `ALL` means run `pnpm test`).
-- CI: pull requests run only the tests related to their diff per Vitest project (`scripts/run-related-tests.mjs --project <p> --base origin/<base>`; a project without related tests passes at once); pushes to `main` and `release/**`, `workflow_dispatch` and PRs labelled `ci:full` run every project in full.
-- Script tests with many cases: `PwshWorker` (`test/helpers/pwsh-worker.ts`) starts one pwsh per describe (`beforeAll`/`afterAll`) and runs the script in-process per `await worker.run(args, {cwd, env})` (status/stdout/stderr like a spawn); cases that need their own process (PATH without git, stdin, the invoking process's env) stay single spawns with a comment. Fixed-case batches use `runBatch` (`queue-batch.ps1`).
+- One Vitest project (`vitest.config.ts`): `src/`, `test/repo/` and `test/packages/`, 30 s test and hook timeout. `pnpm test` runs everything, `test:ci` adds coverage, `test:watch` watches.
+- A `test/packages` file above ≈ 10 s in `test-results/junit.xml` is split along its `describe`s (shared fixture in `test/helpers/`) before new cases are added.
+- Targeted run: `pnpm vitest run <path>`.
+- Script tests with many cases: `PwshWorker` (`test/helpers/pwsh-worker.ts`) starts one pwsh per describe (`beforeAll`/`afterAll`) and runs the script in-process per `await worker.run(args, {cwd, env})` (status/stdout/stderr like a spawn); cases that need their own process (PATH without git, stdin, the invoking process's env) stay single spawns with a comment.
 - Resolve repo files from `__dirname` (`path.resolve(__dirname, '../../../packages/...')` in `test/packages/<domain>/`).
 - `test/integration/skills/` is the Copilot SDK harness with its own `package.json`; no repo tests there.
 
@@ -76,11 +74,7 @@ The title of an issue starts with its level: `[Epic]`, `[Feature]`, `[PBI]`, `[T
 
 ```powershell
 pnpm install
-pnpm run build; pnpm test                 # projects unit + scripts (includes the skill size check)
-pnpm run test:unit                        # unit project only
-pnpm run test:all                         # unit + scripts + integration
-pnpm run test:perf                        # wall-clock bound tests, run alone on an idle machine
-pnpm run test:related -- <paths|--staged> # only the tests related to the changed paths
+pnpm run build; pnpm test                 # all tests (includes the skill size check)
 node scripts/check-manifests.mjs --fix    # sync apm.yml skills lists after adding/removing skills
 pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .   # sizes, dangling refs, duplicates
 ```
