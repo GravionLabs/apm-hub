@@ -591,14 +591,7 @@ describe('upgrade note for v2 installs (#773)', () => {
     ]) {
       expect(note).toContain(`\`${a}\``);
     }
-    for (const sk of [
-      'review-fanout',
-      'verify-project',
-      'queue',
-      'handoff',
-      'orch-pipeline',
-      'orch',
-    ]) {
+    for (const sk of ['review-fanout', 'queue', 'handoff', 'orch-pipeline', 'orch']) {
       expect(note).toContain(`\`${sk}\``);
     }
     expect(note).toContain('~/.claude/agents/<name>.md');
@@ -614,5 +607,14 @@ describe('upgrade note for v2 installs (#773)', () => {
     expect(readme).toContain('## Upgrading from 2.x');
     expect(readme).toContain('references/after-install.md');
     expect(readme).toContain('#v2.5.4');
+    for (const n of [
+      'verify-project',
+      'review-fanout',
+      'orch-pipeline',
+      'pbi-runner',
+      'reviewer',
+    ]) {
+      expect(readme).toContain(`\`${n}\``);
+    }
   });
 });

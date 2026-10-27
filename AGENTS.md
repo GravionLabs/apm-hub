@@ -41,7 +41,7 @@ apm.yml                               # marketplace: lists all packages
 | `core` | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills) |
 | `all` | meta-package: every package above except `apm-tooling` |
 
-Every language package provides `<lang>-implementation` (conventions + `## Review rules`) and `<lang>-test`. `detect-techstack` returns their names so `implementation`, `code-review` and `verify-project` can dispatch.
+Every language package provides `<lang>-implementation` (conventions + `## Review rules`) and `<lang>-test`. `detect-techstack` returns their names so `implementation` and `code-review` can dispatch.
 
 ## Skill conventions
 

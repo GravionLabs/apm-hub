@@ -9,8 +9,6 @@ keywords:
   - pytest
   - uv
   - typing
-  - mcp
-  - debugging
 x-skills:
   - py-create-project
   - py-implementation
