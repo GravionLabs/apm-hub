@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "core",
-      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the orchestrator agent and its subagents and the hooks. Stack packages are installed per project.",
+      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills and the hooks. Stack packages are installed per project.",
       "version": "2.5.4",
       "source": "./packages/core"
     },
@@ -16,12 +16,6 @@
       "description": "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks.",
       "version": "2.5.4",
       "source": "./packages/all"
-    },
-    {
-      "name": "agents",
-      "description": "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the issue-reader, explorer, planner, reviewer, implementer and pr-writer subagents it delegates to, and the /orchestrator skill that runs the orchestrator inline.",
-      "version": "2.5.4",
-      "source": "./packages/agents"
     },
     {
       "name": "hooks",

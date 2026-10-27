@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import {
-  AGENT,
   INSTALLER,
   SCRIPT,
   hasPwsh,
@@ -765,10 +764,3 @@ describe.skipIf(!hasPwsh || !posix)(
   }
 );
 
-describe('orchestrator agent', () => {
-  it('writes Ledger complete. through Add-LedgerLine.ps1 before the final report line', () => {
-    const body = fs.readFileSync(AGENT, 'utf8');
-    expect(body).toContain('Ledger complete.');
-    expect(body).toContain('Add-LedgerLine.ps1');
-  });
-});

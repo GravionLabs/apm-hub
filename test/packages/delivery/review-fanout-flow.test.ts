@@ -6,10 +6,6 @@ const fanout = fs.readFileSync(
   path.join(root, 'packages/delivery/.apm/skills/review-fanout/SKILL.md'),
   'utf-8'
 );
-const lead = fs.readFileSync(
-  path.join(root, 'packages/agents/.apm/agents/review-lead.agent.md'),
-  'utf-8'
-);
 const filterRef = fs.readFileSync(
   path.join(root, 'packages/delivery/.apm/skills/review-fanout/references/package-filter.md'),
   'utf-8'
@@ -38,12 +34,6 @@ describe('review-fanout: no active waiting (#451)', () => {
     expect(fanout).toMatch(/Never run `sleep` or `Start-Sleep`, never poll/);
     for (const c of ['`Agent` returns', '`task()` awaits', '`runSubagent` returns'])
       expect(fanout).toContain(c);
-  });
-
-  it('review-lead carries the same rule', () => {
-    expect(lead).toMatch(/No active waiting/);
-    expect(lead).toMatch(/ONE message, then wait for their replies/);
-    expect(lead).toMatch(/Never run `sleep` or `Start-Sleep`, never poll/);
   });
 });
 
@@ -95,11 +85,6 @@ describe('review-fanout: smaller package (#453)', () => {
   });
 
   it('review-lead and the PBI pipeline pass the previous review.json', () => {
-    expect(lead).toMatch(/previous round's `review\.json` path to `review-fanout`/);
-    expect(lead).toMatch(
-      /only the fix diff plus the earlier findings with status fixed, open, pr-body, declined or deferred, never the full diff/
-    );
-    expect(lead).toMatch(/filters generated files, lockfiles and goldens/);
     expect(pipeline).toMatch(/previous round's `review\.json` path/);
   });
 });
@@ -212,16 +197,6 @@ describe('review-fanout: early verify (#452)', () => {
   it('keeps the fail-closed rules', () => {
     expect(fanout).toMatch(/`unverifiable` \(stays blocking\)/);
     expect(fanout).toMatch(/Fail closed: a failed dimension/);
-  });
-
-  it('review-lead follows the same flow', () => {
-    expect(lead).toMatch(/Early verify/);
-    expect(lead).toMatch(
-      /CRITICAL or HIGH finding, dispatch its verify batch at once while other dimensions still run/
-    );
-    expect(lead).toMatch(
-      /wait for all dimensions and all verify results, a finding refuted early stays refuted/
-    );
   });
 });
 
@@ -457,9 +432,6 @@ describe('review-fanout: review.json shape and ledger line (#534)', () => {
     // The previous review.json travels pipeline -> review-lead -> review-fanout.
     expect(pipeline).toMatch(
       /`review-lead` gets range, dimension list, the previous round's `review\.json` path[^\n]*?passes them to `review-fanout`/
-    );
-    expect(lead).toMatch(
-      /Re-review: also pass the previous round's `review\.json` path to `review-fanout`/
     );
     expect(fanout).toMatch(
       /\*\*Re-review\*\* after a fix round \(the caller passes the previous round's `review\.json`\)/
