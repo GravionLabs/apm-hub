@@ -258,81 +258,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     expect(r.json.commands).toEqual([
       'apm install GravionLabs/apm-hub/packages/ts',
       'apm install GravionLabs/apm-hub/packages/ng',
-      'pwsh <skills dir>/detect-techstack/scripts/Enable-Worktrees.ps1',
     ]);
-    expect(notes(r)).toContain('Enable-Worktrees.ps1');
     expect(apmCalls()).toEqual([]);
-  });
-
-  describe('Enable-Worktrees.ps1 after the install (#445)', () => {
-    // fake onboarding script in the home skills dir: records that it ran and prints the JSON the real one prints
-    const fakeEnable = (body: string) => {
-      const dir = path.dirname(detectDir(S.home));
-      fs.writeFileSync(
-        path.join(dir, 'Enable-Worktrees.ps1'),
-        `param($Root, $TechStack, [switch]$Check)\nSet-Content '${path.join(S.dir, 'enable.ran')}' "$Root|$Check"\n${body}\n`
-      );
-    };
-    const ran = () =>
-      fs.existsSync(path.join(S.dir, 'enable.ran'))
-        ? fs.readFileSync(path.join(S.dir, 'enable.ran'), 'utf8').trim()
-        : null;
-
-    tc('runs it in apply mode after a project install and lists the changed files', async () => {
-      fakeApm();
-      fakeEnable(
-        `'{"root":"x","changed":[".gitignore","biome.json"],"hints":[{"file":"vitest.config","message":"exclude it","snippet":"s"}],"ok":false}'`
-      );
-      const r = await run(['-Packages', 'ts']);
-      expect(r.status).toBe(0);
-      expect(ran()).toMatch(/\|False$/);
-      expect(r.json.worktrees.changed).toEqual(['.gitignore', 'biome.json']);
-      expect(notes(r)).toContain('.gitignore, biome.json');
-      expect(notes(r)).toContain('exclude it');
-      expect(r.json.commands.at(-1)).toContain('Enable-Worktrees.ps1');
-    });
-
-    tc('does not run it on a dry run, with -Global or when nothing was installed', async () => {
-      fakeApm();
-      fakeEnable(`'{"changed":[],"hints":[],"ok":true}'`);
-      await run(['-Packages', 'ts', '-DryRun']);
-      await run(['-Packages', 'ts', '-Global']);
-      manifest('dependencies:\n  apm:\n    - GravionLabs/apm-hub/packages/ts\n');
-      await run(['-Packages', 'ts']);
-      expect(ran()).toBeNull();
-    });
-
-    tc('a failing script is a note, not a failed install', async () => {
-      fakeApm();
-      fakeEnable('exit 3');
-      const r = await run(['-Packages', 'ts']);
-      expect(r.status).toBe(0);
-      expect(r.json.installed).toEqual(['ts']);
-      expect(notes(r)).toContain('Enable-Worktrees.ps1 failed');
-    });
-
-    tc('a missing script is a note', async () => {
-      fakeApm();
-      const r = await run(['-Packages', 'ts']);
-      expect(r.status).toBe(0);
-      expect(notes(r)).toContain('Enable-Worktrees.ps1 not found');
-    });
-
-    tc(
-      'a project-local copy is not run without -TrustProject unless this run installed shared',
-      async () => {
-        fakeApm();
-        const d = path.dirname(detectDir(S.proj));
-        fs.writeFileSync(
-          path.join(d, 'Enable-Worktrees.ps1'),
-          `Set-Content '${path.join(S.dir, 'enable.ran')}' x\n'{"changed":[],"hints":[],"ok":true}'\n`
-        );
-        await run(['-Packages', 'ts']);
-        expect(ran()).toBeNull();
-        await run(['-Packages', 'shared']);
-        expect(ran()).toBe('x');
-      }
-    );
   });
 
   tc('phrases install-only notes as future steps in a dry run', async () => {

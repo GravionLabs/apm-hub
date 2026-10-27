@@ -29,10 +29,7 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     fs.writeFileSync(f, content);
   };
   const detect = async () => {
-    const r = await worker.run(['-ProjectRoot', dir, '-NoCache'], {
-      cwd: dir,
-      env: { ...process.env, DROMOS_STATE_DIR: path.join(dir, '.agents') },
-    });
+    const r = await worker.run(['-ProjectRoot', dir], { cwd: dir });
     expect(r.status).toBe(0);
     return JSON.parse(r.stdout);
   };
