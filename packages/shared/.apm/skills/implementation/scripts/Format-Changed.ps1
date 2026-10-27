@@ -1,8 +1,11 @@
 <#
 .SYNOPSIS
-  Runs a caller-supplied format (or check) command on the changed files with the given extensions. No language logic.
+  Runs a format (or check) command on the changed files with the given extensions.
+  Precedence: `.agents/format.json` entry for -Language, then explicit -Extensions/-Command, then the built-in defaults of -Language
+  (ts, ng: prettier then eslint; py: ruff format then ruff check --fix; dotnet: dotnet format; rust: cargo fmt).
 .PARAMETER Language
   Key into `<repo>/.agents/format.json`; an entry there replaces -Extensions, -Command and -Requires (a configured tool that is missing is an error).
+  Without -Extensions and -Command it also selects the built-in defaults (ts, ng, py, dotnet, rust); -Check uses their read-only variants.
 .PARAMETER Extensions
   Extensions to keep, e.g. '.ts','.tsx' (one comma-separated string works too; the leading dot is optional).
 .PARAMETER Command
@@ -50,22 +53,48 @@ if ($Language -and (Test-Path -LiteralPath $overrideFile -PathType Leaf)) {
     Write-Error "notice: running commands from .agents/format.json for '$Language'" -ErrorAction Continue
   }
 }
-if (-not $override) {
-  if (-not $Command) { Stop-Fail '-Command is required (no .agents/format.json entry applies)' }
-  $commands = @($Command)
+# defaults per language: ordered steps, each with its own extensions, probe and commands (format / check)
+$exts5 = @('.ts', '.tsx', '.js', '.mjs', '.cjs')
+$defaults = @{
+  ts     = @(
+    @{ Tool = 'prettier'; Ext = $exts5 + '.json'; Requires = 'npx --no-install prettier --version'; Format = @('npx --no-install prettier --write {files}'); Check = @('npx --no-install prettier --check {files}') },
+    @{ Tool = 'eslint'; Ext = $exts5; Requires = 'npx --no-install eslint --version'; Format = @('npx --no-install eslint --fix {files}'); Check = @('npx --no-install eslint {files}') })
+  py     = @(
+    @{ Tool = 'ruff'; Ext = @('.py', '.pyi'); Requires = 'uv run ruff --version'; Format = @('uv run ruff format {files}', 'uv run ruff check --fix {files}'); Check = @('uv run ruff format --check {files}', 'uv run ruff check {files}') })
+  dotnet = @(
+    @{ Tool = 'dotnet'; Ext = @('.cs'); Requires = 'dotnet format --version'; Format = @('dotnet format --include {files}'); Check = @('dotnet format --verify-no-changes --include {files}') })
+  rust   = @(
+    @{ Tool = 'cargo'; Ext = @('.rs'); Requires = 'cargo fmt --version'; Format = @('cargo fmt -- {files}'); Check = @('cargo fmt -- --check {files}') })
 }
-if (-not $Extensions) { Stop-Fail '-Extensions is required (no .agents/format.json entry supplies them)' }
+$defaults.ng = @($defaults.ts[0].Clone(), $defaults.ts[1])
+$defaults.ng[0].Ext = $exts5 + @('.json', '.html', '.scss', '.css')
 
-$plans = @($commands | ForEach-Object { , @($_.Trim() -split '\s+' | Where-Object { $_ }) })
+$steps = @()
+if ($override) {
+  if (-not $Extensions) { Stop-Fail '-Extensions is required (no .agents/format.json entry supplies them)' }
+  $steps = @(@{ Tool = $null; Ext = $Extensions; Requires = $null; Commands = $commands })
+}
+elseif (-not $Command -and -not $Extensions -and $Language -and $defaults.ContainsKey($Language)) {
+  $mode = if ($Check) { 'Check' } else { 'Format' }
+  $steps = @($defaults[$Language] | ForEach-Object { @{ Tool = $_.Tool; Ext = $_.Ext; Requires = $_.Requires; Commands = $_[$mode] } })
+}
+else {
+  if (-not $Command) { Stop-Fail '-Command is required (no .agents/format.json entry or built-in default applies)' }
+  if (-not $Extensions) { Stop-Fail '-Extensions is required (no .agents/format.json entry supplies them)' }
+  $steps = @(@{ Tool = $null; Ext = $Extensions; Requires = $Requires; Commands = @($Command) })
+}
+foreach ($st in $steps) { $st.Plans = @($st.Commands | ForEach-Object { , @($_.Trim() -split '\s+' | Where-Object { $_ }) }) }
 if ($override) {
   # a configured tool that is missing is an error even when nothing changed
-  foreach ($t in $plans) {
+  foreach ($t in $steps[0].Plans) {
     if (-not (Get-Command $t[0] -ErrorAction SilentlyContinue)) { Stop-Fail "$($t[0]) not found (configured in .agents/format.json for $Language)" }
   }
 }
 
-$exts = @($Extensions | ForEach-Object { $_ -split ',' } | Where-Object { $_.Trim() } |
-  ForEach-Object { $e = $_.Trim().ToLowerInvariant(); if ($e.StartsWith('.')) { $e } else { ".$e" } })
+function ConvertTo-Ext($List) {
+  @($List | ForEach-Object { $_ -split ',' } | Where-Object { $_.Trim() } |
+    ForEach-Object { $e = $_.Trim().ToLowerInvariant(); if ($e.StartsWith('.')) { $e } else { ".$e" } })
+}
 
 # NUL-separated output (-z): names with spaces, quotes or non-ASCII characters arrive unquoted
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -75,6 +104,7 @@ function Get-GitNames {
   if ($LASTEXITCODE -ne 0) { $code = $LASTEXITCODE; Write-Error (($out | Out-String).Trim()) -ErrorAction Continue; exit $(if ($code) { $code } else { 1 }) }
   (@($out) -join "`n") -split "`0" | Where-Object { $_ }
 }
+$code = 0
 $names = [System.Collections.Generic.List[string]]::new()
 if ($Base) {
   # a bad ref must fail loudly: a swallowed error would let -Check pass with nothing checked
@@ -86,51 +116,54 @@ $diffArgs = if ($LASTEXITCODE -eq 0) { @('diff', '--name-only', '-z', 'HEAD', '-
 Get-GitNames $diffArgs | ForEach-Object { $names.Add($_) }
 Get-GitNames @('ls-files', '--others', '--exclude-standard', '-z') | ForEach-Object { $names.Add($_) }
 
-# repo-relative, existing (deleted dropped), extension match, no duplicates
-$files = @($names | Select-Object -Unique | Where-Object {
-    $_ -and (Test-Path -LiteralPath (Join-Path $root $_) -PathType Leaf) -and ($exts -contains ([IO.Path]::GetExtension($_).ToLowerInvariant()))
-  })
-if ($files.Count -eq 0) { Write-Output 'skipped: no changed files'; exit 0 }
+# repo-relative, existing (deleted dropped), no duplicates
+$existing = @($names | Select-Object -Unique | Where-Object { $_ -and (Test-Path -LiteralPath (Join-Path $root $_) -PathType Leaf) })
 
-if (-not $override) {
-  $t = $plans[0]
-  if (-not (Get-Command $t[0] -ErrorAction SilentlyContinue)) { Write-Output "skipped: $($t[0]) not found"; exit 0 }
-}
-
-if ($Requires -and -not $override) {
-  $rt = @($Requires.Trim() -split '\s+' | Where-Object { $_ })
-  $ok = $false
-  if (Get-Command $rt[0] -ErrorAction SilentlyContinue) {
-    $ra = @($rt | Select-Object -Skip 1)
-    Push-Location -LiteralPath $root
-    try { & $rt[0] @ra *> $null; $ok = ($LASTEXITCODE -eq 0) } finally { Pop-Location }
-  }
-  if (-not $ok) { Write-Output "skipped: $($rt[0]) not configured"; exit 0 }
-}
-
-# every file is its own argument (no shell quoting); the command never sees `.` or a directory
-# a name starting with '-' must not read as an option
-$safe = @($files | ForEach-Object { if ($_.StartsWith('-')) { "./$_" } else { $_ } })
-function Get-ArgList([string[]]$Tokens) {
+function Get-ArgList([string[]]$Tokens, [string[]]$Safe) {
   $argList = [System.Collections.Generic.List[string]]::new()
   $placed = $false
   foreach ($t in $Tokens | Select-Object -Skip 1) {
-    if ($t -eq '{files}') { foreach ($f in $safe) { $argList.Add($f) }; $placed = $true }
-    elseif ($t.Contains('{files}')) { $argList.Add($t.Replace('{files}', ($safe -join ';'))); $placed = $true } # embedded: files joined by ';'
+    if ($t -eq '{files}') { foreach ($f in $Safe) { $argList.Add($f) }; $placed = $true }
+    elseif ($t.Contains('{files}')) { $argList.Add($t.Replace('{files}', ($Safe -join ';'))); $placed = $true } # embedded: files joined by ';'
     else { $argList.Add($t) }
   }
-  if (-not $placed) { foreach ($f in $safe) { $argList.Add($f) } }
+  if (-not $placed) { foreach ($f in $Safe) { $argList.Add($f) } }
   , $argList.ToArray()
 }
 
+$done = [System.Collections.Generic.HashSet[string]]::new()
+$skipped = 0
 Push-Location -LiteralPath $root
 try {
-  foreach ($t in $plans) {
-    $al = Get-ArgList $t
-    & $t[0] @al
-    $code = $LASTEXITCODE
+  foreach ($st in $steps) {
+    $exts = ConvertTo-Ext $st.Ext
+    $files = @($existing | Where-Object { $exts -contains ([IO.Path]::GetExtension($_).ToLowerInvariant()) })
+    if ($files.Count -eq 0) { continue }
+    if (-not $override) {
+      $t = $st.Plans[0]
+      if (-not (Get-Command $t[0] -ErrorAction SilentlyContinue)) { Write-Output "skipped: $($t[0]) not found"; $skipped++; continue }
+    }
+    if ($st.Requires -and -not $override) {
+      $rt = @($st.Requires.Trim() -split '\s+' | Where-Object { $_ })
+      $ok = $false
+      if (Get-Command $rt[0] -ErrorAction SilentlyContinue) {
+        $ra = @($rt | Select-Object -Skip 1)
+        & $rt[0] @ra *> $null; $ok = ($LASTEXITCODE -eq 0)
+      }
+      if (-not $ok) { $name = if ($st.Tool) { $st.Tool } else { $rt[0] }; Write-Output "skipped: $name not configured"; $skipped++; continue }
+    }
+    # every file is its own argument (no shell quoting); the command never sees `.` or a directory
+    # a name starting with '-' must not read as an option
+    $safe = @($files | ForEach-Object { if ($_.StartsWith('-')) { "./$_" } else { $_ } })
+    foreach ($t in $st.Plans) {
+      $al = Get-ArgList $t $safe
+      & $t[0] @al
+      if ($LASTEXITCODE -ne 0) { $code = $LASTEXITCODE; break }
+    }
     if ($code -ne 0) { break }
+    foreach ($f in $files) { $null = $done.Add($f) }
   }
 } finally { Pop-Location }
 if ($code -ne 0) { exit $code }
-Write-Output ("{0}: {1} files" -f ($(if ($Check) { 'checked' } else { 'formatted' }), $files.Count))
+if ($done.Count -gt 0) { Write-Output ("{0}: {1} files" -f ($(if ($Check) { 'checked' } else { 'formatted' }), $done.Count)) }
+elseif ($skipped -eq 0) { Write-Output 'skipped: no changed files' }

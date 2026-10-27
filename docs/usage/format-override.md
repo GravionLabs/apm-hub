@@ -1,6 +1,6 @@
 # Format override
 
-By default the `## Format` section of each `<lang>-implementation` skill decides how changed files are formatted and checked. A project can replace these commands per language with `.agents/format.json`, for example to use JetBrains tools.
+By default `Format-Changed.ps1 -Language <lang>` runs the built-in commands of `ts`, `ng`, `py`, `dotnet` and `rust` (named in the `## Format` section of each `<lang>-implementation` skill). A project can replace these commands per language with `.agents/format.json`, for example to use JetBrains tools.
 
 ## Schema
 
@@ -15,12 +15,12 @@ By default the `## Format` section of each `<lang>-implementation` skill decides
 ```
 
 - Key: the language (`ts`, `ng`, `py`, `dotnet`, ...), as passed with `-Language` by the language skill.
-- `extensions`: files to keep (optional; absent keeps the skill's extensions).
-- `format`: command for the format step; `check`: command for the read-only check (`verify-project`). Each is a string or an array run in order; the first non-zero exit stops. `{files}` is replaced by the changed files, repo-relative, one argument each; inside a token (`--include={files}`) the files are joined by `;`.
+- `extensions`: files to keep (optional; absent needs `-Extensions` on the call).
+- `format`: command for the format step; `check`: command for the read-only check (what CI or the caller runs). Each is a string or an array run in order; the first non-zero exit stops. `{files}` is replaced by the changed files, repo-relative, one argument each; inside a token (`--include={files}`) the files are joined by `;`.
 
 ## Precedence
 
-An entry for a language replaces all default commands of that language. With an entry the script runs once per mode with `-Language <lang>` only. It ignores `-Command`/`-Requires`, so a skill that calls the script several times (prettier then eslint) repeats the override commands; keep them idempotent. The script prints a `notice:` on stderr when it runs commands from the file; the file is repo-controlled, review it like code. Languages without an entry keep their defaults; entries for other languages are ignored.
+An entry for a language replaces all default commands of that language. With an entry the script runs once per mode with `-Language <lang>` only. It ignores `-Command`/`-Requires`, so a caller that runs the script several times repeats the override commands; keep them idempotent. The script prints a `notice:` on stderr when it runs commands from the file; the file is repo-controlled, review it like code. Languages without an entry keep their defaults; entries for other languages are ignored.
 
 ## Errors
 

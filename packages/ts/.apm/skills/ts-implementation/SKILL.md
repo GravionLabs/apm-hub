@@ -11,14 +11,10 @@ description: 'TypeScript implementation and test rules (Vitest) extending `imple
 
 ## Format
 
-- Extensions: prettier `.ts .tsx .js .mjs .cjs .json`; eslint only `.ts .tsx .js .mjs .cjs` (never json, html, scss, css)
+- Extensions: prettier `.ts .tsx .js .mjs .cjs .json`; eslint only `.ts .tsx .js .mjs .cjs`
 - Format: `npx prettier --write {files}` then `npx eslint --fix {files}`
 - Check (read-only): `npx prettier --check {files}` and `npx eslint {files}`
-- Not configured: tool not in the project — the `-Requires` probe fails and the script prints `skipped: <tool> not configured`; note it in the report
-- Run after green tests, before the commit (`-Check` for the check commands; see `implementation` `references/format.md`):
-  `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Language ts -Extensions .ts,.tsx,.js,.mjs,.cjs,.json -Requires 'npx --no-install prettier --version' -Command 'npx --no-install prettier --write {files}'`
-  `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Language ts -Extensions .ts,.tsx,.js,.mjs,.cjs -Requires 'npx --no-install eslint --version' -Command 'npx --no-install eslint --fix {files}'`
-- Override: `.agents/format.json` with an entry for `ts` replaces these commands; then run the script once per mode with `-Language ts` only (it supplies extensions and commands); a missing configured tool is an error (`docs/usage/format-override.md`)
+- Run after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Language ts` (`-Check` for the check commands; not-configured, override: references/format.md of `implementation`)
 
 ## Imports
 
