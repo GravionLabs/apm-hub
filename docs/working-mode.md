@@ -10,7 +10,7 @@ Everything here is interactive: you start a Claude Code, Copilot CLI or OpenCode
 2. Plan if the issue is large: `Plan issue #42.` (`planner` writes the plan one level down; after you approve, `github-issue` creates the sub-issues).
 3. Implement: `Implement #42.` (`github-issue` reads the issue, `implementation` dispatches to the stack skill, tests change with the code).
 4. Verify with the build and test commands of the project.
-5. Review once: `Review the current diff.` (`code-review`). Fix 🔴 findings; the pull request is the second review.
+5. Review once: `Review the current diff.` (`code-review`). Fix blocking findings; the pull request is the second review.
 6. Open the PR: `Create a PR for this branch.` (`github-pull-request`).
 7. `/clear` (or close the session) before the next issue.
 
