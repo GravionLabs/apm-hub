@@ -14,9 +14,9 @@ Consequence of the order, accepted: between the end of Stage A and the first usa
 - the Copilot SDK harness (B5 takes it from the tag `v2.5.4`, so A13 may delete it),
 - the old pipeline as an installable pin: `v2.5.4` is the last release with agents, hooks and queue.
 
-**Who implements what.** Every PBI without the label `interactive` is written to be implemented by an unattended Sonnet session: paths are named, the decision is made, the PBI body is self-contained. PBIs labelled `interactive` (B6b, B10b, P8) need a human in the loop: they measure or decide. A8 carries a default decision that can be changed before it starts, never in its PR.
+**Who implements what.** Every PBI without the label `interactive` is written to be implemented by an unattended Sonnet session: paths are named, the decision is made, the PBI body is self-contained. PBIs labelled `interactive` (B6b, B6c, B10b, B17b, A15, B21, P8) need a human in the loop: they measure, decide or release (a merge into `main` publishes a release). A8 carries a default decision that can be changed before it starts, never in its PR.
 
-Milestones: apm-hub `3.0.0` (Stage A), `3.1.0` (P1-P9); dromos `0.2.0` (B1-B6b), `0.3.0` (B7-B17), `0.4.0` (B18-B21). The unreleased milestones of the earlier roadmap were renamed to `<version> (old roadmap)` and closed during the triage (section 0).
+Milestones: apm-hub `3.0.0` (Stage A), `3.1.0` (P1-P9); dromos `0.2.0` (B1-B6c), `0.3.0` (B7-B17b), `0.4.0` (B18-B21). The unreleased milestones of the earlier roadmap were renamed to `<version> (old roadmap)` and closed during the triage (section 0).
 
 ---
 
@@ -103,6 +103,7 @@ Done when: `dromos run epic <nr> --harness claude|copilot` plans missing PBIs an
 | B6b | `[PBI] chore: spike measurement and harness decision` | S | `dromos run task` run three times per harness against a throwaway repository; results (wall time, JSON validity, permission stalls, usage availability) recorded in `docs/spike.md`; decision recorded there and in dromos#131: Copilot via SDK (B5 as written), via the CLI adapter only, or Claude-only for 0.4.0; B5 is edited to match before it starts | B6 |
 | B4 | `[PBI] feat: Claude adapter on the Claude Agent SDK` | M | `src/runner/harness/claude.ts` runs a phase with the Claude Agent SDK (`@anthropic-ai/claude-agent-sdk`, version pinned in `package.json`): model, permission callback from B3, skills directory, JSON output validated against the phase schema, one retry on invalid JSON with the validation error appended; the CLI adapter from B6 stays as fallback behind `harness: "claude-cli"`; version detection (`claude --version`, SDK package version) into the run header event; tests with recorded SDK message fixtures; one opt-in live test (`DROMOS_LIVE=claude`) | B6 |
 | B5 | `[PBI] feat: Copilot adapter on @github/copilot-sdk` | M | `src/runner/harness/copilot.ts` with `CopilotClient`/`createSession` (inline custom agent, `onPermissionRequest` → B3 callback, `COPILOT_SKILLS_DIRS`, JSON requested in the prompt and validated, one retry); seed: `git -C ../apm-hub show v2.5.4:test/integration/harness/copilot-harness.ts`; SDK version pinned; usage from SDK events where available, else `null` (never estimated); version detection into the run header; tests with recorded event fixtures; opt-in live test (`DROMOS_LIVE=copilot`) | B6b |
+| B6c | `[PBI] chore: release dromos 0.2.0` | S | Features of milestone 0.2.0 closed; release PR `release/next` → `main` green, GitVersion reports `0.2.0`; merged by the owner; tag `v0.2.0`, GitHub Release and CHANGELOG section exist; milestone closed. Added 2026-10-27: releases after 0.2.0 and 0.3.0 make the adapters and the runner installable before Stage C | B4, B5 |
 
 #### [Feature] feat: PBI runner (milestone 0.3.0)
 
@@ -131,6 +132,7 @@ Done when: `dromos run epic <nr> --harness claude|copilot` plans missing PBIs an
 |---|---|---|---|---|
 | B16 | `[PBI] chore: remove the pull-model MCP tools and the old workflow state machine` | M | `src/tools/{submit,review,pr,runs,status}.ts` and their tests deleted; `src/tools/{messaging,inbox}.ts` stay only if code outside `src/tools/` or the herdr plugin references them (check with `grep -rn` and state the result in the PR), else deleted too; `src/state-machine.ts` (old pull model) and its tests deleted; `src/gate.ts` stays (command runner used by the runner's test step); `README.md` MCP section rewritten | B10 |
 | B17 | `[PBI] chore: remove http-lease and run-lease` | S | `src/{http-lease,run-lease,lease}.ts` and tests deleted, their routes removed from `src/http.ts`; worktree ownership is the runner's (B8 claim); `src/state-dir.ts` kept only for the SQLite path | B16 |
+| B17b | `[PBI] chore: release dromos 0.3.0` | S | Features of milestone 0.3.0 closed; `README.md` describes `dromos run pbi`, `dromos plan`, `dromos run feature` and `epic`, `dromos status`; release PR green, GitVersion reports `0.3.0`; merged by the owner; tag `v0.3.0`, GitHub Release and CHANGELOG section exist; milestone closed | B10b, B15, B17 |
 
 ### apm-hub, in parallel with Stage B
 
@@ -186,10 +188,11 @@ P8 lives in apm-hub and is a sub-issue of this dromos Epic.
 
 ```
 A1 → A2 → {A3, A4, A5, A6, A8} → {A7, A9, A10, A11} → A12 → A13 → A14 → A15
-B1 → B2 → B3 → B6 → B6b → B5
+B1 → B2 → B3 → B6 → B6b → B5 → B6c
                      B6 → B4 → B9 ; B7 → B8 → B9 → B10 → B11 → B10b
                                        B8 → B12 → B13 → B13b → B14 → B15
                                                B10 → B16 → B17
+(B10b, B15, B17) → B17b
 A11 → P1 ; A7 → P2 ; A5 → P3 ; (A10, B19) → P4 ; (B11, B13b) → P5 → P6 ; B3 → P9 ; P1-P6, P9 → P7
 (B10, B13b) → B18 → B19 → B20 ; (B15, B17, B19) → B21 ; (P7, B21, B10b) → P8
 ```
@@ -279,6 +282,7 @@ Issue numbers (`#n` = apm-hub, `dromos#n` = GravionLabs/dromos):
 | B5 | dromos#219 |
 | B6 | dromos#216 |
 | B6b | dromos#217 |
+| B6c | dromos#247 |
 | B7 | dromos#220 |
 | B8 | dromos#221 |
 | B9 | dromos#222 |
@@ -292,6 +296,7 @@ Issue numbers (`#n` = apm-hub, `dromos#n` = GravionLabs/dromos):
 | B15 | dromos#230 |
 | B16 | dromos#231 |
 | B17 | dromos#232 |
+| B17b | dromos#248 |
 | B18 | dromos#233 |
 | B19 | dromos#234 |
 | B20 | dromos#235 |
