@@ -72,4 +72,14 @@ describe('grilling reference', () => {
       /\*\*Plan\*\*[^\n]*references\/grilling\.md[^\n]*references\/publish\.md/
     );
   });
+  it('runs one grilling cycle per PBI in the per-PBI breakdown (#580)', () => {
+    expect(grilling).toMatch(/## Per-PBI breakdown/);
+    expect(grilling).toMatch(/one grilling cycle per PBI/);
+    expect(grilling).toMatch(/Never batch the questions of several PBIs/);
+    expect(grilling).toContain('"Plan gate"');
+  });
+
+  it('publish.md points from a pbi publish to the Plan gate breakdown (#580)', () => {
+    expect(publish).toMatch(/After a level `pbi` publish[^\n]*`--no-tasks`[^\n]*"Plan gate"/);
+  });
 });

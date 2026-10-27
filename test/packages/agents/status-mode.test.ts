@@ -9,6 +9,13 @@ const gates = read(`${dir}/references/orchestrator-gates.md`);
 const skill = read(`${dir}/SKILL.md`);
 const section = (text: string, heading: string) => text.split(`## ${heading}`)[1].split(/^## /m)[0];
 
+describe('status.md: unplanned state (#580)', () => {
+  it('defines unplanned and offers plan <feature> --tasks', () => {
+    expect(section(status, 'States')).toMatch(/`unplanned`:.*label `planned`/);
+    expect(status).toContain('`plan <feature> --tasks`');
+  });
+});
+
 describe('status.md: status table rules', () => {
   it('lists the six states in precedence order', () => {
     const states = section(status, 'States');
@@ -18,7 +25,8 @@ describe('status.md: status table rules', () => {
       '`needs-decision`',
       '`blocked by #<a>, #<b>`',
       '`in progress (<detail>)`',
-      '`open`',
+      '`unplanned`',
+      '`open`: none of the above',
     ];
     const idx = order.map((s) => states.indexOf(s));
     expect(idx.every((i) => i >= 0)).toBe(true);
