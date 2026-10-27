@@ -32,7 +32,16 @@ describe('github-issue level-prefixed titles', () => {
   });
 
   it('keeps PR titles without level prefix and task titles prefixed', () => {
-    expect(read('references/standalone-issue.md')).toContain('without level prefix');
+    expect(read('references/standalone-issue.md')).toContain('the skill owns title and footer');
+    expect(
+      readFileSync(
+        path.resolve(
+          __dirname,
+          '../../../packages/github/.apm/skills/github-pull-request/SKILL.md'
+        ),
+        'utf-8'
+      )
+    ).toContain('`<type>: <description> (#<issue_number>)`');
     expect(read('references/task-issues.md')).toContain('`[Task] <conventional title>`');
   });
 });

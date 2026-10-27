@@ -27,7 +27,7 @@ Applies to: **Task**, **PBI** (no tasks), **Bug** (no tasks), **Feature** (no PB
 9. Verify per `implementation`: targeted tests per commit, ONE full build + test suite run before the review, and again after the last fix round. Fix failures; never commit red.
 10. Run the `code-review` skill once on `git diff origin/<base>...HEAD`; fix every 🔴 finding before the pull request.
 11. Push: `git push -u origin HEAD`
-12. Create the PR with the `github-pull-request` skill (`base_branch: <base>`, title `<type>: <desc> (#<nr>)` without level prefix, body ends with `Closes #<nr>`)
+12. Create the PR with the `github-pull-request` skill (`base_branch: <base>`); the skill owns title and footer
 13. If the issue has a parent: confirm it is actually linked as a native sub-issue —
     `gh api repos/{owner}/{repo}/issues/<parent-nr>/sub_issues --jq '.[].number'` should include `<nr>`.
     If it is missing, link it per `sub-issues.md`. An unlinked child looks normal in `gh issue list`,

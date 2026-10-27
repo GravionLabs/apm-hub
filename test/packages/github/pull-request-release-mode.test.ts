@@ -65,4 +65,17 @@ describe('github-pull-request release mode', () => {
     expect(step8).toMatch(/`auto_merge: false`/);
     expect(step8).toMatch(/Never use a direct `gh pr create`/);
   });
+
+  it('review_notes replaces the review-fanout inputs and the standalone step names no title format', () => {
+    expect(prSkill).toMatch(/`review_notes` \(default: empty\)/);
+    expect(prSkill).toMatch(/add `## Review notes`[^\n]*before the footer/);
+    expect(prSkill).toMatch(/never turn `Closes` into `Refs`/);
+    expect(prSkill).not.toMatch(/advisories_not_fixed|follow_up_candidates/);
+    const standalone = read(
+      'packages/github/.apm/skills/github-issue/references/standalone-issue.md'
+    );
+    const step12 = /\n12\. [^\n]*/.exec(standalone)?.[0] ?? '';
+    expect(step12).toMatch(/`base_branch: <base>`/);
+    expect(step12).not.toMatch(/<type>|Closes/);
+  });
 });
