@@ -40,6 +40,37 @@ describe('ci.yml parallel Vitest jobs (#502)', () => {
     for (const a of artifacts) expect(a.with?.name).toContain('${{ matrix.project }}');
   });
 
+  it('runs related tests on pull requests and the full project on push (#704)', () => {
+    expect(wf.on.push.branches).toEqual(['main', 'release/**']);
+    expect(wf.on.pull_request.types).toContain('labeled');
+    expect(wf.jobs.test.name).toBe('Test (${{ matrix.project }})');
+    const related = steps('test').find((s) => s.run?.includes('run-related-tests.mjs')) as Step & {
+      if?: string;
+      env?: Record<string, string>;
+    };
+    expect(related.run).toContain('--project "$PROJECT" --base "origin/$BASE_REF" --coverage');
+    expect(related.env?.BASE_REF).toBe('${{ github.base_ref }}');
+    expect(related.run).toContain('GITHUB_STEP_SUMMARY');
+    expect(related.if).toContain("github.event_name == 'pull_request'");
+    expect(related.if).toContain("!contains(github.event.pull_request.labels.*.name, 'ci:full')");
+    const full = steps('test').find((s) => s.run === 'pnpm run test:ci:project') as Step & {
+      if?: string;
+    };
+    expect(full.if).toContain("github.event_name != 'pull_request'");
+    expect(full.if).toContain("contains(github.event.pull_request.labels.*.name, 'ci:full')");
+    const checkout = steps('test').find((s) => s.uses?.startsWith('actions/checkout'));
+    expect(checkout?.with?.['fetch-depth']).toContain("'pull_request' && 0");
+  });
+
+  it('tolerates a missing junit.xml and coverage file when no tests are related (#704)', () => {
+    const reporter = steps('test').find((s) => s.uses?.startsWith('dorny/test-reporter'));
+    expect(reporter?.with?.['fail-on-empty']).toBe(false);
+    const summary = steps('test').find((s) => s.uses?.startsWith('irongut/CodeCoverageSummary')) as
+      | (Step & { if?: string })
+      | undefined;
+    expect(summary?.if).toContain("hashFiles('coverage/cobertura-coverage.xml') != ''");
+  });
+
   it('publishes a per-project report and coverage summary from the vitest outputs', () => {
     const reporter = steps('test').find((s) => s.uses?.startsWith('dorny/test-reporter'));
     expect(reporter?.with?.name).toContain('${{ matrix.project }}');
