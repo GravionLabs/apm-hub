@@ -10,7 +10,7 @@ keywords:
   - issue
   - workflow
   - git
-skills:
+x-skills:
   - github-issue
   - github-pull-request
   - github-release

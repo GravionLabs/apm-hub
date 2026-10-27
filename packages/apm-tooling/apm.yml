@@ -8,7 +8,7 @@ keywords:
   - apm
   - tooling
   - skill-lifecycle
-skills:
+x-skills:
   - skill-audit
   - skill-slim
   - skill-update

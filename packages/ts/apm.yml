@@ -9,7 +9,7 @@ keywords:
   - nodejs
   - vitest
   - eslint
-skills:
+x-skills:
   - setup-prettier-eslint-husky
   - ts-create-project
   - ts-implementation

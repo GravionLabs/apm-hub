@@ -136,7 +136,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 ```bash
 pnpm install
 pnpm run build && pnpm test            # generators + skill size check
-node scripts/check-manifests.mjs --fix # sync apm.yml skills lists
+node scripts/check-manifests.mjs --fix # sync apm.yml x-skills lists
 ```
 
 New or changed skills must follow the [skill frontmatter convention](docs/concepts/skill-frontmatter.md).

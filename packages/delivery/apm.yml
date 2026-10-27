@@ -1,12 +1,11 @@
 name: delivery
 version: 2.5.4
 description: "Issue-driven development workflow: run retrospective (retro), package installer (apm-install), issue planning with native sub-issues, and git-cliff changelog setup. Pulls in github and shared; stack packages are installed per project."
-registry: https://github.com/GravionLabs/apm-hub
 dependencies:
   apm:
     - GravionLabs/apm-hub/packages/github
     - GravionLabs/apm-hub/packages/shared
-skills:
+x-skills:
   - apm-install
   - issue-planning
   - retro

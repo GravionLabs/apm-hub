@@ -10,6 +10,6 @@ keywords:
   - clippy
   - tokio
   - testing
-skills:
+x-skills:
   - rust-implementation
   - rust-test
