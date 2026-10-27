@@ -13,6 +13,23 @@
   A missing apm.yml is created by `apm install` itself. Install form:
   apm install GravionLabs/apm-hub/packages/<pkg> [-g]
 
+  Behavior in detail:
+  - Detection runs even under -DryRun. The report maps ts/js to ts, py to py, dotnet to dotnet,
+    rust to rust and the angular framework to ng.
+  - detect-techstack missing, failing or printing invalid output: the missing ones of shared, github,
+    delivery plus a note asking for -Packages.
+  - -Global without -Packages proposes only the base packages, no stack detection (hardening beyond the
+    original task, like the -TrustProject gate). Each base package is checked separately: shared via
+    detect-techstack, github via github-issue, delivery via issue-planning; only the missing ones are proposed.
+  - Installed state comes from the manifest (apm.yml, ~/.apm/apm.yml with -Global; comments ignored; core and
+    all cover their members; <pkg>@apm-hub is recognised) and from apm_modules/. Those packages land in `skipped`.
+  - -Packages accepts comma-separated names (whitespace and empty entries ignored; an empty list exits 1).
+    A requested core or all covers its members: they are not installed next to it.
+  - A failing `apm install` stops the run: exit 1, `failed` names the package, `notAttempted` the rest.
+  - -DryRun reports `wouldInstall`, never `installed`; install-only notes read "After install: ...".
+  - The direct form `apm install GravionLabs/apm-hub/packages/<pkg>` is used, not `apm marketplace add` or
+    <pkg>@apm-hub, because it needs no registration step. apm output goes to stderr, so stdout is pure JSON.
+
 .PARAMETER Packages
   Packages to install (comma-separated); skips detection. One of shared, github, delivery,
   hooks, statusline, core, all, ts, py, ng, dotnet.
