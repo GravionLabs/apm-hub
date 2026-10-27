@@ -35,9 +35,6 @@ The contributor tooling package is not offered. What each package brings: [packa
 3. Run the same command without `-DryRun`. The result lists `installed`, `skipped`, `failed`, `notAttempted`, `provides`
    (what each installed package brings), `dependencies` (`angular/skills` for `ng`, `dotnet/skills` for `dotnet`) and
    `notes`. Tell the user what was installed, which dependencies came along, and any failed or not-attempted package.
-   A project install then runs `Enable-Worktrees.ps1` (apply mode, `detect-techstack/scripts/`): it makes `.gitignore` and the
-   stack configs ignore `.worktrees/` and the result lists the changed files and open hints under `worktrees`. Tell the user
-   to commit those files (not with `-Global`; a dry run lists the script as a step).
 4. Relay the `notes` and `sanitized` and follow [after install](references/after-install.md): the script ran
    `apmw sanitize` for agents (or says why not), what to commit.
 

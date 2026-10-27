@@ -30,8 +30,7 @@
   Print the commands in the JSON result, run nothing. The result lists `wouldInstall`, not `installed`.
 
 .OUTPUTS
-  JSON {dryRun, installed|wouldInstall, skipped, failed, notAttempted, commands, sanitized, provides, dependencies, worktrees, notes}.
-  Project installs then run Enable-Worktrees.ps1 (apply mode) and report {changed, hints} as `worktrees` (null on -Global, -DryRun or when nothing was installed).
+  JSON {dryRun, installed|wouldInstall, skipped, failed, notAttempted, commands, sanitized, provides, dependencies, notes}.
   After installing agents, core or all the script runs `apmw sanitize -p <client>` (-g under -Global) for every client with an agents directory and lists them as `sanitized`; a missing or failing apmw is a note, not a failure.
   Exit 1 when apm or pwsh 7 is missing, a package name is invalid or an install command fails.
 #>
@@ -213,52 +212,6 @@ foreach ($pkg in $wanted) {
   $done.Add($pkg)
 }
 
-# Project installs: one-time repository onboarding for .worktrees/ (Enable-Worktrees.ps1, apply mode). The changed files are listed for the PR.
-# The script lives next to Detect-TechStack.ps1; a project-local copy counts as trusted only when this run installed shared/core/all or -TrustProject is given.
-function Find-Enable {
-  foreach ($d in $homeDirs) {
-    $p = Join-Path $userHome "$d/detect-techstack/scripts/Enable-Worktrees.ps1"
-    if (Test-Path $p) { return $p }
-  }
-  if ($TrustProject -or ($done | Where-Object { $_ -in 'shared', 'core', 'all' })) {
-    foreach ($d in $projectDirs) {
-      $p = Join-Path (Get-Location) "$d/detect-techstack/scripts/Enable-Worktrees.ps1"
-      if (Test-Path $p) { return $p }
-    }
-  }
-  return $null
-}
-$worktrees = $null
-if (-not $Global -and -not $failed -and $done.Count -gt 0) {
-  if ($DryRun) {
-    $commands.Add('pwsh <skills dir>/detect-techstack/scripts/Enable-Worktrees.ps1')
-    $notes.Add('After install: Enable-Worktrees.ps1 makes .gitignore and the stack configs ignore .worktrees/; commit the changed files.')
-  } else {
-    $enable = Find-Enable
-    if (-not $enable) {
-      $notes.Add('Enable-Worktrees.ps1 not found (install the shared package): run it once per repository so .worktrees/ is ignored.')
-    } else {
-      $commands.Add("pwsh $enable")
-      try {
-        $stackJson = $null
-        $detectSibling = Join-Path (Split-Path -Parent $enable) 'Detect-TechStack.ps1'
-        if (Test-Path $detectSibling) {
-          $stackJson = (& pwsh -NoProfile -File $detectSibling -ProjectRoot (Get-Location).Path 2>$null | Out-String).Trim()
-          if ($LASTEXITCODE -ne 0) { $stackJson = $null }
-        }
-        $enableArgs = @('-NoProfile', '-File', $enable, '-Root', (Get-Location).Path) + $(if ($stackJson) { @('-TechStack', $stackJson) } else { @() })
-        $raw = (& pwsh @enableArgs 2>&1 | ForEach-Object { "$_" }) -join "`n"
-        if ($LASTEXITCODE -ne 0) { throw "exit $LASTEXITCODE" }
-        $worktrees = $raw | ConvertFrom-Json
-        if (@($worktrees.changed).Count) { $notes.Add("Enable-Worktrees.ps1 changed: $(@($worktrees.changed) -join ', '). Commit these files.") }
-        foreach ($h in @($worktrees.hints)) { $notes.Add("Enable-Worktrees.ps1 hint ($($h.file)): $($h.message)") }
-      } catch {
-        $notes.Add("Enable-Worktrees.ps1 failed ($($_.Exception.Message)): run it by hand.")
-      }
-    }
-  }
-}
-
 $when = if ($DryRun) { 'After install: ' } else { '' }
 $g = if ($Global) { ' -g' } else { '' }
 # Agents: apm copies them in the source format; `apmw sanitize` rewrites the frontmatter per client. The script runs it itself
@@ -307,7 +260,6 @@ $result.commands = @($commands)
 $result.sanitized = @($sanitized)
 $result.provides = $prov
 $result.dependencies = $deps
-$result.worktrees = $(if ($worktrees) { [ordered]@{ changed = @($worktrees.changed); hints = @($worktrees.hints) } } else { $null })
 $result.notes = @($notes)
 $result | ConvertTo-Json -Depth 4
 
