@@ -49,7 +49,7 @@
     },
     {
       "name": "github",
-      "description": "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation, pull request creation, release branches (cut, finish), GitHub Project standard (github-project).",
+      "description": "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation, pull request creation, release branches (cut, finish).",
       "version": "2.5.4",
       "source": "./packages/github"
     },

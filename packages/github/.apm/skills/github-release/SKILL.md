@@ -36,7 +36,7 @@ Owns the lifecycle of the rolling `release/next` branch (explicit `release/<x.y>
 2a. `grep -l 'ci/.github/workflows/release-branch.yml' .github/workflows/*.yml` finds nothing → tell the user the repo does not label
    merged issues and offer to copy `templates/release-branch.yml` to `.github/workflows/release-branch.yml`
    (never silently; one PR per repo, see `references/merged-label.md`).
-   A GitHub Project mirrors the label as status `In release`: `github-project sync`.
+   A GitHub Project mirrors the label as status `In release`: `github-project sync` (skill of GravionLabs/ci).
 3. If `--feature <nr>` → insert `Release branch: release/next` as the second line of that issue's
    body (`gh issue view <nr> --json body`, `gh issue edit <nr> --body-file -`); keep the `Parent …`
    line first. Child issues inherit it through the resolver.
