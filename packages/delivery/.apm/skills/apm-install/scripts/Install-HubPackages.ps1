@@ -20,7 +20,7 @@
     delivery plus a note asking for -Packages.
   - -Global without -Packages proposes only the base packages, no stack detection (hardening beyond the
     original task, like the -TrustProject gate). Each base package is checked separately: shared via
-    detect-techstack, github via github-issue, delivery via issue-planning; only the missing ones are proposed.
+    detect-techstack, github via github-issue, delivery via planner; only the missing ones are proposed.
   - Installed state comes from the manifest (apm.yml, ~/.apm/apm.yml with -Global; comments ignored; core and
     all cover their members; <pkg>@apm-hub is recognised) and from apm_modules/. Those packages land in `skipped`.
   - -Packages accepts comma-separated names (whitespace and empty entries ignored; an empty list exits 1).
@@ -99,7 +99,7 @@ $allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust'
 $provides = @{
   shared   = 'skills: implementation, detect-techstack, diagnose, code-review'
   github   = 'skills: github-issue, github-pull-request, github-release'
-  delivery = 'skills: issue-planning, retro, apm-install'
+  delivery = 'skills: planner, retro, apm-install'
   hooks    = 'hooks: git guardrails'
   statusline = 'skills: context-statusline'
   core     = 'github, delivery, shared, hooks, statusline'
@@ -114,7 +114,7 @@ $externalDeps = @{ ng = 'angular/skills (angular-developer)'; dotnet = 'dotnet/s
 
 # Base packages already present in the user's client skill directories (one marker skill each)
 function Get-MissingBase {
-  $marker = [ordered]@{ shared = 'detect-techstack'; github = 'github-issue'; delivery = 'issue-planning' }
+  $marker = [ordered]@{ shared = 'detect-techstack'; github = 'github-issue'; delivery = 'planner' }
   $missing = [System.Collections.Generic.List[string]]::new()
   foreach ($k in $marker.Keys) {
     $found = $false

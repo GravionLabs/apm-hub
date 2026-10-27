@@ -53,7 +53,7 @@ One issue per session, see [Working mode](../working-mode.md).
    Plan issue #42.
    ```
 
-   `issue-planning` explores the codebase and plans one level down (Epic to Features, Feature to PBIs, PBI to tasks) with `blocked_by` and size. After you approve, `github-issue` creates the issues with native sub-issue and blocked-by links.
+   `planner` explores the codebase and plans one level down (Epic to Features, Feature to PBIs, PBI to tasks) with `blocked_by` and size. After you approve, `github-issue` creates the issues with native sub-issue and blocked-by links.
 
 2. **Implement**
 

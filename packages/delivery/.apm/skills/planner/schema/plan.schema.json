@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "issue-planning plan.json",
+  "title": "planner plan.json",
   "type": "object",
-  "required": ["phase", "status", "parent_issue", "input_type", "level", "depth", "items", "questions", "summary"],
+  "required": ["phase", "status", "parent_issue", "input_type", "level", "depth", "items", "questions", "assumptions", "summary"],
   "additionalProperties": false,
   "properties": {
     "phase": { "const": "plan" },
@@ -48,6 +48,7 @@
         }
       }
     },
+    "assumptions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
     "summary": { "type": "string", "maxLength": 120 }
   }
 }

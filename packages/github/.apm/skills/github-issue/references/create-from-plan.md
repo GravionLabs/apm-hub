@@ -1,6 +1,6 @@
 # Create issues from a plan
 
-Input: the `plan.json` of `issue-planning` (its `references/plan-schema.md`). The plan has no issue
+Input: the `plan.json` of `planner` (its `references/plan-schema.md`). The plan has no issue
 numbers of its own; this procedure creates the issues, links them to the parent and sets the
 blocked-by links. Link calls and their gotchas: `sub-issues.md`.
 

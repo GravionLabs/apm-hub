@@ -1,5 +1,5 @@
 ---
-name: issue-planning
+name: planner
 description: 'Plan an issue one level down with blockers and sizes; writes plan.json. Use for "plan issue #N".'
 ---
 
@@ -36,7 +36,7 @@ The input type decides it (`labels`, else title prefix `[Epic]`/`[Feature]`/`[PB
 4. Explore per the depth with a subagent per affected area, given the file budget and the question; keep only its ≤ 300-word summaries (Claude Code built-in `Explore` subagent, OpenCode `task`, VS Code Copilot `runSubagent`). Without subagents, explore inline with Read/Grep/Glob under the same budget.
 5. Slice per `references/slicing.md`. Per item set `blocked_by`, `size` (S/M/L), `tier` (fast/standard/strong, see ## Tier) and `files`. Items whose files or exploration summary show background/async work, persistence or a state machine get an `## Invariants` section per `references/invariants.md` (load it only then).
 6. Collect open decisions as `questions[]` per `references/questions.md`; resolve anything the repo can answer yourself.
-7. Build the plan per `references/plan-schema.md`.
+7. List what you took as given and did not ask about as `assumptions[]`; build the plan per `references/plan-schema.md`.
 
 ## Tier
 

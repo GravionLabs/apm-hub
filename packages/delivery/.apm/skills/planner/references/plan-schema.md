@@ -1,6 +1,6 @@
 # plan.json schema
 
-The only output contract of `issue-planning`: one JSON object, returned to the caller, who validates it and creates the issues. Machine-checkable form: `plan.schema.json` (structure); graph invariants are listed under Validity.
+The only output contract of `planner`: one JSON object, returned to the caller, who validates it and creates the issues. Machine-checkable form: `schema/plan.schema.json` (JSON Schema draft 2020-12, structure; dromos validates against the same file); graph invariants are listed under Validity.
 
 ```json
 {
@@ -32,6 +32,7 @@ The only output contract of `issue-planning`: one JSON object, returned to the c
       "blocks": ["p1"]
     }
   ],
+  "assumptions": ["The legacy flag is read by no package in this repository."],
   "summary": "≤120 chars; names the first unblocked item"
 }
 ```
@@ -52,6 +53,8 @@ The only output contract of `issue-planning`: one JSON object, returned to the c
 | `items[].tier` | `fast`, `standard`, `strong`, chosen per the tier table below; the item body states `Tier: <tier> — <reason>`. Migration: a legacy `model` maps `haiku` to `fast`, `sonnet` to `standard`, `inherit` to `strong`; readers apply the same mapping to existing plans, new plans carry only `tier` |
 | `items[].blocked_by` | Plan ids or existing issue numbers (integers); acyclic; `[]` when free |
 | `items[].files`, `skills` | Files to touch; `<lang>-implementation` names from detect-techstack |
+| `assumptions[]` | Strings: what the plan takes as given where the repo and the request leave it open and no question is worth asking; `[]` when none |
+| `summary` | ≤ 120 characters; names the first unblocked item |
 | `questions[]` | `id`, `question`, `options` (≥ 2), `recommended` (one of `options`), `why`, `blocks` (item ids, may be empty); only decisions the repo cannot answer, see `questions.md` |
 
 ## Validity

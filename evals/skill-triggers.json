@@ -1,5 +1,5 @@
 [
-  { "skill": "issue-planning",
+  { "skill": "planner",
     "shouldTrigger": ["Plan issue #42 into tasks with blockers and sizes", "Break Feature #120 down into PBIs and write the plan.json"],
     "shouldNotTrigger": ["Implement issue #42 and open a pull request", "Review my changes before I merge"] },
   { "skill": "dotnet-test",
