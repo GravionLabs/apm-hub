@@ -58,7 +58,7 @@ Load `ng-test` for TestBed setup, signal testing, mocking and async patterns.
 
 ## Scaffolding
 
-- New standalone component (incl. the Sakai UI variant) → read `references/component.md`
+- New standalone component → read `references/component.md`
 - New NgRx Signal Store for feature state → read `references/signal-store.md`
 
 ## Related Skills

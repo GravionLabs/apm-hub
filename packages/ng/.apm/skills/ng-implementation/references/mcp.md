@@ -4,7 +4,7 @@ Run with `npx -y @angular/cli mcp`. Gives the assistant docs search, best-practi
 
 ## Setup
 
-Add to the client's MCP config (`.vscode/mcp.json` uses `servers`; Cursor `.cursor/mcp.json`, Gemini `.gemini/settings.json` and others use `mcpServers`):
+Add the server block to the client's MCP config. If the file exists, merge: never overwrite other servers.
 
 ```json
 {
@@ -14,7 +14,20 @@ Add to the client's MCP config (`.vscode/mcp.json` uses `servers`; Cursor `.curs
 }
 ```
 
-If the file exists, merge — do not overwrite other servers.
+## Client config files
+
+One table for every MCP server of this package (Angular CLI above, `ag-mcp` below).
+
+| Client | File | Root key |
+|---|---|---|
+| VS Code + Copilot | `.vscode/mcp.json` | `servers` (add `"type": "stdio"`) |
+| Claude Code | `.mcp.json` in project root | `mcpServers` |
+| Cursor | `.cursor/mcp.json` | `mcpServers` |
+| Gemini | `.gemini/settings.json` | `mcpServers` |
+
+## AG Grid server (`ag-mcp`)
+
+Block for the same files, with the root key of the table: `{ "mcpServers": { "ag-mcp": { "command": "npx", "args": ["ag-mcp"] } } }`. Usage and prompts: skill `ng-ag-grid-developer`.
 
 ## Default tools
 
