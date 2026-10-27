@@ -115,6 +115,7 @@ type Def = {
   env?: (t: Tools) => Record<string, string | null>; // null removes the variable for this case
   cwd?: (t: Tools) => string;
   repo?: boolean; // start from a copy of the template repository (origin has feat/11-x at oid)
+  path?: (t: Tools) => string; // replaces the PATH of the case (default: the case's bin dir plus the PATH of the test run)
 };
 
 describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
@@ -198,7 +199,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
           key,
           args: def.args,
           cwd: fs.realpathSync(def.cwd?.(t) ?? dir),
-          path: `${bin}${path.delimiter}${process.env.PATH}`,
+          path: def.path?.(t) ?? `${bin}${path.delimiter}${process.env.PATH}`,
           env: def.env?.(t),
         };
       });
@@ -652,8 +653,12 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
         setup: (t: Tools) => void,
         opts: Partial<Def> = {}
       ) => reg(key, args, setup, { repo: true, ...opts });
+      // review.json plus the ledger line of the reviewed commit (the merge is bound to it)
       const review = (verdict = 'APPROVE', incomplete = false) =>
-        `echo '${JSON.stringify({ verdict, incomplete })}' > .agents/11/review.json`;
+        `echo '${JSON.stringify({ verdict, incomplete })}' > .agents/11/review.json; ` +
+        // prepended: 'Ledger complete.' must stay the last ledger line
+        `{ echo "Phase review: complete — ${oid.slice(0, 8)} — package ~1k tokens"; cat .agents/11/progress.md 2>/dev/null; } > .agents/11/p.tmp; ` +
+        `mv .agents/11/p.tmp .agents/11/progress.md`;
       const pbiApprove = (pr = 101) => pbiRun(11, { pr, out: review() });
       const mergeLine = () => `pr merge 101 --squash --match-head-commit ${oid}`;
 
@@ -776,7 +781,10 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
           t.fakeQueue([pbiRun(11), doneStep]);
         },
         {
-          env: (t) => ({ MERGE_SCRIPT: stub(t, 'skipped: PR #7: state MERGED') }),
+          env: (t) => ({
+            QUEUE_TEST_HOOKS: '1',
+            MERGE_SCRIPT: stub(t, 'skipped: PR #7: state MERGED'),
+          }),
         }
       );
       it('passes -Issue, the absolute PBI ledger and -NoMerge to the script and maps its skipped line', () => {
@@ -789,7 +797,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
       });
 
       const merged = mreg('merge-stub-merged', F10, (t) => t.fakeQueue([pbiRun(11), doneStep]), {
-        env: (t) => ({ MERGE_SCRIPT: stub(t, 'merged abc1234') }),
+        env: (t) => ({ QUEUE_TEST_HOOKS: '1', MERGE_SCRIPT: stub(t, 'merged abc1234') }),
       });
       it('maps "merged <sha>" to the outcome merged, without -NoMerge', () => {
         const { r, t } = got(merged);
@@ -801,7 +809,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
       });
 
       const garbage = mreg('merge-stub-garbage', F10, (t) => t.fakeQueue([pbiRun(11), doneStep]), {
-        env: (t) => ({ MERGE_SCRIPT: stub(t, 'something else') }),
+        env: (t) => ({ QUEUE_TEST_HOOKS: '1', MERGE_SCRIPT: stub(t, 'something else') }),
       });
       it('does not count an unrecognised script output as a merge', () => {
         const { t } = got(garbage);
@@ -813,7 +821,7 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
         'merge-script-missing',
         F10,
         (t) => t.fakeQueue([pbiRun(11), doneStep]),
-        { env: (t) => ({ MERGE_SCRIPT: path.join(t.dir, 'nope.ps1') }) }
+        { env: (t) => ({ QUEUE_TEST_HOOKS: '1', MERGE_SCRIPT: path.join(t.dir, 'nope.ps1') }) }
       );
       it('fails the PBI when the merge script cannot be found', () => {
         const { r, t } = got(missing);
@@ -823,12 +831,70 @@ describe.skipIf(!hasPwsh)('Invoke-OrchestratorQueue.ps1', () => {
       });
 
       const exit1 = mreg('merge-stub-exit1', F10, (t) => t.fakeQueue([pbiRun(11), doneStep]), {
-        env: (t) => ({ MERGE_SCRIPT: stub(t, 'merged abc1234', 1) }),
+        env: (t) => ({ QUEUE_TEST_HOOKS: '1', MERGE_SCRIPT: stub(t, 'merged abc1234', 1) }),
       });
       it('treats a script exit code 1 as failed even when it printed a merged line', () => {
         const { r, t } = got(exit1);
         expect(r.status).toBe(1);
         expect(t.outcomes()).toEqual([[11, 'failed']]);
+      });
+
+      const noHooks = mreg(
+        'merge-script-no-hooks',
+        F10,
+        (t) => {
+          t.ghFake([defaultPr]);
+          t.fakeQueue([pbiApprove(), doneStep]);
+        },
+        { env: (t) => ({ MERGE_SCRIPT: stub(t, 'merged abc1234') }) }
+      );
+      it('ignores MERGE_SCRIPT without QUEUE_TEST_HOOKS=1 and runs the real script', () => {
+        const { r, t } = got(noHooks);
+        expect(r.status).toBe(0);
+        expect(fs.existsSync(path.join(t.dir, 'merge-args.log'))).toBe(false);
+        expect(t.lines()).toContain(mergeLine());
+      });
+
+      const noMergeFails = mreg(
+        'merge-off-script-fails',
+        [...F10, '-NoMerge'],
+        (t) => t.fakeQueue([pbiRun(11), doneStep]),
+        { env: (t) => ({ QUEUE_TEST_HOOKS: '1', MERGE_SCRIPT: stub(t, 'skipped: x', 1) }) }
+      );
+      it('with -NoMerge a failing script does not fail the PBI', () => {
+        const { r, t } = got(noMergeFails);
+        expect(r.status).toBe(0);
+        expect(t.outcomes()).toEqual([[11, 'done']]);
+        expect(t.queue().pbis[0].note).toContain('failed (exit code 1)');
+        expect(t.queue().state).toBe('done');
+      });
+
+      // only the fake claude on PATH: the gh precheck stops the queue before the first run
+      const noGh = mreg('merge-no-gh', F10, (t) => t.fakeQueue([pbiApprove(), doneStep]), {
+        path: (t) => {
+          const only = path.join(t.dir, 'nogh');
+          fs.mkdirSync(only, { recursive: true });
+          fs.copyFileSync(path.join(t.bin, 'claude'), path.join(only, 'claude'));
+          fs.chmodSync(path.join(only, 'claude'), 0o755);
+          return only;
+        },
+      });
+      it('refuses to start a merging queue without gh on PATH', () => {
+        const { r, t } = got(noGh);
+        expect(r.status).not.toBe(0);
+        expect(r.stderr).toContain("'gh' not found on PATH (needed to merge approved PBIs");
+        expect(t.calls()).toHaveLength(0);
+      });
+
+      const epicMerge = mreg('merge-epic', ['-Epic', '10'], (t) => {
+        t.ghFake([defaultPr]);
+        t.fakeQueue([pbiApprove(), 'echo "Epic #10 is done."']);
+      });
+      it('merges the approved PBI PR in -Epic mode too', () => {
+        const { r, t } = got(epicMerge);
+        expect(r.status).toBe(0);
+        expect(t.lines()).toContain(mergeLine());
+        expect(t.outcomes()).toEqual([[11, 'merged']]);
       });
     });
   });

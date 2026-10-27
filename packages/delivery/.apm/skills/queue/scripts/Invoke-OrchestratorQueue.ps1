@@ -39,7 +39,7 @@
   'Next PBI: #<n>' is parsed (a running child cannot be changed); the caller's value is restored at the end.
   A 'Gate:' line (at line start, may be markdown-wrapped: '**Gate**:', '> Gate:'; case-sensitive) in the output parks the PBI (or, without a selected PBI, stops the queue) even when the ledger has no new gate (the question must reach a human).
   Merge (default in -Feature/-Epic mode): after a done PBI (child exit 0) the runner calls github-pull-request/scripts/Merge-ApprovedPr.ps1
-  -Issue <pbi> -Ledger <state>/<pbi>/progress.md (MERGE_SCRIPT overrides). That script owns every precondition (review.json APPROVE, one open PR,
+  -Issue <pbi> -Ledger <state>/<pbi>/progress.md (MERGE_SCRIPT overrides it only with QUEUE_TEST_HOOKS=1, tests). That script owns every precondition (review.json APPROVE, one open PR,
   release/* base, mergeable and CLEAN, green checks, head verification). 'merged <sha>' -> outcome merged; 'skipped: <reason>' -> note 'not merged: <reason>'
   (label needs-review and a comment are set on the PBI); exit 1 -> outcome failed, the queue stops. -NoMerge never merges but still calls the script with
   -NoMerge (label and comment). -MergeApproved is the old opt-in flag, accepted as an alias (no-op); with -NoMerge it is an error.
@@ -199,11 +199,12 @@ function Invoke-ParkGate([string]$Pbi, [string]$Question, [string]$LogFile) {
 }
 
 # Merges the approved PR of a done PBI: Merge-ApprovedPr.ps1 of the github-pull-request skill (installed beside this skill, or the
-# repository layout; MERGE_SCRIPT overrides). Output goes to the PBI run.log. Never throws; returns @{ Merged; Failed; Note }.
+# repository layout; MERGE_SCRIPT overrides it only together with QUEUE_TEST_HOOKS=1 (tests), so a stray variable cannot swap the
+# script that merges). Output goes to the PBI run.log. Never throws; returns @{ Merged; Failed; Note }.
 # The script prints 'merged <sha>' or 'skipped: <reason>' (its exit 1 is a failed 'gh pr merge').
 function Invoke-MergeApproved([string]$Pbi, [string]$LedgerFile, [string]$LogFile) {
   try {
-    $f = $env:MERGE_SCRIPT
+    $f = if ($env:QUEUE_TEST_HOOKS -eq '1') { $env:MERGE_SCRIPT } else { $null }
     if (-not $f) {
       foreach ($d in @((Join-Path $PSScriptRoot '../../github-pull-request/scripts'), (Join-Path $PSScriptRoot '../../../../../github/.apm/skills/github-pull-request/scripts'))) {
         $c = Join-Path $d 'Merge-ApprovedPr.ps1'

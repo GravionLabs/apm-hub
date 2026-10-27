@@ -81,7 +81,7 @@ PBI ledger wins over a `Gate:` line, as in list mode. State is cached in `<state
 (GitHub stays the source of truth), output in `<state>/queue-<nr>.log`. It does not use the orchestrator `loop` mode.
 
 With `-Feature`/`-Epic` the runner merges by default: after a done PBI (child exit 0) it runs `github-pull-request/scripts/Merge-ApprovedPr.ps1 -Issue <pbi> -Ledger <state>/<pbi>/progress.md`
-(`MERGE_SCRIPT` overrides), which owns every precondition (`review.json` APPROVE, one open PR into `release/*`, mergeable/clean, green checks, head verification; `QUEUE_POLL_SECONDS` for the UNKNOWN polls).
+(`MERGE_SCRIPT` overrides it only with `QUEUE_TEST_HOOKS=1`, tests), which owns every precondition (`review.json` APPROVE for the reviewed commit, the ledger's open PR into `release/*`, mergeable/clean, green checks, head verification; `QUEUE_POLL_SECONDS` for the UNKNOWN polls).
 `merged <sha>` gives outcome `merged`; `skipped: <reason>` keeps the PBI `done` with the note `not merged: <reason>` (the script labels it `needs-review` and comments); exit 1 gives `failed` and stops the queue.
 `-NoMerge` never merges and still calls the script with `-NoMerge` (label and comment); `-MergeApproved` with `-NoMerge` is an error. The JSON has `merge` (`auto`|`off`) and, for one more release, `mergeApproved`. Set branch protection with required checks.
 A `Gate:` line in the output parks the PBI (no PBI selected: stops the queue) even without a new ledger gate. Never after a gate, a block or a failure.

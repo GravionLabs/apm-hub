@@ -51,7 +51,7 @@ Active when the head matches `^release/(next|[0-9]+\.[0-9]+)$` and `<base>` is t
 
 ## Scripts
 
-- `pwsh scripts/Merge-ApprovedPr.ps1 -Issue <pbi> -Ledger <state>/<pbi>/progress.md [-WhatIf] [-NoMerge]`: the only unattended merge of a PBI PR. Merges with `gh pr merge <n> --squash --match-head-commit <oid>` only when `review.json` next to the ledger says `verdict: APPROVE` and `incomplete: false`, the PR is open, head `/<pbi>-` (not `release/*`), base `release/*`, same repository, `MERGEABLE`/`CLEAN`, checks green and the head matches the local or origin branch tip. Prints one line, `merged <sha>` or `skipped: <reason>`; a skip (also `-NoMerge`) labels the PBI `needs-review` and comments the reason with the PR URL once, a merge removes the label. `-WhatIf` prints the line only. Exit 0, or 1 when `gh pr merge` fails or `gh`/`git` is missing.
+- `pwsh scripts/Merge-ApprovedPr.ps1 -Issue <pbi> -Ledger <state>/<pbi>/progress.md [-WhatIf] [-NoMerge]`: the only unattended merge of a PBI PR. Merges with `gh pr merge <n> --squash --match-head-commit <oid>` only when `review.json` next to the ledger says `verdict: APPROVE` and `incomplete: false`, the PR head is the commit of the last ledger line `Phase review: complete — <sha>`, the PR is the one of the ledger line `Phase pull-request: complete — <url>` and open, head `/<pbi>-` (not `release/*`), base `release/*`, same repository, `MERGEABLE`/`CLEAN`, checks green and the head matches the local or origin branch tip. Prints one line, `merged <sha>` or `skipped: <reason>`; a skip (also `-NoMerge`) labels the PBI `needs-review` and comments the reason with the PR URL once, a merge removes the label. `-WhatIf` prints the line only. Exit 0, or 1 when `gh pr merge` fails or `gh`/`git` is missing.
 
 ## Rules
 

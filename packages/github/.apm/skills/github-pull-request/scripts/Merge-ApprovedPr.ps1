@@ -5,8 +5,9 @@
   Squash-merges the approved PR of a PBI into its release/* integration branch, or says why not; prints one line: 'merged <sha>' or 'skipped: <reason>'.
 .DESCRIPTION
   Fail closed: merges only when every precondition holds, in this order: review.json next to the ledger has verdict exactly 'APPROVE' and
-  incomplete exactly false; exactly one open PR of the PBI (the ledger line 'Phase pull-request: complete - <url>' names it, else the only
-  open PR whose head contains '/<pbi>-'); state OPEN; head not release/*; base release/*; not cross-repository; head commit known;
+  incomplete exactly false; the ledger names the reviewed commit (last 'Phase review: complete - <sha>') and the PR (last
+  'Phase pull-request: complete - <url>'); that PR is open and its head contains '/<pbi>-'; state OPEN; head not release/*; base release/*;
+  not cross-repository; head commit known and equal to the reviewed commit;
   mergeable MERGEABLE and mergeStateStatus CLEAN (UNKNOWN is polled up to 3 times, QUEUE_POLL_SECONDS between polls, default 5);
   checks present and all green; head commit equal to the local branch tip, else to the tip on origin. Then
   'gh pr merge <n> --squash --match-head-commit <oid>' and 'merged <merge commit>' (the head commit when GitHub reports none yet).
@@ -59,21 +60,27 @@ function Wait-PrState($P) {
   $P
 }
 # The PBI's open PR: from the ledger line 'Phase pull-request: complete - <url>' and 'gh pr list', never from free text.
+# The ledger must name the PR: a PR found by its branch name alone is never merged.
 function Resolve-PbiPr([string]$Pbi, [string[]]$LedgerLines) {
   $lm = Get-LastMatch $LedgerLines '\APhase pull-request: complete\b.*?/pull/(\d+)'
-  $ledgerPr = if ($lm) { [long]$lm.Groups[1].Value } else { $null }
+  if (-not $lm) { return @{ Pr = $null; Note = 'no PR in the ledger (Phase pull-request: complete)' } }
+  $ledgerPr = [long]$lm.Groups[1].Value
   $json = & gh pr list --state open --limit 100 --json number,url,state,headRefName,baseRefName,headRefOid,isCrossRepository,mergeable,mergeStateStatus,statusCheckRollup 2>&1 | Out-String
   if ($LASTEXITCODE -ne 0) { return @{ Pr = $null; Note = 'gh pr list failed' } }
   try { $all = @($json | ConvertFrom-Json) } catch { return @{ Pr = $null; Note = 'gh pr list returned no JSON' } }
   $mine = @($all | Where-Object { $_ -and $_.PSObject.Properties['headRefName'] -and $_.headRefName -match "(\A|/)$Pbi-" })
-  $pick = @(if ($ledgerPr) { $mine | Where-Object { $_.number -eq $ledgerPr } } else { $mine })
-  if ($pick.Count -ne 1) { return @{ Pr = $null; Note = "no single open PR of PBI #$Pbi found (ledger PR: $(if ($ledgerPr) { "#$ledgerPr" } else { 'none' }))" } }
+  $pick = @($mine | Where-Object { $_.number -eq $ledgerPr })
+  if ($pick.Count -ne 1) { return @{ Pr = $null; Note = "no single open PR of PBI #$Pbi found (ledger PR: #$ledgerPr)" } }
   @{ Pr = $pick[0]; Note = $null }
 }
 function Get-Field($O, [string]$Name) { if ($O -and $O.PSObject.Properties[$Name]) { $O.$Name } else { $null } }
 
 $lines = @()
-if (Test-Path -LiteralPath $Ledger -PathType Leaf) { $lines = @(Get-Content -LiteralPath $Ledger) }
+# the optional ISO-8601 UTC prefix of a ledger line ('2026-10-21T15:19:46Z <text>') is dropped: older ledgers have none
+if (Test-Path -LiteralPath $Ledger -PathType Leaf) { $lines = @(Get-Content -LiteralPath $Ledger | ForEach-Object { $_ -replace '\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z ', '' }) }
+# the approval in review.json belongs to the commit of the last review line; a later push is not reviewed
+$rm = Get-LastMatch $lines '\APhase review: complete\W+([0-9a-f]{7,64})\b'
+$reviewed = if ($rm) { $rm.Groups[1].Value } else { $null }
 $um = Get-LastMatch $lines '\APhase pull-request: complete\b.*?(https://\S+/pull/\d+)'
 $prUrl = if ($um) { $um.Groups[1].Value } else { $null }
 
@@ -88,6 +95,7 @@ else {
   if (-not $review) { $why = 'no review.json' }
   elseif (-not ($verdict -is [string] -and $verdict -ceq 'APPROVE')) { $why = "verdict is not a plain APPROVE ($verdict)" }
   elseif (-not ($incomplete -is [bool] -and $incomplete -eq $false)) { $why = 'review is incomplete' }
+  elseif (-not $reviewed) { $why = 'no reviewed commit in the ledger (Phase review: complete)' }
 }
 if (-not $why) {
   $res = Resolve-PbiPr $Issue $lines
@@ -106,6 +114,7 @@ if (-not $why) {
   elseif ($p.baseRefName -notmatch '\Arelease/') { $why = "${n}: base $($p.baseRefName) is not the integration branch (release/*)" }
   elseif ($p.isCrossRepository -ne $false -or $p.headRefName -match ':') { $why = "${n}: fork or cross-repository PR" }
   elseif (-not $p.headRefOid) { $why = "${n}: head commit unknown" }
+  elseif (-not "$($p.headRefOid)".StartsWith($reviewed, [StringComparison]::Ordinal)) { $why = "${n}: head $($p.headRefOid) is not the reviewed commit $reviewed" }
   elseif ($p.mergeable -eq 'UNKNOWN' -or $p.mergeStateStatus -eq 'UNKNOWN') { $why = "${n}: mergeability still UNKNOWN after 3 polls" }
   elseif ($p.mergeable -ne 'MERGEABLE' -or $p.mergeStateStatus -ne 'CLEAN') { $why = "${n}: not mergeable/clean ($($p.mergeable)/$($p.mergeStateStatus))" }
   elseif (-not $p.statusCheckRollup -or @($p.statusCheckRollup).Count -eq 0) { $why = "${n}: no checks reported" }

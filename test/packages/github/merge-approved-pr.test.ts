@@ -23,6 +23,12 @@ const PR_URL = 'https://github.com/o/r/pull/101';
 type Scenario = {
   prs?: object[];
   listFails?: boolean;
+  /** raw stdout of gh pr list (e.g. not JSON) */
+  listRaw?: string;
+  /** mergeCommit answer of gh pr view after the merge (default: { oid: MERGE_SHA }) */
+  mergeCommit?: object | null;
+  editFails?: boolean;
+  commentFails?: boolean;
   view?: object;
   mergeFails?: boolean;
   comments?: { body: string }[];
@@ -35,14 +41,20 @@ const HANDLER = `(call) => {
   const s = JSON.parse(fs.readFileSync(dir + '/scenario.json', 'utf8'));
   const [a0, a1] = call.args;
   const json = call.args[call.args.indexOf('--json') + 1];
-  if (a0 === 'pr' && a1 === 'list') { if (s.listFails) throw new Error('boom'); return { rest: s.prs || [] }; }
-  if (a0 === 'pr' && a1 === 'view' && json === 'mergeCommit') return { rest: { mergeCommit: { oid: '${MERGE_SHA}' } } };
+  if (a0 === 'pr' && a1 === 'list') {
+    if (s.listFails) throw new Error('boom');
+    if (s.listRaw !== undefined) { fs.writeSync(1, s.listRaw); process.exit(0); }
+    return { rest: s.prs || [] };
+  }
+  if (a0 === 'pr' && a1 === 'view' && json === 'mergeCommit')
+    return { rest: { mergeCommit: s.mergeCommit === undefined ? { oid: '${MERGE_SHA}' } : s.mergeCommit } };
   if (a0 === 'pr' && a1 === 'view') return { rest: s.view || {} };
   if (a0 === 'pr' && a1 === 'merge') { if (s.mergeFails) throw new Error('merge failed'); return { rest: '' }; }
   if (a0 === 'issue' && a1 === 'view' && json === 'comments') return { rest: { comments: s.comments || [] } };
   if (a0 === 'issue' && a1 === 'view' && json === 'labels') return { rest: { labels: s.labels || [] } };
-  if (a0 === 'issue' && a1 === 'edit') return { rest: '' };
+  if (a0 === 'issue' && a1 === 'edit') { if (s.editFails) throw new Error('edit failed'); return { rest: '' }; }
   if (a0 === 'issue' && a1 === 'comment') {
+    if (s.commentFails) throw new Error('comment failed');
     fs.appendFileSync(dir + '/comments.txt', fs.readFileSync(call.args[call.args.indexOf('--body-file') + 1], 'utf8') + '\\n');
     return { rest: '' };
   }
@@ -96,7 +108,7 @@ describe.skipIf(!hasPwsh || !posix)('Merge-ApprovedPr.ps1', () => {
   const setup = (
     s: Scenario,
     review: object | string | null = { verdict: 'APPROVE', incomplete: false },
-    ledgerLines: string[] = [`Phase pull-request: complete - ${PR_URL}`]
+    ledgerLines: string[] = ledgerFor(oid)
   ) => {
     fs.mkdirSync(pbiDir(), { recursive: true });
     fs.writeFileSync(ledgerFile(), ledgerLines.map((l) => `${l}\n`).join(''));
@@ -107,6 +119,11 @@ describe.skipIf(!hasPwsh || !posix)('Merge-ApprovedPr.ps1', () => {
       );
     fs.writeFileSync(path.join(tmp, 'scenario.json'), JSON.stringify(s));
   };
+  // real ledger lines carry an ISO-8601 prefix; the reviewed commit is recorded short
+  const ledgerFor = (reviewed: string, url = PR_URL) => [
+    `2026-10-27T04:00:00Z Phase review: complete — ${reviewed.slice(0, 8)} — package ~3k tokens`,
+    `2026-10-27T04:10:00Z Phase pull-request: complete — ${url}`,
+  ];
   const pr = (o: object = {}) => ({
     number: 101,
     url: PR_URL,
@@ -144,15 +161,29 @@ describe.skipIf(!hasPwsh || !posix)('Merge-ApprovedPr.ps1', () => {
       expect(comments()).toEqual([]);
     });
 
-    it('finds the PR by the PBI head branch when the ledger names none', async () => {
-      setup({ prs: [pr(), pr({ number: 7, headRefName: 'feat/99-other' })] }, undefined, []);
+    it('picks the ledger PR when two open PRs match the PBI branch', async () => {
+      setup({ prs: [pr({ number: 102, headRefName: 'fix/582-again' }), pr()] });
       const r = await run();
       expect(r.stdout.trim()).toBe(`merged ${MERGE_SHA}`);
       expect(merges()).toEqual([`pr merge 101 --squash --match-head-commit ${oid}`]);
     });
 
+    it('accepts ledger lines without the timestamp prefix', async () => {
+      setup(
+        { prs: [pr()] },
+        undefined,
+        ledgerFor(oid).map((l) => l.replace(/^\S+ /, ''))
+      );
+      const r = await run();
+      expect(r.stdout.trim()).toBe(`merged ${MERGE_SHA}`);
+    });
+
     it('verifies the head against origin when there is no local branch', async () => {
-      setup({ prs: [pr({ headRefName: 'feat/582-remote', headRefOid: originOid })] });
+      setup(
+        { prs: [pr({ headRefName: 'feat/582-remote', headRefOid: originOid })] },
+        undefined,
+        ledgerFor(originOid)
+      );
       const r = await run();
       expect(r.stdout.trim()).toBe(`merged ${MERGE_SHA}`);
       expect(merges()).toEqual([`pr merge 101 --squash --match-head-commit ${originOid}`]);
@@ -182,6 +213,24 @@ describe.skipIf(!hasPwsh || !posix)('Merge-ApprovedPr.ps1', () => {
       const r = await run();
       expect(lines()).toContain('pr view 101 --json mergeable,mergeStateStatus,statusCheckRollup');
       expect(r.stdout.trim()).toBe(`merged ${MERGE_SHA}`);
+    });
+
+    it.each([
+      ['no merge commit', null],
+      ['a merge commit without a valid oid', { oid: 'not-a-sha' }],
+    ])('prints the head commit when GitHub reports %s yet', async (_n, mergeCommit) => {
+      setup({ prs: [pr()], mergeCommit });
+      const r = await run();
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe(`merged ${oid}`);
+    });
+
+    it('reports a failed label removal on stderr and still exits 0', async () => {
+      setup({ prs: [pr()], labels: [{ name: 'needs-review' }], editFails: true });
+      const r = await run();
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe(`merged ${MERGE_SHA}`);
+      expect(r.stderr).toContain('could not remove label needs-review from #582');
     });
   });
 
@@ -215,8 +264,20 @@ describe.skipIf(!hasPwsh || !posix)('Merge-ApprovedPr.ps1', () => {
       ],
       ['gh pr list failing', () => ({ listFails: true }), undefined, 'gh pr list failed'],
       [
+        'gh pr list printing no JSON',
+        () => ({ listRaw: 'oops <html>' }),
+        undefined,
+        'gh pr list returned no JSON',
+      ],
+      [
         'no PR at all',
         () => ({ prs: [] }),
+        undefined,
+        'no single open PR of PBI #582 found (ledger PR: #101)',
+      ],
+      [
+        'a ledger PR that is not among the open PRs',
+        () => ({ prs: [pr({ number: 102 })] }),
         undefined,
         'no single open PR of PBI #582 found (ledger PR: #101)',
       ],
@@ -263,12 +324,6 @@ describe.skipIf(!hasPwsh || !posix)('Merge-ApprovedPr.ps1', () => {
         'PR #101: head commit unknown',
       ],
       [
-        'mergeability that stays UNKNOWN',
-        () => ({ prs: [pr({ mergeable: 'UNKNOWN', mergeStateStatus: 'UNKNOWN' })], view: {} }),
-        undefined,
-        'PR #101: mergeability still UNKNOWN after 3 polls',
-      ],
-      [
         'a conflicting PR',
         () => ({ prs: [pr({ mergeable: 'CONFLICTING', mergeStateStatus: 'DIRTY' })] }),
         undefined,
@@ -289,10 +344,10 @@ describe.skipIf(!hasPwsh || !posix)('Merge-ApprovedPr.ps1', () => {
         'PR #101: checks are not green',
       ],
       [
-        'a head that differs from the local branch',
+        'a head pushed after the review',
         () => ({ prs: [pr({ headRefOid: 'a'.repeat(40) })] }),
         undefined,
-        `PR #101: head ${'a'.repeat(40)} differs from local branch tip`,
+        `PR #101: head ${'a'.repeat(40)} is not the reviewed commit`,
       ],
     ];
     it.each(rows)('%s', async (_name, s, review, reason) => {
@@ -303,6 +358,68 @@ describe.skipIf(!hasPwsh || !posix)('Merge-ApprovedPr.ps1', () => {
       expect(r.stdout.trim()).toMatch(/^skipped: /);
       expect(r.stdout.trim()).toContain(`skipped: ${reason}`);
       expect(merges()).toEqual([]);
+    });
+
+    it('never picks a PR by its branch name when the ledger names no PR', async () => {
+      setup({ prs: [pr()] }, undefined, [ledgerFor(oid)[0]]);
+      const r = await run();
+      expect(r.stdout.trim()).toBe('skipped: no PR in the ledger (Phase pull-request: complete)');
+      expect(merges()).toEqual([]);
+    });
+
+    it('does not merge without a reviewed commit in the ledger', async () => {
+      setup({ prs: [pr()] }, undefined, [ledgerFor(oid)[1]]);
+      const r = await run();
+      expect(r.stdout.trim()).toBe(
+        'skipped: no reviewed commit in the ledger (Phase review: complete)'
+      );
+      expect(lines().filter((l) => l.startsWith('pr '))).toEqual([]);
+    });
+
+    it('does not let PBI 58 match the branch of PBI 582', async () => {
+      setup({ prs: [pr()] });
+      const r = await worker.run(['-Issue', '58', '-Ledger', ledgerFile()], {
+        cwd: work,
+        env: gh.env({ ...process.env, QUEUE_POLL_SECONDS: '0' }),
+      });
+      expect(r.stdout.trim()).toBe('skipped: no single open PR of PBI #58 found (ledger PR: #101)');
+      expect(merges()).toEqual([]);
+    });
+
+    it('stops polling UNKNOWN mergeability after three polls', async () => {
+      setup({ prs: [pr({ mergeable: 'UNKNOWN', mergeStateStatus: 'UNKNOWN' })], view: {} });
+      const r = await run();
+      expect(lines().filter((l) => l.startsWith('pr view'))).toHaveLength(3);
+      expect(r.stdout.trim()).toBe('skipped: PR #101: mergeability still UNKNOWN after 3 polls');
+      expect(merges()).toEqual([]);
+    });
+
+    it('does not merge a head that differs from the local branch tip', async () => {
+      const other = 'b'.repeat(40);
+      setup({ prs: [pr({ headRefOid: other })] }, undefined, ledgerFor(other));
+      const r = await run();
+      expect(r.stdout.trim()).toBe(
+        `skipped: PR #101: head ${other} differs from local branch tip ${oid}`
+      );
+      expect(merges()).toEqual([]);
+    });
+
+    it('does not merge a head that differs from the origin branch tip', async () => {
+      setup({ prs: [pr({ headRefName: 'feat/582-remote' })] });
+      const r = await run();
+      expect(r.stdout.trim()).toBe(
+        `skipped: PR #101: head ${oid} differs from origin branch tip ${originOid}`
+      );
+      expect(merges()).toEqual([]);
+    });
+
+    it('reports failed label and comment calls on stderr and still exits 0', async () => {
+      setup({ prs: [pr({ state: 'CLOSED' })], editFails: true, commentFails: true });
+      const r = await run();
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe('skipped: PR #101: state CLOSED');
+      expect(r.stderr).toContain('could not add label needs-review to #582');
+      expect(r.stderr).toContain('could not comment on #582');
     });
 
     it('reports an unverifiable head', async () => {
@@ -347,10 +464,10 @@ describe.skipIf(!hasPwsh || !posix)('Merge-ApprovedPr.ps1', () => {
     });
 
     it('names "no PR" in the comment when neither the ledger nor gh knows a URL', async () => {
-      setup({ prs: [] }, undefined, []);
+      setup({ prs: [pr()] }, undefined, [ledgerFor(oid)[0]]);
       await run();
       expect(comments()).toEqual([
-        'Merge skipped: no single open PR of PBI #582 found (ledger PR: none) — no PR',
+        'Merge skipped: no PR in the ledger (Phase pull-request: complete) — no PR',
       ]);
     });
   });
@@ -411,6 +528,13 @@ describe.skipIf(!hasPwsh || !posix)('Merge-ApprovedPr.ps1', () => {
       });
       expect(r.status).toBe(1);
       expect(r.stderr).toContain("'gh' not found on PATH");
+    });
+
+    it('rejects a missing -Ledger', async () => {
+      const r = await worker.run(['-Issue', '582'], { cwd: work, env: gh.env() });
+      expect(r.status).not.toBe(0);
+      expect(r.stderr).toContain('Missing -Ledger');
+      expect(gh.calls()).toEqual([]);
     });
 
     it('rejects an -Issue that is not a number', async () => {
