@@ -16,7 +16,6 @@ packages/<domain>/
 src/                                  # TypeScript generators for docs/*.md, unit tests next to the code (*.test.ts)
 test/packages/<domain>/               # Vitest tests of package content (skills, scripts, hooks)
 test/repo/ test/helpers/              # repository checks (workflows), shared test helpers
-test/integration/skills/              # Copilot SDK harness, own package.json (`pnpm run test:integration`)
 scripts/check-manifests.mjs           # apm.yml skills list ⇄ directories on disk
 site/                                 # VitePress docs site: renders docs/ in place, README as home via docs/index.md (see site/README.md)
 apm.yml                               # marketplace: lists all packages
@@ -68,7 +67,6 @@ The title of an issue starts with its level: `[Epic]`, `[Feature]`, `[PBI]`, `[T
 - Targeted run: `pnpm vitest run <path>`.
 - Script tests with many cases: `PwshWorker` (`test/helpers/pwsh-worker.ts`) starts one pwsh per describe (`beforeAll`/`afterAll`) and runs the script in-process per `await worker.run(args, {cwd, env})` (status/stdout/stderr like a spawn); cases that need their own process (PATH without git, stdin, the invoking process's env) stay single spawns with a comment.
 - Resolve repo files from `__dirname` (`path.resolve(__dirname, '../../../packages/...')` in `test/packages/<domain>/`).
-- `test/integration/skills/` is the Copilot SDK harness with its own `package.json`; no repo tests there.
 
 ## Commands
 

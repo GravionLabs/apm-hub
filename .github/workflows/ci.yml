@@ -114,6 +114,10 @@ jobs:
       - name: Check manifest skills lists
         run: node scripts/check-manifests.mjs
 
+      - name: Skill report (sizes, dangling references)
+        shell: pwsh
+        run: ./packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .
+
       - name: Check formatting
         run: pnpm run format:check
 
