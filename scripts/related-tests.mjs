@@ -3,11 +3,14 @@
 //   node scripts/related-tests.mjs <path...>        explicit paths
 //   node scripts/related-tests.mjs --staged         staged files (git diff --cached --name-only)
 //   node scripts/related-tests.mjs --range a..b     files changed in a revision range
-// `*.perf.test.ts` files (Vitest project `perf`, wall-clock bounds) are never listed; run `pnpm run test:perf`.
+//   --base <ref>      files changed in `git diff --name-only <ref>...HEAD`
+//   --project <name>  (unit|scripts|integration|perf) list only that Vitest project's files, incl. queue
+//                     integration tests and perf files; without it `*.perf.test.ts` files are never listed
+//                     (run `pnpm run test:perf`) and queue integration tests are not mapped.
 // Prints one test file per line (sorted, deduplicated), or the single word ALL when the
 // change can affect anything (shared helpers, config, lockfile, unknown paths). Exit code 0.
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -32,15 +35,44 @@ function listTests(root, dir) {
   });
 }
 
+// Skill/script areas whose changes can affect the queue integration tests.
+const INTEGRATION_AREAS = [
+  'packages/delivery/.apm/skills/queue/',
+  'packages/github/.apm/skills/github-issue/scripts/',
+];
+
+/** Quoted entries of `scriptsTests` in test/helpers/scripts-tests.ts (root first, then this checkout). */
+function scriptsList(root) {
+  for (const r of [root, REPO_ROOT]) {
+    const f = path.join(r, 'test/helpers/scripts-tests.ts');
+    if (existsSync(f))
+      return new Set(
+        [...readFileSync(f, 'utf8').matchAll(/'([^']+\.test\.ts)'/g)].map((x) => x[1])
+      );
+  }
+  return new Set();
+}
+
+/** Vitest project a repo-relative test file belongs to (mirrors vitest.config.ts), or null. */
+export function projectOf(file, scripts) {
+  if (file.endsWith('.perf.test.ts')) return file.startsWith('test/packages/') ? 'perf' : null;
+  if (file.endsWith('.integration.test.ts'))
+    return file.startsWith('test/integration/queue/') ? 'integration' : null;
+  if (scripts.has(file)) return 'scripts';
+  return /^(src|test\/repo|test\/packages)\//.test(file) ? 'unit' : null;
+}
+
 /**
  * @param {string[]} paths repo-relative changed paths
- * @param {{root?: string}} [options] repo root (defaults to this checkout)
+ * @param {{root?: string, project?: 'unit'|'scripts'|'integration'|'perf'}} [options]
+ *   repo root (defaults to this checkout); project limits the result to that Vitest project
  * @returns {string[]} sorted unique test files, or ['ALL']
  */
-export function relatedTests(paths, { root = REPO_ROOT } = {}) {
+export function relatedTests(paths, { root = REPO_ROOT, project } = {}) {
   const out = new Set();
   const srcTests = () => listTests(root, 'src');
-  const validators = () => listTests(root, 'src/generators').filter((f) => /validator[^/]*\.test\.ts$/.test(f));
+  const validators = () =>
+    listTests(root, 'src/generators').filter((f) => /validator[^/]*\.test\.ts$/.test(f));
 
   for (const raw of paths) {
     const p = raw.trim().replace(/\\/g, '/').replace(/^\.\//, '');
@@ -57,11 +89,18 @@ export function relatedTests(paths, { root = REPO_ROOT } = {}) {
     } else if ((m = /^packages\/([^/]+)\/(.*)$/.exec(p))) {
       const [, domain, rest] = m;
       validators().forEach((f) => out.add(f));
+      if (project && INTEGRATION_AREAS.some((a) => p.startsWith(a))) {
+        listTests(root, 'test/integration/queue').forEach((f) => out.add(f));
+      }
       const skill = /^\.apm\/skills\/([^/]+)\//.exec(rest);
       const narrow = skill
-        ? listTests(root, `test/packages/${domain}`).filter((f) => path.posix.basename(f).startsWith(skill[1]))
+        ? listTests(root, `test/packages/${domain}`).filter((f) =>
+            path.posix.basename(f).startsWith(skill[1])
+          )
         : [];
-      (narrow.length ? narrow : listTests(root, `test/packages/${domain}`)).forEach((f) => out.add(f));
+      (narrow.length ? narrow : listTests(root, `test/packages/${domain}`)).forEach((f) =>
+        out.add(f)
+      );
     } else if (p.startsWith('.github/')) {
       listTests(root, 'test/repo').forEach((f) => out.add(f));
       if (CALLER_WORKFLOWS.has(p)) out.add('test/packages/github/release-workflow.test.ts');
@@ -69,26 +108,33 @@ export function relatedTests(paths, { root = REPO_ROOT } = {}) {
       return ['ALL'];
     }
   }
+  if (project) {
+    const scripts = scriptsList(root);
+    return [...out].filter((f) => projectOf(f, scripts) === project).sort();
+  }
   return [...out].filter((f) => !f.endsWith('.perf.test.ts')).sort();
 }
 
-/** Resolves CLI arguments (paths, --staged, --range a..b) to changed paths. */
+/** Resolves CLI arguments (paths, --staged, --range a..b, --base ref; --project is skipped) to changed paths. */
 export function pathsFromArgs(args, cwd = REPO_ROOT) {
   const git = (...a) =>
-    execFileSync('git', a, { cwd, encoding: 'utf8' })
-      .split('\n')
-      .filter(Boolean);
+    execFileSync('git', a, { cwd, encoding: 'utf8' }).split('\n').filter(Boolean);
   const paths = [];
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--') continue;
     if (args[i] === '--staged') paths.push(...git('diff', '--cached', '--name-only'));
     else if (args[i] === '--range') paths.push(...git('diff', '--name-only', args[++i] ?? ''));
+    else if (args[i] === '--base')
+      paths.push(...git('diff', '--name-only', `${args[++i] ?? ''}...HEAD`));
+    else if (args[i] === '--project') i++;
     else paths.push(args[i]);
   }
   return paths;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const lines = relatedTests(pathsFromArgs(process.argv.slice(2)));
+  const argv = process.argv.slice(2);
+  const pi = argv.indexOf('--project');
+  const lines = relatedTests(pathsFromArgs(argv), { project: pi >= 0 ? argv[pi + 1] : undefined });
   if (lines.length) console.log(lines.join('\n'));
 }
