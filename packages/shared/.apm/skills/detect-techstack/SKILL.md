@@ -43,6 +43,7 @@ If `pwsh` is not available → infer the stack from this table (search recursive
 | `pyproject.toml`, `requirements.txt`, `setup.py` | language `py` |
 | `*.csproj`, `*.sln`, `*.slnx` | language `dotnet`, package manager `dotnet` |
 | `Cargo.toml` | language `rust` (skills `rust-test`, `rust-implementation`) |
+| `react`, `next`, `vue`, `svelte` in `dependencies`/`devDependencies` of any `package.json` | framework of the same name (several possible; language and skills stay `ts`/`js`) |
 | `src-tauri/tauri.conf.json` or `.json5` | framework `tauri` (next to `rust` and usually `ts`) |
 | `packageManager` field in `package.json`, else lockfile (`pnpm-lock.yaml`, `yarn.lock`, `bun.lockb`, `package-lock.json`, `uv.lock`) | package manager |
 

@@ -69,10 +69,16 @@ $frameworks = [System.Collections.Generic.List[string]]::new()
 # --- packageManager detection ---
 $packageManagers = [System.Collections.Generic.List[string]]::new()
 
+$depFrameworks = [System.Collections.Generic.HashSet[string]]::new()
 $pkgJsonFiles = Get-IndicatorFile -Path $rootFull -Filter "package.json" -Depth 5
 foreach ($pkg in $pkgJsonFiles) {
   try {
     $content = Get-Content $pkg.FullName -Raw | ConvertFrom-Json -ErrorAction Stop
+    foreach ($section in 'dependencies', 'devDependencies') {
+      if (@($content.PSObject.Properties.Name) -contains $section -and $null -ne $content.$section) {
+        foreach ($dep in $content.$section.PSObject.Properties.Name) { [void]$depFrameworks.Add($dep) }
+      }
+    }
     if ($content.packageManager) {
       $name = ($content.packageManager -split '@')[0]
       if (-not $packageManagers.Contains($name)) {
@@ -82,6 +88,11 @@ foreach ($pkg in $pkgJsonFiles) {
   } catch {
     continue
   }
+}
+
+# --- JS frameworks from dependencies (language stays ts/js) ---
+foreach ($fw in 'react', 'next', 'vue', 'svelte') {
+  if ($depFrameworks.Contains($fw) -and -not $frameworks.Contains($fw)) { $frameworks.Add($fw) }
 }
 
 $lockfileChecks = @(
