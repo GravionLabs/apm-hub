@@ -32,7 +32,7 @@ describe('docs/usage/format-override.md', () => {
     const s = read('packages/shared/.apm/skills/implementation/SKILL.md');
     expect(s).toMatch(/^- \[ \] Build passes .*never the full suite\)$/m);
     expect(s).toMatch(
-      /^- \[ \] One full run before the pull request, and again after the last fix round$/m
+      /^- \[ \] Full suite: one full run before the pull request, and again after the last fix round$/m
     );
   });
   it('skills link the override doc by full URL, not a relative docs/ path', () => {
