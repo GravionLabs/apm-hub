@@ -22,7 +22,16 @@ describe('implementer.schema.json', () => {
   });
 
   it('accepts a blocked result without commit', () => {
-    expect(validate({ ...done, status: 'blocked', commit: null, filesChanged: [], testsRun: '', notes: ['criterion 2 contradicts the schema'] })).toBe(true);
+    expect(
+      validate({
+        ...done,
+        status: 'blocked',
+        commit: null,
+        filesChanged: [],
+        testsRun: '',
+        notes: ['criterion 2 contradicts the schema'],
+      })
+    ).toBe(true);
   });
 
   it.each([
