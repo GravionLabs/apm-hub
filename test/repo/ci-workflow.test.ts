@@ -9,61 +9,23 @@ const wf = parse(fs.readFileSync(file, 'utf-8'));
 type Step = { uses?: string; run?: string; with?: Record<string, string> };
 const steps = (job: string): Step[] => wf.jobs[job].steps;
 
-describe('ci.yml parallel Vitest jobs (#502)', () => {
-  it('runs every Vitest project as a matrix entry of the test job', () => {
-    const projects = ((config.test?.projects ?? []) as Array<{ test: { name: string } }>).map(
-      (p) => p.test.name
-    );
-    expect(projects).toEqual(['unit', 'scripts', 'integration', 'perf']);
-    expect(wf.jobs.test.strategy.matrix.project).toContain('perf');
-    expect([...wf.jobs.test.strategy.matrix.project].sort()).toEqual([...projects].sort());
-    expect(wf.jobs.test.strategy['fail-fast']).toBe(false);
+describe('ci.yml test job', () => {
+  it('runs one Vitest project in a single job without a matrix', () => {
+    expect(config.test?.projects).toBeUndefined();
+    expect(wf.jobs.test.strategy).toBeUndefined();
+    expect(wf.jobs.test.name).toBe('Test');
+    expect(wf.on.push.branches).toEqual(['main', 'release/**']);
   });
 
-  it('runs the selected project and names result artifacts per project', () => {
-    const run = steps('test').find((s) => s.run === 'pnpm run test:ci:project');
-    expect(run).toBeDefined();
-    expect((run as Step & { env?: Record<string, string> }).env?.PROJECT).toBe(
-      '${{ matrix.project }}'
-    );
+  it('runs the whole suite with coverage and uploads the results', () => {
+    expect(steps('test').some((s) => s.run === 'pnpm run test:ci')).toBe(true);
     const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'));
-    expect(pkg.scripts['test:ci:project']).toContain('--project "$PROJECT"');
-    expect(pkg.scripts['test:ci']).toBe(
-      'vitest run --coverage --project unit --project scripts --project integration'
-    );
-    expect(pkg.scripts['test:all']).toBe(
-      'vitest run --project unit --project scripts --project integration'
-    );
-    expect(pkg.scripts['test:perf']).toBe('vitest run --project perf --passWithNoTests');
+    expect(pkg.scripts['test:ci']).toBe('vitest run --coverage');
     const artifacts = steps('test').filter((s) => s.uses?.startsWith('actions/upload-artifact'));
     expect(artifacts.length).toBe(2);
-    for (const a of artifacts) expect(a.with?.name).toContain('${{ matrix.project }}');
   });
 
-  it('runs related tests on pull requests and the full project on push (#704)', () => {
-    expect(wf.on.push.branches).toEqual(['main', 'release/**']);
-    expect(wf.on.pull_request.types).toContain('labeled');
-    expect(wf.jobs.test.name).toBe('Test (${{ matrix.project }})');
-    const related = steps('test').find((s) => s.run?.includes('run-related-tests.mjs')) as Step & {
-      if?: string;
-      env?: Record<string, string>;
-    };
-    expect(related.run).toContain('--project "$PROJECT" --base "origin/$BASE_REF" --coverage');
-    expect(related.env?.BASE_REF).toBe('${{ github.base_ref }}');
-    expect(related.run).toContain('GITHUB_STEP_SUMMARY');
-    expect(related.if).toContain("github.event_name == 'pull_request'");
-    expect(related.if).toContain("!contains(github.event.pull_request.labels.*.name, 'ci:full')");
-    const full = steps('test').find((s) => s.run === 'pnpm run test:ci:project') as Step & {
-      if?: string;
-    };
-    expect(full.if).toContain("github.event_name != 'pull_request'");
-    expect(full.if).toContain("contains(github.event.pull_request.labels.*.name, 'ci:full')");
-    const checkout = steps('test').find((s) => s.uses?.startsWith('actions/checkout'));
-    // Full history on every event: the related-test diff needs origin/<base>; '&& 0 ||' would always yield 1.
-    expect(checkout?.with?.['fetch-depth']).toBe(0);
-  });
-
-  it('tolerates a missing junit.xml and coverage file when no tests are related (#704)', () => {
+  it('tolerates a missing junit.xml and coverage file', () => {
     const reporter = steps('test').find((s) => s.uses?.startsWith('dorny/test-reporter'));
     expect(reporter?.with?.['fail-on-empty']).toBe(false);
     const summary = steps('test').find((s) => s.uses?.startsWith('irongut/CodeCoverageSummary')) as
@@ -73,9 +35,8 @@ describe('ci.yml parallel Vitest jobs (#502)', () => {
     expect((summary as Step & { 'continue-on-error'?: boolean })?.['continue-on-error']).toBe(true);
   });
 
-  it('publishes a per-project report and coverage summary from the vitest outputs', () => {
+  it('publishes a report and coverage summary from the vitest outputs', () => {
     const reporter = steps('test').find((s) => s.uses?.startsWith('dorny/test-reporter'));
-    expect(reporter?.with?.name).toContain('${{ matrix.project }}');
     expect(reporter?.with?.path).toBe('test-results/junit.xml');
     const summary = steps('test').find((s) => s.uses?.startsWith('irongut/CodeCoverageSummary'));
     expect(summary?.with?.filename).toBe('coverage/cobertura-coverage.xml');

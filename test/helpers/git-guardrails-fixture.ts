@@ -15,7 +15,7 @@ export const hermetic = (
   return { ...env, HOME: home, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
 };
 
-// Shared by git-guardrails.test.ts and git-guardrails.perf.test.ts. Call it inside a describe: it registers the
+// Shared by the git-guardrails*.test.ts files. Call it inside a describe: it registers the
 // beforeAll/afterAll/afterEach hooks and returns the helpers. `repo`, `home` and `nojq` are getters because `repo`
 // changes with withFreshRepo().
 export const createGuardFixture = () => {
