@@ -5,35 +5,39 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [3.0.0] — Unreleased
+## [3.0.0] — 2026-10-27
 
-Breaking: apm-hub ships skills only. The orchestration pipeline moved to the dromos runner (see `docs/simplification-plan.md`).
+### Bug Fixes
+- Add release mode to github-pull-request (#668) (#669)
 
-### Removed
-- **Package `agents`** with the agents `orchestrator`, `pbi-runner`, `issue-reader`, `explorer`, `planner`, `implementer`, `pr-writer`, `review-lead`, `reviewer` and the skill `orchestrator`
-- **Entry point `/orch`**: prompt `orch.prompt.md` and skill `orch-pipeline`
-- **Skills of `delivery`**: `queue`, `review-fanout`, `verify-project`, `handoff`
-- **Skills of `apm-tooling`**: `agent-write`, `agent-audit`
-- **Skill `github-project`**: moved to GravionLabs/ci
-- **Hooks**: `subagent-ledger`, `context-warning`, `agent-sanitize` (package `hooks` keeps the git guardrails); the status line moved to the new package `statusline`
-- **`github-issue`**: references `loop-mode`, `model-policy`, `next-selection`, `orchestrator-gates`, `pbi-pipeline`, `status`, `task-waves`; scripts `Add-LedgerLine`, `Enter-Checkout`, `Exit-Checkout`, `Get-TaskWaves`, `NeedsRules`, `New-Worktree`, `Remove-Worktree`, `Write-StatusTable`
-- **`issue-planning`**: references `grilling` and `publish`; **`retro`**: script `Get-RunMetrics.ps1`; **`detect-techstack`**: script `Enable-Worktrees.ps1`, the state directory in the report
-- **Skill `skill-update`** of `apm-tooling`: merged into `skill-audit` (audit and apply)
-- **`github-issue`**: `references/batch-workflow.md` (batches are the runner's job); **`github-pull-request`**: inputs `advisories_not_fixed` and `follow_up_candidates` (replaced by `review_notes`); **`ng-implementation`**: the project-specific "Sakai UI variant"
-- **Repository tooling**: agent list and size validators, `New-AgentsMd.ps1`, `related-tests.mjs`, `run-related-tests.mjs`, workflows `add-to-project.yml` and `release-pr.yml`, the perf test project and the CI test matrix
 
-### Changed
-- Package `statusline` (skill `context-statusline`) is part of `core`; `hooks` contains the git guardrails only
-- Manifest keys `skills` are renamed to `x-skills` (#658)
-- `github-pull-request` takes `review_notes` and writes `## Review notes`; `github-release` never waits for the user in its fork (the branch delete is the next `finish`); `github-issue` gains `references/create-from-plan.md` and documents native blocked-by links
-- `Get-ReleaseState.ps1 -Mode base` resolves the integration branch; `Format-Changed.ps1` uses Biome for ts and ng when `biome.json[c]` exists and has `-WhatIf`
-- Language skills: `<lang>-implementation` descriptions carry a "Use when" trigger, runtime versions are pinned only in the scaffolding skills
+### Documentation
+- Simplification plan and work plan for apm-hub and dromos
+- Work plan records triage, milestones and issue numbers
+- Work plan adds the dromos release PBIs B6c and B17b
+- AGENTS.md, README, docs/ and site describe skills only (#735) (#760)
 
-### Migration
-- Remove `agents` from the `apm.yml` of consuming repositories; install `core` or `statusline` for the status line
-- `skill-update` is now `skill-audit`; pass `review_notes` instead of `advisories_not_fixed` and `follow_up_candidates` to `github-pull-request`
+
+### Features
+- Sync project Needs from workflows (#626) (#670)
+- Paginate repository/label reads in project standard (#643) (#671)
+- Default advisory policy medium for headless runs (#578) (#673)
+- **hooks**: Colour ctx in the status line like the rate limits (#682) (#684)
+- Park gated PBIs and continue the loop (#579) (#685)
+- Plan ends with tasks (#580) (#693)
+- Answer parked gates with /ruling comments (#581) (#694)
+- **github**: Issue titles carry their level prefix (#660) (#695)
+
+
+### Refactoring
+- Consume reusable ci workflows for release and issues (#519) (#686)
+
 
 ## [2.5.4] — 2026-10-26
+
+### Documentation
+- Update CHANGELOG.md for v2.5.4 [skip ci]
+
 
 ### Features
 - Merged blockers stop blocking; needs sync includes dependents (#662) (#666)
