@@ -7,7 +7,6 @@ Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]` (direct path
 | `shared` | `implementation`, `detect-techstack`, `diagnose`, `code-review` | project |
 | `github` | `github-issue`, `github-pull-request`, `github-release` | project |
 | `delivery` | planning, retro, `apm-install`; depends on `github` and `shared` | project |
-| `hooks` | Claude Code git guardrails hook | project or `-g` |
 | `statusline` | `context-statusline` skill (status line and subagent status line) | project or `-g` |
 | `ts`, `py` | `<lang>-implementation`, `<lang>-test`, project scaffolding | per project |
 | `rust` | `rust-implementation`, `rust-test` | per project |
@@ -16,7 +15,7 @@ Install form: `apm install GravionLabs/apm-hub/packages/<pkg> [-g]` (direct path
 
 ## core vs all
 
-- `core`: `github`, `delivery`, `shared`, `hooks`, `statusline`, no stack skills. Use `core -g` once per machine and the stack
+- `core`: `github`, `delivery`, `shared`, `statusline`, no stack skills. Use `core -g` once per machine and the stack
   package per project.
 - `all`: every package except `apm-tooling`. Use it on machines that mix stacks, or when no per-project choice is wanted.
 - `apm-tooling` (skill authoring and audit) is for contributors of this repository and never part of `all`.
