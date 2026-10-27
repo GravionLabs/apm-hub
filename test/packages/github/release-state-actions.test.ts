@@ -141,3 +141,21 @@ describe('Get-ReleaseState.ps1', () => {
     expect(r.stdout).toBe('');
   });
 });
+
+describe('github-release SKILL.md finish step 4', () => {
+  const skill = fs.readFileSync(
+    path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'),
+    'utf8'
+  );
+  const step4 = skill.split('\n').find((l) => l.startsWith('4. Report the PR URL')) ?? '';
+
+  it('names the merge command and the delete-branch path', () => {
+    expect(step4).toContain('gh pr merge <nr> --merge');
+    expect(step4).toContain('delete-branch');
+  });
+
+  it('never waits for the user in the fork', () => {
+    expect(skill).not.toMatch(/when the user confirms/i);
+    expect(skill).not.toContain('gh pr view <nr> --json merged');
+  });
+});

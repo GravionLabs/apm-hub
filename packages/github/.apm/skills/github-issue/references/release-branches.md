@@ -28,8 +28,8 @@ merge the branch is reset by the next `cut`, never continued, so it can never be
   `main` (equal to it too: a fresh branch has nothing to release), when the branch was already released
   (tag `v<x.y>.0` on origin, or a release tag's merge commit is missing from HEAD while its second parent is
   in it: the branch was continued after its merge; "cut a new release branch"), or when open PRs target it.
-  After the merge the branch is deleted (`finish` names `git push origin --delete <branch>` and deletes
-  `release/next` itself once the merge is confirmed and no open PR targets it), never continued.
+  After the merge the branch is deleted, never continued: `finish` only names `git push origin --delete <branch>`
+  and never waits; a later `finish` on the merged branch returns `delete-branch` from `Get-ReleaseState.ps1` and deletes `release/next`.
 - **Known limitation:** GravionLabs/ci `versioning/release-pr` may title the release PR with the branch name
   (`release/next`) rather than the computed version; the tag and GitHub Release carry the real version.
 
