@@ -14,7 +14,7 @@
     "format:check": "prettier --check \"{src,test}/**/*.ts\"",
     "test": "vitest run --project unit --project scripts",
     "test:all": "vitest run --project unit --project scripts --project integration",
-    "test:perf": "vitest run --project perf",
+    "test:perf": "vitest run --project perf --passWithNoTests",
     "test:unit": "vitest run --project unit",
     "test:related": "node scripts/run-related-tests.mjs",
     "test:ci": "vitest run --coverage --project unit --project scripts --project integration",

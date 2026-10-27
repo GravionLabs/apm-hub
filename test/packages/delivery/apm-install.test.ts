@@ -339,7 +339,6 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     fakeApm();
     const dry = await run(['-Packages', 'core', '-DryRun']);
     expect(notes(dry)).toContain('After install: apmw sanitize -p <client> runs');
-    expect(notes(dry)).toContain('After install: OpenCode: copy');
     const real = await run(['-Packages', 'core']);
     expect(notes(real)).not.toContain('After install');
   });
@@ -564,14 +563,6 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     const bad = await run(['-Packages', 'ts', '-Ref', 'x; rm -rf /']);
     expect(bad.status).toBe(1);
     expect(bad.stderr).toContain('Invalid -Ref');
-  });
-
-  tc('notes the OpenCode plugin copy for hooks, core and all', async () => {
-    fakeApm();
-    for (const p of ['hooks', 'core', 'all']) {
-      expect(notes(await run(['-Packages', p, '-DryRun']))).toContain('apm-hub-hooks.ts');
-    }
-    expect(notes(await run(['-Packages', 'ts', '-DryRun']))).not.toContain('apm-hub-hooks.ts');
   });
 
   tc('warns when apmw is missing and an agent package is selected, without failing', async () => {

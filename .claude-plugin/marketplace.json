@@ -19,9 +19,15 @@
     },
     {
       "name": "hooks",
-      "description": "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit on Claude Code, postToolUse on Copilot CLI) injects a hand-off hint above 150k tokens; the git guardrails (PreToolUse) deny destructive git commands. OpenCode gets a plugin (ledger and context warning) shipped at .apm/opencode/plugins/apm-hub-hooks.ts; after apm install, copy it to .opencode/plugins/ or ~/.config/opencode/plugins/ by hand until an apmw release with GravionLabs/apmw#38 (open) does it via apmw sanitize -p opencode.",
+      "description": "Claude Code hook: the git guardrails (PreToolUse) deny destructive git commands. Copilot CLI is set up by hand (docs/usage/copilot-hooks.md).",
       "version": "2.5.4",
       "source": "./packages/hooks"
+    },
+    {
+      "name": "statusline",
+      "description": "Status line and subagent status line showing context usage: the context-statusline skill installs a cross-platform Node status line for Claude Code and Copilot CLI, plus a Claude Code subagent status line.",
+      "version": "2.5.4",
+      "source": "./packages/statusline"
     },
     {
       "name": "apm-tooling",

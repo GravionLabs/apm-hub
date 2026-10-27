@@ -23,7 +23,8 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                       |
 | `agents`      | `orchestrator` (primary agent) plus the `explorer`, `planner`, `reviewer` and `implementer` subagents                             |
-| `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails), `context-statusline` skill; OpenCode plugin |
+| `hooks`       | Claude Code and Copilot CLI git guardrails hook |
+| `statusline`  | `context-statusline` skill: status line and subagent status line |
 | `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                          |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not in `all`)                                    |
 | `all`         | every package except `apm-tooling`                                                                                                |

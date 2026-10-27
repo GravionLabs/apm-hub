@@ -15,7 +15,7 @@
 
 .PARAMETER Packages
   Packages to install (comma-separated); skips detection. One of shared, github, delivery,
-  agents, hooks, core, all, ts, py, ng, dotnet.
+  agents, hooks, statusline, core, all, ts, py, ng, dotnet.
 
 .PARAMETER Global
   Install user-wide (apm -g) instead of into the project.
@@ -55,7 +55,7 @@ if (-not (Get-Command apm -ErrorAction SilentlyContinue)) {
 }
 
 # pwsh -File passes "ts,ng" as one string: split on commas, then validate
-$valid = 'shared', 'github', 'delivery', 'agents', 'hooks', 'core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust'
+$valid = 'shared', 'github', 'delivery', 'agents', 'hooks', 'statusline', 'core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust'
 if ($PSBoundParameters.ContainsKey('Packages')) {
   $Packages = @($Packages | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
   if ($Packages.Count -eq 0) {
@@ -79,15 +79,16 @@ $projectDirs = '.claude/skills', '.opencode/skills', '.agents/skills', '.github/
 $homeDirs = '.claude/skills', '.config/opencode/skills', '.copilot/skills', '.agents/skills', '.opencode/skills', '.github/skills'
 $notes = [System.Collections.Generic.List[string]]::new()
 $hubPath = 'GravionLabs/apm-hub/packages'
-$coreMembers = 'shared', 'github', 'delivery', 'agents', 'hooks'
+$coreMembers = 'shared', 'github', 'delivery', 'agents', 'hooks', 'statusline'
 $allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust')
 $provides = @{
   shared   = 'skills: implementation, detect-techstack, diagnose, code-review'
   github   = 'skills: github-issue, github-pull-request, github-release'
   delivery = 'skills: review-fanout, verify-project, issue-planning, retro, handoff, queue, apm-install'
   agents   = 'orchestrator skill and agents: orchestrator, issue-reader, explorer, planner, reviewer, review-lead, implementer, pr-writer, pbi-runner'
-  hooks    = 'hooks: subagent ledger, context warning, git guardrails; OpenCode plugin'
-  core     = 'github, delivery, shared, agents, hooks'
+  hooks    = 'hooks: git guardrails'
+  statusline = 'skills: context-statusline'
+  core     = 'github, delivery, shared, agents, hooks, statusline'
   all      = 'every package except apm-tooling'
   ts       = 'skills: ts-implementation, ts-test, ts-create-project, ts-mcp-server-generator, ts-pnpm-workflow, setup-prettier-eslint-husky'
   py       = 'skills: py-implementation, py-test, py-create-project'
@@ -290,10 +291,6 @@ if ($done | Where-Object { $_ -in 'agents', 'core', 'all' }) {
   } else {
     $notes.Add("apmw sanitize: no client agents directory found; run apmw sanitize$g -p <client> once the client has one.")
   }
-}
-if ($done | Where-Object { $_ -in 'hooks', 'core', 'all' }) {
-  $dest = if ($Global) { '~/.config/opencode/plugins/' } else { '.opencode/plugins/' }
-  $notes.Add("${when}OpenCode: copy packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts to $dest by hand.")
 }
 
 $prov = [ordered]@{}

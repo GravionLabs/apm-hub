@@ -43,10 +43,7 @@ describe('Resolve-StateDir copies', () => {
 });
 
 /** The sh copies (state_dir) of the hooks, kept byte-identical between the markers. */
-const SH_FILES = [
-  'packages/hooks/.apm/hooks/subagent-ledger.sh',
-  'packages/hooks/.apm/hooks/git-guardrails.sh',
-];
+const SH_FILES = ['packages/hooks/.apm/hooks/git-guardrails.sh'];
 const extractSh = (rel: string): string => {
   const text = fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
   const m = text.match(/^# BEGIN state_dir[^\n]*\n[\s\S]*?^# END state_dir$/m);

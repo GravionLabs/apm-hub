@@ -39,7 +39,7 @@ The contributor tooling package is not offered. What each package brings: [packa
    stack configs ignore `.worktrees/` and the result lists the changed files and open hints under `worktrees`. Tell the user
    to commit those files (not with `-Global`; a dry run lists the script as a step).
 4. Relay the `notes` and `sanitized` and follow [after install](references/after-install.md): the script ran
-   `apmw sanitize` for agents (or says why not), the OpenCode plugin copy, what to commit.
+   `apmw sanitize` for agents (or says why not), what to commit.
 
 ## Behavior of the script
 

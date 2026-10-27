@@ -6,7 +6,7 @@ import { hasPwsh, posix } from '../../helpers/queue.helpers';
 
 const DIR = path.resolve(
   __dirname,
-  '../../../packages/hooks/.apm/skills/context-statusline/scripts'
+  '../../../packages/statusline/.apm/skills/context-statusline/scripts'
 );
 const STATUS = path.join(DIR, 'statusline.mjs');
 const SUB = path.join(DIR, 'subagent-statusline.mjs');
