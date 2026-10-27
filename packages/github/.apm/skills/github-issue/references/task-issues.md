@@ -1,6 +1,6 @@
 # Task issues inside a PBI
 
-A PBI that needs two or more tasks gets `[Task] <conventional title>` sub-issues (label `task`), for example `[Task] chore: add task field to plan schema`. A PBI that fits one session gets no Task issue. Create them with `issue-planning`'s `references/publish.md` after the plan is approved.
+A PBI that needs two or more tasks gets `[Task] <conventional title>` sub-issues (label `task`), for example `[Task] chore: add task field to plan schema`. A PBI that fits one session gets no Task issue. Create them from the approved `issue-planning` plan.
 
 Body, first line `Parent PBI: #<pbi>` (a Bug parent: `Parent Bug: #<bug>`):
 

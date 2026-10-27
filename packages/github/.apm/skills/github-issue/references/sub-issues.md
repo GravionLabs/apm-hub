@@ -72,4 +72,4 @@ the create step linked anything.
   (for example from a scratch directory).
 - `gh issue create` prints the new issue URL; take the number from its last path segment.
 
-Plan files: `issue-planning` writes `<state>/<issue>/plan.json`; its `references/publish.md` creates and links the sub-issues from it.
+The plan returned by `issue-planning` (`references/plan-schema.md`) is the input for creating and linking the sub-issues.
