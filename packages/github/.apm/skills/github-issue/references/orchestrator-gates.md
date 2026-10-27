@@ -74,7 +74,7 @@ Interactive part; `plan <pbi>` is unchanged (`pbi-pipeline.md` step 3: one plan,
 5. `plan <epic>`: the same per Feature when the user asks to plan a Feature down to PBIs in that run; `--no-tasks` and `--tasks` apply to each such Feature.
 6. On a PBI or a description `--no-tasks` and `--tasks` do nothing: say so in one line and ignore them. Outside `plan` mode they are ignored the same way.
 
-The closing line of a `plan <feature>` run names the Feature: `Next: /clear, then orchestrator next <feature>` (or `loop <feature>`).
+The closing line of a `plan <feature>` run is `Next: /clear, then orchestrator next <feature>` (or `loop <feature>`), naming the Feature number.
 
 ## Clear before implement (closing line after a plan)
 
