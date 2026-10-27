@@ -25,8 +25,6 @@ apm.yml                               # marketplace: lists all packages
 
 ## Packages and skills
 
-`<state>` below is the orchestrator state directory: `DROMOS_STATE_DIR`, else `<git common dir>/agents` (shared by all worktrees). The working-tree `.agents/` only holds installed skills (`.agents/skills`).
-
 | Package | Skills |
 |:--|:--|
 | `shared` | `implementation` (every change has tests; dispatches to `<lang>-implementation`; `scripts/Format-Changed.ps1` formats the changed files with a caller-supplied command), `detect-techstack` (JSON stack report), `diagnose` (bug fixes: red-capable feedback loop → minimal repro → ranked hypotheses → fix + regression test), `code-review` (severity-rated review using each language's `## Review rules`) |
@@ -38,7 +36,7 @@ apm.yml                               # marketplace: lists all packages
 | `rust` | `rust-implementation` (incl. `references/conventions.md`, `references/tauri.md` loaded for framework `tauri`), `rust-test` (incl. `references/mocking-and-properties.md`) |
 | `ng` | `ng-implementation` (incl. `references/component.md`, `references/signal-store.md`), `ng-test`, `ng-create-project`, `ng-ag-grid-developer`. Depends on `angular/skills` (`angular-developer`) |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not part of `all`) |
-| `hooks` | Hook for Claude Code via apm: `PreToolUse` (matcher `Bash`) denies destructive git commands (force push to `main`/`release/*`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .`/`restore .` on a dirty tree, remote delete of `main`/`release/*`, except exactly `release/next`), opt-out `GIT_GUARDRAILS_OFF=1` or `<state>/guardrails.off`. Copilot CLI (`preToolUse`) is manual setup, see `docs/usage/copilot-hooks.md` |
+| `hooks` | Hook for Claude Code via apm: `PreToolUse` (matcher `Bash`) denies destructive git commands (force push to `main`/`release/*`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .`/`restore .` on a dirty tree, remote delete of `main`/`release/*`, except exactly `release/next`), opt-out `GIT_GUARDRAILS_OFF=1`. Copilot CLI (`preToolUse`) is manual setup, see `docs/usage/copilot-hooks.md` |
 | `statusline` | Skill `context-statusline` (user-invoked, Claude Code and Copilot CLI: `scripts/statusline.mjs` and `subagent-statusline.mjs` (Claude Code only), Node >= 22, plus `Install-Statusline.ps1 -Client claude|copilot|all` that points `statusLine`/`subagentStatusLine` in `~/.claude/settings.json` and `statusLine` + the `STATUS_LINE` feature flag in `~/.copilot/settings.json` / `$COPILOT_HOME` at the installed skill's own scripts (`~/.claude/skills/...` resp. `~/.agents/skills/...`, no copy, so `apm update` refreshes them)). |
 | `core` | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills) |
 | `all` | meta-package: every package above except `apm-tooling` |

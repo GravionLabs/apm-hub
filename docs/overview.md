@@ -4,7 +4,7 @@
 Welcome to **apm-hub** v2.5.4 👋
 <!-- AUTO:end version -->
 
-apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The one `agents` package adds the `orchestrator` primary agent and the `explorer`, `planner`, `reviewer` and `implementer` subagents it delegates to. The entry point beyond skill names is the `orchestrator` agent (`/orch` is deprecated and removed in 3.0.0).
+apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The automated runner that chains them lives in [dromos](runner.md).
 
 This documentation is also published as a site at <https://gravionlabs.github.io/apm-hub/>.
 
@@ -15,17 +15,16 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | Package       | What it covers                                                                                                                    |
 | :------------ | :-------------------------------------------------------------------------------------------------------------------------------- |
 | `shared`      | `implementation` (tests per change), `detect-techstack`, `code-review` (severity-rated), `diagnose` (bug diagnosis)               |
-| `delivery`    | `issue-planning`, `retro`, `apm-install`                                                                            |
-| `github`      | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`                              |
+| `delivery`    | `issue-planning`, `retro`, `apm-install`                                                                                          |
+| `github`      | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`, `github-release`            |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                               |
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                       |
-| `agents`      | `orchestrator` (primary agent) plus the `explorer`, `planner`, `reviewer` and `implementer` subagents                             |
-| `hooks`       | Claude Code and Copilot CLI git guardrails hook |
-| `statusline`  | `context-statusline` skill: status line and subagent status line |
-| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                          |
+| `hooks`       | Claude Code and Copilot CLI git guardrails hook                                                                                   |
+| `statusline`  | `context-statusline` skill: status line and subagent status line                                                                  |
+| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills)                      |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling, not in `all`)                                    |
 | `all`         | every package except `apm-tooling`                                                                                                |
 
@@ -35,7 +34,7 @@ The full list with descriptions is generated into [skill-list.md](skill-list.md)
 
 - Every language package has a `<lang>-implementation` skill (conventions plus a `## Review rules` section) and a `<lang>-test` skill.
 - `detect-techstack` inspects the project and returns the names of those skills, so `implementation` and `code-review` dispatch to the right language without hard-coded lists.
-- The `orchestrator` agent composes the rest: it plans tasks, runs test-driven implementation per task, fans out a parallel review and opens the PR after approval gates.
+- You compose the rest in one session: plan with `issue-planning`, implement with `implementation`, review with `code-review`, open the PR with `github-pull-request`.
 - `github-issue` is the entry point for issue work. It reads the issue labels and sub-issues and routes to the matching reference workflow.
 
 Skills delegate by name instead of repeating each other. One skill owns a workflow; the others call it.
@@ -47,7 +46,7 @@ Skills delegate by name instead of repeating each other. One skill owns a workfl
 - [Skill frontmatter convention](concepts/skill-frontmatter.md): the restricted frontmatter that keeps skills portable
 - [Common workflows](usage/common-workflows.md): end-to-end examples with the installed skills
 - [Skill companion directories](usage/skill-companion-dirs.md): `scripts/`, `references/`, `templates/`, `assets/`
-- [The orchestrator](orchestrator.md): agents, pipeline, state, gates and hooks
+- [Working mode](working-mode.md) and [the runner](runner.md): one issue per session, and the automated pipeline in dromos
 - [Prerequisites](prerequisites.md): tools the skill scripts depend on
 - [LSP configuration](lsp-configuration.md): language servers for Copilot CLI
 - [CONTRIBUTING.md](../CONTRIBUTING.md) and [AGENTS.md](../AGENTS.md): adding or changing skills
@@ -57,4 +56,4 @@ Skills delegate by name instead of repeating each other. One skill owns a workfl
 - One `SKILL.md` ≤ 100 lines; long material lives in `references/`, procedures in `scripts/`.
 - Rules the model does not already know: repo conventions, tool contracts, repeatable procedures. No generic tutorials.
 - Compose, don't duplicate.
-- The agent proposes, the developer approves. Gates in the `orchestrator` never auto-approve.
+- The agent proposes, the developer approves.

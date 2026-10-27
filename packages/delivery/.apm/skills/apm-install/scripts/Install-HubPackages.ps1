@@ -15,7 +15,7 @@
 
 .PARAMETER Packages
   Packages to install (comma-separated); skips detection. One of shared, github, delivery,
-  agents, hooks, statusline, core, all, ts, py, ng, dotnet.
+  hooks, statusline, core, all, ts, py, ng, dotnet.
 
 .PARAMETER Global
   Install user-wide (apm -g) instead of into the project.
@@ -30,8 +30,7 @@
   Print the commands in the JSON result, run nothing. The result lists `wouldInstall`, not `installed`.
 
 .OUTPUTS
-  JSON {dryRun, installed|wouldInstall, skipped, failed, notAttempted, commands, sanitized, provides, dependencies, notes}.
-  After installing agents, core or all the script runs `apmw sanitize -p <client>` (-g under -Global) for every client with an agents directory and lists them as `sanitized`; a missing or failing apmw is a note, not a failure.
+  JSON {dryRun, installed|wouldInstall, skipped, failed, notAttempted, commands, provides, dependencies, notes}.
   Exit 1 when apm or pwsh 7 is missing, a package name is invalid or an install command fails.
 #>
 param(
@@ -54,7 +53,7 @@ if (-not (Get-Command apm -ErrorAction SilentlyContinue)) {
 }
 
 # pwsh -File passes "ts,ng" as one string: split on commas, then validate
-$valid = 'shared', 'github', 'delivery', 'agents', 'hooks', 'statusline', 'core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust'
+$valid = 'shared', 'github', 'delivery', 'hooks', 'statusline', 'core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust'
 if ($PSBoundParameters.ContainsKey('Packages')) {
   $Packages = @($Packages | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
   if ($Packages.Count -eq 0) {
@@ -78,16 +77,15 @@ $projectDirs = '.claude/skills', '.opencode/skills', '.agents/skills', '.github/
 $homeDirs = '.claude/skills', '.config/opencode/skills', '.copilot/skills', '.agents/skills', '.opencode/skills', '.github/skills'
 $notes = [System.Collections.Generic.List[string]]::new()
 $hubPath = 'GravionLabs/apm-hub/packages'
-$coreMembers = 'shared', 'github', 'delivery', 'agents', 'hooks', 'statusline'
+$coreMembers = 'shared', 'github', 'delivery', 'hooks', 'statusline'
 $allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust')
 $provides = @{
   shared   = 'skills: implementation, detect-techstack, diagnose, code-review'
   github   = 'skills: github-issue, github-pull-request, github-release'
   delivery = 'skills: issue-planning, retro, apm-install'
-  agents   = 'orchestrator skill and agents: orchestrator, issue-reader, explorer, planner, reviewer, review-lead, implementer, pr-writer, pbi-runner'
   hooks    = 'hooks: git guardrails'
   statusline = 'skills: context-statusline'
-  core     = 'github, delivery, shared, agents, hooks, statusline'
+  core     = 'github, delivery, shared, hooks, statusline'
   all      = 'every package except apm-tooling'
   ts       = 'skills: ts-implementation, ts-test, ts-create-project, ts-mcp-server-generator, ts-pnpm-workflow, setup-prettier-eslint-husky'
   py       = 'skills: py-implementation, py-test, py-create-project'
@@ -212,40 +210,6 @@ foreach ($pkg in $wanted) {
   $done.Add($pkg)
 }
 
-$when = if ($DryRun) { 'After install: ' } else { '' }
-$g = if ($Global) { ' -g' } else { '' }
-# Agents: apm copies them in the source format; `apmw sanitize` rewrites the frontmatter per client. The script runs it itself
-# (a note alone gets forgotten and the orchestrator then starts without tools) for every client whose agents directory exists.
-$sanitized = [System.Collections.Generic.List[string]]::new()
-if ($done | Where-Object { $_ -in 'agents', 'core', 'all' }) {
-  $agentDirs = if ($Global) {
-    [ordered]@{ claude = "$userHome/.claude/agents"; copilot = "$userHome/.copilot/agents"; opencode = "$userHome/.config/opencode/agents" }
-  } else {
-    [ordered]@{ claude = '.claude/agents'; copilot = '.github/agents'; opencode = '.opencode/agents' }
-  }
-  $apmw = Get-Command apmw -ErrorAction SilentlyContinue
-  foreach ($client in $agentDirs.Keys) {
-    if (-not $DryRun -and -not (Test-Path -LiteralPath $agentDirs[$client])) { continue }
-    $sanArgs = @('sanitize') + $(if ($Global) { '-g' } else { @() }) + @('-p', $client)
-    $commands.Add('apmw ' + ($sanArgs -join ' '))
-    if ($DryRun -or -not $apmw) { continue }
-    # apmw output goes to stderr like apm output: stdout stays pure JSON
-    & apmw @sanArgs 2>&1 | ForEach-Object { [Console]::Error.WriteLine("$_") }
-    if ($LASTEXITCODE -ne 0) { $notes.Add("apmw sanitize$g -p $client failed (exit $LASTEXITCODE): run it by hand, the $client agents are still in the source format.") }
-    else { $sanitized.Add($client) }
-  }
-  if ($DryRun) {
-    $notes.Add("After install: apmw sanitize$g -p <client> runs for every client with an agents directory (claude, copilot, opencode); without it the agents stay in the source format and the orchestrator starts without tools.")
-    if (-not $apmw) { $notes.Add('apmw not found: install it first (uv tool install apmw, or pipx install apmw).') }
-  } elseif (-not $apmw) {
-    $notes.Add("apmw not found: the agents are still in the source format. Install it (uv tool install apmw, or pipx install apmw) and run apmw sanitize$g -p claude|opencode|copilot.")
-  } elseif ($sanitized.Count -gt 0) {
-    $notes.Add("apmw sanitize$g ran for: $($sanitized -join ', ').")
-  } else {
-    $notes.Add("apmw sanitize: no client agents directory found; run apmw sanitize$g -p <client> once the client has one.")
-  }
-}
-
 $prov = [ordered]@{}
 foreach ($p in $done) { $prov[$p] = $provides[$p] }
 $deps = @($done | Where-Object { $externalDeps.ContainsKey($_) } | ForEach-Object { $externalDeps[$_] })
@@ -257,7 +221,6 @@ $result.skipped = @($skipped)
 $result.failed = $failed
 $result.notAttempted = @($notAttempted)
 $result.commands = @($commands)
-$result.sanitized = @($sanitized)
 $result.provides = $prov
 $result.dependencies = $deps
 $result.notes = @($notes)

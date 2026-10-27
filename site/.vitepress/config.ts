@@ -23,11 +23,8 @@ export default withMermaid(
   cleanUrls: true,
   lastUpdated: false,
   appearance: 'dark',
-  // A link that leads nowhere fails the build. Exempt: the example addresses of a local run and,
-  // during the 3.0.0 cleanup only, links into packages/: the CI-generated skill and template lists
-  // (never committed in a branch) keep pointing at removed packages until main regenerates them.
-  // A14 (#735) removes the packages/ exemption.
-  ignoreDeadLinks: [/^https?:\/\/localhost/, /\/packages\//],
+  // A link that leads nowhere fails the build. Exempt: the example addresses of a local run.
+  ignoreDeadLinks: [/^https?:\/\/localhost/],
   markdown: {
     // The docs write placeholders such as <issue> or <name> as plain text (GitHub drops them as
     // unknown tags). As raw HTML they break the Vue compile of the page, so they are shown as text.
