@@ -54,7 +54,11 @@ describe('code-review skill', () => {
   it('links reference and schema, names every schema property, stays within 100 lines', () => {
     expect(skill).toContain('references/reviewer-contract.md');
     expect(skill).toContain('schema/review.schema.json');
-    for (const k of ['blocking', 'notes', ...Object.keys(schema.properties.blocking.items.properties)])
+    for (const k of [
+      'blocking',
+      'notes',
+      ...Object.keys(schema.properties.blocking.items.properties),
+    ])
       expect(ref).toContain(`\`${k}\``);
     expect(skill.split('\n').length).toBeLessThanOrEqual(100);
   });
