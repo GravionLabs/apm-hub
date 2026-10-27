@@ -10,15 +10,11 @@
 .PARAMETER ProjectRoot
   Path to the project root directory.
 
-.PARAMETER NoCache
-  Ignore `<state>/techstack.json`: recompute the report and rewrite the cache.
-
 .OUTPUTS
   JSON string to stdout. Non-zero exit code on failure.
 #>
 param(
-  [Parameter(Mandatory)][string]$ProjectRoot,
-  [switch]$NoCache
+  [Parameter(Mandatory)][string]$ProjectRoot
 )
 
 $ErrorActionPreference = 'Stop'
@@ -34,56 +30,8 @@ function Get-IndicatorFile {
     Where-Object { $_.FullName -notmatch '[\\/]node_modules[\\/]' -and $_.FullName -notmatch '[\\/]\.git[\\/]' -and $_.FullName -notmatch '[\\/]\.opencode[\\/]' }
 }
 
-# --- cache: <state>/techstack.json = report + manifest_hash ---
 $rootFull = (Resolve-Path $ProjectRoot).Path
-# BEGIN Resolve-StateDir (identical in every script that defines it; test/repo/state-dir-resolver.test.ts)
-function Resolve-StateDir {
-  if ($env:DROMOS_STATE_DIR) { return [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($env:DROMOS_STATE_DIR, (Get-Location).Path)) }
-  $common = $null
-  try { $common = "$(& git -C (Get-Location).Path rev-parse --path-format=absolute --git-common-dir 2>$null)".Trim() } catch { $common = $null }
-  if ($LASTEXITCODE -ne 0 -or -not $common) { throw 'No state directory: not inside a git repository (set DROMOS_STATE_DIR)' }
-  [IO.Path]::GetFullPath((Join-Path $common 'agents'))
-}
-# END Resolve-StateDir
-# the state directory of the project (git common dir, shared by worktrees); outside a repository detection still works, without cache
-$agentsDir = $null
-Push-Location -LiteralPath $rootFull
-try { $agentsDir = Resolve-StateDir } catch { $agentsDir = $null } finally { Pop-Location }
-$cacheFile = if ($agentsDir) { Join-Path $agentsDir 'techstack.json' } else { $null }
-# a symlinked state directory is never read from or written through; the report is printed without caching
-$agentsItem = if ($agentsDir) { Get-Item -LiteralPath $agentsDir -Force -ErrorAction SilentlyContinue } else { $null }
-$agentsLinked = [bool]($agentsItem -and $agentsItem.LinkType)
-$agentsUsable = [bool]($agentsDir -and -not $agentsLinked)
-
-function Out-Report([string]$Json) {
-  # state_dir is added on output (cache hit or not); the cache file itself does not store it
-  $o = $Json | ConvertFrom-Json
-  $o | Add-Member -NotePropertyName state_dir -NotePropertyValue $agentsDir -Force
-  $o | ConvertTo-Json -Compress
-}
-
-function Test-CacheEntry {
-  # every entry must be a lowercase token like the script itself produces (ts, ts-test, pnpm, ...)
-  param($Value)
-  if ($null -eq $Value) { return $false }
-  if ($Value -is [string] -or $Value -isnot [System.Collections.IEnumerable]) { return $false }
-  foreach ($v in $Value) {
-    if ($v -isnot [string] -or $v -cnotmatch '^[a-z0-9-]+$') { return $false }
-  }
-  return $true
-}
-$manifestFilters = @(
-  'package.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lockb', 'package-lock.json', 'tsconfig.json',
-  'angular.json', 'pyproject.toml', 'requirements.txt', 'setup.py', 'uv.lock', 'Cargo.toml',
-  '*.csproj', '*.sln', '*.slnx'
-)
-$manifestEntries = foreach ($f in $manifestFilters) {
-  foreach ($file in (Get-IndicatorFile -Path $rootFull -Filter $f -Depth 5)) {
-    $rel = [System.IO.Path]::GetRelativePath($rootFull, $file.FullName) -replace '\\', '/'
-    "${rel}:$((Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash)"
-  }
-}
-# --- tools: config files in the project root (part of the cache hash) ---
+# --- tools: config files in the project root ---
 function Test-RootFile([string]$Pattern) {
   [bool](Get-ChildItem -LiteralPath $rootFull -File -Filter $Pattern -Force -ErrorAction SilentlyContinue | Select-Object -First 1)
 }
@@ -115,39 +63,22 @@ if (Test-RootFile 'jest.config.*') { $tools.Add('jest') }
 if ((Test-RootFile 'pytest.ini') -or (Test-RootMatch 'pyproject.toml' '(?m)^\[tool\.pytest')) { $tools.Add('pytest') }
 if (Test-RootFile 'Cargo.toml') { $tools.Add('cargo') }
 
-$schemaVersion = 'techstack-v4'
-$manifestList = $schemaVersion + "`n" + ((@($manifestEntries) | Sort-Object -Unique -CaseSensitive) -join "`n") + "`ntools:" + ($tools -join ',')
-$sha = [System.Security.Cryptography.SHA256]::Create()
-$manifestHash = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestList))) -replace '-', '').ToLowerInvariant()
-
-if (-not $NoCache -and $agentsUsable -and (Test-Path $cacheFile -PathType Leaf)) {
-  try {
-    $cached = Get-Content $cacheFile -Raw | ConvertFrom-Json -ErrorAction Stop
-    $names = @($cached.PSObject.Properties.Name)
-    $shapeOk = $true
-    foreach ($key in 'languages', 'test', 'implementation') {
-      if (-not ($names -contains $key) -or -not (Test-CacheEntry $cached.$key)) { $shapeOk = $false }
-    }
-    foreach ($key in 'frameworks', 'packageManager', 'tools') {
-      if (($names -contains $key) -and -not (Test-CacheEntry $cached.$key)) { $shapeOk = $false }
-    }
-    if ($shapeOk -and $cached.manifest_hash -eq $manifestHash) {
-      Out-Report (Get-Content $cacheFile -Raw).Trim()
-      exit 0
-    }
-  } catch { }
-}
-
 $languages = [System.Collections.Generic.List[string]]::new()
 $frameworks = [System.Collections.Generic.List[string]]::new()
 
 # --- packageManager detection ---
 $packageManagers = [System.Collections.Generic.List[string]]::new()
 
+$depFrameworks = [System.Collections.Generic.HashSet[string]]::new()
 $pkgJsonFiles = Get-IndicatorFile -Path $rootFull -Filter "package.json" -Depth 5
 foreach ($pkg in $pkgJsonFiles) {
   try {
     $content = Get-Content $pkg.FullName -Raw | ConvertFrom-Json -ErrorAction Stop
+    foreach ($section in 'dependencies', 'devDependencies') {
+      if (@($content.PSObject.Properties.Name) -contains $section -and $null -ne $content.$section) {
+        foreach ($dep in $content.$section.PSObject.Properties.Name) { [void]$depFrameworks.Add($dep) }
+      }
+    }
     if ($content.packageManager) {
       $name = ($content.packageManager -split '@')[0]
       if (-not $packageManagers.Contains($name)) {
@@ -157,6 +88,11 @@ foreach ($pkg in $pkgJsonFiles) {
   } catch {
     continue
   }
+}
+
+# --- JS frameworks from dependencies (language stays ts/js) ---
+foreach ($fw in 'react', 'next', 'vue', 'svelte') {
+  if ($depFrameworks.Contains($fw) -and -not $frameworks.Contains($fw)) { $frameworks.Add($fw) }
 }
 
 $lockfileChecks = @(
@@ -274,23 +210,7 @@ $report = [ordered]@{
   tools           = @($tools)
   test            = @($test)
   implementation  = @($implementation)
-  manifest_hash   = $manifestHash
 }
 
-$json = $report | ConvertTo-Json -Compress
-
-$tmp = $null
-try {
-  if ($agentsUsable) {
-    New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
-    $tmp = Join-Path $agentsDir ("techstack." + [guid]::NewGuid().ToString('N') + ".tmp")
-    Set-Content -Path $tmp -Value $json -Encoding utf8NoBOM
-    Move-Item -Path $tmp -Destination $cacheFile -Force
-  }
-} catch {
-  if ($tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
-  # the cache is an optimisation; never fail detection because of it
-}
-
-Out-Report $json
+$report | ConvertTo-Json -Compress
 exit 0

@@ -19,7 +19,7 @@ Load the file for the task at hand. Paths are relative to this skill's directory
 | Topic | File | Load when |
 |---|---|---|
 | Setup, license, modules | `references/setup.md` | First-time setup, registering or cherry-picking modules |
-| AG Grid MCP server | `references/setup.md` § `ag-mcp` | Configuring `ag-mcp` for VS Code, Claude Code or Cursor; looking up version-specific docs |
+| AG Grid MCP server | `references/setup.md` § `ag-mcp` | Using `ag-mcp` (client config files: MCP reference of `ng-implementation`); looking up version-specific docs |
 | Columns, generics | `references/column-definitions.md` | `ColDef`, `columnTypes`, value getters/formatters, typed events, `getRowId` |
 | Row models | `references/row-models.md` | Client-side vs SSRM, datasource, large datasets |
 | API, events, filtering | `references/api-events-filtering.md` | Grid API access, `setGridOption`, events, column/quick/external/advanced filters |

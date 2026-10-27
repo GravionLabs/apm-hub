@@ -1,27 +1,5 @@
 # After install
 
-## Agents: `apmw sanitize`
-
-The `agents` package (also via `core` or `all`) ships agent files in the source format; `apm` copies them verbatim and
-Claude Code then starts them without tools, OpenCode rejects them. `Install-HubPackages.ps1` runs `apmw sanitize -p <client>`
-itself for every client with an agents directory (`-g` under `-Global`) and lists them as `sanitized`. Check the `notes`:
-
-- `apmw not found`: install it (`uv tool install apmw` or `pipx install apmw`), then run the command from `notes`:
-
-  ```powershell
-  apmw sanitize -p claude      # or opencode, copilot; add -g for a global install
-  ```
-
-- `apmw sanitize -p <client> failed`: run that command by hand and read its output.
-- `no client agents directory found`: run it once the client has created its directory.
-
-Later updates: `apmw update -p <client>` (`-g` global), never `apm update` alone.
-
-## OpenCode plugin (hooks, core or all)
-
-Copy `packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts` (in `apm_modules`) to `.opencode/plugins/` (project) or
-`~/.config/opencode/plugins/` (global) by hand, until an apmw release with GravionLabs/apmw#38 does it.
-
 ## What to commit
 
 | Path | Action |
@@ -29,3 +7,13 @@ Copy `packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts` (in `apm_modules`) 
 | `apm.yml`, `apm.lock.yaml` | commit |
 | `.github/skills/`, `.claude/skills/`, `.opencode/skills/` | commit (instant context on clone) |
 | `apm_modules/` | add to `.gitignore` |
+
+## Upgrading from 2.x
+
+3.0.0 removes the agents and the orchestration skills. After `apm update -g` the v2.5.4 files can remain and reference `github-issue` files 3.x no longer ships: the agents `orchestrator`, `pbi-runner`, `implementer`, `issue-reader`, `explorer`, `planner`, `pr-writer`, `review-lead`, `reviewer` and the skills `orchestrator`, `review-fanout`, `queue`, `handoff`, `orch-pipeline`, `orch`, `verify-project`. Two options:
+
+- Keep the old pipeline: pin `agents`, `github` and `delivery` together at `#v2.5.4` (for example `GravionLabs/apm-hub/packages/agents#v2.5.4`), then `apm install -g`.
+- Remove it: delete the `packages/agents` entry (`apm uninstall -g GravionLabs/apm-hub/packages/agents`), then `apm update -g`.
+
+What apm cleans itself (checked with apm 0.35.0 on a scratch project): it removes every file it recorded in `apm.lock.yaml` for a package that left `apm.yml` ("Cleaned 11 files from packages no longer in apm.yml") and for a skill a package no longer ships ("Cleaned 25 stale deployed files"). Recorded paths of `agents` are `~/.claude/agents/<name>.md` (Claude Code) and `~/.copilot/agents/<name>.agent.md` (Copilot CLI), plus `.config/opencode/agents/` and `.codex/agents/`; the skills sit in `~/.claude/skills/` and `~/.agents/skills/`. What remains: an `agents` entry in `apm.yml` that no longer resolves in 3.x (remove or pin it), and files apm never recorded (no lock file, copied by hand): delete those paths yourself.
+

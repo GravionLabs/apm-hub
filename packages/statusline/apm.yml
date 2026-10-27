@@ -1,0 +1,12 @@
+name: statusline
+version: 2.5.4
+description: "Status line and subagent status line showing context usage: the context-statusline skill installs a cross-platform Node status line for Claude Code and Copilot CLI, plus a Claude Code subagent status line."
+author:
+  name: Gravion
+license: MIT
+x-skills:
+  - context-statusline
+keywords:
+  - statusline
+  - claude-code
+  - copilot-cli

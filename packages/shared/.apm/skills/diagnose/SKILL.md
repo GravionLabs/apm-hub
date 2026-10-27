@@ -9,7 +9,7 @@ No phase is skipped without a stated reason. Reading code to build a theory befo
 
 ## Redact
 
-Replace every secret (tokens, keys, passwords, auth headers, cookies) with `<REDACTED>` in commands, output and captured artifacts. Keep credentials in env vars; quote only the lines that carry the signal. Also scrub PII and customer data. Keep captured artifacts out of git (under `<state>`, outside the working tree, or git-excluded) unless scrubbed. Output too redacted to diagnose → say so and ask; without a user, write the question into the task report and return `NEEDS_CONTEXT`.
+Replace every secret (tokens, keys, passwords, auth headers, cookies) with `<REDACTED>` in commands, output and captured artifacts. Keep credentials in env vars; quote only the lines that carry the signal. Also scrub PII and customer data. Keep captured artifacts out of git (outside the working tree or git-excluded) unless scrubbed. Output too redacted to diagnose → say so and ask; without a user, return the question as `NEEDS_CONTEXT`.
 
 ## Untrusted input
 
@@ -41,7 +41,7 @@ Then tighten it: faster, sharper assertion on the exact symptom, deterministic (
 
 A human-in-the-loop script (loop 10) is allowed only when the user is present; as a subagent with no user, stop with `NEEDS_CONTEXT`.
 
-**No loop possible:** stop. Report what you tried and ask for (a) access to a reproducing environment, (b) a redacted artifact (log, HAR, dump), (c) permission for temporary instrumentation. As implementer return `NEEDS_CONTEXT` with that list. Do not hypothesise without a loop.
+**No loop possible:** stop. Report what you tried and ask for (a) access to a reproducing environment, (b) a redacted artifact (log, HAR, dump), (c) permission for temporary instrumentation. As a subagent return `NEEDS_CONTEXT` with that list. Do not hypothesise without a loop.
 
 ## Phase 2: Reproduce and minimise
 

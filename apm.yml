@@ -18,28 +18,28 @@ marketplace:
     url: https://github.com/GravionLabs
   packages:
   - name: core
-    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the orchestrator agent and its subagents and the hooks. Stack packages are installed per project."
+    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the git guardrails hook and the status line. Stack packages are installed per project."
     source: ./packages/core
   - name: all
     description: "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks."
     source: ./packages/all
-  - name: agents
-    description: "Agents for a lean issue workflow: orchestrator (primary agent, keeps only phase summaries in context) and the issue-reader, explorer, planner, reviewer, implementer and pr-writer subagents it delegates to, and the /orchestrator skill that runs the orchestrator inline."
-    source: ./packages/agents
   - name: hooks
-    description: "Hooks for Claude Code and Copilot CLI: the subagent stop hook appends a ledger line per finished subagent; the context warning (UserPromptSubmit on Claude Code, postToolUse on Copilot CLI) injects a hand-off hint above 150k tokens; the git guardrails (PreToolUse) deny destructive git commands. OpenCode gets a plugin (ledger and context warning) shipped at .apm/opencode/plugins/apm-hub-hooks.ts; after apm install, copy it to .opencode/plugins/ or ~/.config/opencode/plugins/ by hand until an apmw release with GravionLabs/apmw#38 (open) does it via apmw sanitize -p opencode."
+    description: "Claude Code hook: the git guardrails (PreToolUse) deny destructive git commands. Copilot CLI is set up by hand (docs/usage/copilot-hooks.md)."
     source: ./packages/hooks
+  - name: statusline
+    description: "Status line and subagent status line showing context usage: the context-statusline skill installs a cross-platform Node status line for Claude Code and Copilot CLI, plus a Claude Code subagent status line."
+    source: ./packages/statusline
   - name: apm-tooling
-    description: "apm-hub contributor tooling for the skill and agent lifecycle: write, audit, update and slim SKILL.md files; write and audit agent source files."
+    description: "apm-hub contributor tooling for the skill lifecycle: write, audit (with apply) and slim SKILL.md files."
     source: ./packages/apm-tooling
   - name: delivery
-    description: "Issue-driven development workflow: review fan-out, project verification, package installer (apm-install), issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project."
+    description: "Issue-driven development workflow: run retrospective (retro), package installer (apm-install), issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project."
     source: ./packages/delivery
   - name: dotnet
     description: "C#/.NET skills: implementation conventions and review rules, NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, MCP server generation."
     source: ./packages/dotnet
   - name: github
-    description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, standalone and batch implementation, pull request creation, release branches (cut, finish), GitHub Project standard (github-project)."
+    description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, pull request creation, release branches (cut, finish)."
     source: ./packages/github
   - name: ng
     description: "Angular 21+ skills: implementation conventions and review rules, Vitest/TestBed testing, component and project scaffolding, NgRx Signal Store, AG Grid Enterprise."

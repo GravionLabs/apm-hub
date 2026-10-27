@@ -9,8 +9,8 @@ license: MIT
 
 dependencies:
   apm:
-    - GravionLabs/apm-hub/packages/agents
     - GravionLabs/apm-hub/packages/hooks
+    - GravionLabs/apm-hub/packages/statusline
     - GravionLabs/apm-hub/packages/ng
     - GravionLabs/apm-hub/packages/delivery
     - GravionLabs/apm-hub/packages/dotnet

@@ -28,8 +28,7 @@ it.runIf(!hasPwsh && !!process.env.CI)('has pwsh in CI', () => {
 
 describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   // Shared per describe: the fake `apm` in one bin dir. It takes its log file and its failure pattern from the environment of
-  // each run, so every case keeps its own log (a file in its own dir) and nobody writes into the shared bin dir (the apmw
-  // case below uses a private copy). The cases are independent (own dir, home and project), so they run concurrently:
+  // each run, so every case keeps its own log (a file in its own dir) and nobody writes into the shared bin dir. The cases are independent (own dir, home and project), so they run concurrently:
   // `tc`/`tc.each` give every case its context (S.dir, S.home, S.proj, S.log, S.fail) through AsyncLocalStorage, and `run` is async.
   let shared: string;
   let bin: string;
@@ -108,7 +107,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   // fake detect emitting the names the real script emits (ts, js, py, dotnet)
   const fakeDetect = (report: object, root = S.home, client = '.claude/skills') =>
     fs.writeFileSync(detectDir(root, client), `param($ProjectRoot)\n'${JSON.stringify(report)}'\n`);
-  const globalBase = (skills = ['detect-techstack', 'github-issue', 'review-fanout']) =>
+  const globalBase = (skills = ['detect-techstack', 'github-issue', 'issue-planning']) =>
     skills.forEach((n) =>
       fs.mkdirSync(path.join(S.home, '.claude/skills', n), { recursive: true })
     );
@@ -258,90 +257,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     expect(r.json.commands).toEqual([
       'apm install GravionLabs/apm-hub/packages/ts',
       'apm install GravionLabs/apm-hub/packages/ng',
-      'pwsh <skills dir>/detect-techstack/scripts/Enable-Worktrees.ps1',
     ]);
-    expect(notes(r)).toContain('Enable-Worktrees.ps1');
     expect(apmCalls()).toEqual([]);
-  });
-
-  describe('Enable-Worktrees.ps1 after the install (#445)', () => {
-    // fake onboarding script in the home skills dir: records that it ran and prints the JSON the real one prints
-    const fakeEnable = (body: string) => {
-      const dir = path.dirname(detectDir(S.home));
-      fs.writeFileSync(
-        path.join(dir, 'Enable-Worktrees.ps1'),
-        `param($Root, $TechStack, [switch]$Check)\nSet-Content '${path.join(S.dir, 'enable.ran')}' "$Root|$Check"\n${body}\n`
-      );
-    };
-    const ran = () =>
-      fs.existsSync(path.join(S.dir, 'enable.ran'))
-        ? fs.readFileSync(path.join(S.dir, 'enable.ran'), 'utf8').trim()
-        : null;
-
-    tc('runs it in apply mode after a project install and lists the changed files', async () => {
-      fakeApm();
-      fakeEnable(
-        `'{"root":"x","changed":[".gitignore","biome.json"],"hints":[{"file":"vitest.config","message":"exclude it","snippet":"s"}],"ok":false}'`
-      );
-      const r = await run(['-Packages', 'ts']);
-      expect(r.status).toBe(0);
-      expect(ran()).toMatch(/\|False$/);
-      expect(r.json.worktrees.changed).toEqual(['.gitignore', 'biome.json']);
-      expect(notes(r)).toContain('.gitignore, biome.json');
-      expect(notes(r)).toContain('exclude it');
-      expect(r.json.commands.at(-1)).toContain('Enable-Worktrees.ps1');
-    });
-
-    tc('does not run it on a dry run, with -Global or when nothing was installed', async () => {
-      fakeApm();
-      fakeEnable(`'{"changed":[],"hints":[],"ok":true}'`);
-      await run(['-Packages', 'ts', '-DryRun']);
-      await run(['-Packages', 'ts', '-Global']);
-      manifest('dependencies:\n  apm:\n    - GravionLabs/apm-hub/packages/ts\n');
-      await run(['-Packages', 'ts']);
-      expect(ran()).toBeNull();
-    });
-
-    tc('a failing script is a note, not a failed install', async () => {
-      fakeApm();
-      fakeEnable('exit 3');
-      const r = await run(['-Packages', 'ts']);
-      expect(r.status).toBe(0);
-      expect(r.json.installed).toEqual(['ts']);
-      expect(notes(r)).toContain('Enable-Worktrees.ps1 failed');
-    });
-
-    tc('a missing script is a note', async () => {
-      fakeApm();
-      const r = await run(['-Packages', 'ts']);
-      expect(r.status).toBe(0);
-      expect(notes(r)).toContain('Enable-Worktrees.ps1 not found');
-    });
-
-    tc(
-      'a project-local copy is not run without -TrustProject unless this run installed shared',
-      async () => {
-        fakeApm();
-        const d = path.dirname(detectDir(S.proj));
-        fs.writeFileSync(
-          path.join(d, 'Enable-Worktrees.ps1'),
-          `Set-Content '${path.join(S.dir, 'enable.ran')}' x\n'{"changed":[],"hints":[],"ok":true}'\n`
-        );
-        await run(['-Packages', 'ts']);
-        expect(ran()).toBeNull();
-        await run(['-Packages', 'shared']);
-        expect(ran()).toBe('x');
-      }
-    );
-  });
-
-  tc('phrases install-only notes as future steps in a dry run', async () => {
-    fakeApm();
-    const dry = await run(['-Packages', 'core', '-DryRun']);
-    expect(notes(dry)).toContain('After install: apmw sanitize -p <client> runs');
-    expect(notes(dry)).toContain('After install: OpenCode: copy');
-    const real = await run(['-Packages', 'core']);
-    expect(notes(real)).not.toContain('After install');
   });
 
   tc('accepts -Packages rust and lets all and core cover members', async () => {
@@ -449,9 +366,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
 
   tc('names what was installed and the external dependencies', async () => {
     fakeApm();
-    const r = await run(['-Packages', 'ng,dotnet,agents', '-DryRun']);
-    expect(Object.keys(r.json.provides)).toEqual(['ng', 'dotnet', 'agents']);
-    expect(r.json.provides.agents).toContain('orchestrator');
+    const r = await run(['-Packages', 'ng,dotnet', '-DryRun']);
+    expect(Object.keys(r.json.provides)).toEqual(['ng', 'dotnet']);
     expect(r.json.provides.ng).toContain('ng-implementation');
     expect(r.json.dependencies).toEqual([
       'angular/skills (angular-developer)',
@@ -468,7 +384,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     fakeApm();
     globalBase(['github-issue']);
     expect((await run(['-Global', '-DryRun'])).json.wouldInstall).toEqual(['shared', 'delivery']);
-    globalBase(['detect-techstack', 'review-fanout']);
+    globalBase(['detect-techstack', 'issue-planning']);
     const r = await run(['-Global', '-DryRun']);
     expect(r.json.wouldInstall).toEqual([]);
     expect(notes(r)).toContain('already installed globally');
@@ -566,31 +482,6 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     expect(bad.stderr).toContain('Invalid -Ref');
   });
 
-  tc('notes the OpenCode plugin copy for hooks, core and all', async () => {
-    fakeApm();
-    for (const p of ['hooks', 'core', 'all']) {
-      expect(notes(await run(['-Packages', p, '-DryRun']))).toContain('apm-hub-hooks.ts');
-    }
-    expect(notes(await run(['-Packages', 'ts', '-DryRun']))).not.toContain('apm-hub-hooks.ts');
-  });
-
-  tc('warns when apmw is missing and an agent package is selected, without failing', async () => {
-    fakeApm();
-    // PATH without apmw: bin (fake apm) plus the directory of pwsh only if it holds no apmw
-    const lean = fs.mkdtempSync(path.join(S.dir, 'lean-'));
-    fs.symlinkSync(pwshPath, path.join(lean, 'pwsh'));
-    const own = path.join(S.dir, 'own-bin'); // private copy: this case adds apmw to its bin dir
-    fs.mkdirSync(own);
-    fs.copyFileSync(path.join(bin, 'apm'), path.join(own, 'apm'));
-    const missing = await run(['-Packages', 'agents', '-DryRun'], `${own}:${lean}`);
-    expect(missing.status).toBe(0);
-    expect(notes(missing)).toContain('apmw not found');
-    fs.writeFileSync(path.join(own, 'apmw'), '#!/bin/sh\n', { mode: 0o755 });
-    const present = await run(['-Packages', 'agents', '-DryRun'], `${own}:${lean}`);
-    expect(notes(present)).not.toContain('apmw not found');
-    expect(notes(present)).toContain('apmw sanitize');
-  });
-
   tc('exits 1 when apm is not on PATH', async () => {
     const r = await run(['-Packages', 'ts'], S.dir);
     expect(r.status).toBe(1);
@@ -605,111 +496,10 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     expect(apmCalls()).toEqual([]);
   });
 
-  tc('-Global uses the -g form and notes apmw sanitize -g for agents', async () => {
+  tc('-Global uses the -g form', async () => {
     fakeApm();
-    const r = await run(['-Packages', 'core', '-Global']);
+    await run(['-Packages', 'core', '-Global']);
     expect(apmCalls()).toEqual(['install GravionLabs/apm-hub/packages/core -g']);
-    expect(notes(r)).toContain('apmw sanitize -g');
-  });
-
-  describe('apmw sanitize after an agent install', () => {
-    // private bin per case: the fake apm plus a fake apmw that logs `apmw: <args>` into the same log, prints noise like the
-    // real one (stdout must stay pure JSON, which `run` enforces) and exits per `body`
-    const ownBin = (body = 'exit 0') => {
-      const own = path.join(S.dir, 'own-bin');
-      fs.mkdirSync(own, { recursive: true });
-      fs.copyFileSync(path.join(bin, 'apm'), path.join(own, 'apm'));
-      fs.writeFileSync(
-        path.join(own, 'apmw'),
-        `#!/bin/sh\necho "apmw: $*" >> "$APM_LOG"\necho "apmw noise: $*"\n${body}\n`,
-        {
-          mode: 0o755,
-        }
-      );
-      return `${own}:${process.env.PATH}`;
-    };
-    const apmwCalls = () => apmCalls().filter((l) => l.startsWith('apmw: '));
-    const agentsDir = (root: string, client: string) =>
-      fs.mkdirSync(path.join(root, client, 'agents'), { recursive: true });
-
-    tc('runs it for every client with a project agents directory, in order', async () => {
-      fakeApm();
-      agentsDir(S.proj, '.claude');
-      agentsDir(S.proj, '.opencode');
-      const r = await run(['-Packages', 'agents'], ownBin());
-      expect(r.status).toBe(0);
-      expect(apmwCalls()).toEqual(['apmw: sanitize -p claude', 'apmw: sanitize -p opencode']);
-      expect(r.json.sanitized).toEqual(['claude', 'opencode']);
-      expect(r.json.commands).toContain('apmw sanitize -p claude');
-      expect(r.json.commands).not.toContain('apmw sanitize -p copilot');
-      expect(notes(r)).toContain('apmw sanitize ran for: claude, opencode');
-    });
-
-    tc('uses -g and the home directories under -Global', async () => {
-      fakeApm();
-      agentsDir(S.home, '.claude');
-      agentsDir(S.home, '.copilot');
-      agentsDir(S.proj, '.claude'); // project directory must not count under -Global
-      const r = await run(['-Packages', 'core', '-Global'], ownBin());
-      expect(apmwCalls()).toEqual(['apmw: sanitize -g -p claude', 'apmw: sanitize -g -p copilot']);
-      expect(r.json.sanitized).toEqual(['claude', 'copilot']);
-    });
-
-    tc('does not run it for packages without agents or when the install failed', async () => {
-      fakeApm();
-      agentsDir(S.proj, '.claude');
-      await run(['-Packages', 'ts,shared'], ownBin());
-      expect(apmwCalls()).toEqual([]);
-      fakeApm('packages/agents');
-      const r = await run(['-Packages', 'agents'], ownBin());
-      expect(r.status).toBe(1);
-      expect(apmwCalls()).toEqual([]);
-    });
-
-    tc('a failing apmw is a note and the install still counts', async () => {
-      fakeApm();
-      agentsDir(S.proj, '.claude');
-      const r = await run(['-Packages', 'agents'], ownBin('exit 2'));
-      expect(r.status).toBe(0);
-      expect(r.json.installed).toEqual(['agents']);
-      expect(r.json.sanitized).toEqual([]);
-      expect(notes(r)).toContain('apmw sanitize -p claude failed (exit 2)');
-    });
-
-    tc('a missing apmw leaves the agents in the source format and says so', async () => {
-      fakeApm();
-      agentsDir(S.proj, '.claude');
-      const lean = fs.mkdtempSync(path.join(S.dir, 'lean-'));
-      fs.symlinkSync(pwshPath, path.join(lean, 'pwsh'));
-      const own = path.join(S.dir, 'own-bin');
-      fs.mkdirSync(own);
-      fs.copyFileSync(path.join(bin, 'apm'), path.join(own, 'apm'));
-      const r = await run(['-Packages', 'agents'], `${own}:${lean}`);
-      expect(r.status).toBe(0);
-      expect(r.json.sanitized).toEqual([]);
-      expect(r.json.commands).toContain('apmw sanitize -p claude');
-      expect(notes(r)).toContain('apmw not found: the agents are still in the source format');
-      expect(notes(r)).toContain('uv tool install apmw');
-    });
-
-    tc('without any client agents directory it notes the command to run later', async () => {
-      fakeApm();
-      const r = await run(['-Packages', 'agents'], ownBin());
-      expect(apmwCalls()).toEqual([]);
-      expect(notes(r)).toContain('no client agents directory found');
-    });
-
-    tc('a dry run lists the three sanitize commands and runs nothing', async () => {
-      fakeApm();
-      const r = await run(['-Packages', 'agents', '-DryRun'], ownBin());
-      expect(apmwCalls()).toEqual([]);
-      expect(r.json.commands.filter((c: string) => c.startsWith('apmw '))).toEqual([
-        'apmw sanitize -p claude',
-        'apmw sanitize -p copilot',
-        'apmw sanitize -p opencode',
-      ]);
-      expect(r.json.sanitized).toEqual([]);
-    });
   });
 });
 
@@ -721,10 +511,10 @@ describe('apm-install SKILL.md', () => {
   const text = fs.readFileSync(skillPath, 'utf-8');
   const fm = parse(text.split(/^---$/m)[1]);
 
-  it('is a gated, user-invocable skill', () => {
+  it('is a gated skill without a user-invocable key', () => {
     expect(fm.name).toBe('apm-install');
     expect(fm['disable-model-invocation']).toBe(true);
-    expect(fm['user-invocable']).toBe(true);
+    expect(fm['user-invocable']).toBeUndefined();
     expect(fm.metadata['opencode/autoinvoke']).toBe('false');
   });
 
@@ -738,6 +528,100 @@ describe('apm-install SKILL.md', () => {
     const dir = path.dirname(skillPath);
     for (const m of text.matchAll(/\]\((references\/[^)]+)\)/g)) {
       expect(fs.existsSync(path.join(dir, m[1]))).toBe(true);
+    }
+  });
+
+  it('stays within 50 lines and keeps only inputs, output fields, -TrustProject and -Ref', () => {
+    expect(text.split('\n').length).toBeLessThanOrEqual(50);
+    expect(text).not.toContain('## Behavior of the script');
+    expect(text).not.toContain('Hardening beyond the original task');
+    for (const k of ['-TrustProject', '-Ref', 'wouldInstall', 'notAttempted', 'dependencies']) {
+      expect(text).toContain(k);
+    }
+  });
+
+  it('lists exactly the packages the script accepts ($valid)', () => {
+    const script = fs.readFileSync(
+      path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),
+      'utf-8'
+    );
+    const valid = /^\$valid = (.+)$/m
+      .exec(script)![1]
+      .match(/'([^']+)'/g)!
+      .map((x) => x.slice(1, -1));
+    const line = /Valid packages: (.+?); anything else/s.exec(text)![1];
+    const documented = [...line.matchAll(/`([a-z]+)`/g)].map((m) => m[1]);
+    expect(documented).toEqual(valid);
+    expect(valid).toContain('statusline');
+  });
+
+  it('moved the behavior details into the script help', () => {
+    const script = fs.readFileSync(
+      path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),
+      'utf-8'
+    );
+    const help = script.slice(0, script.indexOf('param('));
+    expect(help).toContain('Behavior in detail');
+    expect(help.replace(/\s+/g, ' ')).toContain('hardening beyond the original task');
+  });
+});
+
+describe('upgrade note for v2 installs (#773)', () => {
+  const root = path.resolve(__dirname, '../../..');
+  const note = fs.readFileSync(
+    path.join(root, 'packages/delivery/.apm/skills/apm-install/references/after-install.md'),
+    'utf-8'
+  );
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf-8');
+
+  it('names both options, the leftover agents and skills and the paths', () => {
+    expect(note).toContain('## Upgrading from 2.x');
+    expect(note).toContain('`#v2.5.4`');
+    expect(note).toContain('apm uninstall -g GravionLabs/apm-hub/packages/agents');
+    for (const a of [
+      'orchestrator',
+      'pbi-runner',
+      'implementer',
+      'issue-reader',
+      'explorer',
+      'planner',
+      'pr-writer',
+      'review-lead',
+      'reviewer',
+    ]) {
+      expect(note).toContain(`\`${a}\``);
+    }
+    for (const sk of [
+      'review-fanout',
+      'queue',
+      'handoff',
+      'orch-pipeline',
+      'orch',
+      'verify-project',
+    ]) {
+      expect(note).toContain(`\`${sk}\``);
+    }
+    expect(note).toContain('~/.claude/agents/<name>.md');
+    expect(note).toContain('~/.copilot/agents/<name>.agent.md');
+  });
+
+  it('documents what apm cleans itself', () => {
+    expect(note).toMatch(/apm\.lock\.yaml/);
+    expect(note).toMatch(/Cleaned \d+ files from packages no longer in apm\.yml/);
+  });
+
+  it('README points to the upgrade note', () => {
+    expect(readme).toContain('## Upgrading from 2.x');
+    expect(readme).toContain('references/after-install.md');
+    expect(readme).toContain('#v2.5.4');
+    for (const n of [
+      'verify-project',
+      'review-fanout',
+      'orch-pipeline',
+      'pbi-runner',
+      'reviewer',
+    ]) {
+      expect(readme).toContain(`\`${n}\``);
     }
   });
 });

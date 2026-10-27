@@ -3,16 +3,7 @@ import * as path from 'path';
 
 const ROOT = path.resolve(__dirname, '../..');
 /** Every pwsh file that defines Resolve-StateDir (later tasks extend this list). */
-const PWSH_FILES = [
-  'packages/github/.apm/skills/github-issue/scripts/Add-LedgerLine.ps1',
-  'packages/github/.apm/skills/github-issue/scripts/Write-StatusTable.ps1',
-  'packages/github/.apm/skills/github-issue/scripts/Enter-Checkout.ps1',
-  'packages/github/.apm/skills/github-issue/scripts/Exit-Checkout.ps1',
-  'packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1',
-  'packages/delivery/.apm/skills/queue/scripts/Invoke-OrchestratorQueue.ps1',
-  'packages/delivery/.apm/skills/retro/scripts/Get-RunMetrics.ps1',
-  'scripts/Invoke-HeadlessSmoke.ps1',
-];
+const PWSH_FILES = ['scripts/Invoke-HeadlessSmoke.ps1'];
 
 const extract = (rel: string): string => {
   const text = fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
@@ -42,10 +33,7 @@ describe('Resolve-StateDir copies', () => {
 });
 
 /** The sh copies (state_dir) of the hooks, kept byte-identical between the markers. */
-const SH_FILES = [
-  'packages/hooks/.apm/hooks/subagent-ledger.sh',
-  'packages/hooks/.apm/hooks/git-guardrails.sh',
-];
+const SH_FILES = ['packages/hooks/.apm/hooks/git-guardrails.sh'];
 const extractSh = (rel: string): string => {
   const text = fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
   const m = text.match(/^# BEGIN state_dir[^\n]*\n[\s\S]*?^# END state_dir$/m);

@@ -54,17 +54,7 @@ Pass `[modules]="modules"` on `<ag-grid-angular>` (type `Module[]`) when grids n
 
 `npx ag-mcp` gives the assistant version-specific AG Grid docs, examples and API refs. Node 22 LTS; no install, no `devDependencies` entry (npx fetches the latest CLI).
 
-Add this block to the client's MCP config and merge if the file exists, never overwrite other servers:
-
-```json
-{ "mcpServers": { "ag-mcp": { "command": "npx", "args": ["ag-mcp"] } } }
-```
-
-| Client | File | Root key |
-|---|---|---|
-| VS Code + Copilot | `.vscode/mcp.json` | `servers` (add `"type": "stdio"`) |
-| Claude Code | `.mcp.json` in project root | `mcpServers` |
-| Cursor | `.cursor/mcp.json` | `mcpServers` |
+Client config files and the server block: the MCP reference of `ng-implementation` (skill name, not a path). Command: `npx ag-mcp`.
 
 Restart the client, then verify: VS Code chat `@ag-mcp`; Claude Code `claude mcp list`. Prompts: `/ag-mcp:quick-start` (scaffold a grid), `/ag-mcp:upgrade-grid` (migration plan); tool `search_docs`.
 

@@ -1,7 +1,7 @@
 ---
 name: Epic
 about: Group related Features toward one larger outcome
-title: 'Epic: '
+title: '[Epic] '
 labels: epic
 assignees: ''
 ---

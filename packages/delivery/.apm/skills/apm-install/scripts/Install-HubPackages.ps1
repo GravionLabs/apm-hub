@@ -13,9 +13,26 @@
   A missing apm.yml is created by `apm install` itself. Install form:
   apm install GravionLabs/apm-hub/packages/<pkg> [-g]
 
+  Behavior in detail:
+  - Detection runs even under -DryRun. The report maps ts/js to ts, py to py, dotnet to dotnet,
+    rust to rust and the angular framework to ng.
+  - detect-techstack missing, failing or printing invalid output: the missing ones of shared, github,
+    delivery plus a note asking for -Packages.
+  - -Global without -Packages proposes only the base packages, no stack detection (hardening beyond the
+    original task, like the -TrustProject gate). Each base package is checked separately: shared via
+    detect-techstack, github via github-issue, delivery via issue-planning; only the missing ones are proposed.
+  - Installed state comes from the manifest (apm.yml, ~/.apm/apm.yml with -Global; comments ignored; core and
+    all cover their members; <pkg>@apm-hub is recognised) and from apm_modules/. Those packages land in `skipped`.
+  - -Packages accepts comma-separated names (whitespace and empty entries ignored; an empty list exits 1).
+    A requested core or all covers its members: they are not installed next to it.
+  - A failing `apm install` stops the run: exit 1, `failed` names the package, `notAttempted` the rest.
+  - -DryRun reports `wouldInstall`, never `installed`; install-only notes read "After install: ...".
+  - The direct form `apm install GravionLabs/apm-hub/packages/<pkg>` is used, not `apm marketplace add` or
+    <pkg>@apm-hub, because it needs no registration step. apm output goes to stderr, so stdout is pure JSON.
+
 .PARAMETER Packages
   Packages to install (comma-separated); skips detection. One of shared, github, delivery,
-  agents, hooks, core, all, ts, py, ng, dotnet.
+  hooks, statusline, core, all, ts, py, ng, dotnet.
 
 .PARAMETER Global
   Install user-wide (apm -g) instead of into the project.
@@ -30,9 +47,7 @@
   Print the commands in the JSON result, run nothing. The result lists `wouldInstall`, not `installed`.
 
 .OUTPUTS
-  JSON {dryRun, installed|wouldInstall, skipped, failed, notAttempted, commands, sanitized, provides, dependencies, worktrees, notes}.
-  Project installs then run Enable-Worktrees.ps1 (apply mode) and report {changed, hints} as `worktrees` (null on -Global, -DryRun or when nothing was installed).
-  After installing agents, core or all the script runs `apmw sanitize -p <client>` (-g under -Global) for every client with an agents directory and lists them as `sanitized`; a missing or failing apmw is a note, not a failure.
+  JSON {dryRun, installed|wouldInstall, skipped, failed, notAttempted, commands, provides, dependencies, notes}.
   Exit 1 when apm or pwsh 7 is missing, a package name is invalid or an install command fails.
 #>
 param(
@@ -55,7 +70,7 @@ if (-not (Get-Command apm -ErrorAction SilentlyContinue)) {
 }
 
 # pwsh -File passes "ts,ng" as one string: split on commas, then validate
-$valid = 'shared', 'github', 'delivery', 'agents', 'hooks', 'core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust'
+$valid = 'shared', 'github', 'delivery', 'hooks', 'statusline', 'core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust'
 if ($PSBoundParameters.ContainsKey('Packages')) {
   $Packages = @($Packages | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
   if ($Packages.Count -eq 0) {
@@ -79,15 +94,15 @@ $projectDirs = '.claude/skills', '.opencode/skills', '.agents/skills', '.github/
 $homeDirs = '.claude/skills', '.config/opencode/skills', '.copilot/skills', '.agents/skills', '.opencode/skills', '.github/skills'
 $notes = [System.Collections.Generic.List[string]]::new()
 $hubPath = 'GravionLabs/apm-hub/packages'
-$coreMembers = 'shared', 'github', 'delivery', 'agents', 'hooks'
+$coreMembers = 'shared', 'github', 'delivery', 'hooks', 'statusline'
 $allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust')
 $provides = @{
   shared   = 'skills: implementation, detect-techstack, diagnose, code-review'
   github   = 'skills: github-issue, github-pull-request, github-release'
-  delivery = 'skills: review-fanout, verify-project, issue-planning, retro, handoff, queue, apm-install'
-  agents   = 'orchestrator skill and agents: orchestrator, issue-reader, explorer, planner, reviewer, review-lead, implementer, pr-writer, pbi-runner'
-  hooks    = 'hooks: subagent ledger, context warning, git guardrails; OpenCode plugin'
-  core     = 'github, delivery, shared, agents, hooks'
+  delivery = 'skills: issue-planning, retro, apm-install'
+  hooks    = 'hooks: git guardrails'
+  statusline = 'skills: context-statusline'
+  core     = 'github, delivery, shared, hooks, statusline'
   all      = 'every package except apm-tooling'
   ts       = 'skills: ts-implementation, ts-test, ts-create-project, ts-mcp-server-generator, ts-pnpm-workflow, setup-prettier-eslint-husky'
   py       = 'skills: py-implementation, py-test, py-create-project'
@@ -99,7 +114,7 @@ $externalDeps = @{ ng = 'angular/skills (angular-developer)'; dotnet = 'dotnet/s
 
 # Base packages already present in the user's client skill directories (one marker skill each)
 function Get-MissingBase {
-  $marker = [ordered]@{ shared = 'detect-techstack'; github = 'github-issue'; delivery = 'review-fanout' }
+  $marker = [ordered]@{ shared = 'detect-techstack'; github = 'github-issue'; delivery = 'issue-planning' }
   $missing = [System.Collections.Generic.List[string]]::new()
   foreach ($k in $marker.Keys) {
     $found = $false
@@ -212,90 +227,6 @@ foreach ($pkg in $wanted) {
   $done.Add($pkg)
 }
 
-# Project installs: one-time repository onboarding for .worktrees/ (Enable-Worktrees.ps1, apply mode). The changed files are listed for the PR.
-# The script lives next to Detect-TechStack.ps1; a project-local copy counts as trusted only when this run installed shared/core/all or -TrustProject is given.
-function Find-Enable {
-  foreach ($d in $homeDirs) {
-    $p = Join-Path $userHome "$d/detect-techstack/scripts/Enable-Worktrees.ps1"
-    if (Test-Path $p) { return $p }
-  }
-  if ($TrustProject -or ($done | Where-Object { $_ -in 'shared', 'core', 'all' })) {
-    foreach ($d in $projectDirs) {
-      $p = Join-Path (Get-Location) "$d/detect-techstack/scripts/Enable-Worktrees.ps1"
-      if (Test-Path $p) { return $p }
-    }
-  }
-  return $null
-}
-$worktrees = $null
-if (-not $Global -and -not $failed -and $done.Count -gt 0) {
-  if ($DryRun) {
-    $commands.Add('pwsh <skills dir>/detect-techstack/scripts/Enable-Worktrees.ps1')
-    $notes.Add('After install: Enable-Worktrees.ps1 makes .gitignore and the stack configs ignore .worktrees/; commit the changed files.')
-  } else {
-    $enable = Find-Enable
-    if (-not $enable) {
-      $notes.Add('Enable-Worktrees.ps1 not found (install the shared package): run it once per repository so .worktrees/ is ignored.')
-    } else {
-      $commands.Add("pwsh $enable")
-      try {
-        $stackJson = $null
-        $detectSibling = Join-Path (Split-Path -Parent $enable) 'Detect-TechStack.ps1'
-        if (Test-Path $detectSibling) {
-          $stackJson = (& pwsh -NoProfile -File $detectSibling -ProjectRoot (Get-Location).Path 2>$null | Out-String).Trim()
-          if ($LASTEXITCODE -ne 0) { $stackJson = $null }
-        }
-        $enableArgs = @('-NoProfile', '-File', $enable, '-Root', (Get-Location).Path) + $(if ($stackJson) { @('-TechStack', $stackJson) } else { @() })
-        $raw = (& pwsh @enableArgs 2>&1 | ForEach-Object { "$_" }) -join "`n"
-        if ($LASTEXITCODE -ne 0) { throw "exit $LASTEXITCODE" }
-        $worktrees = $raw | ConvertFrom-Json
-        if (@($worktrees.changed).Count) { $notes.Add("Enable-Worktrees.ps1 changed: $(@($worktrees.changed) -join ', '). Commit these files.") }
-        foreach ($h in @($worktrees.hints)) { $notes.Add("Enable-Worktrees.ps1 hint ($($h.file)): $($h.message)") }
-      } catch {
-        $notes.Add("Enable-Worktrees.ps1 failed ($($_.Exception.Message)): run it by hand.")
-      }
-    }
-  }
-}
-
-$when = if ($DryRun) { 'After install: ' } else { '' }
-$g = if ($Global) { ' -g' } else { '' }
-# Agents: apm copies them in the source format; `apmw sanitize` rewrites the frontmatter per client. The script runs it itself
-# (a note alone gets forgotten and the orchestrator then starts without tools) for every client whose agents directory exists.
-$sanitized = [System.Collections.Generic.List[string]]::new()
-if ($done | Where-Object { $_ -in 'agents', 'core', 'all' }) {
-  $agentDirs = if ($Global) {
-    [ordered]@{ claude = "$userHome/.claude/agents"; copilot = "$userHome/.copilot/agents"; opencode = "$userHome/.config/opencode/agents" }
-  } else {
-    [ordered]@{ claude = '.claude/agents'; copilot = '.github/agents'; opencode = '.opencode/agents' }
-  }
-  $apmw = Get-Command apmw -ErrorAction SilentlyContinue
-  foreach ($client in $agentDirs.Keys) {
-    if (-not $DryRun -and -not (Test-Path -LiteralPath $agentDirs[$client])) { continue }
-    $sanArgs = @('sanitize') + $(if ($Global) { '-g' } else { @() }) + @('-p', $client)
-    $commands.Add('apmw ' + ($sanArgs -join ' '))
-    if ($DryRun -or -not $apmw) { continue }
-    # apmw output goes to stderr like apm output: stdout stays pure JSON
-    & apmw @sanArgs 2>&1 | ForEach-Object { [Console]::Error.WriteLine("$_") }
-    if ($LASTEXITCODE -ne 0) { $notes.Add("apmw sanitize$g -p $client failed (exit $LASTEXITCODE): run it by hand, the $client agents are still in the source format.") }
-    else { $sanitized.Add($client) }
-  }
-  if ($DryRun) {
-    $notes.Add("After install: apmw sanitize$g -p <client> runs for every client with an agents directory (claude, copilot, opencode); without it the agents stay in the source format and the orchestrator starts without tools.")
-    if (-not $apmw) { $notes.Add('apmw not found: install it first (uv tool install apmw, or pipx install apmw).') }
-  } elseif (-not $apmw) {
-    $notes.Add("apmw not found: the agents are still in the source format. Install it (uv tool install apmw, or pipx install apmw) and run apmw sanitize$g -p claude|opencode|copilot.")
-  } elseif ($sanitized.Count -gt 0) {
-    $notes.Add("apmw sanitize$g ran for: $($sanitized -join ', ').")
-  } else {
-    $notes.Add("apmw sanitize: no client agents directory found; run apmw sanitize$g -p <client> once the client has one.")
-  }
-}
-if ($done | Where-Object { $_ -in 'hooks', 'core', 'all' }) {
-  $dest = if ($Global) { '~/.config/opencode/plugins/' } else { '.opencode/plugins/' }
-  $notes.Add("${when}OpenCode: copy packages/hooks/.apm/opencode/plugins/apm-hub-hooks.ts to $dest by hand.")
-}
-
 $prov = [ordered]@{}
 foreach ($p in $done) { $prov[$p] = $provides[$p] }
 $deps = @($done | Where-Object { $externalDeps.ContainsKey($_) } | ForEach-Object { $externalDeps[$_] })
@@ -307,10 +238,8 @@ $result.skipped = @($skipped)
 $result.failed = $failed
 $result.notAttempted = @($notAttempted)
 $result.commands = @($commands)
-$result.sanitized = @($sanitized)
 $result.provides = $prov
 $result.dependencies = $deps
-$result.worktrees = $(if ($worktrees) { [ordered]@{ changed = @($worktrees.changed); hints = @($worktrees.hints) } } else { $null })
 $result.notes = @($notes)
 $result | ConvertTo-Json -Depth 4
 

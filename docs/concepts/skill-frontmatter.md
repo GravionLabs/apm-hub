@@ -23,7 +23,7 @@ These, and only these, may appear in addition to the keys above:
 | Key                        | Honored by                                   | Effect                                                                                                            |
 | :------------------------- | :------------------------------------------- | :---------------------------------------------------------------------------------------------------------------- |
 | `disable-model-invocation` | Claude Code, VS Code Copilot                 | `true` removes the description from the model's skill list; the skill runs only when the user types `/<name>`.    |
-| `user-invocable`           | Claude Code, VS Code Copilot                 | `false` hides the skill from the `/` menu; the model may still load it.                                           |
+| `user-invocable`           | Claude Code, VS Code Copilot                 | `false` hides the skill from the `/` menu; the model may still load it. Written only as `false`; `true` is the default.                                   |
 | `context`                  | Claude Code, VS Code Copilot (experimental)  | `fork` runs the skill in a subagent with its own context; only the result returns to the caller.                  |
 | `agent`                    | Claude Code                                  | With `context: fork`: the agent definition to run in (`explorer`, `reviewer`, or a built-in such as `Explore`).   |
 

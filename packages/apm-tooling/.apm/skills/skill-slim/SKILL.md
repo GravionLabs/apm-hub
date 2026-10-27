@@ -8,7 +8,7 @@ description: 'Measure skills across a package or repo, classify content as keep,
 - Repo root; run read-only analysis first — **no edits before the user approves the findings**
 - Follow `../skill-write/references/skill-writing-rules.md` for the target shape
 
-Paths to `scripts/`, `references/` and `assets/` are relative to this skill's directory.
+Paths to `scripts/` are relative to this skill's directory.
 
 ## Instructions
 
@@ -16,9 +16,10 @@ Paths to `scripts/`, `references/` and `assets/` are relative to this skill's di
 
 ```powershell
 pwsh scripts/Get-SkillReport.ps1 -Root .
+pwsh scripts/Get-SkillReport.ps1 -Root . -FailOnDangling   # CI: exit 1 on a dangling reference
 ```
 
-JSON on stdout: sizes, skills over the 100-line limit, `danglingCandidates` (some are false positives, e.g. tool names that share a skill prefix — verify each), `duplicatedLines` across skills.
+JSON on stdout: sizes, skills over the 100-line limit, `danglingCandidates` across `SKILL.md` and `references/*.md`, also references into other skills (known false positives: `scripts/skill-report-allowlist.txt`, `skill: ref` per line with a comment why), `duplicatedLines` across skills.
 
 ### 2. Classify
 

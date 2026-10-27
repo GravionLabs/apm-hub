@@ -1,17 +1,11 @@
 name: delivery
 version: 2.5.4
-description: "Issue-driven development workflow: parallel review fan-out, run retrospective (retro), session hand-off document (handoff), headless queue runner (queue, optional --fix-advisories), package installer (apm-install), project verification, issue planning with native sub-issues, and git-cliff changelog setup. Pulls in github and shared; stack packages are installed per project."
-registry: https://github.com/GravionLabs/apm-hub
+description: "Issue-driven development workflow: run retrospective (retro), package installer (apm-install), and issue planning with native sub-issues. Pulls in github and shared; stack packages are installed per project."
 dependencies:
   apm:
     - GravionLabs/apm-hub/packages/github
     - GravionLabs/apm-hub/packages/shared
-skills:
+x-skills:
   - apm-install
-  - handoff
   - issue-planning
-  - orch-pipeline
-  - queue
   - retro
-  - review-fanout
-  - verify-project

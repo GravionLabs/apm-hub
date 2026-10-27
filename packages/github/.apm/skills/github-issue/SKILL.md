@@ -1,11 +1,11 @@
 ---
 name: github-issue
-description: 'Implement GitHub issues by type (Epic, Feature, PBI, Task), single or batch. Use for any GitHub issue work.'
+description: 'GitHub issue conventions: types, [Level] titles, branches, commits, native sub-issues, Task issues. Use for any GitHub issue work.'
 ---
 
 ## Overview
 
-Single entry point for the GitHub issue lifecycle. Detect the issue type and shape of the input, then strictly follow the matching reference document. One issue per session; the `orchestrator` agent is the preferred entry point (see the hub's `docs/working-mode.md`).
+Conventions for the GitHub issue lifecycle. Detect the issue type, then follow the matching reference document. One issue per session; running several issues is the runner's job.
 
 ## Prerequisites
 
@@ -15,19 +15,17 @@ Single entry point for the GitHub issue lifecycle. Detect the issue type and sha
 
 ## Issue Types
 
-Issues follow this hierarchy (defined in `issue-templates/`):
+Issues follow this hierarchy (the repository's `.github/ISSUE_TEMPLATE/` holds the templates when present; this table is the definition):
 
-| Label     | Title convention                                      | Sub-issues    |
+| Label     | Title (always `[<Level>] <summary>`)                  | Sub-issues    |
 | --------- | ----------------------------------------------------- | ------------- |
-| `epic`    | Per the repo's Epic template                          | Features      |
-| `feature` | Per the repo's Feature template                       | PBIs          |
-| `pbi`     | Conventional commit: `feat: …`, `refactor: …`, …     | Tasks (opt.)  |
-| `task`    | Conventional commit: `chore: …`, `feat: …`, …         | —             |
-| `bug`     | `fix: <symptom>`                                      | Tasks (opt.)  |
+| `epic`    | `[Epic] <outcome>`                                    | Features      |
+| `feature` | `[Feature] <capability>`                              | PBIs          |
+| `pbi`     | `[PBI] feat(scope): …`, `[PBI] refactor: …`           | Tasks (opt.)  |
+| `task`    | `[Task] chore: …`, `[Task] feat: …`                   | —             |
+| `bug`     | `[Bug] fix: <symptom>`                                | Tasks (opt.)  |
 
-Epic and Feature title conventions vary by repo — some use a `Epic: ` prefix, others `[Epic] `.
-Read `.github/ISSUE_TEMPLATE/` in the target repo and match what is already there rather than
-assuming. Never mix two conventions within one repo.
+Titles are always written with the bracket prefix. Legacy titles (`Epic: …`, `Feature: …`, `[EPIC] …`) are still recognized when reading, never written.
 
 Parent/child links are **native GitHub sub-issues** — see `references/sub-issues.md` for how to
 read, create, move and verify them. Markdown checklists are not used. Task sub-issues of a PBI follow `references/task-issues.md` and never become separate branches or PRs.
@@ -36,29 +34,15 @@ read, create, move and verify them. Markdown checklists are not used. Task sub-i
 
 1. Read the issue(s): `gh issue view <nr> --json title,body,labels`
 2. Detect type from the `labels` field (`epic` / `feature` / `pbi` / `task` / `bug`)
-3. Check whether it has children:
-   `gh api repos/{owner}/{repo}/issues/<nr>/sub_issues --jq 'length'`
-4. Pick the workflow:
-
-   | Issue type              | Has sub-issues | Workflow reference                                  |
-   | ----------------------- | -------------- | --------------------------------------------------- |
-   | `epic`                  | yes (always)   | `references/batch-workflow.md` (use the `epic` row)    |
-   | `feature`, `pbi`, `bug` | yes            | `references/batch-workflow.md` (row for the type)      |
-   | any                     | no             | `references/standalone-issue.md`                       |
-   | `task`                  | —              | `references/standalone-issue.md`                       |
-
-   **Next open PBI of a Feature or Epic** (orchestrator `next` mode, end-line suggestion): `references/next-selection.md`; running them one after another until a gate (orchestrator `loop` mode, loop ledger, stop conditions): `references/loop-mode.md`. Per-PBI state table of a Feature or Epic (orchestrator `status` mode): `references/status.md`. Orchestrator issue overview, review summary and description input (PBI created at the plan gate): `references/orchestrator-gates.md`.
-
-   **PBI pipeline** (orchestrator steps 0–6, per-PBI rules, gate points): `references/pbi-pipeline.md`; parallel Task waves (`--parallel`, worktrees, integration): `references/task-waves.md`.
-
-   **Batch user requests** ("implement all PBIs in feature #12", "work through these issues"): collect the target issues, then process each one sequentially with the appropriate workflow above.
+3. Follow `references/standalone-issue.md`; Task sub-issues of a PBI follow `references/task-issues.md`.
+4. A plan from `issue-planning` (`plan.json`) → `references/create-from-plan.md`: create the issues, sub-issue and blocked-by links.
 
 ## Shared constraints (all workflows)
 
 - Work branches are cut from and merged into the integration branch (`release/next` by default, explicit `release/<x.y>` only for parallel lines), never `main` (`references/release-branches.md`); `github-release` cuts and finishes it.
-- Branch name `<type>/<nr>-<slug>` per `references/conventional-commits.md`; `<slug>` from the issue title (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
+- Branch name `<type>/<nr>-<slug>` per `references/conventional-commits.md`; `<slug>` from the issue title after stripping `^\[(Epic|Feature|PBI|Task|Bug)\] ` (case-insensitive) and the legacy `Epic: ` / `Feature: `, then the conventional type and scope (lowercase, spaces → `-`, drop parenthetical scope, max ~40 chars).
 - One logical change per commit; commit format per `references/conventional-commits.md`.
 - Commit and PR titles reference the issue: `<type>: <description> (#<nr>)`; the PR body contains `Closes #<nr>` for every issue it completes (only partly delivered: `Refs #<nr>` and `## Not delivered`, see `github-pull-request`).
-- Two-stage verify (load the `detect-techstack` skill if the project's commands are unknown): per Task or commit run the build only when the stack compiles and compiled sources changed, plus targeted tests (test files of the changed paths and their direct neighbours; unknown mapping: the project's fast/unit group, never the full suite). Per PBI ONE full run (Final-Verify) after the last Task and again after the last fix round, before the review and before the PR. Never commit or move on with a red run.
+- Verify per `implementation` (targeted tests per commit, one full run before the pull request); never commit or move on with a red run.
 - Never merge a PR with failing checks.
 - Closing a child is all that's needed — the native sub-issue link updates the parent's progress automatically. There is no checklist to tick. If a child turns out not to be linked to its parent, link it (`references/sub-issues.md`) instead of adding a checklist.

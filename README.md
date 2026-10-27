@@ -8,7 +8,7 @@ Documentation site: **[gravionlabs.github.io/apm-hub](https://gravionlabs.github
 
 ## What is apm-hub?
 
-**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the `agents` package adds the `orchestrator` primary agent and its `issue-reader`, `explorer`, `planner`, `reviewer`, `implementer` and `pr-writer` subagents. The entry point beyond skill names is the `orchestrator` agent (`/orch` is deprecated and removed in 3.0.0).
+**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the runner that chains them lives in [dromos](docs/runner.md).
 
 Skills are the primary artifact: one `SKILL.md` source file loads unchanged on GitHub Copilot, Claude Code, and OpenCode. See the [skill frontmatter convention](docs/concepts/skill-frontmatter.md) for how that is guaranteed.
 
@@ -19,14 +19,21 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Overview](docs/overview.md)**: Introduction, core concepts, and guiding principles.
 - **[Skills](docs/concepts/skills.md)**: What skills are and how they work across platforms.
 - **[Skill Frontmatter Convention](docs/concepts/skill-frontmatter.md)**: The spec-compliant frontmatter every skill follows.
-- **[The orchestrator](docs/orchestrator.md)**: Agents, pipeline, state, gates, hooks and end of run.
+- **[Working mode](docs/working-mode.md)**: one issue per session, small contexts.
+- **[The runner](docs/runner.md)**: the automated pipeline lives in dromos.
+- **[Simplification plan](docs/simplification-plan.md)**: why apm-hub becomes a content-only repository and the pipeline moves to dromos.
+- **[Simplification work plan](docs/simplification-workplan.md)**: order of work, PBIs and milestones for that change.
 - **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
 - **[Common Workflows](docs/usage/common-workflows.md)**: End-to-end examples with the installed skills.
 - **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
 - **[Copilot CLI hooks](docs/usage/copilot-hooks.md)**: manual setup, upgrade cleanup.
 - **[Format override](docs/usage/format-override.md)**: replace the format and check commands per language with `.agents/format.json`.
-- **[Project standard](docs/usage/project-standard.md)**: the GitHub Project layout: fields Status, Level, Needs and Sprint, the ten views and the labels `planned` and `needs-review`.
+- **Project standard** (`github-project`): ships from [GravionLabs/ci](https://github.com/GravionLabs/ci) (`apm install GravionLabs/ci`), see its `docs/project-standard.md`.
 - **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
+
+## Upgrading from 2.x
+
+3.0.0 is content-only: the agents and the orchestration skills (`orchestrator`, `review-fanout`, `verify-project`, `queue`, `handoff`, `orch-pipeline`, `orch`) and the agents (`orchestrator`, `pbi-runner`, `implementer`, `issue-reader`, `explorer`, `planner`, `pr-writer`, `review-lead`, `reviewer`) are gone; the runner is [dromos](docs/runner.md). If you still want the old pipeline, pin `agents`, `github` and `delivery` together at `#v2.5.4`; otherwise remove the `agents` entry and run `apm update -g`. What apm cleans itself and what can remain: [after install](packages/delivery/.apm/skills/apm-install/references/after-install.md).
 
 ## 🚀 Quick Start
 
@@ -62,10 +69,9 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    apm install dotnet@apm-hub
    ```
 
-   Globally, install the workflow skills and agents without any stack skills (`apmw` wraps `apm` and sanitizes the agent
-   frontmatter for the client; `uv tool install apmw` once):
+   Globally, install the workflow skills without any stack skills:
    ```bash
-   apmw install -g -p claude GravionLabs/apm-hub/packages/core
+   apm install -g GravionLabs/apm-hub/packages/core
    ```
 
    Or install **all packages** at once (machines that mix stacks):
@@ -111,49 +117,21 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 
 | Package       | Contents                                                                                                                                       |
 | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| `shared`      | `implementation`, `detect-techstack`, `code-review`                                                                                            |
-| `delivery`    | `review-fanout`, `verify-project`, `issue-planning`; formerly `development-workflow`                                                           |
-| `github`      | `github-issue`, `github-pull-request`                                                                                                          |
+| `shared`      | `implementation`, `detect-techstack`, `diagnose`, `code-review`                                                                                |
+| `delivery`    | `issue-planning`, `retro`, `apm-install`                                                                                                       |
+| `github`      | `github-issue`, `github-pull-request`, `github-release`                                                                                        |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`) |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`              |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                             |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
-| `agents`      | `orchestrator`, `issue-reader`, `explorer`, `planner`, `reviewer`, `implementer`, `pr-writer` (subagents), `/orchestrator` skill — see below   |
-| `hooks`       | Claude Code and Copilot CLI hooks (subagent ledger, context warning, git guardrails, agent sanitize on session start); OpenCode plugin         |
-| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `agents`, `hooks` (no stack skills)                                       |
-| `apm-tooling` | `skill-write`, `skill-audit`, `skill-update`, `skill-slim` (contributor tooling)                                                               |
+| `hooks`       | Claude Code git guardrails hook (denies destructive git commands)                                                                              |
+| `statusline`  | `context-statusline` skill: status line and subagent status line                                                                               |
+| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills)                                   |
+| `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling)                                                               |
 | `all`         | every package above except `apm-tooling`                                                                                                       |
 
-📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[Browse All Agents](docs/agent-list.md)** · 📄 **[Working mode](docs/working-mode.md)** (small contexts, one issue per session) · 📄 **[External frameworks](docs/frameworks.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
-
-## 🤖 Agents
-
-Skills are the primary artifact; the `agents` package adds the seven agents skills cannot replace.
-`orchestrator` runs as the **primary agent** and keeps only phase summaries in its context; the
-six subagents each have their own model and tool set:
-
-| Agent          | Role                                                                                                                  |
-| :------------- | :-------------------------------------------------------------------------------------------------------------------- |
-| `orchestrator` | `plan\|implement\|full\|next\|loop <issue>` (or `/orchestrator`): plan → implement → review → PR; gates stay with you |
-| `issue-reader` | read-only `gh` and `git` (haiku), resolves issue type, integration branch, digest and Task merged state as one JSON   |
-| `explorer`     | read-only, small model, ≤ 300-word answers with `path:line` references                                                |
-| `planner`      | read-only plus read-only `gh`, runs `issue-planning`, writes `<state>/<issue>/plan.json`, returns path + summary      |
-| `reviewer`     | read-only (diff, log and show only, never the test suite), returns the `review-fanout` findings JSON                  |
-| `implementer`  | one task per run (sonnet by default), `implementation` skill preloaded, commits, report file + ≤ 15-line status reply |
-| `pr-writer`    | git and `gh` only, runs `github-pull-request` for the PBI's one PR, returns `{number, url}` as JSON                   |
-
-```powershell
-uv tool install apmw                                # once per machine (or pipx install apmw)
-apmw install -g -p claude                           # apm install + per-platform frontmatter; add -p opencode / -p copilot for those clients
-apmw update -g -p claude                            # later updates; apm update alone leaves the agents in the source format
-claude --agent orchestrator "full 123"     # Copilot: copilot --agent orchestrator · OpenCode: opencode --agent orchestrator
-```
-
-Skills install with `apm install` alone. The agents do not: `apm install`/`apm update` copy them in the source format (Copilot tool aliases plus a `metadata` block) and every client except Copilot then loads them without tools or rejects them, so **the command for a package with agents is `apmw install` / `apmw update`** (`uv tool install apmw` or `pipx install apmw`), which runs `apm` and then `apmw sanitize -p <client>`. Already ran `apm` directly? `apmw sanitize -g -p claude|opencode|copilot` repairs the installed files. Safety nets: the `/apm-install` skill runs the sanitize itself, the `hooks` package heals Claude Code at session start, and an APM lifecycle hook in `~/.apm/apm.yml` makes every `apm` call sanitize, see [prerequisites](docs/prerequisites.md#can-the-sanitize-run-automatically).
-
-Source format and the `metadata` block: [docs/concepts/agent-frontmatter.md](docs/concepts/agent-frontmatter.md).
-[`apmw`](https://github.com/GravionLabs/apmw) does the per-platform rewrite.
+📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[Working mode](docs/working-mode.md)** (small contexts, one issue per session) · 📄 **[External frameworks](docs/frameworks.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
 
 ## 🤝 Contributing
 
@@ -162,7 +140,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 ```bash
 pnpm install
 pnpm run build && pnpm test            # generators + skill size check
-node scripts/check-manifests.mjs --fix # sync apm.yml skills lists
+node scripts/check-manifests.mjs --fix # sync apm.yml x-skills lists
 ```
 
 New or changed skills must follow the [skill frontmatter convention](docs/concepts/skill-frontmatter.md).

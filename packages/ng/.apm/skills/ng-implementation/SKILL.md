@@ -1,6 +1,6 @@
 ---
 name: ng-implementation
-description: 'Angular 20+ implementation and review rules (standalone, signals, DI, forms). Use for Angular code questions.'
+description: 'Angular 21+ implementation and review rules (standalone, signals, DI, forms). Use when writing or changing Angular code.'
 license: MIT
 ---
 
@@ -35,14 +35,11 @@ Match the project's existing convention. New Angular 20+ projects follow the CLI
 
 ## Format
 
-- Extensions: prettier `.ts .tsx .js .mjs .cjs .json .html .scss .css`; eslint only `.ts .tsx .js .mjs .cjs` (never json, html, scss, css)
-- Format: `npx prettier --write {files}` then `npx eslint --fix {files}`
-- Check (read-only): `npx prettier --check {files}` and `npx eslint {files}`
-- Not configured: tool not in the project — the `-Requires` probe fails and the script prints `skipped: <tool> not configured`; note it in the report
-- Run after green tests, before the commit (`-Check` for the check commands; see `implementation` `references/format.md`):
-  `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Language ng -Extensions .ts,.tsx,.js,.mjs,.cjs,.json,.html,.scss,.css -Requires 'npx --no-install prettier --version' -Command 'npx --no-install prettier --write {files}'`
-  `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Language ng -Extensions .ts,.tsx,.js,.mjs,.cjs -Requires 'npx --no-install eslint --version' -Command 'npx --no-install eslint --fix {files}'`
-- Override: `.agents/format.json` with an entry for `ng` replaces these commands; then run the script once per mode with `-Language ng` only (it supplies extensions and commands); a missing configured tool is an error (`docs/usage/format-override.md`)
+- Extensions: prettier `.ts .tsx .js .mjs .cjs .json .html .scss .css`; eslint only `.ts .tsx .js .mjs .cjs`
+- Format: `npx --no-install prettier --write {files}` then `npx --no-install eslint --fix {files}`
+- Check (read-only): `npx --no-install prettier --check {files}` and `npx --no-install eslint {files}`
+- Biome project (`biome.json[c]`): `npx biome check --write {files}` / check `npx biome check {files}`
+- Run after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Language ng` (`-Check` for the check commands; not-configured, override: references/format.md of `implementation`)
 
 ## Tests
 
@@ -61,7 +58,7 @@ Load `ng-test` for TestBed setup, signal testing, mocking and async patterns.
 
 ## Scaffolding
 
-- New standalone component (incl. the Sakai UI variant) → read `references/component.md`
+- New standalone component → read `references/component.md`
 - New NgRx Signal Store for feature state → read `references/signal-store.md`
 
 ## Related Skills

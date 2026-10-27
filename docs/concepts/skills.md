@@ -6,11 +6,11 @@ A **skill** is a directory with a `SKILL.md` file and optional companion files (
 
 Agents load skills progressively:
 
-| Stage | What loads | When |
-| :-- | :-- | :-- |
-| Discovery | `name` and `description` of every installed skill | Session start |
-| Activation | The full `SKILL.md` body | The description matches the task, or the user names the skill |
-| Execution | Files under `references/`, `scripts/`, `templates/` | Only when the skill says to read or run them |
+| Stage      | What loads                                          | When                                                          |
+| :--------- | :-------------------------------------------------- | :------------------------------------------------------------ |
+| Discovery  | `name` and `description` of every installed skill   | Session start                                                 |
+| Activation | The full `SKILL.md` body                            | The description matches the task, or the user names the skill |
+| Execution  | Files under `references/`, `scripts/`, `templates/` | Only when the skill says to read or run them                  |
 
 This is why the `description` is trigger-oriented (what the skill does **and** when to use it) and why `SKILL.md` stays short: everything in it costs tokens on every activation.
 
@@ -24,11 +24,11 @@ Use the dotnet-create-solution skill to scaffold the project.
 
 Skills are authored once under `packages/<domain>/.apm/skills/<name>/` and deployed by `apm install` to each platform's directory:
 
-| Platform | Project path |
-| :-- | :-- |
-| GitHub Copilot | `.github/skills/<name>/` |
-| Claude Code | `.claude/skills/<name>/` |
-| OpenCode | `.opencode/skills/<name>/` |
+| Platform       | Project path               |
+| :------------- | :------------------------- |
+| GitHub Copilot | `.github/skills/<name>/`   |
+| Claude Code    | `.claude/skills/<name>/`   |
+| OpenCode       | `.opencode/skills/<name>/` |
 
 Commit the deployed directories in your project so a fresh clone has the skills immediately. `apm_modules/` is install state and belongs in `.gitignore`.
 
@@ -67,13 +67,12 @@ The complete rule set is in `packages/apm-tooling/.apm/skills/skill-write/refere
 - `implementation` enforces "every change has tests" and dispatches to the language skill from that report.
 - `code-review` reads the `## Review rules` section of each detected `<lang>-implementation` skill and rates findings 🔴 / 🟡 / 🟢.
 - `diagnose` is loaded for bug fixes: it builds a red-capable feedback loop (commands from `<lang>-test`) before any hypothesis.
-- `verify-project` runs build, tests and lint with the detected package manager.
-- The `orchestrator` agent chains plan, TDD, `review-fanout` and PR; `orch-pipeline` is a deprecated stub.
+- `issue-planning` plans an issue one level down; the runner in [dromos](../runner.md) can chain the skills without a person in the loop.
 - `github-issue` routes issue work by label and sub-issue shape; `github-pull-request` opens the PR.
 
 ## Skills vs. prompts
 
-The only prompt in the repo is the deprecated `/orch` in `packages/delivery/.apm/prompts/`, a one-liner pointing to the orchestrator agent. Prompts are slash-command entry points; the behaviour always lives in a skill so it works the same on every platform.
+Prompts are slash-command entry points (`*.prompt.md` under `.apm/prompts/`); the behaviour always lives in a skill so it works the same on every platform.
 
 ## Related
 

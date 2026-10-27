@@ -1,6 +1,6 @@
 ## Skill Writing Rules
 
-Single source of truth for how a skill is shaped. `skill-audit`, `skill-update` and `skill-slim` check against this file; do not restate these rules elsewhere.
+Single source of truth for how a skill is shaped. `skill-audit` and `skill-slim` check against this file; do not restate these rules elsewhere.
 
 ### Load it when
 
@@ -9,7 +9,7 @@ Single source of truth for how a skill is shaped. `skill-audit`, `skill-update` 
 
 ### Placement and naming
 
-- Domain workflows: `packages/<domain>/.apm/skills/<name>/`; repo-level contributor tooling only: `.github/skills/<name>/`. If no package fits, create one with `apm.yml`.
+- Domain workflows: `packages/<domain>/.apm/skills/<name>/`; repo-level contributor tooling only: `.github/skills/<name>/`. If no package fits, create one with `apm.yml`. A new skill is listed under the `x-skills:` key of that `apm.yml` (`node scripts/check-manifests.mjs --fix`); the `x-` prefix keeps apm 0.35+ from warning about an unknown key.
 - `name`: kebab-case, 1-64 chars, matches the directory exactly, no leading, trailing or consecutive hyphens.
 
 ### Frontmatter

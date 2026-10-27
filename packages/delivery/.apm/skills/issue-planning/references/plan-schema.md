@@ -1,6 +1,6 @@
 # plan.json schema
 
-Written to `<state>/<issue>/plan.json` by the planning step, read by the primary agent. Publishing follows `publish.md`. `plan.md` is the human view of the same data. Machine-checkable form: `plan.schema.json` (structure); graph invariants are listed under Validity.
+The only output contract of `issue-planning`: one JSON object, returned to the caller, who validates it and creates the issues. Machine-checkable form: `plan.schema.json` (structure); graph invariants are listed under Validity.
 
 ```json
 {
@@ -19,8 +19,7 @@ Written to `<state>/<issue>/plan.json` by the planning step, read by the primary
       "tier": "standard",
       "blocked_by": [],
       "files": ["packages/x/.apm/skills/y/SKILL.md"],
-      "skills": ["ts-implementation"],
-      "issue": null
+      "skills": ["ts-implementation"]
     }
   ],
   "questions": [
@@ -29,6 +28,7 @@ Written to `<state>/<issue>/plan.json` by the planning step, read by the primary
       "question": "Drop the legacy flag now or keep it one release?",
       "options": ["drop now", "keep one release"],
       "recommended": "keep one release",
+      "why": "Consumers pin the old flag; dropping it now breaks them with no gain.",
       "blocks": ["p1"]
     }
   ],
@@ -40,28 +40,32 @@ Written to `<state>/<issue>/plan.json` by the planning step, read by the primary
 
 | Field | Rule |
 |:--|:--|
-| `phase`, `status` | `"plan"`; planning sets `ok` or `fail`; publish sets `published` or `partial` (the failing step goes in `summary`) |
-| `parent_issue` | Number of the planned issue, `null` for a description until the orchestrator creates its PBI |
-| `input_type` | `epic`, `feature`, `pbi`, `bug`, `description`; the orchestrator rewrites a `description` plan to `pbi` when it creates the PBI at the plan gate |
+| `phase`, `status` | `"plan"`; `ok`, or `fail` (the reason goes in `summary`) |
+| `parent_issue` | Number of the planned issue, `null` for a description |
+| `input_type` | `epic`, `feature`, `pbi`, `bug`, `description` |
 | `level` | `feature` (from epic), `pbi` (from feature), `task` (from pbi, bug, description) |
 | `depth` | `quick`, `standard`, `deep` (exploration budget only) |
 | `items[].id` | Unique plan id (`p1`, `p2`, …) |
-| `items[].title` | Conventional per level: `Feature: …`, `feat: …` / `fix: …`, `chore: …` |
+| `items[].title` | Summary without level prefix: capability for `feature`, `feat: …` / `fix: …` for `pbi`, `chore: …` for `task`; the caller adds `[Feature] `, `[PBI] ` or `[Task] ` by `level` |
 | `items[].body` | Issue body; for levels `feature` and `pbi` the first line is `Parent Epic: #N` / `Parent Feature: #N` (the parent number, as in `parent_issue`) followed by the sections of the matching issue template (see the `github-issue` skill). For `task`, the Task issue body (Parent PBI line, or `Parent Bug: #<bug>` for a Bug parent; Overview, Implementation Notes, agent-ready block with Context, Depends on, Files, Done when; Done when names the interface(s) under test). Optional `## Invariants` section for async/stateful items (`invariants.md`): before `## Definition of Done` for `pbi`, before the agent-ready block for `task` |
 | `items[].size` | `S`, `M`, `L` (see `slicing.md`) |
-| `items[].tier` | `fast`, `standard`, `strong`, chosen per `references/model-policy.md` in `github-issue`; the item body states `Tier: <tier> — <reason>`. Migration: a legacy `model` maps `haiku` to `fast`, `sonnet` to `standard`, `inherit` to `strong`; readers apply the same mapping to existing plans, new plans carry only `tier` |
+| `items[].tier` | `fast`, `standard`, `strong`, chosen per the tier table below; the item body states `Tier: <tier> — <reason>`. Migration: a legacy `model` maps `haiku` to `fast`, `sonnet` to `standard`, `inherit` to `strong`; readers apply the same mapping to existing plans, new plans carry only `tier` |
 | `items[].blocked_by` | Plan ids or existing issue numbers (integers); acyclic; `[]` when free |
 | `items[].files`, `skills` | Files to touch; `<lang>-implementation` names from detect-techstack |
-| `items[].issue` | `null` until publish writes the created issue number back |
-| `questions[]` | `id`, `question`, `options` (≥ 2), `recommended` (one of `options`), `blocks` (item ids, may be empty unless deferred), optional `deferred` (boolean, see Validity); only decisions the repo cannot answer |
+| `questions[]` | `id`, `question`, `options` (≥ 2), `recommended` (one of `options`), `why`, `blocks` (item ids, may be empty); only decisions the repo cannot answer, see `questions.md` |
 
 ## Validity
 
-- Level `task` from a PBI or bug with ≥ 2 items creates `[Task]` sub-issues (`task-issues.md` in `github-issue`); `issue` caches their numbers and the issues stay the source of truth. A single task or a description creates none: `issue` stays `null`, publish is a no-op except the label `planned` (`publish.md` § 5). The orchestrator first turns a description plan into a PBI plan at the plan gate (PBI created, `parent_issue` set, `input_type: pbi`, `Parent PBI` body lines; `github-issue` `references/orchestrator-gates.md`), so its ≥ 2 tasks are then published as `[Task]` sub-issues. Never a mix of null and numbers after publish (`issue-plan-schema.test.ts` checks both rules). A plan from a `description` never has issue numbers.
-- Ids are unique. Every string in `blocked_by` and every id in `blocks` resolves to an item; integers are existing issues (publish links them via the blocked_by endpoint even when the item is new). `blocked_by` has no cycles and no self-reference.
+- Ids are unique. Every string in `blocked_by` and every id in `blocks` resolves to an item; integers are existing issues. `blocked_by` has no cycles and no self-reference.
 - `recommended` is one of `options`; `options` has at least 2 distinct entries.
-- Publish runs only after every `questions[]` entry is answered, dropped or deferred.
-  - Answered: the primary agent sets `recommended` to the chosen option, edits the items listed in `blocks` (title, body, `blocked_by`, size) to reflect it, then removes the question.
-  - Dropped: the question is removed, items unchanged.
-  - Deferred: the owner postpones the choice; the primary agent sets `deferred: true` and keeps the question. `blocks` must be non-empty, else no item would carry `needs-decision`; a question without `blocks` can only be answered or dropped. It counts as resolved for publish, which creates the items in `blocks` with the label `needs-decision` and an "Owner decision required" block (`publish.md`).
-- Publish writes created numbers into `items[].issue` after every create; readers use `issue` as the key to the created issue.
+- A plan has no issue numbers of its own: the caller creates the issues from it.
+
+## Tiers
+
+| Tier | When |
+|:--|:--|
+| `fast` | mechanical or docs-only change of size S |
+| `strong` | size L, cross-package change, security-relevant code, persistence or a state machine |
+| `standard` | everything else |
+
+The tier carries no model id; the runner maps it.

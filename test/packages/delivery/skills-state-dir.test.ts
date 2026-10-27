@@ -11,7 +11,7 @@ function walk(dir: string): string[] {
   });
 }
 
-describe('delivery and shared skills use <state>, not .agents/', () => {
+describe('delivery and shared skills keep no state under .agents/', () => {
   const files = [
     ...walk(path.join(root, 'delivery/.apm/skills')),
     ...walk(path.join(root, 'shared/.apm/skills')),
@@ -26,14 +26,5 @@ describe('delivery and shared skills use <state>, not .agents/', () => {
       )
     );
     expect(offenders).toEqual([]);
-  });
-
-  it('detect-techstack documents state_dir and the removed exclude step', () => {
-    const s = fs.readFileSync(
-      path.join(root, 'shared/.apm/skills/detect-techstack/SKILL.md'),
-      'utf8'
-    );
-    expect(s).toContain('"state_dir"');
-    expect(s).toContain('no longer edits `.git/info/exclude`');
   });
 });
