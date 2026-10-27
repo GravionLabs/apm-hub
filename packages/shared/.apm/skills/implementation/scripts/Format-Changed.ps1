@@ -2,7 +2,8 @@
 .SYNOPSIS
   Runs a format (or check) command on the changed files with the given extensions.
   Precedence: `.agents/format.json` entry for -Language, then explicit -Extensions/-Command, then the built-in defaults of -Language
-  (ts, ng: prettier then eslint; py: ruff format then ruff check --fix; dotnet: dotnet format; rust: cargo fmt).
+  (ts, ng: prettier then eslint, or biome check when biome.json[c] is at the git toplevel; py: ruff format then ruff check --fix;
+  dotnet: dotnet format; rust: cargo fmt).
 .PARAMETER Language
   Key into `<repo>/.agents/format.json`; an entry there replaces -Extensions, -Command and -Requires (a configured tool that is missing is an error).
   Without -Extensions and -Command it also selects the built-in defaults (ts, ng, py, dotnet, rust); -Check uses their read-only variants.
@@ -16,6 +17,9 @@
   Read-only intent: the command passed is the check command; the success line reads `checked: <n> files`.
 .PARAMETER Base
   Also include the files changed in `<Base>...HEAD`. Default: uncommitted changes only (staged, unstaged, untracked).
+.PARAMETER WhatIf
+  Prints the resolved steps (override, -Command or defaults; -Check selects the check commands) as JSON
+  `[{ tool, extensions, requires, commands }]` and exits 0 without probing or running anything.
 #>
 param(
   [string]$Language,
@@ -23,7 +27,8 @@ param(
   [string]$Command,
   [switch]$Check,
   [string]$Requires,
-  [string]$Base
+  [string]$Base,
+  [switch]$WhatIf
 )
 $ErrorActionPreference = 'Stop'
 
@@ -68,6 +73,12 @@ $defaults = @{
 }
 $defaults.ng = @($defaults.ts[0].Clone(), $defaults.ts[1])
 $defaults.ng[0].Ext = $exts5 + @('.json', '.html', '.scss', '.css')
+# a Biome project (biome.json[c] at the toplevel) replaces prettier + eslint with one biome step on the prettier extensions
+if ((Test-Path -LiteralPath (Join-Path $root 'biome.json') -PathType Leaf) -or (Test-Path -LiteralPath (Join-Path $root 'biome.jsonc') -PathType Leaf)) {
+  foreach ($lang in 'ts', 'ng') {
+    $defaults[$lang] = @(@{ Tool = 'biome'; Ext = $defaults[$lang][0].Ext; Requires = 'npx --no-install biome --version'; Format = @('npx biome check --write {files}'); Check = @('npx biome check {files}') })
+  }
+}
 
 $steps = @()
 if ($override) {
@@ -82,6 +93,10 @@ else {
   if (-not $Command) { Stop-Fail '-Command is required (no .agents/format.json entry or built-in default applies)' }
   if (-not $Extensions) { Stop-Fail '-Extensions is required (no .agents/format.json entry supplies them)' }
   $steps = @(@{ Tool = $null; Ext = $Extensions; Requires = $Requires; Commands = @($Command) })
+}
+if ($WhatIf) {
+  ConvertTo-Json -Depth 4 -InputObject @($steps | ForEach-Object { [ordered]@{ tool = $_.Tool; extensions = @($_.Ext); requires = $(if ($_.Requires) { $_.Requires } else { $null }); commands = @($_.Commands) } })
+  exit 0
 }
 foreach ($st in $steps) { $st.Plans = @($st.Commands | ForEach-Object { , @($_.Trim() -split '\s+' | Where-Object { $_ }) }) }
 if ($override) {

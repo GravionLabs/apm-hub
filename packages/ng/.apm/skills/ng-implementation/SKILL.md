@@ -36,8 +36,9 @@ Match the project's existing convention. New Angular 20+ projects follow the CLI
 ## Format
 
 - Extensions: prettier `.ts .tsx .js .mjs .cjs .json .html .scss .css`; eslint only `.ts .tsx .js .mjs .cjs`
-- Format: `npx prettier --write {files}` then `npx eslint --fix {files}`
-- Check (read-only): `npx prettier --check {files}` and `npx eslint {files}`
+- Format: `npx --no-install prettier --write {files}` then `npx --no-install eslint --fix {files}`
+- Check (read-only): `npx --no-install prettier --check {files}` and `npx --no-install eslint {files}`
+- Biome project (`biome.json[c]`): `npx biome check --write {files}` / check `npx biome check {files}`
 - Run after green tests, before the commit: `pwsh <implementation dir>/scripts/Format-Changed.ps1 -Language ng` (`-Check` for the check commands; not-configured, override: references/format.md of `implementation`)
 
 ## Tests
