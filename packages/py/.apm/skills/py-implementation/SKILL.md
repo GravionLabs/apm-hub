@@ -1,6 +1,6 @@
 ---
 name: py-implementation
-description: 'Python implementation and test rules (pytest) extending `implementation`. Loaded when `implementation` dispatches to py-implementation.'
+description: 'Python implementation and test rules (pytest) extending `implementation`. Use when writing or changing Python code.'
 ---
 
 ## Framework

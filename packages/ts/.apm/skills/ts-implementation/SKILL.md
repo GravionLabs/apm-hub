@@ -1,13 +1,12 @@
 ---
 name: ts-implementation
-description: 'TypeScript implementation and test rules (Vitest) extending `implementation`. Loaded when `implementation` dispatches to ts-implementation.'
+description: 'TypeScript implementation and test rules (Vitest) extending `implementation`. Use when writing or changing TypeScript or Node.js code.'
 ---
 
 ## Framework
 
 - **Tests**: Vitest — see `ts-test`
 - **Format/Lint**: ESLint (flat config) + Prettier — see `setup-prettier-eslint-husky` and `## Format`
-- **Runtime**: Node.js 22 LTS
 
 ## Format
 

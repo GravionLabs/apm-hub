@@ -1,6 +1,6 @@
 ---
 name: ng-implementation
-description: 'Angular 21+ implementation and review rules (standalone, signals, DI, forms). Use for Angular code questions.'
+description: 'Angular 21+ implementation and review rules (standalone, signals, DI, forms). Use when writing or changing Angular code.'
 license: MIT
 ---
 

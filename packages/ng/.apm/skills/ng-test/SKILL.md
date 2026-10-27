@@ -33,29 +33,6 @@ describe('My', () => {
 });
 ```
 
-## Signal Testing
-
-```typescript
-import { TestBed } from '@angular/core/testing';
-import { MyStore } from './my-store';
-
-it('updates signal on action', () => {
-  const service = TestBed.inject(MyStore);
-  service.updateValue('new');
-  expect(service.value()).toBe('new');
-});
-```
-
-## Service Mocking
-
-```typescript
-TestBed.configureTestingModule({
-  providers: [
-    { provide: MyService, useValue: mockService }
-  ]
-});
-```
-
 ## TestBed rules
 
 - `TestBed.configureTestingModule()` for component/service wiring; one `describe` per component/service

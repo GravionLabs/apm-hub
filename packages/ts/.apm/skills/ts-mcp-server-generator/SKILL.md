@@ -11,7 +11,7 @@ Generate an MCP server in TypeScript. Paths to `scripts/` and `templates/` are r
 ## Stack
 - `@modelcontextprotocol/sdk` — McpServer, transports
 - `zod` — schema validation
-- Node.js 22 LTS, `tsx` for dev
+- `tsx` for dev
 
 ## Steps
 

@@ -7,7 +7,6 @@ description: >
 
 ## Prerequisites
 
-- Node.js 22 LTS
 - Project root with `vitest.config.ts`
 
 ## Test Runner

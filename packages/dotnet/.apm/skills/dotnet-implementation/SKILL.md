@@ -1,6 +1,6 @@
 ---
 name: dotnet-implementation
-description: 'C#/.NET implementation and test rules extending `implementation`. Loaded when `implementation` dispatches to dotnet-implementation.'
+description: 'C#/.NET implementation and test rules extending `implementation`. Use when writing or changing C# code.'
 ---
 
 The official `dotnet` plugin skills (dependency `dotnet/skills`) cover general C#/.NET style. Only project conventions follow.
