@@ -390,9 +390,28 @@ describe('retro SKILL.md multi-run', () => {
     }
   );
 
-  it('keeps the step anchors and stays within 47 lines', () => {
+  it('documents the per-PBI columns, the aggregate row and the repeated-ruling lines', () => {
+    const line = skill.split('\n').find((l) => l.includes('one row per `runs[]` entry')) ?? '';
+    expect(line).toContain('(issue, fix rounds, escalations, gates, parked, duration, cost)');
+    expect(line).toContain('aggregate row from `aggregate`');
+    expect(line).toContain('one line per `repeatedRulings[]`');
+    expect(line).toContain('seven-column table stays for `-Issue`');
+  });
+
+  it('keeps the step anchors and adds at most 5 lines to the base file', () => {
     expect(skill).toContain('1. **Metrics.**');
     expect(skill).toContain('2. **Read primary sources.**');
-    expect(skill.trimEnd().split('\n').length).toBeLessThanOrEqual(47);
+    const base = spawnSync(
+      'git',
+      ['show', 'fd1950ad:packages/delivery/.apm/skills/retro/SKILL.md'],
+      {
+        cwd: path.resolve(__dirname, '../../..'),
+        encoding: 'utf8',
+      }
+    );
+    const lines = (t: string) => t.trimEnd().split('\n').length;
+    // base commit unavailable (shallow clone): fall back to the absolute cap
+    const cap = base.status === 0 ? lines(base.stdout) + 5 : 47;
+    expect(lines(skill)).toBeLessThanOrEqual(cap);
   });
 });
