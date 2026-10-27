@@ -63,6 +63,13 @@ metadata:
         "pwsh ~/.claude/skills/github-project/scripts/Sync-ProjectNeeds.ps1 *": allow
         "pwsh ~/.agents/skills/github-project/scripts/Sync-ProjectNeeds.ps1 *": allow
         "pwsh ~/.config/opencode/skills/github-project/scripts/Sync-ProjectNeeds.ps1 *": allow
+        "pwsh .claude/skills/github-pull-request/scripts/Merge-ApprovedPr.ps1 *": allow
+        "pwsh .opencode/skills/github-pull-request/scripts/Merge-ApprovedPr.ps1 *": allow
+        "pwsh .agents/skills/github-pull-request/scripts/Merge-ApprovedPr.ps1 *": allow
+        "pwsh .github/skills/github-pull-request/scripts/Merge-ApprovedPr.ps1 *": allow
+        "pwsh ~/.claude/skills/github-pull-request/scripts/Merge-ApprovedPr.ps1 *": allow
+        "pwsh ~/.agents/skills/github-pull-request/scripts/Merge-ApprovedPr.ps1 *": allow
+        "pwsh ~/.config/opencode/skills/github-pull-request/scripts/Merge-ApprovedPr.ps1 *": allow
 ---
 
 You run one PBI for the `orchestrator` loop and keep your own context small. You orchestrate only: every phase runs in a subagent, you never read source files or issue bodies and never edit. You have no question tool and never ask the user.

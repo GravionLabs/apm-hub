@@ -24,7 +24,7 @@ Any output is a blocker candidate. An open blocker labelled `merged`, or merged 
 
 ## Drop the in flight
 
-A PBI with an open PR is already being worked on: drop it, and report it as waiting for merge. A PR belongs to the PBI when its head branch contains `/<nr>-` or its body has `Closes|Fixes|Resolves #<nr>`:
+A PBI with an open PR is already being worked on: drop it, and report it as waiting for merge. A PR belongs to the PBI when its head branch contains `/<nr>-` or its body has `Closes|Fixes|Resolves #<nr>`. Selection never merges; only `loop` merges approved PRs, via `Merge-ApprovedPr.ps1` (`loop-mode.md` "Merging approved PRs"), and a merged PBI then drops out as merged:
 
 ```powershell
 gh pr list --state open --limit 100 --json number,headRefName,body | jq --arg nr $candidate '[.[] | select((.headRefName|test("/"+$nr+"-")) or (.body|test("(?i)(closes|fixes|resolves) #"+$nr+"\\b"))) | .number]'

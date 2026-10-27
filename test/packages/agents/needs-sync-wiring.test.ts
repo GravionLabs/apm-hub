@@ -47,3 +47,21 @@ describe('Needs sync wiring (#638)', () => {
     expect(line).toContain('PROJECT_SYNC_OFF=1');
   });
 });
+
+describe('Merge-ApprovedPr wiring (#582)', () => {
+  for (const [name, text] of Object.entries(agents)) {
+    it(`${name} allows Merge-ApprovedPr.ps1 for every skills directory variant`, () => {
+      for (const p of PREFIXES)
+        expect(text).toContain(
+          `"pwsh ${p}/skills/github-pull-request/scripts/Merge-ApprovedPr.ps1 *": allow`
+        );
+    });
+  }
+
+  it('the orchestrator documents --merge and --no-merge in description and body', () => {
+    const o = agents.orchestrator;
+    expect(o).toMatch(/description:[^\n]*--no-merge/);
+    expect(body(o)).toContain('`--no-merge`');
+    expect(body(o)).toContain('`--merge`');
+  });
+});
