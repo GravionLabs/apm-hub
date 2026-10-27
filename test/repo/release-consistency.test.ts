@@ -22,6 +22,15 @@ describe('removed names are gone from packages, manifests and AGENTS.md (#766)',
     path.join(root, 'apm.yml'),
     path.join(root, 'AGENTS.md'),
   ].filter((f) => !/\.(png|jpg|ico|zip)$/.test(f));
+  // The upgrade note lists the removed names on purpose, so users find the files to delete
+  const upgradeNote = path.join(
+    root,
+    'packages/delivery/.apm/skills/apm-install/references/after-install.md'
+  );
+  const content = (f: string) => {
+    const text = fs.readFileSync(f, 'utf-8');
+    return f === upgradeNote ? text.replace(/## Upgrading from 2\.x[\s\S]*?(?=\n## |$)/, '') : text;
+  };
   it.each([
     'verify-project',
     'Final-Verify',
@@ -32,7 +41,7 @@ describe('removed names are gone from packages, manifests and AGENTS.md (#766)',
     'subagent_type: explorer',
   ])('%s', (needle) => {
     const hits = files
-      .filter((f) => fs.readFileSync(f, 'utf-8').includes(needle))
+      .filter((f) => content(f).includes(needle))
       .map((f) => path.relative(root, f));
     expect(hits).toEqual([]);
   });
