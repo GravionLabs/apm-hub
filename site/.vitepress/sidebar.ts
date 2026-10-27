@@ -23,6 +23,8 @@ export const sidebar: SidebarGroup[] = [
       { text: 'Prerequisites', link: '/prerequisites' },
       { text: 'Working mode', link: '/working-mode' },
       { text: 'The orchestrator', link: '/orchestrator' },
+      { text: 'Simplification plan', link: '/simplification-plan' },
+      { text: 'Simplification work plan', link: '/simplification-workplan' },
     ],
   },
   {

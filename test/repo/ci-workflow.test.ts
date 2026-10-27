@@ -34,7 +34,7 @@ describe('ci.yml parallel Vitest jobs (#502)', () => {
     expect(pkg.scripts['test:all']).toBe(
       'vitest run --project unit --project scripts --project integration'
     );
-    expect(pkg.scripts['test:perf']).toBe('vitest run --project perf');
+    expect(pkg.scripts['test:perf']).toBe('vitest run --project perf --passWithNoTests');
     const artifacts = steps('test').filter((s) => s.uses?.startsWith('actions/upload-artifact'));
     expect(artifacts.length).toBe(2);
     for (const a of artifacts) expect(a.with?.name).toContain('${{ matrix.project }}');
@@ -59,7 +59,8 @@ describe('ci.yml parallel Vitest jobs (#502)', () => {
     expect(full.if).toContain("github.event_name != 'pull_request'");
     expect(full.if).toContain("contains(github.event.pull_request.labels.*.name, 'ci:full')");
     const checkout = steps('test').find((s) => s.uses?.startsWith('actions/checkout'));
-    expect(checkout?.with?.['fetch-depth']).toContain("'pull_request' && 0");
+    // Full history on every event: the related-test diff needs origin/<base>; '&& 0 ||' would always yield 1.
+    expect(checkout?.with?.['fetch-depth']).toBe(0);
   });
 
   it('tolerates a missing junit.xml and coverage file when no tests are related (#704)', () => {
@@ -69,6 +70,7 @@ describe('ci.yml parallel Vitest jobs (#502)', () => {
       | (Step & { if?: string })
       | undefined;
     expect(summary?.if).toContain("hashFiles('coverage/cobertura-coverage.xml') != ''");
+    expect((summary as Step & { 'continue-on-error'?: boolean })?.['continue-on-error']).toBe(true);
   });
 
   it('publishes a per-project report and coverage summary from the vitest outputs', () => {
