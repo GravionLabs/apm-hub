@@ -11,7 +11,7 @@ Goal: improve the agent **environment**, not the code under review. Rank candida
 5. **No-op instructions** - lines that do not change agent behaviour (the agent already does it, or it is unverifiable). Candidates for deletion.
 6. **Tool economy** - expensive tool calls that could be streamlined (whole-file reads, noisy CLI output, token-heavy MCP tools). Check request counts and the largest tool results.
 7. **Information access** - a crucial fact was unavailable (dev-server logs, read-only access to a third-party service, an issue field). Propose access, not instructions.
-8. **Model per role** - compare usage per role with its outcome. An expensive role that produced rework may need a stronger model; a role that only reads may need a cheaper one. Evidence: `phase.finished` events.
+8. **Model per role** - compare usage per role with its outcome. An expensive role that produced rework may need a stronger model; a role that only reads may need a cheaper one. Evidence: the role share of agentlens and the fix rounds on the PR.
 
 ## Metric reading
 
