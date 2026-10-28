@@ -81,7 +81,7 @@ describe('language test skills (#771)', () => {
 describe('language skills: triggers and no generic content (#784)', () => {
   it.each(langs)('%s-implementation description contains "Use when"', (l) => {
     const fm = /^---\n([\s\S]*?)\n---/.exec(
-      read(`${l}/.apm/skills/${l}-implementation/SKILL.md`)
+      read(`${l}/.apm/skills/${l}-implementation/SKILL.md`),
     )![1];
     expect(fm).toMatch(/Use when/);
   });

@@ -125,7 +125,7 @@ export function summarize(records: RunRecord[]): Summary {
       skill,
       ...rates(
         records.filter((r) => r.skill === skill),
-        hit
+        hit,
       ),
     })),
   };
@@ -157,11 +157,11 @@ function overallOf(skills: SkillRates[]): Rates {
     negatives,
     triggerRate: pct(
       sum((k) => (k.triggerRate * k.positives) / 100),
-      positives
+      positives,
     ),
     falseTriggerRate: pct(
       sum((k) => (k.falseTriggerRate * k.negatives) / 100),
-      negatives
+      negatives,
     ),
   };
 }
@@ -173,7 +173,7 @@ function overallOf(skills: SkillRates[]): Rates {
 export function compareToBaseline(
   current: Summary,
   baseline: Summary,
-  maxDrop = MAX_DROP
+  maxDrop = MAX_DROP,
 ): string[] {
   const out: string[] = [];
   const cmp = (label: string, cur: Rates, base: Rates) => {
@@ -181,7 +181,7 @@ export function compareToBaseline(
       out.push(`${label}: trigger rate fell ${base.triggerRate}% -> ${cur.triggerRate}%`);
     if (round1(cur.falseTriggerRate - base.falseTriggerRate) > maxDrop)
       out.push(
-        `${label}: false-trigger rate rose ${base.falseTriggerRate}% -> ${cur.falseTriggerRate}%`
+        `${label}: false-trigger rate rose ${base.falseTriggerRate}% -> ${cur.falseTriggerRate}%`,
       );
   };
   const pairs = current.skills.flatMap((cur) => {
@@ -202,7 +202,7 @@ export interface Baseline extends ScoreContext {
 const isRates = (v: unknown): boolean =>
   isObject(v) &&
   ['positives', 'negatives', 'triggerRate', 'falseTriggerRate'].every(
-    (k) => typeof v[k] === 'number'
+    (k) => typeof v[k] === 'number',
   );
 
 /** Accepts a result file or a bare summary; throws a clear error when no usable summary is found. */
@@ -215,7 +215,7 @@ export function parseBaseline(data: unknown): Baseline {
     !summary.skills.every((k) => isObject(k) && typeof k.skill === 'string' && isRates(k))
   )
     throw new Error(
-      'baseline has no usable summary (expected a result file with "summary" or a bare summary)'
+      'baseline has no usable summary (expected a result file with "summary" or a bare summary)',
     );
   const ctx = isObject(data) ? data : {};
   return {
@@ -228,7 +228,7 @@ export function parseBaseline(data: unknown): Baseline {
 /** Differences between the baseline and the current run that make a comparison less meaningful. */
 export function baselineWarnings(
   current: ScoreContext & { summary: Summary },
-  base: Baseline
+  base: Baseline,
 ): string[] {
   const out: string[] = [];
   if (base.meta?.model && current.meta?.model && base.meta.model !== current.meta.model)
@@ -252,7 +252,7 @@ export function baselineWarnings(
 export function score(
   records: RunRecord[],
   baseline?: Baseline | Summary,
-  ctx: ScoreContext = {}
+  ctx: ScoreContext = {},
 ): ScoreResult {
   const summary = summarize(records);
   const base = baseline ? ('summary' in baseline ? baseline : { summary: baseline }) : undefined;
@@ -295,7 +295,7 @@ function parseRecords(data: unknown): { records: RunRecord[]; ctx: ScoreContext 
       !Array.isArray(r.invoked)
     )
       throw new Error(
-        'malformed record: expected { skill: string, kind: "positive"|"negative", invoked: string[] }'
+        'malformed record: expected { skill: string, kind: "positive"|"negative", invoked: string[] }',
       );
   }
   const ctx: ScoreContext = isObject(data)
@@ -329,16 +329,16 @@ export function main(argv: string[]): number {
       const result = score(records, baseline, ctx);
       fs.writeFileSync(b, JSON.stringify(result, null, 2));
       console.log(
-        `trigger ${result.summary.overall.triggerRate}%  false-trigger ${result.summary.overall.falseTriggerRate}%`
+        `trigger ${result.summary.overall.triggerRate}%  false-trigger ${result.summary.overall.falseTriggerRate}%`,
       );
       if (result.failedRuns > 0)
         console.log(
-          `${result.failedRuns} of ${records.length} sessions failed (excluded from rates)`
+          `${result.failedRuns} of ${records.length} sessions failed (excluded from rates)`,
         );
       for (const w of result.warnings) console.log(`WARN ${w}`);
       if (records.length > 0 && result.failedRuns / records.length > MAX_FAILED_SHARE) {
         console.error(
-          `ERROR more than ${MAX_FAILED_SHARE * 100}% of sessions failed; the result is not trustworthy`
+          `ERROR more than ${MAX_FAILED_SHARE * 100}% of sessions failed; the result is not trustworthy`,
         );
         return 2;
       }

@@ -103,7 +103,8 @@ apm install ng@apm-hub   # Angular only
 | Goal                                  | Prompt                                                 | Skill                                              |
 | :------------------------------------ | :----------------------------------------------------- | :------------------------------------------------- |
 | Migrate from npm to pnpm              | "Switch this project to pnpm."                         | `ts-pnpm-workflow`                                 |
-| ESLint, Prettier and Husky pre-commit | "Set up linting and formatting with pre-commit hooks." | `setup-prettier-eslint-husky`                      |
+| Pre-commit linting, plain TS (Biome)  | "Set up linting and formatting with pre-commit hooks." | `setup-biome-husky`                                |
+| Pre-commit linting, Angular (Prettier) | "Set up linting and formatting with pre-commit hooks." | `setup-prettier-eslint-husky`                      |
 | New Angular workspace                 | "Create an Angular app named shop with Vitest."        | `ng-create-project`                                |
 | Standalone component                  | "Add a product-list component under features/catalog." | `ng-implementation` (`references/component.md`)    |
 | NgRx Signal Store                     | "Create a signal store for the cart."                  | `ng-implementation` (`references/signal-store.md`) |

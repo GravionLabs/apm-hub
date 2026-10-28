@@ -7,7 +7,7 @@ import { PwshWorker } from '../../helpers/pwsh-worker';
 const repo = path.resolve(__dirname, '../../..');
 const SCRIPT = path.join(
   repo,
-  'packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1'
+  'packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1',
 );
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
@@ -60,7 +60,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Get-SkillReport.ps1 (
   it('<skill>/references/<file> and ../<skill>/ forms are checked against the other skill', async () => {
     skill(
       'alpha',
-      'Read `beta/references/gone.md`, `../beta/references/gone2.md` and `beta/references/ok.md`.'
+      'Read `beta/references/gone.md`, `../beta/references/gone2.md` and `beta/references/ok.md`.',
     );
     skill('beta', 'Beta.');
     write('packages/p/.apm/skills/beta/references/ok.md');
@@ -81,7 +81,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Get-SkillReport.ps1 (
     skill('alpha', 'Alpha.');
     write(
       'packages/p/.apm/skills/alpha/references/r.md',
-      'Needs `references/own-missing.md` and `references/r.md`.\n'
+      'Needs `references/own-missing.md` and `references/r.md`.\n',
     );
     const r = await run('-FailOnDangling');
     expect(r.status).toBe(1);
@@ -126,7 +126,7 @@ describe('CI and skill-slim (#775)', () => {
     expect(ci).toMatch(/Get-SkillReport\.ps1 -Root \. -FailOnDangling/);
     const md = fs.readFileSync(
       path.join(repo, 'packages/apm-tooling/.apm/skills/skill-slim/SKILL.md'),
-      'utf-8'
+      'utf-8',
     );
     expect(md).toContain('-FailOnDangling');
     expect(md).toContain('skill-report-allowlist.txt');

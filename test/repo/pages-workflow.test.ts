@@ -9,7 +9,7 @@ const wf = parse(text);
 describe('pages.yml workflow guard (#272)', () => {
   it('pins every action to a 40-hex SHA followed by a comment', () => {
     const steps = Object.values(wf.jobs).flatMap(
-      (j) => (j as { steps: { uses?: string }[] }).steps
+      (j) => (j as { steps: { uses?: string }[] }).steps,
     );
     const usesSteps = steps.filter((s) => s.uses);
     expect(usesSteps.length).toBeGreaterThan(0);
@@ -40,7 +40,7 @@ describe('pages.yml workflow guard (#272)', () => {
 
   it('cancels only pull request runs and queues deployments', () => {
     expect(wf.concurrency.group).toBe(
-      "pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}"
+      "pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}",
     );
     expect(wf.concurrency['cancel-in-progress']).toBe("${{ github.event_name == 'pull_request' }}");
   });
@@ -50,15 +50,15 @@ describe('pages.yml workflow guard (#272)', () => {
     expect(build.name).toBe('Build the site');
     expect(build.if).toBe("github.event_name == 'pull_request' || vars.DEPLOY_PAGES == 'true'");
     const upload = build.steps.find((s: { uses?: string }) =>
-      s.uses?.includes('upload-pages-artifact')
+      s.uses?.includes('upload-pages-artifact'),
     );
     expect(upload.if).toBe(
-      "github.event_name != 'pull_request' && github.ref == 'refs/heads/main'"
+      "github.event_name != 'pull_request' && github.ref == 'refs/heads/main'",
     );
     expect(upload.with.path).toBe('site/.vitepress/dist');
     expect(deploy.needs).toBe('build');
     expect(deploy.if).toBe(
-      "github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_PAGES == 'true'"
+      "github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_PAGES == 'true'",
     );
     expect(deploy.permissions).toEqual({ pages: 'write', 'id-token': 'write' });
     expect(deploy.environment.name).toBe('github-pages');
@@ -80,7 +80,7 @@ describe('pages.yml workflow guard (#272)', () => {
 
   it('never commits or pushes in a run step', () => {
     const runs = Object.values(wf.jobs).flatMap((j) =>
-      (j as { steps: { run?: string }[] }).steps.map((s) => s.run ?? '')
+      (j as { steps: { run?: string }[] }).steps.map((s) => s.run ?? ''),
     );
     for (const r of runs) expect(r).not.toMatch(/git commit|git push/);
   });

@@ -5,7 +5,7 @@ import * as path from 'path';
 
 const SCRIPT = path.resolve(
   __dirname,
-  '../../.github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1'
+  '../../.github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1',
 );
 const pwshProbe = spawnSync('sh', ['-c', 'command -v pwsh'], { encoding: 'utf8' });
 const hasPwsh = pwshProbe.status === 0;
@@ -73,7 +73,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
         expect(r.code).toBe(1);
         expect(r.out).toContain('apm-hub source format');
         expect(r.out).toContain('uv tool install apmw');
-      }
+      },
     );
 
     it('checks the home directories too', () => {
@@ -107,5 +107,5 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
       expect(found.code).toBe(0);
       expect(found.out).toContain('dromos: 0.5.0');
     });
-  }
+  },
 );

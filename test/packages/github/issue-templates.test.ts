@@ -24,7 +24,7 @@ describe('issue templates default to the level prefix', () => {
 
     it(`${name} is identical in both template sets`, () => {
       expect(readFileSync(path.join(copies, name), 'utf8')).toBe(
-        readFileSync(path.join(sources, name), 'utf8')
+        readFileSync(path.join(sources, name), 'utf8'),
       );
     });
   }
@@ -69,7 +69,7 @@ describe('no skill prescribes an unprefixed Epic/Feature title', () => {
         .split('\n')
         .map((line, i) => ({ line, at: `${path.relative(root, f)}:${i + 1}` }))
         .filter(({ line }) => /\b(Epic|Feature): /.test(line) && !allowed.test(line))
-        .map(({ at }) => at)
+        .map(({ at }) => at),
     );
     expect(offenders).toEqual([]);
   });

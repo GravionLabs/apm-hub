@@ -8,7 +8,7 @@ const posix = process.platform !== 'win32';
 
 const DIR = path.resolve(
   __dirname,
-  '../../../packages/statusline/.apm/skills/context-statusline/scripts'
+  '../../../packages/statusline/.apm/skills/context-statusline/scripts',
 );
 const STATUS = path.join(DIR, 'statusline.mjs');
 const SUB = path.join(DIR, 'subagent-statusline.mjs');
@@ -31,7 +31,7 @@ describe('statusline.mjs', () => {
         model: { display_name: 'Opus 4' },
         context_window: { used_percentage: 41.6 },
         rate_limits: { five_hour: { used_percentage: 12.2 }, seven_day: { used_percentage: 30 } },
-      })
+      }),
     );
     expect(r.status).toBe(0);
     const out = strip(r.stdout);
@@ -49,7 +49,7 @@ describe('statusline.mjs', () => {
         model: null,
         context_window: { used_percentage: null },
         rate_limits: { five_hour: null, seven_day: { used_percentage: null } },
-      })
+      }),
     );
     expect(r.status).toBe(0);
     expect(strip(r.stdout)).toMatch(new RegExp(`:${tmp.replace(/[\\/]/g, '.')}$`));
@@ -65,7 +65,7 @@ describe('statusline.mjs', () => {
         workspace: { current_dir: tmp },
         context_window: { used_percentage: 30, current_context_used_percentage: 12.4 },
         cost: { total_premium_requests: 3 },
-      })
+      }),
     );
     const out = strip(r.stdout);
     expect(out).toContain('GPT-5 ctx:12%');
@@ -77,9 +77,9 @@ describe('statusline.mjs', () => {
           JSON.stringify({
             workspace: { current_dir: tmp },
             context_window: { used_percentage: 30, current_context_used_percentage: null },
-          })
-        ).stdout
-      )
+          }),
+        ).stdout,
+      ),
     ).toContain('ctx:30%');
   });
 
@@ -88,8 +88,8 @@ describe('statusline.mjs', () => {
       strip(
         run(
           STATUS,
-          JSON.stringify({ workspace: { current_dir: tmp }, context_window: cw, ...extra })
-        ).stdout
+          JSON.stringify({ workspace: { current_dir: tmp }, context_window: cw, ...extra }),
+        ).stdout,
       );
 
     it('shows used and size from current_usage', () => {
@@ -113,7 +113,7 @@ describe('statusline.mjs', () => {
         cache_read_input_tokens: 30000,
       };
       expect(
-        ctxOf({ used_percentage: 42, context_window_size: 200000, current_usage: cu })
+        ctxOf({ used_percentage: 42, context_window_size: 200000, current_usage: cu }),
       ).toContain('ctx:42% (54k/200k)');
     });
 
@@ -123,7 +123,7 @@ describe('statusline.mjs', () => {
           used_percentage: 42,
           context_window_size: 200000,
           current_usage: { input_tokens: 10000 },
-        })
+        }),
       ).toContain('(10k/200k)');
     });
 
@@ -131,9 +131,9 @@ describe('statusline.mjs', () => {
       'falls back to pct * size for current_usage %j',
       (cu) => {
         expect(
-          ctxOf({ used_percentage: 25, context_window_size: 200000, current_usage: cu })
+          ctxOf({ used_percentage: 25, context_window_size: 200000, current_usage: cu }),
         ).toContain('ctx:25% (50k/200k)');
-      }
+      },
     );
 
     it.each([
@@ -146,16 +146,16 @@ describe('statusline.mjs', () => {
 
     it('derives used tokens from the percentage without current_usage', () => {
       expect(ctxOf({ used_percentage: 25, context_window_size: 200000 })).toContain(
-        'ctx:25% (50k/200k)'
+        'ctx:25% (50k/200k)',
       );
       expect(
-        ctxOf({ used_percentage: 25, context_window_size: 200000, current_usage: null })
+        ctxOf({ used_percentage: 25, context_window_size: 200000, current_usage: null }),
       ).toContain('ctx:25% (50k/200k)');
     });
 
     it('renders a 1M window as 1M', () => {
       expect(ctxOf({ used_percentage: 10, context_window_size: 1000000 })).toContain(
-        'ctx:10% (100k/1M)'
+        'ctx:10% (100k/1M)',
       );
     });
 
@@ -168,7 +168,7 @@ describe('statusline.mjs', () => {
     it('works with the Copilot percentage and a size', () => {
       const out = ctxOf(
         { used_percentage: 30, current_context_used_percentage: 12.4, context_window_size: 128000 },
-        { model: { display_name: 'GPT-5' } }
+        { model: { display_name: 'GPT-5' } },
       );
       expect(out).toContain('GPT-5 ctx:12% (16k/128k)');
     });
@@ -191,7 +191,7 @@ describe('statusline.mjs', () => {
       JSON.stringify({
         workspace: { current_dir: tmp },
         rate_limits: { five_hour: { used_percentage: used }, seven_day: { used_percentage: used } },
-      })
+      }),
     );
     expect(r.stdout).toContain(`\x1b[${code}m5h:${used}%`);
     expect(r.stdout).toContain(`\x1b[${code}m7d:${used}%`);
@@ -211,7 +211,7 @@ describe('statusline.mjs', () => {
       JSON.stringify({
         workspace: { current_dir: tmp },
         context_window: { used_percentage: used, context_window_size: 200000 },
-      })
+      }),
     );
     expect(r.stdout).toContain(`\x1b[${code}mctx:${used}%`);
   });
@@ -223,8 +223,8 @@ describe('statusline.mjs', () => {
         JSON.stringify({
           workspace: { current_dir: tmp },
           rate_limits: { seven_day: { used_percentage: 7 } },
-        })
-      ).stdout
+        }),
+      ).stdout,
     );
     expect(out).toMatch(/ 7d:7%$/);
     expect(out).not.toContain('5h:');
@@ -282,7 +282,7 @@ describe('subagent-statusline.mjs', () => {
             label: 'plan it',
           }),
         ],
-      })
+      }),
     );
     expect(r.status).toBe(0);
     const [a, b] = rows(r.stdout);
@@ -301,7 +301,7 @@ describe('subagent-statusline.mjs', () => {
   ])('colours %i tokens of 200000 with code %s', (tokens, code) => {
     const [row] = rows(
       run(SUB, JSON.stringify({ tasks: [task({ tokenCount: tokens, contextWindowSize: 200000 })] }))
-        .stdout
+        .stdout,
     );
     expect(row.content).toContain(`\x1b[${code}mctx:`);
   });
@@ -313,7 +313,7 @@ describe('subagent-statusline.mjs', () => {
   ])('formats %i tokens as %s', (n, want) => {
     const [row] = rows(
       run(SUB, JSON.stringify({ tasks: [task({ tokenCount: n, contextWindowSize: 2000000 })] }))
-        .stdout
+        .stdout,
     );
     expect(strip(row.content)).toContain(`(${want}/2M)`);
   });
@@ -322,8 +322,8 @@ describe('subagent-statusline.mjs', () => {
     const [row] = rows(
       run(
         SUB,
-        JSON.stringify({ tasks: [task({ tokenCount: 250000, contextWindowSize: 1000000 })] })
-      ).stdout
+        JSON.stringify({ tasks: [task({ tokenCount: 250000, contextWindowSize: 1000000 })] }),
+      ).stdout,
     );
     expect(strip(row.content)).toBe('explorer ctx:25% (250k/1M) · scan');
   });
@@ -332,7 +332,7 @@ describe('subagent-statusline.mjs', () => {
     for (const size of [undefined, 0, null]) {
       const [row] = rows(
         run(SUB, JSON.stringify({ tasks: [task({ tokenCount: 12400, contextWindowSize: size })] }))
-          .stdout
+          .stdout,
       );
       expect(strip(row.content)).toBe('explorer 12k · scan');
     }
@@ -340,7 +340,7 @@ describe('subagent-statusline.mjs', () => {
 
   it('uses defaults for missing fields (name, description, no tokens)', () => {
     const [row] = rows(
-      run(SUB, JSON.stringify({ tasks: [{ id: 7, name: 'bob', description: 'desc' }] })).stdout
+      run(SUB, JSON.stringify({ tasks: [{ id: 7, name: 'bob', description: 'desc' }] })).stdout,
     );
     expect(row.id).toBe(7);
     expect(strip(row.content)).toBe('bob 0k · desc');
@@ -359,7 +359,7 @@ describe('subagent-statusline.mjs', () => {
       const r = run(SUB, stdin);
       expect(r.status).toBe(0);
       expect(r.stdout).toBe('');
-    }
+    },
   );
 });
 
@@ -479,7 +479,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1', () => {
         statusLine: old('statusline.mjs'),
         x: 1,
         subagentStatusLine: old('subagent-statusline.mjs'),
-      })
+      }),
     );
     fs.mkdirSync(oldCopy, { recursive: true });
     fs.writeFileSync(path.join(oldCopy, 'statusline.mjs'), 'old');
@@ -499,7 +499,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1', () => {
     const orig = JSON.stringify(
       { statusLine: { type: 'command', command: 'bash ~/mine.sh' }, x: 1 },
       null,
-      2
+      2,
     );
     fs.writeFileSync(settings, orig);
     const r = install();
@@ -511,7 +511,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1', () => {
   it('replaces a foreign statusLine with -Force', () => {
     fs.writeFileSync(
       settings,
-      JSON.stringify({ statusLine: { type: 'command', command: 'bash ~/mine.sh' }, x: 1 })
+      JSON.stringify({ statusLine: { type: 'command', command: 'bash ~/mine.sh' }, x: 1 }),
     );
     expect(install('-Force').status).toBe(0);
     expect(read()).toEqual({
@@ -557,7 +557,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1', () => {
       JSON.stringify({
         statusLine: old('statusline.mjs'),
         subagentStatusLine: old('subagent-statusline.mjs'),
-      })
+      }),
     );
     expect(install('-Uninstall').status).toBe(0);
     expect(read()).toEqual({});
@@ -624,7 +624,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1 -Client copilot', ()
     const r1 = spawn(inst, { COPILOT_HOME: chome }, '-Client', 'copilot');
     expect(r1.status).not.toBe(0);
     expect(r1.stderr).toContain(
-      '.agents/skills/context-statusline/scripts/statusline.mjs not found'
+      '.agents/skills/context-statusline/scripts/statusline.mjs not found',
     );
     expect(fs.existsSync(chome)).toBe(false);
     deploy(home, '.agents');
@@ -641,7 +641,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1 -Client copilot', ()
     fs.mkdirSync(chome);
     fs.writeFileSync(
       sp(chome),
-      JSON.stringify({ model: 'x', feature_flags: { enabled: ['OTHER'], disabled: ['D'] } })
+      JSON.stringify({ model: 'x', feature_flags: { enabled: ['OTHER'], disabled: ['D'] } }),
     );
     expect(install({ COPILOT_HOME: chome }).status).toBe(0);
     const once = fs.readFileSync(sp(chome), 'utf8');
@@ -674,7 +674,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1 -Client copilot', ()
           command: `node ${chome}/apm-hub/statusline/statusline.mjs`,
           padding: 1,
         },
-      })
+      }),
     );
     expect(install({ COPILOT_HOME: chome }).status).toBe(0);
     expect(read(chome).statusLine).toEqual(entry);
@@ -727,10 +727,10 @@ describe.skipIf(!hasPwsh || !posix)('Install-Statusline.ps1 -Client copilot', ()
     const r = spawn(inst, { COPILOT_HOME: chome }, '-Client', 'all');
     expect(r.status).toBe(0);
     expect(read(path.join(home, '.claude')).statusLine.command).toBe(
-      'node ~/.claude/skills/context-statusline/scripts/statusline.mjs'
+      'node ~/.claude/skills/context-statusline/scripts/statusline.mjs',
     );
     expect(read(chome).statusLine.command).toBe(
-      'node ~/.agents/skills/context-statusline/scripts/statusline.mjs'
+      'node ~/.agents/skills/context-statusline/scripts/statusline.mjs',
     );
   });
 });

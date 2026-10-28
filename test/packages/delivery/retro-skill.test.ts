@@ -4,7 +4,7 @@ import * as path from 'node:path';
 
 const text = fs.readFileSync(
   path.resolve(__dirname, '../../../packages/delivery/.apm/skills/retro/SKILL.md'),
-  'utf8'
+  'utf8',
 );
 
 describe('retro SKILL.md', () => {

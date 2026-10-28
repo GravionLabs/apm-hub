@@ -27,7 +27,7 @@ describe('Resolve-StateDir copies', () => {
     expect(block).toContain('DROMOS_STATE_DIR');
     expect(block).toContain('--git-common-dir');
     expect(block).toContain(
-      'No state directory: not inside a git repository (set DROMOS_STATE_DIR)'
+      'No state directory: not inside a git repository (set DROMOS_STATE_DIR)',
     );
   });
 });

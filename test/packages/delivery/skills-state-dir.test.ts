@@ -22,8 +22,8 @@ describe('delivery and shared skills keep no state under .agents/', () => {
       /\.agents(?!\/skills)/.test(
         fs
           .readFileSync(f, 'utf8')
-          .replace(/\.opencode\|\.agents\||~\/\.agents|\.agents\/format\.json/g, '')
-      )
+          .replace(/\.opencode\|\.agents\||~\/\.agents|\.agents\/format\.json/g, ''),
+      ),
     );
     expect(offenders).toEqual([]);
   });

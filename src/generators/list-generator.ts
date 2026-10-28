@@ -38,7 +38,7 @@ export interface ListConfig {
 export function generateDomainListMarkdown(
   allEntries: DomainEntry[],
   byDomain: Record<string, DomainEntry[]>,
-  config: ListConfig
+  config: ListConfig,
 ): string {
   let output = `# ${config.title}\n\n`;
   output += `${config.intro}\n\n`;

@@ -14,7 +14,7 @@ const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 const sectionLines = (lang: string): string[] => {
   const skill = fs.readFileSync(
     path.join(PACKAGES, `${lang}/.apm/skills/${lang}-implementation/SKILL.md`),
-    'utf8'
+    'utf8',
   );
   const section = /^## Format$([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(skill)?.[1] ?? '';
   return section.split('\n').filter((l) => l.trim());
@@ -61,7 +61,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
         expect(check.length).toBeGreaterThan(0);
         expect(format).toEqual(await defaults(lang, plain, false));
         expect(check).toEqual(await defaults(lang, plain, true));
-      }
+      },
     );
 
     it.each(['ts', 'ng'])('%s: the Biome project line equals the biome defaults', async (lang) => {
@@ -76,7 +76,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
       async (lang) => {
         expect(line(lang, 'Biome project')).toBe('');
         expect(await defaults(lang, biome, false)).toEqual(await defaults(lang, plain, false));
-      }
+      },
     );
-  }
+  },
 );

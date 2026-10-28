@@ -9,7 +9,7 @@ import { useReleaseFixture } from '../../helpers/release-fixture';
 const root = path.resolve(__dirname, '../../..');
 const script = path.join(
   root,
-  'packages/github/.apm/skills/github-release/scripts/Get-ReleaseState.ps1'
+  'packages/github/.apm/skills/github-release/scripts/Get-ReleaseState.ps1',
 );
 
 const fx = useReleaseFixture();
@@ -30,7 +30,7 @@ describe('Get-ReleaseState.ps1 -Mode base', () => {
         const nr = call.args[2];
         if (call.args[0] !== 'issue' || call.args[1] !== 'view' || !(nr in bodies)) throw new Error('not found: ' + nr);
         return { rest: { body: bodies[nr] } };
-      }`
+      }`,
     );
   });
   afterAll(() => worker.close());
@@ -158,7 +158,7 @@ describe('Get-ReleaseState.ps1 -Mode base', () => {
   describe('explicit input (step 1)', () => {
     it('returns -Branch unchanged before the issue line', async () => {
       expect(
-        await base(['-Branch', 'main', '-Issue', '7'], { '7': 'Release branch: release/2.2' })
+        await base(['-Branch', 'main', '-Issue', '7'], { '7': 'Release branch: release/2.2' }),
       ).toEqual({
         base: 'main',
         source: 'input',

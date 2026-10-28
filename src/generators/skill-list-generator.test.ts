@@ -18,25 +18,25 @@ describe('generateSkillList', () => {
     fs.mkdirSync(path.join(csSkillsDir, 'csharp-async'), { recursive: true });
     fs.writeFileSync(
       path.join(csSkillsDir, 'csharp-async', 'SKILL.md'),
-      '---\nname: csharp-async\ndescription: Best practices for async/await in C#.\n---\nContent'
+      '---\nname: csharp-async\ndescription: Best practices for async/await in C#.\n---\nContent',
     );
     fs.mkdirSync(path.join(csSkillsDir, 'csharp-docs'), { recursive: true });
     fs.writeFileSync(
       path.join(csSkillsDir, 'csharp-docs', 'SKILL.md'),
-      '---\nname: csharp-docs\ndescription: Document C# types with XML comments.\n---\nContent'
+      '---\nname: csharp-docs\ndescription: Document C# types with XML comments.\n---\nContent',
     );
     // Agents/instructions in csharp domain should be ignored by skill-list
     const csAgentsDir = path.join(packagesDir, 'csharp', '.apm', 'agents');
     fs.mkdirSync(csAgentsDir, { recursive: true });
     fs.writeFileSync(
       path.join(csAgentsDir, 'csharp-expert.agent.md'),
-      '---\nname: C# Expert\n---\n'
+      '---\nname: C# Expert\n---\n',
     );
     const csInstrDir = path.join(packagesDir, 'csharp', '.apm', 'instructions');
     fs.mkdirSync(csInstrDir, { recursive: true });
     fs.writeFileSync(
       path.join(csInstrDir, 'csharp.instructions.md'),
-      '---\ndescription: C# standards.\n---\n'
+      '---\ndescription: C# standards.\n---\n',
     );
 
     // shared/.apm/skills/ts-write-tests/SKILL.md
@@ -44,13 +44,13 @@ describe('generateSkillList', () => {
     fs.mkdirSync(path.join(sharedSkillsDir, 'ts-write-tests'), { recursive: true });
     fs.writeFileSync(
       path.join(sharedSkillsDir, 'ts-write-tests', 'SKILL.md'),
-      '---\nname: ts-write-tests\ndescription: Write unit tests.\n---\nContent'
+      '---\nname: ts-write-tests\ndescription: Write unit tests.\n---\nContent',
     );
     // shared/.apm/skills/ts-create-project/SKILL.md — gated from model invocation
     fs.mkdirSync(path.join(sharedSkillsDir, 'ts-create-project'), { recursive: true });
     fs.writeFileSync(
       path.join(sharedSkillsDir, 'ts-create-project', 'SKILL.md'),
-      "---\nname: ts-create-project\ndescription: Scaffold a project.\ndisable-model-invocation: true\nmetadata:\n  opencode/autoinvoke: 'false'\n---\nContent"
+      "---\nname: ts-create-project\ndescription: Scaffold a project.\ndisable-model-invocation: true\nmetadata:\n  opencode/autoinvoke: 'false'\n---\nContent",
     );
   });
 
@@ -89,7 +89,7 @@ describe('generateSkillList', () => {
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain('Scaffold a project. *(user-invoked: `/ts-create-project`)*');
     expect(content).toContain(
-      '| [`ts-write-tests`](../packages/shared/.apm/skills/ts-write-tests/SKILL.md) | Write unit tests. |'
+      '| [`ts-write-tests`](../packages/shared/.apm/skills/ts-write-tests/SKILL.md) | Write unit tests. |',
     );
   });
 
@@ -103,7 +103,7 @@ describe('generateSkillList', () => {
   it('should list external dependencies per package and skip internal ones', () => {
     fs.writeFileSync(
       path.join(packagesDir, 'csharp', 'apm.yml'),
-      'name: csharp\ndependencies:\n  apm:\n    - dotnet/skills/plugins/dotnet#v1.0.0\n    - GravionLabs/apm-hub/packages/shared\n'
+      'name: csharp\ndependencies:\n  apm:\n    - dotnet/skills/plugins/dotnet#v1.0.0\n    - GravionLabs/apm-hub/packages/shared\n',
     );
     generateSkillList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
@@ -114,7 +114,7 @@ describe('generateSkillList', () => {
   it('should list object-form dependencies and omit the line without external ones', () => {
     fs.writeFileSync(
       path.join(packagesDir, 'csharp', 'apm.yml'),
-      'name: csharp\ndependencies:\n  apm:\n    - git: https://github.com/o/r\n      path: p\n      ref: v1\n'
+      'name: csharp\ndependencies:\n  apm:\n    - git: https://github.com/o/r\n      path: p\n      ref: v1\n',
     );
     fs.writeFileSync(path.join(packagesDir, 'shared', 'apm.yml'), 'name: shared\n');
     generateSkillList(packagesDir, outputFile);
@@ -142,7 +142,7 @@ describe('generateSkillList', () => {
         '    - git@github.com:GravionLabs/apm-hub.git',
         '    - gravionlabs/apm-hub/packages/core',
         '',
-      ].join('\n')
+      ].join('\n'),
     );
     generateSkillList(packagesDir, outputFile);
     expect(fs.readFileSync(outputFile, 'utf8')).not.toContain('External dependencies');
@@ -157,30 +157,30 @@ describe('generateSkillList', () => {
   it('should join multiple external dependencies with a comma', () => {
     fs.writeFileSync(
       path.join(packagesDir, 'csharp', 'apm.yml'),
-      'name: csharp\ndependencies:\n  apm:\n    - a/b/c#v1\n    - d/e\n'
+      'name: csharp\ndependencies:\n  apm:\n    - a/b/c#v1\n    - d/e\n',
     );
     generateSkillList(packagesDir, outputFile);
     expect(fs.readFileSync(outputFile, 'utf8')).toContain(
-      'External dependencies: `a/b/c#v1`, `d/e`'
+      'External dependencies: `a/b/c#v1`, `d/e`',
     );
   });
 
   it('should render object form without path or ref', () => {
     fs.writeFileSync(
       path.join(packagesDir, 'csharp', 'apm.yml'),
-      'name: csharp\ndependencies:\n  apm:\n    - git: https://github.com/o/r\n    - git: https://github.com/o/s\n      ref: v2\n    - git: https://github.com/o/t\n      path: sub\n'
+      'name: csharp\ndependencies:\n  apm:\n    - git: https://github.com/o/r\n    - git: https://github.com/o/s\n      ref: v2\n    - git: https://github.com/o/t\n      path: sub\n',
     );
     generateSkillList(packagesDir, outputFile);
     const content = fs.readFileSync(outputFile, 'utf8');
     expect(content).toContain(
-      'External dependencies: `https://github.com/o/r`, `https://github.com/o/s#v2`, `https://github.com/o/t/sub`'
+      'External dependencies: `https://github.com/o/r`, `https://github.com/o/s#v2`, `https://github.com/o/t/sub`',
     );
   });
 
   it('should keep dollar sequences in refs literal', () => {
     fs.writeFileSync(
       path.join(packagesDir, 'csharp', 'apm.yml'),
-      "name: csharp\ndependencies:\n  apm:\n    - 'o/r#a$&b'\n"
+      "name: csharp\ndependencies:\n  apm:\n    - 'o/r#a$&b'\n",
     );
     generateSkillList(packagesDir, outputFile);
     expect(fs.readFileSync(outputFile, 'utf8')).toContain('`o/r#a$&b`');

@@ -130,7 +130,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `delivery`    | `planner`, `orchestrator`, `retro`, `apm-install`                                                                                                   |
 | `github`      | `github-issue`, `github-pull-request`, `github-release`                                                                                        |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`) |
-| `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`              |
+| `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky`              |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                             |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |

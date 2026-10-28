@@ -24,7 +24,7 @@ export class PwshWorker {
     this.child = spawn(
       'pwsh',
       ['-NoProfile', '-File', path.join(__dirname, 'pwsh-worker.ps1'), script],
-      { stdio: ['pipe', 'pipe', 'pipe'] }
+      { stdio: ['pipe', 'pipe', 'pipe'] },
     );
     // a dead worker is reported through `exited`; a write to it must not crash the test run with EPIPE
     this.child.stdin.on('error', () => undefined);
@@ -48,17 +48,17 @@ export class PwshWorker {
 
   private async exec(
     args: string[],
-    opts: { cwd: string; env?: NodeJS.ProcessEnv }
+    opts: { cwd: string; env?: NodeJS.ProcessEnv },
   ): Promise<WorkerResult> {
     if (this.exited) throw new Error(this.exited);
     // a spawned process sees the real path of its cwd (macOS /var -> /private/var); Set-Location would keep the symlink
     const realCwd = fs.realpathSync(opts.cwd);
     const out = path.join(this.tmp, `r${++this.n}.json`);
     const fullEnv = Object.fromEntries(
-      Object.entries(opts.env ?? process.env).filter(([, v]) => v !== undefined)
+      Object.entries(opts.env ?? process.env).filter(([, v]) => v !== undefined),
     );
     this.child.stdin.write(
-      JSON.stringify({ key: `call-${this.n}`, args, cwd: realCwd, fullEnv, out }) + '\n'
+      JSON.stringify({ key: `call-${this.n}`, args, cwd: realCwd, fullEnv, out }) + '\n',
     );
     const deadline = Date.now() + this.timeoutMs;
     let m: RegExpExecArray | null;
@@ -67,7 +67,7 @@ export class PwshWorker {
       if (Date.now() > deadline) {
         this.child.kill();
         throw new Error(
-          `pwsh worker: no answer within ${this.timeoutMs} ms for: ${args.join(' ')}`
+          `pwsh worker: no answer within ${this.timeoutMs} ms for: ${args.join(' ')}`,
         );
       }
       await new Promise<void>((resolve) => {

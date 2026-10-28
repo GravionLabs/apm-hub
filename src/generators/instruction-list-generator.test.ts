@@ -17,25 +17,25 @@ describe('generateInstructionList', () => {
     fs.mkdirSync(csDir, { recursive: true });
     fs.writeFileSync(
       path.join(csDir, 'csharp.instructions.md'),
-      '---\ndescription: C# coding standards and best practices.\n---\nContent'
+      '---\ndescription: C# coding standards and best practices.\n---\nContent',
     );
     fs.writeFileSync(
       path.join(csDir, 'csharp-nunit.instructions.md'),
-      '---\ndescription: NUnit testing conventions for C#.\n---\nContent'
+      '---\ndescription: NUnit testing conventions for C#.\n---\nContent',
     );
     // Non-instruction files should be ignored
     const csAgentsDir = path.join(packagesDir, 'csharp', '.apm', 'agents');
     fs.mkdirSync(csAgentsDir, { recursive: true });
     fs.writeFileSync(
       path.join(csAgentsDir, 'csharp-expert.agent.md'),
-      '---\nname: C# Expert\n---\nContent'
+      '---\nname: C# Expert\n---\nContent',
     );
 
     const devopsDir = path.join(packagesDir, 'devops', '.apm', 'instructions');
     fs.mkdirSync(devopsDir, { recursive: true });
     fs.writeFileSync(
       path.join(devopsDir, 'shell.instructions.md'),
-      '---\ndescription: Shell scripting best practices.\n---\nContent'
+      '---\ndescription: Shell scripting best practices.\n---\nContent',
     );
   });
 

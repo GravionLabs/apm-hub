@@ -10,21 +10,22 @@
     "generate:root-apm": "node dist/index.js --root-apm",
     "generate:ci": "node dist/index.js --aggregate",
     "generate:all": "npm run build && npm run generate:ci",
-    "format": "prettier --write \"{src,test}/**/*.ts\"",
-    "format:check": "prettier --check \"{src,test}/**/*.ts\"",
+    "format": "biome format --write .",
+    "format:check": "biome check .",
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
     "test:watch": "vitest",
-    "check:manifests": "node scripts/check-manifests.mjs"
+    "check:manifests": "node scripts/check-manifests.mjs",
+    "lint": "biome lint ."
   },
   "dependencies": {
     "yaml": "^2.8.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.6.3",
     "@types/node": "^24.0.0",
     "@vitest/coverage-v8": "^4.1.2",
     "ajv": "^8.20.0",
-    "prettier": "^3.8.1",
     "typescript": "^7.0.2",
     "vitest": "^4.1.2"
   }

@@ -118,7 +118,7 @@ export interface DescriptionBudget {
 /** True when the frontmatter gates the skill with `disable-model-invocation: true` (also quoted). */
 export function isModelGated(content: string): boolean {
   return frontmatterLines(content).some((l) =>
-    /^disable-model-invocation:\s*(['"]?)true\1\s*$/.test(l)
+    /^disable-model-invocation:\s*(['"]?)true\1\s*$/.test(l),
   );
 }
 

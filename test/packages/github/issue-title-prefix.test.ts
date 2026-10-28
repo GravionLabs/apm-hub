@@ -37,10 +37,10 @@ describe('github-issue level-prefixed titles', () => {
       readFileSync(
         path.resolve(
           __dirname,
-          '../../../packages/github/.apm/skills/github-pull-request/SKILL.md'
+          '../../../packages/github/.apm/skills/github-pull-request/SKILL.md',
         ),
-        'utf-8'
-      )
+        'utf-8',
+      ),
     ).toContain('`<type>: <description> (#<issue_number>)`');
     expect(read('references/task-issues.md')).toContain('`[Task] <conventional title>`');
   });

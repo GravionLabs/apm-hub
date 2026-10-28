@@ -1,6 +1,6 @@
 name: ts
 version: 3.0.0
-description: TypeScript and Node.js skills. Implementation conventions and review rules, Vitest testing, project scaffolding with strict tsconfig and ESM, ESLint/Prettier/Husky setup, pnpm migration, and MCP server generation.
+description: TypeScript and Node.js skills. Implementation conventions and review rules, Vitest testing, project scaffolding with strict tsconfig and ESM, Biome/Husky setup (ESLint/Prettier/Husky for Angular), pnpm migration, and MCP server generation.
 author:
   name: Gravion
 license: MIT
@@ -10,6 +10,7 @@ keywords:
   - vitest
   - eslint
 x-skills:
+  - setup-biome-husky
   - setup-prettier-eslint-husky
   - ts-create-project
   - ts-implementation

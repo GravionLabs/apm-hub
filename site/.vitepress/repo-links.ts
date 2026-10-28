@@ -77,7 +77,7 @@ interface Markdown {
     ruler: {
       push(
         name: string,
-        rule: (state: { tokens: Token[]; env: { relativePath?: string } }) => void
+        rule: (state: { tokens: Token[]; env: { relativePath?: string } }) => void,
       ): void;
     };
   };

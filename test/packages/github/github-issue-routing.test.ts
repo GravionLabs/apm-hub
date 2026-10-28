@@ -52,7 +52,7 @@ describe('github-issue creates issues from a plan with blocked-by links', () => 
 
   it('routes a plan from planner to create-from-plan.md', () => {
     expect(routing).toContain(
-      'A plan from `planner` (`plan.json`) → `references/create-from-plan.md`'
+      'A plan from `planner` (`plan.json`) → `references/create-from-plan.md`',
     );
   });
 
@@ -68,11 +68,11 @@ describe('github-issue creates issues from a plan with blocked-by links', () => 
     const doc = read('github-issue/references/sub-issues.md');
     expect(doc).toContain('## Blocked-by links');
     expect(doc).toContain(
-      'gh api -X POST repos/{owner}/{repo}/issues/<nr>/dependencies/blocked_by -F issue_id=$blockerId'
+      'gh api -X POST repos/{owner}/{repo}/issues/<nr>/dependencies/blocked_by -F issue_id=$blockerId',
     );
     expect(doc).toContain('gh api repos/{owner}/{repo}/issues/<nr>/dependencies/blocked_by --jq');
     expect(doc).toContain(
-      'gh api -X DELETE repos/{owner}/{repo}/issues/<nr>/dependencies/blocked_by/$blockerId'
+      'gh api -X DELETE repos/{owner}/{repo}/issues/<nr>/dependencies/blocked_by/$blockerId',
     );
     expect(doc).toContain('gh api repos/{owner}/{repo}/issues/<blocker-nr> --jq .id');
   });
@@ -89,7 +89,7 @@ describe('github-issue creates issues from a plan with blocked-by links', () => 
       sources
         .flatMap((s) => s.split('\n'))
         .filter((l) => /blocked-by links?/i.test(l))
-        .flatMap((l) => [...l.matchAll(/`(?:references\/)?([\w-]+\.md)`/g)].map((m) => m[1]))
+        .flatMap((l) => [...l.matchAll(/`(?:references\/)?([\w-]+\.md)`/g)].map((m) => m[1])),
     );
     expect([...named]).toContain('sub-issues.md');
     for (const file of named) {

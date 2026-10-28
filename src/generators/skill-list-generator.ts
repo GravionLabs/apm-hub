@@ -64,7 +64,7 @@ export function generateSkillList(packagesBaseDir = 'packages', outputFile = 'do
       .sort();
 
     const validSkillDirs = skillDirs.filter((name) =>
-      fs.existsSync(path.join(skillsSubdir, name, 'SKILL.md'))
+      fs.existsSync(path.join(skillsSubdir, name, 'SKILL.md')),
     );
     if (validSkillDirs.length === 0) continue;
 
@@ -102,7 +102,7 @@ export function generateSkillList(packagesBaseDir = 'packages', outputFile = 'do
     const heading = `\n## ${label}\n\n`;
     output = output.replace(
       heading,
-      () => `${heading}External dependencies: ${deps.map((d) => `\`${d}\``).join(', ')}\n\n`
+      () => `${heading}External dependencies: ${deps.map((d) => `\`${d}\``).join(', ')}\n\n`,
     );
   }
 

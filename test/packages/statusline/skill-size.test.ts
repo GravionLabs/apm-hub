@@ -4,7 +4,7 @@ import * as path from 'path';
 const root = path.resolve(__dirname, '../../..');
 const skill = fs.readFileSync(
   path.join(root, 'packages/statusline/.apm/skills/context-statusline/SKILL.md'),
-  'utf-8'
+  'utf-8',
 );
 const doc = fs.readFileSync(path.join(root, 'docs/usage/statusline.md'), 'utf-8');
 
