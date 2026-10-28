@@ -1,7 +1,7 @@
 # Overview
 
 <!-- AUTO:start version -->
-Welcome to **apm-hub** v3.0.0 👋
+Welcome to **apm-hub** v3.0.1 👋
 <!-- AUTO:end version -->
 
 apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The automated runner that chains them lives in [dromos](runner.md).
@@ -12,20 +12,20 @@ This documentation is also published as a site at <https://gravionlabs.github.io
 
 A package is a domain bundle of skills. Installing it copies the skills into your repository, where the agent picks them up by their `description` or when you name them.
 
-| Package       | What it covers                                                                                                                    |
-| :------------ | :-------------------------------------------------------------------------------------------------------------------------------- |
-| `shared`      | `implementation` (tests per change), `detect-techstack`, `code-review` (blocking findings and notes), `diagnose` (bug diagnosis)               |
-| `delivery`    | `planner`, `retro`, `apm-install`                                                                                          |
-| `github`      | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`, `github-release`            |
-| `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
+| Package       | What it covers                                                                                                                                         |
+| :------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shared`      | `implementation` (tests per change), `detect-techstack`, `code-review` (blocking findings and notes), `diagnose` (bug diagnosis)                       |
+| `delivery`    | `planner`, `retro`, `apm-install`                                                                                                                      |
+| `github`      | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`, `github-release`                                 |
+| `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                                        |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky` |
-| `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                               |
-| `rust`        | `rust-implementation`, `rust-test`                                                                                                |
-| `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                       |
-| `statusline`  | `context-statusline` skill: status line and subagent status line                                                                  |
-| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `statusline` (no stack skills)                      |
-| `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling, not in `all`)                                                    |
-| `all`         | every package except `apm-tooling`                                                                                                |
+| `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                                    |
+| `rust`        | `rust-implementation`, `rust-test`                                                                                                                     |
+| `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                                            |
+| `statusline`  | `context-statusline` skill: status line and subagent status line                                                                                       |
+| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `statusline` (no stack skills)                                                    |
+| `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling, not in `all`)                                                                         |
+| `all`         | every package except `apm-tooling`                                                                                                                     |
 
 The full list with descriptions is generated into [skill-list.md](skill-list.md).
 

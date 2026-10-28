@@ -124,20 +124,20 @@ Skill scripts are PowerShell 7+ (`pwsh`) and run on Windows, macOS and Linux. `d
 
 apm-hub distributes domain packages via APM. Each package is installed with `apm install` and deployed to `.github/`, `.claude/`, `.cursor/`, `.opencode/`, and `.gemini/` automatically.
 
-| Package       | Contents                                                                                                                                       |
-| :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| `shared`      | `implementation`, `detect-techstack`, `diagnose`, `code-review`                                                                                |
-| `delivery`    | `planner`, `orchestrator`, `retro`, `apm-install`                                                                                                   |
-| `github`      | `github-issue`, `github-pull-request`, `github-release`                                                                                        |
-| `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`) |
-| `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky`              |
-| `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
-| `rust`        | `rust-implementation`, `rust-test`                                                                                                             |
-| `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
-| `statusline`  | `context-statusline` skill: status line and subagent status line                                                                               |
-| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `statusline` (no stack skills)                                   |
-| `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling)                                                                               |
-| `all`         | every package above except `apm-tooling`                                                                                                       |
+| Package       | Contents                                                                                                                                               |
+| :------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shared`      | `implementation`, `detect-techstack`, `diagnose`, `code-review`                                                                                        |
+| `delivery`    | `planner`, `orchestrator`, `retro`, `apm-install`                                                                                                      |
+| `github`      | `github-issue`, `github-pull-request`, `github-release`                                                                                                |
+| `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`)         |
+| `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky` |
+| `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                                    |
+| `rust`        | `rust-implementation`, `rust-test`                                                                                                                     |
+| `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                         |
+| `statusline`  | `context-statusline` skill: status line and subagent status line                                                                                       |
+| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `statusline` (no stack skills)                                                    |
+| `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling)                                                                                       |
+| `all`         | every package above except `apm-tooling`                                                                                                               |
 
 📄 **[Learn about Skills](docs/concepts/skills.md)** · 📄 **[Browse All Skills](docs/skill-list.md)** · 📄 **[Working mode](docs/working-mode.md)** (small contexts, one issue per session) · 📄 **[External frameworks](docs/frameworks.md)** · 📄 **[AGENTS.md](AGENTS.md)** for layout and conventions
 

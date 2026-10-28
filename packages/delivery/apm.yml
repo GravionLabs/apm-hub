@@ -1,5 +1,5 @@
 name: delivery
-version: 3.0.0
+version: 3.0.1
 description: "Issue-driven development workflow: run retrospective (retro), runner launcher (orchestrator), package installer (apm-install), and issue planning with native sub-issues. Pulls in github and shared; stack packages are installed per project."
 dependencies:
   apm:
