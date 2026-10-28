@@ -2,7 +2,7 @@
 
 apm-hub contains no pipeline. It ships skills; the runner that chains them (plan, implement, review, pull request, one PBI after another) lives in [dromos](https://github.com/GravionLabs/dromos). Why the split was made is in the [simplification plan](simplification-plan.md).
 
-Until the runner is released you work interactively, see [Working mode](working-mode.md).
+Without the runner you work interactively, see [Working mode](working-mode.md).
 
 ## What the runner does
 
