@@ -35,6 +35,8 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 
 3.0.0 is content-only: the agents and the orchestration skills (`orchestrator`, `review-fanout`, `verify-project`, `queue`, `handoff`, `orch-pipeline`, `orch`) and the agents (`orchestrator`, `pbi-runner`, `implementer`, `issue-reader`, `explorer`, `planner`, `pr-writer`, `review-lead`, `reviewer`) are gone; the runner is [dromos](docs/runner.md). If you still want the old pipeline, pin `agents`, `github` and `delivery` together at `#v2.5.4`; otherwise remove the `agents` entry and run `apm update -g`. What apm cleans itself and what can remain: [after install](packages/delivery/.apm/skills/apm-install/references/after-install.md).
 
+3.1.0 removes the `hooks` package (the git guardrails hook); the guardrails now live in the dromos [permission callback](https://github.com/GravionLabs/dromos/blob/main/src/runner/permissions.ts). Clean up: remove the `GravionLabs/apm-hub/packages/hooks` entry from your `apm.yml` and run `apm uninstall` (or `apm update -g` for a global install); delete the `PreToolUse` entry that runs `git-guardrails.sh` from `~/.claude/settings.json`; delete the `preToolUse` entry for `git-guardrails.sh` from your Copilot hook file (for example `~/.copilot/hooks/*.json`) if you added it by hand. `v2.5.4` still ships the hook.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
