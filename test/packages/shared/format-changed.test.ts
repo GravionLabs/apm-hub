@@ -535,9 +535,12 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
 
     it('go: a missing gofmt is skipped by name', async () => {
       write('main.go', 'x');
+      // CI images ship gofmt in /usr/bin, so /usr/bin:/bin cannot stay on PATH for this case: only git is linked in.
+      const git = spawnSync('sh', ['-c', 'command -v git'], { encoding: 'utf8' }).stdout.trim();
+      fs.symlinkSync(git, path.join(bin, 'git'));
       const r = await worker.run(['-Language', 'go'], {
         cwd: dir,
-        env: { ...process.env, PATH: `${bin}:/usr/bin:/bin` },
+        env: { ...process.env, PATH: bin },
       });
       expect(r.status).toBe(0);
       expect(r.stdout.trim()).toBe('skipped: gofmt not found');
