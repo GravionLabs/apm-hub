@@ -5,6 +5,25 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.2.0] — 2026-10-28
+
+### Bug Fixes
+- **delivery**: Nest runner config models per harness in after-install example (#812)
+- **delivery**: Install hint names @gravionlabs/dromos (#816) (#817)
+- **go**: Go-test rule for tests that simulate a missing tool (#819) (#834)
+
+
+### Documentation
+- Spike on workflow, skill and harness capabilities for deliver (#823) (#831)
+- Roadmap after dromos decision 004 (#833)
+
+
+## [3.1.0] — 2026-10-28
+
+### Documentation
+- Update CHANGELOG.md for v3.1.0 [skip ci]
+
+
 ## [3.0.1] — 2026-10-28
 
 ### Documentation
