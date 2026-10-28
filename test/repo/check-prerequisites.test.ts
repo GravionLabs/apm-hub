@@ -95,5 +95,17 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
       expect(r.code).toBe(0);
       expect(r.out).not.toContain('source format');
     });
+
+    it('reports dromos --version when installed and stays green when missing', () => {
+      const missing = run();
+      expect(missing.code).toBe(0);
+      expect(missing.out).toContain('dromos: NOT FOUND');
+      const bin = path.join(dir, 'bin');
+      fs.mkdirSync(bin);
+      fs.writeFileSync(path.join(bin, 'dromos'), '#!/bin/sh\necho 0.5.0\n', { mode: 0o755 });
+      const found = run(bin);
+      expect(found.code).toBe(0);
+      expect(found.out).toContain('dromos: 0.5.0');
+    });
   }
 );
