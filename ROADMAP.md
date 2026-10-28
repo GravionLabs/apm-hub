@@ -60,7 +60,7 @@ Milestone 3.4.0. Planned in detail with `issue-planning` once 3.3.0 is cut.
 | Issue | Title | Size | Depends on / decision |
 | --- | --- | --- | --- |
 | #661 | Feature: lessons contract. `.agents/lessons/*.md` read by `deliver`, `issue-planning` and `code-review`; `retro` proposes and retires lessons; check validates the files. Under Epic #821 | L | #826; PBIs planned with `issue-planning` |
-| new | `retro` input replaces `dromos run metrics` (runner events, cost per phase) with data that exists after 004: review findings and PR history of the `deliver` run, plus cost from agentlens when available | M | #826; blocks the metrics columns of `retro`, not the lesson proposals |
+| #832 | `retro` reads agentlens (cost, requests, role share) and GitHub (fix and review rounds, CI) instead of `dromos run metrics`; escalation lines from the `deliver` report. Under Feature #661 | M | #826; blocks the metrics columns of `retro`, not the lesson proposals |
 | new | `Format-Changed.ps1` repo detection without `-Language` (the dromos `detectFormatter` table: `scripts.format`, Biome, Prettier, ruff, `.sln`, `Cargo.toml`, `go.mod`), optional `PostToolUse` format hook for interactive sessions | M | #830; decision whether apm-hub ships a hook again (AGENTS.md: no hooks package since P9) |
 | #420 | `jvm` package for Java and Kotlin | M | `needs-decision`: one `jvm` package or `java` + `kotlin`; blocked by #419 (merged) |
 | #421 | `swift` package, detection via `Package.swift` | M | #420 |
@@ -90,5 +90,5 @@ Feature #413 and Epic #411 close with #421; Feature #661 closes with its last PB
 - The deliver chain is serial (#823 → #824 → #825 → #826 → #828/#829): a "no" in the spike (workflow `scriptPath` inside an installed skill, headless `/deliver`) changes #826's design before any code exists. The spike names a fallback for every "no", so the chain slips, it does not break.
 - 3.2.0 ships the dromos setup of #804 and 3.3.0 removes it. Users who run `apm-install` in between get a `.dromos/config.json`; #828 and `after-install.md` must say how to migrate it to `.agents/config.json`.
 - `.agents/` is both an install target (`.agents/skills/`) and the home of the committed config; a project that ignores the whole directory loses the config. #830 adds the installer notice; until then the gitignore exception is documented only in `docs/usage/format-override.md`.
-- `retro` still reads `dromos run metrics` (SKILL.md step 1), and dromos is archived. Retro keeps working on review findings and transcripts, but its cost and duration columns are `n/a` until the input is replaced (3.4.0). Every retro-based lesson proposal (#661) depends on that fallback.
+- `retro` still reads `dromos run metrics` (SKILL.md step 1), and dromos is archived. Retro keeps working on review findings and transcripts, but its cost and duration columns are `n/a` until the input is replaced (3.4.0). Every retro-based lesson proposal (#661) depends on that fallback until #832 is merged.
 - #827 depends on keryx, which has no code yet. Shipping 3.3.0 Claude Code only is the planned fallback.
