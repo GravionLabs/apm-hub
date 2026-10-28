@@ -17,6 +17,7 @@ pwsh .github/skills/check-prerequisites/scripts/Check-Prerequisites.ps1 -AutoIns
 | [PowerShell](https://github.com/PowerShell/PowerShell) | 7.4+    | All skill scripts are `pwsh` scripts. `detect-techstack` has a manual fallback, but scaffolding and report scripts need it. |
 | [Git](https://git-scm.com/)                            | 2.40+   | Branching, commits, diffs in every workflow skill                                                                           |
 | [APM CLI](https://microsoft.github.io/apm/)            | latest  | Installs the packages (`curl -sSL https://aka.ms/apm-unix \| sh` or `winget install Microsoft.APM`)                         |
+| [dromos](https://github.com/GravionLabs/dromos) | latest | Optional: the runner that chains the skills (`npm i -g dromos`, needs Node.js 22). Needed by `/orchestrator`, not by the skills themselves. `Check-Prerequisites.ps1` reports `dromos --version` and does not fail when it is missing. |
 
 Install PowerShell:
 

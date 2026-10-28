@@ -8,6 +8,28 @@
 | `.github/skills/`, `.claude/skills/`, `.opencode/skills/` | commit (instant context on clone) |
 | `apm_modules/` | add to `.gitignore` |
 
+## Runner (optional)
+
+The skills work by hand. To chain them automatically install the runner once per machine and check it:
+
+```bash
+npm i -g dromos
+dromos --version
+```
+
+Per repository dromos reads `.dromos/config.json` (commit it; without it the defaults apply). Example for a TypeScript project:
+
+```json
+{
+  "harness": "claude",
+  "models": { "planner": "opus", "implementer": "sonnet", "reviewer": "sonnet" },
+  "test": { "related": "pnpm vitest related --run", "full": "pnpm test" },
+  "parallel": 3
+}
+```
+
+`test.related` is optional (without it the runner runs `test.full`). All keys, `skills` per role and `allow` extensions: [dromos README](https://github.com/GravionLabs/dromos#readme). Usage: [the runner](https://github.com/GravionLabs/apm-hub/blob/release/next/docs/runner.md).
+
 ## Upgrading from 2.x
 
 3.0.0 removes the agents and the orchestration skills. After `apm update -g` the v2.5.4 files can remain and reference `github-issue` files 3.x no longer ships: the agents `orchestrator`, `pbi-runner`, `implementer`, `issue-reader`, `explorer`, `planner`, `pr-writer`, `review-lead`, `reviewer` and the skills `orchestrator`, `review-fanout`, `queue`, `handoff`, `orch-pipeline`, `orch`, `verify-project`. Two options:

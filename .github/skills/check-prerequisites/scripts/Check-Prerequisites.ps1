@@ -4,7 +4,7 @@
     Checks and validates all global prerequisites for apm-hub skills.
 
 .DESCRIPTION
-    Verifies that required tools are installed: PowerShell, Git, Node.js, npm.
+    Verifies that required tools are installed: PowerShell, Git, Node.js, npm. Reports dromos (`dromos --version`, optional).
     Optionally checks for optional tools (gh, curl, jq, yq, ast-grep, python, apmw). apmw counts as required
     when an installed agent file is still in the apm-hub source format (never sanitized).
     Can auto-install missing tools using platform-specific package managers.
@@ -153,6 +153,16 @@ if (Test-Tool 'npm') {
     $results.runtime['npm'] = "✗ NOT FOUND"
     Write-Host "  ✗ npm: NOT FOUND" -ForegroundColor Red
     $results.missing += 'npm'
+}
+
+# ===== dromos (optional runner; reported, never fails the check) =====
+if (Test-Tool 'dromos') {
+    $dromosVersion = Get-ToolVersion 'dromos'
+    $results.runtime['dromos'] = "✓ $dromosVersion"
+    Write-Host "  ✓ dromos: $dromosVersion" -ForegroundColor Green
+} else {
+    $results.runtime['dromos'] = "✗ NOT FOUND (optional)"
+    Write-Host "  - dromos: NOT FOUND (optional, the runner: npm i -g dromos)" -ForegroundColor Gray
 }
 
 # ===== apmw (required once agent files in the apm-hub source format are installed) =====
