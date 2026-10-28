@@ -38,7 +38,6 @@ export const sidebar: SidebarGroup[] = [
     text: 'Usage',
     items: [
       { text: 'Common workflows', link: '/usage/common-workflows' },
-      { text: 'Copilot CLI hooks', link: '/usage/copilot-hooks' },
       { text: 'Format override', link: '/usage/format-override' },
       { text: 'Status lines', link: '/usage/statusline' },
       { text: 'Skill companion directories', link: '/usage/skill-companion-dirs' },

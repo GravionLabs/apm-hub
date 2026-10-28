@@ -2,7 +2,7 @@ name: core
 version: 3.0.0
 description: >
   Workflow meta package for the global install: GitHub issue and PR skills, development workflow,
-  shared skills, the git guardrails hook and the status line. Stack packages are installed per project.
+  shared skills and the status line. Stack packages are installed per project.
 author:
   name: Gravion
 license: MIT
@@ -12,5 +12,4 @@ dependencies:
     - GravionLabs/apm-hub/packages/github
     - GravionLabs/apm-hub/packages/delivery
     - GravionLabs/apm-hub/packages/shared
-    - GravionLabs/apm-hub/packages/hooks
     - GravionLabs/apm-hub/packages/statusline

@@ -23,10 +23,10 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[The runner](docs/runner.md)**: the automated pipeline lives in dromos.
 - **[Simplification plan](docs/simplification-plan.md)**: why apm-hub becomes a content-only repository and the pipeline moves to dromos.
 - **[Simplification work plan](docs/simplification-workplan.md)**: order of work, PBIs and milestones for that change.
+- **Git guardrails**: destructive git commands are denied by the dromos [permission callback](https://github.com/GravionLabs/dromos/blob/main/src/runner/permissions.ts); apm-hub ships no hooks.
 - **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
 - **[Common Workflows](docs/usage/common-workflows.md)**: End-to-end examples with the installed skills.
 - **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
-- **[Copilot CLI hooks](docs/usage/copilot-hooks.md)**: manual setup, upgrade cleanup.
 - **[Format override](docs/usage/format-override.md)**: replace the format and check commands per language with `.agents/format.json`.
 - **Project standard** (`github-project`): ships from [GravionLabs/ci](https://github.com/GravionLabs/ci) (`apm install GravionLabs/ci`), see its `docs/project-standard.md`.
 - **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
@@ -132,9 +132,8 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                             |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
-| `hooks`       | Claude Code git guardrails hook (denies destructive git commands)                                                                              |
 | `statusline`  | `context-statusline` skill: status line and subagent status line                                                                               |
-| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills)                                   |
+| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `statusline` (no stack skills)                                   |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling)                                                                               |
 | `all`         | every package above except `apm-tooling`                                                                                                       |
 

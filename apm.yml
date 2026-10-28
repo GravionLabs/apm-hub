@@ -18,14 +18,11 @@ marketplace:
     url: https://github.com/GravionLabs
   packages:
   - name: core
-    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the git guardrails hook and the status line. Stack packages are installed per project."
+    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills and the status line. Stack packages are installed per project."
     source: ./packages/core
   - name: all
     description: "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks."
     source: ./packages/all
-  - name: hooks
-    description: "Claude Code hook: the git guardrails (PreToolUse) deny destructive git commands. Copilot CLI is set up by hand (docs/usage/copilot-hooks.md)."
-    source: ./packages/hooks
   - name: statusline
     description: "Status line and subagent status line showing context usage: the context-statusline skill installs a cross-platform Node status line for Claude Code and Copilot CLI, plus a Claude Code subagent status line."
     source: ./packages/statusline
