@@ -21,6 +21,7 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky` |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                                    |
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                                     |
+| `go`          | `go-implementation`, `go-test`                                                                                                                         |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                                            |
 | `statusline`  | `context-statusline` skill: status line and subagent status line                                                                                       |
 | `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `statusline` (no stack skills)                                                    |

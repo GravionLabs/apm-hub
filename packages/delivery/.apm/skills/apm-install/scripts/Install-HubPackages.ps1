@@ -15,7 +15,7 @@
 
   Behavior in detail:
   - Detection runs even under -DryRun. The report maps ts/js to ts, py to py, dotnet to dotnet,
-    rust to rust and the angular framework to ng.
+    rust to rust, go to go and the angular framework to ng.
   - detect-techstack missing, failing or printing invalid output: the missing ones of shared, github,
     delivery plus a note asking for -Packages.
   - -Global without -Packages proposes only the base packages, no stack detection (hardening beyond the
@@ -32,7 +32,7 @@
 
 .PARAMETER Packages
   Packages to install (comma-separated); skips detection. One of shared, github, delivery,
-  statusline, core, all, ts, py, ng, dotnet.
+  statusline, core, all, ts, py, ng, dotnet, rust, go.
 
 .PARAMETER Global
   Install user-wide (apm -g) instead of into the project.
@@ -70,7 +70,7 @@ if (-not (Get-Command apm -ErrorAction SilentlyContinue)) {
 }
 
 # pwsh -File passes "ts,ng" as one string: split on commas, then validate
-$valid = 'shared', 'github', 'delivery', 'statusline', 'core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust'
+$valid = 'shared', 'github', 'delivery', 'statusline', 'core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust', 'go'
 if ($PSBoundParameters.ContainsKey('Packages')) {
   $Packages = @($Packages | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
   if ($Packages.Count -eq 0) {
@@ -95,7 +95,7 @@ $homeDirs = '.claude/skills', '.config/opencode/skills', '.copilot/skills', '.ag
 $notes = [System.Collections.Generic.List[string]]::new()
 $hubPath = 'GravionLabs/apm-hub/packages'
 $coreMembers = 'shared', 'github', 'delivery', 'statusline'
-$allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust')
+$allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust', 'go')
 $provides = @{
   shared   = 'skills: implementation, detect-techstack, diagnose, code-review'
   github   = 'skills: github-issue, github-pull-request, github-release'
@@ -106,7 +106,8 @@ $provides = @{
   ts       = 'skills: ts-implementation, ts-test, ts-create-project, ts-mcp-server-generator, ts-pnpm-workflow, setup-prettier-eslint-husky'
   py       = 'skills: py-implementation, py-test, py-create-project'
   rust     = 'skills: rust-implementation, rust-test'
-  ng       = 'skills: ng-implementation, ng-test, ng-create-project, ng-ag-grid-developer'
+  go       = 'skills: go-implementation, go-test'
+  ng       ='skills: ng-implementation, ng-test, ng-create-project, ng-ag-grid-developer'
   dotnet   = 'skills: dotnet-implementation, dotnet-test, dotnet-create-solution, dotnet-mcp-server-generator'
 }
 $externalDeps = @{ ng = 'angular/skills (angular-developer)'; dotnet = 'dotnet/skills (dotnet plugin)' }
@@ -140,7 +141,7 @@ function Find-Detect {
   return $null
 }
 
-$langMap = @{ ts = 'ts'; js = 'ts'; typescript = 'ts'; javascript = 'ts'; py = 'py'; python = 'py'; dotnet = 'dotnet'; csharp = 'dotnet'; rust = 'rust' }
+$langMap = @{ ts = 'ts'; js = 'ts'; typescript = 'ts'; javascript = 'ts'; py = 'py'; python = 'py'; dotnet = 'dotnet'; csharp = 'dotnet'; rust = 'rust'; go = 'go' }
 $wanted = [System.Collections.Generic.List[string]]::new()
 $missingBase = Get-MissingBase
 if ($Packages) {

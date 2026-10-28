@@ -14,6 +14,7 @@ dependencies:
     - GravionLabs/apm-hub/packages/delivery
     - GravionLabs/apm-hub/packages/dotnet
     - GravionLabs/apm-hub/packages/github
+    - GravionLabs/apm-hub/packages/go
     - GravionLabs/apm-hub/packages/py
     - GravionLabs/apm-hub/packages/rust
     - GravionLabs/apm-hub/packages/shared

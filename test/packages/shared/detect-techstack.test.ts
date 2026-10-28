@@ -148,6 +148,37 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     expect((await detect()).languages).not.toContain('rust');
   });
 
+  it('reports a Go project with the go package manager', async () => {
+    write('go.mod', 'module example.com/x\n\ngo 1.22\n');
+    const r = await detect();
+    expect(r.languages).toEqual(['go']);
+    expect(r.test).toEqual(['go-test']);
+    expect(r.implementation).toEqual(['go-implementation']);
+    expect(r.packageManager).toEqual(['go']);
+  });
+
+  it('finds go.mod at depth 5 but not deeper', async () => {
+    write('a/b/c/d/e/go.mod', 'module x\n');
+    expect((await detect()).languages).toEqual(['go']);
+    fs.rmSync(path.join(dir, 'a'), { recursive: true });
+    write('a/b/c/d/e/f/go.mod', 'module x\n');
+    expect((await detect()).languages).toEqual([]);
+  });
+
+  it.each(['vendor', 'testdata', 'node_modules'])('ignores a go.mod under %s/', async (d) => {
+    write('package.json', '{}');
+    write(`${d}/dep/go.mod`, 'module x\n');
+    expect((await detect()).languages).not.toContain('go');
+  });
+
+  it('reports a Go + Rust monorepo', async () => {
+    write('svc/go.mod', 'module x\n');
+    write('crates/core/Cargo.toml', '[package]\n');
+    const r = await detect();
+    expect(r.languages).toEqual(['rust', 'go']);
+    expect(r.test).toEqual(['rust-test', 'go-test']);
+  });
+
   it('detects tauri when both tauri.conf.json and tauri.conf.json5 exist, once', async () => {
     write('src-tauri/Cargo.toml', '[package]\n');
     write('src-tauri/tauri.conf.json', '{}');

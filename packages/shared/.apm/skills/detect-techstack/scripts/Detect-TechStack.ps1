@@ -102,6 +102,7 @@ $lockfileChecks = @(
   @{ Name = "package-lock.json"; Value = "npm" }
   @{ Name = "uv.lock";        Value = "uv" }
   @{ Name = "Cargo.toml";     Value = "cargo" }
+  @{ Name = "go.mod";         Value = "go" }
 )
 
 foreach ($entry in $lockfileChecks) {
@@ -184,6 +185,12 @@ foreach ($tauriConf in 'tauri.conf.json', 'tauri.conf.json5') {
   if ($tauriFound -and -not $frameworks.Contains("tauri")) {
     $frameworks.Add("tauri")
   }
+}
+
+# --- Go (go.mod; vendored modules and testdata carry their own go.mod) ---
+if (Get-IndicatorFile -Path $rootFull -Filter "go.mod" -Depth 5 |
+    Where-Object { [System.IO.Path]::GetRelativePath($rootFull, $_.FullName) -notmatch '(^|[\\/])(vendor|testdata)[\\/]' }) {
+  $languages.Add("go")
 }
 
 $langPrefixMap = @{
