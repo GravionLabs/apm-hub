@@ -13,7 +13,7 @@
 The skills work by hand. To chain them automatically install the runner once per machine and check it:
 
 ```bash
-npm i -g dromos
+npm i -g @gravionlabs/dromos
 dromos --version
 ```
 

@@ -7,7 +7,7 @@ Verify the environment for apm-hub skills. Paths to `scripts/` are relative to t
 
 - Run `pnpm run check` to execute the local build, formatting, manifest, skill-report, and test checks.
 - **Core/runtime** (always): PowerShell 7+, Git, Node.js, npm
-- **Runner** (always reported, never fails): `dromos --version`; install with `npm i -g dromos`
+- **Runner** (always reported, never fails): `dromos --version`; install with `npm i -g @gravionlabs/dromos`
 - **Optional** (`-Full`): `gh`, `curl`, `jq`, `yq`, `ast-grep`, Python 3, `apmw` (for the `agents` package, also in `core`/`all`; `uv tool install apmw` or `pipx install apmw`). `apmw` is reported as missing even without `-Full` when an installed agent file is still in the source format (a top-level `metadata:` key): Claude Code starts such agents without tools, OpenCode rejects them; fix with `apmw sanitize -g -p <client>`.
 
 ```powershell

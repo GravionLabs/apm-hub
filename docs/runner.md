@@ -11,7 +11,7 @@ Without the runner you work interactively, see [Working mode](working-mode.md).
 ## Install
 
 ```bash
-npm i -g dromos
+npm i -g @gravionlabs/dromos
 apm install GravionLabs/apm-hub/packages/core -g   # the skills the runner calls
 ```
 

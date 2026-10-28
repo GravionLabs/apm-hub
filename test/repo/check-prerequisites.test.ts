@@ -100,6 +100,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
       const missing = run();
       expect(missing.code).toBe(0);
       expect(missing.out).toContain('dromos: NOT FOUND');
+      expect(missing.out).toContain('npm i -g @gravionlabs/dromos');
       const bin = path.join(dir, 'bin');
       fs.mkdirSync(bin);
       fs.writeFileSync(path.join(bin, 'dromos'), '#!/bin/sh\necho 0.5.0\n', { mode: 0o755 });
