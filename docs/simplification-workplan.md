@@ -227,6 +227,28 @@ From A3 until B10b there is no automated pipeline. The intended mode:
 
 ---
 
+## 6a. Learned (first retro, P8, 2026-10-28)
+
+Basis: 14 `dromos run pbi` runs from the validation of dromos#225 (11 with a PR, 3 blocked, all three with `--harness copilot`). Only apm-hub#804 and #816 have events in the dromos store; the figures of the other 12 runs come from `docs/validation.md` of dromos and are not measured by `dromos run metrics`.
+
+| Metric (section 2 of `simplification-plan.md`) | Target | Result | |
+|---|---|---|---|
+| Human wait time per run | ≈ 0 | no gates, but 4 of 11 PRs needed manual fixes and 3 runs got stuck | not met |
+| Runs with red tests | < 20 % | local 0 of 11, CI red in 1 of 11 (apm-hub#815) | met |
+| Fix rounds per PBI | < 0.5 | 3 in 14 runs = 0.21 | met |
+| Median active time per PBI | ≤ 34 min | 3 min of phase time (11 PRs, 40 s to 402 s); review, CI and manual work not included | met |
+
+Caveats: apm-hub#816 ran 3577 s with 225 s in phases (retries, cause not checked). Cost is measured for #804 (1.75 USD) and #816 (0.92 USD) only.
+
+Findings:
+
+- The runner reviewer missed dead links, CI behavior that does not exist, a wrong phase grouping and a requirement of the Technical Notes. Already fixed by dromos#304 (PR 307) on 2026-10-28; no new issue.
+- `--harness copilot` was blocked in 3 of 3 runs (dromos#299); `Harness: claude` stays the default.
+- Run metrics select by issue number only, which collides between repositories, and the store lacks the events of 12 of 14 runs: GravionLabs/dromos#345.
+- The local gate cannot see tools that exist only on the CI image: GravionLabs/apm-hub#819.
+
+---
+
 ## 7. Issues
 
 Created 2026-10-27. Every PBI body has Overview, Parent, Acceptance Criteria (the Done-when line split into checkboxes), Technical Notes (branch, commands, context, out of scope) and Definition of Done; size in the body. Blocked-by links are native, also across the two repositories.
