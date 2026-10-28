@@ -26,4 +26,8 @@ Per project add the stack package (`ts`, `py`, `ng`, `dotnet`, `rust`).
 | `dromos run feature <nr>` | runs the PBIs of a Feature in dependency order    |
 | `dromos run epic <nr>`    | plans missing Features and PBIs, then runs them   |
 
+## From the session: `/orchestrator`
+
+The `orchestrator` skill (package `delivery`, user-invoked) launches dromos without leaving Claude Code or Copilot CLI: `/orchestrator <plan|run|status> <nr> [--harness claude|claude-cli|copilot]`. It runs `dromos … --format json`, summarizes the progress in the session and, when `plan` exits 2 with open planner questions, asks them with the client's question tool and re-runs with `--answer <id>=<value>`. It has no agent file; dromos does the work.
+
 Options, configuration and the event log are documented in the [dromos README](https://github.com/GravionLabs/dromos#readme).

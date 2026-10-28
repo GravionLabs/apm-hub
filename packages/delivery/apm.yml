@@ -1,11 +1,12 @@
 name: delivery
 version: 3.0.0
-description: "Issue-driven development workflow: run retrospective (retro), package installer (apm-install), and issue planning with native sub-issues. Pulls in github and shared; stack packages are installed per project."
+description: "Issue-driven development workflow: run retrospective (retro), runner launcher (orchestrator), package installer (apm-install), and issue planning with native sub-issues. Pulls in github and shared; stack packages are installed per project."
 dependencies:
   apm:
     - GravionLabs/apm-hub/packages/github
     - GravionLabs/apm-hub/packages/shared
 x-skills:
   - apm-install
+  - orchestrator
   - planner
   - retro
