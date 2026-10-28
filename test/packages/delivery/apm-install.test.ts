@@ -7,11 +7,11 @@ import { parse } from 'yaml';
 
 const REAL_DETECT = path.resolve(
   __dirname,
-  '../../../packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1'
+  '../../../packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1',
 );
 const SCRIPT = path.resolve(
   __dirname,
-  '../../../packages/delivery/.apm/skills/apm-install/scripts/Install-HubPackages.ps1'
+  '../../../packages/delivery/.apm/skills/apm-install/scripts/Install-HubPackages.ps1',
 );
 const pwshProbe = spawnSync('sh', ['-c', 'command -v pwsh'], { encoding: 'utf8' });
 const hasPwsh =
@@ -39,7 +39,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     fs.writeFileSync(
       path.join(bin, 'apm'),
       `#!/bin/sh\necho "$@" >> "$APM_LOG"\necho "apm noise: $*"\ncase "$*" in *"\${APM_FAIL:-NEVER-MATCH}"*) exit 1;; esac\n`,
-      { mode: 0o755 }
+      { mode: 0o755 },
     );
   });
   afterAll(() => fs.rmSync(shared, { recursive: true, force: true }));
@@ -88,7 +88,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
       each: (table: readonly any[]) => (name: string, fn: (...a: any[]) => Promise<void>) =>
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         it.concurrent.each(table)(name, (...a: any[]) => inCtx(() => fn(...a))),
-    }
+    },
   );
 
   // the fake apm is always in `bin`; the argument only sets which apm calls fail
@@ -107,9 +107,9 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   // fake detect emitting the names the real script emits (ts, js, py, dotnet)
   const fakeDetect = (report: object, root = S.home, client = '.claude/skills') =>
     fs.writeFileSync(detectDir(root, client), `param($ProjectRoot)\n'${JSON.stringify(report)}'\n`);
-  const globalBase = (skills = ['detect-techstack', 'github-issue', 'issue-planning']) =>
+  const globalBase = (skills = ['detect-techstack', 'github-issue', 'planner']) =>
     skills.forEach((n) =>
-      fs.mkdirSync(path.join(S.home, '.claude/skills', n), { recursive: true })
+      fs.mkdirSync(path.join(S.home, '.claude/skills', n), { recursive: true }),
     );
   const manifest = (text: string, root = S.proj) =>
     fs.writeFileSync(path.join(root, 'apm.yml'), text);
@@ -134,9 +134,9 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
             } catch (e) {
               reject(e);
             }
-          }
+          },
         );
-      }
+      },
     );
   };
   const notes = (r: { json: { notes: string[] } }) => r.json.notes.join(' | ');
@@ -165,7 +165,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     fs.copyFileSync(REAL_DETECT, detectDir(S.home));
     fs.writeFileSync(
       path.join(S.proj, 'package.json'),
-      '{"dependencies":{"@angular/core":"19.0.0"},"devDependencies":{"typescript":"5.0.0"}}'
+      '{"dependencies":{"@angular/core":"19.0.0"},"devDependencies":{"typescript":"5.0.0"}}',
     );
     fs.writeFileSync(path.join(S.proj, 'tsconfig.json'), '{}');
     fs.writeFileSync(path.join(S.proj, 'angular.json'), '{}');
@@ -196,7 +196,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     const marker = path.join(S.dir, 'ran');
     fs.writeFileSync(
       detectDir(S.proj),
-      `param($ProjectRoot)\nSet-Content '${marker}' x\n'{"languages":["py"],"frameworks":[]}'\n`
+      `param($ProjectRoot)\nSet-Content '${marker}' x\n'{"languages":["py"],"frameworks":[]}'\n`,
     );
     const r = await run(['-DryRun']);
     expect(fs.existsSync(marker)).toBe(false);
@@ -275,18 +275,18 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
       fakeApm();
       globalBase();
       manifest(
-        'dependencies:\n  apm:\n    - GravionLabs/apm-hub/packages/py\n    # - GravionLabs/apm-hub/packages/ts\n    - ng@apm-hub\n    - "GravionLabs/apm-hub/packages/dotnet#v1" # pinned\n'
+        'dependencies:\n  apm:\n    - GravionLabs/apm-hub/packages/py\n    # - GravionLabs/apm-hub/packages/ts\n    - ng@apm-hub\n    - "GravionLabs/apm-hub/packages/dotnet#v1" # pinned\n',
       );
       const r = await run(['-Packages', 'py,ts,ng,dotnet']);
       expect(r.json.skipped).toEqual(['py', 'ng', 'dotnet']);
       expect(r.json.installed).toEqual(['ts']);
-    }
+    },
   );
 
   tc('does not treat a longer name or another repository as installed', async () => {
     fakeApm();
     manifest(
-      '  apm:\n    - GravionLabs/apm-hub/packages/ts-extra\n    - GravionLabs/apm-hub/packages/tsx\n    - other/repo/packages/py\n'
+      '  apm:\n    - GravionLabs/apm-hub/packages/ts-extra\n    - GravionLabs/apm-hub/packages/tsx\n    - other/repo/packages/py\n',
     );
     const r = await run(['-Packages', 'ts,py']);
     expect(r.json.installed).toEqual(['ts', 'py']);
@@ -296,8 +296,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   tc('treats core and all as covering their members', async () => {
     fakeApm();
     manifest('  apm:\n    - GravionLabs/apm-hub/packages/core\n');
-    const core = await run(['-Packages', 'shared,hooks,ts']);
-    expect(core.json.skipped).toEqual(['shared', 'hooks']);
+    const core = await run(['-Packages', 'shared,statusline,ts']);
+    expect(core.json.skipped).toEqual(['shared', 'statusline']);
     expect(core.json.installed).toEqual(['ts']);
     manifest('  apm:\n    - all@apm-hub\n');
     expect((await run(['-Packages', 'ts,dotnet'])).json.skipped).toEqual(['ts', 'dotnet']);
@@ -335,7 +335,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
       expect(r.json.skipped).toEqual(['ts', 'ng']);
       expect(r.json.installed).toEqual(['py']);
       expect(apmCalls()).toEqual(['install GravionLabs/apm-hub/packages/py -g']);
-    }
+    },
   );
 
   tc('-Global without -Packages proposes the base packages only, without detection', async () => {
@@ -343,7 +343,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     const marker = path.join(S.dir, 'ran');
     fs.writeFileSync(
       detectDir(S.home),
-      `param($ProjectRoot)\nSet-Content '${marker}' x\n'{"languages":["ts"],"frameworks":[]}'\n`
+      `param($ProjectRoot)\nSet-Content '${marker}' x\n'{"languages":["ts"],"frameworks":[]}'\n`,
     );
     const r = await run(['-Global', '-DryRun']);
     expect(r.json.wouldInstall).toEqual(['github', 'delivery']);
@@ -384,7 +384,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     fakeApm();
     globalBase(['github-issue']);
     expect((await run(['-Global', '-DryRun'])).json.wouldInstall).toEqual(['shared', 'delivery']);
-    globalBase(['detect-techstack', 'issue-planning']);
+    globalBase(['detect-techstack', 'planner']);
     const r = await run(['-Global', '-DryRun']);
     expect(r.json.wouldInstall).toEqual([]);
     expect(notes(r)).toContain('already installed globally');
@@ -404,7 +404,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
       expect(dry.json.skipped).toEqual(['dotnet']);
       expect(dry.json.failed).toBeNull();
       expect(dry.json.notAttempted).toEqual([]);
-    }
+    },
   );
 
   tc('reports a first-package failure with everything else not attempted', async () => {
@@ -436,7 +436,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   tc('does not match a look-alike host or owner in the manifest', async () => {
     fakeApm();
     manifest(
-      '  apm:\n    - https://evil.example/GravionLabs/apm-hub/packages/ts\n    - xGravionLabs/apm-hub/packages/py\n'
+      '  apm:\n    - https://evil.example/GravionLabs/apm-hub/packages/ts\n    - xGravionLabs/apm-hub/packages/py\n',
     );
     expect((await run(['-Packages', 'ts,py'])).json.installed).toEqual(['ts', 'py']);
   });
@@ -506,7 +506,7 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
 describe('apm-install SKILL.md', () => {
   const skillPath = path.resolve(
     __dirname,
-    '../../../packages/delivery/.apm/skills/apm-install/SKILL.md'
+    '../../../packages/delivery/.apm/skills/apm-install/SKILL.md',
   );
   const text = fs.readFileSync(skillPath, 'utf-8');
   const fm = parse(text.split(/^---$/m)[1]);
@@ -543,7 +543,7 @@ describe('apm-install SKILL.md', () => {
   it('lists exactly the packages the script accepts ($valid)', () => {
     const script = fs.readFileSync(
       path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),
-      'utf-8'
+      'utf-8',
     );
     const valid = /^\$valid = (.+)$/m
       .exec(script)![1]
@@ -558,7 +558,7 @@ describe('apm-install SKILL.md', () => {
   it('moved the behavior details into the script help', () => {
     const script = fs.readFileSync(
       path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),
-      'utf-8'
+      'utf-8',
     );
     const help = script.slice(0, script.indexOf('param('));
     expect(help).toContain('Behavior in detail');
@@ -570,7 +570,7 @@ describe('upgrade note for v2 installs (#773)', () => {
   const root = path.resolve(__dirname, '../../..');
   const note = fs.readFileSync(
     path.join(root, 'packages/delivery/.apm/skills/apm-install/references/after-install.md'),
-    'utf-8'
+    'utf-8',
   );
   const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf-8');
 

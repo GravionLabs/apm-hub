@@ -14,17 +14,16 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 
 | Package       | What it covers                                                                                                                    |
 | :------------ | :-------------------------------------------------------------------------------------------------------------------------------- |
-| `shared`      | `implementation` (tests per change), `detect-techstack`, `code-review` (severity-rated), `diagnose` (bug diagnosis)               |
-| `delivery`    | `issue-planning`, `retro`, `apm-install`                                                                                          |
+| `shared`      | `implementation` (tests per change), `detect-techstack`, `code-review` (blocking findings and notes), `diagnose` (bug diagnosis)               |
+| `delivery`    | `planner`, `retro`, `apm-install`                                                                                          |
 | `github`      | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`, `github-release`            |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                   |
-| `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
+| `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky` |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                               |
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`                                                       |
-| `hooks`       | Claude Code and Copilot CLI git guardrails hook                                                                                   |
 | `statusline`  | `context-statusline` skill: status line and subagent status line                                                                  |
-| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills)                      |
+| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `statusline` (no stack skills)                      |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling, not in `all`)                                                    |
 | `all`         | every package except `apm-tooling`                                                                                                |
 
@@ -34,7 +33,7 @@ The full list with descriptions is generated into [skill-list.md](skill-list.md)
 
 - Every language package has a `<lang>-implementation` skill (conventions plus a `## Review rules` section) and a `<lang>-test` skill.
 - `detect-techstack` inspects the project and returns the names of those skills, so `implementation` and `code-review` dispatch to the right language without hard-coded lists.
-- You compose the rest in one session: plan with `issue-planning`, implement with `implementation`, review with `code-review`, open the PR with `github-pull-request`.
+- You compose the rest in one session: plan with `planner`, implement with `implementation`, review with `code-review`, open the PR with `github-pull-request`.
 - `github-issue` is the entry point for issue work. It reads the issue labels and sub-issues and routes to the matching reference workflow.
 
 Skills delegate by name instead of repeating each other. One skill owns a workflow; the others call it.

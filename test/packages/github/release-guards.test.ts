@@ -7,7 +7,7 @@ import { useReleaseFixture } from '../../helpers/release-fixture';
 const root = path.resolve(__dirname, '../../..');
 const script = path.join(
   root,
-  'packages/github/.apm/skills/github-release/scripts/Get-ReleaseState.ps1'
+  'packages/github/.apm/skills/github-release/scripts/Get-ReleaseState.ps1',
 );
 
 const fx = useReleaseFixture();
@@ -27,7 +27,7 @@ describe('Get-ReleaseState.ps1', () => {
     fs.mkdirSync(ghDir);
     fake = createFakeGh(
       ghDir,
-      `(call) => ({ rest: JSON.parse((call.args.includes('--head') ? process.env.FAKE_RELEASE_PR : process.env.FAKE_PRS) || '[]') })`
+      `(call) => ({ rest: JSON.parse((call.args.includes('--head') ? process.env.FAKE_RELEASE_PR : process.env.FAKE_PRS) || '[]') })`,
     );
   });
   afterAll(() => worker.close());
@@ -39,7 +39,7 @@ describe('Get-ReleaseState.ps1', () => {
   const state = async (
     mode: 'cut' | 'finish',
     branch: string,
-    extra: Record<string, string> = {}
+    extra: Record<string, string> = {},
   ) => {
     const r = await worker.run(['-Mode', mode, '-Branch', branch], {
       cwd: fx.clone,
@@ -57,7 +57,7 @@ describe('Get-ReleaseState.ps1', () => {
       `${parent}^{tree}`,
       '-p',
       parent,
-      ...msg.flatMap((m) => ['-m', m])
+      ...msg.flatMap((m) => ['-m', m]),
     );
 
   it('absent: the branch is not on origin (cut creates it)', async () => {
@@ -120,7 +120,7 @@ describe('Get-ReleaseState.ps1', () => {
   it('behind: main has commits the branch lacks (release/2.2)', async () => {
     expect(await state('cut', 'release/2.2')).toMatchObject({ state: 'behind', action: 'noop' });
     expect((await state('finish', 'release/2.2')).action).toBe(
-      'stop: behind main; merge it in first'
+      'stop: behind main; merge it in first',
     );
   });
 

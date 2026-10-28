@@ -2,11 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Ajv from 'ajv/dist/2020';
 
-const refs = path.resolve(
-  __dirname,
-  '../../../packages/delivery/.apm/skills/issue-planning/references'
-);
-const schema = JSON.parse(fs.readFileSync(path.join(refs, 'plan.schema.json'), 'utf-8'));
+const skillDir = path.resolve(__dirname, '../../../packages/delivery/.apm/skills/planner');
+const refs = path.join(skillDir, 'references');
+const schema = JSON.parse(fs.readFileSync(path.join(skillDir, 'schema/plan.schema.json'), 'utf-8'));
 const doc = fs.readFileSync(path.join(refs, 'plan-schema.md'), 'utf-8');
 const example = JSON.parse(/```json\n([\s\S]*?)\n```/.exec(doc)![1]);
 
@@ -141,13 +139,27 @@ describe('plan.json schema', () => {
     expect(check(p)).toEqual([]);
   });
 
+  it('plan-schema.md names every top-level property of the schema', () => {
+    expect(schema.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
+    for (const prop of Object.keys(schema.properties)) expect(doc).toContain(`\`${prop}`);
+  });
+
+  it('requires assumptions as a list of strings', () => {
+    const p = clone();
+    expect(p.assumptions.length).toBeGreaterThan(0);
+    p.assumptions = [1];
+    expect(check(p)).toContain('schema');
+    delete p.assumptions;
+    expect(check(p)).toContain('schema');
+  });
+
   it('plan-schema.md names no file path and no publish step', () => {
     expect(doc).not.toMatch(/<state>|publish/i);
     expect(doc).not.toMatch(/plan\.json`? (is )?written/i);
   });
 });
 
-describe('issue-planning references', () => {
+describe('planner references', () => {
   const skill = path.resolve(refs, '..');
   const questions = fs.readFileSync(path.join(refs, 'questions.md'), 'utf-8');
 
@@ -169,7 +181,7 @@ describe('issue-planning references', () => {
   });
 });
 
-describe('issue-planning without removed dependencies', () => {
+describe('planner without removed dependencies', () => {
   const skill = path.resolve(refs, '..');
   const md = fs.readFileSync(path.join(skill, 'SKILL.md'), 'utf-8');
 

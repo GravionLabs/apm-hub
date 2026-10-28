@@ -71,7 +71,7 @@ describe('generateTemplateList', () => {
     fs.mkdirSync(agentsDir, { recursive: true });
     fs.writeFileSync(
       path.join(agentsDir, 'csharp-expert.agent.md'),
-      '---\nname: C# Expert\ndescription: Expert C# developer agent.\n---\nContent'
+      '---\nname: C# Expert\ndescription: Expert C# developer agent.\n---\nContent',
     );
 
     // Skill directory layout: .apm/skills/<name>/SKILL.md
@@ -79,14 +79,14 @@ describe('generateTemplateList', () => {
     fs.mkdirSync(skillDir, { recursive: true });
     fs.writeFileSync(
       path.join(skillDir, 'SKILL.md'),
-      '---\nname: csharp-async\ndescription: Best practices for C# async/await.\n---\nContent'
+      '---\nname: csharp-async\ndescription: Best practices for C# async/await.\n---\nContent',
     );
 
     const instructionsDir = path.join(packagesDir, 'csharp', '.apm', 'instructions');
     fs.mkdirSync(instructionsDir, { recursive: true });
     fs.writeFileSync(
       path.join(instructionsDir, 'csharp.instructions.md'),
-      '---\ndescription: C# coding standards.\n---\nContent'
+      '---\ndescription: C# coding standards.\n---\nContent',
     );
 
     // Shared domain with a skill
@@ -94,7 +94,7 @@ describe('generateTemplateList', () => {
     fs.mkdirSync(sharedSkillDir, { recursive: true });
     fs.writeFileSync(
       path.join(sharedSkillDir, 'SKILL.md'),
-      '---\nname: ts-write-tests\ndescription: Write unit tests.\n---\nContent'
+      '---\nname: ts-write-tests\ndescription: Write unit tests.\n---\nContent',
     );
   });
 

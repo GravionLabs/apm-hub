@@ -20,7 +20,7 @@ const repo = files(
   'scripts/check-manifests.mjs',
   'src/generators/',
   'docs/usage/',
-  '/'
+  '/',
 );
 const GH = 'https://github.com/GravionLabs/apm-hub';
 
@@ -59,11 +59,11 @@ describe('repoLink from a page in docs/', () => {
   it('sends packages, .github, scripts and src files to GitHub as blobs', () => {
     expect(link('../../packages/shared/apm.yml')).toBe(`${GH}/blob/main/packages/shared/apm.yml`);
     expect(link('../packages/shared/.apm/skills/implementation/SKILL.md', 'x.md')).toBe(
-      `${GH}/blob/main/packages/shared/.apm/skills/implementation/SKILL.md`
+      `${GH}/blob/main/packages/shared/.apm/skills/implementation/SKILL.md`,
     );
     expect(link('../../.github/workflows/ci.yml')).toBe(`${GH}/blob/main/.github/workflows/ci.yml`);
     expect(link('../../scripts/check-manifests.mjs')).toBe(
-      `${GH}/blob/main/scripts/check-manifests.mjs`
+      `${GH}/blob/main/scripts/check-manifests.mjs`,
     );
   });
 
@@ -71,7 +71,7 @@ describe('repoLink from a page in docs/', () => {
     expect(link('../../packages/shared')).toBe(`${GH}/tree/main/packages/shared`);
     expect(link('../../src/generators/')).toBe(`${GH}/tree/main/src/generators`);
     expect(link('../../.github/skills/check-prerequisites')).toBe(
-      `${GH}/tree/main/.github/skills/check-prerequisites`
+      `${GH}/tree/main/.github/skills/check-prerequisites`,
     );
   });
 
@@ -82,7 +82,7 @@ describe('repoLink from a page in docs/', () => {
 
   it('leaves ./-prefixed links between site pages alone and resolves ./ to GitHub', () => {
     expect(link('./agent-frontmatter.md', 'concepts/agent-frontmatter.md')).toBe(
-      './agent-frontmatter.md'
+      './agent-frontmatter.md',
     );
     expect(link('./../../AGENTS.md')).toBe(`${GH}/blob/main/AGENTS.md`);
   });
@@ -144,7 +144,7 @@ describe('the markdown-it plugin', () => {
     const md = await createMarkdownRenderer(
       '/docs',
       { config: (m) => repoLinksPlugin(m as never, repo) },
-      '/'
+      '/',
     );
     const html = md.render(
       [
@@ -162,7 +162,7 @@ describe('the markdown-it plugin', () => {
         relativePath: 'concepts/agent-frontmatter.md',
         path: 'concepts/agent-frontmatter.md',
         cleanUrls: true,
-      }
+      },
     );
     expect(html).toContain(`href="${GH}/tree/main/packages/shared"`);
     expect(html).toContain('href="./../usage/install"');
@@ -176,7 +176,7 @@ describe('the markdown-it plugin', () => {
     const md = await createMarkdownRenderer(
       '/docs',
       { config: (m) => repoLinksPlugin(m as never, repo) },
-      '/'
+      '/',
     );
     return md.render(src, { cleanUrls: true, ...env });
   };
@@ -192,7 +192,7 @@ describe('the markdown-it plugin', () => {
       '# See [a](AGENTS.md)\n\n**bold [b](packages/shared)** _[c](docs/usage/install.md)_',
       {
         relativePath: 'index.md',
-      }
+      },
     );
     expect(html).toContain(`href="${GH}/blob/main/AGENTS.md"`);
     expect(html).toContain(`href="${GH}/tree/main/packages/shared"`);

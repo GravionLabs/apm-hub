@@ -2,15 +2,15 @@
 
 The cost of an agent session is its context size, not the skills it loads. In a 30-day sample (AgentLens, 79 sessions) issue sessions averaged 365k tokens per request and skill text made up about 1 % of it; PR and release skills ran at 500k because they were started at the end of long sessions. This page is the operating procedure that keeps contexts small. The skills in this hub assume it.
 
-Everything here is interactive: you start a Claude Code, Copilot CLI or OpenCode session and name the skill or describe the task. The automated runner is described in [The runner](runner.md).
+Everything here is interactive: you start a Claude Code, Copilot CLI or OpenCode session and name the skill or describe the task. The automated runner is described in [The runner](runner.md); `/orchestrator run 42` starts it from the session.
 
 ## 1. One issue per session
 
 1. Start a fresh session in the repository.
-2. Plan if the issue is large: `Plan issue #42.` (`issue-planning` writes the plan one level down; after you approve, `github-issue` creates the sub-issues).
+2. Plan if the issue is large: `Plan issue #42.` or `/orchestrator plan 42` (`planner` writes the plan one level down; after you approve, `github-issue` creates the sub-issues).
 3. Implement: `Implement #42.` (`github-issue` reads the issue, `implementation` dispatches to the stack skill, tests change with the code).
 4. Verify with the build and test commands of the project.
-5. Review once: `Review the current diff.` (`code-review`). Fix 🔴 findings; the pull request is the second review.
+5. Review once: `Review the current diff.` (`code-review`, the reviewer role). Fix blocking findings; the pull request is the second review.
 6. Open the PR: `Create a PR for this branch.` (`github-pull-request`).
 7. `/clear` (or close the session) before the next issue.
 
@@ -30,7 +30,7 @@ Sonnet is enough for every PBI without the label `interactive`. Use a larger mod
 
 ## 4. Guardrails
 
-The `hooks` package installs a `PreToolUse` hook that denies destructive git commands (force push to `main`/`release/*`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .` on a dirty tree). Opt out with `GIT_GUARDRAILS_OFF=1`. Copilot CLI needs a manual setup, see [Copilot CLI hooks](usage/copilot-hooks.md).
+The git guardrails (force push to `main`/`release/*`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .` on a dirty tree) live in the dromos [permission callback](https://github.com/GravionLabs/dromos/blob/main/src/runner/permissions.ts); apm-hub ships no hook. Interactive sessions outside dromos are not guarded.
 
 ## 5. Releases
 

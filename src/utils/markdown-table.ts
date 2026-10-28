@@ -17,7 +17,7 @@ function parseAlignment(cell: string): Alignment {
 /** Build a separator cell of the given width with the correct alignment markers */
 function buildSeparator(width: number, alignment: Alignment): string {
   const dashes = '-'.repeat(
-    Math.max(width - (alignment === 'center' ? 2 : alignment === 'right' ? 1 : 1), 1)
+    Math.max(width - (alignment === 'center' ? 2 : alignment === 'right' ? 1 : 1), 1),
   );
   switch (alignment) {
     case 'center':

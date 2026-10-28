@@ -26,12 +26,12 @@ export const ALLOWED_CLAUDE_MODELS: readonly string[] = TIERS.map((t) => MODEL_B
 
 /** OpenCode id for each Claude model of the same tier (derived from `MODEL_BY_TIER`). */
 export const OPENCODE_MODEL_BY_TIER = Object.fromEntries(
-  TIERS.map((t) => [MODEL_BY_TIER.claude[t], MODEL_BY_TIER.opencode[t]])
+  TIERS.map((t) => [MODEL_BY_TIER.claude[t], MODEL_BY_TIER.opencode[t]]),
 ) as Record<ClaudeModel, string>;
 
 /** Allowed `metadata.opencode.model` ids, one per tier. */
 export const ALLOWED_OPENCODE_MODELS: readonly string[] = TIERS.map(
-  (t) => MODEL_BY_TIER.opencode[t]
+  (t) => MODEL_BY_TIER.opencode[t],
 );
 
 export interface AgentModelViolation {

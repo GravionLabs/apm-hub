@@ -8,7 +8,7 @@ const prAll = `${prSkill}\n${read(`${prDir}/references/release-mode.md`)}`;
 const releaseSkill = read('packages/github/.apm/skills/github-release/SKILL.md');
 const step8 = releaseSkill.slice(
   releaseSkill.indexOf('\n3. `releasePr` set'),
-  releaseSkill.indexOf('\n4. Report')
+  releaseSkill.indexOf('\n4. Report'),
 );
 
 // the head pattern as written in the skill, executed against sample branches
@@ -28,7 +28,7 @@ describe('github-pull-request release mode', () => {
 
   it('requires the default branch as base and no issue_number', () => {
     expect(prSkill).toMatch(
-      /`<base>` is the default branch \(`gh repo view --json defaultBranchRef/
+      /`<base>` is the default branch \(`gh repo view --json defaultBranchRef/,
     );
     expect(prSkill).toMatch(/Release mode needs no `issue_number`/);
     expect(prSkill).toMatch(/stop when neither exists, except in release mode/);
@@ -36,7 +36,7 @@ describe('github-pull-request release mode', () => {
 
   it('closes only the Feature, only when passed, and reports none otherwise', () => {
     expect(prAll).toMatch(
-      /`Closes #<feature_number>` only when `feature_number` is passed, else none/
+      /`Closes #<feature_number>` only when `feature_number` is passed, else none/,
     );
     expect(prAll).toMatch(/Never `Closes #<issue_number>`/);
     expect(prAll).toMatch(/`none` in release mode without `feature_number`/);
@@ -72,7 +72,7 @@ describe('github-pull-request release mode', () => {
     expect(prSkill).toMatch(/never turn `Closes` into `Refs`/);
     expect(prSkill).not.toMatch(/advisories_not_fixed|follow_up_candidates/);
     const standalone = read(
-      'packages/github/.apm/skills/github-issue/references/standalone-issue.md'
+      'packages/github/.apm/skills/github-issue/references/standalone-issue.md',
     );
     const step12 = /\n12\. [^\n]*/.exec(standalone)?.[0] ?? '';
     expect(step12).toMatch(/`base_branch: <base>`/);

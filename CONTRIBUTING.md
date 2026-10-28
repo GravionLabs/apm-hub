@@ -59,7 +59,9 @@ Legacy names kept for compatibility:
 
 | Legacy name | Where | Removed in |
 |:--|:--|:--|
+| `issue-planning` -> `planner` | skill, renamed with the role skills (#737), no alias | n/a |
 | `skill-update` -> `skill-audit` | skill, merged into `skill-audit` (#786), no alias | n/a |
+| `hooks` -> dromos permission callback | package, removed in 3.1.0 (#743), no alias; `v2.5.4` still has it | n/a |
 
 The `development-workflow` package was a clean rename with no alias (#178, released in 2.2.0), a record of a past decision, so there is nothing to remove; the note in `README.md` stays for searchability.
 

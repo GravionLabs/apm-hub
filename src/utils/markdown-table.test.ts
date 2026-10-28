@@ -21,7 +21,7 @@ describe('formatTablesInMarkdown', () => {
 
   it('keeps escaped pipes inside their cell', () => {
     const input = ['| Agent | Role |', '| :--- | :--- |', '| `o` | `plan\\|full` runs |'].join(
-      '\n'
+      '\n',
     );
 
     const lines = formatTablesInMarkdown(input).split('\n');

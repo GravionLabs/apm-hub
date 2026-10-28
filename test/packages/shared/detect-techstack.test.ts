@@ -6,7 +6,7 @@ import { PwshWorker } from '../../helpers/pwsh-worker';
 
 const SCRIPT = path.resolve(
   __dirname,
-  '../../../packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1'
+  '../../../packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1',
 );
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
@@ -117,7 +117,7 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     expect(r.frameworks).toEqual(['react']);
     write(
       'package.json',
-      '{"dependencies":{"react-dom":"^19","preact":"^10"},"devDependencies":null}'
+      '{"dependencies":{"react-dom":"^19","preact":"^10"},"devDependencies":null}',
     );
     expect((await detect()).frameworks).toEqual([]);
   });

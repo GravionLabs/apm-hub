@@ -23,7 +23,7 @@ function makePackages(skills: Record<string, { pkg?: string; gated?: boolean }>)
     const gate = gated ? 'disable-model-invocation: true\n' : '';
     fs.writeFileSync(
       path.join(dir, 'SKILL.md'),
-      `---\nname: ${name}\ndescription: 'x'\n${gate}---\nbody\n`
+      `---\nname: ${name}\ndescription: 'x'\n${gate}---\nbody\n`,
     );
   }
   return base;
@@ -94,7 +94,7 @@ describe('validateEvals', () => {
     const base = makePackages({ a: {}, b: {} });
     const problems = validateEvals(
       [entry('a', ['same'], ['n1']), entry('b', ['p2'], ['SAME'])],
-      base
+      base,
     );
     expect(problems).toEqual(['b: duplicate prompt "SAME" (also in a)']);
   });
@@ -124,15 +124,15 @@ describe('validateEvals', () => {
             shouldNotTrigger: [1, ' '],
           } as unknown as TriggerEval,
         ],
-        base
-      )
+        base,
+      ),
     ).toEqual(['a: prompts must be non-empty strings', 'a: prompts must be non-empty strings']);
   });
 
   it('normalizes whitespace and case when detecting duplicate prompts', () => {
     const base = makePackages({ a: {}, b: {} });
     expect(
-      validateEvals([entry('a', ['Same  '], ['n1']), entry('b', ['p2'], ['  same'])], base)
+      validateEvals([entry('a', ['Same  '], ['n1']), entry('b', ['p2'], ['  same'])], base),
     ).toEqual(['b: duplicate prompt "  same" (also in a)']);
   });
 

@@ -32,12 +32,12 @@ try {
   if (out && out.rest !== undefined) console.log(JSON.stringify(out.rest));
   else console.log(JSON.stringify({ data: out }));
 } catch (e) { console.error(String(e.message || e)); process.exit(1); }
-`
+`,
   );
   fs.writeFileSync(
     path.join(bin, 'gh'),
     `#!/bin/sh\nexec node ${JSON.stringify(path.join(dir, 'gh-handler.js'))} "$@"\n`,
-    { mode: 0o755 }
+    { mode: 0o755 },
   );
   return {
     bin,

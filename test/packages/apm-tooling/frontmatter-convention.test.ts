@@ -28,12 +28,12 @@ describe('apm-tooling enforces the skill frontmatter convention', () => {
       const line = lines(file).find((l) => namesAll(l, FORBIDDEN_KEYS));
       expect(line, `${file} has no line naming all forbidden keys`).toBeDefined();
       expect(line).toContain('🔴');
-    }
+    },
   );
 
   it('skill-audit checklist recommends moving annotations to metadata', () => {
     const line = lines('skill-audit/references/audit-checklist.md').find((l) =>
-      namesAll(l, FORBIDDEN_KEYS)
+      namesAll(l, FORBIDDEN_KEYS),
     );
     expect(line).toMatch(/recommendation: remove, or move annotations to `metadata:`/);
   });
@@ -48,10 +48,10 @@ describe('apm-tooling enforces the skill frontmatter convention', () => {
 
   it('skill-write sends chronicle-hints to metadata', () => {
     expect(read('skill-write/references/skill-writing-rules.md')).toMatch(
-      /`chronicle-hints` \(move to `metadata:`\)/
+      /`chronicle-hints` \(move to `metadata:`\)/,
     );
     expect(read('skill-write/SKILL.md')).toMatch(
-      /`chronicle-hints` at top level; annotations go under `metadata`/
+      /`chronicle-hints` at top level; annotations go under `metadata`/,
     );
   });
 

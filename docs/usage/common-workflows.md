@@ -33,7 +33,7 @@ apm install shared@apm-hub
    Review the current diff.
    ```
 
-   `code-review` applies the `## Review rules` of `dotnet-implementation` and reports 🔴 / 🟡 / 🟢 findings. It never edits.
+   `code-review` applies the `## Review rules` of `dotnet-implementation` and reports blocking findings and notes. It never edits.
 
 The same pattern works with `ts`, `py` and `ng`: `<lang>-create-project` or `ng-create-project` to scaffold, `implementation` to build, `code-review` to check.
 
@@ -53,7 +53,7 @@ One issue per session, see [Working mode](../working-mode.md).
    Plan issue #42.
    ```
 
-   `issue-planning` explores the codebase and plans one level down (Epic to Features, Feature to PBIs, PBI to tasks) with `blocked_by` and size. After you approve, `github-issue` creates the issues with native sub-issue and blocked-by links.
+   `planner` explores the codebase and plans one level down (Epic to Features, Feature to PBIs, PBI to tasks) with `blocked_by` and size. After you approve, `github-issue` creates the issues with native sub-issue and blocked-by links.
 
 2. **Implement**
 
@@ -69,7 +69,7 @@ One issue per session, see [Working mode](../working-mode.md).
    Review the current diff.
    ```
 
-   `code-review` rates findings 🔴 / 🟡 / 🟢. Fix the 🔴 ones; the pull request is the second review.
+   `code-review` lists blocking findings and notes. Fix the blocking ones; the pull request is the second review.
 
 4. **Open the pull request**
 
@@ -103,7 +103,8 @@ apm install ng@apm-hub   # Angular only
 | Goal                                  | Prompt                                                 | Skill                                              |
 | :------------------------------------ | :----------------------------------------------------- | :------------------------------------------------- |
 | Migrate from npm to pnpm              | "Switch this project to pnpm."                         | `ts-pnpm-workflow`                                 |
-| ESLint, Prettier and Husky pre-commit | "Set up linting and formatting with pre-commit hooks." | `setup-prettier-eslint-husky`                      |
+| Pre-commit linting, plain TS (Biome)  | "Set up linting and formatting with pre-commit hooks." | `setup-biome-husky`                                |
+| Pre-commit linting, Angular (Prettier) | "Set up linting and formatting with pre-commit hooks." | `setup-prettier-eslint-husky`                      |
 | New Angular workspace                 | "Create an Angular app named shop with Vitest."        | `ng-create-project`                                |
 | Standalone component                  | "Add a product-list component under features/catalog." | `ng-implementation` (`references/component.md`)    |
 | NgRx Signal Store                     | "Create a signal store for the cart."                  | `ng-implementation` (`references/signal-store.md`) |

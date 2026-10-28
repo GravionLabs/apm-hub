@@ -71,9 +71,10 @@ describe('ci.yml formatting check and triggers', () => {
     expect(wf.on.pull_request.branches).toEqual(['main', 'release/next']);
   });
 
-  it('runs prettier --check over the files the format script writes', () => {
+  it('runs biome check (format and lint) in CI and biome format --write locally', () => {
     const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'));
-    expect(pkg.scripts['format:check']).toBe(pkg.scripts.format.replace('--write', '--check'));
+    expect(pkg.scripts.format).toBe('biome format --write .');
+    expect(pkg.scripts['format:check']).toBe('biome check .');
     expect(steps('build-test').some((s) => s.run === 'pnpm run format:check')).toBe(true);
   });
 });

@@ -54,7 +54,7 @@ describe('issue-events.yml (#358)', () => {
 describe('release workflow and template call the same reusable workflow (#489)', () => {
   it('differ only in the project URL, the comments and the project-url placeholder', () => {
     const [w, t] = [files.workflow, files.template].map((f) =>
-      parse(fs.readFileSync(path.join(root, f), 'utf-8'))
+      parse(fs.readFileSync(path.join(root, f), 'utf-8')),
     );
     const strip = (x: { jobs: Record<string, { with?: unknown }> }) => ({
       ...x,
@@ -123,7 +123,7 @@ describe('github-release skill (#358, #769)', () => {
 describe('github-release skill refuses a released branch (#252)', () => {
   const reference = fs.readFileSync(
     path.join(root, 'packages/github/.apm/skills/github-issue/references/release-branches.md'),
-    'utf-8'
+    'utf-8',
   );
   const section = (text: string, from: string, to: string) => {
     const start = text.indexOf(from);

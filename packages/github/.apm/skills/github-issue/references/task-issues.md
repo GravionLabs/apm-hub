@@ -1,6 +1,6 @@
 # Task issues inside a PBI
 
-A PBI that needs two or more tasks gets `[Task] <conventional title>` sub-issues (label `task`), for example `[Task] chore: add task field to plan schema`. A PBI that fits one session gets no Task issue. Create them from the approved `issue-planning` plan.
+A PBI that needs two or more tasks gets `[Task] <conventional title>` sub-issues (label `task`), for example `[Task] chore: add task field to plan schema`. A PBI that fits one session gets no Task issue. Create them from the approved `planner` plan.
 
 Body, first line `Parent PBI: #<pbi>` (a Bug parent: `Parent Bug: #<bug>`):
 
@@ -14,7 +14,7 @@ Parent PBI: #<pbi>
 <how and where; exact files and symbols>
 
 ## Invariants
-<optional: only for async, persistence or state-machine Tasks, written by `issue-planning`; omit this heading when no invariant applies>
+<optional: only for async, persistence or state-machine Tasks, written by `planner`; omit this heading when no invariant applies>
 
 <!-- agent-ready:start -->
 ## Context

@@ -6,7 +6,7 @@ import { PwshWorker } from '../../helpers/pwsh-worker';
 
 const SCRIPT = path.resolve(
   __dirname,
-  '../../../packages/shared/.apm/skills/implementation/scripts/Format-Changed.ps1'
+  '../../../packages/shared/.apm/skills/implementation/scripts/Format-Changed.ps1',
 );
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
@@ -42,7 +42,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
     fs.writeFileSync(
       path.join(bin, name),
       `#!/bin/sh\nfor a in "$@"; do echo "$a" >> args.log; done\n${body}\n`,
-      { mode: 0o755 }
+      { mode: 0o755 },
     );
   const go = (args: string[]) =>
     worker.run(args, { cwd: dir, env: { ...process.env, PATH: `${bin}:${process.env.PATH}` } });
@@ -436,7 +436,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
       fs.writeFileSync(
         path.join(bin, name),
         `#!/bin/sh\n${probe ? '' : 'case "$*" in *--version*) exit 1;; esac\n'}echo "${name} $*" >> calls.log\n`,
-        { mode: 0o755 }
+        { mode: 0o755 },
       );
     const calls = () =>
       fs.existsSync(path.join(dir, 'calls.log'))

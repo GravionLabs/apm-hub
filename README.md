@@ -23,10 +23,10 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[The runner](docs/runner.md)**: the automated pipeline lives in dromos.
 - **[Simplification plan](docs/simplification-plan.md)**: why apm-hub becomes a content-only repository and the pipeline moves to dromos.
 - **[Simplification work plan](docs/simplification-workplan.md)**: order of work, PBIs and milestones for that change.
+- **Git guardrails**: destructive git commands are denied by the dromos [permission callback](https://github.com/GravionLabs/dromos/blob/main/src/runner/permissions.ts); apm-hub ships no hooks.
 - **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
 - **[Common Workflows](docs/usage/common-workflows.md)**: End-to-end examples with the installed skills.
 - **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
-- **[Copilot CLI hooks](docs/usage/copilot-hooks.md)**: manual setup, upgrade cleanup.
 - **[Format override](docs/usage/format-override.md)**: replace the format and check commands per language with `.agents/format.json`.
 - **Project standard** (`github-project`): ships from [GravionLabs/ci](https://github.com/GravionLabs/ci) (`apm install GravionLabs/ci`), see its `docs/project-standard.md`.
 - **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
@@ -34,6 +34,8 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 ## Upgrading from 2.x
 
 3.0.0 is content-only: the agents and the orchestration skills (`orchestrator`, `review-fanout`, `verify-project`, `queue`, `handoff`, `orch-pipeline`, `orch`) and the agents (`orchestrator`, `pbi-runner`, `implementer`, `issue-reader`, `explorer`, `planner`, `pr-writer`, `review-lead`, `reviewer`) are gone; the runner is [dromos](docs/runner.md). If you still want the old pipeline, pin `agents`, `github` and `delivery` together at `#v2.5.4`; otherwise remove the `agents` entry and run `apm update -g`. What apm cleans itself and what can remain: [after install](packages/delivery/.apm/skills/apm-install/references/after-install.md).
+
+3.1.0 removes the `hooks` package (the git guardrails hook); the guardrails now live in the dromos [permission callback](https://github.com/GravionLabs/dromos/blob/main/src/runner/permissions.ts). Clean up: remove the `GravionLabs/apm-hub/packages/hooks` entry from your `apm.yml` and run `apm uninstall` (or `apm update -g` for a global install); delete the `PreToolUse` entry that runs `git-guardrails.sh` from `~/.claude/settings.json`; delete the `preToolUse` entry for `git-guardrails.sh` from your Copilot hook file (for example `~/.copilot/hooks/*.json`) if you added it by hand. `v2.5.4` still ships the hook.
 
 ## 🚀 Quick Start
 
@@ -90,6 +92,13 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    ```
    Then run `apm install` to deploy to `.github/`, `.claude/`, `.cursor/` etc.
 
+5. Install the runner (optional, for automated runs; the skills work without it):
+   ```bash
+   npm i -g dromos
+   dromos --version
+   ```
+   dromos reads `.dromos/config.json` in the target repository, see [the runner](docs/runner.md) and [after install](packages/delivery/.apm/skills/apm-install/references/after-install.md).
+
 ### Where things land
 
 | Platform       | Skills                     |
@@ -118,16 +127,15 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | Package       | Contents                                                                                                                                       |
 | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- |
 | `shared`      | `implementation`, `detect-techstack`, `diagnose`, `code-review`                                                                                |
-| `delivery`    | `issue-planning`, `retro`, `apm-install`                                                                                                       |
+| `delivery`    | `planner`, `orchestrator`, `retro`, `apm-install`                                                                                                   |
 | `github`      | `github-issue`, `github-pull-request`, `github-release`                                                                                        |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`) |
-| `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky`              |
+| `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky`              |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                            |
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                             |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                 |
-| `hooks`       | Claude Code git guardrails hook (denies destructive git commands)                                                                              |
 | `statusline`  | `context-statusline` skill: status line and subagent status line                                                                               |
-| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `hooks`, `statusline` (no stack skills)                                   |
+| `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `statusline` (no stack skills)                                   |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling)                                                                               |
 | `all`         | every package above except `apm-tooling`                                                                                                       |
 

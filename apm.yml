@@ -18,14 +18,11 @@ marketplace:
     url: https://github.com/GravionLabs
   packages:
   - name: core
-    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the git guardrails hook and the status line. Stack packages are installed per project."
+    description: "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills and the status line. Stack packages are installed per project."
     source: ./packages/core
   - name: all
     description: "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks."
     source: ./packages/all
-  - name: hooks
-    description: "Claude Code hook: the git guardrails (PreToolUse) deny destructive git commands. Copilot CLI is set up by hand (docs/usage/copilot-hooks.md)."
-    source: ./packages/hooks
   - name: statusline
     description: "Status line and subagent status line showing context usage: the context-statusline skill installs a cross-platform Node status line for Claude Code and Copilot CLI, plus a Claude Code subagent status line."
     source: ./packages/statusline
@@ -33,7 +30,7 @@ marketplace:
     description: "apm-hub contributor tooling for the skill lifecycle: write, audit (with apply) and slim SKILL.md files."
     source: ./packages/apm-tooling
   - name: delivery
-    description: "Issue-driven development workflow: run retrospective (retro), package installer (apm-install), issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project."
+    description: "Issue-driven development workflow: run retrospective (retro), runner launcher (orchestrator), package installer (apm-install), issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project."
     source: ./packages/delivery
   - name: dotnet
     description: "C#/.NET skills: implementation conventions and review rules, NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, MCP server generation."
@@ -51,7 +48,7 @@ marketplace:
     description: "Rust skills: implementation conventions and review rules (thiserror/anyhow, clippy, rustfmt, unsafe, tokio), cargo test and nextest testing with mockall and proptest."
     source: ./packages/rust
   - name: shared
-    description: "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), severity-rated code review (code-review), bug diagnosis (diagnose)."
+    description: "Shared skills used by all apm-hub packages: tech-stack detection (detect-techstack), language-agnostic implementation rules (implementation), code review (code-review), bug diagnosis (diagnose)."
     source: ./packages/shared
   - name: ts
     description: "TypeScript and Node.js skills: implementation conventions and review rules, Vitest testing, project scaffolding, ESLint/Prettier/Husky setup, pnpm migration, MCP server generation."

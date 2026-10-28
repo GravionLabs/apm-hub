@@ -17,7 +17,7 @@ otherwise). Run from the project root.
 `/apm-install` (detect and propose), `/apm-install ts py` (named packages, no detection), `/apm-install core -g`
 (user-wide), `/apm-install dry-run ...` (print the commands only). Mapping: `dry-run` is `-DryRun`, `-g` is `-Global`,
 remaining words are `-Packages` (comma-separated on the command line: `-Packages ts,py`). Valid packages: `shared`,
-`github`, `delivery`, `hooks`, `statusline`, `core`, `all`, `ts`, `py`, `ng`, `dotnet`, `rust`; anything else makes the script exit 1.
+`github`, `delivery`, `statusline`, `core`, `all`, `ts`, `py`, `ng`, `dotnet`, `rust`; anything else makes the script exit 1.
 The contributor tooling package is not offered. What each package brings: [packages](references/packages.md).
 
 ## Steps

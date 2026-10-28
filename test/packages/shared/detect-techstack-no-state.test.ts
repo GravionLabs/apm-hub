@@ -5,7 +5,7 @@ import * as path from 'path';
 
 const SCRIPT = path.resolve(
   __dirname,
-  '../../../packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1'
+  '../../../packages/shared/.apm/skills/detect-techstack/scripts/Detect-TechStack.ps1',
 );
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 

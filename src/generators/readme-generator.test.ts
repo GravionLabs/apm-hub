@@ -19,7 +19,7 @@ describe('injectBlock', () => {
 
     const result = injectBlock(content, 'my-block', 'new content');
     expect(result).toContain(
-      '<!-- AUTO:start my-block -->\nnew content\n<!-- AUTO:end my-block -->'
+      '<!-- AUTO:start my-block -->\nnew content\n<!-- AUTO:end my-block -->',
     );
     expect(result).not.toContain('old content');
     expect(result).toContain('after');
@@ -34,14 +34,14 @@ describe('injectBlock', () => {
   it('throws when start marker is missing', () => {
     const content = '<!-- AUTO:end my-block -->';
     expect(() => injectBlock(content, 'my-block', 'x')).toThrow(
-      "AUTO markers for 'my-block' not found"
+      "AUTO markers for 'my-block' not found",
     );
   });
 
   it('throws when end marker is missing', () => {
     const content = '<!-- AUTO:start my-block -->';
     expect(() => injectBlock(content, 'my-block', 'x')).toThrow(
-      "AUTO markers for 'my-block' not found"
+      "AUTO markers for 'my-block' not found",
     );
   });
 });

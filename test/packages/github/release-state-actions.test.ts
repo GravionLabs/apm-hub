@@ -7,7 +7,7 @@ import { useReleaseFixture } from '../../helpers/release-fixture';
 const root = path.resolve(__dirname, '../../..');
 const script = path.join(
   root,
-  'packages/github/.apm/skills/github-release/scripts/Get-ReleaseState.ps1'
+  'packages/github/.apm/skills/github-release/scripts/Get-ReleaseState.ps1',
 );
 
 const fx = useReleaseFixture();
@@ -25,7 +25,7 @@ describe('Get-ReleaseState.ps1', () => {
     fs.mkdirSync(ghDir);
     fake = createFakeGh(
       ghDir,
-      `(call) => ({ rest: JSON.parse((call.args.includes('--head') ? process.env.FAKE_RELEASE_PR : process.env.FAKE_PRS) || '[]') })`
+      `(call) => ({ rest: JSON.parse((call.args.includes('--head') ? process.env.FAKE_RELEASE_PR : process.env.FAKE_PRS) || '[]') })`,
     );
   });
   afterAll(() => worker.close());
@@ -37,7 +37,7 @@ describe('Get-ReleaseState.ps1', () => {
   const state = async (
     mode: 'cut' | 'finish',
     branch: string,
-    extra: Record<string, string> = {}
+    extra: Record<string, string> = {},
   ) => {
     const r = await worker.run(['-Mode', mode, '-Branch', branch], {
       cwd: fx.clone,
@@ -70,7 +70,7 @@ describe('Get-ReleaseState.ps1', () => {
         action: 'recreate',
       });
       expect((await state('finish', 'release/next')).action).toBe(
-        'stop: already released; cut a new release branch'
+        'stop: already released; cut a new release branch',
       );
     });
 
@@ -82,7 +82,7 @@ describe('Get-ReleaseState.ps1', () => {
         action: 'stop: open PRs or local commits block the reset',
       });
       expect((await state('finish', 'release/next', prs)).action).toBe(
-        'stop: already released; cut a new release branch'
+        'stop: already released; cut a new release branch',
       );
     });
 
@@ -115,7 +115,7 @@ describe('Get-ReleaseState.ps1', () => {
     fs.mkdirSync(wf, { recursive: true });
     fs.writeFileSync(
       path.join(wf, 'rb.yml'),
-      'uses: GravionLabs/ci/.github/workflows/release-branch.yml@main\n'
+      'uses: GravionLabs/ci/.github/workflows/release-branch.yml@main\n',
     );
     try {
       expect((await state('cut', 'release/next')).releaseWorkflow).toBe(true);
@@ -145,7 +145,7 @@ describe('Get-ReleaseState.ps1', () => {
 describe('github-release SKILL.md finish step 4', () => {
   const skill = fs.readFileSync(
     path.join(root, 'packages/github/.apm/skills/github-release/SKILL.md'),
-    'utf8'
+    'utf8',
   );
   const step4 = skill.split('\n').find((l) => l.startsWith('4. Report the PR URL')) ?? '';
 

@@ -57,7 +57,8 @@ function openViewer(doc: Document, source: SVGSVGElement): void {
     scale = next;
     apply();
   };
-  const centre = (factor: number) => zoomAt(factor, viewer.clientWidth / 2, viewer.clientHeight / 2);
+  const centre = (factor: number) =>
+    zoomAt(factor, viewer.clientWidth / 2, viewer.clientHeight / 2);
   const close = () => {
     doc.removeEventListener('keydown', onKey);
     viewer.remove();
@@ -93,7 +94,7 @@ function openViewer(doc: Document, source: SVGSVGElement): void {
       e.preventDefault();
       zoomAt(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX, e.clientY);
     },
-    { passive: false }
+    { passive: false },
   );
   let drag: { px: number; py: number; x: number; y: number; moved: boolean } | null = null;
   viewer.addEventListener('pointerdown', (e) => {

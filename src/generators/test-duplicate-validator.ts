@@ -64,7 +64,7 @@ export function isPointerLine(text: string): boolean {
 /** All packages/<domain>/.apm/skills/<lang>-implementation/SKILL.md files. */
 export function findImplementationSkillFiles(packagesBaseDir: string): string[] {
   return findSkillFiles(packagesBaseDir).filter((f) =>
-    path.basename(path.dirname(f)).endsWith('-implementation')
+    path.basename(path.dirname(f)).endsWith('-implementation'),
   );
 }
 

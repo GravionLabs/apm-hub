@@ -50,7 +50,7 @@ describe('the VitePress config', () => {
     expect(theme.socialLinks).toEqual([{ icon: 'github', link: GH }]);
     expect(theme.footer?.message).toMatch(/MIT/);
     expect(theme.sidebar).toEqual(
-      expect.arrayContaining([expect.objectContaining({ text: 'Start here' })])
+      expect.arrayContaining([expect.objectContaining({ text: 'Start here' })]),
     );
   });
 });
@@ -63,7 +63,7 @@ describe('the navigation', () => {
     for (const { link } of nav.filter((n) => n.link.startsWith('/'))) {
       expect(listed).toContain(link);
       expect(generatedPages.includes(link) || existsSync(resolve(repoRoot, `docs${link}.md`))).toBe(
-        true
+        true,
       );
     }
   });
@@ -83,11 +83,11 @@ describe('the home page', () => {
     // VitePress keeps the first renderer it creates: every test passes the full markdown options.
     const md = await createMarkdownRenderer(resolve(repoRoot, 'docs'), config.markdown, '/');
     const html = md.render(
-      '[o](docs/overview.md) [f](docs/usage/copilot-hooks.md#x) [a](AGENTS.md) [p](packages/shared) [w](https://agentskills.io)',
-      { relativePath: 'index.md', path: resolve(repoRoot, 'docs/index.md'), cleanUrls: true }
+      '[o](docs/overview.md) [f](docs/usage/statusline.md#x) [a](AGENTS.md) [p](packages/shared) [w](https://agentskills.io)',
+      { relativePath: 'index.md', path: resolve(repoRoot, 'docs/index.md'), cleanUrls: true },
     );
     expect(html).toContain('href="./overview"');
-    expect(html).toContain('href="./usage/copilot-hooks#x"');
+    expect(html).toContain('href="./usage/statusline#x"');
     expect(html).toContain(`href="${GH}/blob/main/AGENTS.md"`);
     expect(html).toContain(`href="${GH}/tree/main/packages/shared"`);
     expect(html).toContain('href="https://agentskills.io"');
@@ -121,7 +121,7 @@ describe('HTML comments', () => {
     const md = await createMarkdownRenderer(resolve(repoRoot, 'docs'), config.markdown, '/');
     const html = md.render(
       '<!-- AUTO:start version -->\nWelcome 👋\n<!-- AUTO:end version -->\n\n`<!-- keep -->`',
-      { relativePath: 'overview.md' }
+      { relativePath: 'overview.md' },
     );
     expect(html).toContain('Welcome');
     expect(html).not.toContain('AUTO:');
