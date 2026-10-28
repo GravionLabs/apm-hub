@@ -1,4 +1,5 @@
 {
+  "format": "pnpm run format",
   "test": {
     "full": "pnpm run format:check && pnpm test"
   }
