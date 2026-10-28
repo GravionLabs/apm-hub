@@ -89,6 +89,7 @@ jobs:
   build-test:
     name: Build & Test
     runs-on: ubuntu-latest
+    # Local equivalent: pnpm run check; keep CI checks separate for individual job logs.
     permissions:
       checks: write
       pull-requests: write
