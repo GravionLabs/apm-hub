@@ -31,7 +31,7 @@
     },
     {
       "name": "delivery",
-      "description": "Issue-driven development workflow: run retrospective (retro), runner launcher (orchestrator), package installer (apm-install), issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project.",
+      "description": "Issue-driven development workflow: run retrospective (retro), package installer (apm-install), issue planning with native sub-issues. Depends on github and shared; stack packages are installed per project.",
       "version": "3.2.0",
       "source": "./packages/delivery"
     },
