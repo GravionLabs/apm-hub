@@ -1,5 +1,5 @@
 name: ng
-version: 3.0.1
+version: 3.1.0
 description: Angular 21+ skills. Implementation conventions and review rules (standalone, signals, inject(), libraries), Vitest/TestBed testing, component and project scaffolding, NgRx Signal Store, and AG Grid Enterprise integration.
 author:
   name: Gravion
