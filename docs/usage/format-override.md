@@ -1,6 +1,6 @@
 # Format override
 
-By default `Format-Changed.ps1 -Language <lang>` runs the built-in commands of `ts`, `ng`, `py`, `dotnet` and `rust` (named in the `## Format` section of each `<lang>-implementation` skill). A project can replace these commands per language with `.agents/format.json`, for example to use JetBrains tools.
+By default `Format-Changed.ps1 -Language <lang>` runs the built-in commands of `ts`, `ng`, `py`, `dotnet`, `rust` and `go` (named in the `## Format` section of each `<lang>-implementation` skill). A project can replace these commands per language with `.agents/format.json`, for example to use JetBrains tools.
 
 ## Schema
 

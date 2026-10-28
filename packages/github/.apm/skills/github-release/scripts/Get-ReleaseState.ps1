@@ -29,7 +29,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 function Fail([string]$m) { Write-Error $m -ErrorAction Continue; exit 1 }
-function Invoke-Git { $o = & git @args 2>$null; $global:gitOk = ($LASTEXITCODE -eq 0); $o }
+function Invoke-Git { $o = & git @args 2>$null; $script:gitOk = ($LASTEXITCODE -eq 0); $o }
 
 $null = Invoke-Git fetch origin --tags --quiet
 if (-not $gitOk) { Fail 'git fetch origin failed' }

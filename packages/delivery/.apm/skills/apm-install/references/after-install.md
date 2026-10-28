@@ -13,22 +13,32 @@
 The skills work by hand. To chain them automatically install the runner once per machine and check it:
 
 ```bash
-npm i -g dromos
+npm i -g @gravionlabs/dromos
 dromos --version
 ```
 
-Per repository dromos reads `.dromos/config.json` (commit it; without it the defaults apply). Example for a TypeScript project:
+Per repository dromos reads `.dromos/config.json` (commit it; without it the defaults apply). Let dromos write it, do not hand-write it:
+
+```bash
+dromos init --dry-run --format json --stack ts   # preview: {path, action, added, kept}; without --format json it prints the file and a diff
+dromos init --stack ts                           # write; an existing file is updated, never overwritten
+dromos config check                              # validate the file in this repository (exit 1 when invalid)
+dromos config schema                             # JSON schema of every key
+```
+
+`--stack` is one of `ts`, `py`, `dotnet`, `rust`, `ng` (without it dromos detects the stack from marker files). `/apm-install` runs the preview after the packages are installed and writes only after you agree. It skips the step for `-g` (no repository config) and when `dromos` is not installed.
+
+`init` manages three keys and adds only the missing ones (`added`; existing values are `kept`): `harness`, `test.full` (from the stack, `pnpm test` with a `pnpm-lock.yaml`) and `parallel`. A new file for a TypeScript project with pnpm:
 
 ```json
 {
   "harness": "claude",
-  "models": { "planner": "opus", "implementer": "sonnet", "reviewer": "sonnet" },
-  "test": { "related": "pnpm vitest related --run", "full": "pnpm test" },
+  "test": { "full": "pnpm test" },
   "parallel": 3
 }
 ```
 
-`test.related` is optional (without it the runner runs `test.full`). All keys, `skills` per role and `allow` extensions: [dromos README](https://github.com/GravionLabs/dromos#readme). Usage: [the runner](https://github.com/GravionLabs/apm-hub/blob/release/next/docs/runner.md).
+An invalid existing file (bad JSON, an unknown key or a value the schema rejects) is left untouched: `init` exits 1 with `valid: false` and `errors`; fix it by hand. Optional keys you add yourself: `test.related` (without it the runner runs `test.full`), `models.<claude|copilot>.<role>`. All keys, `skills` per role and `allow` extensions: [dromos README](https://github.com/GravionLabs/dromos#readme). Usage: [the runner](https://github.com/GravionLabs/apm-hub/blob/release/next/docs/runner.md).
 
 ## Upgrading from 2.x
 

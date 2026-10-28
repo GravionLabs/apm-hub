@@ -18,7 +18,7 @@ Thin launcher for [dromos](https://github.com/GravionLabs/dromos). dromos owns c
 | `run` | `dromos run pbi <nr> --format json`; for a Feature or Epic `dromos run feature <nr>` / `dromos run epic <nr>` (level from `dromos status <nr> --format json`) |
 | `status` | `dromos status <nr> --format json` |
 
-Pass `--harness` through unchanged; without it dromos uses its configuration. `dromos --version` fails: say that dromos is missing (`npm i -g dromos`, see `docs/runner.md`) and stop.
+Pass `--harness` through unchanged; without it dromos uses its configuration. `dromos --version` fails: say that dromos is missing (`npm i -g @gravionlabs/dromos`, see `docs/runner.md`) and stop.
 
 ## Steps
 

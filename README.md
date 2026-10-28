@@ -94,7 +94,7 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
 
 5. Install the runner (optional, for automated runs; the skills work without it):
    ```bash
-   npm i -g dromos
+   npm i -g @gravionlabs/dromos
    dromos --version
    ```
    dromos reads `.dromos/config.json` in the target repository, see [the runner](docs/runner.md) and [after install](packages/delivery/.apm/skills/apm-install/references/after-install.md).
@@ -133,6 +133,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky` |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                                    |
 | `rust`        | `rust-implementation`, `rust-test`                                                                                                                     |
+| `go`          | `go-implementation`, `go-test`                                                                                                                         |
 | `ng`          | `ng-implementation`, `ng-test`, `ng-create-project`, `ng-ag-grid-developer`; depends on `angular/skills` (`angular-developer`)                         |
 | `statusline`  | `context-statusline` skill: status line and subagent status line                                                                                       |
 | `core`        | meta-package for the global install: `github`, `delivery`, `shared`, `statusline` (no stack skills)                                                    |

@@ -17,7 +17,7 @@ otherwise). Run from the project root.
 `/apm-install` (detect and propose), `/apm-install ts py` (named packages, no detection), `/apm-install core -g`
 (user-wide), `/apm-install dry-run ...` (print the commands only). Mapping: `dry-run` is `-DryRun`, `-g` is `-Global`,
 remaining words are `-Packages` (comma-separated on the command line: `-Packages ts,py`). Valid packages: `shared`,
-`github`, `delivery`, `statusline`, `core`, `all`, `ts`, `py`, `ng`, `dotnet`, `rust`; anything else makes the script exit 1.
+`github`, `delivery`, `statusline`, `core`, `all`, `ts`, `py`, `ng`, `dotnet`, `rust`, `go`; anything else makes the script exit 1.
 The contributor tooling package is not offered. What each package brings: [packages](references/packages.md).
 
 ## Steps
@@ -35,6 +35,7 @@ The contributor tooling package is not offered. What each package brings: [packa
    (what each installed package brings), `dependencies` (`angular/skills` for `ng`, `dotnet/skills` for `dotnet`) and
    `notes`. Tell the user what was installed, which dependencies came along, and any failed or not-attempted package.
 4. Relay the `notes` and follow [after install](references/after-install.md): what to commit.
+5. Project install only (never with `-g`): create or update `.dromos/config.json` with `dromos init --dry-run --format json --stack <stack>` (stack from `detect-techstack`; `--stack` accepts `ts`, `py`, `dotnet`, `rust`, `ng`, omit it for any other stack). Show `action` (`created`, `updated`, `unchanged`), `added` and `kept`; write (`dromos init --stack <stack>`) only after the user agrees; an existing file is updated, never overwritten (only missing keys are added). Exit 1 (`valid: false`, `errors`): the file is invalid and left untouched, show the errors, do not write. `dromos` missing: print `npm i -g @gravionlabs/dromos`, skip the step, the install still succeeds; exit 2 (a dromos without `init`): print the same update hint and skip.
 
 ## Script inputs and output
 

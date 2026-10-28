@@ -156,7 +156,7 @@ Done when: the four role skills ship JSON schemas that dromos validates against,
 | # | PBI | Size | Done when | Depends on |
 |---|---|---|---|---|
 | P5 | `[PBI] feat: orchestrator launcher skill` | S | `packages/delivery/.apm/skills/orchestrator/SKILL.md`: `/orchestrator <plan|run|status> <nr> [--harness …]` runs `dromos … --format json`, summarizes progress in the session, on exit 2 asks the planner questions with the client's question tool and re-runs with `--answer`; no agent file; works on Claude Code and Copilot; content test; `docs/runner.md` updated | B11, B13b |
-| P6 | `[PBI] docs: install story — apm install plus npm i -g dromos` | S | `README.md`, `docs/prerequisites.md`, `apm-install` skill (`references/after-install.md` names the runner install and `.dromos/config.json` with an example), `.github/skills/check-prerequisites` checks `dromos --version` | P5 |
+| P6 | `[PBI] docs: install story — apm install plus npm i -g @gravionlabs/dromos` | S | `README.md`, `docs/prerequisites.md`, `apm-install` skill (`references/after-install.md` names the runner install and `.dromos/config.json` with an example), `.github/skills/check-prerequisites` checks `dromos --version` | P5 |
 | P9 | `[PBI] chore: remove the git-guardrails hook, dromos enforces the guardrails` | S | `packages/hooks/` and `test/packages/hooks/` deleted; root `apm.yml`, `core`, `all` no longer list `hooks`; `docs/usage/copilot-hooks.md` deleted; `AGENTS.md` and `README.md` say the guardrails live in the dromos permission callback (link) | B3 |
 | P7 | `[PBI] feat: release apm-hub 3.1.0 with the role skills and launcher` | S | P1-P6 and P9 merged; `core` = `github`, `delivery` (planner, retro, orchestrator, apm-install), `shared`, `statusline`; `all` adds the stack packages; CHANGELOG; release PR with the `github-release` skill | P1, P2, P3, P4, P5, P6, P9 |
 
@@ -177,7 +177,7 @@ Done when: runner runs emit outcome events, `dromos run metrics` aggregates them
 | B18 | `[PBI] feat: outcome events — findings with fingerprints, test results, fix-round causes` | M | the reviewer and test steps emit `outcome.finding {fingerprint: sha1(file, rule, title), blocking, fixed}`, `outcome.tests {passed, failed, failures[]}`, `outcome.fixRound {cause}`; the planner emits `outcome.questions {count, assumed}`; `schema/events.schema.json` and tests | B10, B13b |
 | B19 | `[PBI] feat: dromos run metrics on runner events` | M | `src/run-metrics.ts` computes per run and in aggregate: durations per phase, usage per role, fix rounds, blocked runs, unanswered questions, finding fingerprints repeated across runs; CLI `dromos run metrics [--issues <n,…>] [--since <date>] --format json|table` (replaces the closed #137 and #180; reuse what exists in `src/run-metrics*.ts`); `GET /runs/metrics` keeps its shape where possible; the JSON contract is documented in `docs/run-metrics.md` for apm-hub P4 | B18 |
 | B20 | `[PBI] feat: cross-repo learning queries and approval notifications` | M | fingerprints and causes queryable across repositories (the closed dromos#161 has the original scope); the herdr plugin shows pending `needs-approval` and `needs-decision` issues as attention (the closed dromos#162, reduced to a notification) | B19 |
-| B21 | `[PBI] feat: release dromos 0.4.0` | S | CHANGELOG, `npm i -g dromos` documented in `README.md`, `dromos --version` in the run header, apm-hub `check-prerequisites` passes against the published package | B15, B17, B19 |
+| B21 | `[PBI] feat: release dromos 0.4.0` | S | CHANGELOG, `npm i -g @gravionlabs/dromos` documented in `README.md`, `dromos --version` in the run header, apm-hub `check-prerequisites` passes against the published package | B15, B17, B19 |
 | P8 | `[PBI] chore: first retro on ten runner runs` | S | apm-hub retro over the first ten `dromos run pbi` runs; the section 2 metrics of `simplification-plan.md` compared with the targets (human wait time per run ≈ 0, runs with red tests < 20 %, fix rounds < 0.5 per PBI, median active time per PBI ≤ 34 min); candidates become issues in the right repository after approval; this work plan gets a "Learned" section | P7, B21, B10b |
 
 P8 lives in apm-hub and is a sub-issue of this dromos Epic.
@@ -224,6 +224,28 @@ From A3 until B10b there is no automated pipeline. The intended mode:
 - The git-guardrails hook stays installed until P9.
 - Do not run `apm update` against apm-hub `release/next` in a session that still uses the old orchestrator; pin `v2.5.4` if it is needed.
 - dromos PBIs from B10b on are run by the runner itself (dogfooding), with `--harness claude` first.
+
+---
+
+## 6a. Learned (first retro, P8, 2026-10-28)
+
+Basis: 14 `dromos run pbi` runs from the validation of dromos#225 (11 with a PR, 3 blocked, all three with `--harness copilot`). Only apm-hub#804 and #816 have events in the dromos store; the figures of the other 12 runs come from `docs/validation.md` of dromos and are not measured by `dromos run metrics`.
+
+| Metric (section 2 of `simplification-plan.md`) | Target | Result | |
+|---|---|---|---|
+| Human wait time per run | ≈ 0 | no gates, but 4 of 11 PRs needed manual fixes and 3 runs got stuck | not met |
+| Runs with red tests | < 20 % | local 0 of 11, CI red in 1 of 11 (apm-hub#815) | met |
+| Fix rounds per PBI | < 0.5 | 3 in 14 runs = 0.21 | met |
+| Median active time per PBI | ≤ 34 min | 3 min of phase time (11 PRs, 40 s to 402 s); review, CI and manual work not included | met |
+
+Caveats: apm-hub#816 ran 3577 s with 225 s in phases (retries, cause not checked). Cost is measured for #804 (1.75 USD) and #816 (0.92 USD) only.
+
+Findings:
+
+- The runner reviewer missed dead links, CI behavior that does not exist, a wrong phase grouping and a requirement of the Technical Notes. Already fixed by dromos#304 (PR 307) on 2026-10-28; no new issue.
+- `--harness copilot` was blocked in 3 of 3 runs (dromos#299); `Harness: claude` stays the default.
+- Run metrics select by issue number only, which collides between repositories, and the store lacks the events of 12 of 14 runs: GravionLabs/dromos#345.
+- The local gate cannot see tools that exist only on the CI image: GravionLabs/apm-hub#819.
 
 ---
 

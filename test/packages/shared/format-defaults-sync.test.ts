@@ -8,7 +8,7 @@ import { PwshWorker } from '../../helpers/pwsh-worker';
 // this test keeps both in sync (the script's `-WhatIf` JSON is the source of truth).
 const PACKAGES = path.resolve(__dirname, '../../../packages');
 const SCRIPT = path.join(PACKAGES, 'shared/.apm/skills/implementation/scripts/Format-Changed.ps1');
-const LANGS = ['ts', 'ng', 'py', 'dotnet', 'rust'];
+const LANGS = ['ts', 'ng', 'py', 'dotnet', 'rust', 'go'];
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
 const sectionLines = (lang: string): string[] => {
@@ -71,7 +71,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
       expect([check]).toEqual(await defaults(lang, biome, true));
     });
 
-    it.each(['py', 'dotnet', 'rust'])(
+    it.each(['py', 'dotnet', 'rust', 'go'])(
       '%s: no Biome line, the biome.json fixture changes nothing',
       async (lang) => {
         expect(line(lang, 'Biome project')).toBe('');
