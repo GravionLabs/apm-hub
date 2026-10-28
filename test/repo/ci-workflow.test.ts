@@ -64,6 +64,33 @@ describe('ci.yml checks', () => {
     expect(runs.filter((r) => r.includes('Get-SkillReport.ps1')).length).toBe(1);
     expect(JSON.stringify(wf)).not.toContain('integration');
   });
+
+  it('includes every CI check in the local check script', () => {
+    const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'));
+    const checkCommands = pkg.scripts.check.split(' && ');
+    const build = steps('build-test').find((s) => s.uses?.includes('node/build@'));
+    const manifests = steps('build-test').find((s) => s.run?.includes('check-manifests.mjs'));
+    const report = steps('build-test').find((s) => s.run?.includes('Get-SkillReport.ps1'));
+    const formatting = steps('build-test').find((s) => s.run === 'pnpm run format:check');
+
+    expect(checkCommands).toEqual([
+      'pnpm run build',
+      'pnpm run format:check',
+      'node scripts/check-manifests.mjs',
+      'pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root . -FailOnDangling',
+      'pnpm test',
+    ]);
+    expect(checkCommands).toContain(build?.with?.['build-command']);
+    expect(checkCommands).toContain(manifests?.run);
+    expect(checkCommands).toContain(`pwsh ${report?.run?.replace(/^\.\//, '')}`);
+    expect(checkCommands).toContain(formatting?.run);
+
+    const ciTest = steps('test').find((s) => s.run === 'pnpm run test:ci');
+    expect(pkg.scripts['test:ci'].replace(/ --coverage$/, '')).toBe(pkg.scripts.test);
+    expect(pkg.scripts.test).toBe('vitest run');
+    expect(checkCommands).toContain('pnpm test');
+    expect(ciTest?.run).toBe('pnpm run test:ci');
+  });
 });
 
 describe('ci.yml formatting check and triggers', () => {

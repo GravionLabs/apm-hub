@@ -71,6 +71,7 @@ The title of an issue starts with its level: `[Epic]`, `[Feature]`, `[PBI]`, `[T
 
 ```powershell
 pnpm install
+pnpm run check                          # local equivalent of the CI checks
 pnpm run build; pnpm test                 # all tests (includes the skill size check)
 pnpm run format:check                     # Biome format + lint (pnpm run format writes); Prettier is not used here
 node scripts/check-manifests.mjs --fix    # sync apm.yml x-skills lists after adding/removing skills
