@@ -36,6 +36,7 @@ There is no hooks package: the git guardrails (destructive git commands) live in
 | `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky` |
 | `py` | `py-implementation` (incl. `references/uv-cli.md`), `py-test`, `py-create-project` |
 | `rust` | `rust-implementation` (incl. `references/conventions.md`, `references/tauri.md` loaded for framework `tauri`), `rust-test` (incl. `references/mocking-and-properties.md`) |
+| `go` | `go-implementation` (package layout, errors, context, `## Review rules`), `go-test` (table-driven, testify, race detector, build tags) |
 | `ng` | `ng-implementation` (incl. `references/component.md`, `references/signal-store.md`), `ng-test`, `ng-create-project`, `ng-ag-grid-developer`. Depends on `angular/skills` (`angular-developer`) |
 | `apm-tooling` | `skill-write`, `skill-audit`, `skill-slim` (contributor tooling, not part of `all`) |
 | `statusline` | Skill `context-statusline` (user-invoked, Claude Code and Copilot CLI: `scripts/statusline.mjs` and `subagent-statusline.mjs` (Claude Code only), Node >= 22, plus `Install-Statusline.ps1 -Client claude|copilot|all` that points `statusLine`/`subagentStatusLine` in `~/.claude/settings.json` and `statusLine` + the `STATUS_LINE` feature flag in `~/.copilot/settings.json` / `$COPILOT_HOME` at the installed skill's own scripts (`~/.claude/skills/...` resp. `~/.agents/skills/...`, no copy, so `apm update` refreshes them)). |

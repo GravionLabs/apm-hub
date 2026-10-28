@@ -152,7 +152,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     [{ languages: ['ts', 'rust'], frameworks: ['tauri'] }, ['ts', 'rust']],
     [{ languages: ['typescript'], frameworks: [] }, ['ts']],
     [{ languages: ['csharp'], frameworks: [] }, ['dotnet']],
-    [{ languages: ['go'], frameworks: [] }, []],
+    [{ languages: ['go'], frameworks: [] }, ['go']],
+    [{ languages: ['java'], frameworks: [] }, []],
   ])('maps detect report %j to %j', async (report, expected) => {
     fakeApm();
     fakeDetect(report);

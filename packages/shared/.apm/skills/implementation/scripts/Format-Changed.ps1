@@ -3,10 +3,10 @@
   Runs a format (or check) command on the changed files with the given extensions.
   Precedence: `.agents/format.json` entry for -Language, then explicit -Extensions/-Command, then the built-in defaults of -Language
   (ts, ng: prettier then eslint, or biome check when biome.json[c] is at the git toplevel; py: ruff format then ruff check --fix;
-  dotnet: dotnet format; rust: cargo fmt).
+  dotnet: dotnet format; rust: cargo fmt; go: gofmt).
 .PARAMETER Language
   Key into `<repo>/.agents/format.json`; an entry there replaces -Extensions, -Command and -Requires (a configured tool that is missing is an error).
-  Without -Extensions and -Command it also selects the built-in defaults (ts, ng, py, dotnet, rust); -Check uses their read-only variants.
+  Without -Extensions and -Command it also selects the built-in defaults (ts, ng, py, dotnet, rust, go); -Check uses their read-only variants.
 .PARAMETER Extensions
   Extensions to keep, e.g. '.ts','.tsx' (one comma-separated string works too; the leading dot is optional).
 .PARAMETER Command
@@ -70,6 +70,9 @@ $defaults = @{
     @{ Tool = 'dotnet'; Ext = @('.cs'); Requires = 'dotnet format --version'; Format = @('dotnet format --include {files}'); Check = @('dotnet format --verify-no-changes --include {files}') })
   rust   = @(
     @{ Tool = 'cargo'; Ext = @('.rs'); Requires = 'cargo fmt --version'; Format = @('cargo fmt -- {files}'); Check = @('cargo fmt -- --check {files}') })
+  # gofmt ships with go and has no --version: the not-found check is the probe
+  go     = @(
+    @{ Tool = 'gofmt'; Ext = @('.go'); Requires = $null; Format = @('gofmt -w {files}'); Check = @('gofmt -l {files}') })
 }
 $defaults.ng = @($defaults.ts[0].Clone(), $defaults.ts[1])
 $defaults.ng[0].Ext = $exts5 + @('.json', '.html', '.scss', '.css')
