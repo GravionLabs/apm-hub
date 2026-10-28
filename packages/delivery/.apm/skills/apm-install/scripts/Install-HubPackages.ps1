@@ -201,6 +201,16 @@ if (Test-Path $manifest) {
 } else {
   $notes.Add("No apm.yml at ${manifest}: apm install creates it.")
 }
+# .agents/ holds installed skills and the committed config: ignoring the directory loses .agents/config.json
+$gitignore = Join-Path $base '.gitignore'
+if (-not $Global -and (Test-Path -LiteralPath $gitignore -PathType Leaf)) {
+  $gi = @(Get-Content -LiteralPath $gitignore | ForEach-Object { $_.Trim() })
+  $ignored = @($gi | Where-Object { $_ -match '^/?\.agents(/(\*{1,2})?)?$' })
+  $excepted = @($gi | Where-Object { $_ -match '^!/?\.agents/config\.json$' })
+  if ($ignored.Count -gt 0 -and $excepted.Count -eq 0) {
+    $notes.Add('.gitignore ignores .agents/ without an exception for .agents/config.json (the committed project config): use the lines .agents/* and !.agents/config.json')
+  }
+}
 foreach ($pkg in $allMembers) {
   if (Test-Path (Join-Path $base "apm_modules/$hubPath/$pkg")) { [void]$have.Add($pkg) }
 }

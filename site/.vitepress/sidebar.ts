@@ -38,7 +38,7 @@ export const sidebar: SidebarGroup[] = [
     text: 'Usage',
     items: [
       { text: 'Common workflows', link: '/usage/common-workflows' },
-      { text: 'Format override', link: '/usage/format-override' },
+      { text: 'Project config', link: '/usage/project-config' },
       { text: 'Status lines', link: '/usage/statusline' },
       { text: 'Skill companion directories', link: '/usage/skill-companion-dirs' },
       { text: 'Skill trigger evals', link: '/usage/trigger-evals' },

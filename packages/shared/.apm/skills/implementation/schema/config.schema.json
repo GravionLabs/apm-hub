@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/GravionLabs/apm-hub/main/packages/shared/.apm/skills/implementation/schema/config.schema.json",
+  "title": "apm-hub project config (.agents/config.json)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "format": {
+      "description": "false disables every format and check call; a map replaces the built-in commands per language.",
+      "oneOf": [
+        { "const": false },
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/formatEntry" }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "commands": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      ]
+    },
+    "formatEntry": {
+      "type": "object",
+      "required": ["format"],
+      "additionalProperties": false,
+      "properties": {
+        "extensions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "format": { "$ref": "#/$defs/commands" },
+        "check": { "$ref": "#/$defs/commands" }
+      }
+    }
+  }
+}

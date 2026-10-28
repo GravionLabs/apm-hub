@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
   Runs a format (or check) command on the changed files with the given extensions.
-  Precedence: `.agents/format.json` entry for -Language, then explicit -Extensions/-Command, then the built-in defaults of -Language
+  Precedence: `.agents/config.json` entry `format.<Language>` (legacy `.agents/format.json`; `"format": false` disables), then explicit -Extensions/-Command, then the built-in defaults of -Language
   (ts, ng: prettier then eslint, or biome check when biome.json[c] is at the git toplevel; py: ruff format then ruff check --fix;
   dotnet: dotnet format; rust: cargo fmt; go: gofmt).
 .PARAMETER Language
-  Key into `<repo>/.agents/format.json`; an entry there replaces -Extensions, -Command and -Requires (a configured tool that is missing is an error).
+  Key into `format` of `<repo>/.agents/config.json`; an entry there replaces -Extensions, -Command and -Requires (a configured tool that is missing is an error).
   Without -Extensions and -Command it also selects the built-in defaults (ts, ng, py, dotnet, rust, go); -Check uses their read-only variants.
 .PARAMETER Extensions
   Extensions to keep, e.g. '.ts','.tsx' (one comma-separated string works too; the leading dot is optional).
@@ -36,27 +36,69 @@ $root = (& git rev-parse --show-toplevel 2>$null)
 if ($LASTEXITCODE -ne 0 -or -not $root) { Write-Output 'skipped: not a git repository'; exit 0 }
 
 function Stop-Fail([string]$Message) { Write-Error "error: $Message" -ErrorAction Continue; exit 1 }
+# `1 -is [pscustomobject]` is true in PowerShell: ask for the real type
+function Test-JsonObject($Value) { $null -ne $Value -and $Value.GetType().Name -eq 'PSCustomObject' }
 
 # per-project override: an entry for -Language replaces extensions and ALL default commands
-$commands = @(); $override = $false
-$overrideFile = Join-Path $root '.agents/format.json'
-if ($Language -and (Test-Path -LiteralPath $overrideFile -PathType Leaf)) {
-  try { $cfg = Get-Content -LiteralPath $overrideFile -Raw | ConvertFrom-Json -ErrorAction Stop }
-  catch { Stop-Fail ".agents/format.json is not valid JSON ($($_.Exception.Message))" }
-  $entry = if ($cfg -is [pscustomobject]) { $cfg.PSObject.Properties[$Language] } else { $null }
+# source: `.agents/config.json` key `format` (false disables, else a map language -> entry); the legacy `.agents/format.json` (the map itself) is honoured when config.json has no `format` key
+$commands = @(); $override = $false; $disabled = $false
+$configFile = Join-Path $root '.agents/config.json'
+$legacyFile = Join-Path $root '.agents/format.json'
+$srcName = '.agents/config.json'
+$formatCfg = $null; $haveFormat = $false
+if ($Language) {
+  if (Test-Path -LiteralPath $configFile -PathType Leaf) {
+    try { $cfg = Get-Content -LiteralPath $configFile -Raw | ConvertFrom-Json -ErrorAction Stop }
+    catch { Stop-Fail ".agents/config.json is not valid JSON ($($_.Exception.Message))" }
+    if (-not (Test-JsonObject $cfg)) { Stop-Fail '.agents/config.json must be a JSON object' }
+    # top-level keys come from the schema shipped next to the skill, so a typo is caught
+    $schemaFile = Join-Path $PSScriptRoot '../schema/config.schema.json'
+    if (Test-Path -LiteralPath $schemaFile -PathType Leaf) {
+      $known = @((Get-Content -LiteralPath $schemaFile -Raw | ConvertFrom-Json).properties.PSObject.Properties.Name)
+      foreach ($p in $cfg.PSObject.Properties.Name) {
+        if ($known -notcontains $p) { Stop-Fail ".agents/config.json: unknown key '$p' (known: $($known -join ', '))" }
+      }
+    }
+    $fp = $cfg.PSObject.Properties['format']
+    if ($fp) {
+      $haveFormat = $true; $formatCfg = $fp.Value
+      if (-not (($formatCfg -is [bool] -and -not $formatCfg) -or (Test-JsonObject $formatCfg))) {
+        Stop-Fail ".agents/config.json: key 'format' must be false or a map of language to entry"
+      }
+    }
+  }
+  if (Test-Path -LiteralPath $legacyFile -PathType Leaf) {
+    if ($haveFormat) {
+      Write-Error 'notice: .agents/config.json and the deprecated .agents/format.json both define format; .agents/config.json wins, delete .agents/format.json' -ErrorAction Continue
+    }
+    else {
+      try { $formatCfg = Get-Content -LiteralPath $legacyFile -Raw | ConvertFrom-Json -ErrorAction Stop }
+      catch { Stop-Fail ".agents/format.json is not valid JSON ($($_.Exception.Message))" }
+      $haveFormat = $true; $srcName = '.agents/format.json'
+      Write-Error 'notice: .agents/format.json is deprecated; move its content to the "format" key of .agents/config.json' -ErrorAction Continue
+    }
+  }
+}
+if ($haveFormat -and $formatCfg -is [bool] -and -not $formatCfg) { $disabled = $true }
+elseif ($haveFormat) {
+  $entry = if ($formatCfg -is [pscustomobject]) { $formatCfg.PSObject.Properties[$Language] } else { $null }
   if ($entry) {
     $override = $true
     $key = if ($Check) { 'check' } else { 'format' }
     $entryVal = $entry.Value
     $cmdProp = if ($entryVal -is [pscustomobject]) { $entryVal.PSObject.Properties[$key] } else { $null }
-    if (-not $cmdProp) { Stop-Fail ".agents/format.json: entry '$Language' has no '$key' command" }
+    if (-not $cmdProp) { Stop-Fail "${srcName}: entry '$Language' has no '$key' command" }
     $commands = @($cmdProp.Value | Where-Object { $_ -is [string] -and $_.Trim() })
-    if ($commands.Count -eq 0) { Stop-Fail ".agents/format.json: entry '$Language' has an empty '$key' command" }
+    if ($commands.Count -eq 0) { Stop-Fail "${srcName}: entry '$Language' has an empty '$key' command" }
     $extProp = $entryVal.PSObject.Properties['extensions']
     if ($extProp) { $Extensions = @($extProp.Value) }
     # commands come from a repo-controlled file: say so (no gate)
-    Write-Error "notice: running commands from .agents/format.json for '$Language'" -ErrorAction Continue
+    Write-Error "notice: running commands from $srcName for '$Language'" -ErrorAction Continue
   }
+}
+if ($disabled) {
+  if ($WhatIf) { ConvertTo-Json -InputObject @() } else { Write-Output 'skipped: disabled' }
+  exit 0
 }
 # defaults per language: ordered steps, each with its own extensions, probe and commands (format / check)
 $exts5 = @('.ts', '.tsx', '.js', '.mjs', '.cjs')
@@ -85,7 +127,7 @@ if ((Test-Path -LiteralPath (Join-Path $root 'biome.json') -PathType Leaf) -or (
 
 $steps = @()
 if ($override) {
-  if (-not $Extensions) { Stop-Fail '-Extensions is required (no .agents/format.json entry supplies them)' }
+  if (-not $Extensions) { Stop-Fail '-Extensions is required (no $srcName entry supplies them)' }
   $steps = @(@{ Tool = $null; Ext = $Extensions; Requires = $null; Commands = $commands })
 }
 elseif (-not $Command -and -not $Extensions -and $Language -and $defaults.ContainsKey($Language)) {
@@ -93,8 +135,8 @@ elseif (-not $Command -and -not $Extensions -and $Language -and $defaults.Contai
   $steps = @($defaults[$Language] | ForEach-Object { @{ Tool = $_.Tool; Ext = $_.Ext; Requires = $_.Requires; Commands = $_[$mode] } })
 }
 else {
-  if (-not $Command) { Stop-Fail '-Command is required (no .agents/format.json entry or built-in default applies)' }
-  if (-not $Extensions) { Stop-Fail '-Extensions is required (no .agents/format.json entry supplies them)' }
+  if (-not $Command) { Stop-Fail '-Command is required (no $srcName entry or built-in default applies)' }
+  if (-not $Extensions) { Stop-Fail '-Extensions is required (no $srcName entry supplies them)' }
   $steps = @(@{ Tool = $null; Ext = $Extensions; Requires = $Requires; Commands = @($Command) })
 }
 if ($WhatIf) {
@@ -105,7 +147,7 @@ foreach ($st in $steps) { $st.Plans = @($st.Commands | ForEach-Object { , @($_.T
 if ($override) {
   # a configured tool that is missing is an error even when nothing changed
   foreach ($t in $steps[0].Plans) {
-    if (-not (Get-Command $t[0] -ErrorAction SilentlyContinue)) { Stop-Fail "$($t[0]) not found (configured in .agents/format.json for $Language)" }
+    if (-not (Get-Command $t[0] -ErrorAction SilentlyContinue)) { Stop-Fail "$($t[0]) not found (configured in $srcName for $Language)" }
   }
 }
 
