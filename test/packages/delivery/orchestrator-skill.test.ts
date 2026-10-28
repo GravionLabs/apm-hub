@@ -12,7 +12,11 @@ describe('orchestrator SKILL.md', () => {
   });
 
   it('launches dromos plan, run and status as JSON', () => {
-    for (const cmd of ['dromos run plan <nr> --format json', 'dromos run pbi <nr> --format json', 'dromos status <nr> --format json']) {
+    for (const cmd of [
+      'dromos run plan <nr> --format json',
+      'dromos run pbi <nr> --format json',
+      'dromos status <nr> --format json',
+    ]) {
       expect(text).toContain(cmd);
     }
     expect(text).toContain('--harness');
@@ -29,8 +33,6 @@ describe('orchestrator SKILL.md', () => {
   it('does not auto-assume answers and ships no agent file', () => {
     expect(text).toMatch(/Never pass `--assume-recommended`/);
     expect(fs.readdirSync(skillDir).filter((f) => f.endsWith('.agent.md'))).toEqual([]);
-    expect(
-      fs.existsSync(path.resolve(skillDir, '../../agents'))
-    ).toBe(false);
+    expect(fs.existsSync(path.resolve(skillDir, '../../agents'))).toBe(false);
   });
 });
