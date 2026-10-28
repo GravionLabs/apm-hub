@@ -314,6 +314,26 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     expect(r.json.installed).toEqual(['py']);
   });
 
+  tc.each([
+    ['.agents/\n', true],
+    ['node_modules\n.agents\n', true],
+    ['.agents/*\n', true],
+    ['.agents/*\n!.agents/config.json\n', false],
+    ['.agents/skills/\n', false],
+    ['dist/\n', false],
+  ])('gitignore %j: notice about .agents/config.json is %s', async (gi, expected) => {
+    fakeApm();
+    fs.writeFileSync(path.join(S.proj, '.gitignore'), gi);
+    const r = await run(['-Packages', 'ts']);
+    expect(r.status).toBe(0);
+    if (expected) {
+      expect(notes(r)).toContain('!.agents/config.json');
+      expect(notes(r)).toContain('.agents/*');
+    } else {
+      expect(notes(r)).not.toContain('.agents/config.json');
+    }
+  });
+
   tc('installs without an apm.yml and notes that apm creates it', async () => {
     fakeApm();
     const r = await run(['-Packages', 'ts']);

@@ -7,6 +7,7 @@
 | `apm.yml`, `apm.lock.yaml` | commit |
 | `.github/skills/`, `.claude/skills/`, `.opencode/skills/` | commit (instant context on clone) |
 | `apm_modules/` | add to `.gitignore` |
+| `.agents/config.json` | commit (project config, see [project config](https://github.com/GravionLabs/apm-hub/blob/main/docs/usage/project-config.md)). When `.gitignore` ignores the whole directory, use the lines `.agents/*` and `!.agents/config.json` instead; the installer prints a note when they are missing |
 
 ## Runner (optional)
 

@@ -225,7 +225,7 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
     expect(logged()).toContain('a.ts');
   });
 
-  describe('.agents/format.json override', () => {
+  describe('legacy .agents/format.json override', () => {
     const cfg = (o: unknown) =>
       write('.agents/format.json', typeof o === 'string' ? o : JSON.stringify(o));
 
@@ -427,6 +427,124 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
       write('a.ts', 'x');
       expect((await go(['-Extensions', '.ts'])).status).not.toBe(0);
       expect((await go(['-Command', 'x {files}'])).status).not.toBe(0);
+    });
+  });
+
+  describe('.agents/config.json (#830)', () => {
+    const conf = (o: unknown) =>
+      write('.agents/config.json', typeof o === 'string' ? o : JSON.stringify(o));
+    const legacy = (o: unknown) => write('.agents/format.json', JSON.stringify(o));
+    const ts = ['-Language', 'ts', '-Extensions', '.ts'];
+
+    it('runs the format.<lang> entry for format and check, with {files}', async () => {
+      fake('jb');
+      write('A.cs', 'x');
+      conf({
+        format: {
+          dotnet: { extensions: ['.cs'], format: 'jb fmt {files}', check: 'jb chk {files}' },
+        },
+      });
+      const f = await go(['-Language', 'dotnet']);
+      expect(f.stdout.trim()).toBe('formatted: 1 files');
+      expect(f.stderr).toContain('notice: running commands from .agents/config.json');
+      expect(logged()).toEqual(['fmt', 'A.cs']);
+      fs.rmSync(path.join(dir, 'args.log'));
+      const c = await go(['-Language', 'dotnet', '-Check']);
+      expect(c.stdout.trim()).toBe('checked: 1 files');
+      expect(logged()).toEqual(['chk', 'A.cs']);
+    });
+
+    it('"format": false skips format and check with skipped: disabled', async () => {
+      fake('dflt');
+      write('a.ts', 'x');
+      conf({ format: false });
+      for (const extra of [[], ['-Check']]) {
+        const r = await go([...ts, '-Command', 'dflt {files}', ...extra]);
+        expect(r.status).toBe(0);
+        expect(r.stdout.trim()).toBe('skipped: disabled');
+      }
+      expect(logged()).toEqual([]);
+    });
+
+    it('keeps the defaults without a format key or without an entry for the language', async () => {
+      fake('dflt');
+      fake('jb');
+      write('a.ts', 'x');
+      for (const c of [
+        { $schema: 'https://example.com/s.json' },
+        { format: { py: { format: 'jb {files}' } } },
+      ]) {
+        conf(c);
+        const r = await go([...ts, '-Command', 'dflt {files}']);
+        expect(r.stdout.trim()).toBe('formatted: 1 files');
+        expect(r.stderr).not.toContain('deprecated');
+      }
+      expect(logged()).toEqual(['a.ts', 'a.ts']);
+    });
+
+    it('falls back to format.json when config.json has no format key, with a deprecation notice', async () => {
+      fake('jb');
+      write('a.ts', 'x');
+      conf({});
+      legacy({ ts: { format: 'jb old {files}' } });
+      const r = await go(ts);
+      expect(r.status).toBe(0);
+      expect(logged()).toEqual(['old', 'a.ts']);
+      expect(r.stderr).toMatch(/deprecated.*\.agents\/config\.json/);
+    });
+
+    it('config.json wins when both define format, and says so', async () => {
+      fake('jb');
+      write('a.ts', 'x');
+      conf({ format: { ts: { format: 'jb new {files}' } } });
+      legacy({ ts: { format: 'jb old {files}' } });
+      const r = await go(ts);
+      expect(logged()).toEqual(['new', 'a.ts']);
+      expect(r.stderr).toMatch(/both define format.*config\.json wins/);
+    });
+
+    it('config.json "format": false wins over format.json', async () => {
+      fake('jb');
+      write('a.ts', 'x');
+      conf({ format: false });
+      legacy({ ts: { format: 'jb old {files}' } });
+      const r = await go(ts);
+      expect(r.stdout.trim()).toBe('skipped: disabled');
+      expect(logged()).toEqual([]);
+    });
+
+    it.each([
+      ['unknown top-level key', { frmat: {} }, /config\.json: unknown key 'frmat'/],
+      [
+        'format that is not false or a map',
+        { format: 'jb {files}' },
+        /config\.json: key 'format' must be false or a map/,
+      ],
+      ['format true', { format: true }, /key 'format' must be false or a map/],
+      [
+        'entry without the mode key',
+        { format: { ts: { check: 'x' } } },
+        /config\.json: entry 'ts' has no 'format' command/,
+      ],
+      ['not valid JSON', '{ nope', /config\.json is not valid JSON/],
+      ['not an object', [1], /config\.json must be a JSON object/],
+    ])('fails for %s, naming file and key', async (_n, c, re) => {
+      fake('jb');
+      write('a.ts', 'x');
+      conf(c);
+      const r = await go([...ts, '-Command', 'jb {files}']);
+      expect(r.status).toBe(1);
+      expect(r.stderr).toMatch(re);
+      expect(logged()).toEqual([]);
+    });
+
+    it('is ignored without -Language', async () => {
+      fake('dflt');
+      write('a.ts', 'x');
+      conf('{ nope');
+      const r = await go(['-Extensions', '.ts', '-Command', 'dflt {files}']);
+      expect(r.status).toBe(0);
+      expect(logged()).toEqual(['a.ts']);
     });
   });
 

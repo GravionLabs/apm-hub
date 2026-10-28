@@ -27,7 +27,7 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
 - **[Common Workflows](docs/usage/common-workflows.md)**: End-to-end examples with the installed skills.
 - **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
-- **[Format override](docs/usage/format-override.md)**: replace the format and check commands per language with `.agents/format.json`.
+- **[Project config](docs/usage/project-config.md)**: `.agents/config.json`, the committed project configuration; its `format` key replaces the format and check commands per language.
 - **Project standard** (`github-project`): ships from [GravionLabs/ci](https://github.com/GravionLabs/ci) (`apm install GravionLabs/ci`), see its `docs/project-standard.md`.
 - **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
 
