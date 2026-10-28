@@ -30,7 +30,7 @@ Sonnet is enough for every PBI without the label `interactive`. Use a larger mod
 
 ## 4. Guardrails
 
-The `hooks` package installs a `PreToolUse` hook that denies destructive git commands (force push to `main`/`release/*`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .` on a dirty tree). Opt out with `GIT_GUARDRAILS_OFF=1`. Copilot CLI needs a manual setup, see [Copilot CLI hooks](usage/copilot-hooks.md).
+The git guardrails (force push to `main`/`release/*`, `reset --hard`, `clean -f`, `branch -D`, `checkout -- .` on a dirty tree) live in the dromos [permission callback](https://github.com/GravionLabs/dromos/blob/main/src/runner/permissions.ts); apm-hub ships no hook. Interactive sessions outside dromos are not guarded.
 
 ## 5. Releases
 

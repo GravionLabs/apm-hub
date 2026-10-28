@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "core",
-      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills, the git guardrails hook and the status line. Stack packages are installed per project.",
+      "description": "Workflow meta package for the global install: GitHub issue and PR skills, development workflow, shared skills and the status line. Stack packages are installed per project.",
       "version": "3.0.0",
       "source": "./packages/core"
     },
@@ -16,12 +16,6 @@
       "description": "Meta-package that installs every apm-hub package except apm-tooling in one step. Use it in workspaces that mix several tech stacks.",
       "version": "3.0.0",
       "source": "./packages/all"
-    },
-    {
-      "name": "hooks",
-      "description": "Claude Code hook: the git guardrails (PreToolUse) deny destructive git commands. Copilot CLI is set up by hand (docs/usage/copilot-hooks.md).",
-      "version": "3.0.0",
-      "source": "./packages/hooks"
     },
     {
       "name": "statusline",

@@ -296,8 +296,8 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
   tc('treats core and all as covering their members', async () => {
     fakeApm();
     manifest('  apm:\n    - GravionLabs/apm-hub/packages/core\n');
-    const core = await run(['-Packages', 'shared,hooks,ts']);
-    expect(core.json.skipped).toEqual(['shared', 'hooks']);
+    const core = await run(['-Packages', 'shared,statusline,ts']);
+    expect(core.json.skipped).toEqual(['shared', 'statusline']);
     expect(core.json.installed).toEqual(['ts']);
     manifest('  apm:\n    - all@apm-hub\n');
     expect((await run(['-Packages', 'ts,dotnet'])).json.skipped).toEqual(['ts', 'dotnet']);
