@@ -541,6 +541,50 @@ describe('apm-install SKILL.md', () => {
     }
   });
 
+  it('creates or updates .dromos/config.json via dromos init (#804)', () => {
+    expect(text).toContain('dromos init --dry-run --format json --stack');
+    expect(text).toContain('never with `-g`');
+    expect(text).toContain('updated, never overwritten');
+    expect(text).toContain('npm i -g @gravionlabs/dromos');
+    expect(text).toContain('only after the user agrees');
+  });
+
+  it('names the --stack values dromos init accepts and handles invalid and older dromos', () => {
+    // dromos src/runner/init.ts STACKS; go is not one of them, so the step omits --stack for other stacks
+    expect(text).toContain(
+      '`--stack` accepts `ts`, `py`, `dotnet`, `rust`, `ng`, omit it for any other stack',
+    );
+    // the JSON of `init --dry-run --format json` is {path, action, added, kept}
+    for (const k of ['`action`', '`added`', '`kept`', '`unchanged`']) expect(text).toContain(k);
+    expect(text).toContain('Exit 1 (`valid: false`, `errors`)');
+    expect(text).toContain('do not write');
+    expect(text).toContain('exit 2 (a dromos without `init`)');
+  });
+
+  describe('after-install.md', () => {
+    const ref = fs.readFileSync(
+      path.join(path.dirname(skillPath), 'references/after-install.md'),
+      'utf8',
+    );
+
+    it('uses dromos init and dromos config check', () => {
+      expect(ref).toContain('dromos init --dry-run --format json --stack ts');
+      expect(ref).toContain('dromos config check');
+      expect(ref).toContain('dromos config schema');
+    });
+
+    it('shows the keys dromos init writes, not a hand-written full config', () => {
+      const block = /```json\n([\s\S]+?)```/.exec(ref.slice(ref.indexOf('## Runner')))![1];
+      expect(JSON.parse(block)).toEqual({
+        harness: 'claude',
+        test: { full: 'pnpm test' },
+        parallel: 3,
+      });
+      expect(ref).toContain('`harness`, `test.full`');
+      expect(ref).toContain('left untouched');
+    });
+  });
+
   it('lists exactly the packages the script accepts ($valid)', () => {
     const script = fs.readFileSync(
       path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),

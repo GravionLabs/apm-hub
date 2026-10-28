@@ -160,6 +160,27 @@ if (Test-Tool 'dromos') {
     $dromosVersion = Get-ToolVersion 'dromos'
     $results.runtime['dromos'] = "✓ $dromosVersion"
     Write-Host "  ✓ dromos: $dromosVersion" -ForegroundColor Green
+    # config of the current repository: `dromos config check --format json` prints {path, valid, errors} and exits
+    # 0 (valid or no file) or 1 (invalid); anything else is a dromos without the command. Reported, never fails the check.
+    $configJson = (& dromos config check --format json 2>$null | Out-String)
+    $configExit = $LASTEXITCODE
+    $config = $null
+    if ($configExit -in 0, 1) {
+        try { $config = $configJson | ConvertFrom-Json -ErrorAction Stop } catch { $config = $null }
+    }
+    if ($null -eq $config) {
+        $results.runtime['dromos config'] = '✗ config check not available'
+        Write-Host '  - dromos config check: not available in this dromos version (update: npm i -g @gravionlabs/dromos)' -ForegroundColor Gray
+    } elseif ($config.valid) {
+        $state = if (Test-Path -LiteralPath $config.path) { 'valid' } else { 'not found, defaults apply' }
+        $results.runtime['dromos config'] = "✓ $state"
+        Write-Host "  ✓ dromos config check: $state" -ForegroundColor Green
+    } else {
+        $issues = (@($config.errors) | ForEach-Object { if ($_.path) { "$($_.path): $($_.message)" } else { $_.message } }) -join '; '
+        $results.runtime['dromos config'] = "✗ invalid ($issues)"
+        # dromos init leaves an invalid file untouched, so the fix is by hand against the schema
+        Write-Host "  - dromos config check: invalid ($issues); fix .dromos/config.json by hand (dromos config schema)" -ForegroundColor Yellow
+    }
 } else {
     $results.runtime['dromos'] = "✗ NOT FOUND (optional)"
     Write-Host "  - dromos: NOT FOUND (optional, the runner: npm i -g @gravionlabs/dromos)" -ForegroundColor Gray
