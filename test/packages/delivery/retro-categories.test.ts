@@ -19,7 +19,7 @@ describe('retro categories.md', () => {
     for (let n = 1; n <= 8; n++) {
       expect(text).toMatch(new RegExp(`^${n}\\. \\*\\*`, 'm'));
     }
-    expect(text).toMatch(/^8\. \*\*Model per role\*\*.*`phase\.finished`/m);
+    expect(text).toMatch(/^8\. \*\*Model per role\*\*.*agentlens/m);
     expect(text).not.toMatch(/^(9|10)\. /m);
   });
 

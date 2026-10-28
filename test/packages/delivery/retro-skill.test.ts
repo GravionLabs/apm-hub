@@ -8,14 +8,49 @@ const text = fs.readFileSync(
 );
 
 describe('retro SKILL.md', () => {
-  it('reads dromos run metrics as JSON and links the contract', () => {
-    expect(text).toContain('dromos run metrics');
-    expect(text).toContain('--format json');
-    expect(text).toContain('docs/run-metrics.md');
+  it('gathers figures with agentlens and gh and names no dromos', () => {
+    expect(text).toContain('agentlens cost --by issue --format json');
+    expect(text).toContain('gh pr view');
+    expect(text).not.toMatch(/dromos/i);
+    expect(text).not.toContain('phase.finished');
   });
 
-  it('takes escalation lines from phase.finished events', () => {
-    expect(text).toMatch(/escalation lines[^\n]*`phase\.finished`/i);
+  it('marks estimates, handles a missing agentlens and repeated findings', () => {
+    expect(text).toContain('`~`');
+    expect(text).toMatch(/`agentlens` missing or failing[^\n]*not measured/);
+    expect(text).toMatch(/same file and title in two or more PRs/);
+  });
+
+  it('takes escalation lines from the deliver report', () => {
+    expect(text).toMatch(/Escalation lines[^\n]*final report of `deliver`/);
+    expect(text).toContain('"no run report"');
+  });
+
+  it('names the source of every column in references/metrics-sources.md', () => {
+    const ref = fs.readFileSync(
+      path.resolve(
+        __dirname,
+        '../../../packages/delivery/.apm/skills/retro/references/metrics-sources.md',
+      ),
+      'utf8',
+    );
+    expect(text).toContain('references/metrics-sources.md');
+    for (const col of [
+      'cost',
+      'main peak',
+      'requests',
+      'roles by cost',
+      'review rounds',
+      'fix rounds',
+      'CI',
+    ]) {
+      expect(ref).toContain(col);
+    }
+    expect(ref).not.toMatch(/dromos/i);
+  });
+
+  it('stays within 100 lines', () => {
+    expect(text.split('\n').length).toBeLessThanOrEqual(100);
   });
 
   it('keeps the seven columns and the approval rule', () => {

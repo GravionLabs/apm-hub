@@ -14,15 +14,13 @@ Issue number (`retro 197`), session id, or nothing = the newest run.
 
 ## Steps
 
-1. **Metrics.** Run `dromos run metrics --issues <n> --format json` (or `--since <date>`; the command needs one of them; nothing given: ask for the issue number). Contract: [run metrics of dromos](https://github.com/GravionLabs/dromos/blob/release/next/docs/run-metrics.md); the output is `{ runs, aggregate }`. The metrics table has exactly these seven columns, filled from these fields; a field that is absent or `null` is shown as `n/a`, never estimated:
-   - cost: `usage.usd` (`usage.measured` false → mark as estimate); main peak: `n/a` unless the JSON carries it; requests: `n/a` unless the JSON carries it
-   - roles by cost: `usage.byRole`; review rounds: `n/a` unless the JSON carries it; fix rounds: `fixRounds`; gates: `attention.byKind.GATE`
-   - Durations: `durations.phases` with their share of `durations.seconds`; name the longest phase in one line. No `durations` → say so.
-   - Also read `blocked`, `unansweredQuestions` and, in the aggregate, `repeatedFindings` (a fingerprint in two or more runs is a missing review rule or check).
-   - `dromos` missing or failing: report that, continue with the transcripts and review findings that exist, and say that cost and context are not measured.
-2. **Read primary sources.** The metrics JSON, the review findings and the relevant transcript turns. Take the **escalation lines** from the `phase.finished` events in the run's event log: one line per phase that ended with an escalation, with role, phase and reason. Search only for what a metric flags (a peak, a costly role); do not read whole transcripts.
+1. **Metrics.** Gather the figures per PR of the issue with `agentlens` (cost, requests, role share by subagent: `agentlens cost --by issue --format json`) and `gh` (review rounds, fix rounds, CI result, duration PR opened to merged: `gh pr view <pr> --json commits,reviews,statusCheckRollup,createdAt,mergedAt`). Source per column: `references/metrics-sources.md`. Nothing given: ask for the issue number. The metrics table has exactly these seven columns; a column without a source or value is `n/a`, never estimated. A value that agentlens marks `~` stays marked as an estimate.
+   - Name the longest phase or most expensive role in one line.
+   - A finding with the same file and title in two or more PRs of the analysed issues is **repeated**: a missing review rule or check.
+   - `agentlens` missing or failing: report that, show cost and context as not measured, continue with the `gh` data and the review findings.
+2. **Read primary sources.** The metrics, the review findings and the relevant transcript turns. **Escalation lines** (blocked PBIs with their reason) come from the final report of `deliver`; without a `deliver` run the section says "no run report". Search only for what a metric flags (a peak, a costly role); do not read whole transcripts.
 3. **Find candidates** in the categories of `references/categories.md`. Each needs evidence (turn, review finding, metric). Drop candidates without evidence.
-4. **Report**, at most 40 lines: a metrics table, then candidates ranked by severity (cost or rework caused), one line each: category, evidence, proposed change. Escalation lines come from `phase.finished` events and are listed after the candidates.
+4. **Report**, at most 40 lines: a metrics table, then candidates ranked by severity (cost or rework caused), one line each: category, evidence, proposed change. Escalation lines are listed after the candidates.
 5. **Draft PBIs** for the candidates the user wants, in the `github-issue` format (`github-issue` `references/standalone-issue.md`; sections per its issue templates: Overview, Acceptance Criteria with a verifiable done-when, Definition of Done). Each draft names the skill file (path under `packages/`) and the rule to change (heading or quoted line) in its Acceptance Criteria. Show them as text.
 
 ## Rules
