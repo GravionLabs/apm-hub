@@ -1,182 +1,94 @@
 # Roadmap
 
-## Superseded by simplification-plan.md
+Order of work and release assignment for the open issues. Rewritten 2026-10-28 after dromos decision 004 (dromos archived at v0.4.0; delivery becomes a Claude Code workflow in apm-hub, the bus, Attention API and gates continue in [GravionLabs/keryx](https://github.com/GravionLabs/keryx)). Last release `v3.1.0` (2026-10-28). Each release has a GitHub milestone of the same name; work runs on `release/next` and the release PR into `main` is the human review point.
 
-As of 2026-10-27 this roadmap is frozen. The [simplification plan](docs/simplification-plan.md) replaces it, and the [simplification work plan](docs/simplification-workplan.md) sets the order of work: apm-hub becomes a content-only repository (3.0.0) and the control flow moves to dromos. The sections below are kept as history only. The following roadmap items are removed; merged work stays on `release/next` until Stage A deletes it, and the rest was closed as not planned:
+History: 2.x and the simplification plan that produced 3.0.0 and 3.1.0 are in [docs/simplification-plan.md](docs/simplification-plan.md) and [docs/simplification-workplan.md](docs/simplification-workplan.md). The dromos runner path (Stage B there) is closed by decision 004.
 
-| Epic | Features |
-| --- | --- |
-| #300 Orchestrator: smaller per-PBI footprint and multi-PBI sessions | #301, #302, #547 |
-| #384 Orchestrator: extensions | #248, #385, #432, #455, #457, #478, #479, #499, #568 (and PBI #566) |
-| #387 Report orchestrator state to dromos for dromos-mux | #388, #390, #398 |
-| #573 Unattended orchestrator loops with a retro feedback loop | #574, #575, #576, #577, #595 |
+## Where we are
 
-Feature #661 (lessons contract) under Epic #573 stays open in the backlog.
-
-Order of work and release assignment for the open issues. Created 2026-10-18, last release `v2.4.0` (2026-10-24), updated 2026-10-25 for Epic #573 (unattended loops, see the analysis document "dromos + apm-hub: Analyse und selbstlernendes Agent-System") and for Feature #595 (project cockpit, pulled into 2.5.0). Checked against GitHub state on 2026-10-25 (`v2.4.0` shipped #389 and Feature #388; the Rust Feature #412 and #571 are merged). Each release has a GitHub milestone of the same name. Work runs one PBI at a time on `release/next` (several PBIs edit `orchestrator.agent.md` or the ledger hook).
-
-## Unattended path — self-learning workflow (Epic #573)
-
-Overview across releases. The per-release tables below stay the order of work. Two human review points remain by design: planning (Epic → Feature → PBI → Tasks) and the release PR `release/next` → `main`. dromos blocks nothing up to step 5; counterpart: `GravionLabs/dromos` `ROADMAP.md`, Stage 2b.
-
-| Step | Feature | PBIs in order | Release | Done when |
-| --- | --- | --- | --- | --- |
-| 0 | #595 project cockpit (Epic #384) | #597 → #598; #626 follows | 2.5.0 (#626: 2.6.0) | `Needs` is computed from GitHub state and shown by `status` and `queue -DryRun` |
-| 1 | #574 unattended gates | #578 → #579 → #580 → #581 | 2.6.0 | a gate parks one PBI and the loop continues; `/ruling` answers it |
-| 2 | #575 auto-merge | #582 → #583 → #585, #584 after #582 | 2.6.0 | merge by default, `release/**` carries required checks, docs name the two review points |
-| 3 | #576 retro, stage 0 | #586 → #587 → #590 → #588 → #589, #594 parallel to #587–#589 | 2.7.0 | a retro runs after every loop, bounded by `Test-RetroScope.ps1`, and files candidate PBIs with hypothesis and metric |
-| 4 | #390 attention, queue, usage | #391, #392, #393 → #394 | 2.7.0 | parked gates reach dromos as `attention`; serial with #588 (queue runner) |
-| 5 | #577 retro reads the dromos history | #591 → #592 | 2.8.0 | cross-harness metrics; needs dromos 0.2.0 |
-| 6 | #398 queue runner as driver | planned after dromos#65 | 2.8.0 | overnight Epic runs on the bus session API |
-
-Rules for this path:
-
-- No unattended run in this repository before #582 and #583 are both merged; until then run with `--no-merge`.
-- #590 before #588: the first automatic retro is already bounded.
-- `Needs` rules: `needs-decision` (parked gates, retro candidates) → `Decision` and `needs-review` → `Review` are in #597. A finished Feature or Epic (`FEATURE_DONE`, #584) needs its own rule in `Sync-ProjectNeeds.ps1`, added with #584.
-- First acceptance run: one small Feature with `queue -Feature <nr>` overnight, ending with a list of parked PBIs and a release PR.
-
-## 2.4.0 — Feature runs and hardening (released as `v2.4.0`)
-
-| Order | Issue | Title | Size | Note |
-| --- | --- | --- | --- | --- |
-| 1 | #375 | loop-mode ledger lines before the PBI branch exists | S | merged; before #402 and #389: same hook file |
-| 2 | #402 | worktree-shared state directory (git common dir, `DROMOS_STATE_DIR`) | L | Tasks #403–#410; after #375 (same hook files), before #386 and #389, which build on the path; #379 is already merged, so `Write-StatusTable.ps1` is adapted in #403; `.agents/` → `.dromos/` stays at 3.0.0 (dromos#70); client verification follow-ups (Windows #422, VS Code Copilot #423, OpenCode #424, Copilot CLI #425, Claude Code #450) are linked from the results table in docs/orchestrator.md; #410 stays open until they are done; Feature #432 (#422–#426) is not part of this release |
-| 3 | #367 | git-guardrails scanner quadratic on bash 3.2 | S | independent |
-| 4 | #252 | `github-release` refuses an already released branch | S | protects this very release; do before cutting |
-| 5 | #251 | model policy, opus in `plan.json`, escalation at fix round 2 | M | released |
-| 6 | #389 | `SubagentStop` hook sends `progress` to `$DROMOS_URL/ingest` (Feature #388, closed) | M | released; opt-in through `DROMOS_URL`, needs `POST /ingest` (dromos#43, in dromos `v0.1.0`) |
-
-Feature #248 is closed; its verification follow-ups #422–#425, #450 belong to Feature #432. Epic #300 closes with Feature #547 (merged, ships in 2.5.0).
-
-## 2.5.0 — Epic #384 (format, review convergence) and Feature #595: project cockpit
-
-Merged on `release/next` (project status `In release`); the release is cut once the cockpit PBIs below are merged:
-
-| Issue | Title | Note |
+| Epic | State | Note |
 | --- | --- | --- |
-| #442 | worktrees on demand under `.worktrees/<nr>`, checkout lease, queue wiring | Tasks #443 #444 #465 #445 |
-| #383, #386 | format changed sources as a fixed implementer step, per-project override in `.agents/format.json` | Feature #385 closes |
-| #480, #481, #482, #534, #535 | review rounds converge after APPROVE, smaller review package, fewer dimensions for small diffs | Feature #478 stays open with the unscheduled #487, #541, #543 |
-| #548 | Task bodies cached as `task-<nr>.md` | Feature #547 closes |
-| #569, #570, #571 | test files split per describe, perf cases in their own Vitest project | Feature #568 closes with #610 |
-| #426 | bash tool for `pr-writer`, `review-lead`, `reviewer` on OpenCode | Feature #432 stays open |
-| #610 | Final-Verify runs the full test suite once | Feature #568 closes |
+| #714 content-only repository (3.0.0) | closed 2026-10-28 | released as `v3.0.0` |
+| #715 role skills and runner launcher (3.1.0) | Feature #806 open | released as `v3.1.0`; #806 closes when #811 (merged) is closed with 3.2.0 |
+| #821 deliver issues through Claude Code workflows | planned, no PBI started | replaces the runner launcher of #715; Feature #822 holds every PBI |
+| #427 hub maintenance | Feature #808 open (PBIs merged) | closes with 3.2.0; Bug #520 moved to [ci#89](https://github.com/GravionLabs/ci/issues/89) |
+| #411 stack packages | Feature #413 open (#419 merged, #420, #421) | Go ships in 3.2.0; JVM waits on a decision |
 
-The cockpit replaces the sprint as the way to pick work: a project field `Needs` (`Planning`, `Decision`, `Review`, `Blocked`, `Ready`, `In progress`, `Release review`) computed from GitHub state, and the views `Needs me`, `Ready for loop` and `Blocked` on it. The `Sprint` field stays optional. Pulled forward from 2.6.0 because the unattended loops of Epic #573 need the human's two jobs (planning, release review) visible first.
+`release/next` carries seven commits since `v3.1.0` (#419, #809, #810, #804, #811, #816, #745). #804 installs the dromos runner setup that #828 removes again; releasing it once is cheaper than holding 3.2.0 until #828, which sits behind the whole deliver chain.
 
-| Order | Issue | Title | Size | Depends on |
-| --- | --- | --- | --- | --- |
-| 1 | #596 | project standard: field `Needs`, views `Needs me`, `Ready for loop`, `Blocked`, `Sprint next`; label `planned` on publish | S | — |
-| 2 | #597 | `Sync-ProjectNeeds.ps1`: rules, `Set-ProjectStandard -Sync`, loop and queue call at PBI boundaries, workflow `project-needs.yml` | M | #596 |
-| 3 | #598 | `Needs` column in `orchestrator status` and `queue -DryRun`, closing `Needs me:` line | S | #597 |
+## 3.2.0 — ship what is merged, prepare the config file
 
-Feature #595 closes with #598. The sync hooks in `add-to-project.yml` and `release-pr.yml` and the workflow template for other repositories are split out as #626 (2.6.0). #597 edits `loop-mode.md` and the queue runner before #579 and #582 do, so no parallel work on those files in this release.
-
-### 2.5.0 — Epic #411, Feature #412: Rust stack package with Tauri (done: #412 and #414–#417 are closed)
+Cut once #819 and #830 are merged. Both are size S and have no blockers; #830 is the only PBI the deliver work depends on that can start today.
 
 | Order | Issue | Title | Size | Depends on |
 | --- | --- | --- | --- | --- |
-| 1 | #414 | ROADMAP.md schedules Epic #411 | S | — |
-| 2 | #415 | `detect-techstack` detects Rust and Tauri | S | — |
-| 3 | #416 | `rust` package with `rust-implementation` and `rust-test` | M | #415 |
-| 4 | #417 | Tauri conventions in `rust-implementation` | S | #416 |
+| merged | #419 | `go` package with `go-implementation` and `go-test`, detection via `go.mod` | M | — |
+| merged | #809, #810 | `pnpm run check` bundles the CI checks; PSScriptAnalyzer over the skill scripts (Feature #808) | S | — |
+| merged | #811 | runner config example in `after-install.md` (Feature #806) | S | — |
+| 1 | #819 | `go-test` rule: a test for a missing tool empties `PATH` | S | — |
+| 2 | #830 | `.agents/config.json` as the project config, `format` override moves in from `.agents/format.json` | S | — |
 
-Feature #412 closes with #417. The stack PBIs share no files with the orchestrator PBIs of this release (`detect-techstack`, new `packages/<lang>/`, README and AGENTS.md tables) and may run in parallel to #383 and #386.
+Closes with the release: Features #806 and #808, Epic #715.
 
-## 2.6.0 — Epic #573, Features #574 and #575: unattended loops (apm-hub only)
+## 3.3.0 — Epic #821: deliver through Claude Code workflows
 
-The loop and the queue run a Feature or Epic without a human by default. Two human review points remain: planning (`orchestrator plan <feature>` ends with the Task breakdown, #580) and the release PR `release/next` → `main`. No dromos dependency; these PBIs share files with #391/#392 (`pbi-runner`, queue runner), which follow in 2.7.0.
-
-| Order | Issue | Title | Size | Depends on |
-| --- | --- | --- | --- | --- |
-| 1 | #578 | default advisory policy `medium` for headless runs | S | — |
-| 2 | #579 | parked gates: label, comment, `attention`, loop reselection, queue exit codes | L | #578 |
-| 3 | #580 | planning ends with Tasks: `plan <feature>` breaks approved PBIs down, `status` shows `unplanned` | M | #579 |
-| 4 | #581 | `/ruling` issue comments answer parked gates | M | #579 |
-| 5 | #582 | `Merge-ApprovedPr.ps1`: loop and queue merge approved PBI PRs by default, `--no-merge` | M | — (parallel to #578–#581: own script, queue runner shared with #579, so serial with it) |
-| 6 | #583 | required checks on `release/**` as a verified merge precondition, `github-release protect` | S | #582 |
-| 7 | #584 | Feature/Epic digest, `attention FEATURE_DONE`, `--release-at` | M | #582 |
-| 8 | #585 | docs: unattended mode, review points, rollback | S | #582, #579 |
-
-Feature #574 closes with #581, Feature #575 with #585. Before the first unattended run of this repository: #583 protects `release/next` (today it has no required checks).
-
-### 2.6.0 — Feature #595 follow-up and PBIs moved out of 2.5.0
+Feature #822. The chain is serial through the spike and the planning skills; #827 and #830-based keys in the config are the parallel strands.
 
 | Order | Issue | Title | Size | Depends on |
 | --- | --- | --- | --- | --- |
-| 1 | #626 | `Needs` sync from `add-to-project.yml` and `release-pr.yml`; workflow template for other repositories | S | #597 |
+| 1 | #823 | spike: workflow subagents and skills, `scriptPath` in an installed skill, headless `claude -p "/deliver"`, agentlens metadata, OpenCode skills and plugin events; report in `docs/spikes/deliver.md` | S | — (in progress, branch `chore/823-spike-deliver`) |
+| 2 | #824 | `grill-me` skill: one question at a time, decisions written to the issue, non-interactive mode returns questions as data | S | #823 |
+| 3 | #825 | `issue-planning` grills first and supports `refine <nr>` | M | #824 |
+| 4 | #826 | `deliver` skill and workflow: Epic/Feature/PBI, worktree, gate, `code-review`, ≤ 2 fix rounds, PR, CI wait, merge; adds the keys it needs (`base`, models per role) to `.agents/config.json` and its schema | L | #823, #825, #830 (released in 3.2.0) |
+| 5 | #828 | remove the dromos launcher and runner setup (`/orchestrator`, `dromos init` in `apm-install`, `.dromos/`) | S | #826 |
+| 6 | #829 | trial: `/deliver` on one small agentlens PBI; findings become issues | S | #826 |
+| parallel | #827 | OpenCode orchestrator and role agents; PR and merge only through the keryx gate tools | M | #823, keryx#12 (`open_pr`/`merge` MCP tools), keryx#13 (plugin denies `gh pr create`/`merge`) |
 
-### 2.6.0 — Epic #411, Feature #413: Go, JVM and Swift packages, frontend detection
+Rules for this release:
 
-| Order | Issue | Title | Size | Depends on |
-| --- | --- | --- | --- | --- |
-| 1 | #418 | `detect-techstack` reports react, vue, svelte and next as frameworks | S | #415 (serial edits of `detect-techstack`) |
-| 2 | #419 | `go` package, detection via `go.mod` | M | #418 |
-| 3 | #420 | `jvm` package for Java and Kotlin, detection via build files | M | #419; `needs-decision`: one `jvm` package or `java` + `kotlin` |
-| 4 | #421 | `swift` package, detection via `Package.swift` | M | #420 |
+- #826 reads `.agents/config.json` from #830, so #830 is released before #826 starts; `#826` must not reintroduce a tool-named config path.
+- #828 lands before the release is cut, so 3.3.0 is the first release without any dromos surface; `after-install.md` names keryx where it named dromos.
+- #827 can ship in 3.3.0 only if keryx#12 and keryx#13 are released; otherwise it moves to 3.4.0 and 3.3.0 ships Claude Code only. keryx is at the planning stage (README only, Epic keryx#1 with Features #2, #5, #8, #11, #14).
+- One PBI at a time on `release/next`: #824–#826 all edit the `delivery` package and `issue-planning`.
 
-Feature #413 closes with #421, Epic #411 with it. These PBIs share no files with #578–#585 and #626 and may run in parallel to them.
+Epic #821 closes with #829 (acceptance: `/deliver <nr>` runs without questions after grilling; planning is interactive with `grill-me`; no dromos launcher or setup left).
 
-## 2.7.0 — Epic #573, Feature #576: retro as a feedback loop (Stage 0)
+## 3.4.0 — learning path, follow-ups and stack packages
 
-| Order | Issue | Title | Size | Depends on |
-| --- | --- | --- | --- | --- |
-| 1 | #586 | `Get-RunMetrics.ps1` across runs (`-Loop`, `-Issues`, `-Since`), normalised rulings | M | — |
-| 2 | #587 | headless retro: report under `<state>/retro/`, candidate PBIs (`retro`, `needs-decision`) with hypothesis and metric | L | #586 |
-| 3 | #590 | retro guardrails: `guardrails.md`, `Test-RetroScope.ps1` in review and CI | M | #587 |
-| 4 | #588 | retro trigger from loop and queue (`--retro auto|never`, thresholds) | M | #587; serial with #392 (queue runner) |
-| 5 | #589 | hypothesis check after k runs, revert candidates | M | #587, #588 |
-| 6 | #594 | planner estimates (size, tier) on the Task ledger line; retro measures their accuracy | M | #586 (parallel to #587–#589) |
+Milestone 3.4.0. Planned in detail with `issue-planning` once 3.3.0 is cut.
 
-Feature #576 closes with #589 and #594. #590 runs before #588 so the first automatic retro is already bounded.
+| Issue | Title | Size | Depends on / decision |
+| --- | --- | --- | --- |
+| #661 | Feature: lessons contract. `.agents/lessons/*.md` read by `deliver`, `issue-planning` and `code-review`; `retro` proposes and retires lessons; check validates the files. Under Epic #821 | L | #826; PBIs planned with `issue-planning` |
+| new | `retro` input replaces `dromos run metrics` (runner events, cost per phase) with data that exists after 004: review findings and PR history of the `deliver` run, plus cost from agentlens when available | M | #826; blocks the metrics columns of `retro`, not the lesson proposals |
+| new | `Format-Changed.ps1` repo detection without `-Language` (the dromos `detectFormatter` table: `scripts.format`, Biome, Prettier, ruff, `.sln`, `Cargo.toml`, `go.mod`), optional `PostToolUse` format hook for interactive sessions | M | #830; decision whether apm-hub ships a hook again (AGENTS.md: no hooks package since P9) |
+| #420 | `jvm` package for Java and Kotlin | M | `needs-decision`: one `jvm` package or `java` + `kotlin`; blocked by #419 (merged) |
+| #421 | `swift` package, detection via `Package.swift` | M | #420 |
+| #827 | OpenCode orchestrator (if keryx is late) | M | keryx#12, keryx#13 |
 
-### 2.7.0 — Feature #390: attention, queue, usage, `/dromos-mux`
+Feature #413 and Epic #411 close with #421; Feature #661 closes with its last PBI. Improvement via `retro` is a requirement of the learning path: a lesson that `retro` proposes and a human approves must be in the next `deliver` run's context without a skill change.
 
-| Order | Issue | Title | Size | Depends on |
-| --- | --- | --- | --- | --- |
-| 1 | #391 | `pbi-runner` `GATE|BLOCKED|FAILED` as `attention` | S | #389 (released in 2.4.0); #579 adds `kind: GATE` with question and options, dromos#138 returns the attention id |
-| 2 | #392 | queue runner reports `queue.item`, supports `-Mux` | M | #389 (released in 2.4.0); serial with #588 (queue runner) |
-| 3 | #393 | status line reports `usage` | S | #389 (released in 2.4.0) |
-| 4 | #394 | user-invoked `/dromos-mux` skill in `delivery` | M | #392, dromos-mux released |
+## Decided on 2026-10-28
 
-Epic #387 closes with #394.
-
-## 2.8.0 — Features #577 and #398: the bus as history and executor (dromos-dependent)
-
-### 2.8.0 — Epic #573, Feature #577: retro reads the dromos event history (Stage 1)
-
-| Order | Issue | Title | Size | Depends on |
-| --- | --- | --- | --- | --- |
-| 1 | #591 | `Add-LedgerLine.ps1` posts every ledger line to `/ingest` as `progress` with `data.kind` | S | #389; dromos#136 for `kind` (omitted until released) |
-| 2 | #592 | `Get-RunMetrics.ps1 -Source dromos` | M | #591, #586; dromos#135, dromos#137, #393 |
-
-Counterpart: dromos Epic GravionLabs/dromos#132 (Features #133 history and metrics, #134 attention lifecycle; milestone 0.2.0 there).
-
-### 2.8.0 — Feature #398: queue runner as driver on the bus session API
-
-Scheduled for 2.8.0, planned when dromos#65 is released. Splits `Invoke-OrchestratorQueue.ps1` into driver (stays in apm-hub) and executor (bus session API, `GravionLabs/dromos` Feature #61); #392's `-Mux` is reworked into it. Order in dromos: `ROADMAP.md` there, stage 4.
-
-| Needs from dromos | Enables in apm-hub |
+| Issue | Decision |
 | --- | --- |
-| #62–#65 (headless sessions, restart, HTTP) | executor choice in the queue runner, overnight Epic runs without dromos-mux |
-| #66–#68 (idle, pane mode) | `-Mux` as pane executor, following a run in dromos-mux |
-| #43 (`/ingest`) | already needed for 2.6.0 (#389) |
+| #520 `Set-Sprint.ps1` / `Set-ProjectStandard.ps1` miss project items | transferred to [ci#89](https://github.com/GravionLabs/ci/issues/89), the scripts live in `GravionLabs/ci` since A8 |
+| #661 lessons contract | kept, re-parented from the closed Epic #573 to Epic #821, re-scoped to `deliver` and `retro`, milestone 3.4.0, blocked by #826 |
+| #714 content-only repository | closed |
 
-PBIs for #398 are planned when #65 is released (`orchestrator plan 398`).
+## Dependencies on other repositories
 
-## 3.0.0 — breaking
-
-| Issue | Title | Depends on |
+| Repository | Needed for | Status |
 | --- | --- | --- |
-| #280 | remove `orch-pipeline`, `/orch` prompt and `.orch/` mentions | everything above released in 2.x |
-| #431 | remove deprecated surface, incl. the queue alias `-MergeApproved` (default since #582) and the headless advisory `Gate:` (replaced by the default policy of #578) | #582, #578 released |
+| keryx #12, #13 | #827 (gate tools, plugin deny) | planned |
+| keryx #6, #7 | session events for herdr; not a blocker for apm-hub | planned |
+| agentlens | #829 trial repository; #823 question 5 (subagent metadata as role) | — |
+| ci | [ci#89](https://github.com/GravionLabs/ci/issues/89) (project items walk); `issues.yml` sets the `[Level]` prefix | — |
 
 ## Risks
 
-- Unattended merges into `release/next` (#582) land before a human looks at them; the release PR is the review point, `release/**` must carry required checks (#583) before the default is switched on in a repository.
-- The retro loop (#576) learns from ledger discipline; estimates from transcripts are ±30 %, measured cost arrives only with #393 and #592.
-
-- #398 depends on the session API in dromos#61; until then the local executor stays the only one.
-- 2.6.0 has no dromos dependency any more (#389 shipped in 2.4.0). Feature #390 (2.7.0) needs dromos#138 and dromos-mux, 2.8.0 needs dromos 0.2.0 and 0.4.0; if dromos lags, those move, nothing else does.
-- The `merged` label was set by automation on Epic #573 and the unmerged #594 (2026-10-25 04:22 UTC, both removed by hand); the label step of the release workflow matches issue numbers in PR bodies too loosely.
+- The deliver chain is serial (#823 → #824 → #825 → #826 → #828/#829): a "no" in the spike (workflow `scriptPath` inside an installed skill, headless `/deliver`) changes #826's design before any code exists. The spike names a fallback for every "no", so the chain slips, it does not break.
+- 3.2.0 ships the dromos setup of #804 and 3.3.0 removes it. Users who run `apm-install` in between get a `.dromos/config.json`; #828 and `after-install.md` must say how to migrate it to `.agents/config.json`.
+- `.agents/` is both an install target (`.agents/skills/`) and the home of the committed config; a project that ignores the whole directory loses the config. #830 adds the installer notice; until then the gitignore exception is documented only in `docs/usage/format-override.md`.
+- `retro` still reads `dromos run metrics` (SKILL.md step 1), and dromos is archived. Retro keeps working on review findings and transcripts, but its cost and duration columns are `n/a` until the input is replaced (3.4.0). Every retro-based lesson proposal (#661) depends on that fallback.
+- #827 depends on keryx, which has no code yet. Shipping 3.3.0 Claude Code only is the planned fallback.
