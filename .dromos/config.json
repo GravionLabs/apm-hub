@@ -1,6 +1,0 @@
-{
-  "format": "pnpm run format",
-  "test": {
-    "full": "pnpm run check"
-  }
-}

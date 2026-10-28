@@ -1,5 +1,7 @@
 # Simplification work plan: apm-hub and dromos
 
+Update 2026-10-28: dromos decision 004 archived dromos at v0.4.0. Delivery is the `deliver` workflow in apm-hub, the bus, Attention API and gates continue in [GravionLabs/keryx](https://github.com/GravionLabs/keryx); the dromos runner path (Stage B), `/orchestrator` and `.dromos/config.json` are removed (#828). Read the runner parts of this document as history.
+
 Status: approved direction, 2026-10-27, review corrections applied the same day. Architecture and reasoning: [simplification-plan.md](simplification-plan.md). This document is the backlog. Every `[Epic]`, `[Feature]` and `[PBI]` below exists as a GitHub issue with the same title; the `Done when` lines are the acceptance criteria, `Depends on` lines are native blocked-by links. Sizes: S (one sitting), M (one day). There is no L: anything larger is split.
 
 Order of work, as decided:

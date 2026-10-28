@@ -46,7 +46,7 @@ Skills delegate by name instead of repeating each other. One skill owns a workfl
 - [Skill frontmatter convention](concepts/skill-frontmatter.md): the restricted frontmatter that keeps skills portable
 - [Common workflows](usage/common-workflows.md): end-to-end examples with the installed skills
 - [Skill companion directories](usage/skill-companion-dirs.md): `scripts/`, `references/`, `templates/`, `assets/`
-- [Working mode](working-mode.md) and [the runner](runner.md): one issue per session, and the automated pipeline in dromos
+- [Working mode](working-mode.md) and [delivery](runner.md): one issue per session, and delivery through `/deliver`
 - [Prerequisites](prerequisites.md): tools the skill scripts depend on
 - [LSP configuration](lsp-configuration.md): language servers for Copilot CLI
 - [CONTRIBUTING.md](../CONTRIBUTING.md) and [AGENTS.md](../AGENTS.md): adding or changing skills
