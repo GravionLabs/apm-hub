@@ -523,6 +523,26 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
       expect(calls()).toEqual(['cargo fmt -- src/lib.rs', 'cargo fmt -- --check src/lib.rs']);
     });
 
+    it('go: gofmt -w <files>, -Check lists with gofmt -l', async () => {
+      tool('gofmt');
+      write('cmd/app/main.go', 'x');
+      write('README.md', 'x');
+      const r = await go(['-Language', 'go']);
+      expect(r.stdout.trim()).toBe('formatted: 1 files');
+      await go(['-Language', 'go', '-Check']);
+      expect(calls()).toEqual(['gofmt -w cmd/app/main.go', 'gofmt -l cmd/app/main.go']);
+    });
+
+    it('go: a missing gofmt is skipped by name', async () => {
+      write('main.go', 'x');
+      const r = await worker.run(['-Language', 'go'], {
+        cwd: dir,
+        env: { ...process.env, PATH: `${bin}:/usr/bin:/bin` },
+      });
+      expect(r.status).toBe(0);
+      expect(r.stdout.trim()).toBe('skipped: gofmt not found');
+    });
+
     it('skips with no changed files when no file of the language changed', async () => {
       tool('cargo');
       write('a.ts', 'x');
