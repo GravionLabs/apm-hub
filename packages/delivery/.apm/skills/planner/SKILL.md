@@ -1,9 +1,28 @@
 ---
 name: planner
-description: 'Plan an issue one level down with blockers and sizes; writes plan.json. Use for "plan issue #N".'
+description: 'Plan an issue one level down with blockers and sizes, grill the open decisions, create the issues; refine <nr> grills an existing issue. Use for "plan issue #N".'
 ---
 
-Planning only: no source edits, no issue creation, no questions to the user (open decisions go into `questions[]`, see `references/questions.md`). The plan is the reply; the caller creates the issues.
+Planning only: no source edits. The planning steps below ask nothing (open decisions go into `questions[]`, see `references/questions.md`); the plan is the reply.
+
+## Modes
+
+- **Non-interactive** (a workflow subagent, e.g. `deliver` phase 1): no questions, no issue creation; return the plan with `questions[]` as data, the caller decides.
+- **Interactive** (a user session): plan, grill, approve, create (see `## Interactive`).
+- **`refine <nr>`**: see `## Refine`.
+
+## Interactive
+
+1. Plan per `## Steps`.
+2. Load `grill-me` with the plan's `questions[]`. Re-plan only when an answer changes the item structure (items added, removed, split, re-blocked); otherwise fold the answers into the item bodies. Next round with the new `questions[]` until none is open.
+3. Show the items (id, title, size, `blocked_by`) and the answers. The user approves granularity, blockers and which items to create; also with zero questions. Create nothing before.
+4. Create the approved items with `github-issue` `references/create-from-plan.md`; each created issue gets the answers that concern it under `## Decisions` (`<question> — <answer>`).
+
+Task breakdown after a Feature plan: one cycle (steps 1-4) per PBI, in order, with its own grilling and approval. Never put the questions of several PBIs into one round.
+
+## Refine
+
+`refine <nr>`: read the issue (`gh issue view <nr> --json title,body,labels,comments`), load `grill-me` with its open points, acceptance criteria and technical notes (explore the code named there first; facts are not asked). Update the body with the decisions (`## Decisions`) and the sharpened criteria and notes via `gh api -X PATCH repos/{owner}/{repo}/issues/<nr> -F body=@file`. No plan, no new issues.
 
 ## Depth (exploration budget)
 

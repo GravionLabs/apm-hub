@@ -31,6 +31,7 @@ Feature #822. The chain #824 → #825 → #826 is serial; #830 and #827 are the 
 | 5 | #828 | remove the dromos launcher and runner setup (`/orchestrator`, `dromos init` in `apm-install`, `.dromos/`) | S | #826 |
 | 6 | #829 | trial: `/deliver` on one small agentlens PBI; findings become issues | S | #826 |
 | parallel | #827 | OpenCode orchestrator and role agents; PR and merge only through the keryx gate tools | M | keryx#12, keryx#13, an OpenCode provider login |
+| last | #839 | release PBI: CHANGELOG, migration note, `git grep dromos` clean, release PR with `github-release` | S | #830, #824, #825, #826, #828, #829 (and #827 if it stays in) |
 
 Rules for this release:
 
@@ -56,6 +57,7 @@ Milestone 3.4.0. Planned in detail with `planner` once 3.3.0 is cut.
 | #420 | `jvm` package for Java and Kotlin | M | `needs-decision`: one `jvm` package or `java` + `kotlin` |
 | #421 | `swift` package, detection via `Package.swift` | M | #420 |
 | #827 | OpenCode orchestrator (if keryx is late) | M | keryx#12, keryx#13 |
+| #840 | release PBI for 3.4.0: CHANGELOG, release PR with `github-release`; the real scope is added as blockers after the planning round | S | #839, #832 |
 
 Feature #413 and Epic #411 close with #421; Feature #661 and Epic #821 close with the last lessons PBI. Improvement via `retro` is a requirement of the learning path: a lesson that `retro` proposes and a human approves must be in the next `deliver` run's context without a skill change.
 
