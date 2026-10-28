@@ -20,7 +20,7 @@ describe('retro SKILL.md', () => {
 
   it('keeps the seven columns and the approval rule', () => {
     expect(text).toContain('exactly these seven columns');
-    expect(text).toContain('without the user\'s approval');
+    expect(text).toContain("without the user's approval");
   });
 
   it('has draft PBIs name the skill file and the rule', () => {
