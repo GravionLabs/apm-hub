@@ -33,7 +33,7 @@ There is no hooks package: the git guardrails (destructive git commands) live in
 | `delivery` | `planner`, `orchestrator` (user-invoked launcher of the dromos runner: `/orchestrator <plan|run|status> <nr>`, answers planner questions on exit 2 with `--answer`), `retro` (user-invoked run retrospective), `apm-install` (user-invoked installer `scripts/Install-HubPackages.ps1`: detects the stack, proposes packages, dry run first; slash usage `/apm-install [dry-run] [pkg...] [-g]`; `references/packages.md`, `references/after-install.md`). Depends on `github` and `shared`; stack packages are installed per project. |
 | `github` | `github-issue` (routing skill for the Epic→Feature→PBI→Task hierarchy, writes titles as `[<Level>] <summary>`; references for standalone, sub-issues, task issues, conventional commits, release branches), `github-pull-request` (targets the release branch, not `main`; release mode for heads `release/next` and `release/<x.y>` into the default branch needs no issue number, caller `title`, `merged_prs`, optional `feature_number`), `github-release` (cut the rolling `release/next`, finish with the release PR into `main`; read-only state checks in `scripts/Get-ReleaseState.ps1`; owns the git-cliff changelog, `references/cliff-setup.md`; `templates/release-branch.yml` is the caller of the reusable `release-branch.yml` of GravionLabs/ci, offered by `cut`), the project standard skill `github-project` ships from GravionLabs/ci (not in this repository) |
 | `dotnet` | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`. Depends on `dotnet/skills` (`dotnet` plugin) |
-| `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-prettier-eslint-husky` |
+| `ts` | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky` |
 | `py` | `py-implementation` (incl. `references/uv-cli.md`), `py-test`, `py-create-project` |
 | `rust` | `rust-implementation` (incl. `references/conventions.md`, `references/tauri.md` loaded for framework `tauri`), `rust-test` (incl. `references/mocking-and-properties.md`) |
 | `ng` | `ng-implementation` (incl. `references/component.md`, `references/signal-store.md`), `ng-test`, `ng-create-project`, `ng-ag-grid-developer`. Depends on `angular/skills` (`angular-developer`) |
@@ -72,6 +72,7 @@ The title of an issue starts with its level: `[Epic]`, `[Feature]`, `[PBI]`, `[T
 ```powershell
 pnpm install
 pnpm run build; pnpm test                 # all tests (includes the skill size check)
+pnpm run format:check                     # Biome format + lint (pnpm run format writes); Prettier is not used here
 node scripts/check-manifests.mjs --fix    # sync apm.yml x-skills lists after adding/removing skills
 pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .   # sizes, dangling refs, duplicates
 ```

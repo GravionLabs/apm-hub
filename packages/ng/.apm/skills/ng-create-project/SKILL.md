@@ -13,7 +13,7 @@ Scaffold a new Angular 21+ project with a production-ready baseline. Paths to `s
 - **`@angular/cli`** ≥ 21 (global or via `npx @angular/cli@latest`), Node 22 LTS
 - **TypeScript** strict mode with Angular compiler options
 - **Vitest** with jsdom (replaces Karma/Jest), on by default
-- **ESLint + Prettier + Husky** via the `setup-prettier-eslint-husky` skill, on by default
+- **ESLint + Prettier + Husky** via the `setup-prettier-eslint-husky` skill, on by default (Angular stays on Prettier, not Biome: no Angular template support, no SCSS)
 
 ## Steps
 
