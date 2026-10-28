@@ -6,6 +6,10 @@
 
 By default `Format-Changed.ps1 -Language <lang>` runs the built-in commands of `ts`, `ng`, `py`, `dotnet`, `rust` and `go` (named in the `## Format` section of each `<lang>-implementation` skill). The `format` key replaces these commands per language, for example to use JetBrains tools.
 
+## Deliver roles
+
+`deliver.roles` sets `model` and `effort` per role of the `/deliver` workflow (`select`, `plan`, `create`, `implement`, `fix`, `gate`, `review`, `pr`, `ci`); `implement` and `fix` also take `tiers` (`fast`, `standard`, `strong`). Unset keys keep the defaults, see `references/roles.md` of the `deliver` skill.
+
 ## Schema
 
 ```json
@@ -21,6 +25,7 @@ By default `Format-Changed.ps1 -Language <lang>` runs the built-in commands of `
 }
 ```
 
+- `deliver`: `{ "roles": { "review": { "model": "opus", "effort": "high" } } }`, see above.
 - `format`: `false` skips every format and check call (`skipped: disabled`, exit 0), or a map keyed by language (`ts`, `ng`, `py`, `dotnet`, ...), as passed with `-Language` by the language skill. No `format` key keeps the defaults.
 - `extensions`: files to keep (optional; absent needs `-Extensions` on the call).
 - `format` (entry): command for the format step; `check`: command for the read-only check (what CI or the caller runs). Each is a string or an array run in order; the first non-zero exit stops. `{files}` is replaced by the changed files, repo-relative, one argument each; inside a token (`--include={files}`) the files are joined by `;`.
