@@ -12,12 +12,13 @@
     "generate:all": "npm run build && npm run generate:ci",
     "format": "biome format --write .",
     "format:check": "biome check .",
-    "check": "pnpm run build && pnpm run format:check && node scripts/check-manifests.mjs && pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root . -FailOnDangling && pnpm test",
+    "check": "pnpm run build && pnpm run format:check && node scripts/check-manifests.mjs && pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root . -FailOnDangling && pnpm run lint:ps && pnpm test",
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
     "test:watch": "vitest",
     "check:manifests": "node scripts/check-manifests.mjs",
-    "lint": "biome lint ."
+    "lint": "biome lint .",
+    "lint:ps": "pwsh scripts/Invoke-ScriptAnalysis.ps1"
   },
   "dependencies": {
     "yaml": "^2.8.3"

@@ -74,6 +74,7 @@ pnpm install
 pnpm run check                          # local equivalent of the CI checks
 pnpm run build; pnpm test                 # all tests (includes the skill size check)
 pnpm run format:check                     # Biome format + lint (pnpm run format writes); Prettier is not used here
+pnpm run lint:ps                        # PSScriptAnalyzer (PSScriptAnalyzerSettings.psd1) over packages/ and .github/
 node scripts/check-manifests.mjs --fix    # sync apm.yml x-skills lists after adding/removing skills
 pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .   # sizes, dangling refs, duplicates
 ```

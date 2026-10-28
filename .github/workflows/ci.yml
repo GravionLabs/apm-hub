@@ -122,6 +122,13 @@ jobs:
       - name: Check formatting
         run: pnpm run format:check
 
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module PSScriptAnalyzer -RequiredVersion 1.24.0 -Scope CurrentUser -Force
+
+      - name: Analyze PowerShell scripts
+        run: pnpm run lint:ps
+
       # Generated aggregate docs are gitignored/CI-owned; generate them in the
       # working tree only so the site build resolves its links. Never committed here.
       # generate:all = tsc build + generate:ci; dist/ is not available after the test action.
