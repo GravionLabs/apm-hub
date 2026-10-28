@@ -110,28 +110,56 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
     });
 
     describe('dromos config check', () => {
-      const fake = (configBody: string) => {
+      // fake dromos: `config check --format json` prints the given JSON and exits with the given code (the shape of
+      // dromos src/cli/config.ts: {path, valid, errors}); anything else prints the version. Args are logged.
+      // Only shell builtins: the lean PATH has no cat; the JSON holds no single quote.
+      const fake = (json: string, exit = 0) => {
         const bin = path.join(dir, 'bin');
         fs.mkdirSync(bin);
         fs.writeFileSync(
           path.join(bin, 'dromos'),
-          `#!/bin/sh\nif [ "$1" = config ]; then ${configBody}; else echo 0.5.0; fi\n`,
+          `#!/bin/sh\necho "$@" >> "${dir}/dromos.log"\nif [ "$1" = config ]; then printf '%s\\n' '${json}'; exit ${exit}; else echo 0.5.0; fi\n`,
           { mode: 0o755 },
         );
         return bin;
       };
+      const configPath = () => path.join(proj, '.dromos/config.json');
 
-      it('reports a valid config', () => {
-        const r = run(fake('echo "config ok"'));
+      it('reports a valid config of the current repository', () => {
+        fs.mkdirSync(path.join(proj, '.dromos'));
+        fs.writeFileSync(configPath(), '{}');
+        const r = run(fake(JSON.stringify({ path: configPath(), valid: true, errors: [] })));
         expect(r.code).toBe(0);
-        expect(r.out).toContain('dromos config check: config ok');
+        expect(r.out).toContain('dromos config check: valid');
+        expect(fs.readFileSync(path.join(dir, 'dromos.log'), 'utf8')).toContain(
+          'config check --format json',
+        );
       });
 
-      it('reports an invalid config without failing', () => {
-        const r = run(fake('echo "models.claude missing"; exit 1'));
+      it('reports a missing config as defaults', () => {
+        const r = run(fake(JSON.stringify({ path: configPath(), valid: true, errors: [] })));
         expect(r.code).toBe(0);
-        expect(r.out).toContain('dromos config check: invalid (models.claude missing)');
-        expect(r.out).toContain('dromos init');
+        expect(r.out).toContain('dromos config check: not found, defaults apply');
+      });
+
+      it('reports an invalid config with its errors without failing', () => {
+        const errors = [
+          { path: 'parallel', message: 'Too small: expected number to be >0' },
+          { path: '', message: 'invalid JSON: Unexpected token' },
+        ];
+        const r = run(fake(JSON.stringify({ path: configPath(), valid: false, errors }), 1));
+        expect(r.code).toBe(0);
+        expect(r.out).toContain(
+          'dromos config check: invalid (parallel: Too small: expected number to be >0; invalid JSON: Unexpected token)',
+        );
+        expect(r.out).toContain('dromos config schema');
+        expect(r.out).not.toContain('fix with: dromos init');
+      });
+
+      it('reports a dromos without config check (usage error) without failing', () => {
+        const r = run(fake('dromos: unknown command config', 2));
+        expect(r.code).toBe(0);
+        expect(r.out).toContain('dromos config check: not available');
       });
 
       it('skips the config check when dromos is missing', () => {
