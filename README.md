@@ -94,7 +94,7 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
 
 5. Install the runner (optional, for automated runs; the skills work without it):
    ```bash
-   npm i -g dromos
+   npm i -g @gravionlabs/dromos
    dromos --version
    ```
    dromos reads `.dromos/config.json` in the target repository, see [the runner](docs/runner.md) and [after install](packages/delivery/.apm/skills/apm-install/references/after-install.md).

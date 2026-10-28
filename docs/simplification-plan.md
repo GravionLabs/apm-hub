@@ -229,7 +229,7 @@ dromos, delete or demote:
 
 - apm-hub 3.0.0: content-only. `/orch`, `/orchestrator`, agents and hooks removed; `core` and `all` meta-packages redefined (skills only).
 - dromos 0.4.0 (milestones 0.2.0 adapters, 0.3.0 runner, 0.4.0 learning loop; the earlier roadmap's milestones were closed as `(old roadmap)`): runner, adapters, metrics, status.
-- Install story: `apm install` (skills) plus `npm i -g dromos` (runner). The queue launcher and `Install-QueueLauncher.ps1` disappear.
+- Install story: `apm install` (skills) plus `npm i -g @gravionlabs/dromos` (runner). The queue launcher and `Install-QueueLauncher.ps1` disappear.
 
 ## 8. What stays as it is
 

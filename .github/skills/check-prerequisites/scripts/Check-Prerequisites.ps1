@@ -162,7 +162,7 @@ if (Test-Tool 'dromos') {
     Write-Host "  ✓ dromos: $dromosVersion" -ForegroundColor Green
 } else {
     $results.runtime['dromos'] = "✗ NOT FOUND (optional)"
-    Write-Host "  - dromos: NOT FOUND (optional, the runner: npm i -g dromos)" -ForegroundColor Gray
+    Write-Host "  - dromos: NOT FOUND (optional, the runner: npm i -g @gravionlabs/dromos)" -ForegroundColor Gray
 }
 
 # ===== apmw (required once agent files in the apm-hub source format are installed) =====
