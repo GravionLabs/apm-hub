@@ -8,6 +8,7 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 - [Delivery](#delivery)
 - [Dotnet](#dotnet)
 - [Github](#github)
+- [Go](#go)
 - [Ng](#ng)
 - [Py](#py)
 - [Rust](#rust)
@@ -56,6 +57,15 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 | github-issue        | GitHub issue conventions: types, [Level] titles, branches, commits, native sub-issues, Task issues. Use for any GitHub issue work.                                  | [github-issue](../packages/github/.apm/skills/github-issue/SKILL.md)               |
 | github-pull-request | Create a GitHub PR from the current branch and linked issue via gh. Use for "create a PR" or to finish a branch.                                                    | [github-pull-request](../packages/github/.apm/skills/github-pull-request/SKILL.md) |
 | github-release      | Cut the rolling release/next branch or finish it with the release PR and changelog. Use for "cut a release", "finish the release" or when no release branch exists. | [github-release](../packages/github/.apm/skills/github-release/SKILL.md)           |
+
+## Go
+
+### Skills
+
+| Name              | Description                                                                                                                                                           | File                                                                       |
+| :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------- |
+| go-implementation | Go implementation rules (gofmt, go vet, golangci-lint) extending `implementation`. Use when writing or changing Go code.                                              | [go-implementation](../packages/go/.apm/skills/go-implementation/SKILL.md) |
+| go-test           | Go test rules using go test (table-driven tests, testify, t.Parallel, race detector, build-tag integration tests). Use when writing or running tests in a Go project. | [go-test](../packages/go/.apm/skills/go-test/SKILL.md)                     |
 
 ## Ng
 

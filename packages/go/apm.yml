@@ -1,5 +1,5 @@
 name: go
-version: 3.1.0
+version: 3.2.0
 description: Go skills. Implementation conventions and review rules (package layout, error wrapping, context, gofmt, go vet, golangci-lint) and go test testing with table-driven tests, testify, t.Parallel, race detector and build-tag integration tests.
 author:
   name: Gravion
