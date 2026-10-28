@@ -5,6 +5,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.0.1] — 2026-10-28
+
+### Documentation
+- Install story, apm install plus npm i -g dromos (#742) (#798)
+- 3.1.0 documentation after the role skills and without the guardrails hook (#799) (#801)
+
+
+### Features
+- Planner skill with plan schema in schema/ and assumptions (#737) (#793)
+- Implementer contract in the implementation skill (#738) (#794)
+- Reviewer contract in the code-review skill (#739) (#795)
+- Retro skill reads dromos run metrics (#740) (#796)
+- Orchestrator launcher skill (#741) (#797)
+- **ts**: Migrate formatting and linting from Prettier to Biome (#556) (#802)
+
+
 ## [3.0.0] — 2026-10-27
 
 ### Bug Fixes
@@ -16,6 +32,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Work plan records triage, milestones and issue numbers
 - Work plan adds the dromos release PBIs B6c and B17b
 - AGENTS.md, README, docs/ and site describe skills only (#735) (#760)
+- Update CHANGELOG.md for v3.0.0 [skip ci]
 
 
 ### Features
