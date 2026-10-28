@@ -16,9 +16,9 @@ History: 2.x and the simplification plan that produced 3.0.0 and 3.1.0 are in [d
 
 `release/next` carries seven commits since `v3.1.0` (#419, #809, #810, #804, #811, #816, #745). #804 installs the dromos runner setup that #828 removes again; releasing it once is cheaper than holding 3.2.0 until #828, which sits behind the whole deliver chain.
 
-## 3.2.0 — ship what is merged, prepare the config file
+## 3.2.0 — ship what is merged
 
-Cut once #819 and #830 are merged. Both are size S and have no blockers; #830 is the only PBI the deliver work depends on that can start today.
+Cut once #819 is merged (size S, no blockers). The Go package of #419 is new in this release, so its test rule ships with it. #830 (`.agents/config.json`) goes into 3.3.0: 3.2.0 still contains the `dromos init` setup of #804 that writes `.dromos/config.json`, and two project config files in one release would need two migration notes.
 
 | Order | Issue | Title | Size | Depends on |
 | --- | --- | --- | --- | --- |
@@ -26,27 +26,28 @@ Cut once #819 and #830 are merged. Both are size S and have no blockers; #830 is
 | merged | #809, #810 | `pnpm run check` bundles the CI checks; PSScriptAnalyzer over the skill scripts (Feature #808) | S | — |
 | merged | #811 | runner config example in `after-install.md` (Feature #806) | S | — |
 | 1 | #819 | `go-test` rule: a test for a missing tool empties `PATH` | S | — |
-| 2 | #830 | `.agents/config.json` as the project config, `format` override moves in from `.agents/format.json` | S | — |
 
 Closes with the release: Features #806 and #808, Epic #715.
 
 ## 3.3.0 — Epic #821: deliver through Claude Code workflows
 
-Feature #822. The chain is serial through the spike and the planning skills; #827 and #830-based keys in the config are the parallel strands.
+Feature #822. The chain is serial through the spike and the planning skills; #830 and #827 are the parallel strands.
 
 | Order | Issue | Title | Size | Depends on |
 | --- | --- | --- | --- | --- |
+| 0 | #830 | `.agents/config.json` as the project config, `format` override moves in from `.agents/format.json`; first in the release, no blockers | S | — |
 | 1 | #823 | spike: workflow subagents and skills, `scriptPath` in an installed skill, headless `claude -p "/deliver"`, agentlens metadata, OpenCode skills and plugin events; report in `docs/spikes/deliver.md` | S | — (in progress, branch `chore/823-spike-deliver`) |
 | 2 | #824 | `grill-me` skill: one question at a time, decisions written to the issue, non-interactive mode returns questions as data | S | #823 |
 | 3 | #825 | `issue-planning` grills first and supports `refine <nr>` | M | #824 |
-| 4 | #826 | `deliver` skill and workflow: Epic/Feature/PBI, worktree, gate, `code-review`, ≤ 2 fix rounds, PR, CI wait, merge; adds the keys it needs (`base`, models per role) to `.agents/config.json` and its schema | L | #823, #825, #830 (released in 3.2.0) |
+| 4 | #826 | `deliver` skill and workflow: Epic/Feature/PBI, worktree, gate, `code-review`, ≤ 2 fix rounds, PR, CI wait, merge; adds the keys it needs (`base`, models per role) to `.agents/config.json` and its schema | L | #823, #825, #830 (merged on `release/next`) |
 | 5 | #828 | remove the dromos launcher and runner setup (`/orchestrator`, `dromos init` in `apm-install`, `.dromos/`) | S | #826 |
 | 6 | #829 | trial: `/deliver` on one small agentlens PBI; findings become issues | S | #826 |
 | parallel | #827 | OpenCode orchestrator and role agents; PR and merge only through the keryx gate tools | M | #823, keryx#12 (`open_pr`/`merge` MCP tools), keryx#13 (plugin denies `gh pr create`/`merge`) |
 
 Rules for this release:
 
-- #826 reads `.agents/config.json` from #830, so #830 is released before #826 starts; `#826` must not reintroduce a tool-named config path.
+- #826 reads `.agents/config.json` from #830, so #830 is merged before #826 starts; `#826` must not reintroduce a tool-named config path.
+- #830 and #828 land in the same release: `.agents/config.json` replaces `.dromos/config.json` and `.agents/format.json` in one migration note.
 - #828 lands before the release is cut, so 3.3.0 is the first release without any dromos surface; `after-install.md` names keryx where it named dromos.
 - #827 can ship in 3.3.0 only if keryx#12 and keryx#13 are released; otherwise it moves to 3.4.0 and 3.3.0 ships Claude Code only. keryx is at the planning stage (README only, Epic keryx#1 with Features #2, #5, #8, #11, #14).
 - One PBI at a time on `release/next`: #824–#826 all edit the `delivery` package and `issue-planning`.
