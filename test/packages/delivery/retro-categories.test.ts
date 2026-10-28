@@ -4,7 +4,7 @@ import * as path from 'node:path';
 
 const file = path.resolve(
   __dirname,
-  '../../../packages/delivery/.apm/skills/retro/references/categories.md'
+  '../../../packages/delivery/.apm/skills/retro/references/categories.md',
 );
 const text = fs.readFileSync(file, 'utf8');
 

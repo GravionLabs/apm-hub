@@ -30,7 +30,7 @@ describe('implementer.schema.json', () => {
         filesChanged: [],
         testsRun: '',
         notes: ['criterion 2 contradicts the schema'],
-      })
+      }),
     ).toBe(true);
   });
 

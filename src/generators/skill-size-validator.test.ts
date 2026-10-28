@@ -123,7 +123,7 @@ describe('checkSkillSizes', () => {
       big,
       Array(SKILL_MD_LINE_LIMIT + 2)
         .fill('line')
-        .join('\n')
+        .join('\n'),
     );
     const violations = checkSkillSizes([small, big]);
     expect(violations).toHaveLength(1);
@@ -138,7 +138,7 @@ describe('checkSkillSizes', () => {
 describe('extractDescription', () => {
   it('reads a single-quoted scalar and unescapes doubled quotes', () => {
     expect(extractDescription("---\nname: x\ndescription: 'Review a PR''s diff.'\n---\n")).toBe(
-      "Review a PR's diff."
+      "Review a PR's diff.",
     );
   });
 
@@ -169,11 +169,11 @@ describe('checkDescriptionLengths', () => {
     const long = path.join(tmpDir, 'long-SKILL.md');
     fs.writeFileSync(
       ok,
-      `---\nname: ok\ndescription: ${'a'.repeat(SKILL_DESCRIPTION_CHAR_LIMIT)}\n---\n`
+      `---\nname: ok\ndescription: ${'a'.repeat(SKILL_DESCRIPTION_CHAR_LIMIT)}\n---\n`,
     );
     fs.writeFileSync(
       long,
-      `---\nname: long\ndescription: ${'a'.repeat(SKILL_DESCRIPTION_CHAR_LIMIT + 1)}\n---\n`
+      `---\nname: long\ndescription: ${'a'.repeat(SKILL_DESCRIPTION_CHAR_LIMIT + 1)}\n---\n`,
     );
     const violations = checkDescriptionLengths([ok, long]);
     expect(violations).toHaveLength(1);
@@ -245,7 +245,7 @@ describe('checkDescriptionBudget', () => {
       raw('c', '---\r\nname: c\r\ndescription: hello\r\n---\r\n'),
       raw(
         'g',
-        '---\r\nname: g\r\ndescription: hidden\r\ndisable-model-invocation: true\r\n---\r\n'
+        '---\r\nname: g\r\ndescription: hidden\r\ndisable-model-invocation: true\r\n---\r\n',
       ),
     ];
     const r = checkDescriptionBudget(files);
@@ -312,7 +312,7 @@ describe('live repo size check', () => {
     // Excluded from the budget: .github/skills and packages/apm-tooling are contributor tooling,
     // never loaded in consumer projects (apm-tooling is not part of `all`); they keep the per-skill limit.
     const files = findSkillFiles(repoPackagesDir).filter(
-      (f) => !f.startsWith(path.join(repoPackagesDir, 'apm-tooling') + path.sep)
+      (f) => !f.startsWith(path.join(repoPackagesDir, 'apm-tooling') + path.sep),
     );
     const r = checkDescriptionBudget(files);
     const list = r.skills
@@ -323,7 +323,7 @@ describe('live repo size check', () => {
       'Budget hit: shorten a description, gate the skill with disable-model-invocation: true, or raise SKILL_DESCRIPTION_TOTAL_CHAR_BUDGET with a justification.';
     expect(
       findBudgetViolation(r),
-      `total ${r.total}, budget ${r.budget}\n${hint}\n${list}`
+      `total ${r.total}, budget ${r.budget}\n${hint}\n${list}`,
     ).toBeNull();
   });
 });

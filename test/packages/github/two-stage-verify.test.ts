@@ -13,7 +13,7 @@ describe('two-stage verify rule (#447, #771)', () => {
   it('implementation owns the rule: targeted tests per commit, one full run before the PR, never red', () => {
     expect(implementation).not.toContain('build + full test suite');
     expect(implementation).toMatch(
-      /Build passes when the stack compiles and compiled sources changed/
+      /Build passes when the stack compiles and compiled sources changed/,
     );
     expect(implementation).toMatch(/targeted tests pass/);
     expect(implementation).toMatch(/never the full suite/);

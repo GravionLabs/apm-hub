@@ -15,7 +15,7 @@ export const readLedger = (file: string): string =>
 /** Env without inherited GIT_* (e.g. GIT_DIR when run from a git hook) and without user/system git config. */
 export const gitCleanEnv = (
   base: NodeJS.ProcessEnv,
-  extra: Record<string, string> = {}
+  extra: Record<string, string> = {},
 ): NodeJS.ProcessEnv => {
   const env = { ...base };
   for (const k of Object.keys(env)) if (k.startsWith('GIT_')) delete env[k];

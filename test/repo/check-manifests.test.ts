@@ -47,7 +47,7 @@ describe('check-manifests.mjs', () => {
     const root = fixture('name: demo\nx-skills:\n  - gone\n', ['a', 'b']);
     expect(run(root, '--fix').status).toBe(0);
     expect(fs.readFileSync(path.join(root, 'packages/demo/apm.yml'), 'utf8')).toBe(
-      'name: demo\nx-skills:\n  - a\n  - b\n'
+      'name: demo\nx-skills:\n  - a\n  - b\n',
     );
   });
 

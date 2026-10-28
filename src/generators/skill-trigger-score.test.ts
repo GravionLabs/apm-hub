@@ -112,14 +112,15 @@ describe('analyzeTranscript', () => {
 
   it('fails on an error result but treats hitting max turns as a normal end', () => {
     expect(
-      analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'success' })).failed
+      analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'success' })).failed,
     ).toBe(true);
     expect(
       analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'error_during_execution' }))
-        .failed
+        .failed,
     ).toBe(true);
     expect(
-      analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'error_max_turns' })).failed
+      analyzeTranscript(line({ type: 'result', is_error: true, subtype: 'error_max_turns' }))
+        .failed,
     ).toBe(false);
   });
 });
@@ -171,7 +172,7 @@ describe('checkThresholds', () => {
 
   it('reports low trigger and high false-trigger rates', () => {
     const msgs = checkThresholds(
-      summarize([rec('a', 'positive', []), rec('a', 'negative', ['a'])])
+      summarize([rec('a', 'positive', []), rec('a', 'negative', ['a'])]),
     );
     expect(msgs).toContain('a: trigger rate 0% < 80%');
     expect(msgs).toContain('a: false-trigger rate 100% > 10%');
@@ -215,7 +216,7 @@ describe('compareToBaseline rounding and scope', () => {
     positives: number,
     triggerRate: number,
     falseTriggerRate = 0,
-    negatives = 0
+    negatives = 0,
   ) => ({
     skill,
     positives,
@@ -234,10 +235,10 @@ describe('compareToBaseline rounding and scope', () => {
 
   it('flags a false-trigger rise greater than 5 but not exactly 5', () => {
     expect(compareToBaseline(sum(sk('a', 20, 100, 5, 20)), sum(sk('a', 20, 100, 0, 20)))).toEqual(
-      []
+      [],
     );
     expect(
-      compareToBaseline(sum(sk('a', 20, 100, 10, 20)), sum(sk('a', 20, 100, 0, 20)))
+      compareToBaseline(sum(sk('a', 20, 100, 10, 20)), sum(sk('a', 20, 100, 0, 20))),
     ).toContain('a: false-trigger rate rose 0% -> 10%');
   });
 
@@ -330,7 +331,7 @@ describe('parseBaseline', () => {
     expect(() => parseBaseline({ date: '2026-10-14' })).toThrow(/no usable summary/);
     expect(() => parseBaseline(null)).toThrow(/no usable summary/);
     expect(() => parseBaseline({ summary: { overall: {}, skills: [] } })).toThrow(
-      /no usable summary/
+      /no usable summary/,
     );
   });
 });
@@ -385,7 +386,7 @@ describe('main (CLI)', () => {
     const base = write(
       d,
       'b.json',
-      score([rec('a', 'positive', ['a'])], undefined, { meta: { model: 'sonnet', runs: 1 } })
+      score([rec('a', 'positive', ['a'])], undefined, { meta: { model: 'sonnet', runs: 1 } }),
     );
     const restore = silent();
     const code = main([

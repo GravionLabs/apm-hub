@@ -10,7 +10,7 @@ import {
 
 export function generateInstructionList(
   packagesBaseDir = 'packages',
-  outputFile = 'docs/instruction-list.md'
+  outputFile = 'docs/instruction-list.md',
 ) {
   const domains = collectDomains(packagesBaseDir);
   const allInstructions: DomainEntry[] = [];

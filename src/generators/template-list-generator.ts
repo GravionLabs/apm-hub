@@ -108,7 +108,7 @@ const TYPE_HEADINGS: Record<string, string> = {
 
 export function generateTemplateList(
   packagesBaseDir = 'packages',
-  outputFile = 'docs/template-list.md'
+  outputFile = 'docs/template-list.md',
 ) {
   const domains = collectDomains(packagesBaseDir);
 

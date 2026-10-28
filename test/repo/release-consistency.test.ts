@@ -25,7 +25,7 @@ describe('removed names are gone from packages, manifests and AGENTS.md (#766)',
   // The upgrade note lists the removed names on purpose, so users find the files to delete
   const upgradeNote = path.join(
     root,
-    'packages/delivery/.apm/skills/apm-install/references/after-install.md'
+    'packages/delivery/.apm/skills/apm-install/references/after-install.md',
   );
   const content = (f: string) => {
     const text = fs.readFileSync(f, 'utf-8');
@@ -68,7 +68,7 @@ describe('versions and descriptions (#774)', () => {
 
   it('ng-implementation says Angular 21+', () => {
     expect(read('packages/ng/.apm/skills/ng-implementation/SKILL.md')).toMatch(
-      /^description: 'Angular 21\+/m
+      /^description: 'Angular 21\+/m,
     );
   });
 
@@ -82,7 +82,7 @@ describe('versions and descriptions (#774)', () => {
 
   it('implementation asks for one full run before the pull request', () => {
     expect(read('packages/shared/.apm/skills/implementation/SKILL.md')).toContain(
-      'one full run before the pull request'
+      'one full run before the pull request',
     );
   });
 });

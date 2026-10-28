@@ -6,7 +6,7 @@ import * as path from 'path';
 
 export const SCRIPTS = path.resolve(
   __dirname,
-  '../../../packages/github/.apm/skills/github-issue/scripts'
+  '../../../packages/github/.apm/skills/github-issue/scripts',
 );
 
 const gitEnv = (): NodeJS.ProcessEnv => ({
@@ -21,7 +21,7 @@ export const git = (cwd: string, ...a: string[]): string => {
   const r = spawnSync(
     'git',
     ['-c', 'commit.gpgsign=false', '-c', 'user.name=t', '-c', 'user.email=t@t', ...a],
-    { cwd, encoding: 'utf8', env: gitEnv() }
+    { cwd, encoding: 'utf8', env: gitEnv() },
   );
   if (r.status !== 0) throw new Error(`git ${a.join(' ')}: ${r.stderr}`);
   return r.stdout.trim();
@@ -50,7 +50,7 @@ export const run = (
   script: string,
   args: string[],
   cwd: string,
-  env: Record<string, string> = {}
+  env: Record<string, string> = {},
 ) =>
   spawnSync('pwsh', ['-NoProfile', '-File', path.join(SCRIPTS, script), ...args], {
     cwd,
@@ -78,7 +78,7 @@ export type Lease = {
 /** Plants a lease file; heartbeat and started default to now. */
 export const plantLease = (
   state: string,
-  l: Partial<Lease> & { path: string; issue: number }
+  l: Partial<Lease> & { path: string; issue: number },
 ): string => {
   const dir = path.join(state, 'leases');
   fs.mkdirSync(dir, { recursive: true });
@@ -92,7 +92,7 @@ export const plantLease = (
       started: now,
       heartbeat: now,
       ...l,
-    })
+    }),
   );
   return file;
 };

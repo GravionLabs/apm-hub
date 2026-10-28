@@ -27,7 +27,7 @@ describe.skipIf(!hasPwsh)('PwshWorker', () => {
         "  'leak' { $env:LEAKED_VAR = 'x' }",
         '  \'noleak\' { Write-Output "e=[$env:LEAKED_VAR]" }',
         '}',
-      ].join('\n')
+      ].join('\n'),
     );
     worker = new PwshWorker(script);
   });

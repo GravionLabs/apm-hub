@@ -12,7 +12,7 @@ function pagesOnDisk(dir = docs, prefix = ''): string[] {
       ? pagesOnDisk(resolve(dir, e.name), `${prefix}/${e.name}`)
       : e.name.endsWith('.md')
         ? [`${prefix}/${e.name.replace(/\.md$/, '')}`]
-        : []
+        : [],
   );
 }
 

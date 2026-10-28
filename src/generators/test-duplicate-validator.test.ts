@@ -19,7 +19,7 @@ const skill = (body: string, name = 'x-implementation') => {
   const file = path.join(tmpDir, `${name}-SKILL.md`);
   fs.writeFileSync(
     file,
-    `---\nname: ${name}\ndescription: 'Rules (vitest, pytest).'\n---\n${body}`
+    `---\nname: ${name}\ndescription: 'Rules (vitest, pytest).'\n---\n${body}`,
   );
   return file;
 };
@@ -44,7 +44,7 @@ describe('findImplementationSkillFiles', () => {
 describe('checkTestDuplicates', () => {
   it('passes on a clean skill with a Tests pointer and review rules', () => {
     const f = skill(
-      '# X\n\n- **Tests**: Vitest, see `ts-test`\n\n## Tests\n\nRunner config, naming and mocking live in `ts-test`.\n\n## Review rules\n\n- Missing tests for new code\n- Read `references/version-notes.md` for Vitest setup\n'
+      '# X\n\n- **Tests**: Vitest, see `ts-test`\n\n## Tests\n\nRunner config, naming and mocking live in `ts-test`.\n\n## Review rules\n\n- Missing tests for new code\n- Read `references/version-notes.md` for Vitest setup\n',
     );
     expect(checkTestDuplicates([f])).toEqual([]);
   });
@@ -171,7 +171,7 @@ describe('checkTestDuplicates', () => {
     const f = path.join(tmpDir, 'crlf-SKILL.md');
     fs.writeFileSync(
       f,
-      '---\r\nname: x-implementation\r\ndescription: d\r\n---\r\n# X\r\n\r\nUse Moq.\r\n'
+      '---\r\nname: x-implementation\r\ndescription: d\r\n---\r\n# X\r\n\r\nUse Moq.\r\n',
     );
     const v = checkTestDuplicates([f]);
     expect(v).toHaveLength(1);
