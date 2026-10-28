@@ -23,18 +23,13 @@ describe('after-install.md runner config example', () => {
     }
   });
 
-  it('nests models per harness family', () => {
+  it('shows the keys dromos init manages', () => {
     const config = readExample();
-    const models = config.models as Record<string, unknown>;
-    expect(Object.keys(models).length).toBeGreaterThan(0);
-    for (const key of Object.keys(models)) {
-      expect(['claude', 'copilot']).toContain(key);
-    }
-    expect(models.claude).toEqual({ planner: 'opus', implementer: 'sonnet', reviewer: 'sonnet' });
+    expect(config).toEqual({ harness: 'claude', test: { full: 'pnpm test' }, parallel: 3 });
   });
 
-  it('keeps test.related and test.full', () => {
-    const config = readExample();
-    expect(config.test).toEqual({ related: 'pnpm vitest related --run', full: 'pnpm test' });
+  it('documents models nested per harness family as an optional key', () => {
+    const md = fs.readFileSync(FILE, 'utf8');
+    expect(md).toContain('`models.<claude|copilot>.<role>`');
   });
 });
