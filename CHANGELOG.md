@@ -10,6 +10,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Documentation
 - Install story, apm install plus npm i -g dromos (#742) (#798)
 - 3.1.0 documentation after the role skills and without the guardrails hook (#799) (#801)
+- Update CHANGELOG.md for v3.0.1 [skip ci]
 
 
 ### Features
