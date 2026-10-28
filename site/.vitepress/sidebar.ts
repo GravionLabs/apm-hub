@@ -52,6 +52,10 @@ export const sidebar: SidebarGroup[] = [
     ],
   },
   {
+    text: 'Spikes',
+    items: [{ text: 'Deliver capabilities', link: '/spikes/deliver' }],
+  },
+  {
     text: 'Reference',
     items: [
       { text: 'Skills', link: '/skill-list' },
