@@ -7,6 +7,7 @@ How `code-review` behaves as the reviewer role when a runner (dromos) or a calle
 - the diff under review (`git diff <base>...HEAD`)
 - the acceptance criteria of the issue or PBI
 - the `## Review rules` of the `<lang>-implementation` skills from `detect-techstack`
+- the `## Review rules` of the `<lang>-test` skills from `detect-techstack`, applied to the test files of the diff; a skill without that section is skipped
 
 ## Blocking
 

@@ -60,4 +60,4 @@ Load `go-test` for table-driven tests, testify, parallelism, race detector and b
 - 🟡 Goroutine without a stop condition; `defer` inside a loop that holds resources
 - 🟡 `gofmt`, `go vet` or `golangci-lint` not clean; `//nolint` without a justifying comment
 - 🟢 `util`/`common` packages, interfaces declared on the producer side, `init()` side effects
-- 🟡 A test in the diff breaks an entry of `## Review rules` in `go-test` (read it); otherwise tests follow `go-test`
+- 🟢 Tests follow `go-test`

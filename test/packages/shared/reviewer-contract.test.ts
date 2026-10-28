@@ -47,6 +47,13 @@ describe('code-review skill', () => {
     expect(skill).toContain('## Review rules');
   });
 
+  it('reads the Review rules of the <lang>-test skills next to the implementation rules', () => {
+    expect(skill).toMatch(/`<lang>-implementation` and of its `<lang>-test` skill/);
+    expect(skill).toMatch(/test files of the diff/);
+    expect(ref).toMatch(/Review rules` of the `<lang>-test` skills/);
+    expect(ref).toMatch(/test files of the diff/);
+  });
+
   it('keeps an interactive readable report', () => {
     expect(skill).toMatch(/Interactive: a readable report/);
   });

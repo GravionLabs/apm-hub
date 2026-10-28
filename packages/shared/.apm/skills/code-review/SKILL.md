@@ -8,8 +8,8 @@ Read-only: report findings, never edit.
 ## Steps
 
 1. Load `detect-techstack` — parse the JSON report for the languages in scope
-2. For each language, read the `## Review rules` section of its `<lang>-implementation` skill
-3. Review the diff against the acceptance criteria (when given), those rules, correctness, security and test coverage
+2. For each language, read the `## Review rules` section of its `<lang>-implementation` and of its `<lang>-test` skill; a `-test` skill without that section is skipped without a note, a skill that is not installed is reported as `detect-techstack` does
+3. Review the diff against the acceptance criteria (when given), those rules, correctness, security and test coverage; apply the `-test` rules to the test files of the diff. A rule's severity prefix maps as for implementation rules: red is blocking, yellow and green are notes
 4. Sort each finding: **blocking** or **note**
 5. Do not recommend patterns or abstractions that add complexity without a concrete need
 
