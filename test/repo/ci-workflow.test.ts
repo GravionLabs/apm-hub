@@ -78,12 +78,20 @@ describe('ci.yml checks', () => {
       'pnpm run format:check',
       'node scripts/check-manifests.mjs',
       'pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root . -FailOnDangling',
+      'pnpm run lint:ps',
       'pnpm test',
     ]);
     expect(checkCommands).toContain(build?.with?.['build-command']);
     expect(checkCommands).toContain(manifests?.run);
     expect(checkCommands).toContain(`pwsh ${report?.run?.replace(/^\.\//, '')}`);
     expect(checkCommands).toContain(formatting?.run);
+
+    const analysis = steps('build-test').find((s) => s.run === 'pnpm run lint:ps');
+    const analyzerInstall = steps('build-test').find((s) =>
+      s.run?.includes('Install-Module PSScriptAnalyzer'),
+    );
+    expect(checkCommands).toContain(analysis?.run);
+    expect(analyzerInstall?.run).toMatch(/-RequiredVersion \d+\.\d+\.\d+/);
 
     const ciTest = steps('test').find((s) => s.run === 'pnpm run test:ci');
     expect(pkg.scripts['test:ci'].replace(/ --coverage$/, '')).toBe(pkg.scripts.test);
