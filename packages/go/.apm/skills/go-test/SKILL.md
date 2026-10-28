@@ -39,3 +39,7 @@ description: >
 - Never call `t.Fatal` in a spawned goroutine; collect results and assert in the test goroutine
 - Never write tests that pass trivially without exercising logic
 - Do not test unexported internals when the exported API covers the behavior
+
+## Review rules
+
+- 🟡 A test that simulates a missing tool sets `PATH` to a directory that holds only the tools the test needs (`t.Setenv("PATH", dir)` with `dir` from `t.TempDir()`), never system paths such as `/usr/bin:/bin`: the tool may exist on the CI image and the test turns red there
