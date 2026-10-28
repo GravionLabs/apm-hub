@@ -160,6 +160,17 @@ if (Test-Tool 'dromos') {
     $dromosVersion = Get-ToolVersion 'dromos'
     $results.runtime['dromos'] = "✓ $dromosVersion"
     Write-Host "  ✓ dromos: $dromosVersion" -ForegroundColor Green
+    # config of the current repository: `dromos config check` is reported, its exit code never fails the check
+    $configLines = @(& dromos config check 2>&1)
+    $configExit = $LASTEXITCODE
+    $configOut = ($configLines | Select-Object -First 1 | Out-String).Trim()
+    if ($configExit -eq 0) {
+        $results.runtime['dromos config'] = "✓ $configOut"
+        Write-Host "  ✓ dromos config check: $configOut" -ForegroundColor Green
+    } else {
+        $results.runtime['dromos config'] = "✗ $configOut"
+        Write-Host "  - dromos config check: invalid ($configOut); fix with: dromos init" -ForegroundColor Yellow
+    }
 } else {
     $results.runtime['dromos'] = "✗ NOT FOUND (optional)"
     Write-Host "  - dromos: NOT FOUND (optional, the runner: npm i -g @gravionlabs/dromos)" -ForegroundColor Gray

@@ -541,6 +541,23 @@ describe('apm-install SKILL.md', () => {
     }
   });
 
+  it('creates or updates .dromos/config.json via dromos init (#804)', () => {
+    expect(text).toContain('dromos init --dry-run --format json --stack');
+    expect(text).toContain('never with `-g`');
+    expect(text).toContain('updated, never overwritten');
+    expect(text).toContain('npm i -g @gravionlabs/dromos');
+    expect(text).toContain('only after the user agrees');
+  });
+
+  it('after-install.md uses dromos init and dromos config check', () => {
+    const ref = fs.readFileSync(
+      path.join(path.dirname(skillPath), 'references/after-install.md'),
+      'utf8',
+    );
+    expect(ref).toContain('dromos init');
+    expect(ref).toContain('dromos config check');
+  });
+
   it('lists exactly the packages the script accepts ($valid)', () => {
     const script = fs.readFileSync(
       path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),

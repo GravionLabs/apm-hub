@@ -17,7 +17,15 @@ npm i -g @gravionlabs/dromos
 dromos --version
 ```
 
-Per repository dromos reads `.dromos/config.json` (commit it; without it the defaults apply). Example for a TypeScript project:
+Per repository dromos reads `.dromos/config.json` (commit it; without it the defaults apply). Let dromos write it, do not hand-write it:
+
+```bash
+dromos init --dry-run --format json --stack ts   # preview, stack from detect-techstack
+dromos init --stack ts                           # write; an existing file is updated, never overwritten
+dromos config check                              # validate the file in this repository
+```
+
+`/apm-install` runs the preview after the packages are installed and writes only after you agree. It skips the step for `-g` (no repository config) and when `dromos` is not installed. Shape of the result for a TypeScript project (`models` nests per harness family, `claude` or `copilot`):
 
 ```json
 {

@@ -108,5 +108,37 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
       expect(found.code).toBe(0);
       expect(found.out).toContain('dromos: 0.5.0');
     });
+
+    describe('dromos config check', () => {
+      const fake = (configBody: string) => {
+        const bin = path.join(dir, 'bin');
+        fs.mkdirSync(bin);
+        fs.writeFileSync(
+          path.join(bin, 'dromos'),
+          `#!/bin/sh\nif [ "$1" = config ]; then ${configBody}; else echo 0.5.0; fi\n`,
+          { mode: 0o755 },
+        );
+        return bin;
+      };
+
+      it('reports a valid config', () => {
+        const r = run(fake('echo "config ok"'));
+        expect(r.code).toBe(0);
+        expect(r.out).toContain('dromos config check: config ok');
+      });
+
+      it('reports an invalid config without failing', () => {
+        const r = run(fake('echo "models.claude missing"; exit 1'));
+        expect(r.code).toBe(0);
+        expect(r.out).toContain('dromos config check: invalid (models.claude missing)');
+        expect(r.out).toContain('dromos init');
+      });
+
+      it('skips the config check when dromos is missing', () => {
+        const r = run();
+        expect(r.code).toBe(0);
+        expect(r.out).not.toContain('config check');
+      });
+    });
   },
 );
