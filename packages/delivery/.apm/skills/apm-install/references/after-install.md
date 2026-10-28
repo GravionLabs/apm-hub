@@ -22,7 +22,7 @@ Per repository dromos reads `.dromos/config.json` (commit it; without it the def
 ```json
 {
   "harness": "claude",
-  "models": { "planner": "opus", "implementer": "sonnet", "reviewer": "sonnet" },
+  "models": { "claude": { "planner": "opus", "implementer": "sonnet", "reviewer": "sonnet" } },
   "test": { "related": "pnpm vitest related --run", "full": "pnpm test" },
   "parallel": 3
 }
