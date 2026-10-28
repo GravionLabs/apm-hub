@@ -177,7 +177,18 @@ describe('planner references', () => {
   it('SKILL.md references questions.md and no state path', () => {
     const md = fs.readFileSync(path.join(skill, 'SKILL.md'), 'utf-8');
     expect(md).toContain('references/questions.md');
-    expect(md).not.toMatch(/<state>|publish\.md|grilling/);
+    expect(md).not.toMatch(/<state>|publish\.md|grilling\.md/);
+  });
+
+  it('the interactive path names grill-me, create-from-plan and refine; non-interactive stays data', () => {
+    const md = fs.readFileSync(path.join(skill, 'SKILL.md'), 'utf-8');
+    const interactive = md.slice(md.indexOf('\n## Interactive'), md.indexOf('\n## Refine'));
+    expect(interactive).toContain('`grill-me`');
+    expect(interactive).toContain('create-from-plan.md');
+    expect(interactive).toMatch(/one cycle .* per PBI/);
+    expect(md.slice(md.indexOf('\n## Refine'), md.indexOf('\n## Depth'))).toContain('`grill-me`');
+    expect(md).toMatch(/\*\*Non-interactive\*\*.*no questions.*`questions\[\]` as data/);
+    expect(fs.readdirSync(refs).filter((f) => /question/.test(f))).toEqual(['questions.md']);
   });
 });
 
