@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { parse } from 'yaml';
 
 const root = path.resolve(__dirname, '../..');
 const file = path.join(root, '.claude/settings.json');
@@ -51,5 +52,13 @@ describe('.claude/settings.json', () => {
 
   it('has no Bash wildcard', () => {
     expect(settings.permissions.allow.filter((e) => /^Bash\(\*/.test(e))).toEqual([]);
+  });
+});
+
+// .claude/ is committed next to .github/, so APM needs a pinned target in CI
+describe('root apm.yml', () => {
+  it('pins targets to claude', () => {
+    const apm = parse(fs.readFileSync(path.join(root, 'apm.yml'), 'utf8')) as { targets: string[] };
+    expect(apm.targets).toEqual(['claude']);
   });
 });
