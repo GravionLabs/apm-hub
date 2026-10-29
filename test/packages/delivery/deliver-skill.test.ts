@@ -96,6 +96,29 @@ describe('deliver SKILL.md', () => {
     expect(fs.existsSync(path.join(skillDir, 'workflow.js'))).toBe(true);
   });
 
+  describe('herdr progress (#855)', () => {
+    const start = body.slice(body.indexOf('## Start'), body.indexOf('## Steps'));
+    const herdrCalls = [...body.matchAll(/`(herdr [^`]+)`/g)].map((m) => m[1]);
+
+    it('reads the pane id only when HERDR_ENV is 1', () => {
+      expect(start).toContain(
+        '`printenv HERDR_ENV`. Only when it prints `1`: `printenv HERDR_PANE_ID`',
+      );
+    });
+
+    it('sets the progress line per step and clears it at the end', () => {
+      expect(herdrCalls).toEqual([
+        'herdr pane report-metadata <pane> --source deliver --display-agent "deliver #12 review: 1 blocking"',
+        'herdr pane report-metadata <pane> --source deliver --clear-display-agent',
+      ]);
+      expect(body.indexOf('--clear-display-agent')).toBeGreaterThan(body.indexOf('## Report'));
+    });
+
+    it('never expands a variable in a herdr call', () => {
+      for (const c of herdrCalls) expect(c).not.toContain('$');
+    });
+  });
+
   it('contains no command with a quoted $(…) substitution', () => {
     const commands = [...body.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
     for (const c of commands) expect(c).not.toMatch(/["'][^"']*\$\(/);
@@ -125,7 +148,14 @@ describe('deliver permissions.md (#862)', () => {
   });
 
   it('names the command groups deliver needs', () => {
-    for (const c of ['`AGENTS.md`', '`git`', '`gh`', '`herdr pane report-metadata`'])
+    for (const c of [
+      '`AGENTS.md`',
+      '`git`',
+      '`gh`',
+      '`printenv HERDR_ENV`',
+      '`printenv HERDR_PANE_ID`',
+      '`herdr pane report-metadata`',
+    ])
       expect(permissions).toContain(c);
   });
 
