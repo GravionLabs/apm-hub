@@ -2,7 +2,10 @@
 
 `scripts/Format-Changed.ps1` formats (or checks) the changed files of a task. For `ts`, `ng`, `py`, `dotnet`, `rust` and `go` it knows the default commands; a `-Language` call needs no further parameters. The `## Format` section of each `<lang>-implementation` skill names the extensions and commands.
 
+Without `-Language`, `-Extensions` and `-Command` the script detects the formatter: the changed files are grouped by extension (`.ts .tsx .js .jsx .mjs .cjs .json .css .html` ts, `.py` py, `.cs .csproj .sln .slnx` dotnet, `.rs` rust, `.go` go), each detected language runs its defaults (a `format.<lang>` entry still replaces them), other extensions are ignored. `-WhatIf` lists the steps of every detected language.
+
 ```powershell
+pwsh scripts/Format-Changed.ps1                      # detect from the changed files
 pwsh scripts/Format-Changed.ps1 -Language ts
 pwsh scripts/Format-Changed.ps1 -Language ts -Check
 pwsh scripts/Format-Changed.ps1 -Extensions .ts,.tsx -Command 'npx prettier --write {files}'   # any other tool
