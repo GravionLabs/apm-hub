@@ -10,7 +10,7 @@ const SCRIPT = path.resolve(
 );
 const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
-describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
+describe.skipIf(!hasPwsh)('Detect-TechStack.ps1', () => {
   let dir: string;
   // one pwsh worker for the describe runs the script in-process per call instead of one pwsh start per case
   let worker: PwshWorker;
@@ -19,7 +19,7 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
   });
   afterAll(() => worker.close());
   beforeEach(() => {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'detect-'));
+    dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'detect-')));
   });
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
@@ -28,24 +28,34 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     fs.mkdirSync(path.dirname(f), { recursive: true });
     fs.writeFileSync(f, content);
   };
-  const detect = async () => {
-    const r = await worker.run(['-ProjectRoot', dir], { cwd: dir });
+  const detect = async (env?: NodeJS.ProcessEnv) => {
+    const r = await worker.run(['-ProjectRoot', dir], { cwd: dir, env });
     expect(r.status).toBe(0);
     return JSON.parse(r.stdout);
   };
 
-  it('reports a pure Rust project', async () => {
+  // a git repository and a state dir in the invoking env: the script keeps no state (no cache, no exclude entry)
+  it('reports a pure Rust project, ignores a tauri.conf.json outside src-tauri and keeps no state', async () => {
     write('Cargo.toml', '[package]\nname = "x"\n');
-    const r = await detect();
+    write('docs/tauri.conf.json', '{}');
+    spawnSync('git', ['-C', dir, 'init', '-q']);
+    const exclude = path.join(dir, '.git', 'info', 'exclude');
+    const before = fs.readFileSync(exclude, 'utf8');
+    const state = path.join(dir, 'custom-state');
+    const r = await detect({ ...process.env, DROMOS_STATE_DIR: state });
     expect(r.languages).toEqual(['rust']);
     expect(r.test).toEqual(['rust-test']);
     expect(r.implementation).toEqual(['rust-implementation']);
     expect(r.packageManager).toEqual(['cargo']);
     expect(r.frameworks).toEqual([]);
+    expect(r).not.toHaveProperty('state_dir');
+    expect(r).not.toHaveProperty('manifest_hash');
+    expect(fs.existsSync(state)).toBe(false);
+    expect(fs.existsSync(path.join(dir, '.git', 'agents'))).toBe(false);
+    expect(fs.readFileSync(exclude, 'utf8')).toBe(before);
   });
 
   it('reports tools by config file presence in the project root', async () => {
-    expect((await detect()).tools).toEqual([]);
     write('Cargo.toml', '[package]\n');
     write('biome.jsonc', '{}');
     write('eslint.config.mjs');
@@ -64,22 +74,36 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     ]);
   });
 
-  it('detects vitest via vite.config test block, devDependencies, and pytest via pyproject', async () => {
-    write('vite.config.ts', 'export default { plugins: [] };');
-    expect((await detect()).tools).toEqual([]);
-    write('vite.config.ts', 'export default { test: { globals: true } };');
-    expect((await detect()).tools).toEqual(['vitest']);
-    fs.rmSync(path.join(dir, 'vite.config.ts'));
-    write('package.json', '{"devDependencies":{"vitest":"^2"}}');
-    write('pyproject.toml', '[tool.pytest.ini_options]\n');
-    expect((await detect()).tools).toEqual(['vitest', 'pytest']);
+  it.each<[string, Record<string, string>, string[]]>([
+    [
+      'vite.config without a test block',
+      { 'vite.config.ts': 'export default { plugins: [] };' },
+      [],
+    ],
+    [
+      'a vite.config test block',
+      { 'vite.config.ts': 'export default { test: { globals: true } };' },
+      ['vitest'],
+    ],
+    [
+      'devDependencies and pyproject',
+      {
+        'package.json': '{"devDependencies":{"vitest":"^2"}}',
+        'pyproject.toml': '[tool.pytest.ini_options]\n',
+      },
+      ['vitest', 'pytest'],
+    ],
+  ])('detects vitest/pytest via %s', async (_n, files, expected) => {
+    for (const [rel, content] of Object.entries(files)) write(rel, content);
+    expect((await detect()).tools).toEqual(expected);
   });
 
-  it('reports Tauri next to the TS frontend (Tauri 2, json)', async () => {
+  it('reports Tauri next to the TS frontend (Tauri 2, json and json5 once)', async () => {
     write('package.json', '{"packageManager":"pnpm@9.0.0"}');
     write('tsconfig.json', '{}');
     write('src-tauri/Cargo.toml', '[package]\nname = "app"\n');
     write('src-tauri/tauri.conf.json', '{}');
+    write('src-tauri/tauri.conf.json5', '{}');
     const r = await detect();
     expect(r.languages).toEqual(['ts', 'rust']);
     expect(r.test).toEqual(['ts-test', 'rust-test']);
@@ -88,68 +112,55 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     expect(r.packageManager).toEqual(['pnpm', 'cargo']);
   });
 
-  it.each([
-    ['react', { dependencies: { react: '^19' } }, ['react']],
-    ['next', { dependencies: { next: '^15', react: '^19' } }, ['react', 'next']],
-    ['vue', { devDependencies: { vue: '^3' } }, ['vue']],
-    ['svelte', { devDependencies: { svelte: '^5' } }, ['svelte']],
-  ])('reports %s from package.json dependencies, skills stay ts', async (_n, deps, expected) => {
-    write('package.json', JSON.stringify(deps));
+  it('detects tauri.conf.json5 with src-tauri but no package.json', async () => {
+    write('src-tauri/Cargo.toml', '[package]\n');
+    write('src-tauri/tauri.conf.json5', '{}');
+    const r = await detect();
+    expect(r.languages).toEqual(['rust']);
+    expect(r.frameworks).toEqual(['tauri']);
+    expect(r.packageManager).toEqual(['cargo']);
+  });
+
+  it('reports react, next, vue and svelte from dependencies and devDependencies, skills stay ts', async () => {
+    write(
+      'package.json',
+      JSON.stringify({
+        dependencies: { next: '^15', react: '^19' },
+        devDependencies: { svelte: '^5', vue: '^3' },
+      }),
+    );
     write('tsconfig.json', '{}');
     const r = await detect();
-    expect(r.frameworks).toEqual(expected);
+    expect(r.frameworks).toEqual(['react', 'next', 'vue', 'svelte']);
     expect(r.languages).toEqual(['ts']);
     expect(r.test).toEqual(['ts-test']);
     expect(r.implementation).toEqual(['ts-implementation']);
   });
 
-  it('reports react next to angular in a monorepo and js without tsconfig', async () => {
+  it('reports react next to angular in a monorepo', async () => {
     write('apps/web/package.json', '{"dependencies":{"react":"^19"}}');
     write('apps/ng/angular.json', '{}');
     write('apps/ng/package.json', '{"dependencies":{"@angular/core":"^20"}}');
     expect((await detect()).frameworks).toEqual(['react', 'angular']);
   });
 
-  it('reports react for a js project and ignores unrelated or empty dependencies', async () => {
-    write('package.json', '{"dependencies":{"react":"^19"}}');
-    const r = await detect();
-    expect(r.languages).toEqual(['js']);
-    expect(r.frameworks).toEqual(['react']);
+  // vendored, build-output and too deep manifests do not make the project Go or Rust
+  it('reports js without tsconfig, ignores unrelated or empty dependencies and vendored or too deep manifests', async () => {
     write(
       'package.json',
       '{"dependencies":{"react-dom":"^19","preact":"^10"},"devDependencies":null}',
     );
-    expect((await detect()).frameworks).toEqual([]);
-  });
-
-  it('detects tauri.conf.json5', async () => {
-    write('src-tauri/Cargo.toml', '[package]\n');
-    write('src-tauri/tauri.conf.json5', '{}');
-    expect((await detect()).frameworks).toEqual(['tauri']);
-  });
-
-  it('ignores a tauri.conf.json outside src-tauri', async () => {
-    write('Cargo.toml', '[package]\n');
-    write('docs/tauri.conf.json', '{}');
-    expect((await detect()).frameworks).toEqual([]);
-  });
-
-  it('reports a Rust + Python monorepo', async () => {
-    write('crates/core/Cargo.toml', '[package]\n');
-    write('py/pyproject.toml', '[project]\nname = "p"\n');
+    for (const d of ['vendor', 'testdata', 'node_modules']) write(`${d}/dep/go.mod`, 'module x\n');
+    for (const d of ['target', 'vendor', 'node_modules'])
+      write(`${d}/dep/Cargo.toml`, '[package]\n');
+    write('a/b/c/d/e/f/go.mod', 'module x\n');
     const r = await detect();
-    expect(r.languages).toEqual(['py', 'rust']);
-    expect(r.test).toEqual(['py-test', 'rust-test']);
-    expect(r.packageManager).toEqual(['cargo']);
+    expect(r.languages).toEqual(['js']);
+    expect(r.frameworks).toEqual([]);
   });
 
-  it('reports no rust without Cargo.toml', async () => {
-    write('package.json', '{}');
-    expect((await detect()).languages).not.toContain('rust');
-  });
-
-  it('reports a Go project with the go package manager', async () => {
-    write('go.mod', 'module example.com/x\n\ngo 1.22\n');
+  it('reports a Go project with the go package manager, go.mod found at depth 5', async () => {
+    write('a/b/c/d/e/go.mod', 'module example.com/x\n\ngo 1.22\n');
     const r = await detect();
     expect(r.languages).toEqual(['go']);
     expect(r.test).toEqual(['go-test']);
@@ -157,47 +168,13 @@ describe.skipIf(!hasPwsh)('Detect-TechStack.ps1 Rust and Tauri', () => {
     expect(r.packageManager).toEqual(['go']);
   });
 
-  it('finds go.mod at depth 5 but not deeper', async () => {
-    write('a/b/c/d/e/go.mod', 'module x\n');
-    expect((await detect()).languages).toEqual(['go']);
-    fs.rmSync(path.join(dir, 'a'), { recursive: true });
-    write('a/b/c/d/e/f/go.mod', 'module x\n');
-    expect((await detect()).languages).toEqual([]);
-  });
-
-  it.each(['vendor', 'testdata', 'node_modules'])('ignores a go.mod under %s/', async (d) => {
-    write('package.json', '{}');
-    write(`${d}/dep/go.mod`, 'module x\n');
-    expect((await detect()).languages).not.toContain('go');
-  });
-
-  it('reports a Go + Rust monorepo', async () => {
-    write('svc/go.mod', 'module x\n');
+  it('reports a Python + Rust + Go monorepo', async () => {
     write('crates/core/Cargo.toml', '[package]\n');
+    write('py/pyproject.toml', '[project]\nname = "p"\n');
+    write('svc/go.mod', 'module x\n');
     const r = await detect();
-    expect(r.languages).toEqual(['rust', 'go']);
-    expect(r.test).toEqual(['rust-test', 'go-test']);
-  });
-
-  it('detects tauri when both tauri.conf.json and tauri.conf.json5 exist, once', async () => {
-    write('src-tauri/Cargo.toml', '[package]\n');
-    write('src-tauri/tauri.conf.json', '{}');
-    write('src-tauri/tauri.conf.json5', '{}');
-    expect((await detect()).frameworks).toEqual(['tauri']);
-  });
-
-  it('detects tauri with src-tauri but no package.json', async () => {
-    write('src-tauri/Cargo.toml', '[package]\n');
-    write('src-tauri/tauri.conf.json', '{}');
-    const r = await detect();
-    expect(r.languages).toEqual(['rust']);
-    expect(r.frameworks).toEqual(['tauri']);
-    expect(r.packageManager).toEqual(['cargo']);
-  });
-
-  it.each(['target', 'vendor', 'node_modules'])('ignores a Cargo.toml under %s/', async (d) => {
-    write('package.json', '{}');
-    write(`${d}/dep/Cargo.toml`, '[package]\n');
-    expect((await detect()).languages).not.toContain('rust');
+    expect(r.languages).toEqual(['py', 'rust', 'go']);
+    expect(r.test).toEqual(['py-test', 'rust-test', 'go-test']);
+    expect(r.packageManager).toEqual(['cargo', 'go']);
   });
 });

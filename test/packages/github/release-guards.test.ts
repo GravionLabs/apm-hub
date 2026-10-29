@@ -11,7 +11,7 @@ const script = path.join(
 );
 
 const fx = useReleaseFixture();
-const { git, commit, dropRef, resetHeads } = fx;
+const { git, dropRef, resetHeads } = fx;
 
 // #252 / #769: the state checks of github-release live in scripts/Get-ReleaseState.ps1 (JSON result).
 // History: main A - M1 (merge of release/2.1 = B, tag v2.1.0) - H (hotfix) - M2 (merge of release/next = D, tag v2.3.0);
@@ -74,10 +74,12 @@ describe('Get-ReleaseState.ps1', () => {
     expect((await state('finish', 'release/7.7')).action).toBe('stop: branch not on origin');
   });
 
-  it('fresh: equal to main, cut is a no-op and finish has nothing to release', async () => {
+  it('fresh: equal to main, finish has nothing to release', async () => {
     setRef('release/3.0', 'main');
-    expect(await state('cut', 'release/3.0')).toMatchObject({ state: 'fresh', action: 'noop' });
-    expect((await state('finish', 'release/3.0')).action).toBe('stop: nothing to release');
+    expect(await state('finish', 'release/3.0')).toMatchObject({
+      state: 'fresh',
+      action: 'stop: nothing to release',
+    });
   });
 
   it('unreleased: own commits on top of main, finish opens the release PR', async () => {
@@ -118,17 +120,16 @@ describe('Get-ReleaseState.ps1', () => {
   });
 
   it('behind: main has commits the branch lacks (release/2.2)', async () => {
-    expect(await state('cut', 'release/2.2')).toMatchObject({ state: 'behind', action: 'noop' });
-    expect((await state('finish', 'release/2.2')).action).toBe(
-      'stop: behind main; merge it in first',
-    );
+    expect(await state('finish', 'release/2.2')).toMatchObject({
+      state: 'behind',
+      action: 'stop: behind main; merge it in first',
+    });
   });
 
   it('released-continued: .0 tag exists and the branch moved on (release/2.1)', async () => {
     const r = await state('finish', 'release/2.1');
     expect(r.state).toBe('released-continued');
     expect(r.action).toBe('stop: already released; cut a new release branch');
-    expect((await state('cut', 'release/2.1')).action).toBe('noop');
   });
 
   it('released-continued: release/next continued after its merge (no <x.y> tag to check)', async () => {
@@ -142,9 +143,7 @@ describe('Get-ReleaseState.ps1', () => {
     expect(r.action).toBe('stop: already released; cut a new release branch');
   });
 
-  it('released: ancestor of main but no merge tip (release/9.0 and a branch at release/legacy)', async () => {
-    setRef('release/3.0', 'release/legacy');
-    expect((await state('finish', 'release/3.0')).state).toBe('released');
+  it('released: ancestor of main but no merge tip (release/9.0)', async () => {
     expect((await state('finish', 'release/9.0')).state).toBe('released');
   });
 });

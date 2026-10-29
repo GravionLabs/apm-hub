@@ -13,120 +13,472 @@ vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
 
 describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', () => {
   let worker: PwshWorker;
-  let dir: string;
-  let bin: string;
+  let tmp: string;
+  // fake tools on PATH: `ok` probes (`--version`) pass, `bad` probes fail, `gitOnly` has nothing but git
+  const bins = { ok: '', bad: '', gitOnly: '' };
+  // fixture repos shared by all cases: the cases only write the call log (outside every repo) and .agents/ of `cfg`
+  const repo = { langs: '', biome: '', clean: '', work: '', cfg: '', nohead: '', nogit: '' };
+  const log = () => path.join(tmp, 'calls.log');
+
+  const git = (cwd: string, ...a: string[]) => spawnSync('git', a, { cwd });
+  const commit = (cwd: string) =>
+    git(cwd, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'c');
+  const write = (cwd: string, rel: string, c = 'x') => {
+    fs.mkdirSync(path.dirname(path.join(cwd, rel)), { recursive: true });
+    fs.writeFileSync(path.join(cwd, rel), c);
+  };
+  const mkdir = (name: string) => fs.mkdtempSync(path.join(tmp, `${name}-`));
+  // a repo with `committed` in its first commit (none: no HEAD) and `untracked` left as they are
+  const mkRepo = (name: string, committed: string[], untracked: string[]) => {
+    const d = mkdir(name);
+    git(d, 'init', '-q', '-b', 'main');
+    for (const f of committed) write(d, f);
+    if (committed.length) {
+      git(d, 'add', '-A');
+      commit(d);
+    }
+    for (const f of untracked) write(d, f);
+    return d;
+  };
+
   beforeAll(() => {
     worker = new PwshWorker(SCRIPT);
-  });
-  afterAll(() => worker.close());
-  beforeEach(() => {
-    dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fmt-')));
-    bin = fs.mkdtempSync(path.join(os.tmpdir(), 'fmt-bin-'));
-    git('init', '-q', '-b', 'main');
-    write('base.ts', 'x');
-    git('add', 'base.ts');
-    git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'init');
-  });
-  afterEach(() => {
-    fs.rmSync(dir, { recursive: true, force: true });
-    fs.rmSync(bin, { recursive: true, force: true });
-  });
+    tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fmt-')));
+    // every fake tool appends one line per call to $FAKE_LOG: its name and its arguments, tab-separated (probes are not logged)
+    for (const [k, probe] of [
+      ['ok', 0],
+      ['bad', 1],
+    ] as const) {
+      bins[k] = mkdir(`bin-${k}`);
+      for (const name of [
+        'npx',
+        'uv',
+        'dotnet',
+        'cargo',
+        'gofmt',
+        'fmt',
+        'jb',
+        'dflt',
+        'one',
+        'two',
+        'bad',
+      ])
+        fs.writeFileSync(
+          path.join(bins[k], name),
+          `#!/bin/sh\ncase "$*" in *--version*) exit ${probe};; esac\n` +
+            `{ printf '%s' ${name}; for a in "$@"; do printf '\\t%s' "$a"; done; echo; } >> "$FAKE_LOG"\n` +
+            (name === 'bad' ? 'echo broken >&2; exit 5\n' : ''),
+          { mode: 0o755 },
+        );
+    }
+    // CI images ship gofmt in /usr/bin, so /usr/bin:/bin cannot stay on PATH for the missing-tool case: only git is linked in
+    bins.gitOnly = mkdir('bin-git');
+    const gitPath = spawnSync('sh', ['-c', 'command -v git'], { encoding: 'utf8' }).stdout.trim();
+    fs.symlinkSync(gitPath, path.join(bins.gitOnly, 'git'));
 
-  const git = (...a: string[]) => spawnSync('git', a, { cwd: dir });
-  const write = (rel: string, c = '') => {
-    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
-    fs.writeFileSync(path.join(dir, rel), c);
-  };
-  // fake tool: appends its argv (one argument per line) to args.log in the cwd, exits with FAKE_EXIT or 0
-  const fake = (name: string, body = '') =>
-    fs.writeFileSync(
-      path.join(bin, name),
-      `#!/bin/sh\nfor a in "$@"; do echo "$a" >> args.log; done\n${body}\n`,
-      { mode: 0o755 },
+    // one changed file per language; sub/biome.json is no Biome project (not at the toplevel), prettier takes it as json
+    repo.langs = mkRepo(
+      'langs',
+      ['README.md'],
+      [
+        'a.ts',
+        'b.json',
+        'c.html',
+        'd.scss',
+        'e.py',
+        'F.cs',
+        'src/lib.rs',
+        'cmd/app/main.go',
+        'n.md',
+        'sub/biome.json',
+      ],
     );
-  const go = (args: string[]) =>
-    worker.run(args, { cwd: dir, env: { ...process.env, PATH: `${bin}:${process.env.PATH}` } });
-  const logged = () =>
-    fs.existsSync(path.join(dir, 'args.log'))
-      ? fs.readFileSync(path.join(dir, 'args.log'), 'utf8').trim().split('\n')
-      : [];
+    repo.biome = mkRepo('biome', ['biome.jsonc'], ['a.html', 'b.ts', 'c.json', 'n.md']);
+    repo.clean = mkRepo('clean', ['base.ts'], ['n.md']);
+    // branch feat has c.ts committed since main; the working tree has every kind of change
+    repo.work = mkRepo('work', ['base.ts', 'gone.ts', 'staged.ts'], []);
+    git(repo.work, 'checkout', '-qb', 'feat');
+    write(repo.work, 'c.ts');
+    git(repo.work, 'add', 'c.ts');
+    commit(repo.work);
+    write(repo.work, 'base.ts', 'changed'); // unstaged
+    fs.rmSync(path.join(repo.work, 'gone.ts')); // deleted: dropped
+    write(repo.work, 'staged.ts', 'changed');
+    git(repo.work, 'add', 'staged.ts');
+    for (const f of ['-rf.ts', 'Größe über.ts', 'c;d.ts', 'n.md']) write(repo.work, f); // untracked
+    repo.cfg = mkRepo('cfg', ['README.md'], ['a.ts', 'A.cs']);
+    repo.nohead = mkRepo('nohead', [], ['n.ts', 'u.ts']);
+    git(repo.nohead, 'add', 'n.ts');
+    repo.nogit = mkdir('nogit');
+    write(repo.nogit, 'a.ts');
+  });
+  afterAll(() => {
+    worker.close();
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+  beforeEach(() => {
+    fs.rmSync(log(), { force: true });
+    fs.rmSync(path.join(repo.cfg, '.agents'), { recursive: true, force: true });
+  });
 
-  it('skips when nothing changed', async () => {
-    fake('fmt');
-    const r = await go(['-Extensions', '.ts', '-Command', 'fmt {files}']);
-    expect(r).toMatchObject({
-      status: 0,
-      stdout: expect.stringContaining('skipped: no changed files'),
+  const go = (cwd: string, args: string[], bin = bins.ok, env: NodeJS.ProcessEnv = {}) =>
+    worker.run(args, {
+      cwd,
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, FAKE_LOG: log(), ...env },
     });
-    expect(logged()).toEqual([]);
+  // the logged calls, each as its argv (tool name first)
+  const calls = (): string[][] =>
+    fs.existsSync(log())
+      ? fs
+          .readFileSync(log(), 'utf8')
+          .trimEnd()
+          .split('\n')
+          .map((l) => l.split('\t'))
+      : [];
+  const callLines = () => calls().map((c) => c.join(' '));
+  type Conf = { config?: unknown; format?: unknown };
+  const conf = (c: Conf) => {
+    for (const [file, o] of Object.entries(c))
+      write(repo.cfg, `.agents/${file}.json`, typeof o === 'string' ? o : JSON.stringify(o));
+  };
+  const ts = ['-Language', 'ts', '-Extensions', '.ts'];
+
+  // built-in defaults: a format run per language; -Check runs once per toolchain (prettier/eslint, Biome), the other check
+  // commands are data pinned by format-defaults-sync. The Biome rows run in the repo with biome.jsonc at the toplevel
+  const defaults = [
+    [
+      'ts',
+      'langs',
+      3,
+      [
+        'npx --no-install prettier --write a.ts b.json sub/biome.json',
+        'npx --no-install eslint --fix a.ts',
+      ],
+      [
+        'npx --no-install prettier --check a.ts b.json sub/biome.json',
+        'npx --no-install eslint a.ts',
+      ],
+    ],
+    [
+      'ng',
+      'langs',
+      5,
+      [
+        'npx --no-install prettier --write a.ts b.json c.html d.scss sub/biome.json',
+        'npx --no-install eslint --fix a.ts',
+      ],
+      [
+        'npx --no-install prettier --check a.ts b.json c.html d.scss sub/biome.json',
+        'npx --no-install eslint a.ts',
+      ],
+    ],
+    [
+      'py',
+      'langs',
+      1,
+      ['uv run ruff format e.py', 'uv run ruff check --fix e.py'],
+      ['uv run ruff format --check e.py', 'uv run ruff check e.py'],
+    ],
+    [
+      'dotnet',
+      'langs',
+      1,
+      ['dotnet format --include F.cs'],
+      ['dotnet format --verify-no-changes --include F.cs'],
+    ],
+    ['rust', 'langs', 1, ['cargo fmt -- src/lib.rs'], ['cargo fmt -- --check src/lib.rs']],
+    ['go', 'langs', 1, ['gofmt -w cmd/app/main.go'], ['gofmt -l cmd/app/main.go']],
+    ['ts', 'biome', 2, ['npx biome check --write b.ts c.json'], ['npx biome check b.ts c.json']],
+    [
+      'ng',
+      'biome',
+      3,
+      ['npx biome check --write a.html b.ts c.json'],
+      ['npx biome check a.html b.ts c.json'],
+    ],
+  ] as const;
+  it.each(defaults)('default %s (%s repo) runs its format commands', async (lang, r, n, format) => {
+    const f = await go(repo[r], ['-Language', lang]);
+    expect(f).toMatchObject({ status: 0, stdout: `formatted: ${n} files\n` });
+    expect(callLines()).toEqual(format);
+  });
+  it.each(defaults.filter(([lang]) => lang === 'ts'))(
+    'default %s (%s repo) -Check runs its check commands',
+    async (lang, r, n, _format, check) => {
+      const c = await go(repo[r], ['-Language', lang, '-Check']);
+      expect(c).toMatchObject({ status: 0, stdout: `checked: ${n} files\n` });
+      expect(callLines()).toEqual(check);
+    },
+  );
+
+  // explicit -Command (with a passing -Requires probe): staged, unstaged and untracked files of the extensions, deleted and
+  // .md dropped, branch commits (c.ts) only with -Base; names with spaces, non-ASCII or ';' intact, a leading '-' prefixed
+  const files = ['base.ts', 'staged.ts', './-rf.ts', 'Größe über.ts', 'c;d.ts'];
+  it.each([
+    [
+      'a {files} token',
+      'fmt --write {files} --end',
+      [],
+      'formatted: 5',
+      ['--write', ...files, '--end'],
+    ],
+    [
+      'no placeholder (appended), -Check',
+      'fmt --fix',
+      ['-Check'],
+      'checked: 5',
+      ['--fix', ...files],
+    ],
+    [
+      'an embedded {files} (joined by ;)',
+      'fmt --include={files}',
+      [],
+      'formatted: 5',
+      [`--include=${files.join(';')}`],
+    ],
+    ['-Base main', 'fmt {files}', ['-Base', 'main'], 'formatted: 6', ['c.ts', ...files]],
+  ])('-Command with %s passes the changed files', async (_n, cmd, extra, out, argv) => {
+    const r = await go(repo.work, [
+      '-Extensions',
+      'ts,TSX',
+      '-Command',
+      cmd,
+      '-Requires',
+      'fmt --version',
+      ...extra,
+    ]);
+    expect(r).toMatchObject({ status: 0, stdout: `${out} files\n` });
+    expect(calls()).toEqual([['fmt', ...argv]]);
   });
 
-  it('skips when only unsupported extensions changed', async () => {
-    fake('fmt');
-    write('notes.md', 'x');
-    const r = await go(['-Extensions', '.ts,.tsx', '-Command', 'fmt {files}']);
-    expect(r.status).toBe(0);
-    expect(r.stdout).toContain('skipped: no changed files');
-    expect(logged()).toEqual([]);
+  it.each([
+    [
+      'a failing default probe (ruff, not uv)',
+      'langs',
+      ['-Language', 'py'],
+      'bad',
+      'ruff not configured',
+    ],
+    ['a failing biome probe', 'biome', ['-Language', 'ts'], 'bad', 'biome not configured'],
+    [
+      'a failing -Requires probe',
+      'langs',
+      ['-Extensions', '.ts', '-Command', 'fmt {files}', '-Requires', 'fmt --version'],
+      'bad',
+      'fmt not configured',
+    ],
+    ['a missing default tool', 'langs', ['-Language', 'go'], 'gitOnly', 'gofmt not found'],
+    [
+      'a missing -Command tool',
+      'langs',
+      ['-Extensions', '.ts', '-Command', 'no-such-fmt --write {files}'],
+      'ok',
+      'no-such-fmt not found',
+    ],
+  ] as const)('skips a step by name for %s', async (_n, r, args, bin, out) => {
+    const env = bin === 'gitOnly' ? { PATH: bins.gitOnly } : {};
+    const res = await go(repo[r], [...args], bins[bin], env);
+    expect(res).toMatchObject({ status: 0, stdout: `skipped: ${out}\n` });
+    expect(calls()).toEqual([]);
   });
 
-  it('skips with the tool name when the tool is missing', async () => {
-    write('a.ts', 'x');
-    const r = await go(['-Extensions', '.ts', '-Command', 'no-such-formatter --write {files}']);
-    expect(r.status).toBe(0);
-    expect(r.stdout.trim()).toBe('skipped: no-such-formatter not found');
+  it.each([
+    ['a language without changed files', ['-Language', 'rust']],
+    ['only other extensions changed', ['-Extensions', '.ts', '-Command', 'fmt {files}']],
+  ])('skips with no changed files for %s', async (_n, args) => {
+    const r = await go(repo.clean, args);
+    expect(r).toMatchObject({ status: 0, stdout: 'skipped: no changed files\n' });
+    expect(calls()).toEqual([]);
   });
 
-  it('passes only matching changed files, never a directory', async () => {
-    fake('fmt');
-    write('base.ts', 'changed'); // unstaged
-    write('src/new.tsx', 'x'); // untracked
-    write('src/readme.md', 'x'); // wrong extension
-    write('staged.ts', 'x');
-    git('add', 'staged.ts');
-    const r = await go(['-Extensions', '.ts,.tsx', '-Command', 'fmt --write {files} --end']);
-    expect(r.status).toBe(0);
-    expect(r.stdout.trim()).toBe('formatted: 3 files');
-    expect(logged().sort()).toEqual(['--end', '--write', 'base.ts', 'src/new.tsx', 'staged.ts']);
+  it.each([
+    [
+      'without a commit: index and untracked files',
+      'nohead',
+      'formatted: 2 files',
+      [['fmt', 'n.ts', 'u.ts']],
+    ],
+    ['outside a git repository: skipped', 'nogit', 'skipped: not a git repository', []],
+  ] as const)('runs %s', async (_n, r, out, expected) => {
+    const env = { GIT_CEILING_DIRECTORIES: path.dirname(repo.nogit) };
+    const res = await go(repo[r], ['-Extensions', '.ts', '-Command', 'fmt {files}'], bins.ok, env);
+    expect(res).toMatchObject({ status: 0, stdout: `${out}\n` });
+    expect(calls()).toEqual(expected);
   });
 
-  it('drops deleted files and reports checked with -Check', async () => {
-    fake('fmt');
-    fs.rmSync(path.join(dir, 'base.ts'));
-    write('b.ts', 'x');
-    const r = await go(['-Extensions', 'ts', '-Command', 'fmt {files}', '-Check']);
-    expect(r.stdout.trim()).toBe('checked: 1 files');
-    expect(logged()).toEqual(['b.ts']);
-  });
-
-  it('passes the failing exit code and stderr through', async () => {
-    fake('fmt', 'echo broken >&2; exit 7');
-    write('a.ts', 'x');
-    const r = await go(['-Extensions', '.ts', '-Command', 'fmt {files}']);
-    expect(r.status).toBe(7);
+  it('passes a failing exit code and stderr through and stops at the failing command', async () => {
+    conf({
+      config: {
+        format: { ts: { format: 'x', check: ['one {files}', 'bad {files}', 'two {files}'] } },
+      },
+    });
+    const r = await go(repo.cfg, [...ts, '-Check']);
+    expect(r.status).toBe(5);
     expect(r.stderr).toContain('broken');
-    expect(r.stdout).not.toContain('formatted');
+    expect(r.stdout).not.toContain('checked');
+    expect(callLines()).toEqual(['one a.ts', 'bad a.ts']);
   });
 
-  it('-Base adds files committed since the ref; default ignores them', async () => {
-    fake('fmt');
-    git('checkout', '-qb', 'feat');
-    write('c.ts', 'x');
-    git('add', 'c.ts');
-    git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'c');
-    write('d.ts', 'x'); // uncommitted
-    const none = await go(['-Extensions', '.ts', '-Command', 'fmt {files}']);
-    expect(none.stdout.trim()).toBe('formatted: 1 files');
-    fs.rmSync(path.join(dir, 'args.log'));
-    const r = await go(['-Extensions', '.ts', '-Command', 'fmt {files}', '-Base', 'main']);
-    expect(r.stdout.trim()).toBe('formatted: 2 files');
-    expect(logged().sort()).toEqual(['c.ts', 'd.ts']);
+  it('runs the .agents/config.json format.<lang> entry over -Command, -Requires and the defaults', async () => {
+    conf({
+      config: {
+        format: {
+          dotnet: {
+            extensions: ['.cs'],
+            format: ['jb fmt {files}', 'two {files}'],
+            check: 'jb chk {files}',
+          },
+        },
+      },
+    });
+    // bins.bad: a probe would fail, the override runs without one
+    const args = [
+      '-Language',
+      'dotnet',
+      '-Extensions',
+      '.ts',
+      '-Command',
+      'dflt {files}',
+      '-Requires',
+      'jb --version',
+    ];
+    const f = await go(repo.cfg, args, bins.bad);
+    expect(f).toMatchObject({ status: 0, stdout: 'formatted: 1 files\n' });
+    expect(f.stderr).toContain("notice: running commands from .agents/config.json for 'dotnet'");
+    expect(callLines()).toEqual(['jb fmt A.cs', 'two A.cs']);
+    fs.rmSync(log());
+    const c = await go(repo.cfg, ['-Language', 'dotnet', '-Check']);
+    expect(c).toMatchObject({ status: 0, stdout: 'checked: 1 files\n' });
+    expect(callLines()).toEqual(['jb chk A.cs']);
   });
 
-  it('fails non-zero with the git error for an invalid -Base', async () => {
-    fake('fmt');
-    write('a.ts', 'x');
-    const r = await go([
+  it.each([
+    ['format', { config: { format: false } }, []],
+    [
+      '-Check, over a legacy .agents/format.json',
+      { config: { format: false }, format: { ts: { format: 'jb {files}' } } },
+      ['-Check'],
+    ],
+  ])('"format": false skips %s as disabled', async (_n, c, extra) => {
+    conf(c);
+    const r = await go(repo.cfg, [...ts, '-Command', 'dflt {files}', ...extra]);
+    expect(r).toMatchObject({ status: 0, stdout: 'skipped: disabled\n' });
+    expect(calls()).toEqual([]);
+  });
+
+  it.each([
+    [
+      'config.json has no format key: the legacy file applies, deprecated',
+      { config: {}, format: { ts: { format: 'jb old {files}' } } },
+      'jb old a.ts',
+      /format\.json is deprecated.*\.agents\/config\.json[\s\S]*running commands from \.agents\/format\.json/,
+    ],
+    [
+      'both define format: config.json wins',
+      {
+        config: { format: { ts: { format: 'jb new {files}' } } },
+        format: { ts: { format: 'jb old {files}' } },
+      },
+      'jb new a.ts',
+      /both define format.*config\.json wins/,
+    ],
+  ])('legacy .agents/format.json: %s', async (_n, c, call, notice) => {
+    conf(c);
+    const r = await go(repo.cfg, ts);
+    expect(r).toMatchObject({ status: 0, stdout: 'formatted: 1 files\n' });
+    expect(r.stderr).toMatch(notice);
+    expect(callLines()).toEqual([call]);
+  });
+
+  it.each([
+    ['no -Language: the config is not read', { config: '{ nope' }, ['-Extensions', '.ts']],
+    ['no format key', { config: { $schema: 'https://example.com/s.json' } }, ts],
+    [
+      'an entry only for another language',
+      { config: { format: { py: { format: 'jb {files}' } } } },
+      ts,
+    ],
+    ['a legacy file that is not an object', { format: [1] }, ts],
+    ['no config: explicit -Command over the ts default', {}, ts],
+  ])('runs -Command when no entry applies: %s', async (_n, c, args) => {
+    conf(c);
+    const r = await go(repo.cfg, [...args, '-Command', 'dflt {files}']);
+    expect(r).toMatchObject({ status: 0, stdout: 'formatted: 1 files\n' });
+    expect(callLines()).toEqual(['dflt a.ts']);
+  });
+
+  const jb = [...ts, '-Command', 'jb {files}'];
+  it.each([
+    ['config.json is not valid JSON', { config: '{ nope' }, jb, /config\.json is not valid JSON/],
+    ['config.json is not an object', { config: [1] }, jb, /config\.json must be a JSON object/],
+    [
+      'an unknown top-level key',
+      { config: { frmat: {} } },
+      jb,
+      /config\.json: unknown key 'frmat'/,
+    ],
+    [
+      'format is a string',
+      { config: { format: 'jb {files}' } },
+      jb,
+      /key 'format' must be false or a map/,
+    ],
+    ['format is true', { config: { format: true } }, jb, /key 'format' must be false or a map/],
+    [
+      'the entry is not an object',
+      { config: { format: { ts: 'jb {files}' } } },
+      jb,
+      /config\.json: entry 'ts' has no 'format' command/,
+    ],
+    [
+      'the entry lacks the -Check key',
+      { config: { format: { ts: { format: 'jb {files}' } } } },
+      [...jb, '-Check'],
+      /config\.json: entry 'ts' has no 'check' command/,
+    ],
+    [
+      'the command list is empty',
+      { config: { format: { ts: { format: [] } } } },
+      jb,
+      /empty 'format' command/,
+    ],
+    [
+      'the command is blank',
+      { config: { format: { ts: { format: ' ' } } } },
+      jb,
+      /empty 'format' command/,
+    ],
+    [
+      'the legacy file is not valid JSON',
+      { format: '{ nope' },
+      jb,
+      /format\.json is not valid JSON/,
+    ],
+    [
+      'a configured tool is missing',
+      { config: { format: { ts: { format: ['jb {files}', 'no-such-jb {files}'] } } } },
+      jb,
+      /no-such-jb not found \(configured in \.agents\/config\.json for ts\)/,
+    ],
+    [
+      'neither the entry nor the call has extensions',
+      { config: { format: { ts: { format: 'jb {files}' } } } },
+      ['-Language', 'ts'],
+      /-Extensions is required/,
+    ],
+    ['an unknown language without -Command', {}, ['-Language', 'cobol'], /-Command is required/],
+    ['-Command without -Extensions', {}, ['-Command', 'jb {files}'], /-Extensions is required/],
+  ])('fails when %s', async (_n, c, args, re) => {
+    conf(c);
+    const r = await go(repo.cfg, args);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(re);
+    expect(r.stdout).toBe('');
+    expect(calls()).toEqual([]);
+  });
+
+  it('fails with the git error for an invalid -Base, nothing checked', async () => {
+    const r = await go(repo.work, [
       '-Extensions',
       '.ts',
       '-Command',
@@ -136,660 +488,35 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Format-Changed.ps1', 
       '-Check',
     ]);
     expect(r.status).not.toBe(0);
-    expect(r.stdout).not.toContain('skipped');
+    expect(r.stdout).toBe('');
     expect(r.stderr).toMatch(/no-such-ref|unknown revision/);
-    expect(logged()).toEqual([]);
+    expect(calls()).toEqual([]);
   });
 
-  it('keeps non-ASCII and spaced file names intact', async () => {
-    fake('fmt');
-    write('Größe über.ts', 'x');
-    write('日本語.ts', 'x');
-    const r = await go(['-Extensions', '.ts', '-Command', 'fmt {files}']);
-    expect(r.stdout.trim()).toBe('formatted: 2 files');
-    expect(logged().sort()).toEqual(['Größe über.ts', '日本語.ts']);
-  });
-
-  it('prefixes names that start with a dash', async () => {
-    fake('fmt');
-    write('-rf.ts', 'x');
-    await go(['-Extensions', '.ts', '-Command', 'fmt {files}']);
-    expect(logged()).toEqual(['./-rf.ts']);
-  });
-
-  it('appends the files when the command has no {files} placeholder', async () => {
-    fake('fmt');
-    write('a.ts', 'x');
-    const r = await go(['-Extensions', '.ts', '-Command', 'fmt --fix']);
-    expect(r.stdout.trim()).toBe('formatted: 1 files');
-    expect(logged()).toEqual(['--fix', 'a.ts']);
-  });
-
-  it('works in a repository without a commit', async () => {
-    fake('fmt');
-    const fresh = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fmt-nohead-')));
-    spawnSync('git', ['init', '-q'], { cwd: fresh });
-    fs.writeFileSync(path.join(fresh, 'n.ts'), 'x');
-    spawnSync('git', ['add', 'n.ts'], { cwd: fresh });
-    fs.writeFileSync(path.join(fresh, 'u.ts'), 'x');
-    const r = await worker.run(['-Extensions', '.ts', '-Command', 'fmt {files}'], {
-      cwd: fresh,
-      env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
-    });
-    const log = fs.readFileSync(path.join(fresh, 'args.log'), 'utf8').trim().split('\n').sort();
-    fs.rmSync(fresh, { recursive: true, force: true });
-    expect(r.stdout.trim()).toBe('formatted: 2 files');
-    expect(log).toEqual(['n.ts', 'u.ts']);
-  });
-
-  it('skips outside a git repository', async () => {
-    fake('fmt');
-    const plain = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fmt-nogit-')));
-    const r = await worker.run(['-Extensions', '.ts', '-Command', 'fmt {files}'], {
-      cwd: plain,
-      env: {
-        ...process.env,
-        PATH: `${bin}:${process.env.PATH}`,
-        GIT_CEILING_DIRECTORIES: path.dirname(plain),
+  it('-WhatIf prints the resolved steps as JSON and runs nothing', async () => {
+    const d = await go(repo.langs, ['-Language', 'ts', '-Check', '-WhatIf']);
+    expect(d.status).toBe(0);
+    expect(JSON.parse(d.stdout)).toEqual([
+      {
+        tool: 'prettier',
+        extensions: ['.ts', '.tsx', '.js', '.mjs', '.cjs', '.json'],
+        requires: 'npx --no-install prettier --version',
+        commands: ['npx --no-install prettier --check {files}'],
       },
-    });
-    fs.rmSync(plain, { recursive: true, force: true });
-    expect(r.status).toBe(0);
-    expect(r.stdout.trim()).toBe('skipped: not a git repository');
-  });
-
-  it('skips when the -Requires probe fails and runs when it passes', async () => {
-    fake('fmt');
-    fake('probe-bad', 'exit 3');
-    fake('probe-ok');
-    write('a.ts', 'x');
-    const bad = await go([
-      '-Extensions',
-      '.ts',
-      '-Command',
-      'fmt {files}',
-      '-Requires',
-      'probe-bad --version',
+      {
+        tool: 'eslint',
+        extensions: ['.ts', '.tsx', '.js', '.mjs', '.cjs'],
+        requires: 'npx --no-install eslint --version',
+        commands: ['npx --no-install eslint {files}'],
+      },
     ]);
-    expect(bad.status).toBe(0);
-    expect(bad.stdout.trim()).toBe('skipped: probe-bad not configured');
-    const ok = await go([
-      '-Extensions',
-      '.ts',
-      '-Command',
-      'fmt {files}',
-      '-Requires',
-      'probe-ok --version',
+    const c = await go(repo.langs, ['-Extensions', '.ts', '-Command', 'fmt {files}', '-WhatIf']);
+    expect(JSON.parse(c.stdout)).toEqual([
+      { tool: null, extensions: ['.ts'], requires: null, commands: ['fmt {files}'] },
     ]);
-    expect(ok.stdout.trim()).toBe('formatted: 1 files');
-    expect(logged()).toContain('a.ts');
-  });
-
-  describe('legacy .agents/format.json override', () => {
-    const cfg = (o: unknown) =>
-      write('.agents/format.json', typeof o === 'string' ? o : JSON.stringify(o));
-
-    it('wins over -Command for format and for -Check, with {files}', async () => {
-      fake('jb');
-      fake('dflt');
-      write('A.cs', 'x');
-      cfg({ dotnet: { extensions: ['.cs'], format: 'jb fmt {files}', check: 'jb chk {files}' } });
-      const base = ['-Language', 'dotnet', '-Extensions', '.ts', '-Command', 'dflt {files}'];
-      const f = await go(base);
-      expect(f.stdout.trim()).toBe('formatted: 1 files');
-      expect(logged()).toEqual(['fmt', 'A.cs']);
-      fs.rmSync(path.join(dir, 'args.log'));
-      const c = await go([...base, '-Check']);
-      expect(c.stdout.trim()).toBe('checked: 1 files');
-      expect(logged()).toEqual(['chk', 'A.cs']);
-    });
-
-    it('needs -Extensions only when the entry has none, never -Command', async () => {
-      fake('jb');
-      write('a.ts', 'x');
-      cfg({ ts: { format: 'jb {files}' } });
-      const none = await go(['-Language', 'ts']);
-      expect(none.status).toBe(1);
-      expect(none.stderr).toContain('-Extensions is required');
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
-      expect(r.stdout.trim()).toBe('formatted: 1 files');
-      expect(logged()).toEqual(['a.ts']);
-    });
-
-    it('errors naming the tool when the override tool is missing, default not run', async () => {
-      fake('dflt');
-      fake('jb');
-      write('a.ts', 'x');
-      cfg({ ts: { format: ['jb {files}', 'no-such-jb {files}'] } });
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'dflt {files}']);
-      expect(r.status).toBe(1);
-      expect(r.stderr).toContain('no-such-jb not found');
-      expect(r.stderr).toContain('ts');
-      expect(r.stdout).not.toContain('skipped');
-      expect(logged()).toEqual([]);
-    });
-
-    it('ignores an entry for an unrelated language', async () => {
-      fake('dflt');
-      write('a.ts', 'x');
-      cfg({ py: { format: 'other {files}' } });
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'dflt {files}']);
-      expect(r.stdout.trim()).toBe('formatted: 1 files');
-      expect(logged()).toEqual(['a.ts']);
-    });
-
-    it('runs an array of commands in order and stops at the first failure', async () => {
-      fake('one', 'echo one >> order.log');
-      fake('two', 'echo two >> order.log');
-      fake('bad', 'echo bad >> order.log; exit 5');
-      write('a.ts', 'x');
-      cfg({ ts: { format: ['one {files}', 'two {files}'], check: ['one {files}', 'bad', 'two'] } });
-      const ok = await go(['-Language', 'ts', '-Extensions', '.ts']);
-      expect(ok.status).toBe(0);
-      expect(fs.readFileSync(path.join(dir, 'order.log'), 'utf8').trim().split('\n')).toEqual([
-        'one',
-        'two',
-      ]);
-      fs.rmSync(path.join(dir, 'order.log'));
-      const bad = await go(['-Language', 'ts', '-Extensions', '.ts', '-Check']);
-      expect(bad.status).toBe(5);
-      expect(fs.readFileSync(path.join(dir, 'order.log'), 'utf8').trim().split('\n')).toEqual([
-        'one',
-        'bad',
-      ]);
-    });
-
-    it('errors when the mode key is missing, naming file, language and key', async () => {
-      fake('jb');
-      write('a.ts', 'x');
-      cfg({ ts: { format: 'jb {files}' } });
-      const r = await go([
-        '-Language',
-        'ts',
-        '-Extensions',
-        '.ts',
-        '-Command',
-        'jb {files}',
-        '-Check',
-      ]);
-      expect(r.status).toBe(1);
-      expect(r.stderr).toMatch(/format\.json.*ts.*check/);
-      expect(logged()).toEqual([]);
-    });
-
-    it('errors on invalid JSON naming the file', async () => {
-      fake('dflt');
-      write('a.ts', 'x');
-      cfg('{ nope');
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'dflt {files}']);
-      expect(r.status).toBe(1);
-      expect(r.stderr).toContain('format.json is not valid JSON');
-    });
-
-    it('is ignored without -Language', async () => {
-      fake('dflt');
-      write('a.ts', 'x');
-      cfg('{ nope');
-      const r = await go(['-Extensions', '.ts', '-Command', 'dflt {files}']);
-      expect(r.status).toBe(0);
-      expect(logged()).toEqual(['a.ts']);
-    });
-
-    it('ignores -Requires with an override', async () => {
-      fake('jb');
-      write('a.ts', 'x');
-      cfg({ ts: { format: 'jb {files}' } });
-      const r = await go([
-        '-Language',
-        'ts',
-        '-Extensions',
-        '.ts',
-        '-Requires',
-        'probe-bad --version',
-      ]);
-      expect(r.status).toBe(0);
-      expect(r.stdout.trim()).toBe('formatted: 1 files');
-      expect(logged()).toEqual(['a.ts']);
-    });
-
-    it('errors on a missing tool even when no file changed', async () => {
-      cfg({ ts: { format: 'no-such-jb {files}' } });
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
-      expect(r.status).toBe(1);
-      expect(r.stderr).toContain('no-such-jb not found');
-    });
-
-    it('prints a notice on stderr when an override applies', async () => {
-      fake('jb');
-      write('a.ts', 'x');
-      cfg({ ts: { format: 'jb {files}' } });
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
-      expect(r.status).toBe(0);
-      expect(r.stdout.trim()).toBe('formatted: 1 files');
-      expect(r.stderr).toContain('notice:');
-      expect(r.stderr).toContain('.agents/format.json');
-    });
-
-    it('substitutes {files} inside a token, joined by ;', async () => {
-      fake('jb');
-      write('a.ts', 'x');
-      write('b.ts', 'x');
-      cfg({ ts: { format: 'jb --include={files} sln' } });
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
-      expect(r.status).toBe(0);
-      expect(logged()).toEqual(['--include=a.ts;b.ts', 'sln']);
-    });
-
-    it('substitutes an embedded {files} in the default -Command too', async () => {
-      fake('dflt');
-      write('a.ts', 'x');
-      write('b.ts', 'x');
-      const r = await go(['-Extensions', '.ts', '-Command', 'dflt --include={files}']);
-      expect(r.status).toBe(0);
-      expect(logged()).toEqual(['--include=a.ts;b.ts']);
-    });
-
-    it('keeps file names with a space or ; intact in an embedded {files}', async () => {
-      fake('jb');
-      write('a b.ts', 'x');
-      write('c;d.ts', 'x');
-      cfg({ ts: { format: 'jb --include={files}' } });
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts']);
-      expect(r.status).toBe(0);
-      expect(logged()).toEqual(['--include=a b.ts;c;d.ts']);
-    });
-
-    it.each([
-      ['entry is not an object', { ts: 'jb {files}' }, /no 'format' command/],
-      ['mode value is empty', { ts: { format: [] } }, /empty 'format' command/],
-      ['mode value is blank', { ts: { format: ' ' } }, /empty 'format' command/],
-    ])('errors when %s', async (_n, conf, re) => {
-      fake('jb');
-      write('a.ts', 'x');
-      cfg(conf);
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'jb {files}']);
-      expect(r.status).toBe(1);
-      expect(r.stderr).toMatch(re);
-      expect(logged()).toEqual([]);
-    });
-
-    it('treats a file that is not an object as having no entry: the default applies', async () => {
-      fake('jb');
-      write('a.ts', 'x');
-      cfg([1]);
-      const r = await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'jb {files}']);
-      expect(r.status).toBe(0);
-      expect(r.stdout.trim()).toBe('formatted: 1 files');
-      expect(logged()).toEqual(['a.ts']);
-    });
-
-    it('requires -Command and -Extensions when no entry applies', async () => {
-      write('a.ts', 'x');
-      expect((await go(['-Extensions', '.ts'])).status).not.toBe(0);
-      expect((await go(['-Command', 'x {files}'])).status).not.toBe(0);
-    });
-  });
-
-  describe('.agents/config.json (#830)', () => {
-    const conf = (o: unknown) =>
-      write('.agents/config.json', typeof o === 'string' ? o : JSON.stringify(o));
-    const legacy = (o: unknown) => write('.agents/format.json', JSON.stringify(o));
-    const ts = ['-Language', 'ts', '-Extensions', '.ts'];
-
-    it('runs the format.<lang> entry for format and check, with {files}', async () => {
-      fake('jb');
-      write('A.cs', 'x');
-      conf({
-        format: {
-          dotnet: { extensions: ['.cs'], format: 'jb fmt {files}', check: 'jb chk {files}' },
-        },
-      });
-      const f = await go(['-Language', 'dotnet']);
-      expect(f.stdout.trim()).toBe('formatted: 1 files');
-      expect(f.stderr).toContain('notice: running commands from .agents/config.json');
-      expect(logged()).toEqual(['fmt', 'A.cs']);
-      fs.rmSync(path.join(dir, 'args.log'));
-      const c = await go(['-Language', 'dotnet', '-Check']);
-      expect(c.stdout.trim()).toBe('checked: 1 files');
-      expect(logged()).toEqual(['chk', 'A.cs']);
-    });
-
-    it('"format": false skips format and check with skipped: disabled', async () => {
-      fake('dflt');
-      write('a.ts', 'x');
-      conf({ format: false });
-      for (const extra of [[], ['-Check']]) {
-        const r = await go([...ts, '-Command', 'dflt {files}', ...extra]);
-        expect(r.status).toBe(0);
-        expect(r.stdout.trim()).toBe('skipped: disabled');
-      }
-      expect(logged()).toEqual([]);
-    });
-
-    it('keeps the defaults without a format key or without an entry for the language', async () => {
-      fake('dflt');
-      fake('jb');
-      write('a.ts', 'x');
-      for (const c of [
-        { $schema: 'https://example.com/s.json' },
-        { format: { py: { format: 'jb {files}' } } },
-      ]) {
-        conf(c);
-        const r = await go([...ts, '-Command', 'dflt {files}']);
-        expect(r.stdout.trim()).toBe('formatted: 1 files');
-        expect(r.stderr).not.toContain('deprecated');
-      }
-      expect(logged()).toEqual(['a.ts', 'a.ts']);
-    });
-
-    it('falls back to format.json when config.json has no format key, with a deprecation notice', async () => {
-      fake('jb');
-      write('a.ts', 'x');
-      conf({});
-      legacy({ ts: { format: 'jb old {files}' } });
-      const r = await go(ts);
-      expect(r.status).toBe(0);
-      expect(logged()).toEqual(['old', 'a.ts']);
-      expect(r.stderr).toMatch(/deprecated.*\.agents\/config\.json/);
-    });
-
-    it('config.json wins when both define format, and says so', async () => {
-      fake('jb');
-      write('a.ts', 'x');
-      conf({ format: { ts: { format: 'jb new {files}' } } });
-      legacy({ ts: { format: 'jb old {files}' } });
-      const r = await go(ts);
-      expect(logged()).toEqual(['new', 'a.ts']);
-      expect(r.stderr).toMatch(/both define format.*config\.json wins/);
-    });
-
-    it('config.json "format": false wins over format.json', async () => {
-      fake('jb');
-      write('a.ts', 'x');
-      conf({ format: false });
-      legacy({ ts: { format: 'jb old {files}' } });
-      const r = await go(ts);
-      expect(r.stdout.trim()).toBe('skipped: disabled');
-      expect(logged()).toEqual([]);
-    });
-
-    it.each([
-      ['unknown top-level key', { frmat: {} }, /config\.json: unknown key 'frmat'/],
-      [
-        'format that is not false or a map',
-        { format: 'jb {files}' },
-        /config\.json: key 'format' must be false or a map/,
-      ],
-      ['format true', { format: true }, /key 'format' must be false or a map/],
-      [
-        'entry without the mode key',
-        { format: { ts: { check: 'x' } } },
-        /config\.json: entry 'ts' has no 'format' command/,
-      ],
-      ['not valid JSON', '{ nope', /config\.json is not valid JSON/],
-      ['not an object', [1], /config\.json must be a JSON object/],
-    ])('fails for %s, naming file and key', async (_n, c, re) => {
-      fake('jb');
-      write('a.ts', 'x');
-      conf(c);
-      const r = await go([...ts, '-Command', 'jb {files}']);
-      expect(r.status).toBe(1);
-      expect(r.stderr).toMatch(re);
-      expect(logged()).toEqual([]);
-    });
-
-    it('is ignored without -Language', async () => {
-      fake('dflt');
-      write('a.ts', 'x');
-      conf('{ nope');
-      const r = await go(['-Extensions', '.ts', '-Command', 'dflt {files}']);
-      expect(r.status).toBe(0);
-      expect(logged()).toEqual(['a.ts']);
-    });
-  });
-
-  describe('built-in defaults per language (#770)', () => {
-    // fake tool logging one line per call (probes with --version included); `probe` makes the version probe fail
-    const tool = (name: string, probe = true) =>
-      fs.writeFileSync(
-        path.join(bin, name),
-        `#!/bin/sh\n${probe ? '' : 'case "$*" in *--version*) exit 1;; esac\n'}echo "${name} $*" >> calls.log\n`,
-        { mode: 0o755 },
-      );
-    const calls = () =>
-      fs.existsSync(path.join(dir, 'calls.log'))
-        ? fs
-            .readFileSync(path.join(dir, 'calls.log'), 'utf8')
-            .trim()
-            .split('\n')
-            .filter((l) => !l.includes('--version'))
-        : [];
-    const cfg = (o: unknown) => write('.agents/format.json', JSON.stringify(o));
-
-    it('ts: prettier first, then eslint only on code files (json goes to prettier alone)', async () => {
-      tool('npx');
-      write('a.ts', 'x');
-      write('b.json', 'x');
-      write('c.md', 'x');
-      const r = await go(['-Language', 'ts']);
-      expect(r.status).toBe(0);
-      expect(r.stdout.trim()).toBe('formatted: 2 files');
-      expect(calls()).toEqual([
-        'npx --no-install prettier --write a.ts b.json',
-        'npx --no-install eslint --fix a.ts',
-      ]);
-    });
-
-    it('ts -Check: read-only variants in the same order', async () => {
-      tool('npx');
-      write('a.ts', 'x');
-      const r = await go(['-Language', 'ts', '-Check']);
-      expect(r.stdout.trim()).toBe('checked: 1 files');
-      expect(calls()).toEqual([
-        'npx --no-install prettier --check a.ts',
-        'npx --no-install eslint a.ts',
-      ]);
-    });
-
-    it('ng: prettier also takes html, scss and css, eslint does not', async () => {
-      tool('npx');
-      write('a.html', 'x');
-      write('b.scss', 'x');
-      write('c.ts', 'x');
-      await go(['-Language', 'ng']);
-      expect(calls()).toEqual([
-        'npx --no-install prettier --write a.html b.scss c.ts',
-        'npx --no-install eslint --fix c.ts',
-      ]);
-    });
-
-    it('py: ruff format, then ruff check --fix; -Check uses the read-only pair', async () => {
-      tool('uv');
-      write('a.py', 'x');
-      await go(['-Language', 'py']);
-      expect(calls()).toEqual(['uv run ruff format a.py', 'uv run ruff check --fix a.py']);
-      fs.rmSync(path.join(dir, 'calls.log'));
-      await go(['-Language', 'py', '-Check']);
-      expect(calls()).toEqual(['uv run ruff format --check a.py', 'uv run ruff check a.py']);
-    });
-
-    it('py: names ruff, not uv, when the probe fails', async () => {
-      tool('uv', false);
-      write('a.py', 'x');
-      const r = await go(['-Language', 'py']);
-      expect(r.status).toBe(0);
-      expect(r.stdout.trim()).toBe('skipped: ruff not configured');
-      expect(calls()).toEqual([]);
-    });
-
-    it('dotnet: dotnet format --include, -Check verifies', async () => {
-      tool('dotnet');
-      write('A.cs', 'x');
-      await go(['-Language', 'dotnet']);
-      await go(['-Language', 'dotnet', '-Check']);
-      expect(calls()).toEqual([
-        'dotnet format --include A.cs',
-        'dotnet format --verify-no-changes --include A.cs',
-      ]);
-    });
-
-    it('rust: cargo fmt -- <files>, -Check adds --check', async () => {
-      tool('cargo');
-      write('src/lib.rs', 'x');
-      await go(['-Language', 'rust']);
-      await go(['-Language', 'rust', '-Check']);
-      expect(calls()).toEqual(['cargo fmt -- src/lib.rs', 'cargo fmt -- --check src/lib.rs']);
-    });
-
-    it('go: gofmt -w <files>, -Check lists with gofmt -l', async () => {
-      tool('gofmt');
-      write('cmd/app/main.go', 'x');
-      write('README.md', 'x');
-      const r = await go(['-Language', 'go']);
-      expect(r.stdout.trim()).toBe('formatted: 1 files');
-      await go(['-Language', 'go', '-Check']);
-      expect(calls()).toEqual(['gofmt -w cmd/app/main.go', 'gofmt -l cmd/app/main.go']);
-    });
-
-    it('go: a missing gofmt is skipped by name', async () => {
-      write('main.go', 'x');
-      // CI images ship gofmt in /usr/bin, so /usr/bin:/bin cannot stay on PATH for this case: only git is linked in.
-      const git = spawnSync('sh', ['-c', 'command -v git'], { encoding: 'utf8' }).stdout.trim();
-      fs.symlinkSync(git, path.join(bin, 'git'));
-      const r = await worker.run(['-Language', 'go'], {
-        cwd: dir,
-        env: { ...process.env, PATH: bin },
-      });
-      expect(r.status).toBe(0);
-      expect(r.stdout.trim()).toBe('skipped: gofmt not found');
-    });
-
-    it('skips with no changed files when no file of the language changed', async () => {
-      tool('cargo');
-      write('a.ts', 'x');
-      const r = await go(['-Language', 'rust']);
-      expect(r.stdout.trim()).toBe('skipped: no changed files');
-      expect(calls()).toEqual([]);
-    });
-
-    it('a missing tool is skipped by name', async () => {
-      write('a.rs', 'x');
-      const r = await worker.run(['-Language', 'rust'], {
-        cwd: dir,
-        env: { ...process.env, PATH: `${bin}:/usr/bin:/bin` },
-      });
-      expect(r.stdout.trim()).toBe('skipped: cargo not found');
-    });
-
-    it('explicit -Extensions/-Command win over the defaults', async () => {
-      tool('npx');
-      fake('fmt');
-      write('a.ts', 'x');
-      await go(['-Language', 'ts', '-Extensions', '.ts', '-Command', 'fmt {files}']);
-      expect(calls()).toEqual([]);
-      expect(logged()).toEqual(['a.ts']);
-    });
-
-    it('.agents/format.json wins over the defaults', async () => {
-      tool('npx');
-      fake('jb');
-      write('a.ts', 'x');
-      cfg({ ts: { extensions: ['.ts'], format: 'jb {files}' } });
-      const r = await go(['-Language', 'ts']);
-      expect(r.stdout.trim()).toBe('formatted: 1 files');
-      expect(calls()).toEqual([]);
-      expect(logged()).toEqual(['a.ts']);
-    });
-
-    it('ts in a Biome project (biome.json): biome check --write only, never prettier or eslint', async () => {
-      tool('npx');
-      write('biome.json', '{}');
-      git('add', 'biome.json');
-      git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'biome');
-      write('a.ts', 'x');
-      write('b.json', 'x');
-      write('c.md', 'x');
-      const r = await go(['-Language', 'ts']);
-      expect(r.status).toBe(0);
-      expect(r.stdout.trim()).toBe('formatted: 2 files');
-      expect(calls()).toEqual(['npx biome check --write a.ts b.json']);
-    });
-
-    it('ng -Check in a Biome project (biome.jsonc): read-only biome check on the ng extensions', async () => {
-      tool('npx');
-      write('biome.jsonc', '{}');
-      write('a.html', 'x');
-      write('b.ts', 'x');
-      const r = await go(['-Language', 'ng', '-Check']);
-      expect(r.stdout.trim()).toBe('checked: 2 files');
-      expect(calls()).toEqual(['npx biome check a.html b.ts']);
-    });
-
-    it('a Biome project whose biome probe fails is skipped as biome not configured', async () => {
-      tool('npx', false);
-      write('biome.json', '{}');
-      write('a.ts', 'x');
-      const r = await go(['-Language', 'ts']);
-      expect(r.stdout.trim()).toBe('skipped: biome not configured');
-      expect(calls()).toEqual([]);
-    });
-
-    it('biome.json in a subdirectory is not a Biome project: prettier then eslint', async () => {
-      tool('npx');
-      write('sub/biome.json', '{}');
-      write('a.ts', 'x');
-      await go(['-Language', 'ts']);
-      expect(calls()).toEqual([
-        'npx --no-install prettier --write a.ts sub/biome.json',
-        'npx --no-install eslint --fix a.ts',
-      ]);
-    });
-
-    it('.agents/format.json still wins over the biome default', async () => {
-      tool('npx');
-      fake('jb');
-      write('biome.json', '{}');
-      write('a.ts', 'x');
-      cfg({ ts: { extensions: ['.ts'], format: 'jb {files}' } });
-      await go(['-Language', 'ts']);
-      expect(calls()).toEqual([]);
-      expect(logged()).toEqual(['a.ts']);
-    });
-
-    it('-WhatIf prints the resolved steps as JSON and runs nothing', async () => {
-      tool('npx');
-      write('a.ts', 'x');
-      const r = await go(['-Language', 'ts', '-Check', '-WhatIf']);
-      expect(r.status).toBe(0);
-      expect(JSON.parse(r.stdout)).toEqual([
-        {
-          tool: 'prettier',
-          extensions: ['.ts', '.tsx', '.js', '.mjs', '.cjs', '.json'],
-          requires: 'npx --no-install prettier --version',
-          commands: ['npx --no-install prettier --check {files}'],
-        },
-        {
-          tool: 'eslint',
-          extensions: ['.ts', '.tsx', '.js', '.mjs', '.cjs'],
-          requires: 'npx --no-install eslint --version',
-          commands: ['npx --no-install eslint {files}'],
-        },
-      ]);
-      expect(fs.existsSync(path.join(dir, 'calls.log'))).toBe(false);
-    });
-
-    it('-WhatIf with an explicit -Command prints that single step', async () => {
-      const r = await go(['-Extensions', '.ts', '-Command', 'fmt {files}', '-WhatIf']);
-      expect(JSON.parse(r.stdout)).toEqual([
-        { tool: null, extensions: ['.ts'], requires: null, commands: ['fmt {files}'] },
-      ]);
-    });
-
-    it('an unknown language without parameters still needs -Command', async () => {
-      write('a.ts', 'x');
-      const r = await go(['-Language', 'cobol']);
-      expect(r.status).toBe(1);
-      expect(r.stderr).toContain('-Command is required');
-    });
+    conf({ config: { format: false } });
+    const off = await go(repo.cfg, [...ts, '-WhatIf']);
+    expect(JSON.parse(off.stdout)).toEqual([]);
+    expect(calls()).toEqual([]);
   });
 });
