@@ -37,9 +37,9 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 
 3.1.0 removes the `hooks` package (the git guardrails hook); the guardrails now live in the dromos [permission callback](https://github.com/GravionLabs/dromos/blob/main/src/runner/permissions.ts). Clean up: remove the `GravionLabs/apm-hub/packages/hooks` entry from your `apm.yml` and run `apm uninstall` (or `apm update -g` for a global install); delete the `PreToolUse` entry that runs `git-guardrails.sh` from `~/.claude/settings.json`; delete the `preToolUse` entry for `git-guardrails.sh` from your Copilot hook file (for example `~/.copilot/hooks/*.json`) if you added it by hand. `v2.5.4` still ships the hook.
 
-## Upgrading to 3.3.0
+## Upgrading to 3.2.1
 
-3.3.0 ships no dromos surface (decision 004): `/orchestrator`, the `dromos init` step of `apm-install` and `.dromos/` are gone; `/deliver <nr>` delivers issues and `grill-me` settles open decisions. `.agents/config.json` replaces `.dromos/config.json` and `.agents/format.json`: move the content of `.agents/format.json` under the `format` key (the old file still works with a deprecation notice), set the models of the `/deliver` subagents with `deliver.roles` ([project config](docs/usage/project-config.md)), then delete `.dromos/` and run `npm uninstall -g @gravionlabs/dromos`. Commit `.agents/config.json`: a `.gitignore` that ignores `.agents/` needs the lines `.agents/*` and `!.agents/config.json`.
+3.2.1 (planned as 3.3.0) ships no dromos surface (decision 004): `/orchestrator`, the `dromos init` step of `apm-install` and `.dromos/` are gone; `/deliver <nr>` delivers issues and `grill-me` settles open decisions. `.agents/config.json` replaces `.dromos/config.json` and `.agents/format.json`: move the content of `.agents/format.json` under the `format` key (the old file still works with a deprecation notice), set the models of the `/deliver` subagents with `deliver.roles` ([project config](docs/usage/project-config.md)), then delete `.dromos/` and run `npm uninstall -g @gravionlabs/dromos`. Commit `.agents/config.json`: a `.gitignore` that ignores `.agents/` needs the lines `.agents/*` and `!.agents/config.json`.
 
 ## 🚀 Quick Start
 
