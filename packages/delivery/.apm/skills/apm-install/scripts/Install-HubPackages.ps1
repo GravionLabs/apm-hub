@@ -96,19 +96,20 @@ $notes = [System.Collections.Generic.List[string]]::new()
 $hubPath = 'GravionLabs/apm-hub/packages'
 $coreMembers = 'shared', 'github', 'delivery', 'statusline'
 $allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust', 'go')
+# skills per package: the x-skills of packages/<pkg>/apm.yml, sorted (checked by test/packages/delivery/apm-install.test.ts)
 $provides = @{
-  shared   = 'skills: implementation, detect-techstack, diagnose, code-review'
+  shared   = 'skills: code-review, detect-techstack, diagnose, implementation'
   github   = 'skills: github-issue, github-pull-request, github-release'
-  delivery = 'skills: planner, retro, apm-install'
+  delivery = 'skills: apm-install, deliver, grill-me, planner, retro'
   statusline = 'skills: context-statusline'
   core     = 'github, delivery, shared, statusline'
   all      = 'every package except apm-tooling'
-  ts       = 'skills: ts-implementation, ts-test, ts-create-project, ts-mcp-server-generator, ts-pnpm-workflow, setup-prettier-eslint-husky'
-  py       = 'skills: py-implementation, py-test, py-create-project'
+  ts       = 'skills: setup-biome-husky, setup-prettier-eslint-husky, ts-create-project, ts-implementation, ts-mcp-server-generator, ts-pnpm-workflow, ts-test'
+  py       = 'skills: py-create-project, py-implementation, py-test'
   rust     = 'skills: rust-implementation, rust-test'
   go       = 'skills: go-implementation, go-test'
-  ng       ='skills: ng-implementation, ng-test, ng-create-project, ng-ag-grid-developer'
-  dotnet   = 'skills: dotnet-implementation, dotnet-test, dotnet-create-solution, dotnet-mcp-server-generator'
+  ng       = 'skills: ng-ag-grid-developer, ng-create-project, ng-implementation, ng-test'
+  dotnet   = 'skills: dotnet-create-solution, dotnet-implementation, dotnet-mcp-server-generator, dotnet-test'
 }
 $externalDeps = @{ ng = 'angular/skills (angular-developer)'; dotnet = 'dotnet/skills (dotnet plugin)' }
 
