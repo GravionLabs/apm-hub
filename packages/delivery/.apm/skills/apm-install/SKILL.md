@@ -38,7 +38,7 @@ The contributor tooling package is not offered. What each package brings: [packa
 
 ## Script inputs and output
 
-- Inputs: `-Packages` (comma-separated; skips detection), `-Global`, `-DryRun`, `-Ref <tag|sha>` (appends `#<ref>` to every package spec; without it installs track the default branch), `-TrustProject`.
+- Inputs: `-Packages` (comma-separated; skips detection), `-Global`, `-DryRun`, `-Ref <tag|sha>` (appends `#<ref>` to every package spec and installs the apm-hub dependencies first at the same ref; without it installs track the default branch), `-TrustProject`.
 - Without `-Packages` the script runs `detect-techstack` (also under `-DryRun`) from your home skill directories. A copy found only in the project is repository code and is not run unless `-TrustProject` is passed; ask the user before doing so in a repository they do not trust.
 - Output is JSON on stdout: `dryRun`, `wouldInstall` or `installed`, `skipped`, `failed`, `notAttempted`, `commands`, `provides`, `dependencies`, `notes`. A failing `apm install` stops the run with exit 1.
 

@@ -39,6 +39,9 @@
 
 .PARAMETER Ref
   Optional tag or commit sha appended as `#<ref>` to every package spec. Without it apm tracks the default branch.
+  The apm-hub dependencies of a package (shared and github for delivery, the members of core and all) are installed
+  first at the same ref: their specs in the package manifests carry no ref, and a dependency the project lists itself
+  wins. An already installed dependency is not reinstalled; a note names the command that pins it.
 
 .PARAMETER TrustProject
   Allow running a project-local Detect-TechStack.ps1 (repository code). Off by default.
@@ -110,6 +113,12 @@ $provides = @{
   go       = 'skills: go-implementation, go-test'
   ng       = 'skills: ng-ag-grid-developer, ng-create-project, ng-implementation, ng-test'
   dotnet   = 'skills: dotnet-create-solution, dotnet-implementation, dotnet-mcp-server-generator, dotnet-test'
+}
+# apm-hub dependencies of a package (dependencies of its apm.yml): pinned to -Ref before the package itself
+$hubDeps = @{
+  delivery = 'shared', 'github'
+  core     = 'shared', 'github', 'delivery', 'statusline'
+  all      = 'shared', 'github', 'delivery', 'statusline', 'ts', 'py', 'ng', 'dotnet', 'rust', 'go'
 }
 $externalDeps = @{ ng = 'angular/skills (angular-developer)'; dotnet = 'dotnet/skills (dotnet plugin)' }
 
@@ -218,13 +227,28 @@ foreach ($pkg in $allMembers) {
 if ($have.Contains('core')) { $coreMembers | ForEach-Object { [void]$have.Add($_) } }
 if ($have.Contains('all')) { $allMembers | ForEach-Object { [void]$have.Add($_) } }
 
+# With -Ref the apm-hub dependencies go first at the same ref, else apm resolves them from the default branch
+$queue = [System.Collections.Generic.List[string]]::new()
+foreach ($pkg in $wanted) {
+  if ($Ref -and -not $have.Contains($pkg) -and $hubDeps.ContainsKey($pkg)) {
+    $added = @()
+    foreach ($d in $hubDeps[$pkg]) {
+      if ($have.Contains($d)) {
+        $notes.Add("$d (dependency of $pkg) is already installed and keeps its ref. Pin it to ${Ref}: apm install $hubPath/$d#$Ref" + $(if ($Global) { ' -g' } else { '' }))
+      } elseif (-not $queue.Contains($d)) { $queue.Add($d); $added += $d }
+    }
+    if ($added) { $notes.Add("$($added -join ', ') installed at $Ref before $pkg (its dependencies carry no ref).") }
+  }
+  if (-not $queue.Contains($pkg)) { $queue.Add($pkg) }
+}
+
 $done = [System.Collections.Generic.List[string]]::new()
 $skipped = [System.Collections.Generic.List[string]]::new()
 $commands = [System.Collections.Generic.List[string]]::new()
 $failed = $null
 $notAttempted = [System.Collections.Generic.List[string]]::new()
 
-foreach ($pkg in $wanted) {
+foreach ($pkg in $queue) {
   if ($have.Contains($pkg)) { $skipped.Add($pkg); continue }
   if ($failed) { $notAttempted.Add($pkg); continue }
   $spec = "$hubPath/$pkg" + $(if ($Ref) { "#$Ref" } else { '' })

@@ -355,6 +355,26 @@ describe.skipIf(!hasPwsh || !posix)('Install-HubPackages.ps1', () => {
     expect(apmCalls(f)).toEqual(['install GravionLabs/apm-hub/packages/ts#v2.3.0']);
   });
 
+  it('-Ref installs the apm-hub dependencies of delivery first at the same ref (#857)', async () => {
+    const f = fx();
+    const r = await run(f, ['-Packages', 'delivery', '-Ref', 'release/next', '-DryRun']);
+    expect(r.json.wouldInstall).toEqual(['shared', 'github', 'delivery']);
+    expect(r.json.commands).toEqual(
+      ['shared', 'github', 'delivery'].map(
+        (p) => `apm install GravionLabs/apm-hub/packages/${p}#release/next`,
+      ),
+    );
+    expect(notes(r)).toContain('shared, github installed at release/next before delivery');
+    // an installed dependency keeps its ref: a note names the pin command
+    manifest(f.proj, '  apm:\n    - GravionLabs/apm-hub/packages/shared\n');
+    const pinned = await run(f, ['-Packages', 'delivery', '-Ref', 'v3.3.0', '-DryRun']);
+    expect(pinned.json.wouldInstall).toEqual(['github', 'delivery']);
+    expect(notes(pinned)).toContain('apm install GravionLabs/apm-hub/packages/shared#v3.3.0');
+    expect((await run(f, ['-Packages', 'delivery', '-DryRun'])).json.wouldInstall).toEqual([
+      'delivery',
+    ]);
+  });
+
   it.each([
     ['an empty -Packages list', ['-Packages', ' , '], '-Packages is empty'],
     ['an invalid package name', ['-Packages', 'nope'], 'Invalid package'],
@@ -469,6 +489,36 @@ describe('apm-install SKILL.md', () => {
     expect(withSkills.length).toBeGreaterThan(5);
     for (const [p, m] of withSkills)
       expect(provides[p], p).toBe(`skills: ${[...m['x-skills']].sort().join(', ')}`);
+  });
+
+  it('hubDeps lists the apm-hub dependencies of every package manifest (#857)', () => {
+    const script = fs.readFileSync(
+      path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),
+      'utf-8',
+    );
+    const table = /^\$hubDeps = @\{\r?\n([\s\S]+?)^\}/m.exec(script)![1];
+    const hubDeps = Object.fromEntries(
+      [...table.matchAll(/^\s*(\w+)\s*=\s*(.+)$/gm)].map((m) => [
+        m[1],
+        [...m[2].matchAll(/'([^']+)'/g)].map((x) => x[1]).sort(),
+      ]),
+    );
+    const pkgDir = path.resolve(__dirname, '../../../packages');
+    const prefix = 'GravionLabs/apm-hub/packages/';
+    const fromManifests = Object.fromEntries(
+      fs
+        .readdirSync(pkgDir)
+        .map((p) => {
+          const m = parse(fs.readFileSync(path.join(pkgDir, p, 'apm.yml'), 'utf8'));
+          const deps = ((m.dependencies?.apm ?? []) as string[])
+            .filter((d) => d.startsWith(prefix))
+            .map((d) => d.slice(prefix.length).split('#')[0])
+            .sort();
+          return [p, deps] as const;
+        })
+        .filter(([, d]) => d.length > 0),
+    );
+    expect(hubDeps).toEqual(fromManifests);
   });
 
   it('moved the behavior details into the script help', () => {
