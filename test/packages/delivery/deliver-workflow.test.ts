@@ -325,6 +325,81 @@ describe('deliver workflow.js', () => {
     expect((result as { delivered: unknown[] }).delivered).toHaveLength(1);
   });
 
+  it('runs gate and review again after a CI fix and updates the PR before waiting', async () => {
+    let cis = 0;
+    let reviews = 0;
+    const { calls } = await run(
+      { issue: 4 },
+      {
+        ...happy([pbi(4)]),
+        review: () => ({ blocking: [], unmet: [], notes: [`note ${++reviews}`] }),
+        ci: () =>
+          ++cis === 1
+            ? { state: 'red', caused_by_change: true, failure_tail: 'lint error' }
+            : merged,
+      },
+    );
+    expect(calls.map((c) => c.label)).toEqual([
+      'select #4',
+      'implement #4',
+      'gate #4',
+      'review #4',
+      'pr #4',
+      'ci #4',
+      'fix #4',
+      'gate #4',
+      'review #4',
+      'pr #4',
+      'ci #4',
+    ]);
+    expect(calls.filter((c) => c.label === 'pr #4')[1].prompt).toContain('- note 2');
+  });
+
+  it('shares the fix rounds between CI, gate and review', async () => {
+    // ci red → fix 1 → review blocking → fix 2 → review clean → pr → ci merged
+    let cis = 0;
+    let reviews = 0;
+    const { result, calls } = await run(
+      { issue: 4 },
+      {
+        ...happy([pbi(4)]),
+        review: () =>
+          ++reviews === 2 ? { blocking: ['🔴 regression'], unmet: [], notes: [] } : clean,
+        ci: () =>
+          ++cis === 1
+            ? { state: 'red', caused_by_change: true, failure_tail: 'lint error' }
+            : merged,
+      },
+    );
+    expect(calls.filter((c) => c.label === 'fix #4')).toHaveLength(2);
+    expect((result as { delivered: unknown[] }).delivered).toHaveLength(1);
+  });
+
+  it('blocks with the PR URL when the review stays red after a CI fix', async () => {
+    let cis = 0;
+    let reviews = 0;
+    const { result, calls } = await run(
+      { issue: 4, maxFixRounds: 1 },
+      {
+        ...happy([pbi(4)]),
+        review: () =>
+          ++reviews === 1 ? clean : { blocking: ['🔴 regression'], unmet: [], notes: [] },
+        ci: () => ({ state: 'red', caused_by_change: true, failure_tail: 'lint error' }),
+      },
+    );
+    expect(calls.filter((c) => c.label === 'ci #4')).toHaveLength(1);
+    expect(result).toMatchObject({
+      delivered: [],
+      blocked: [
+        {
+          nr: 4,
+          reason: expect.stringContaining('review not clean after 1 fix rounds'),
+          pr: 'https://example/pull/4',
+        },
+      ],
+    });
+  });
+
   it('leaves the PR open and reports it when CI is red for another reason', async () => {
     const { result, calls } = await run(
       { issue: 4 },
