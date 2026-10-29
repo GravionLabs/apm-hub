@@ -9,7 +9,7 @@ An `--unattended` run stops at the first permission prompt (spike #823, `docs/sp
 | `gh` (`auth status`, `api`, `issue`, `pr`) | this session, `github-pull-request` |
 | `herdr pane report-metadata` | only when the run is inside a herdr pane |
 
-Replace the `pnpm` lines below with the commands of the repository's `AGENTS.md`. Force pushes stay denied: `deliver` never needs them.
+Replace the `pnpm` lines below with the commands of the repository's `AGENTS.md`. The deny entries block the common force-push and `--admin` forms; `deliver` needs neither, and the ruleset on `release/next` stays the real gate.
 
 Claude Code denies any command with a quoted `$(…)` substitution even when its prefix is allowed ("Quoted text in this command can't be checked before it runs"). Skill text and subagent prompts write simple commands only.
 
@@ -85,7 +85,11 @@ copilot -p "/deliver <nr> --unattended" `
   --allow-tool 'shell(gh issue)' `
   --allow-tool 'shell(gh pr)' `
   --allow-tool 'shell(herdr pane report-metadata)' `
-  --allow-tool 'shell(pnpm)' `
+  --allow-tool 'shell(pnpm install)' `
+  --allow-tool 'shell(pnpm run build)' `
+  --allow-tool 'shell(pnpm test)' `
+  --allow-tool 'shell(pnpm vitest run)' `
+  --allow-tool 'shell(pnpm run format)' `
   --allow-tool 'write' `
   --deny-tool 'shell(git push --force)' `
   --deny-tool 'shell(git push -f)' `

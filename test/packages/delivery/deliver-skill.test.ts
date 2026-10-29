@@ -159,6 +159,7 @@ describe('deliver permissions.md (#862)', () => {
       "--deny-tool 'shell(git push --force)'",
     ])
       expect(copilot).toContain(flag);
+    expect(copilot).not.toContain("'shell(pnpm)'");
   });
 
   it('contains no quoted $(…) substitution in its examples', () => {
