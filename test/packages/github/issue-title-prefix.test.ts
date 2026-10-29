@@ -44,4 +44,24 @@ describe('github-issue level-prefixed titles', () => {
     ).toContain('`<type>: <description> (#<issue_number>)`');
     expect(read('references/task-issues.md')).toContain('`[Task] <conventional title>`');
   });
+
+  it('takes the PR title from the issue title word for word (#859)', () => {
+    const pr = readFileSync(
+      path.resolve(__dirname, '../../../packages/github/.apm/skills/github-pull-request/SKILL.md'),
+      'utf-8',
+    );
+    const step = pr.slice(pr.indexOf('2. **Title**'), pr.indexOf('3. **Body**'));
+    expect(step).toContain('keep type, scope and summary word for word');
+    expect(step).toContain(
+      '`[PBI] feat(adapters): read the subagents of Claude Code workflows` → `feat(adapters): read the subagents of Claude Code workflows (#436)`',
+    );
+    expect(step).not.toContain('60 chars');
+    const deliver = readFileSync(
+      path.resolve(__dirname, '../../../packages/delivery/.apm/skills/deliver/SKILL.md'),
+      'utf-8',
+    );
+    expect(deliver).toContain(
+      'its title is the issue title without the level prefix, `(#<nr>)` appended',
+    );
+  });
 });
