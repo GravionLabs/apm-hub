@@ -252,43 +252,46 @@ async function deliverOne(p) {
   if (!impl) return fail(p, 'implement agent returned nothing')
   if (impl.status !== 'ok') return fail(p, impl.reason ?? 'implementation blocked')
 
+  // Gate, review and CI share the fix rounds; a CI fix goes through gate and review again before the next CI run.
   let rounds = 0
-  let notes = []
-  let commands = []
+  let url = null
   for (;;) {
-    let problem = null
-    const gate = await agent(gatePrompt(p), { label: `gate #${p.nr}`, schema: GATE, ...at('gate') })
-    if (!gate) return fail(p, 'gate agent returned nothing')
-    commands = gate.commands
-    if (!gate.green) {
-      problem = { kind: 'gate', text: gate.failure_tail ?? 'verify commands failed' }
-    } else {
-      const rev = await agent(reviewPrompt(p), { label: `review #${p.nr}`, schema: REVIEW, ...at('review') })
-      if (!rev) return fail(p, 'review agent returned nothing')
-      notes = rev.notes
-      const items = [...rev.blocking, ...rev.unmet.map((u) => `unmet criterion: ${u}`)]
-      if (items.length) problem = { kind: 'review', text: items.map((i) => `- ${i}`).join('\n') }
+    let notes = []
+    let commands = []
+    for (;;) {
+      let problem = null
+      const gate = await agent(gatePrompt(p), { label: `gate #${p.nr}`, schema: GATE, ...at('gate') })
+      if (!gate) return fail(p, 'gate agent returned nothing', url)
+      commands = gate.commands
+      if (!gate.green) {
+        problem = { kind: 'gate', text: gate.failure_tail ?? 'verify commands failed' }
+      } else {
+        const rev = await agent(reviewPrompt(p), { label: `review #${p.nr}`, schema: REVIEW, ...at('review') })
+        if (!rev) return fail(p, 'review agent returned nothing', url)
+        notes = rev.notes
+        const items = [...rev.blocking, ...rev.unmet.map((u) => `unmet criterion: ${u}`)]
+        if (items.length) problem = { kind: 'review', text: items.map((i) => `- ${i}`).join('\n') }
+      }
+      if (!problem) break
+      if (rounds >= MAX_FIX) return fail(p, `${problem.kind} not clean after ${MAX_FIX} fix rounds: ${problem.text}`, url)
+      rounds++
+      const fx = await agent(fixPrompt(p, problem), { label: `fix #${p.nr}`, schema: IMPL, ...at('fix') })
+      if (!fx || fx.status !== 'ok') return fail(p, fx?.reason ?? 'fix agent returned nothing', url)
     }
-    if (!problem) break
-    if (rounds >= MAX_FIX) return fail(p, `${problem.kind} not clean after ${MAX_FIX} fix rounds: ${problem.text}`)
-    rounds++
-    const fx = await agent(fixPrompt(p, problem), { label: `fix #${p.nr}`, schema: IMPL, ...at('fix') })
-    if (!fx || fx.status !== 'ok') return fail(p, fx?.reason ?? 'fix agent returned nothing')
-  }
 
-  const pr = await agent(prPrompt(p, notes, commands), { label: `pr #${p.nr}`, phase: 'Deliver', schema: PR, ...roleOpts('pr', p.tier) })
-  if (!pr) return fail(p, 'pr agent returned nothing')
-  for (;;) {
+    const pr = await agent(prPrompt(p, notes, commands), { label: `pr #${p.nr}`, phase: 'Deliver', schema: PR, ...roleOpts('pr', p.tier) })
+    if (!pr) return fail(p, 'pr agent returned nothing', url)
+    url = pr.url
     const ci = await agent(ciPrompt(p, pr.pr), { label: `ci #${p.nr}`, phase: 'Deliver', schema: CI, ...roleOpts('ci', p.tier) })
-    if (!ci) return fail(p, 'ci agent returned nothing', pr.url)
-    if (ci.state === 'merged') return { ok: true, pr: pr.url }
+    if (!ci) return fail(p, 'ci agent returned nothing', url)
+    if (ci.state === 'merged') return { ok: true, pr: url }
     if (ci.state === 'red' && ci.caused_by_change && rounds < MAX_FIX) {
       rounds++
       const fx = await agent(fixPrompt(p, { kind: 'ci', text: ci.failure_tail ?? 'a check failed' }), { label: `fix #${p.nr}`, schema: IMPL, ...at('fix') })
-      if (!fx || fx.status !== 'ok') return fail(p, fx?.reason ?? 'fix agent returned nothing', pr.url)
+      if (!fx || fx.status !== 'ok') return fail(p, fx?.reason ?? 'fix agent returned nothing', url)
       continue
     }
-    return fail(p, ci.reason ?? `CI ${ci.state}: ${ci.failure_tail ?? ''}`.trim(), pr.url)
+    return fail(p, ci.reason ?? `CI ${ci.state}: ${ci.failure_tail ?? ''}`.trim(), url)
   }
 }
 

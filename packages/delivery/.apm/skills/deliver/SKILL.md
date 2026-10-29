@@ -39,7 +39,7 @@ Starts the `workflow.js` next to this file and reports its result. The workflow 
 |:--|:--|
 | Select | resolve the issue to open PBIs without `needs-decision`, with their open blockers, tier and branch name |
 | Plan | a Feature or Epic child without PBIs: `planner` in non-interactive mode; open questions end the run (step 3); otherwise `github-issue` creates the issues |
-| Deliver | per PBI in a worktree: `implement`, `gate` (verify commands of `AGENTS.md`), `review` (`code-review` against the acceptance criteria), at most 2 `fix` rounds (shared by gate, review and CI), `pr` into `release/next`, `ci` (wait, merge when green, close the issue) |
+| Deliver | per PBI in a worktree: `implement`, `gate` (verify commands of `AGENTS.md`), `review` (`code-review` against the acceptance criteria), at most 2 `fix` rounds (shared by gate, review and CI), `pr` into `release/next`, `ci` (wait, merge when green, close the issue); a CI fix runs gate and review again and updates the PR before the next `ci` |
 
 A PBI whose blocker is open or not delivered is blocked with that reason. Every `agent()` has a stable label (`implement #<nr>`, `gate #<nr>`, `review #<nr>`, `fix #<nr>`, `pr #<nr>`, `ci #<nr>`) and its own `model` and `effort`.
 
