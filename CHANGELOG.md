@@ -5,26 +5,36 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [3.3.0] — Unreleased
-
-First release without any dromos surface (decision 004): delivery is the skill `deliver`, the same on Claude Code, OpenCode and Copilot CLI.
-
-### Migration
-- `.agents/config.json` replaces `.dromos/config.json` and `.agents/format.json`: move `.agents/format.json` under the `format` key, set subagent models with `deliver.roles`, delete `.dromos/` and run `npm uninstall -g @gravionlabs/dromos` (README, "Upgrading to 3.3.0")
-
-### Features
-- **delivery**: `grill-me` skill (#824); `planner` grills before it creates issues and supports `refine` (#825); `deliver` skill (#826), harness-neutral with plain subagents (#861), claims a PBI so parallel sessions skip it (#868), sets the herdr pane title per step (#855)
-- **shared**: `.agents/config.json` as the project config, the `format` override moves in (#830)
+## [3.2.1] — 2026-10-29
 
 ### Bug Fixes
-- **delivery**: installer `provides` follows the `x-skills` of each package (#856); installer `-Ref` reaches the apm-hub dependencies (#857); `deliver` removes the worktrees of a merged PBI (#858)
-- **github**: PR title keeps the type, scope and summary of the issue (#859)
+- Deliver workflow runs gate and review again after a CI fix (#851) (#852)
+- **delivery**: Installer provides follows the x-skills of each package (#856) (#875)
+- **delivery**: Installer -Ref reaches the apm-hub dependencies (#857) (#876)
+- **delivery**: Deliver removes the worktrees of a merged PBI (#858) (#877)
+- **github**: PR title keeps the type, scope and summary of the issue (#859) (#878)
 
-### Removed
-- **delivery**: the dromos launcher `/orchestrator`, the `dromos init` step of `apm-install` and `.dromos/` (#828)
 
-### Not included
-- The trial of `deliver` in OpenCode (#827) moved to 3.4.0 (Feature #860)
+### Documentation
+- Roadmap lists the release PBIs #839 and #840 (#841)
+- Roadmap after v3.2.0 and the deliver spike (#838)
+- Roadmap for the harness-neutral deliver skill and the archived keryx (#860) (#866)
+- Add shell allowlists for deliver per harness (#862) (#871)
+- Roadmap lists the 3.3.0 bugs #856–#859 (#839) (#874)
+
+
+### Features
+- **delivery**: Grill-me skill (#824) (#842)
+- **delivery**: Planner grills before it creates issues and supports refine (#825) (#843)
+- **shared**: .agents/config.json as the project config, format override moves in (#830) (#844)
+- **shared**: Code-review reads the Review rules of the <lang>-test skills (#835) (#845)
+- **delivery**: Deliver skill and workflow (#826) (#848)
+- Retro reads agentlens and GitHub instead of dromos run metrics (#832) (#850)
+- Deliver logs every step of a PBI (#853) (#854)
+- Deliver as a harness-neutral skill with plain subagents (#861) (#867)
+- Deliver sets the herdr pane title per step (#855) (#872)
+- Deliver claims a pbi so parallel sessions skip it (#868) (#873)
+
 
 ## [3.2.0] — 2026-10-28
 
@@ -37,6 +47,7 @@ First release without any dromos surface (decision 004): delivery is the skill `
 ### Documentation
 - Spike on workflow, skill and harness capabilities for deliver (#823) (#831)
 - Roadmap after dromos decision 004 (#833)
+- Update CHANGELOG.md for v3.2.0 [skip ci]
 
 
 ## [3.1.0] — 2026-10-28
