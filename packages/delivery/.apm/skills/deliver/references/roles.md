@@ -1,6 +1,6 @@
 # Roles: model and effort
 
-Every `agent()` of the workflow takes `model` and `effort` of its role. A run of many PBIs on the session model is expensive (about 30 k context tokens per subagent before it starts), so each role has a default.
+The skill gives its subagents `model` and `effort` of the roles `implement`, `review` and `fix` when the harness takes a model per call (Claude Code); OpenCode and Copilot CLI use the session model or their own agent config. The other roles belong to the frozen `workflow.js`, which takes all of them on every `agent()`. A run of many PBIs on the session model is expensive (about 30 k context tokens per subagent before it starts), so each role has a default.
 
 ## Defaults
 

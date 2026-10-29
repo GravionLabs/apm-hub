@@ -8,6 +8,7 @@ export const meta = {
   ],
 }
 
+// Frozen (#861): SKILL.md no longer starts this workflow; it stays until the retro (#865) decides about it.
 // args: { issue: <nr>, base?: 'release/next', maxFixRounds?: 2, roles?: <deliver.roles>, answers?: { '<nr>': [{ question, answer }] } }
 // Result: { status: 'questions', questions } | { status: 'done', delivered, blocked, skipped }
 

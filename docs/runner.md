@@ -2,9 +2,13 @@
 
 apm-hub contains no pipeline of its own. The dromos runner and its launcher skill `/orchestrator` are removed (decision 004: dromos is archived at v0.4.0; the bus, Attention API and gates continue in [GravionLabs/keryx](https://github.com/GravionLabs/keryx)).
 
-Delivery runs as a Claude Code workflow: `/deliver <nr>` (skill `deliver`, package `delivery`) plans a PBI, Feature or Epic, implements each open and unblocked PBI in a worktree, reviews it, opens the PR into `release/next`, waits for CI, merges and closes. Planner questions stop the run and go to `grill-me`.
+Delivery runs through the skill `deliver` (package `delivery`), the same on Claude Code, OpenCode and Copilot CLI: `/deliver <nr>` takes the open PBIs of a PBI, Feature or Epic in dependency order; per PBI a subagent implements with `implementation`, a subagent reviews with `code-review`, at most 2 fix rounds follow, then the PR into `release/next`, the wait for the required checks, the squash merge and the closed issue. State lives in GitHub only, so `/deliver <nr>` resumes a stopped run. A missing breakdown is planned with `planner` and `grill-me` in the same session.
 
-Without a workflow you work interactively, see [Working mode](working-mode.md).
+Interactive by default: an unclear criterion, extra scope or a blocker asks you in the chat. `/deliver <nr> --unattended` (`claude -p`, `opencode run`, `copilot -p`) comments on the issue instead, labels it `needs-decision` and continues with the next independent PBI.
+
+The hard gate is a GitHub ruleset on `release/next` (required checks, no bypass): a red check blocks the merge whatever the session does. `deliver` warns at the start when the repository has none. The Claude Code workflow `workflow.js` of the previous version stays frozen next to the skill until the retro (#865).
+
+Without `/deliver` you work interactively, see [Working mode](working-mode.md).
 
 ## Migrating
 
@@ -16,4 +20,4 @@ Without a workflow you work interactively, see [Working mode](working-mode.md).
 | `.dromos/config.json` | delete it; project settings are in `.agents/config.json` |
 | `npm i -g @gravionlabs/dromos` | `npm uninstall -g @gravionlabs/dromos` |
 
-Roles, models and effort of `/deliver` are set with `deliver.roles` in `.agents/config.json`, see the `deliver` skill (`references/roles.md`).
+Models of the `/deliver` subagents (where the harness takes one per call) are set with `deliver.roles` in `.agents/config.json`, see the `deliver` skill (`references/roles.md`).
