@@ -24,5 +24,5 @@ features:
   - title: Workflows are skills
     details: Issue planning, implementation, review and release are skills that compose; each one owns a workflow and the others delegate to it by name.
   - title: Delivery as a workflow
-    details: /deliver runs the planner, implementation and review skills as a Claude Code workflow; apm-hub stays content only.
+    details: /deliver runs the implementation and review skills in subagents on Claude Code, OpenCode and Copilot CLI; a GitHub ruleset gates the merge.
 ---

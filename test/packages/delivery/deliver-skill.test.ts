@@ -8,38 +8,96 @@ const text = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8');
 const roles = fs.readFileSync(path.join(skillDir, 'references/roles.md'), 'utf8');
 
 describe('deliver SKILL.md', () => {
+  const body = text.slice(text.indexOf('\n---', 3) + 4);
+
   it('is user-invoked only', () => {
     expect(text).toContain('disable-model-invocation: true');
     expect(text).toContain("opencode/autoinvoke: 'false'");
   });
 
-  it('starts workflow.js by scriptPath in a project and inline elsewhere', () => {
-    expect(text).toContain('scriptPath: <base>/workflow.js');
-    expect(text).toContain('pass its text as `script`');
+  it('stays under 100 lines', () => {
+    expect(text.split('\n').length).toBeLessThan(100);
   });
 
-  it('sends open questions to grill-me and restarts with answers', () => {
-    expect(text).toContain('`status: questions`');
-    expect(text).toContain('Load `grill-me`');
-    expect(text).toContain('answers: {');
-  });
-
-  it('reports delivered, blocked and skipped PBIs', () => {
-    for (const word of ['delivered', 'blocked', 'skipped']) expect(text).toContain(word);
-  });
-
-  it('names the allowlist precondition and the stable labels', () => {
-    expect(text).toContain('project allowlist');
-    for (const label of [
-      'implement #<nr>',
-      'gate #<nr>',
-      'review #<nr>',
-      'fix #<nr>',
-      'pr #<nr>',
-      'ci #<nr>',
+  it('names no harness-specific tool in its body', () => {
+    for (const tool of [
+      'Workflow',
+      'scriptPath',
+      'AskUserQuestion',
+      'Agent tool',
+      'Task tool',
+      'general-purpose',
     ]) {
-      expect(text).toContain(label);
+      expect(body).not.toContain(tool);
     }
+    expect(body).toContain('A subagent with a fresh context');
+  });
+
+  it('runs every step in order', () => {
+    const steps = [
+      '**Select.**',
+      '**Resume.**',
+      '**Implement.**',
+      '**Review.**',
+      '**Fix.**',
+      '**PR.**',
+      '**CI.**',
+      '**Merge.**',
+    ];
+    const at = steps.map((s) => body.indexOf(s));
+    for (const i of at) expect(i).toBeGreaterThan(-1);
+    expect([...at].sort((a, b) => a - b)).toEqual(at);
+  });
+
+  it('delegates implementation and review to subagents with the existing skills', () => {
+    expect(body).toContain('Load `implementation`');
+    expect(body).toContain('Load `code-review`');
+    expect(body).toContain('at most 10 lines');
+    expect(body).toContain('At most 2 fix rounds per PBI, shared by review and CI');
+    expect(body).toContain('`github-pull-request`');
+  });
+
+  it('works on the PBI branch without switching its own checkout', () => {
+    expect(body).toContain('`branch: <branch>`');
+    expect(body).toContain('`git switch -C <branch> origin/<branch>`');
+    expect(body).toContain('never switches its own checkout');
+  });
+
+  it('waits for the required checks and squash-merges', () => {
+    expect(body).toContain('`gh pr checks <pr> --watch --required`');
+    expect(body).toContain('gh pr merge <pr> --squash');
+    expect(body).toContain('gh issue close <nr>');
+  });
+
+  it('warns when release/next has no required status checks', () => {
+    expect(body).toContain('rules/branches/release/next');
+    expect(body).toContain('`required_status_checks`');
+  });
+
+  it('pauses by asking or, unattended, by comment and needs-decision', () => {
+    expect(body).toContain('`--unattended`');
+    expect(body).toContain('## Pause rules');
+    for (const rule of ['No guessing', 'Name extra work', 'Done means merged'])
+      expect(body).toContain(rule);
+    expect(body).toContain('adds the label `needs-decision` and continues with the next PBI');
+  });
+
+  it('plans a missing breakdown with planner and grill-me in the same session', () => {
+    expect(body).toContain('load `planner` (interactive) and `grill-me` in this session');
+  });
+
+  it('prints one progress line per step', () => {
+    expect(body).toContain('`#<nr> <step>: <result>`');
+  });
+
+  it('no longer starts workflow.js', () => {
+    expect(body).toContain('this skill does not start it');
+    expect(fs.existsSync(path.join(skillDir, 'workflow.js'))).toBe(true);
+  });
+
+  it('contains no command with a quoted $(…) substitution', () => {
+    const commands = [...body.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+    for (const c of commands) expect(c).not.toMatch(/["'][^"']*\$\(/);
   });
 
   it('is listed in the package manifest', () => {
