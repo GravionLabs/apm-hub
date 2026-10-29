@@ -26,9 +26,9 @@ gh pr list --head <branch> --state open --json number,updatedAt
 
 - **Fresh**: the branch was pushed within the last hour, or its open PR was updated within the last hour (a long CI run). Skip the PBI with `#<nr> select: claimed, skipped`.
 - **Stale**: the branch is older than an hour and no open PR was updated within the hour. Claim it and continue it (step 2 resumes the branch) with `#<nr> select: stale claim, taken over`.
-- **No branch yet**: the claiming session is still implementing in its worktree and has not pushed. Skip it while the assignment is younger than an hour (`gh api repos/{owner}/{repo}/issues/<nr>/events --jq '[.[] | select(.event == "assigned")] | last | .created_at'`), take it over after that.
+- **No branch yet**: the claiming session is still implementing in its worktree and has not pushed. Skip it while the assignment is younger than an hour (the last line of `gh api repos/{owner}/{repo}/issues/<nr>/events --paginate --jq '.[] | select(.event == "assigned") | .created_at'`), take it over after that.
 
-Only selection through a Feature or Epic skips. `/deliver <nr>` on the PBI itself continues it whatever the claim says: the user named it.
+Only selection through a Feature or Epic skips. `/deliver <nr>` on the PBI itself continues it whatever the claim says: the user named it. This is also the way back into your own stopped run within the hour: `/deliver <feature>` would skip the PBI, `/deliver <pbi>` continues it.
 
 ## Release
 
