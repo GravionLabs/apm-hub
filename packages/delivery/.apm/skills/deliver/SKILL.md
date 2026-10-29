@@ -24,7 +24,7 @@ Starts the `workflow.js` next to this file and reports its result. The workflow 
    - Base directory inside the project (`apm install` per repository): `Workflow` with `scriptPath: <base>/workflow.js`.
    - Elsewhere (`~/.claude/skills`, `~/.agents/skills`; `scriptPath` is refused there): `Read` the file and pass its text as `script`.
    - Arguments for both: `args: { issue: <nr>, roles: <deliver.roles or omitted>, answers: <omitted on the first call> }`.
-2. The workflow runs in the background; progress is in the workflow view (`/workflows`). Do not poll; read the result when the notification arrives.
+2. The workflow runs in the background; progress is in the workflow view (`/workflows`), one `#<nr>` log line per step (implement, gate, review, fix round, PR, CI). Do not poll; read the result when the notification arrives.
 3. **`status: questions`**: phase 1 found decisions the planner cannot take. Load `grill-me` with `result.questions` (each entry has `target`, the issue it belongs to, and the planner question fields). Start the workflow again with the same arguments plus `answers: { "<target>": [{ question, answer }] }`. Repeat while questions come back. After that the run needs no further input.
 4. **`status: done`**: report, at most 12 lines:
    - delivered: one line per PBI with its PR URL;
