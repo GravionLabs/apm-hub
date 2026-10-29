@@ -57,6 +57,12 @@ describe('deliver SKILL.md', () => {
     expect(body).toContain('`github-pull-request`');
   });
 
+  it('works on the PBI branch without switching its own checkout', () => {
+    expect(body).toContain('`branch: <branch>`');
+    expect(body).toContain('`git switch -C <branch> origin/<branch>`');
+    expect(body).toContain('never switches its own checkout');
+  });
+
   it('waits for the required checks and squash-merges', () => {
     expect(body).toContain('`gh pr checks <pr> --watch --required`');
     expect(body).toContain('gh pr merge <pr> --squash');
