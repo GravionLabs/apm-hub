@@ -1,6 +1,6 @@
 # Roadmap
 
-Order of work and release assignment for the open issues. Rewritten 2026-10-28 after dromos decision 004 (dromos archived at v0.4.0; delivery becomes a Claude Code workflow in apm-hub, the bus, Attention API and gates continue in [GravionLabs/keryx](https://github.com/GravionLabs/keryx)), updated the same day after `v3.2.0` and the spike #823. Last release `v3.2.0` (2026-10-28). Each release has a GitHub milestone of the same name; work runs on `release/next` and the release PR into `main` is the human review point.
+Order of work and release assignment for the open issues. Rewritten 2026-10-28 after dromos decision 004 (dromos archived at v0.4.0; delivery becomes a Claude Code workflow in apm-hub, the bus, Attention API and gates continue in [GravionLabs/keryx](https://github.com/GravionLabs/keryx)), updated the same day after `v3.2.0` and the spike #823. Updated 2026-10-29: `deliver` becomes a harness-neutral skill (Feature #860), keryx is archived (keryx#37) and a GitHub ruleset on `release/next` is the hard gate. Last release `v3.2.0` (2026-10-28). Each release has a GitHub milestone of the same name; work runs on `release/next` and the release PR into `main` is the human review point.
 
 History: 2.x and the simplification plan that produced 3.0.0 and 3.1.0 are in [docs/simplification-plan.md](docs/simplification-plan.md) and [docs/simplification-workplan.md](docs/simplification-workplan.md). The dromos runner path (Stage B there) is closed by decision 004.
 
@@ -10,7 +10,7 @@ History: 2.x and the simplification plan that produced 3.0.0 and 3.1.0 are in [d
 | --- | --- | --- |
 | #714 content-only repository (3.0.0) | closed | released as `v3.0.0` |
 | #715 role skills and runner launcher (3.1.0) | closed | released as `v3.1.0`; the launcher is replaced by `deliver` (#826) and removed by #828 |
-| #821 deliver issues through Claude Code workflows | #824 and #825 merged, next #830 and #826 | Feature #822 holds every PBI of 3.3.0; Feature #661 is 3.4.0 |
+| #821 deliver issues through Claude Code workflows | #824 and #825 merged, next #830 and #826 | Feature #822 holds every PBI of 3.3.0; Feature #860 makes `deliver` harness-neutral; Feature #661 is 3.4.0 |
 | #427 hub maintenance | open for [ci#89](https://github.com/GravionLabs/ci/issues/89) only | Feature #808 closed with 3.2.0 |
 | #411 stack packages | Feature #413 open (#420, #421) | Go shipped in 3.2.0; JVM waits on a decision |
 
@@ -30,8 +30,7 @@ Feature #822. The chain #824 → #825 → #826 is serial; #830 and #827 are the 
 | 2 | #826 | `deliver` skill and workflow: Epic/Feature/PBI, worktree, gate, `code-review`, ≤ 2 fix rounds, PR, CI wait, merge; adds `base`, models per role and `gate` (the verify commands, also read by keryx `run_gate`) to `.agents/config.json`; posts `pr.opened`, `ci.finished`, `pr.merged` through `keryx event` when keryx runs | L | #825, #830 |
 | 3 | #828 | remove the dromos launcher and runner setup (`/orchestrator`, `dromos init` in `apm-install`, `.dromos/`) | S | #826 |
 | 4 | #829 | trial: `/deliver` on one small agentlens PBI; findings become issues | S | #826 |
-| parallel | #827 | OpenCode orchestrator and role agents; PR and merge only through the keryx gate tools | M | keryx 0.1.0 (keryx#21: #12 `run_gate`/`record_review`, #20 `open_pr`/`merge`, #13 `gh` guard), an OpenCode provider login |
-| last | #839 | release PBI: CHANGELOG, migration note, `git grep dromos` clean, release PR with `github-release` | S | #830, #824, #825, #826, #828, #829 (and #827 if it stays in) |
+| last | #839 | release PBI: CHANGELOG, migration note, `git grep dromos` clean, release PR with `github-release` | S | #830, #824, #825, #826, #828, #829 |
 
 Rules for this release:
 
@@ -39,7 +38,7 @@ Rules for this release:
 - #830 and #828 land in the same release: `.agents/config.json` replaces `.dromos/config.json` and `.agents/format.json` in one migration note.
 - #828 lands before the release is cut, so 3.3.0 is the first release without any dromos surface; `after-install.md` names keryx where it named dromos.
 - #826 follows the spike decisions: `workflow.js` next to `SKILL.md`, `scriptPath` for project installs and the script passed inline for global installs; a stable `label` per role (`implement #<nr>`, `gate #<nr>`, `review #<nr>`, `fix #<nr>`, `pr #<nr>`); `model` and `effort` on every `agent()` call; the skill checks that the verify, format and `gh` commands of the target repository are on its allowlist before it starts.
-- #827 ships in 3.3.0 only if keryx 0.1.0 (keryx#21) is released; otherwise it moves to 3.4.0 and 3.3.0 ships Claude Code only. keryx#13 is refined as code in `@gravionlabs/keryx-opencode`; the spike's OpenCode permission rule stays the fallback.
+- #827 moved to Feature #860 (trial of `deliver` in OpenCode); it no longer depends on keryx.
 - One PBI at a time on `release/next`: #826, #828 and #829 all edit the `delivery` package.
 
 Epic #821 keeps Feature #661 open; Feature #822 closes with #829 (acceptance: `/deliver <nr>` runs without questions after grilling; planning is interactive with `grill-me`; no dromos launcher or setup left).
@@ -61,6 +60,31 @@ Milestone 3.4.0. Planned in detail with `planner` once 3.3.0 is cut.
 
 Feature #413 and Epic #411 close with #421; Feature #661 and Epic #821 close with the last lessons PBI. Improvement via `retro` is a requirement of the learning path: a lesson that `retro` proposes and a human approves must be in the next `deliver` run's context without a skill change.
 
+## Feature #860 — deliver as a harness-neutral skill
+
+Plan: [Einfache Auslieferung mit Skills und GitHub-Ruleset](https://claude.ai/artifact/BZCAKEQXeA4bDmBdYEwmQ9). One user-invoked skill for Claude Code, OpenCode and Copilot CLI, plain subagents with `implementation` and `code-review`, state from GitHub; `workflow.js` stays frozen until #865. Milestone is set when #861 is planned.
+
+| Order | Issue | Title | Size | Depends on |
+| --- | --- | --- | --- | --- |
+| 1 | #861 | `deliver` as a harness-neutral skill with plain subagents, under 100 lines, pause rules, `--unattended` | M | — |
+| 2 | #862 | shell allowlists for `deliver` per harness | S | #861 |
+| 2 | #855 | `deliver` sets the herdr pane title per step | S | #861 |
+| 3 | #863 | trial in Claude Code (interactive and unattended) | S | #861, #862 |
+| 4 | #827 | trial in OpenCode | S | #863 |
+| 4 | #864 | trial in Copilot CLI | S | #863 |
+| 5 | #865 | retro over ten runs; decides on `workflow.js` | S | #863, #827, #864 |
+
+## Decided on 2026-10-29
+
+| Topic | Decision |
+| --- | --- |
+| Hard gate | GitHub ruleset 26098962 on `release/next`: `Build & Test`, `Test`, `No Generated Files in PR` required, no force push, no bypass (also not for admins); not on `main`, where `Regenerate & Commit` pushes directly and the release PR is merged by the owner |
+| keryx | archived (keryx#37): the ruleset replaces the gate tools; `record_review` was self-reported; herdr detects agent state itself |
+| Agents | no custom agent files; plain subagents load the skills. The multi-harness frontmatter of the `version-1-agents` branch is the template if OpenCode needs one for the model per role (#827) |
+| Copilot CLI | back as the third harness (1.0.105: skills, custom agents as subagents, MCP, hooks, deny rules) |
+| Name | stays `deliver`: it ends at merge, `implement` would clash with `implementation` and with mattpocock's `implement` |
+| #846 `BLOCKED` attentions | not planned; unattended runs comment on the issue and set `needs-decision` |
+
 ## Decided on 2026-10-28
 
 | Issue | Decision |
@@ -77,8 +101,6 @@ Feature #413 and Epic #411 close with #421; Feature #661 and Epic #821 close wit
 
 | Repository | Needed for | Status |
 | --- | --- | --- |
-| keryx 0.1.0 (#21: #12, #20, #13) | #827 (gate tools, `gh` guard) | refined; keryx has a README and its issues only, #3 (scaffold) and #4 (bus port) come first |
-| keryx #4, #20 | `keryx event` and the PR event types that #826 posts; optional, `deliver` runs without keryx | refined |
 | agentlens #436 | the cost of `deliver` subagents (`subagents/workflows/<runId>/`) shows up in agentlens; #832 role share | open |
 | agentlens | #829 trial repository | — |
 | ci | [ci#89](https://github.com/GravionLabs/ci/issues/89) (project items walk); `issues.yml` sets the `[Level]` prefix | — |
@@ -91,4 +113,5 @@ Feature #413 and Epic #411 close with #421; Feature #661 and Epic #821 close wit
 - 3.2.0 ships the dromos setup of #804 and 3.3.0 removes it. Users who run `apm-install` in between get a `.dromos/config.json`; #828 and `after-install.md` must say how to migrate it to `.agents/config.json`.
 - `.agents/` is both an install target (`.agents/skills/`) and the home of the committed config; a project that ignores the whole directory loses the config. #830 adds the installer notice; until then the gitignore exception is documented only in `docs/usage/project-config.md`.
 - `retro` still reads `dromos run metrics` (SKILL.md step 1), and dromos is archived. Retro keeps working on review findings and transcripts, but its cost and duration columns are `n/a` until #832 (3.4.0). Every retro-based lesson proposal (#661) depends on that fallback until then.
-- #827 depends on keryx, which has no code yet, and on an OpenCode provider login for its trial. Shipping 3.3.0 Claude Code only is the planned fallback.
+- #827 needs an OpenCode provider login for its trial.
+- A repository without the `release/next` ruleset can merge red again; #861 warns at start, and every repository that runs `deliver` gets the ruleset with its own check names.
