@@ -8,6 +8,10 @@ Interactive by default: an unclear criterion, extra scope or a blocker asks you 
 
 The hard gate is a GitHub ruleset on `release/next` (required checks, no bypass): a red check blocks the merge whatever the session does. `deliver` warns at the start when the repository has none. The Claude Code workflow `workflow.js` of the previous version stays frozen next to the skill until the retro (#865).
 
+## Parallel runs
+
+Several sessions can run `/deliver` at the same time, one worktree per session (`claude --worktree`; `git worktree add` for OpenCode and Copilot CLI) and on independent issues. Each session claims the PBI it announces by assigning it (`gh issue edit <nr> --add-assignee @me`) and releases the claim when the PBI is merged, blocked or paused. Selection through a Feature or Epic skips a PBI that is assigned and whose branch was pushed within the last hour; a stale claim (older branch, no open PR activity) is taken over. `/deliver <nr>` on the PBI itself continues it regardless of the claim. Details: `references/claim.md` of the `deliver` skill.
+
 Without `/deliver` you work interactively, see [Working mode](working-mode.md).
 
 ## Migrating
