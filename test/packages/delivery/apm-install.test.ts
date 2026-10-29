@@ -452,6 +452,25 @@ describe('apm-install SKILL.md', () => {
     expect(valid).toContain('statusline');
   });
 
+  it('provides lists the x-skills of every package manifest (#856)', () => {
+    const script = fs.readFileSync(
+      path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),
+      'utf-8',
+    );
+    const table = /^\$provides = @\{\r?\n([\s\S]+?)^\}/m.exec(script)![1];
+    const provides = Object.fromEntries(
+      [...table.matchAll(/^\s*(\w+)\s*=\s*'([^']*)'/gm)].map((m) => [m[1], m[2]]),
+    );
+    const pkgDir = path.resolve(__dirname, '../../../packages');
+    const withSkills = fs
+      .readdirSync(pkgDir)
+      .map((p) => [p, parse(fs.readFileSync(path.join(pkgDir, p, 'apm.yml'), 'utf8'))] as const)
+      .filter(([p, m]) => m['x-skills'] && p !== 'apm-tooling');
+    expect(withSkills.length).toBeGreaterThan(5);
+    for (const [p, m] of withSkills)
+      expect(provides[p], p).toBe(`skills: ${[...m['x-skills']].sort().join(', ')}`);
+  });
+
   it('moved the behavior details into the script help', () => {
     const script = fs.readFileSync(
       path.join(path.dirname(skillPath), 'scripts/Install-HubPackages.ps1'),
