@@ -36,7 +36,7 @@ Print one line per step in the chat: `#<nr> <step>: <result>` (`#12 review: 1 bl
 7. **CI.** `gh pr checks <pr> --watch --required` as one call.
    - Red by this change (test, lint or build error in files of the diff): fix round (step 5), then step 4 and 7 again.
    - Red for another reason (flake, red on `release/next` too): comment on the PR, the PBI is blocked.
-8. **Merge.** Interactive: ask before merging. Unattended: merge when green. `gh pr merge <pr> --squash --delete-branch`, then `gh issue close <nr> --comment "Delivered in #<pr>"` (`Closes` does not fire on `release/next`) and `gh issue edit <nr> --remove-assignee @me`. Next PBI: step 1.
+8. **Merge.** Interactive: ask before merging. Unattended: merge when green. `gh pr merge <pr> --squash --delete-branch`, then `gh issue close <nr> --comment "Delivered in #<pr>"` (`Closes` does not fire on `release/next`) and `gh issue edit <nr> --remove-assignee @me`. Clean up the worktrees and branches of the subagents: `pwsh scripts/Remove-PbiWorktrees.ps1 -Pr <pr> -Issue <nr>`; print `#<nr> cleanup: <n> removed` and keep its `left` entries (path or branch, reason, command) for the report. Next PBI: step 1.
 
 After every step read the state from GitHub again (issue, branch, PR, checks), not from the memory of this session.
 
@@ -52,7 +52,7 @@ A blocked or paused PBI releases its claim: `gh issue edit <nr> --remove-assigne
 
 ## Report
 
-At the end, at most 12 lines: delivered (PBI and PR URL), blocked (reason, open PR), paused (`needs-decision`, the question). For each blocked or paused PBI say what the user can do; `/deliver <nr>` again picks up the rest. With a progress display (Start 4), clear it.
+At the end, at most 12 lines: delivered (PBI and PR URL), blocked (reason, open PR), paused (`needs-decision`, the question). Worktrees or branches the cleanup left, each with its command. For each blocked or paused PBI say what the user can do; `/deliver <nr>` again picks up the rest. With a progress display (Start 4), clear it.
 
 ## Rules
 
