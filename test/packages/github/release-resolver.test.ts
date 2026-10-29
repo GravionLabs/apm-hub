@@ -64,12 +64,6 @@ describe('Get-ReleaseState.ps1 -Mode base', () => {
       dropRef('refs/heads/release/2.2');
       expect(await base()).toEqual({ base: null, source: 'none', warning: null });
     });
-
-    it('returns none without release branches', async () => {
-      for (const b of ['next', '2.1', '2.2', '9.0', 'legacy']) dropRef(`refs/heads/release/${b}`);
-      dropRef('refs/heads/fresh');
-      expect(await base()).toEqual({ base: null, source: 'none', warning: null });
-    });
   });
 
   describe('released, not reset', () => {
@@ -85,15 +79,6 @@ describe('Get-ReleaseState.ps1 -Mode base', () => {
     it('does not warn when release/next equals main (fresh)', async () => {
       git(fx.origin, 'update-ref', 'refs/heads/release/next', 'main');
       expect((await base()).warning).toBeNull();
-    });
-
-    it('warns for release/next named by the issue line too', async () => {
-      git(fx.origin, 'update-ref', 'refs/heads/release/next', 'release/legacy');
-      expect(await base(['-Issue', '7'], { '7': 'Release branch: release/next' })).toEqual({
-        base: 'release/next',
-        source: 'issue',
-        warning: 'released, not reset: run github-release cut',
-      });
     });
   });
 

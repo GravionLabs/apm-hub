@@ -1,15 +1,12 @@
-import { spawnSync } from 'child_process';
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
-import { PwshWorker } from '../../helpers/pwsh-worker';
 
 // The `## Format` section of every <lang>-implementation skill spells the default commands of Format-Changed.ps1;
-// this test keeps both in sync (the script's `-WhatIf` JSON is the source of truth).
+// this test keeps both in sync. It reads the `$defaults` table of the script as text (no pwsh): that the script really
+// runs these commands per language (and in a Biome project) is pinned by the defaults table of format-changed.test.ts.
 const PACKAGES = path.resolve(__dirname, '../../../packages');
 const SCRIPT = path.join(PACKAGES, 'shared/.apm/skills/implementation/scripts/Format-Changed.ps1');
 const LANGS = ['ts', 'ng', 'py', 'dotnet', 'rust', 'go'];
-const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '1']).status === 0;
 
 const sectionLines = (lang: string): string[] => {
   const skill = fs.readFileSync(
@@ -25,58 +22,63 @@ const line = (lang: string, label: string): string =>
 const commands = (text: string): string[] =>
   [...text.matchAll(/`([^`]+)`/g)].map((m) => m[1]).filter((c) => c.includes('{files}'));
 
-describe.skipIf(!hasPwsh || process.platform === 'win32')(
-  '## Format sections match the Format-Changed.ps1 defaults',
-  () => {
-    let worker: PwshWorker;
-    let plain: string;
-    let biome: string;
-    beforeAll(() => {
-      worker = new PwshWorker(SCRIPT);
-      plain = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fmt-sync-')));
-      biome = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'fmt-sync-biome-')));
-      for (const d of [plain, biome]) spawnSync('git', ['init', '-q'], { cwd: d });
-      fs.writeFileSync(path.join(biome, 'biome.json'), '{}');
-    });
-    afterAll(() => {
-      worker.close();
-      for (const d of [plain, biome]) fs.rmSync(d, { recursive: true, force: true });
-    });
+type Mode = 'Format' | 'Check';
+// the quoted strings of `<Mode> = @('a', 'b')` in one step line of the script
+const stepCommands = (step: string, mode: Mode): string[] => {
+  const list = new RegExp(`\\b${mode} = @\\(([^)]*)\\)`).exec(step)?.[1] ?? '';
+  return [...list.matchAll(/'([^']*)'/g)].map((m) => m[1]);
+};
 
-    const defaults = async (lang: string, cwd: string, check: boolean): Promise<string[]> => {
-      const r = await worker.run(['-Language', lang, ...(check ? ['-Check'] : []), '-WhatIf'], {
-        cwd,
-      });
-      expect(r.status, r.stderr).toBe(0);
-      const steps = JSON.parse(r.stdout) as { commands: string[] }[];
-      return steps.flatMap((s) => s.commands);
-    };
+const script = fs.readFileSync(SCRIPT, 'utf8');
+// `$defaults = @{ <lang> = @( @{ Tool = ...; Format = @(...); Check = @(...) }, ... ) ... }`: the step lines per language key
+const plainSteps: Record<string, string[]> = {};
+{
+  const table = /^\$defaults = @\{$([\s\S]*?)^\}$/m.exec(script)?.[1] ?? '';
+  let lang = '';
+  for (const l of table.split('\n')) {
+    const key = /^\s*(\w+)\s*=\s*@\(/.exec(l);
+    if (key) lang = key[1];
+    else if (lang && /@\{ Tool = /.test(l)) plainSteps[lang] = [...(plainSteps[lang] ?? []), l];
+  }
+}
+// ng reuses both ts steps (only the prettier extensions differ), so its commands are the ts commands
+const ngFromTs = script.includes('$defaults.ng = @($defaults.ts[0].Clone(), $defaults.ts[1])');
+if (ngFromTs) plainSteps.ng = plainSteps.ts;
+// a Biome project replaces the steps of the languages in the foreach with the single biome step
+const biomeLangs = (/foreach \(\$lang in ([^)]*)\)/.exec(script)?.[1] ?? '')
+  .split(',')
+  .map((s) => s.trim().replace(/'/g, ''));
+const biomeStep = script.split('\n').find((l) => l.includes("@{ Tool = 'biome'")) ?? '';
+const defaults = (lang: string, biome: boolean, mode: Mode): string[] =>
+  (biome && biomeLangs.includes(lang) ? [biomeStep] : (plainSteps[lang] ?? [])).flatMap((s) =>
+    stepCommands(s, mode),
+  );
 
-    it.each(LANGS)(
-      '%s: Format and Check (read-only) lines equal the script defaults',
-      async (lang) => {
-        const format = commands(line(lang, 'Format:'));
-        const check = commands(line(lang, 'Check (read-only):'));
-        expect(format.length).toBeGreaterThan(0);
-        expect(check.length).toBeGreaterThan(0);
-        expect(format).toEqual(await defaults(lang, plain, false));
-        expect(check).toEqual(await defaults(lang, plain, true));
-      },
-    );
+describe('## Format sections match the Format-Changed.ps1 defaults', () => {
+  it('reads a defaults table from the script', () => {
+    expect(Object.keys(plainSteps).sort()).toEqual([...LANGS].sort());
+    expect(ngFromTs).toBe(true);
+    expect(biomeLangs).toEqual(['ts', 'ng']);
+    expect(stepCommands(biomeStep, 'Format')).toHaveLength(1);
+  });
 
-    it.each(['ts', 'ng'])('%s: the Biome project line equals the biome defaults', async (lang) => {
-      const [format, check, ...rest] = commands(line(lang, 'Biome project'));
-      expect(rest).toEqual([]);
-      expect([format]).toEqual(await defaults(lang, biome, false));
-      expect([check]).toEqual(await defaults(lang, biome, true));
-    });
+  it.each(LANGS)('%s: Format and Check (read-only) lines equal the script defaults', (lang) => {
+    const format = commands(line(lang, 'Format:'));
+    const check = commands(line(lang, 'Check (read-only):'));
+    expect(format.length).toBeGreaterThan(0);
+    expect(check.length).toBeGreaterThan(0);
+    expect(format).toEqual(defaults(lang, false, 'Format'));
+    expect(check).toEqual(defaults(lang, false, 'Check'));
+  });
 
-    it.each(['py', 'dotnet', 'rust', 'go'])(
-      '%s: no Biome line, the biome.json fixture changes nothing',
-      async (lang) => {
-        expect(line(lang, 'Biome project')).toBe('');
-        expect(await defaults(lang, biome, false)).toEqual(await defaults(lang, plain, false));
-      },
-    );
-  },
-);
+  it.each(LANGS)('%s: a Biome project line exactly when the biome default applies', (lang) => {
+    if (!biomeLangs.includes(lang)) {
+      expect(line(lang, 'Biome project')).toBe('');
+      return;
+    }
+    const [format, check, ...rest] = commands(line(lang, 'Biome project'));
+    expect(rest).toEqual([]);
+    expect([format]).toEqual(defaults(lang, true, 'Format'));
+    expect([check]).toEqual(defaults(lang, true, 'Check'));
+  });
+});

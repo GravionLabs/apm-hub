@@ -39,80 +39,51 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')('Get-SkillReport.ps1 (
   const refs = (report: { danglingCandidates: { skill: string; ref: string }[] }) =>
     report.danglingCandidates.map((d) => `${d.skill}: ${d.ref}`);
 
-  it('same-sentence cross-skill reference to a missing file fails with -FailOnDangling', async () => {
-    skill('alpha', 'See `beta` `references/missing.md` for the tier.');
+  it('resolves every reference form and still exits 0 with dangling references without -FailOnDangling', async () => {
+    // one sentence per form: same-sentence owner (missing, existing), <skill>/ and ../<skill>/ prefixes, a prefix of
+    // another tool (not ours), repo-root paths against -Root, and references/*.md resolved against their own skill
+    skill(
+      'alpha',
+      [
+        'See `beta` `references/missing.md` for the tier.',
+        'See `beta` `references/there.md` for the tier.',
+        'Read `beta/references/gone.md`, `../beta/references/gone2.md` and `beta/references/ok.md`.',
+        'Uses `vendor/scripts/run.sh` of a vendor.',
+        'See `docs/there.md`, `docs/gone.md`, `AGENTS.md` and `scripts/tool.mjs`.',
+      ].join('\n\n'),
+    );
     skill('beta', 'Beta.');
+    write('packages/p/.apm/skills/beta/references/there.md');
+    write('packages/p/.apm/skills/beta/references/ok.md');
+    write(
+      'packages/p/.apm/skills/alpha/references/r.md',
+      'Needs `references/own-missing.md` and `references/r.md`.\n',
+    );
+    write('docs/there.md');
+    write('scripts/tool.mjs');
+    const r = await run();
+    expect(r.status).toBe(0);
+    expect(refs(r.report).sort()).toEqual([
+      'alpha: AGENTS.md',
+      'alpha: beta/references/gone.md',
+      'alpha: beta/references/gone2.md',
+      'alpha: beta/references/missing.md',
+      'alpha: docs/gone.md',
+      'alpha: references/own-missing.md',
+    ]);
+  });
+
+  it('-FailOnDangling exits 1 for what the allowlist leaves', async () => {
+    skill('alpha', 'See `beta` `references/missing.md`. See `beta` `references/known.md`.');
+    skill('beta', 'Beta.');
+    write('allow.txt', '# beta ships it at runtime\nalpha: beta/references/known.md  # why\n');
     const r = await run('-FailOnDangling');
     expect(r.status).toBe(1);
     expect(refs(r.report)).toEqual(['alpha: beta/references/missing.md']);
     expect(r.stderr).toContain('dangling references: 1');
   });
 
-  it('same-sentence cross-skill reference to an existing file is resolved', async () => {
-    skill('alpha', 'See `beta` `references/there.md` for the tier.');
-    skill('beta', 'Beta.');
-    write('packages/p/.apm/skills/beta/references/there.md');
-    const r = await run('-FailOnDangling');
-    expect(r.status).toBe(0);
-    expect(r.report.danglingCandidates).toEqual([]);
-  });
-
-  it('<skill>/references/<file> and ../<skill>/ forms are checked against the other skill', async () => {
-    skill(
-      'alpha',
-      'Read `beta/references/gone.md`, `../beta/references/gone2.md` and `beta/references/ok.md`.',
-    );
-    skill('beta', 'Beta.');
-    write('packages/p/.apm/skills/beta/references/ok.md');
-    const r = await run();
-    expect(refs(r.report)).toEqual([
-      'alpha: beta/references/gone.md',
-      'alpha: beta/references/gone2.md',
-    ]);
-  });
-
-  it('a path of another tool with an unknown prefix is not ours', async () => {
-    skill('alpha', 'Uses `vendor/scripts/run.sh` of a vendor.');
-    const r = await run('-FailOnDangling');
-    expect(r.status).toBe(0);
-  });
-
-  it('references/*.md files are scanned too, resolved against their own skill', async () => {
-    skill('alpha', 'Alpha.');
-    write(
-      'packages/p/.apm/skills/alpha/references/r.md',
-      'Needs `references/own-missing.md` and `references/r.md`.\n',
-    );
-    const r = await run('-FailOnDangling');
-    expect(r.status).toBe(1);
-    expect(refs(r.report)).toEqual(['alpha: references/own-missing.md']);
-  });
-
-  it('repo-root paths resolve against -Root', async () => {
-    skill('alpha', 'See `docs/there.md`, `docs/gone.md`, `AGENTS.md` and `scripts/tool.mjs`.');
-    write('docs/there.md');
-    write('scripts/tool.mjs');
-    const r = await run();
-    expect(refs(r.report).sort()).toEqual(['alpha: AGENTS.md', 'alpha: docs/gone.md']);
-  });
-
-  it('a dangling reference without -FailOnDangling still exits 0', async () => {
-    skill('alpha', 'See `beta` `references/missing.md`.');
-    skill('beta', 'Beta.');
-    const r = await run();
-    expect(r.status).toBe(0);
-    expect(refs(r.report)).toEqual(['alpha: beta/references/missing.md']);
-  });
-
-  it('the allowlist removes a known false positive', async () => {
-    skill('alpha', 'See `beta` `references/missing.md`.');
-    skill('beta', 'Beta.');
-    write('allow.txt', '# beta ships it at runtime\nalpha: beta/references/missing.md  # why\n');
-    const r = await run('-FailOnDangling');
-    expect(r.status).toBe(0);
-    expect(r.report.danglingCandidates).toEqual([]);
-  });
-
+  // happy path: -FailOnDangling exits 0 on a clean tree
   it('this repository has no dangling references', async () => {
     const r = await worker.run(['-Root', repo, '-FailOnDangling'], { cwd: repo });
     expect(r.status).toBe(0);

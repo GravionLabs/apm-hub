@@ -20,11 +20,12 @@ export class PwshWorker {
   // a call that does not answer in time kills the worker (a late @@done can never be mistaken for the next call's answer)
   private timeoutMs = 25000;
 
-  constructor(script: string) {
+  // `env` is the worker's own start environment, for what pwsh fixes at start (e.g. $HOME); per-call env goes to run()
+  constructor(script: string, env?: NodeJS.ProcessEnv) {
     this.child = spawn(
       'pwsh',
       ['-NoProfile', '-File', path.join(__dirname, 'pwsh-worker.ps1'), script],
-      { stdio: ['pipe', 'pipe', 'pipe'] },
+      { stdio: ['pipe', 'pipe', 'pipe'], env },
     );
     // a dead worker is reported through `exited`; a write to it must not crash the test run with EPIPE
     this.child.stdin.on('error', () => undefined);
