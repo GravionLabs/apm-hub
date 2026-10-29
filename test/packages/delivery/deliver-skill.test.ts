@@ -8,6 +8,7 @@ const text = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8');
 const roles = fs.readFileSync(path.join(skillDir, 'references/roles.md'), 'utf8');
 const permissions = fs.readFileSync(path.join(skillDir, 'references/permissions.md'), 'utf8');
 const herdr = fs.readFileSync(path.join(skillDir, 'references/herdr.md'), 'utf8');
+const claim = fs.readFileSync(path.join(skillDir, 'references/claim.md'), 'utf8');
 
 describe('deliver SKILL.md', () => {
   const body = text.slice(text.indexOf('\n---', 3) + 4);
@@ -123,6 +124,58 @@ describe('deliver SKILL.md', () => {
 
     it('never expands a variable in a herdr call', () => {
       for (const c of herdrCalls) expect(c).not.toContain('$');
+    });
+  });
+
+  describe('claim for parallel runs (#868)', () => {
+    const select = body.slice(body.indexOf('**Select.**'), body.indexOf('**Resume.**'));
+    const merge = body.slice(body.indexOf('**Merge.**'), body.indexOf('## Pause rules'));
+    const pause = body.slice(body.indexOf('## Pause rules'), body.indexOf('## Report'));
+    const runner = fs.readFileSync(path.resolve(__dirname, '../../../docs/runner.md'), 'utf8');
+
+    it('claims the announced PBI by assigning it', () => {
+      expect(select).toContain(
+        'Announce the PBI that is next and claim it: `gh issue edit <nr> --add-assignee @me`',
+      );
+      expect(claim).toContain('gh issue edit <nr> --add-assignee @me');
+    });
+
+    it('skips a fresh claim and takes over a stale one, each with a progress line', () => {
+      expect(select).toContain('`#<nr> select: claimed, skipped`');
+      expect(select).toContain('`references/claim.md`');
+      expect(claim).toContain('Skip the PBI with `#<nr> select: claimed, skipped`');
+      expect(claim).toContain('with `#<nr> select: stale claim, taken over`');
+      expect(claim).toContain('within the last hour');
+    });
+
+    it('dates the branch through the GitHub API, not git ls-remote', () => {
+      expect(claim).toContain(
+        'gh api repos/{owner}/{repo}/branches/<branch> --jq .commit.commit.committer.date',
+      );
+      expect(claim).toContain('gh pr list --head <branch> --state open --json number,updatedAt');
+    });
+
+    it('continues a PBI named directly regardless of the claim', () => {
+      expect(select).toContain(
+        '`/deliver <nr>` on the PBI itself continues it regardless of the claim',
+      );
+      expect(claim).toContain('Only selection through a Feature or Epic skips');
+    });
+
+    it('releases the claim on merge, block and pause', () => {
+      expect(merge).toContain('`gh issue edit <nr> --remove-assignee @me`');
+      expect(pause).toContain('A blocked or paused PBI releases its claim');
+      expect(claim).toContain('When the PBI is merged (step 8), blocked or paused');
+    });
+
+    it('documents parallel runs in docs/runner.md', () => {
+      expect(runner).toContain('## Parallel runs');
+      expect(runner).toContain('one worktree per session');
+      expect(runner).toContain('independent issues');
+    });
+
+    it('contains no quoted $(…) substitution in its commands', () => {
+      expect(claim).not.toMatch(/["'][^"'\n]*\$\(/);
     });
   });
 
