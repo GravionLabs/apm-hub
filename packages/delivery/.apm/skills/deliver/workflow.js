@@ -251,6 +251,7 @@ async function deliverOne(p) {
   const impl = await agent(implementPrompt(p), { label: `implement #${p.nr}`, schema: IMPL, ...at('implement') })
   if (!impl) return fail(p, 'implement agent returned nothing')
   if (impl.status !== 'ok') return fail(p, impl.reason ?? 'implementation blocked')
+  log(`#${p.nr} implement ok`)
 
   // Gate, review and CI share the fix rounds; a CI fix goes through gate and review again before the next CI run.
   let rounds = 0
@@ -264,17 +265,22 @@ async function deliverOne(p) {
       if (!gate) return fail(p, 'gate agent returned nothing', url)
       commands = gate.commands
       if (!gate.green) {
-        problem = { kind: 'gate', text: gate.failure_tail ?? 'verify commands failed' }
+        problem = { kind: 'gate', summary: 'gate red', text: gate.failure_tail ?? 'verify commands failed' }
       } else {
+        log(`#${p.nr} gate green`)
         const rev = await agent(reviewPrompt(p), { label: `review #${p.nr}`, schema: REVIEW, ...at('review') })
         if (!rev) return fail(p, 'review agent returned nothing', url)
         notes = rev.notes
         const items = [...rev.blocking, ...rev.unmet.map((u) => `unmet criterion: ${u}`)]
-        if (items.length) problem = { kind: 'review', text: items.map((i) => `- ${i}`).join('\n') }
+        if (items.length) {
+          const summary = `review: ${rev.blocking.length} blocking, ${rev.unmet.length} unmet`
+          problem = { kind: 'review', summary, text: items.map((i) => `- ${i}`).join('\n') }
+        } else log(`#${p.nr} review clean`)
       }
       if (!problem) break
       if (rounds >= MAX_FIX) return fail(p, `${problem.kind} not clean after ${MAX_FIX} fix rounds: ${problem.text}`, url)
       rounds++
+      log(`#${p.nr} ${problem.summary} → fix ${rounds}/${MAX_FIX}`)
       const fx = await agent(fixPrompt(p, problem), { label: `fix #${p.nr}`, schema: IMPL, ...at('fix') })
       if (!fx || fx.status !== 'ok') return fail(p, fx?.reason ?? 'fix agent returned nothing', url)
     }
@@ -282,11 +288,13 @@ async function deliverOne(p) {
     const pr = await agent(prPrompt(p, notes, commands), { label: `pr #${p.nr}`, phase: 'Deliver', schema: PR, ...roleOpts('pr', p.tier) })
     if (!pr) return fail(p, 'pr agent returned nothing', url)
     url = pr.url
+    log(`#${p.nr} PR ${url}, waiting for CI`)
     const ci = await agent(ciPrompt(p, pr.pr), { label: `ci #${p.nr}`, phase: 'Deliver', schema: CI, ...roleOpts('ci', p.tier) })
     if (!ci) return fail(p, 'ci agent returned nothing', url)
     if (ci.state === 'merged') return { ok: true, pr: url }
     if (ci.state === 'red' && ci.caused_by_change && rounds < MAX_FIX) {
       rounds++
+      log(`#${p.nr} CI red, caused by the change → fix ${rounds}/${MAX_FIX}`)
       const fx = await agent(fixPrompt(p, { kind: 'ci', text: ci.failure_tail ?? 'a check failed' }), { label: `fix #${p.nr}`, schema: IMPL, ...at('fix') })
       if (!fx || fx.status !== 'ok') return fail(p, fx?.reason ?? 'fix agent returned nothing', url)
       continue

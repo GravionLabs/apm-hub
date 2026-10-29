@@ -21,6 +21,7 @@ type Handler = (call: Call, n: number) => unknown;
 // Runs workflow.js with stubbed workflow globals; `handlers` answers an agent() call by the role prefix of its label.
 async function run(args: unknown, handlers: Record<string, Handler>) {
   const calls: Call[] = [];
+  const logs: string[] = [];
   const counts: Record<string, number> = {};
   const agent = async (prompt: string, opts: Record<string, unknown> = {}) => {
     const label = String(opts.label);
@@ -50,9 +51,9 @@ async function run(args: unknown, handlers: Record<string, Handler>) {
     pipeline,
     undefined,
     () => {},
-    () => {},
+    (m: string) => logs.push(m),
   );
-  return { result, calls };
+  return { result, calls, logs };
 }
 
 const pbi = (nr: number, extra: Record<string, unknown> = {}) => ({
@@ -438,6 +439,59 @@ describe('deliver workflow.js', () => {
       delivered: [{ nr: 2 }],
       blocked: [{ nr: 1, reason: 'gate agent returned nothing' }],
     });
+  });
+
+  it('logs every step of a delivered PBI', async () => {
+    const { logs } = await run({ issue: 12 }, happy([pbi(12)]));
+    expect(logs).toEqual([
+      '#12 implement ok',
+      '#12 gate green',
+      '#12 review clean',
+      '#12 PR https://example/pull/12, waiting for CI',
+      '#12 delivered: https://example/pull/12',
+    ]);
+  });
+
+  it('logs gate, review and CI fix rounds with the round count', async () => {
+    let gates = 0;
+    let reviews = 0;
+    let cis = 0;
+    const { logs } = await run(
+      { issue: 8, maxFixRounds: 3 },
+      {
+        ...happy([pbi(8)]),
+        gate: () =>
+          ++gates === 1 ? { green: false, commands: ['pnpm test'], failure_tail: 'boom' } : green,
+        review: () =>
+          ++reviews === 1 ? { blocking: ['🔴 null deref'], unmet: ['AC 2'], notes: [] } : clean,
+        ci: () =>
+          ++cis === 1
+            ? { state: 'red', caused_by_change: true, failure_tail: 'lint error' }
+            : merged,
+      },
+    );
+    expect(logs).toEqual([
+      '#8 implement ok',
+      '#8 gate red → fix 1/3',
+      '#8 gate green',
+      '#8 review: 1 blocking, 1 unmet → fix 2/3',
+      '#8 gate green',
+      '#8 review clean',
+      '#8 PR https://example/pull/8, waiting for CI',
+      '#8 CI red, caused by the change → fix 3/3',
+      '#8 gate green',
+      '#8 review clean',
+      '#8 PR https://example/pull/8, waiting for CI',
+      '#8 delivered: https://example/pull/8',
+    ]);
+  });
+
+  it('logs no fix round when the rounds are used up, only the blocked line', async () => {
+    const { logs } = await run(
+      { issue: 8, maxFixRounds: 0 },
+      { ...happy([pbi(8)]), gate: () => ({ green: false, commands: [], failure_tail: 'red' }) },
+    );
+    expect(logs).toEqual(['#8 implement ok', '#8 blocked: gate not clean after 0 fix rounds: red']);
   });
 
   it('reports skipped issues from the selection', async () => {
