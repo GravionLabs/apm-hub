@@ -7,11 +7,11 @@ An `--unattended` run stops at the first permission prompt (spike #823, `docs/sp
 | the verify commands of the repository's `AGENTS.md` (build, test, format, lint) | implement and fix subagents |
 | `git` (`fetch`, `switch`, `worktree`, `add`, `commit`, `rebase`, `push`, `diff`, `ls-remote`) | all |
 | `gh` (`auth status`, `api`, `issue`, `pr`) | this session, `github-pull-request` |
-| `herdr pane report-metadata` | only when the run is inside a herdr pane |
+| `printenv HERDR_ENV`, `printenv HERDR_PANE_ID`, `herdr pane report-metadata` | only when the run is inside a herdr pane (`references/herdr.md`) |
 
 Replace the `pnpm` lines below with the commands of the repository's `AGENTS.md`. The deny entries block the common force-push and `--admin` forms; `deliver` needs neither, and the ruleset on `release/next` stays the real gate.
 
-Claude Code denies any command with a quoted `$(…)` substitution even when its prefix is allowed ("Quoted text in this command can't be checked before it runs"). Skill text and subagent prompts write simple commands only.
+Claude Code denies any command with a quoted `$(…)` substitution even when its prefix is allowed ("Quoted text in this command can't be checked before it runs"). The same holds for any variable expansion: `herdr pane report-metadata $HERDR_PANE_ID …` is denied with or without quotes, the same call with the literal pane id passes (checked headless with `--permission-mode default`, 2026-10-29). Skill text and subagent prompts write simple commands only.
 
 ## Claude Code
 
@@ -26,6 +26,8 @@ Claude Code denies any command with a quoted `$(…)` substitution even when its
       "Bash(gh api:*)",
       "Bash(gh issue:*)",
       "Bash(gh pr:*)",
+      "Bash(printenv HERDR_ENV)",
+      "Bash(printenv HERDR_PANE_ID)",
       "Bash(herdr pane report-metadata:*)",
       "Bash(pnpm install)",
       "Bash(pnpm run build)",
@@ -57,6 +59,8 @@ Headless: `claude -p "/deliver <nr> --unattended"` reads the same file; `--allow
       "gh api *": "allow",
       "gh issue *": "allow",
       "gh pr *": "allow",
+      "printenv HERDR_ENV": "allow",
+      "printenv HERDR_PANE_ID": "allow",
       "herdr pane report-metadata*": "allow",
       "pnpm install": "allow",
       "pnpm run build": "allow",
@@ -84,6 +88,8 @@ copilot -p "/deliver <nr> --unattended" `
   --allow-tool 'shell(gh api)' `
   --allow-tool 'shell(gh issue)' `
   --allow-tool 'shell(gh pr)' `
+  --allow-tool 'shell(printenv HERDR_ENV)' `
+  --allow-tool 'shell(printenv HERDR_PANE_ID)' `
   --allow-tool 'shell(herdr pane report-metadata)' `
   --allow-tool 'shell(pnpm install)' `
   --allow-tool 'shell(pnpm run build)' `
