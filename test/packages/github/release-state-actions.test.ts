@@ -48,30 +48,28 @@ describe('Get-ReleaseState.ps1', () => {
     return JSON.parse(r.stdout);
   };
   const setRef = (b: string, sha: string) => git(fx.origin, 'update-ref', `refs/heads/${b}`, sha);
-  const child = (parent: string, ...msg: string[]) =>
-    git(origin, 'commit-tree', `${parent}^{tree}`, '-p', parent, ...msg.flatMap((m) => ['-m', m]));
 
   describe('release/next merged or released', () => {
-    it('merged tip without open PRs: finish deletes it, cut recreates it', async () => {
+    it('merged tip without open PRs: finish deletes it, cut recreates it, neither touches origin', async () => {
       setRef('release/next', 'v2.1.0^2');
+      const before = git(fx.origin, 'for-each-ref');
       expect(await state('finish', 'release/next')).toMatchObject({
         state: 'merged',
         deleteAllowed: true,
         action: 'delete-branch',
       });
       expect(await state('cut', 'release/next')).toMatchObject({ action: 'recreate' });
+      // read-only: the script only reports delete-branch / recreate, it never pushes or deletes
+      expect(git(fx.origin, 'for-each-ref')).toBe(before);
     });
 
-    it('released without merge tip: cut recreates, finish stops', async () => {
+    it('released without merge tip: cut recreates', async () => {
       setRef('release/next', 'release/legacy');
       expect(await state('cut', 'release/next')).toMatchObject({
         state: 'released',
         deleteAllowed: true,
         action: 'recreate',
       });
-      expect((await state('finish', 'release/next')).action).toBe(
-        'stop: already released; cut a new release branch',
-      );
     });
 
     it('open PRs block delete and recreate', async () => {
@@ -81,9 +79,6 @@ describe('Get-ReleaseState.ps1', () => {
         deleteAllowed: false,
         action: 'stop: open PRs or local commits block the reset',
       });
-      expect((await state('finish', 'release/next', prs)).action).toBe(
-        'stop: already released; cut a new release branch',
-      );
     });
 
     it('local commits ahead of origin block the reset', async () => {
@@ -104,13 +99,13 @@ describe('Get-ReleaseState.ps1', () => {
     });
   });
 
-  it('lists released release/<x.y> lines as stale, sorted by version', async () => {
+  it('lists released release/<x.y> lines as stale, sorted by version; no release workflow', async () => {
     const r = await state('cut', 'release/next');
     expect(r.staleLines).toEqual(['release/2.1', 'release/9.0']);
+    expect(r.releaseWorkflow).toBe(false);
   });
 
   it('releaseWorkflow is true when a workflow calls the reusable release-branch.yml', async () => {
-    expect((await state('cut', 'release/next')).releaseWorkflow).toBe(false);
     const wf = path.join(fx.clone, '.github/workflows');
     fs.mkdirSync(wf, { recursive: true });
     fs.writeFileSync(
@@ -122,13 +117,6 @@ describe('Get-ReleaseState.ps1', () => {
     } finally {
       fs.rmSync(path.join(fx.clone, '.github'), { recursive: true, force: true });
     }
-  });
-
-  it('never pushes or deletes: origin refs are unchanged', async () => {
-    const before = git(fx.origin, 'for-each-ref');
-    await state('finish', 'release/next');
-    await state('cut', 'release/2.1');
-    expect(git(fx.origin, 'for-each-ref')).toBe(before);
   });
 
   it('invalid branch name: exit 1 with a message on stderr', async () => {

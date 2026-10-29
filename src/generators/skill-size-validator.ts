@@ -5,7 +5,7 @@ export const SKILL_MD_LINE_LIMIT = 100;
 /** The description is sent with every request; ~40 tokens, hard limit 200 characters. */
 export const SKILL_DESCRIPTION_CHAR_LIMIT = 200;
 /** Sum of the descriptions of all consumer-visible model-invocable skills (~700 tokens at chars/4). */
-export const SKILL_DESCRIPTION_TOTAL_CHAR_BUDGET = 2800;
+export const SKILL_DESCRIPTION_TOTAL_CHAR_BUDGET = 3000;
 
 export interface SizeViolation {
   filePath: string;

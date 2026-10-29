@@ -4,7 +4,7 @@
 Welcome to **apm-hub** v3.2.0 👋
 <!-- AUTO:end version -->
 
-apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The automated runner that chains them lives in [dromos](runner.md).
+apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The skill `deliver` chains them from issue to merged PR, see [delivery](runner.md).
 
 This documentation is also published as a site at <https://gravionlabs.github.io/apm-hub/>.
 
@@ -46,7 +46,7 @@ Skills delegate by name instead of repeating each other. One skill owns a workfl
 - [Skill frontmatter convention](concepts/skill-frontmatter.md): the restricted frontmatter that keeps skills portable
 - [Common workflows](usage/common-workflows.md): end-to-end examples with the installed skills
 - [Skill companion directories](usage/skill-companion-dirs.md): `scripts/`, `references/`, `templates/`, `assets/`
-- [Working mode](working-mode.md) and [the runner](runner.md): one issue per session, and the automated pipeline in dromos
+- [Working mode](working-mode.md) and [delivery](runner.md): one issue per session, and delivery through `/deliver`
 - [Prerequisites](prerequisites.md): tools the skill scripts depend on
 - [LSP configuration](lsp-configuration.md): language servers for Copilot CLI
 - [CONTRIBUTING.md](../CONTRIBUTING.md) and [AGENTS.md](../AGENTS.md): adding or changing skills

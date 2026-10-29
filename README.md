@@ -8,7 +8,7 @@ Documentation site: **[gravionlabs.github.io/apm-hub](https://gravionlabs.github
 
 ## What is apm-hub?
 
-**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the runner that chains them lives in [dromos](docs/runner.md).
+**apm-hub** is a shared library of reusable **skills** ([agentskills.io](https://agentskills.io) format), distributed as **APM packages** via [Agent Package Manager](https://microsoft.github.io/apm/). Each package is a curated, domain-specific bundle of skills that you can install into any repository with a single command. Workflows are skills; the skill `deliver` chains them from issue to merged PR ([delivery](docs/runner.md)).
 
 Skills are the primary artifact: one `SKILL.md` source file loads unchanged on GitHub Copilot, Claude Code, and OpenCode. See the [skill frontmatter convention](docs/concepts/skill-frontmatter.md) for how that is guaranteed.
 
@@ -20,22 +20,26 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Skills](docs/concepts/skills.md)**: What skills are and how they work across platforms.
 - **[Skill Frontmatter Convention](docs/concepts/skill-frontmatter.md)**: The spec-compliant frontmatter every skill follows.
 - **[Working mode](docs/working-mode.md)**: one issue per session, small contexts.
-- **[The runner](docs/runner.md)**: the automated pipeline lives in dromos.
+- **[The runner](docs/runner.md)**: retired; delivery runs through `/deliver` (decision 004).
 - **[Simplification plan](docs/simplification-plan.md)**: why apm-hub becomes a content-only repository and the pipeline moves to dromos.
 - **[Simplification work plan](docs/simplification-workplan.md)**: order of work, PBIs and milestones for that change.
 - **Git guardrails**: destructive git commands are denied by the dromos [permission callback](https://github.com/GravionLabs/dromos/blob/main/src/runner/permissions.ts); apm-hub ships no hooks.
 - **[Prerequisites](docs/prerequisites.md)**: System requirements and setup guide for apm-hub skills.
 - **[Common Workflows](docs/usage/common-workflows.md)**: End-to-end examples with the installed skills.
 - **[Skill Companion Directories](docs/usage/skill-companion-dirs.md)**: `scripts/`, `references/`, `templates/`, `assets/`.
-- **[Format override](docs/usage/format-override.md)**: replace the format and check commands per language with `.agents/format.json`.
+- **[Project config](docs/usage/project-config.md)**: `.agents/config.json`, the committed project configuration; its `format` key replaces the format and check commands per language.
 - **Project standard** (`github-project`): ships from [GravionLabs/ci](https://github.com/GravionLabs/ci) (`apm install GravionLabs/ci`), see its `docs/project-standard.md`.
 - **[LSP Configuration](docs/lsp-configuration.md)**: Enable precise code intelligence with Language Server Protocol.
 
 ## Upgrading from 2.x
 
-3.0.0 is content-only: the agents and the orchestration skills (`orchestrator`, `review-fanout`, `verify-project`, `queue`, `handoff`, `orch-pipeline`, `orch`) and the agents (`orchestrator`, `pbi-runner`, `implementer`, `issue-reader`, `explorer`, `planner`, `pr-writer`, `review-lead`, `reviewer`) are gone; the runner is [dromos](docs/runner.md). If you still want the old pipeline, pin `agents`, `github` and `delivery` together at `#v2.5.4`; otherwise remove the `agents` entry and run `apm update -g`. What apm cleans itself and what can remain: [after install](packages/delivery/.apm/skills/apm-install/references/after-install.md).
+3.0.0 is content-only: the agents and the orchestration skills (`orchestrator`, `review-fanout`, `verify-project`, `queue`, `handoff`, `orch-pipeline`, `orch`) and the agents (`orchestrator`, `pbi-runner`, `implementer`, `issue-reader`, `explorer`, `planner`, `pr-writer`, `review-lead`, `reviewer`) are gone; the runner was dromos, since decision 004 delivery is [`/deliver`](docs/runner.md). If you still want the old pipeline, pin `agents`, `github` and `delivery` together at `#v2.5.4`; otherwise remove the `agents` entry and run `apm update -g`. What apm cleans itself and what can remain: [after install](packages/delivery/.apm/skills/apm-install/references/after-install.md).
 
 3.1.0 removes the `hooks` package (the git guardrails hook); the guardrails now live in the dromos [permission callback](https://github.com/GravionLabs/dromos/blob/main/src/runner/permissions.ts). Clean up: remove the `GravionLabs/apm-hub/packages/hooks` entry from your `apm.yml` and run `apm uninstall` (or `apm update -g` for a global install); delete the `PreToolUse` entry that runs `git-guardrails.sh` from `~/.claude/settings.json`; delete the `preToolUse` entry for `git-guardrails.sh` from your Copilot hook file (for example `~/.copilot/hooks/*.json`) if you added it by hand. `v2.5.4` still ships the hook.
+
+## Upgrading to 3.3.0
+
+3.3.0 ships no dromos surface (decision 004): `/orchestrator`, the `dromos init` step of `apm-install` and `.dromos/` are gone; `/deliver <nr>` delivers issues and `grill-me` settles open decisions. `.agents/config.json` replaces `.dromos/config.json` and `.agents/format.json`: move the content of `.agents/format.json` under the `format` key (the old file still works with a deprecation notice), set the models of the `/deliver` subagents with `deliver.roles` ([project config](docs/usage/project-config.md)), then delete `.dromos/` and run `npm uninstall -g @gravionlabs/dromos`. Commit `.agents/config.json`: a `.gitignore` that ignores `.agents/` needs the lines `.agents/*` and `!.agents/config.json`.
 
 ## 🚀 Quick Start
 
@@ -92,13 +96,6 @@ See **[Prerequisites Documentation](docs/prerequisites.md)** for detailed setup 
    ```
    Then run `apm install` to deploy to `.github/`, `.claude/`, `.cursor/` etc.
 
-5. Install the runner (optional, for automated runs; the skills work without it):
-   ```bash
-   npm i -g @gravionlabs/dromos
-   dromos --version
-   ```
-   dromos reads `.dromos/config.json` in the target repository, see [the runner](docs/runner.md) and [after install](packages/delivery/.apm/skills/apm-install/references/after-install.md).
-
 ### Where things land
 
 | Platform       | Skills                     |
@@ -127,7 +124,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | Package       | Contents                                                                                                                                               |
 | :------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `shared`      | `implementation`, `detect-techstack`, `diagnose`, `code-review`                                                                                        |
-| `delivery`    | `planner`, `orchestrator`, `retro`, `apm-install`                                                                                                      |
+| `delivery`    | `planner`, `deliver`, `retro`, `apm-install`                                                                                           |
 | `github`      | `github-issue`, `github-pull-request`, `github-release`                                                                                                |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`)         |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky` |

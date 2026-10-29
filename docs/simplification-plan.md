@@ -1,5 +1,7 @@
 # Simplification plan: apm-hub and dromos
 
+Update 2026-10-28: dromos decision 004 archived dromos at v0.4.0. Delivery is the `deliver` workflow in apm-hub, the bus, Attention API and gates continue in [GravionLabs/keryx](https://github.com/GravionLabs/keryx); the dromos runner path (Stage B), `/orchestrator` and `.dromos/config.json` are removed (#828). Read the runner parts of this document as history.
+
 Status: approved, 2026-10-27 (review corrections applied the same day). Execution order and backlog: [simplification-workplan.md](simplification-workplan.md). Supersedes the direction of the 2026-10-25 analysis ("dromos + apm-hub: Analyse und selbstlernendes Agent-System") and the 2026-10-26 dromos re-scope (dromos#131) in one point: control flow moves out of prompts into dromos, and apm-hub becomes a content-only repository.
 
 ## 1. Goal

@@ -2,12 +2,12 @@
 
 The cost of an agent session is its context size, not the skills it loads. In a 30-day sample (AgentLens, 79 sessions) issue sessions averaged 365k tokens per request and skill text made up about 1 % of it; PR and release skills ran at 500k because they were started at the end of long sessions. This page is the operating procedure that keeps contexts small. The skills in this hub assume it.
 
-Everything here is interactive: you start a Claude Code, Copilot CLI or OpenCode session and name the skill or describe the task. The automated runner is described in [The runner](runner.md); `/orchestrator run 42` starts it from the session.
+Everything here is interactive: you start a Claude Code, Copilot CLI or OpenCode session and name the skill or describe the task. Delivery of whole issues is `/deliver 42`, unattended `/deliver 42 --unattended` (see [The runner](runner.md)).
 
 ## 1. One issue per session
 
 1. Start a fresh session in the repository.
-2. Plan if the issue is large: `Plan issue #42.` or `/orchestrator plan 42` (`planner` writes the plan one level down; after you approve, `github-issue` creates the sub-issues).
+2. Plan if the issue is large: `Plan issue #42.` (`planner` writes the plan one level down, `grill-me` asks you the open decisions round by round, and after you approve the plan `github-issue` creates the sub-issues with the answers under `## Decisions`; a Feature is broken down PBI by PBI, one grilling and approval each). To sharpen an existing issue: `refine 42` (`planner` grills its open points and updates the body).
 3. Implement: `Implement #42.` (`github-issue` reads the issue, `implementation` dispatches to the stack skill, tests change with the code).
 4. Verify with the build and test commands of the project.
 5. Review once: `Review the current diff.` (`code-review`, the reviewer role). Fix blocking findings; the pull request is the second review.

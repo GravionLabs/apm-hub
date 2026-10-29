@@ -25,9 +25,10 @@ describe('go-test ## Review rules', () => {
 });
 
 describe('go-implementation Review rules', () => {
-  it('points the reviewer to the Review rules of go-test', () => {
+  it('has no pointer to the Review rules of go-test, code-review reads them itself', () => {
     const section =
       /^## Review rules$([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(goImplementation)?.[1] ?? '';
-    expect(section).toMatch(/go-test.*Review rules|Review rules.*go-test/);
+    expect(section).not.toMatch(/Review rules.*go-test|go-test.*Review rules/);
+    expect(section).toContain('- 🟢 Tests follow `go-test`');
   });
 });

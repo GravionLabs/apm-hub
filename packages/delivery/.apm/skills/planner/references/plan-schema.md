@@ -1,6 +1,6 @@
 # plan.json schema
 
-The only output contract of `planner`: one JSON object, returned to the caller, who validates it and creates the issues. Machine-checkable form: `schema/plan.schema.json` (JSON Schema draft 2020-12, structure; dromos validates against the same file); graph invariants are listed under Validity.
+The only output contract of `planner`: one JSON object, returned to the caller, who validates it and creates the issues. Machine-checkable form: `schema/plan.schema.json` (JSON Schema draft 2020-12, structure; a caller may validate against the same file); graph invariants are listed under Validity.
 
 ```json
 {

@@ -7,38 +7,13 @@
 | `apm.yml`, `apm.lock.yaml` | commit |
 | `.github/skills/`, `.claude/skills/`, `.opencode/skills/` | commit (instant context on clone) |
 | `apm_modules/` | add to `.gitignore` |
+| `.agents/config.json` | commit (project config, see [project config](https://github.com/GravionLabs/apm-hub/blob/main/docs/usage/project-config.md)). When `.gitignore` ignores the whole directory, use the lines `.agents/*` and `!.agents/config.json` instead; the installer prints a note when they are missing |
 
-## Runner (optional)
+## Delivery
 
-The skills work by hand. To chain them automatically install the runner once per machine and check it:
+Delivery runs through the `deliver` skill (`/deliver <nr>`, harness-neutral), not through a separate runner.
 
-```bash
-npm i -g @gravionlabs/dromos
-dromos --version
-```
-
-Per repository dromos reads `.dromos/config.json` (commit it; without it the defaults apply). Let dromos write it, do not hand-write it:
-
-```bash
-dromos init --dry-run --format json --stack ts   # preview: {path, action, added, kept}; without --format json it prints the file and a diff
-dromos init --stack ts                           # write; an existing file is updated, never overwritten
-dromos config check                              # validate the file in this repository (exit 1 when invalid)
-dromos config schema                             # JSON schema of every key
-```
-
-`--stack` is one of `ts`, `py`, `dotnet`, `rust`, `ng` (without it dromos detects the stack from marker files). `/apm-install` runs the preview after the packages are installed and writes only after you agree. It skips the step for `-g` (no repository config) and when `dromos` is not installed.
-
-`init` manages three keys and adds only the missing ones (`added`; existing values are `kept`): `harness`, `test.full` (from the stack, `pnpm test` with a `pnpm-lock.yaml`) and `parallel`. A new file for a TypeScript project with pnpm:
-
-```json
-{
-  "harness": "claude",
-  "test": { "full": "pnpm test" },
-  "parallel": 3
-}
-```
-
-An invalid existing file (bad JSON, an unknown key or a value the schema rejects) is left untouched: `init` exits 1 with `valid: false` and `errors`; fix it by hand. Optional keys you add yourself: `test.related` (without it the runner runs `test.full`), `models.<claude|copilot>.<role>`. All keys, `skills` per role and `allow` extensions: [dromos README](https://github.com/GravionLabs/dromos#readme). Usage: [the runner](https://github.com/GravionLabs/apm-hub/blob/release/next/docs/runner.md).
+Before the first `/deliver <nr> --unattended`, propose the shell allowlist of the harness and let the user confirm it (never write it unasked): `.claude/settings.json` (`permissions.allow`) for Claude Code, `opencode.json` (`permission.bash`) for OpenCode, `--allow-tool 'shell(…)'` flags for Copilot CLI. The entries are `git`, `gh`, `herdr pane report-metadata`, `pwsh` for the cleanup script of `deliver` and the verify commands of the repository's `AGENTS.md` (build, test, format, lint): read them from its `## Commands` section and name them. The templates per harness are in `permissions.md` in the references of the `deliver` skill; without them an unattended run stops at the first prompt. The dromos runner and its `.dromos/config.json` are gone: dromos was archived with decision 004 (bus, attention and gates continue in [GravionLabs/keryx](https://github.com/GravionLabs/keryx)). Delete a leftover `.dromos/` directory; `npm uninstall -g @gravionlabs/dromos` removes the CLI. The per-project settings the skills read live in `.agents/config.json`.
 
 ## Upgrading from 2.x
 

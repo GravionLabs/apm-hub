@@ -23,6 +23,6 @@ features:
     details: Domain bundles for GitHub, delivery, .NET, TypeScript, Python and Angular, installed into any repository with one apm command.
   - title: Workflows are skills
     details: Issue planning, implementation, review and release are skills that compose; each one owns a workflow and the others delegate to it by name.
-  - title: Runner in dromos
-    details: The automated pipeline lives in dromos and calls these skills; apm-hub stays content only.
+  - title: Delivery as a workflow
+    details: /deliver runs the implementation and review skills in subagents on Claude Code, OpenCode and Copilot CLI; a GitHub ruleset gates the merge.
 ---

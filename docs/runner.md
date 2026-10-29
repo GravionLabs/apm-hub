@@ -1,33 +1,27 @@
-# The runner
+# The runner (retired)
 
-apm-hub contains no pipeline. It ships skills; the runner that chains them (plan, implement, review, pull request, one PBI after another) lives in [dromos](https://github.com/GravionLabs/dromos). Why the split was made is in the [simplification plan](simplification-plan.md).
+apm-hub contains no pipeline of its own. The dromos runner and its launcher skill `/orchestrator` are removed (decision 004: dromos is archived at v0.4.0; the bus, Attention API and gates continue in [GravionLabs/keryx](https://github.com/GravionLabs/keryx)).
 
-Without the runner you work interactively, see [Working mode](working-mode.md).
+Delivery runs through the skill `deliver` (package `delivery`), the same on Claude Code, OpenCode and Copilot CLI: `/deliver <nr>` takes the open PBIs of a PBI, Feature or Epic in dependency order; per PBI a subagent implements with `implementation`, a subagent reviews with `code-review`, at most 2 fix rounds follow, then the PR into `release/next`, the wait for the required checks, the squash merge and the closed issue. State lives in GitHub only, so `/deliver <nr>` resumes a stopped run. A missing breakdown is planned with `planner` and `grill-me` in the same session.
 
-## What the runner does
+Interactive by default: an unclear criterion, extra scope or a blocker asks you in the chat. `/deliver <nr> --unattended` (`claude -p`, `opencode run`, `copilot -p`) comments on the issue instead, labels it `needs-decision` and continues with the next independent PBI.
 
-`dromos run task|pbi|feature|epic <nr> --harness claude|copilot` starts harness sessions (Claude Code or Copilot CLI) and gives each phase a skill from this hub: `planner` for planning, `implementation` with the stack skills for the change, `code-review` for the review, `github-pull-request` for the PR. Control flow, state and events belong to dromos; the skills stay the same whether you call them by hand or through the runner.
+The hard gate is a GitHub ruleset on `release/next` (required checks, no bypass): a red check blocks the merge whatever the session does. `deliver` warns at the start when the repository has none. The Claude Code workflow `workflow.js` of the previous version stays frozen next to the skill until the retro (#865).
 
-## Install
+## Parallel runs
 
-```bash
-npm i -g @gravionlabs/dromos
-apm install GravionLabs/apm-hub/packages/core -g   # the skills the runner calls
-```
+Several sessions can run `/deliver` at the same time, one worktree per session (`claude --worktree`; `git worktree add` for OpenCode and Copilot CLI) and on independent issues. Each session claims the PBI it announces by assigning it (`gh issue edit <nr> --add-assignee @me`) and releases the claim when the PBI is merged, blocked or paused. Selection through a Feature or Epic skips a PBI that is assigned and whose branch was pushed within the last hour; a stale claim (older branch, no open PR activity) is taken over. `/deliver <nr>` on the PBI itself continues it regardless of the claim. Details: `references/claim.md` of the `deliver` skill.
 
-Per project add the stack package (`ts`, `py`, `ng`, `dotnet`, `rust`, `go`).
+Without `/deliver` you work interactively, see [Working mode](working-mode.md).
 
-## Commands
+## Migrating
 
-| Command                   | Does                                              |
-| :------------------------ | :------------------------------------------------ |
-| `dromos run task <nr>`    | implements one Task                               |
-| `dromos run pbi <nr>`     | plans if needed, implements the PBI, opens the PR |
-| `dromos run feature <nr>` | runs the PBIs of a Feature in dependency order    |
-| `dromos run epic <nr>`    | plans missing Features and PBIs, then runs them   |
+| Before | Now |
+| :-- | :-- |
+| `/orchestrator run <nr>` | `/deliver <nr>` |
+| `/orchestrator plan <nr>` | `planner` (`Plan issue #<nr>.`) |
+| `/orchestrator status <nr>` | the sub-issues and PRs on GitHub |
+| `.dromos/config.json` | delete it; project settings are in `.agents/config.json` |
+| `npm i -g @gravionlabs/dromos` | `npm uninstall -g @gravionlabs/dromos` |
 
-## From the session: `/orchestrator`
-
-The `orchestrator` skill (package `delivery`, user-invoked) launches dromos without leaving Claude Code or Copilot CLI: `/orchestrator <plan|run|status> <nr> [--harness claude|claude-cli|copilot]`. It runs `dromos … --format json`, summarizes the progress in the session and, when `plan` exits 2 with open planner questions, asks them with the client's question tool and re-runs with `--answer <id>=<value>`. It has no agent file; dromos does the work.
-
-Options, configuration and the event log are documented in the [dromos README](https://github.com/GravionLabs/dromos#readme).
+Models of the `/deliver` subagents (where the harness takes one per call) are set with `deliver.roles` in `.agents/config.json`, see the `deliver` skill (`references/roles.md`).

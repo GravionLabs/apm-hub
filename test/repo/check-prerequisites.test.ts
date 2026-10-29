@@ -2,6 +2,7 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { PwshWorker } from '../helpers/pwsh-worker';
 
 const SCRIPT = path.resolve(
   __dirname,
@@ -10,10 +11,6 @@ const SCRIPT = path.resolve(
 const pwshProbe = spawnSync('sh', ['-c', 'command -v pwsh'], { encoding: 'utf8' });
 const hasPwsh = pwshProbe.status === 0;
 const pwshPath = pwshProbe.stdout.trim();
-
-// The unit project keeps the default 5 s test timeout; every case here starts pwsh at least once, which takes
-// several seconds on a cold CI runner (the scripts project allows 30 s, but it lists test/packages files only).
-vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
 
 const SOURCE =
   "---\nname: explorer\ntools: ['read']\nmetadata:\n  claude:\n    tools: [Read]\n---\n\nBody.\n";
@@ -26,13 +23,17 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
     let home: string;
     let proj: string;
     let lean: string;
+    let bin: string;
+    // one pwsh worker runs the script in-process per call; each call gets its own HOME and PATH, and the script resolves
+    // tools through Get-Command on the current $env:PATH, so a PATH without apmw needs no separate process
+    let worker: PwshWorker;
 
-    beforeEach(() => {
+    beforeAll(() => {
+      worker = new PwshWorker(SCRIPT);
       dir = fs.mkdtempSync(path.join(os.tmpdir(), 'prereq-'));
-      home = path.join(dir, 'home');
-      proj = path.join(dir, 'proj');
       lean = path.join(dir, 'lean');
-      [home, proj, lean].forEach((d) => fs.mkdirSync(d));
+      bin = path.join(dir, 'bin');
+      for (const d of [lean, bin]) fs.mkdirSync(d);
       // PATH with the core tools the script checks (pwsh, git, node, npm, uname) but without apmw
       for (const tool of ['git', 'node', 'npm', 'uname', 'sh']) {
         const found = spawnSync('sh', ['-c', `command -v ${tool}`], {
@@ -41,132 +42,57 @@ describe.skipIf(!hasPwsh || process.platform === 'win32')(
         if (found) fs.symlinkSync(found, path.join(lean, tool));
       }
       fs.symlinkSync(pwshPath, path.join(lean, 'pwsh'));
+      fs.writeFileSync(path.join(bin, 'apmw'), '#!/bin/sh\necho 1.0\n', { mode: 0o755 });
     });
-    afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+    afterAll(() => {
+      worker.close();
+      fs.rmSync(dir, { recursive: true, force: true });
+    });
+    beforeEach(() => {
+      home = fs.mkdtempSync(path.join(dir, 'home-'));
+      proj = fs.mkdtempSync(path.join(dir, 'proj-'));
+    });
 
     const write = (d: string, text: string) => {
       fs.mkdirSync(d, { recursive: true });
       fs.writeFileSync(path.join(d, 'explorer.md'), text);
     };
-    const run = (extraPath = '') => {
-      const r = spawnSync(pwshPath, ['-NoProfile', '-File', SCRIPT], {
+    const run = async (extraPath = '') => {
+      const r = await worker.run([], {
         cwd: proj,
-        encoding: 'utf8',
         env: { HOME: home, PATH: extraPath ? `${extraPath}:${lean}` : lean },
       });
       return { code: r.status, out: r.stdout };
     };
 
-    it('passes when every agent file is sanitized or absent', () => {
-      write(path.join(home, '.claude/agents'), SANITIZED);
+    it('passes when every agent file is sanitized (keys in a body do not count) and says nothing about dromos', async () => {
+      write(path.join(home, '.claude/agents'), `${SANITIZED}metadata:\n  claude:\n`);
       write(path.join(proj, '.claude/agents'), SANITIZED);
-      const r = run();
+      const r = await run();
       expect(r.code).toBe(0);
       expect(r.out).not.toContain('apmw');
+      // the runner is gone (#828)
+      expect(r.out).not.toMatch(/dromos/i);
     });
 
-    it.each(['.claude/agents', '.opencode/agents', '.github/agents'])(
-      'fails with the install hint for a source-format file in the project %s',
-      (sub) => {
-        write(path.join(proj, sub), SOURCE);
-        const r = run();
-        expect(r.code).toBe(1);
-        expect(r.out).toContain('apm-hub source format');
-        expect(r.out).toContain('uv tool install apmw');
-      },
-    );
-
-    it('checks the home directories too', () => {
-      write(path.join(home, '.config/opencode/agents'), SOURCE);
-      expect(run().code).toBe(1);
+    it.each([
+      ['proj', '.claude/agents'],
+      ['proj', '.opencode/agents'],
+      ['proj', '.github/agents'],
+      ['home', '.config/opencode/agents'],
+    ])('fails with the install hint for a source-format file in the %s %s', async (root, sub) => {
+      write(path.join(root === 'home' ? home : proj, sub), SOURCE);
+      const r = await run();
+      expect(r.code).toBe(1);
+      expect(r.out).toContain('apm-hub source format');
+      expect(r.out).toContain('uv tool install apmw');
     });
 
-    it('ignores the keys in a body', () => {
-      write(path.join(home, '.claude/agents'), `${SANITIZED}metadata:\n  claude:\n`);
-      expect(run().code).toBe(0);
-    });
-
-    it('is satisfied by an apmw on PATH', () => {
+    it('is satisfied by an apmw on PATH', async () => {
       write(path.join(home, '.claude/agents'), SOURCE);
-      const bin = path.join(dir, 'bin');
-      fs.mkdirSync(bin);
-      fs.writeFileSync(path.join(bin, 'apmw'), '#!/bin/sh\necho 1.0\n', { mode: 0o755 });
-      const r = run(bin);
+      const r = await run(bin);
       expect(r.code).toBe(0);
       expect(r.out).not.toContain('source format');
-    });
-
-    it('reports dromos --version when installed and stays green when missing', () => {
-      const missing = run();
-      expect(missing.code).toBe(0);
-      expect(missing.out).toContain('dromos: NOT FOUND');
-      expect(missing.out).toContain('npm i -g @gravionlabs/dromos');
-      const bin = path.join(dir, 'bin');
-      fs.mkdirSync(bin);
-      fs.writeFileSync(path.join(bin, 'dromos'), '#!/bin/sh\necho 0.5.0\n', { mode: 0o755 });
-      const found = run(bin);
-      expect(found.code).toBe(0);
-      expect(found.out).toContain('dromos: 0.5.0');
-    });
-
-    describe('dromos config check', () => {
-      // fake dromos: `config check --format json` prints the given JSON and exits with the given code (the shape of
-      // dromos src/cli/config.ts: {path, valid, errors}); anything else prints the version. Args are logged.
-      // Only shell builtins: the lean PATH has no cat; the JSON holds no single quote.
-      const fake = (json: string, exit = 0) => {
-        const bin = path.join(dir, 'bin');
-        fs.mkdirSync(bin);
-        fs.writeFileSync(
-          path.join(bin, 'dromos'),
-          `#!/bin/sh\necho "$@" >> "${dir}/dromos.log"\nif [ "$1" = config ]; then printf '%s\\n' '${json}'; exit ${exit}; else echo 0.5.0; fi\n`,
-          { mode: 0o755 },
-        );
-        return bin;
-      };
-      const configPath = () => path.join(proj, '.dromos/config.json');
-
-      it('reports a valid config of the current repository', () => {
-        fs.mkdirSync(path.join(proj, '.dromos'));
-        fs.writeFileSync(configPath(), '{}');
-        const r = run(fake(JSON.stringify({ path: configPath(), valid: true, errors: [] })));
-        expect(r.code).toBe(0);
-        expect(r.out).toContain('dromos config check: valid');
-        expect(fs.readFileSync(path.join(dir, 'dromos.log'), 'utf8')).toContain(
-          'config check --format json',
-        );
-      });
-
-      it('reports a missing config as defaults', () => {
-        const r = run(fake(JSON.stringify({ path: configPath(), valid: true, errors: [] })));
-        expect(r.code).toBe(0);
-        expect(r.out).toContain('dromos config check: not found, defaults apply');
-      });
-
-      it('reports an invalid config with its errors without failing', () => {
-        const errors = [
-          { path: 'parallel', message: 'Too small: expected number to be >0' },
-          { path: '', message: 'invalid JSON: Unexpected token' },
-        ];
-        const r = run(fake(JSON.stringify({ path: configPath(), valid: false, errors }), 1));
-        expect(r.code).toBe(0);
-        expect(r.out).toContain(
-          'dromos config check: invalid (parallel: Too small: expected number to be >0; invalid JSON: Unexpected token)',
-        );
-        expect(r.out).toContain('dromos config schema');
-        expect(r.out).not.toContain('fix with: dromos init');
-      });
-
-      it('reports a dromos without config check (usage error) without failing', () => {
-        const r = run(fake('dromos: unknown command config', 2));
-        expect(r.code).toBe(0);
-        expect(r.out).toContain('dromos config check: not available');
-      });
-
-      it('skips the config check when dromos is missing', () => {
-        const r = run();
-        expect(r.code).toBe(0);
-        expect(r.out).not.toContain('config check');
-      });
     });
   },
 );

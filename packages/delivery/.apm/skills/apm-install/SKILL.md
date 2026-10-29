@@ -34,12 +34,11 @@ The contributor tooling package is not offered. What each package brings: [packa
 3. Run the same command without `-DryRun`. The result lists `installed`, `skipped`, `failed`, `notAttempted`, `provides`
    (what each installed package brings), `dependencies` (`angular/skills` for `ng`, `dotnet/skills` for `dotnet`) and
    `notes`. Tell the user what was installed, which dependencies came along, and any failed or not-attempted package.
-4. Relay the `notes` and follow [after install](references/after-install.md): what to commit.
-5. Project install only (never with `-g`): create or update `.dromos/config.json` with `dromos init --dry-run --format json --stack <stack>` (stack from `detect-techstack`; `--stack` accepts `ts`, `py`, `dotnet`, `rust`, `ng`, omit it for any other stack). Show `action` (`created`, `updated`, `unchanged`), `added` and `kept`; write (`dromos init --stack <stack>`) only after the user agrees; an existing file is updated, never overwritten (only missing keys are added). Exit 1 (`valid: false`, `errors`): the file is invalid and left untouched, show the errors, do not write. `dromos` missing: print `npm i -g @gravionlabs/dromos`, skip the step, the install still succeeds; exit 2 (a dromos without `init`): print the same update hint and skip.
+4. Relay the `notes` and follow [after install](references/after-install.md): what to commit, and the allowlist file of the harness with the verify commands of the repository's `AGENTS.md` for `/deliver`.
 
 ## Script inputs and output
 
-- Inputs: `-Packages` (comma-separated; skips detection), `-Global`, `-DryRun`, `-Ref <tag|sha>` (appends `#<ref>` to every package spec; without it installs track the default branch), `-TrustProject`.
+- Inputs: `-Packages` (comma-separated; skips detection), `-Global`, `-DryRun`, `-Ref <tag|sha>` (appends `#<ref>` to every package spec and installs the apm-hub dependencies first at the same ref; without it installs track the default branch), `-TrustProject`.
 - Without `-Packages` the script runs `detect-techstack` (also under `-DryRun`) from your home skill directories. A copy found only in the project is repository code and is not run unless `-TrustProject` is passed; ask the user before doing so in a repository they do not trust.
 - Output is JSON on stdout: `dryRun`, `wouldInstall` or `installed`, `skipped`, `failed`, `notAttempted`, `commands`, `provides`, `dependencies`, `notes`. A failing `apm install` stops the run with exit 1.
 

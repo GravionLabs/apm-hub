@@ -39,6 +39,9 @@
 
 .PARAMETER Ref
   Optional tag or commit sha appended as `#<ref>` to every package spec. Without it apm tracks the default branch.
+  The apm-hub dependencies of a package (shared and github for delivery, the members of core and all) are installed
+  first at the same ref: their specs in the package manifests carry no ref, and a dependency the project lists itself
+  wins. An already installed dependency is not reinstalled; a note names the command that pins it.
 
 .PARAMETER TrustProject
   Allow running a project-local Detect-TechStack.ps1 (repository code). Off by default.
@@ -96,19 +99,26 @@ $notes = [System.Collections.Generic.List[string]]::new()
 $hubPath = 'GravionLabs/apm-hub/packages'
 $coreMembers = 'shared', 'github', 'delivery', 'statusline'
 $allMembers = $coreMembers + @('core', 'all', 'ts', 'py', 'ng', 'dotnet', 'rust', 'go')
+# skills per package: the x-skills of packages/<pkg>/apm.yml, sorted (checked by test/packages/delivery/apm-install.test.ts)
 $provides = @{
-  shared   = 'skills: implementation, detect-techstack, diagnose, code-review'
+  shared   = 'skills: code-review, detect-techstack, diagnose, implementation'
   github   = 'skills: github-issue, github-pull-request, github-release'
-  delivery = 'skills: planner, retro, apm-install'
+  delivery = 'skills: apm-install, deliver, grill-me, planner, retro'
   statusline = 'skills: context-statusline'
   core     = 'github, delivery, shared, statusline'
   all      = 'every package except apm-tooling'
-  ts       = 'skills: ts-implementation, ts-test, ts-create-project, ts-mcp-server-generator, ts-pnpm-workflow, setup-prettier-eslint-husky'
-  py       = 'skills: py-implementation, py-test, py-create-project'
+  ts       = 'skills: setup-biome-husky, setup-prettier-eslint-husky, ts-create-project, ts-implementation, ts-mcp-server-generator, ts-pnpm-workflow, ts-test'
+  py       = 'skills: py-create-project, py-implementation, py-test'
   rust     = 'skills: rust-implementation, rust-test'
   go       = 'skills: go-implementation, go-test'
-  ng       ='skills: ng-implementation, ng-test, ng-create-project, ng-ag-grid-developer'
-  dotnet   = 'skills: dotnet-implementation, dotnet-test, dotnet-create-solution, dotnet-mcp-server-generator'
+  ng       = 'skills: ng-ag-grid-developer, ng-create-project, ng-implementation, ng-test'
+  dotnet   = 'skills: dotnet-create-solution, dotnet-implementation, dotnet-mcp-server-generator, dotnet-test'
+}
+# apm-hub dependencies of a package (dependencies of its apm.yml): pinned to -Ref before the package itself
+$hubDeps = @{
+  delivery = 'shared', 'github'
+  core     = 'shared', 'github', 'delivery', 'statusline'
+  all      = 'shared', 'github', 'delivery', 'statusline', 'ts', 'py', 'ng', 'dotnet', 'rust', 'go'
 }
 $externalDeps = @{ ng = 'angular/skills (angular-developer)'; dotnet = 'dotnet/skills (dotnet plugin)' }
 
@@ -201,11 +211,36 @@ if (Test-Path $manifest) {
 } else {
   $notes.Add("No apm.yml at ${manifest}: apm install creates it.")
 }
+# .agents/ holds installed skills and the committed config: ignoring the directory loses .agents/config.json
+$gitignore = Join-Path $base '.gitignore'
+if (-not $Global -and (Test-Path -LiteralPath $gitignore -PathType Leaf)) {
+  $gi = @(Get-Content -LiteralPath $gitignore | ForEach-Object { $_.Trim() })
+  $ignored = @($gi | Where-Object { $_ -match '^/?\.agents(/(\*{1,2})?)?$' })
+  $excepted = @($gi | Where-Object { $_ -match '^!/?\.agents/config\.json$' })
+  if ($ignored.Count -gt 0 -and $excepted.Count -eq 0) {
+    $notes.Add('.gitignore ignores .agents/ without an exception for .agents/config.json (the committed project config): use the lines .agents/* and !.agents/config.json')
+  }
+}
 foreach ($pkg in $allMembers) {
   if (Test-Path (Join-Path $base "apm_modules/$hubPath/$pkg")) { [void]$have.Add($pkg) }
 }
 if ($have.Contains('core')) { $coreMembers | ForEach-Object { [void]$have.Add($_) } }
 if ($have.Contains('all')) { $allMembers | ForEach-Object { [void]$have.Add($_) } }
+
+# With -Ref the apm-hub dependencies go first at the same ref, else apm resolves them from the default branch
+$queue = [System.Collections.Generic.List[string]]::new()
+foreach ($pkg in $wanted) {
+  if ($Ref -and -not $have.Contains($pkg) -and $hubDeps.ContainsKey($pkg)) {
+    $added = @()
+    foreach ($d in $hubDeps[$pkg]) {
+      if ($have.Contains($d)) {
+        $notes.Add("$d (dependency of $pkg) is already installed and keeps its ref. Pin it to ${Ref}: apm install $hubPath/$d#$Ref" + $(if ($Global) { ' -g' } else { '' }))
+      } elseif (-not $queue.Contains($d)) { $queue.Add($d); $added += $d }
+    }
+    if ($added) { $notes.Add("$($added -join ', ') installed at $Ref before $pkg (its dependencies carry no ref).") }
+  }
+  if (-not $queue.Contains($pkg)) { $queue.Add($pkg) }
+}
 
 $done = [System.Collections.Generic.List[string]]::new()
 $skipped = [System.Collections.Generic.List[string]]::new()
@@ -213,7 +248,7 @@ $commands = [System.Collections.Generic.List[string]]::new()
 $failed = $null
 $notAttempted = [System.Collections.Generic.List[string]]::new()
 
-foreach ($pkg in $wanted) {
+foreach ($pkg in $queue) {
   if ($have.Contains($pkg)) { $skipped.Add($pkg); continue }
   if ($failed) { $notAttempted.Add($pkg); continue }
   $spec = "$hubPath/$pkg" + $(if ($Ref) { "#$Ref" } else { '' })
