@@ -11,7 +11,9 @@
 
 ## Delivery
 
-Delivery runs through the `deliver` skill (`/deliver <nr>`, a Claude Code workflow), not through a separate runner. The dromos runner and its `.dromos/config.json` are gone: dromos was archived with decision 004 (bus, attention and gates continue in [GravionLabs/keryx](https://github.com/GravionLabs/keryx)). Delete a leftover `.dromos/` directory; `npm uninstall -g @gravionlabs/dromos` removes the CLI. The per-project settings the skills read live in `.agents/config.json`.
+Delivery runs through the `deliver` skill (`/deliver <nr>`, harness-neutral), not through a separate runner.
+
+Before the first `/deliver <nr> --unattended`, propose the shell allowlist of the harness and let the user confirm it (never write it unasked): `.claude/settings.json` (`permissions.allow`) for Claude Code, `opencode.json` (`permission.bash`) for OpenCode, `--allow-tool 'shell(…)'` flags for Copilot CLI. The entries are `git`, `gh`, `herdr pane report-metadata` and the verify commands of the repository's `AGENTS.md` (build, test, format, lint): read them from its `## Commands` section and name them. The templates per harness are in `permissions.md` in the references of the `deliver` skill; without them an unattended run stops at the first prompt. The dromos runner and its `.dromos/config.json` are gone: dromos was archived with decision 004 (bus, attention and gates continue in [GravionLabs/keryx](https://github.com/GravionLabs/keryx)). Delete a leftover `.dromos/` directory; `npm uninstall -g @gravionlabs/dromos` removes the CLI. The per-project settings the skills read live in `.agents/config.json`.
 
 ## Upgrading from 2.x
 
