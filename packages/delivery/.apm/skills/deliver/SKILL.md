@@ -20,11 +20,11 @@ Delivers the open PBIs of an issue one after the other: a subagent implements, a
 1. `gh auth status` works and the repository has `release/next`.
 2. `gh api repos/{owner}/{repo}/rules/branches/release/next --jq '.[].type'`: no `required_status_checks` in the output → warn that red CI is mergeable here (ruleset of `github-release`), then go on.
 3. Unattended: `git`, `gh` and the verify commands of `AGENTS.md` must be on the harness allowlist, otherwise the run hangs at a prompt (entries per harness: `references/permissions.md`). Write commands without quoted `$(…)`; the permission check cannot see through them.
-4. herdr: `printenv HERDR_ENV`. Only when it prints `1`: `printenv HERDR_PANE_ID` once and keep the pane id. Claude Code denies any command with `$HERDR_PANE_ID` in it, quoted or not, so later calls carry the id as a literal.
+4. Progress display: `printenv HERDR_ENV`. Only when it prints `1`, follow `references/herdr.md` at the start, after each progress line and after the report.
 
 ## Steps
 
-Print one line per step in the chat: `#<nr> <step>: <result>` (`#12 review: 1 blocking → fix 1/2`). With a herdr pane id (Start 4), also show it in the herdr Agent sidebar, where it replaces the agent name: `herdr pane report-metadata <pane> --source deliver --display-agent "deliver #12 review: 1 blocking"`. herdr 0.9.5 stores `--title` but renders it nowhere, so the skill uses `--display-agent`.
+Print one line per step in the chat: `#<nr> <step>: <result>` (`#12 review: 1 blocking → fix 1/2`). With a progress display (Start 4), show the line there too.
 
 1. **Select.** `gh issue view <nr> --json number,title,state,labels,body` and its sub-issues (`github-issue` `references/sub-issues.md`, recursively down to PBIs). Keep open PBIs without `needs-decision`; order them by their blocked-by links; a PBI whose blocker is still open waits. Announce the PBI that is next.
    - A Feature or Epic child without PBIs: load `planner` (interactive) and `grill-me` in this session, create the issues, then select again. Unattended: comment and label `needs-decision` instead.
@@ -50,7 +50,7 @@ From OpenSpec `openspec-apply-change`; a pause follows the mode of `## Input`.
 
 ## Report
 
-At the end, at most 12 lines: delivered (PBI and PR URL), blocked (reason, open PR), paused (`needs-decision`, the question). For each blocked or paused PBI say what the user can do; `/deliver <nr>` again picks up the rest. With a herdr pane id: `herdr pane report-metadata <pane> --source deliver --clear-display-agent`.
+At the end, at most 12 lines: delivered (PBI and PR URL), blocked (reason, open PR), paused (`needs-decision`, the question). For each blocked or paused PBI say what the user can do; `/deliver <nr>` again picks up the rest. With a progress display (Start 4), clear it.
 
 ## Rules
 

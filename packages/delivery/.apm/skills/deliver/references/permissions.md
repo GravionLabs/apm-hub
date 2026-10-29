@@ -7,7 +7,7 @@ An `--unattended` run stops at the first permission prompt (spike #823, `docs/sp
 | the verify commands of the repository's `AGENTS.md` (build, test, format, lint) | implement and fix subagents |
 | `git` (`fetch`, `switch`, `worktree`, `add`, `commit`, `rebase`, `push`, `diff`, `ls-remote`) | all |
 | `gh` (`auth status`, `api`, `issue`, `pr`) | this session, `github-pull-request` |
-| `printenv HERDR_ENV`, `printenv HERDR_PANE_ID`, `herdr pane report-metadata` | only when the run is inside a herdr pane |
+| `printenv HERDR_ENV`, `printenv HERDR_PANE_ID`, `herdr pane report-metadata` | only when the run is inside a herdr pane (`references/herdr.md`) |
 
 Replace the `pnpm` lines below with the commands of the repository's `AGENTS.md`. The deny entries block the common force-push and `--admin` forms; `deliver` needs neither, and the ruleset on `release/next` stays the real gate.
 

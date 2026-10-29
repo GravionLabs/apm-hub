@@ -7,6 +7,7 @@ const skillDir = path.join(root, '.apm/skills/deliver');
 const text = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8');
 const roles = fs.readFileSync(path.join(skillDir, 'references/roles.md'), 'utf8');
 const permissions = fs.readFileSync(path.join(skillDir, 'references/permissions.md'), 'utf8');
+const herdr = fs.readFileSync(path.join(skillDir, 'references/herdr.md'), 'utf8');
 
 describe('deliver SKILL.md', () => {
   const body = text.slice(text.indexOf('\n---', 3) + 4);
@@ -98,20 +99,26 @@ describe('deliver SKILL.md', () => {
 
   describe('herdr progress (#855)', () => {
     const start = body.slice(body.indexOf('## Start'), body.indexOf('## Steps'));
-    const herdrCalls = [...body.matchAll(/`(herdr [^`]+)`/g)].map((m) => m[1]);
+    const herdrCalls = [...herdr.matchAll(/^(herdr .+)$/gm)].map((m) => m[1]);
 
-    it('reads the pane id only when HERDR_ENV is 1', () => {
+    it('loads the herdr reference only when HERDR_ENV is 1', () => {
       expect(start).toContain(
-        '`printenv HERDR_ENV`. Only when it prints `1`: `printenv HERDR_PANE_ID`',
+        '`printenv HERDR_ENV`. Only when it prints `1`, follow `references/herdr.md`',
       );
+      expect(herdr).toContain('Only when `printenv HERDR_ENV` prints `1`');
     });
 
-    it('sets the progress line per step and clears it at the end', () => {
+    it('names no herdr command in SKILL.md itself', () => {
+      expect(body).not.toMatch(/`herdr /);
+    });
+
+    it('reads the pane id once, sets the progress line per step and clears it at the end', () => {
+      expect(herdr).toContain('`printenv HERDR_PANE_ID` once');
       expect(herdrCalls).toEqual([
         'herdr pane report-metadata <pane> --source deliver --display-agent "deliver #12 review: 1 blocking"',
         'herdr pane report-metadata <pane> --source deliver --clear-display-agent',
       ]);
-      expect(body.indexOf('--clear-display-agent')).toBeGreaterThan(body.indexOf('## Report'));
+      expect(herdr.indexOf('--clear-display-agent')).toBeGreaterThan(herdr.indexOf('## End'));
     });
 
     it('never expands a variable in a herdr call', () => {
