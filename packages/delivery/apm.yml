@@ -1,5 +1,5 @@
 name: delivery
-version: 3.2.0
+version: 3.2.1
 description: "Issue-driven development workflow: one-command delivery with subagents on any harness (deliver), open-decision interview (grill-me), run retrospective (retro), package installer (apm-install), and issue planning with native sub-issues. Pulls in github and shared; stack packages are installed per project."
 dependencies:
   apm:

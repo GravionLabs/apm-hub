@@ -124,7 +124,7 @@ apm-hub distributes domain packages via APM. Each package is installed with `apm
 | Package       | Contents                                                                                                                                               |
 | :------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `shared`      | `implementation`, `detect-techstack`, `diagnose`, `code-review`                                                                                        |
-| `delivery`    | `planner`, `deliver`, `retro`, `apm-install`                                                                                           |
+| `delivery`    | `planner`, `deliver`, `retro`, `apm-install`                                                                                                           |
 | `github`      | `github-issue`, `github-pull-request`, `github-release`                                                                                                |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`; depends on `dotnet/skills` (`plugins/dotnet`)         |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky` |

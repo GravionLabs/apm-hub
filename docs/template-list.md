@@ -30,12 +30,13 @@ This page lists all available packages (Agents, Skills, Instructions) organized 
 
 ### Skills
 
-| Name         | Description                                                                                                                                                                 | File                                                                   |
-| :----------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------- |
-| apm-install  | /apm-install: detect the stack and install the matching apm-hub packages into this project or globally (-g). Use for "install apm-hub", "set up the skills here".           | [apm-install](../packages/delivery/.apm/skills/apm-install/SKILL.md)   |
-| orchestrator | Launch the dromos runner from the session: plan, run or status of an issue. Use for "/orchestrator run 12", "plan feature 7" or "status of epic 3".                         | [orchestrator](../packages/delivery/.apm/skills/orchestrator/SKILL.md) |
-| planner      | Plan an issue one level down with blockers and sizes; writes plan.json. Use for "plan issue #N".                                                                            | [planner](../packages/delivery/.apm/skills/planner/SKILL.md)           |
-| retro        | Retrospective on a run or session: metrics, ranked environment improvements, draft PBIs. Use for "retro #<issue>" or "analyse this run"; creates no issue without approval. | [retro](../packages/delivery/.apm/skills/retro/SKILL.md)               |
+| Name        | Description                                                                                                                                                                 | File                                                                 |
+| :---------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------- |
+| apm-install | /apm-install: detect the stack and install the matching apm-hub packages into this project or globally (-g). Use for "install apm-hub", "set up the skills here".           | [apm-install](../packages/delivery/.apm/skills/apm-install/SKILL.md) |
+| deliver     | Deliver a PBI, Feature or Epic PBI by PBI with subagents (implement, review, PR, CI, merge). Use for "/deliver 12" or "deliver feature 7".                                  | [deliver](../packages/delivery/.apm/skills/deliver/SKILL.md)         |
+| grill-me    | Interview the user until no open decision is left. Use for "grill me", "ask me the open questions" or to answer a plan's questions[] or an issue's open decisions.          | [grill-me](../packages/delivery/.apm/skills/grill-me/SKILL.md)       |
+| planner     | Plan an issue one level down with blockers and sizes, grill the open decisions, create the issues; refine <nr> grills an existing issue. Use for "plan issue #N".           | [planner](../packages/delivery/.apm/skills/planner/SKILL.md)         |
+| retro       | Retrospective on a run or session: metrics, ranked environment improvements, draft PBIs. Use for "retro #<issue>" or "analyse this run"; creates no issue without approval. | [retro](../packages/delivery/.apm/skills/retro/SKILL.md)             |
 
 ## Dotnet
 

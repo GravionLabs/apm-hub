@@ -1,7 +1,7 @@
 # Overview
 
 <!-- AUTO:start version -->
-Welcome to **apm-hub** v3.2.0 👋
+Welcome to **apm-hub** v3.2.1 👋
 <!-- AUTO:end version -->
 
 apm-hub is a library of reusable **skills** in the [agentskills.io](https://agentskills.io) `SKILL.md` format, distributed as [APM](https://microsoft.github.io/apm/) packages. One skill source loads unchanged on **GitHub Copilot**, **Claude Code** and **OpenCode**. Workflows are skills. The skill `deliver` chains them from issue to merged PR, see [delivery](runner.md).
