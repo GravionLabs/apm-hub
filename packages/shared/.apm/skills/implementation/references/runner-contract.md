@@ -1,6 +1,6 @@
 # Runner contract
 
-How `implementation` behaves as the implementer role when a runner (dromos) or a caller starts it for one Task. Interactive use is unchanged; this file only adds the input, the rules and the result.
+How `implementation` behaves as the implementer role when a runner (such as `deliver`) or a caller starts it for one Task. Interactive use is unchanged; this file only adds the input, the rules and the result.
 
 ## Input
 
