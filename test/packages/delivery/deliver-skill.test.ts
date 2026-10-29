@@ -127,6 +127,27 @@ describe('deliver SKILL.md', () => {
     });
   });
 
+  describe('cleanup after the merge (#858)', () => {
+    const merge = body.slice(body.indexOf('**Merge.**'), body.indexOf('## Pause rules'));
+    const report = body.slice(body.indexOf('## Report'), body.indexOf('## Rules'));
+
+    it('runs the cleanup script after the merge and reports what it left', () => {
+      expect(merge).toContain('`pwsh scripts/Remove-PbiWorktrees.ps1 -Pr <pr> -Issue <nr>`');
+      expect(fs.existsSync(path.join(skillDir, 'scripts/Remove-PbiWorktrees.ps1'))).toBe(true);
+      expect(merge.indexOf('Remove-PbiWorktrees')).toBeGreaterThan(merge.indexOf('gh pr merge'));
+      expect(report).toContain('Worktrees or branches the cleanup left, each with its command');
+    });
+
+    it('puts the cleanup script on every allowlist', () => {
+      expect(permissions).toContain('`pwsh` with `scripts/Remove-PbiWorktrees.ps1`');
+      expect(permissions).toContain(
+        '"Bash(pwsh .claude/skills/deliver/scripts/Remove-PbiWorktrees.ps1:*)"',
+      );
+      expect(permissions).toContain('"pwsh *deliver/scripts/Remove-PbiWorktrees.ps1*": "allow"');
+      expect(permissions).toContain("--allow-tool 'shell(pwsh)'");
+    });
+  });
+
   describe('claim for parallel runs (#868)', () => {
     const select = body.slice(body.indexOf('**Select.**'), body.indexOf('**Resume.**'));
     const merge = body.slice(body.indexOf('**Merge.**'), body.indexOf('## Pause rules'));
