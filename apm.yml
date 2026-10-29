@@ -7,6 +7,10 @@ author:
 license: MIT
 
 # Stack skills for working on this repository (installed into .claude/, gitignored).
+# The target is pinned because .claude/settings.json is committed: .claude/ and .github/
+# both exist, and APM would otherwise refuse to choose a harness.
+targets:
+  - claude
 dependencies:
   apm:
     - GravionLabs/apm-hub/packages/ts#release/next

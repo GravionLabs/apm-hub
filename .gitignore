@@ -19,8 +19,9 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/extensions.json
 
-# Claude Code / OpenCode - local session state
-.claude/
+# Claude Code / OpenCode - local session state; settings.json is the shared deliver allowlist
+.claude/*
+!.claude/settings.json
 
 # JetBrains IDEs - share run configurations
 .idea/*
