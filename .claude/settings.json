@@ -15,6 +15,9 @@
       "Bash(pnpm run format:*)",
       "Bash(pnpm run lint:ps)",
       "Bash(pnpm run check)",
+      "Bash(printenv HERDR_ENV)",
+      "Bash(printenv HERDR_PANE_ID)",
+      "Bash(herdr pane report-metadata:*)",
       "Edit",
       "Write"
     ],
