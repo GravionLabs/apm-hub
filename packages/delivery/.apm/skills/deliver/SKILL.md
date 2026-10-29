@@ -19,7 +19,7 @@ Delivers the open PBIs of an issue one after the other: a subagent implements, a
 
 1. `gh auth status` works and the repository has `release/next`.
 2. `gh api repos/{owner}/{repo}/rules/branches/release/next --jq '.[].type'`: no `required_status_checks` in the output → warn that red CI is mergeable here (ruleset of `github-release`), then go on.
-3. Unattended: `git`, `gh` and the verify commands of `AGENTS.md` must be on the harness allowlist, otherwise the run hangs at a prompt. Write commands without quoted `$(…)`; the permission check cannot see through them.
+3. Unattended: `git`, `gh` and the verify commands of `AGENTS.md` must be on the harness allowlist, otherwise the run hangs at a prompt (entries per harness: `references/permissions.md`). Write commands without quoted `$(…)`; the permission check cannot see through them.
 
 ## Steps
 

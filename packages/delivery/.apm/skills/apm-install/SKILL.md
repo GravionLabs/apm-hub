@@ -34,7 +34,7 @@ The contributor tooling package is not offered. What each package brings: [packa
 3. Run the same command without `-DryRun`. The result lists `installed`, `skipped`, `failed`, `notAttempted`, `provides`
    (what each installed package brings), `dependencies` (`angular/skills` for `ng`, `dotnet/skills` for `dotnet`) and
    `notes`. Tell the user what was installed, which dependencies came along, and any failed or not-attempted package.
-4. Relay the `notes` and follow [after install](references/after-install.md): what to commit.
+4. Relay the `notes` and follow [after install](references/after-install.md): what to commit, and the allowlist file of the harness with the verify commands of the repository's `AGENTS.md` for `/deliver`.
 
 ## Script inputs and output
 

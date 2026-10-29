@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, '../../../packages/delivery');
 const skillDir = path.join(root, '.apm/skills/deliver');
 const text = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8');
 const roles = fs.readFileSync(path.join(skillDir, 'references/roles.md'), 'utf8');
+const permissions = fs.readFileSync(path.join(skillDir, 'references/permissions.md'), 'utf8');
 
 describe('deliver SKILL.md', () => {
   const body = text.slice(text.indexOf('\n---', 3) + 4);
@@ -107,6 +108,64 @@ describe('deliver SKILL.md', () => {
   it('documents the role defaults and the override key', () => {
     expect(roles).toContain('deliver.roles');
     expect(roles).toContain('`fast` haiku/low, `standard` sonnet/medium, `strong` opus/high');
+  });
+});
+
+describe('deliver permissions.md (#862)', () => {
+  const section = (heading: string) => {
+    const start = permissions.indexOf(`\n## ${heading}\n`);
+    expect(start).toBeGreaterThan(-1);
+    const next = permissions.indexOf('\n## ', start + 1);
+    return permissions.slice(start, next === -1 ? undefined : next);
+  };
+  const json = (text: string) => JSON.parse(/```json\n([\s\S]+?)```/.exec(text)![1]);
+
+  it('is referenced from the unattended start check', () => {
+    expect(text).toContain('`references/permissions.md`');
+  });
+
+  it('names the command groups deliver needs', () => {
+    for (const c of ['`AGENTS.md`', '`git`', '`gh`', '`herdr pane report-metadata`'])
+      expect(permissions).toContain(c);
+  });
+
+  it('Claude Code: permissions.allow in .claude/settings.json', () => {
+    const claude = section('Claude Code');
+    expect(claude).toContain('`.claude/settings.json`');
+    const allow: string[] = json(claude).permissions.allow;
+    expect(allow).toEqual(
+      expect.arrayContaining([
+        'Bash(git:*)',
+        'Bash(gh pr:*)',
+        'Bash(herdr pane report-metadata:*)',
+      ]),
+    );
+  });
+
+  it('OpenCode: permission.bash in opencode.json, catch-all first', () => {
+    const opencode = section('OpenCode');
+    expect(opencode).toContain('`opencode.json`');
+    const bash: Record<string, string> = json(opencode).permission.bash;
+    expect(Object.keys(bash)[0]).toBe('*');
+    expect(bash['git *']).toBe('allow');
+    expect(bash['git push --force*']).toBe('deny');
+  });
+
+  it('Copilot CLI: --allow-tool shell entries', () => {
+    const copilot = section('Copilot CLI');
+    for (const flag of [
+      "--allow-tool 'shell(git)'",
+      "--allow-tool 'shell(gh pr)'",
+      "--deny-tool 'shell(git push --force)'",
+    ])
+      expect(copilot).toContain(flag);
+    expect(copilot).not.toContain("'shell(pnpm)'");
+  });
+
+  it('contains no quoted $(…) substitution in its examples', () => {
+    const blocks = [...permissions.matchAll(/```\w*\n([\s\S]+?)```/g)].map((m) => m[1]);
+    expect(blocks.length).toBe(3);
+    for (const b of blocks) expect(b).not.toMatch(/["'][^"'\n]*\$\(/);
   });
 });
 

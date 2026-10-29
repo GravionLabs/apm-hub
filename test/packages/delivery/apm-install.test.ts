@@ -423,6 +423,18 @@ describe('apm-install SKILL.md', () => {
       expect(ref).not.toContain('dromos init');
       expect(ref).not.toContain('dromos config');
     });
+
+    it('after-install.md proposes the deliver allowlist per harness (#862)', () => {
+      for (const f of [
+        '`.claude/settings.json` (`permissions.allow`)',
+        '`opencode.json` (`permission.bash`)',
+        "`--allow-tool 'shell(…)'`",
+        "verify commands of the repository's `AGENTS.md`",
+        '`permissions.md` in the references of the `deliver` skill',
+      ])
+        expect(ref).toContain(f);
+      expect(text).toContain('allowlist file of the harness');
+    });
   });
 
   it('lists exactly the packages the script accepts ($valid)', () => {
