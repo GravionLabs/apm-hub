@@ -60,6 +60,16 @@ describe('deliver SKILL.md', () => {
     expect(body).toContain('`github-pull-request`');
   });
 
+  it('takes several numbers and a milestone, skips needs-refinement, reports per number', () => {
+    expect(body).toContain('`/deliver <nr> [<nr> …] [--milestone <name>] [--unattended]`');
+    expect(body).toContain('gh issue list --milestone <name> --label pbi --state open');
+    expect(body).toContain('drop duplicates');
+    expect(body).toContain('ties keep the order of the arguments');
+    expect(body).toContain('#<nr> select: needs refinement, skipped');
+    expect(body).toContain('planner refine <nr>');
+    expect(body).toContain('per given number');
+  });
+
   it('works on the PBI branch without switching its own checkout', () => {
     expect(body).toContain('`branch: <branch>`');
     expect(body).toContain('`git switch -C <branch> origin/<branch>`');

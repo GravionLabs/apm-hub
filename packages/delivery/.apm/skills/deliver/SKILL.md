@@ -10,7 +10,7 @@ Delivers the open PBIs of an issue one after the other: a subagent implements, a
 
 ## Input
 
-`/deliver <nr> [--unattended]`: issue number of a PBI, Feature or Epic. Missing: ask once.
+`/deliver <nr> [<nr> …] [--milestone <name>] [--unattended]`: each number is a PBI, Feature or Epic; `--milestone <name>` (a release) adds the open PBIs of that milestone (`gh issue list --milestone <name> --label pbi --state open`, plus the PBIs below the Features and Epics in it). Missing: ask once.
 
 - **Interactive** (default): a pause rule asks the user in the chat; a blocked PBI asks: retry, skip or an instruction.
 - **`--unattended`** (`claude -p`, `opencode run`, `copilot -p`): never ask. A pause comments on the issue, adds the label `needs-decision` and continues with the next PBI that does not depend on it.
@@ -26,7 +26,7 @@ Delivers the open PBIs of an issue one after the other: a subagent implements, a
 
 Print one line per step in the chat: `#<nr> <step>: <result>` (`#12 review: 1 blocking → fix 1/2`). With a progress display (Start 4), show the line there too.
 
-1. **Select.** `gh issue view <nr> --json number,title,state,labels,body` and its sub-issues (`github-issue` `references/sub-issues.md`, recursively down to PBIs). Keep open PBIs without `needs-decision`; order them by their blocked-by links; a PBI whose blocker is still open waits. Skip a PBI another session has claimed (`#<nr> select: claimed, skipped`), take over a stale claim (`references/claim.md`); `/deliver <nr>` on the PBI itself continues it regardless of the claim. Announce the PBI that is next and claim it: `gh issue edit <nr> --add-assignee @me`.
+1. **Select.** `gh issue view <nr> --json number,title,state,labels,body` for every number and their sub-issues (`github-issue` `references/sub-issues.md`, recursively down to PBIs). Collect the open PBIs of all numbers and of the milestone, drop duplicates, keep those without `needs-decision`; order them by their blocked-by links across all of them, ties keep the order of the arguments. A PBI whose blocker is still open and not in the set waits and is reported (a blocker outside the milestone is never delivered). A PBI with `needs-refinement` is skipped (`#<nr> select: needs refinement, skipped`, hint `planner refine <nr>`); `/deliver <nr>` on such a PBI refuses it. Skip a PBI another session has claimed (`#<nr> select: claimed, skipped`), take over a stale claim (`references/claim.md`); `/deliver <nr>` on the PBI itself continues it regardless of the claim. Announce the PBI that is next and claim it: `gh issue edit <nr> --add-assignee @me`.
    - A Feature or Epic child without PBIs: load `planner` (interactive) and `grill-me` in this session, create the issues, then select again. Unattended: comment and label `needs-decision` instead.
 2. **Resume.** Branch `<type>/<nr>-<slug>` (`github-issue`). `git ls-remote --heads origin <branch>` and `gh pr list --head <branch> --state open`: an existing branch is continued, an existing PR skips to step 7.
 3. **Implement.** A subagent with a fresh context: "Load `implementation`. Implement PBI #<nr> in your own worktree on `<branch>` from `origin/release/next` (an existing branch: switch to it and rebase). Acceptance criteria: <from the issue>. Commit, push, report in at most 10 lines: done or blocked, commits, tests run."
@@ -52,7 +52,7 @@ A blocked or paused PBI releases its claim: `gh issue edit <nr> --remove-assigne
 
 ## Report
 
-At the end, at most 12 lines: delivered (PBI and PR URL), blocked (reason, open PR), paused (`needs-decision`, the question). Worktrees or branches the cleanup left, each with its command. For each blocked or paused PBI say what the user can do; `/deliver <nr>` again picks up the rest. With a progress display (Start 4), clear it.
+At the end, at most 12 lines, per given number (and milestone): delivered (PBI and PR URL), blocked (reason, open PR), paused (`needs-decision`, the question), skipped (claimed; `needs-refinement` with `planner refine <nr>`). Worktrees or branches the cleanup left, each with its command. For each blocked or paused PBI say what the user can do; `/deliver <nr>` again picks up the rest. With a progress display (Start 4), clear it.
 
 ## Rules
 

@@ -39,7 +39,7 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 
 ## Upgrading to 3.2.1
 
-3.2.1 (planned as 3.3.0) ships no dromos surface (decision 004): `/orchestrator`, the `dromos init` step of `apm-install` and `.dromos/` are gone; `/deliver <nr>` delivers issues and `grill-me` settles open decisions. `.agents/config.json` replaces `.dromos/config.json` and `.agents/format.json`: move the content of `.agents/format.json` under the `format` key (the old file still works with a deprecation notice), set the models of the `/deliver` subagents with `deliver.roles` ([project config](docs/usage/project-config.md)), then delete `.dromos/` and run `npm uninstall -g @gravionlabs/dromos`. Commit `.agents/config.json`: a `.gitignore` that ignores `.agents/` needs the lines `.agents/*` and `!.agents/config.json`.
+3.2.1 (planned as 3.3.0) ships no dromos surface (decision 004): `/orchestrator`, the `dromos init` step of `apm-install` and `.dromos/` are gone; `/deliver <nr> [<nr> …] [--milestone <name>]` delivers issues and `grill-me` settles open decisions. `.agents/config.json` replaces `.dromos/config.json` and `.agents/format.json`: move the content of `.agents/format.json` under the `format` key (the old file still works with a deprecation notice), set the models of the `/deliver` subagents with `deliver.roles` ([project config](docs/usage/project-config.md)), then delete `.dromos/` and run `npm uninstall -g @gravionlabs/dromos`. Commit `.agents/config.json`: a `.gitignore` that ignores `.agents/` needs the lines `.agents/*` and `!.agents/config.json`.
 
 ## 🚀 Quick Start
 
