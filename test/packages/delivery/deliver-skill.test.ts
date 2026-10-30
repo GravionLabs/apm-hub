@@ -61,7 +61,9 @@ describe('deliver SKILL.md', () => {
   });
 
   it('takes several numbers and a milestone, skips needs-refinement, reports per number', () => {
-    expect(body).toContain('`/deliver <nr> [<nr> …] [--milestone <name>] [--unattended]`');
+    expect(body).toContain(
+      '`/deliver <nr> [<nr> …] [--milestone <name>] [--unattended] [--max <n>]`',
+    );
     expect(body).toContain('gh issue list --milestone <name> --label pbi --state open');
     expect(body).toContain('drop duplicates');
     expect(body).toContain('ties keep the order of the arguments');

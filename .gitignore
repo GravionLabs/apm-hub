@@ -34,6 +34,9 @@ Thumbs.db
 # Misc
 *.log
 
+# deliver loop: stream logs of Invoke-DeliverLoop.ps1
+.agents/deliver-loop/
+
 # Test results
 test-results/
 

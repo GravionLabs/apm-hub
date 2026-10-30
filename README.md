@@ -20,7 +20,7 @@ Skills are the primary artifact: one `SKILL.md` source file loads unchanged on G
 - **[Skills](docs/concepts/skills.md)**: What skills are and how they work across platforms.
 - **[Skill Frontmatter Convention](docs/concepts/skill-frontmatter.md)**: The spec-compliant frontmatter every skill follows.
 - **[Working mode](docs/working-mode.md)**: one issue per session, small contexts.
-- **[The runner](docs/runner.md)**: retired; delivery runs through `/deliver` (decision 004).
+- **[The runner](docs/runner.md)**: retired; delivery runs through `/deliver` (decision 004). A whole release in fresh sessions per PBI: `pwsh <skill-dir>/scripts/Invoke-DeliverLoop.ps1 -Milestone <name> [-Max <n>] [-Model sonnet]` (`deliver/references/loop.md`).
 - **[Simplification plan](docs/simplification-plan.md)**: why apm-hub becomes a content-only repository and the pipeline moves to dromos.
 - **[Simplification work plan](docs/simplification-workplan.md)**: order of work, PBIs and milestones for that change.
 - **Git guardrails**: destructive git commands are denied by the dromos [permission callback](https://github.com/GravionLabs/dromos/blob/main/src/runner/permissions.ts); apm-hub ships no hooks.
