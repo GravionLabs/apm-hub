@@ -132,7 +132,11 @@ describe('deliver SKILL.md', () => {
     const report = body.slice(body.indexOf('## Report'), body.indexOf('## Rules'));
 
     it('runs the cleanup script after the merge and reports what it left', () => {
-      expect(merge).toContain('`pwsh scripts/Remove-PbiWorktrees.ps1 -Pr <pr> -Issue <nr>`');
+      expect(merge).toContain(
+        '`pwsh <skill-dir>/scripts/Remove-PbiWorktrees.ps1 -Pr <pr> -Issue <nr>`',
+      );
+      expect(merge).toContain('`~/.claude/skills/deliver/`');
+      expect(merge).toContain('`.claude/skills/deliver/`');
       expect(fs.existsSync(path.join(skillDir, 'scripts/Remove-PbiWorktrees.ps1'))).toBe(true);
       expect(merge.indexOf('Remove-PbiWorktrees')).toBeGreaterThan(merge.indexOf('gh pr merge'));
       expect(report).toContain('Worktrees or branches the cleanup left, each with its command');
