@@ -16,14 +16,14 @@ pwsh scripts/Get-ReleaseState.ps1 -Mode cut            # or: -Mode finish [-Bran
 
 The script is read-only and prints JSON: `default`, `branch`, `state`, `openPrs`, `localAhead`, `staleLines`, `deleteAllowed`, `action`, `hasSemverCommit`, `hasMajorCommit`, `releaseWorkflow`, `releasePr`. Exit 1 with a message on stderr (invalid branch name, no release branch) means stop and report. Do what `action` says; `stop: ...` means report the text and change nothing.
 
-| `state` | cut | finish |
-|:--|:--|:--|
-| `absent` | `create` | stop |
-| `fresh` (equals default) | no-op | stop: nothing to release |
-| `unreleased` | no-op | continue below |
-| `behind` (default moved on) | no-op | stop, merge default in first |
-| `merged`, `released` | `recreate` when `deleteAllowed`, else stop and name the blocker | `merged` with `deleteAllowed`: `delete-branch`; else stop "already released; cut a new release branch" |
-| `released-continued` | no-op | stop "already released; cut a new release branch" |
+| `state`                     | cut                                                             | finish                                                                                                 |
+| :-------------------------- | :-------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------- |
+| `absent`                    | `create`                                                        | stop                                                                                                   |
+| `fresh` (equals default)    | no-op                                                           | stop: nothing to release                                                                               |
+| `unreleased`                | no-op                                                           | continue below                                                                                         |
+| `behind` (default moved on) | no-op                                                           | stop, merge default in first                                                                           |
+| `merged`, `released`        | `recreate` when `deleteAllowed`, else stop and name the blocker | `merged` with `deleteAllowed`: `delete-branch`; else stop "already released; cut a new release branch" |
+| `released-continued`        | no-op                                                           | stop "already released; cut a new release branch"                                                      |
 
 ## cut
 

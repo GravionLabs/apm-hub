@@ -21,13 +21,13 @@ Read the files the issue names, then follow `SKILL.md` and the `<lang>-implement
 
 Print one JSON object that validates against `schema/implementer.schema.json`, nothing else.
 
-| Property | Meaning |
-|---|---|
-| `status` | `done` (committed, tests green) or `blocked` (nothing committed that is red) |
-| `commit` | SHA of the commit; `null` when `blocked` without a commit |
-| `filesChanged` | paths changed by the commit, relative to the worktree |
-| `testsRun` | the test commands run and their outcome, one string |
-| `notes` | decisions, deviations, follow-ups; for `blocked` the reason and what is needed |
+| Property       | Meaning                                                                        |
+| -------------- | ------------------------------------------------------------------------------ |
+| `status`       | `done` (committed, tests green) or `blocked` (nothing committed that is red)   |
+| `commit`       | SHA of the commit; `null` when `blocked` without a commit                      |
+| `filesChanged` | paths changed by the commit, relative to the worktree                          |
+| `testsRun`     | the test commands run and their outcome, one string                            |
+| `notes`        | decisions, deviations, follow-ups; for `blocked` the reason and what is needed |
 
 ```json
 {

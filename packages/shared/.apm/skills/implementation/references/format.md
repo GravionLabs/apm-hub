@@ -17,37 +17,45 @@ Not configured: a tool that is missing or whose `-Requires` probe fails is skipp
 
 ## Parameters
 
-| Parameter | Meaning |
-|:--|:--|
-| `-Language` | Key into `format` of `.agents/config.json` and into the built-in defaults (`ts`, `ng`, `py`, `dotnet`, `rust`, `go`). With an entry or a default, `-Extensions`/`-Command` become optional. |
-| `-Extensions` | Extensions to keep (`.ts`, `.tsx`; comma-separated string or array; the dot is optional). |
-| `-Command` | Command line with a `{files}` placeholder (files appended when absent). Each file is its own argument, repo-relative; never `.` or a directory. |
-| `-Requires` | Optional probe command that must exit 0 (e.g. `npx --no-install prettier --version`); otherwise `skipped: <tool> not configured`, exit 0. Makes "tool not configured" skip even behind `npx`/`uv`/`dotnet`. |
-| `-Check` | Read-only intent: the command is the check command; success prints `checked`. |
-| `-WhatIf` | Prints the resolved steps as JSON (`tool`, `extensions`, `requires`, `commands`; `-Check` selects the check commands) and runs nothing. |
-| `-Base <ref>` | Also include files changed in `<ref>...HEAD`. Default: uncommitted changes only (staged, unstaged, untracked). Deleted files are dropped. |
+| Parameter     | Meaning                                                                                                                                                                                                     |
+| :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-Language`   | Key into `format` of `.agents/config.json` and into the built-in defaults (`ts`, `ng`, `py`, `dotnet`, `rust`, `go`). With an entry or a default, `-Extensions`/`-Command` become optional.                 |
+| `-Extensions` | Extensions to keep (`.ts`, `.tsx`; comma-separated string or array; the dot is optional).                                                                                                                   |
+| `-Command`    | Command line with a `{files}` placeholder (files appended when absent). Each file is its own argument, repo-relative; never `.` or a directory.                                                             |
+| `-Requires`   | Optional probe command that must exit 0 (e.g. `npx --no-install prettier --version`); otherwise `skipped: <tool> not configured`, exit 0. Makes "tool not configured" skip even behind `npx`/`uv`/`dotnet`. |
+| `-Check`      | Read-only intent: the command is the check command; success prints `checked`.                                                                                                                               |
+| `-WhatIf`     | Prints the resolved steps as JSON (`tool`, `extensions`, `requires`, `commands`; `-Check` selects the check commands) and runs nothing.                                                                     |
+| `-Base <ref>` | Also include files changed in `<ref>...HEAD`. Default: uncommitted changes only (staged, unstaged, untracked). Deleted files are dropped.                                                                   |
 
 ## Outcomes
 
-| Situation | stdout | Exit |
-|:--|:--|:--|
-| No changed file with a listed extension (or only other extensions) | `skipped: no changed files` | 0 |
-| `-Requires` probe fails | `skipped: <tool> not configured` | 0 |
-| First token of `-Command` not found | `skipped: <tool> not found` (note it in the report) | 0 |
-| `-Base` ref invalid or git fails | git's error on stderr | non-zero |
-| Override tool not found | stderr `error: <tool> not found (configured in .agents/config.json for <lang>)`, nothing runs | 1 |
-| `.agents/config.json` (or the legacy `.agents/format.json`) invalid JSON, unknown top-level key, or entry lacks the `format`/`check` key | stderr error naming file (and language, key) | 1 |
-| `"format": false` in `.agents/config.json` (with `-Language`) | `skipped: disabled` | 0 |
-| Command fails | its stderr passes through | its exit code |
-| Not a git repository | `skipped: not a git repository` | 0 |
-| Success | `formatted: <n> files` / `checked: <n> files` | 0 |
+| Situation                                                                                                                                | stdout                                                                                        | Exit          |
+| :--------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- | :------------ |
+| No changed file with a listed extension (or only other extensions)                                                                       | `skipped: no changed files`                                                                   | 0             |
+| `-Requires` probe fails                                                                                                                  | `skipped: <tool> not configured`                                                              | 0             |
+| First token of `-Command` not found                                                                                                      | `skipped: <tool> not found` (note it in the report)                                           | 0             |
+| `-Base` ref invalid or git fails                                                                                                         | git's error on stderr                                                                         | non-zero      |
+| Override tool not found                                                                                                                  | stderr `error: <tool> not found (configured in .agents/config.json for <lang>)`, nothing runs | 1             |
+| `.agents/config.json` (or the legacy `.agents/format.json`) invalid JSON, unknown top-level key, or entry lacks the `format`/`check` key | stderr error naming file (and language, key)                                                  | 1             |
+| `"format": false` in `.agents/config.json` (with `-Language`)                                                                            | `skipped: disabled`                                                                           | 0             |
+| Command fails                                                                                                                            | its stderr passes through                                                                     | its exit code |
+| Not a git repository                                                                                                                     | `skipped: not a git repository`                                                               | 0             |
+| Success                                                                                                                                  | `formatted: <n> files` / `checked: <n> files`                                                 | 0             |
 
 ## Override (.agents/config.json)
 
 With `-Language <lang>` the script reads `<git toplevel>/.agents/config.json`, key `format` (schema: `schema/config.schema.json`, unknown top-level keys are an error):
 
 ```json
-{ "format": { "dotnet": { "extensions": [".cs"], "format": "jb cleanupcode {files}", "check": ["jb inspectcode {files}", "jb chk"] } } }
+{
+  "format": {
+    "dotnet": {
+      "extensions": [".cs"],
+      "format": "jb cleanupcode {files}",
+      "check": ["jb inspectcode {files}", "jb chk"]
+    }
+  }
+}
 ```
 
 - `"format": false` skips every format and check call: `skipped: disabled`, exit 0. No `format` key, or no entry for `<lang>`: the defaults apply.

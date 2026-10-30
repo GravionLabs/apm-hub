@@ -16,12 +16,12 @@ Without `/deliver` you work interactively, see [Working mode](working-mode.md).
 
 ## Migrating
 
-| Before | Now |
-| :-- | :-- |
-| `/orchestrator run <nr>` | `/deliver <nr>` |
-| `/orchestrator plan <nr>` | `planner` (`Plan issue #<nr>.`) |
-| `/orchestrator status <nr>` | the sub-issues and PRs on GitHub |
-| `.dromos/config.json` | delete it; project settings are in `.agents/config.json` |
-| `npm i -g @gravionlabs/dromos` | `npm uninstall -g @gravionlabs/dromos` |
+| Before                         | Now                                                      |
+| :----------------------------- | :------------------------------------------------------- |
+| `/orchestrator run <nr>`       | `/deliver <nr>`                                          |
+| `/orchestrator plan <nr>`      | `planner` (`Plan issue #<nr>.`)                          |
+| `/orchestrator status <nr>`    | the sub-issues and PRs on GitHub                         |
+| `.dromos/config.json`          | delete it; project settings are in `.agents/config.json` |
+| `npm i -g @gravionlabs/dromos` | `npm uninstall -g @gravionlabs/dromos`                   |
 
 Models of the `/deliver` subagents (where the harness takes one per call) are set with `deliver.roles` in `.agents/config.json`, see the `deliver` skill (`references/roles.md`).

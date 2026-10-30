@@ -14,10 +14,10 @@ blocked-by links. Link calls and their gotchas: `sub-issues.md`.
 
 ## 2. Create each item, in plan order
 
-| `level` | Title | Label |
-| :-- | :-- | :-- |
+| `level`   | Title               | Label     |
+| :-------- | :------------------ | :-------- |
 | `feature` | `[Feature] <title>` | `feature` |
-| `pbi` | `[PBI] <title>` | `pbi` |
+| `pbi`     | `[PBI] <title>`     | `pbi`     |
 
 There is no `task` level: no `[Task]` issue is created.
 

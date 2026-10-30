@@ -16,12 +16,12 @@ Run it from the repository root. It starts `claude -p "/deliver <targets> --unat
 
 Checked from GitHub (not from the output) before and after each iteration, on the open PBIs of the targets without `needs-decision` / `needs-refinement`:
 
-| Result | When | Exit |
-|:--|:--|:--|
-| done | no open PBI left | 0 |
-| max reached | `-Max` iterations ran (delivered, blocked or paused PBIs in total) | 0 |
-| blocked | open PBIs remain, all wait on an open blocker or a label | 2 |
-| no progress | the set did not change after an iteration; prints the last log lines, never retries | 1 |
+| Result      | When                                                                                | Exit |
+| :---------- | :---------------------------------------------------------------------------------- | :--- |
+| done        | no open PBI left                                                                    | 0    |
+| max reached | `-Max` iterations ran (delivered, blocked or paused PBIs in total)                  | 0    |
+| blocked     | open PBIs remain, all wait on an open blocker or a label                            | 2    |
+| no progress | the set did not change after an iteration; prints the last log lines, never retries | 1    |
 
 ## Observability
 

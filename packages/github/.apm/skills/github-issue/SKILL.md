@@ -17,12 +17,12 @@ Conventions for the GitHub issue lifecycle. Detect the issue type, then follow t
 
 Issues follow this hierarchy (the repository's `.github/ISSUE_TEMPLATE/` holds the templates when present; this table is the definition):
 
-| Label     | Title (always `[<Level>] <summary>`)                  | Sub-issues    |
-| --------- | ----------------------------------------------------- | ------------- |
-| `epic`    | `[Epic] <outcome>`                                    | Features      |
-| `feature` | `[Feature] <capability>`                              | PBIs          |
-| `pbi`     | `[PBI] feat(scope): …`, `[PBI] refactor: …`           | —             |
-| `bug`     | `[Bug] fix: <symptom>`                                | —             |
+| Label     | Title (always `[<Level>] <summary>`)        | Sub-issues |
+| --------- | ------------------------------------------- | ---------- |
+| `epic`    | `[Epic] <outcome>`                          | Features   |
+| `feature` | `[Feature] <capability>`                    | PBIs       |
+| `pbi`     | `[PBI] feat(scope): …`, `[PBI] refactor: …` | —          |
+| `bug`     | `[Bug] fix: <symptom>`                      | —          |
 
 Titles are always written with the bracket prefix. Legacy titles (`Epic: …`, `Feature: …`, `[EPIC] …`) are still recognized when reading, never written. `[Task]` issues (label `task`) of older plans are read and closed together with their PBI, never created (`references/sub-issues.md`, "Legacy Task issues").
 

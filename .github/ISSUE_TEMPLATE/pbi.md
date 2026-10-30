@@ -20,7 +20,7 @@ Parent Feature: #NNN
 
 ## Acceptance Criteria
 
-- [ ] 
+- [ ]
 
 ## Technical Notes
 
