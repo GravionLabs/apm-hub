@@ -26,7 +26,7 @@ approximate.
 **Why not adopt.**
 
 - No GitHub issue, sub-issue or release-branch model. Its unit of work is a spec file plus a plan
-  file under `docs/superpowers/`; this hub's unit is the Epic → Feature → PBI → Task issue and a PR
+  file under `docs/superpowers/`; this hub's unit is the Epic → Feature → PBI issue and a PR
   per PBI into `release/next`. Adopting it would mean rebuilding the runner on top of it.
 - No stack skills. TDD is generic; `<lang>-implementation` and `<lang>-test` stay necessary.
 - A SessionStart hook injects `using-superpowers` into every session and demands a skill check

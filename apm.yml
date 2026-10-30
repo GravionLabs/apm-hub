@@ -40,7 +40,7 @@ marketplace:
     description: "C#/.NET skills: implementation conventions and review rules, NUnit/NSubstitute/Shouldly testing, solution scaffolding with Central Package Management, MCP server generation."
     source: ./packages/dotnet
   - name: github
-    description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI → Task, Bug) with native sub-issues, pull request creation, release branches (cut, finish)."
+    description: "GitHub workflow skills: issue hierarchy (Epic → Feature → PBI, Bug) with native sub-issues, pull request creation, release branches (cut, finish)."
     source: ./packages/github
   - name: go
     description: "Go skills: implementation conventions and review rules (package layout, error wrapping, context, gofmt, go vet, golangci-lint), go test testing with table-driven tests, testify, t.Parallel, race detector and build tags."

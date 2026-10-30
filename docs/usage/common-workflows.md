@@ -61,7 +61,7 @@ One issue per session, see [Working mode](../working-mode.md).
    Implement issue #42.
    ```
 
-   `github-issue` reads the labels (`epic`, `feature`, `pbi`, `task`, `bug`), checks for sub-issues and follows the matching reference workflow. It creates the branch per the conventional-commit type, and `implementation` loads the stack skill and ships tests with every change. Bugs go through `diagnose`: a red feedback loop first, then the fix with a regression test.
+   `github-issue` reads the labels (`epic`, `feature`, `pbi`, `bug`), checks for sub-issues and follows the matching reference workflow. It creates the branch per the conventional-commit type, and `implementation` loads the stack skill and ships tests with every change. Bugs go through `diagnose`: a red feedback loop first, then the fix with a regression test.
 
 3. **Review the diff**
 

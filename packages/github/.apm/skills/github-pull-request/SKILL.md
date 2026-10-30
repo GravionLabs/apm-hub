@@ -14,7 +14,7 @@ Create a PR from the current branch. No dialogue — tool calls only. On Claude 
 - `feature_number` (release mode only, optional)
 - `branch` (default: `git branch --show-current`). Passed and not the current branch (a caller whose work sits in another worktree): `<head>` below is `origin/<branch>`, otherwise `HEAD`
 - `base_branch` (default: the integration branch per the `github-issue` skill's `references/release-branches.md`, `pwsh <github-release dir>/scripts/Get-ReleaseState.ps1 -Mode base -Issue <nr>`: `release/next`, or `main` only when the head is `release/*` or the user asked for a hotfix; `<base>` below)
-- `not_delivered` (default: empty): Task numbers `#<task>` or acceptance-criterion text this PR leaves open
+- `not_delivered` (default: empty): acceptance-criterion text this PR leaves open; the PR body lists no task numbers
 - `review_notes` (default: empty): lines `file:line title — <why>` for findings not fixed (declined, deferred, advisory)
 - `auto_merge` (default: false)
 - `add_reviewer` (default: false)
@@ -53,5 +53,5 @@ Active when the head matches `^release/(next|[0-9]+\.[0-9]+)$` and `<base>` is t
 - Never create an empty PR (no commits beyond the base branch, also in release mode)
 - `<base>` is `main` but the head is not `release/*` and no hotfix was requested → stop and report; the work belongs on `release/next`
 - Branch must be pushed: if `<head>` is `HEAD` and `git log origin/<branch>..HEAD` is non-empty, run `git push -u origin HEAD` first; with `<head>` = `origin/<branch>` the caller has pushed
-- Never write `Closes` for an issue with an undelivered acceptance criterion or open Task; that is `Refs` plus `## Not delivered`
+- Never write `Closes` for an issue with an undelivered acceptance criterion; that is `Refs` plus `## Not delivered`
 - Never claim verification that was not run; if nothing was run, say so in the body
