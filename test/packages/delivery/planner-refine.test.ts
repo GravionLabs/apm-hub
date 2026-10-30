@@ -38,11 +38,15 @@ describe('planner refine definition of ready (#891)', () => {
     expect(skill.split('---')[1]).toContain('refine #N');
   });
 
-  it('trigger evals cover a refine prompt', () => {
+  it('trigger evals cover refine on a PBI without acceptance criteria', () => {
     const evals = JSON.parse(
       fs.readFileSync(path.resolve(__dirname, '../../../evals/skill-triggers.json'), 'utf-8'),
     );
     const p = evals.find((e: { skill: string }) => e.skill === 'planner');
-    expect(p.shouldTrigger.some((x: string) => /^Refine #/.test(x))).toBe(true);
+    expect(
+      p.shouldTrigger.some(
+        (x: string) => /refine/i.test(x) && /PBI/.test(x) && /acceptance criteria/i.test(x),
+      ),
+    ).toBe(true);
   });
 });
