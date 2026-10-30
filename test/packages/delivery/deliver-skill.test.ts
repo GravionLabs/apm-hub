@@ -128,10 +128,14 @@ describe('deliver SKILL.md', () => {
     it('reads the pane id once, sets the progress line per step and clears it at the end', () => {
       expect(herdr).toContain('`printenv HERDR_PANE_ID` once');
       expect(herdrCalls).toEqual([
-        'herdr pane report-metadata <pane> --source deliver --display-agent "deliver #12 review: 1 blocking"',
+        'herdr pane report-metadata <pane> --source deliver --display-agent "#12 review ✗1"',
         'herdr pane report-metadata <pane> --source deliver --clear-display-agent',
       ]);
       expect(herdr.indexOf('--clear-display-agent')).toBeGreaterThan(herdr.indexOf('## End'));
+    });
+
+    it('keeps the sidebar text short', () => {
+      expect(herdr).toContain('no `deliver` prefix, no transient states');
     });
 
     it('never expands a variable in a herdr call', () => {

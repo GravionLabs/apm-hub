@@ -10,13 +10,13 @@ When `scripts/Invoke-DeliverLoop.ps1` started this session it owns the pane disp
 
 ## Per step
 
-After the progress line of a step:
+After the progress line of a step, show its short form:
 
 ```powershell
-herdr pane report-metadata <pane> --source deliver --display-agent "deliver #12 review: 1 blocking"
+herdr pane report-metadata <pane> --source deliver --display-agent "#12 review ✗1"
 ```
 
-The text replaces the agent name in the herdr Agent sidebar. herdr 0.9.5 stores `--title` but renders it nowhere, so `--display-agent` is used instead.
+The text replaces the agent name in the herdr Agent sidebar, so keep it short: `#<nr> <step>`, then `✗<n>` for blocking findings or `fix <n>/2` for a fix round, nothing else (no `deliver` prefix, no transient states such as `opening`). herdr 0.9.5 stores `--title` but renders it nowhere, so `--display-agent` is used instead.
 
 ## End
 
