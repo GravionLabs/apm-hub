@@ -2,12 +2,12 @@
 
 ## What to commit
 
-| Path | Action |
-|:--|:--|
-| `apm.yml`, `apm.lock.yaml` | commit |
-| `.github/skills/`, `.claude/skills/`, `.opencode/skills/` | commit (instant context on clone) |
-| `apm_modules/` | add to `.gitignore` |
-| `.agents/config.json` | commit (project config, see [project config](https://github.com/GravionLabs/apm-hub/blob/main/docs/usage/project-config.md)). When `.gitignore` ignores the whole directory, use the lines `.agents/*` and `!.agents/config.json` instead; the installer prints a note when they are missing |
+| Path                                                      | Action                                                                                                                                                                                                                                                                                       |
+| :-------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apm.yml`, `apm.lock.yaml`                                | commit                                                                                                                                                                                                                                                                                       |
+| `.github/skills/`, `.claude/skills/`, `.opencode/skills/` | commit (instant context on clone)                                                                                                                                                                                                                                                            |
+| `apm_modules/`                                            | add to `.gitignore`                                                                                                                                                                                                                                                                          |
+| `.agents/config.json`                                     | commit (project config, see [project config](https://github.com/GravionLabs/apm-hub/blob/main/docs/usage/project-config.md)). When `.gitignore` ignores the whole directory, use the lines `.agents/*` and `!.agents/config.json` instead; the installer prints a note when they are missing |
 
 ## Delivery
 
@@ -23,4 +23,3 @@ Before the first `/deliver <nr> --unattended`, propose the shell allowlist of th
 - Remove it: delete the `packages/agents` entry (`apm uninstall -g GravionLabs/apm-hub/packages/agents`), then `apm update -g`.
 
 What apm cleans itself (checked with apm 0.35.0 on a scratch project): it removes every file it recorded in `apm.lock.yaml` for a package that left `apm.yml` ("Cleaned 11 files from packages no longer in apm.yml") and for a skill a package no longer ships ("Cleaned 25 stale deployed files"). Recorded paths of `agents` are `~/.claude/agents/<name>.md` (Claude Code) and `~/.copilot/agents/<name>.agent.md` (Copilot CLI), plus `.config/opencode/agents/` and `.codex/agents/`; the skills sit in `~/.claude/skills/` and `~/.agents/skills/`. What remains: an `agents` entry in `apm.yml` that no longer resolves in 3.x (remove or pin it), and files apm never recorded (no lock file, copied by hand): delete those paths yourself.
-

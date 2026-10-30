@@ -20,12 +20,12 @@ Bug
 
 ## Titles & labels
 
-| Type    | Label     | Title convention                                                  |
-| ------- | --------- | ----------------------------------------------------------------- |
-| Epic    | `epic`    | `Epic: <name>`                                                    |
-| Feature | `feature` | `Feature: <name>`                                                 |
+| Type    | Label     | Title convention                                                    |
+| ------- | --------- | ------------------------------------------------------------------- |
+| Epic    | `epic`    | `Epic: <name>`                                                      |
+| Feature | `feature` | `Feature: <name>`                                                   |
 | PBI     | `pbi`     | Conventional commit: `feat: …`, `refactor: …`, `docs: …`, `test: …` |
-| Bug     | `bug`     | `fix: <symptom>`                                                  |
+| Bug     | `bug`     | `fix: <symptom>`                                                    |
 
 Additional area labels (`library`, `demo`, `form`, `navigation`, `design-system`, …) may be added on top of the type label.
 
@@ -57,48 +57,48 @@ Each child references its parent with a `Part of #NNN` line in its **Parent** se
 
 ### Epic
 
-| Section            | Content                                          |
-| ------------------ | ------------------------------------------------ |
-| Overview           | What this epic groups and why (2–4 sentences)    |
-| Background         | Current state / pain points motivating the epic  |
-| Goals              | Bullet list of outcomes                          |
-| Out of Scope       | Explicit non-goals                               |
-| Sub-Issues         | Checklist of Features                            |
+| Section            | Content                                           |
+| ------------------ | ------------------------------------------------- |
+| Overview           | What this epic groups and why (2–4 sentences)     |
+| Background         | Current state / pain points motivating the epic   |
+| Goals              | Bullet list of outcomes                           |
+| Out of Scope       | Explicit non-goals                                |
+| Sub-Issues         | Checklist of Features                             |
 | Definition of Done | Measurable completion criteria for the whole epic |
 
 ### Feature
 
-| Section            | Content                                    |
-| ------------------ | ------------------------------------------ |
-| Overview           | What the feature delivers                  |
+| Section            | Content                                     |
+| ------------------ | ------------------------------------------- |
+| Overview           | What the feature delivers                   |
 | Background         | Why it's needed, links to design/discussion |
-| Parent             | `Part of #NNN` (epic)                      |
-| Scope              | In scope / out of scope bullets            |
-| Sub-Issues         | Checklist of PBIs                          |
-| Definition of Done | Feature-level acceptance criteria          |
+| Parent             | `Part of #NNN` (epic)                       |
+| Scope              | In scope / out of scope bullets             |
+| Sub-Issues         | Checklist of PBIs                           |
+| Definition of Done | Feature-level acceptance criteria           |
 
 ### PBI
 
-| Section             | Content                                                   |
-| ------------------- | --------------------------------------------------------- |
-| Overview            | User story or concise description of the increment        |
-| Background          | Context, constraints, prior art                           |
-| Parent              | `Part of #NNN` (feature)                                  |
-| Acceptance Criteria | Testable Given/When/Then or bullet criteria               |
-| Technical Notes     | Implementation hints, affected files/packages (optional)  |
-| Definition of Done  | Code + tests + docs criteria                              |
+| Section             | Content                                                  |
+| ------------------- | -------------------------------------------------------- |
+| Overview            | User story or concise description of the increment       |
+| Background          | Context, constraints, prior art                          |
+| Parent              | `Part of #NNN` (feature)                                 |
+| Acceptance Criteria | Testable Given/When/Then or bullet criteria              |
+| Technical Notes     | Implementation hints, affected files/packages (optional) |
+| Definition of Done  | Code + tests + docs criteria                             |
 
 ### Bug
 
-| Section            | Content                                          |
-| ------------------ | ------------------------------------------------ |
-| Description        | What is broken                                   |
-| Reproduction       | Numbered steps                                   |
-| Expected Behavior  | What should happen                               |
-| Actual Behavior    | What happens instead                             |
-| Environment        | Versions, browser, OS                            |
-| Screenshots        | Optional                                         |
-| Definition of Done | Fix + regression test criteria                   |
+| Section            | Content                        |
+| ------------------ | ------------------------------ |
+| Description        | What is broken                 |
+| Reproduction       | Numbered steps                 |
+| Expected Behavior  | What should happen             |
+| Actual Behavior    | What happens instead           |
+| Environment        | Versions, browser, OS          |
+| Screenshots        | Optional                       |
+| Definition of Done | Fix + regression test criteria |
 
 ## Creating issues with `gh`
 

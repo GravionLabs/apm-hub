@@ -18,19 +18,21 @@ Set up Biome and Husky for a plain TypeScript or Node.js project. Paths to `scri
 
 1. Ask: IDE (VS Code / WebStorm / both / none). If `angular.json` exists, stop and use `setup-prettier-eslint-husky`.
 2. Run the setup script:
+
    ```powershell
    pwsh scripts/Setup-Biome.ps1 [-IDE vscode]
    ```
+
    It installs `@biomejs/biome`, `husky` and `lint-staged` with pnpm or npm (detected from the lockfile / `packageManager` field), copies `biome.json` unless one exists, initializes Husky, adds the `lint-staged` block and the `format`, `format:check` and `lint` scripts to `package.json`, and writes the IDE settings.
 3. Format the project once: `npx biome check --write .`; put that commit into `.git-blame-ignore-revs`.
 4. Verify: `npx biome check .`
 
 ## Templates
 
-| File | Purpose |
-|---|---|
+| File                                           | Purpose                                                                                                                      |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `biome.json.template` (copied as `biome.json`) | 2 spaces, line width 100, single quotes, semicolons, trailing commas `all`, recommended lint rules, git ignore file honoured |
-| `.husky/pre-commit` | Runs `npx lint-staged` on commit |
+| `.husky/pre-commit`                            | Runs `npx lint-staged` on commit                                                                                             |
 
 ## Constraints
 

@@ -33,11 +33,11 @@ Planning only: no source edits. The planning steps below ask nothing (open decis
 
 Pick from the request ("quick plan", "deep planning") or default to **standard**.
 
-| Depth    | Exploration                                                     |
-|----------|-----------------------------------------------------------------|
-| quick    | ~5 key files                                                    |
-| standard | Grep/glob/read affected and related code                        |
-| deep     | Standard + call sites, tests, docs of every affected area       |
+| Depth    | Exploration                                               |
+| -------- | --------------------------------------------------------- |
+| quick    | ~5 key files                                              |
+| standard | Grep/glob/read affected and related code                  |
+| deep     | Standard + call sites, tests, docs of every affected area |
 
 Depth limits exploration, not the number of items. Size items by session: **one item = one fresh session**.
 
@@ -45,12 +45,12 @@ Depth limits exploration, not the number of items. Size items by session: **one 
 
 The input type decides it (`labels`, else title prefix `[Epic]`/`[Feature]`/`[PBI]`/`[Bug]`, or the legacy `Epic: `/`Feature: `). Plan titles are summaries; the caller adds the level prefix:
 
-| Input | Plan items |
-|:--|:--|
-| Epic | Features (`<capability>`, created as `[Feature] …`) |
-| Feature | PBIs (`feat: …`, `fix: …`, created as `[PBI] …`) |
-| PBI or bug | none when it fits one session: `items: []`, the summary says `refine <nr>`. Too big (size L or more than one session) → a split into sibling PBIs under the same Feature (`feat: …`, `fix: …`, level `pbi`) |
-| Description only | internal steps (level `pbi`), no issues are created |
+| Input            | Plan items                                                                                                                                                                                                  |
+| :--------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Epic             | Features (`<capability>`, created as `[Feature] …`)                                                                                                                                                         |
+| Feature          | PBIs (`feat: …`, `fix: …`, created as `[PBI] …`)                                                                                                                                                            |
+| PBI or bug       | none when it fits one session: `items: []`, the summary says `refine <nr>`. Too big (size L or more than one session) → a split into sibling PBIs under the same Feature (`feat: …`, `fix: …`, level `pbi`) |
+| Description only | internal steps (level `pbi`), no issues are created                                                                                                                                                         |
 
 In a split, `p1` becomes the planned issue (its title and body are replaced) and the other items are created as sibling `[PBI]`s (`github-issue` `references/create-from-plan.md`). No plan creates `[Task]` issues; `[Task]` sub-issues of older plans are read, never re-planned.
 

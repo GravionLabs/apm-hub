@@ -14,19 +14,19 @@ The goal does not change. What changes is where the control flow lives and how m
 
 Measured on 2026-10-27 over 41 timestamped orchestrator ledgers (2026-10-22 to 2026-10-27), the GitHub PR and issue history, and the repository itself.
 
-| Metric | Value |
-|---|---|
-| Active agent time per PBI (median) | 34 min (Oct 22-23) → 41 min (Oct 26-27), roughly flat |
-| Human wait time across the 41 runs | ~118 h, against ~27 h of agent time |
-| Runs with at least one red Final-Verify | 17 of 41; 8 of the last 13 |
-| Fix rounds per PBI | 1.24; 54 % of the recent runs had a fix round although the review verdict was APPROVE |
-| Subagent stops per run | 23 → 33 (pbi-runner polling adds 13-42 "Waiting for …" turns per run) |
-| Test suite | 2,508 → 3,289 tests in five days; ~1,250 s CPU; the 15 slowest files take 37-89 s each and all spawn pwsh |
-| Tests that cover the stack skills (the product) | 34 of 3,289 |
-| Tests that cover orchestration machinery (hooks, delivery, github, agents) | ~2,700 |
-| Prose rules the orchestrator must follow | agents package 149 → 544 lines since Oct 12, plus ~1,160 lines of references |
-| PowerShell | 33 scripts, 5,857 lines |
-| Median PR size | 31 LOC / 4 files (Oct 12) → 374 LOC / 12 files (Oct 26) |
+| Metric                                                                     | Value                                                                                                     |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Active agent time per PBI (median)                                         | 34 min (Oct 22-23) → 41 min (Oct 26-27), roughly flat                                                     |
+| Human wait time across the 41 runs                                         | ~118 h, against ~27 h of agent time                                                                       |
+| Runs with at least one red Final-Verify                                    | 17 of 41; 8 of the last 13                                                                                |
+| Fix rounds per PBI                                                         | 1.24; 54 % of the recent runs had a fix round although the review verdict was APPROVE                     |
+| Subagent stops per run                                                     | 23 → 33 (pbi-runner polling adds 13-42 "Waiting for …" turns per run)                                     |
+| Test suite                                                                 | 2,508 → 3,289 tests in five days; ~1,250 s CPU; the 15 slowest files take 37-89 s each and all spawn pwsh |
+| Tests that cover the stack skills (the product)                            | 34 of 3,289                                                                                               |
+| Tests that cover orchestration machinery (hooks, delivery, github, agents) | ~2,700                                                                                                    |
+| Prose rules the orchestrator must follow                                   | agents package 149 → 544 lines since Oct 12, plus ~1,160 lines of references                              |
+| PowerShell                                                                 | 33 scripts, 5,857 lines                                                                                   |
+| Median PR size                                                             | 31 LOC / 4 files (Oct 12) → 374 LOC / 12 files (Oct 26)                                                   |
 
 Root cause: control flow is written in prose. A prompt is asked to execute phases, gates, retries, leases and ledger lines. Because prompts do that unreliably, scripts were added to make the prose safe, hooks to observe it, and tests to check prose, scripts and hooks. Every new rule pulls new scripts and tests behind it. The retro skill already states the principle that was not applied to the pipeline itself: "Mechanical mistakes get a check, never a prose rule."
 
@@ -41,12 +41,12 @@ Secondary causes that follow from the first:
 
 ### 3.1 Split of responsibilities
 
-| | apm-hub | dromos |
-|---|---|---|
-| Role | What the agents know | When and how they run |
+|         | apm-hub                                                                                | dromos                                                                                                                                                                                |
+| ------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Role    | What the agents know                                                                   | When and how they run                                                                                                                                                                 |
 | Content | Skills, phase prompts, per-language review rules, stack packages, retro analysis skill | Runner CLI, run state machine, harness adapters (Claude, Copilot), GitHub access, worktrees, permission callback with git guardrails, event history, metrics, attention, herdr plugin |
-| State | None | SQLite for events and metrics; GitHub is the source of truth for issue state |
-| Tests | Content checks (frontmatter, size, manifests), a few dozen | Unit tests with mocked `gh` and a mocked harness |
+| State   | None                                                                                   | SQLite for events and metrics; GitHub is the source of truth for issue state                                                                                                          |
+| Tests   | Content checks (frontmatter, size, manifests), a few dozen                             | Unit tests with mocked `gh` and a mocked harness                                                                                                                                      |
 
 ### 3.2 The runner
 
@@ -88,12 +88,12 @@ Rounds are bounded in code (`maxRounds`, default 1 fix round). Every transition 
 ```ts
 export interface Harness {
   runPhase(input: {
-    prompt: string;               // phase prompt from apm-hub, with issue/plan paths filled in
-    cwd: string;                  // the worktree
-    model: string;                // per phase, per harness (config)
-    skills: string[];             // skill directories to expose
+    prompt: string; // phase prompt from apm-hub, with issue/plan paths filled in
+    cwd: string; // the worktree
+    model: string; // per phase, per harness (config)
+    skills: string[]; // skill directories to expose
     allow: (tool: string, input: unknown) => Decision; // one allowlist + guardrails, in TypeScript
-    schema: ZodSchema;            // the phase's output contract
+    schema: ZodSchema; // the phase's output contract
     timeoutMs: number;
   }): Promise<{ result: unknown; events: RunEvent[]; usage: Usage | null }>;
 }
@@ -101,13 +101,13 @@ export interface Harness {
 
 Adapters:
 
-| | Claude | Copilot |
-|---|---|---|
-| Transport | Claude Agent SDK (fallback: `claude -p --output-format json --agents <json>`) | `@github/copilot-sdk` (`CopilotClient`, `createSession`, `customAgents`, `sendAndWait`); already in `test/integration/harness` |
-| Permissions | SDK permission callback / `allowedTools` | `onPermissionRequest` |
-| Skills | skills directory | `COPILOT_SKILLS_DIRS` |
-| Structured output | native JSON output | JSON requested in the prompt, validated by the runner, one retry |
-| Usage | per-message usage from the SDK | from SDK events where available, else `null` (never estimated) |
+|                   | Claude                                                                        | Copilot                                                                                                                        |
+| ----------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Transport         | Claude Agent SDK (fallback: `claude -p --output-format json --agents <json>`) | `@github/copilot-sdk` (`CopilotClient`, `createSession`, `customAgents`, `sendAndWait`); already in `test/integration/harness` |
+| Permissions       | SDK permission callback / `allowedTools`                                      | `onPermissionRequest`                                                                                                          |
+| Skills            | skills directory                                                              | `COPILOT_SKILLS_DIRS`                                                                                                          |
+| Structured output | native JSON output                                                            | JSON requested in the prompt, validated by the runner, one retry                                                               |
+| Usage             | per-message usage from the SDK                                                | from SDK events where available, else `null` (never estimated)                                                                 |
 
 The allowlist and the git guardrails exist once, in TypeScript, and apply to both harnesses. The Claude hooks package becomes unnecessary for this purpose.
 
@@ -115,12 +115,12 @@ The allowlist and the git guardrails exist once, in TypeScript, and apply to bot
 
 Four roles, each a prompt plus the skills it needs, each returning JSON against a schema:
 
-| Role | Input | Output | Default model |
-|---|---|---|---|
-| planner | issue body, parent context, codebase summary | `{items:[{title, body, criteria[], size, dependsOn[]}], questions[]}` | opus |
-| implementer | one Task, acceptance criteria, `implementation` + `<lang>-implementation` skills | `{status, commit, filesChanged[], testsRun, notes[]}` | sonnet; opus on round 2 |
-| reviewer | the PBI diff, the acceptance criteria, the language's `## Review rules` | `{blocking:[{file,line,title,why}], notes:[...]}` | sonnet (optionally a second pass with another model) |
-| retro | run events of one or many runs | `{candidates:[{category, evidence, change}], lessons[]}` | opus |
+| Role        | Input                                                                            | Output                                                                | Default model                                        |
+| ----------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------- |
+| planner     | issue body, parent context, codebase summary                                     | `{items:[{title, body, criteria[], size, dependsOn[]}], questions[]}` | opus                                                 |
+| implementer | one Task, acceptance criteria, `implementation` + `<lang>-implementation` skills | `{status, commit, filesChanged[], testsRun, notes[]}`                 | sonnet; opus on round 2                              |
+| reviewer    | the PBI diff, the acceptance criteria, the language's `## Review rules`          | `{blocking:[{file,line,title,why}], notes:[...]}`                     | sonnet (optionally a second pass with another model) |
+| retro       | run events of one or many runs                                                   | `{candidates:[{category, evidence, change}], lessons[]}`              | opus                                                 |
 
 The prompts live in apm-hub as skills so that they stay usable interactively in any client: `planner` (renamed from `issue-planning`), `implementation` (implementer role), `code-review` (reviewer role) and `retro`. Each ships its output schema under `schema/`. The runner maps role → skill in its configuration and loads the skill by name from the installed skills directory.
 
@@ -168,10 +168,10 @@ Replacement: one reviewer call with one prompt, output `{blocking, notes}`. `blo
 
 A simpler workflow leads to simpler tests for three reasons: control flow in TypeScript is tested with mocked `gh` and a mocked harness (no pwsh spawn, no git fixtures, no timeouts); the ledger, leases, markers and hooks have no tests because they no longer exist; without process spawns there are no load flakes, so the main source of red verifies disappears with the suite that produced it.
 
-| Repository | Today | Target |
-|---|---|---|
-| apm-hub | 3,289 tests, ~21 CPU min, 4 vitest projects | ~50-100 content checks (frontmatter, size, manifest, prompt schema compatibility) plus the existing stack-skill tests; one vitest project, seconds |
-| dromos | 33 test files | runner unit tests (state machine, selection, permission callback, adapters with recorded SDK fixtures), ~300-500 cases; one opt-in live test per harness against a throwaway repository |
+| Repository | Today                                       | Target                                                                                                                                                                                  |
+| ---------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| apm-hub    | 3,289 tests, ~21 CPU min, 4 vitest projects | ~50-100 content checks (frontmatter, size, manifest, prompt schema compatibility) plus the existing stack-skill tests; one vitest project, seconds                                      |
+| dromos     | 33 test files                               | runner unit tests (state machine, selection, permission callback, adapters with recorded SDK fixtures), ~300-500 cases; one opt-in live test per harness against a throwaway repository |
 
 Perf and flake-sensitive tests are deleted, not moved.
 
@@ -242,17 +242,17 @@ dromos, delete or demote:
 
 ## 9. Risks and mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Copilot SDK 0.1.x is immature; headless permissions may require `--allow-all-tools` | Stage 1 spike decides; CLI fallback adapter; Claude-only first release if needed |
-| dromos is at v0.1.2 and becomes the critical path | Stage 1-2 run against apm-hub itself; stabilize before Stage 3; no herdr or mux work until Stage 3 is done |
-| Loss of fine-grained interactive gates | The PR is the review point; `dromos status` and the herdr plugin show pending approvals; draft PRs carry failures |
-| Non-Claude models behind Copilot return invalid JSON | Schema validation plus one retry; phase fails to `blocked` with the raw output attached, never a silent guess |
-| A reversed architecture decision two days after the last one | Decision record in dromos#131 with the measurements of section 2; the retro reads this document before proposing pipeline changes |
-| Features in flight on `release/next` touch files that Stage 5 deletes | Stage 0 freeze; finish or close in-flight PBIs before Stage 2 |
-| No automated pipeline between the cleanup and the first `dromos run pbi` | Interactive skills (workplan section 6); the old pipeline stays installable by pinning apm-hub `v2.5.4` |
-| Interactive sessions lose the git guardrails when the hooks package goes | The guardrails hook stays in apm-hub until dromos B3 ports it; removed afterwards (workplan P9) |
-| Two runs pick the same PBI once the leases are gone | Claim by label `in-progress` with the run id (workplan B8); `--force` to override |
+| Risk                                                                                | Mitigation                                                                                                                        |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Copilot SDK 0.1.x is immature; headless permissions may require `--allow-all-tools` | Stage 1 spike decides; CLI fallback adapter; Claude-only first release if needed                                                  |
+| dromos is at v0.1.2 and becomes the critical path                                   | Stage 1-2 run against apm-hub itself; stabilize before Stage 3; no herdr or mux work until Stage 3 is done                        |
+| Loss of fine-grained interactive gates                                              | The PR is the review point; `dromos status` and the herdr plugin show pending approvals; draft PRs carry failures                 |
+| Non-Claude models behind Copilot return invalid JSON                                | Schema validation plus one retry; phase fails to `blocked` with the raw output attached, never a silent guess                     |
+| A reversed architecture decision two days after the last one                        | Decision record in dromos#131 with the measurements of section 2; the retro reads this document before proposing pipeline changes |
+| Features in flight on `release/next` touch files that Stage 5 deletes               | Stage 0 freeze; finish or close in-flight PBIs before Stage 2                                                                     |
+| No automated pipeline between the cleanup and the first `dromos run pbi`            | Interactive skills (workplan section 6); the old pipeline stays installable by pinning apm-hub `v2.5.4`                           |
+| Interactive sessions lose the git guardrails when the hooks package goes            | The guardrails hook stays in apm-hub until dromos B3 ports it; removed afterwards (workplan P9)                                   |
+| Two runs pick the same PBI once the leases are gone                                 | Claim by label `in-progress` with the run id (workplan B8); `--force` to override                                                 |
 
 ## 10. Open questions
 

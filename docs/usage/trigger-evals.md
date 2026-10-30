@@ -24,9 +24,13 @@ Every prompt runs `-Runs` times (default 3) as a real model session: with the cu
 {
   "summary": {
     "overall": { "positives": 0, "negatives": 0, "triggerRate": 0, "falseTriggerRate": 0 },
-    "skills": [ { "skill": "name", "positives": 0, "negatives": 0, "triggerRate": 0, "falseTriggerRate": 0 } ]
+    "skills": [
+      { "skill": "name", "positives": 0, "negatives": 0, "triggerRate": 0, "falseTriggerRate": 0 }
+    ]
   },
-  "records": [ { "skill": "name", "kind": "positive|negative", "prompt": "...", "invoked": ["skill"] } ],
+  "records": [
+    { "skill": "name", "kind": "positive|negative", "prompt": "...", "invoked": ["skill"] }
+  ],
   "meta": { "date": "YYYY-MM-DD", "model": "sonnet", "runs": 3, "maxTurns": 4 },
   "notInstalled": ["skill"],
   "sampleSize": { "prompts": 0, "runs": 0, "failed": 0 },

@@ -46,9 +46,11 @@ description: >
 One-line purpose. Paths to `scripts/` and `references/` are relative to this skill's directory.
 
 ## Steps
+
 ...
 
 ## Gotchas
+
 ...
 ```
 

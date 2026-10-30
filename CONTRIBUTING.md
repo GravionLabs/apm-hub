@@ -29,11 +29,13 @@ The repo uses pnpm (`pnpm-lock.yaml`) only. The Copilot SDK harness that lived i
 2. Keep `SKILL.md` ≤ 100 lines; frontmatter only `name`, `description`, optional `license`/`metadata`; shell fences ` ```powershell `. Long specs go to `references/` with a conditional load line, templates to `templates/`, procedures to `scripts/*.ps1`.
 3. If another skill already owns a step, delegate by name instead of repeating it.
 4. Run the checks:
+
    ```powershell
    node scripts/check-manifests.mjs --fix
    pnpm run build; pnpm test
    pwsh packages/apm-tooling/.apm/skills/skill-slim/scripts/Get-SkillReport.ps1 -Root .
    ```
+
    Tests live in two places: unit tests of the TypeScript tools next to their code (`src/**/*.test.ts`), tests of package content (skills, agents, scripts, hooks) in `test/packages/<domain>/` (repository checks in `test/repo/`, shared helpers in `test/helpers/`).
    Vitest has one project (`vitest.config.ts`): `src/**/*.test.ts`, `test/repo/` and `test/packages/`. `pnpm test` runs it, `pnpm run test:ci` adds coverage (CI), a single file runs with `pnpm vitest run <path>`.
 5. Update the package `description` in `packages/<domain>/apm.yml` and the root `apm.yml` when the package scope changed, and the skill table in AGENTS.md.
@@ -57,12 +59,12 @@ Public surface is everything a consumer can depend on: package names (install na
 
 Legacy names kept for compatibility:
 
-| Legacy name | Where | Removed in |
-|:--|:--|:--|
-| `issue-planning` -> `planner` | skill, renamed with the role skills (#737), no alias | n/a |
-| `skill-update` -> `skill-audit` | skill, merged into `skill-audit` (#786), no alias | n/a |
-| `orchestrator` -> `deliver` | skill, removed with the dromos runner (#828, decision 004), no alias | n/a |
-| `hooks` -> dromos permission callback | package, removed in 3.1.0 (#743), no alias; `v2.5.4` still has it | n/a |
+| Legacy name                           | Where                                                                | Removed in |
+| :------------------------------------ | :------------------------------------------------------------------- | :--------- |
+| `issue-planning` -> `planner`         | skill, renamed with the role skills (#737), no alias                 | n/a        |
+| `skill-update` -> `skill-audit`       | skill, merged into `skill-audit` (#786), no alias                    | n/a        |
+| `orchestrator` -> `deliver`           | skill, removed with the dromos runner (#828, decision 004), no alias | n/a        |
+| `hooks` -> dromos permission callback | package, removed in 3.1.0 (#743), no alias; `v2.5.4` still has it    | n/a        |
 
 The `development-workflow` package was a clean rename with no alias (#178, released in 2.2.0), a record of a past decision, so there is nothing to remove; the note in `README.md` stays for searchability.
 

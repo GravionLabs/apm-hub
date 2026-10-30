@@ -24,6 +24,7 @@ Create a PR from the current branch. No dialogue — tool calls only. On Claude 
 1. **Gather context** (parallel): `git branch --show-current`, `git log origin/<base>..<head> --oneline`, `git diff --stat origin/<base>...<head>`, `gh issue view <nr> --json title,body,labels` (release mode: no `gh issue view`, the `git log`/`git diff` of the release head against `origin/<base>` still run)
 2. **Title**: release mode uses the caller `title`. Otherwise `<type>: <description> (#<issue_number>)` from the issue title: strip the level prefix `[Epic|Feature|PBI|Task|Bug] ` (the squash commit must stay a conventional commit), keep type, scope and summary word for word (never shorten or rephrase them) and append ` (#<issue_number>)`: `[PBI] feat(adapters): read the subagents of Claude Code workflows` → `feat(adapters): read the subagents of Claude Code workflows (#436)`. An issue title without a conventional type: type from the commits (`feat`, `fix`, `docs`, `refactor`, `perf`; mixed → dominant type or the issue's labels) before the summary.
 3. **Body**:
+
    ```markdown
    ## Summary
    <what changed and why>
@@ -36,6 +37,7 @@ Create a PR from the current branch. No dialogue — tool calls only. On Claude 
 
    Closes #<issue_number>
    ```
+
    Release mode: body per `references/release-mode.md`; the footer is `Closes #<feature_number>` only when passed, else none, and `not_delivered` does not apply.
    `not_delivered` non-empty: add `## Not delivered` (one bullet per item, its follow-up `#<n>` when known) before the footer and end with `Refs #<issue_number>` instead of `Closes`, so the release leaves the issue open.
    `review_notes` non-empty: add `## Review notes` (one bullet per line) before the footer. Review notes are not acceptance criteria and never turn `Closes` into `Refs`.

@@ -11,7 +11,7 @@ Always use conventional commit format.
 ## Types
 
 | Type       | When to use                              |
-|------------|------------------------------------------|
+| ---------- | ---------------------------------------- |
 | `feat`     | New feature or capability                |
 | `fix`      | Bug fix                                  |
 | `docs`     | Documentation only                       |
