@@ -10,9 +10,8 @@ Set up Biome and Husky for a plain TypeScript or Node.js project. Paths to `scri
 
 ## Stack
 
-- **Biome** (`biome.json`): one tool for formatting and linting `*.ts`, `*.js`, `*.json`
+- **Biome** (`biome.json`): one tool for formatting and linting `*.ts`, `*.js`, `*.json`, `*.md`, `*.yml`, `*.yaml` (Markdown and YAML need Biome >= 2.6)
 - **Husky** + **lint-staged** running `biome check --write` on staged files
-- Markdown and YAML are not formatted by Biome; add Prettier for them only if the project needs it, scoped to those file types
 
 ## Steps
 
@@ -29,10 +28,10 @@ Set up Biome and Husky for a plain TypeScript or Node.js project. Paths to `scri
 
 ## Templates
 
-| File                                           | Purpose                                                                                                                      |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `biome.json.template` (copied as `biome.json`) | 2 spaces, line width 100, single quotes, semicolons, trailing commas `all`, recommended lint rules, git ignore file honoured |
-| `.husky/pre-commit`                            | Runs `npx lint-staged` on commit                                                                                             |
+| File                                           | Purpose                                                                                                                                                                                  |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `biome.json.template` (copied as `biome.json`) | 2 spaces, line width 100, single quotes, semicolons, trailing commas `all`, recommended lint rules, git ignore file honoured, Markdown frontmatter parsed as YAML, prose kept as written |
+| `.husky/pre-commit`                            | Runs `npx lint-staged` on commit                                                                                                                                                         |
 
 ## Constraints
 
