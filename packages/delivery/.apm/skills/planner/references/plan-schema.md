@@ -42,13 +42,13 @@ The only output contract of `planner`: one JSON object, returned to the caller, 
 | Field | Rule |
 |:--|:--|
 | `phase`, `status` | `"plan"`; `ok`, or `fail` (the reason goes in `summary`) |
-| `parent_issue` | Number of the planned issue, `null` for a description |
+| `parent_issue` | Number of the planned issue, `null` for a description. A pbi or bug that fits one session returns `items: []` (the summary says `refine <nr>`) |
 | `input_type` | `epic`, `feature`, `pbi`, `bug`, `description` |
-| `level` | `feature` (from epic), `pbi` (from feature), `task` (from pbi, bug, description) |
+| `level` | `feature` (from epic), `pbi` (from feature; from a pbi or bug as a split into sibling PBIs; from a description as internal steps that are not created). There is no level `task`: a plan never yields `[Task]` issues |
 | `depth` | `quick`, `standard`, `deep` (exploration budget only) |
 | `items[].id` | Unique plan id (`p1`, `p2`, …) |
-| `items[].title` | Summary without level prefix: capability for `feature`, `feat: …` / `fix: …` for `pbi`, `chore: …` for `task`; the caller adds `[Feature] `, `[PBI] ` or `[Task] ` by `level` |
-| `items[].body` | Issue body; for levels `feature` and `pbi` the first line is `Parent Epic: #N` / `Parent Feature: #N` (the parent number, as in `parent_issue`) followed by the sections of the matching issue template (see the `github-issue` skill). For `task`, the Task issue body (Parent PBI line, or `Parent Bug: #<bug>` for a Bug parent; Overview, Implementation Notes, agent-ready block with Context, Depends on, Files, Done when; Done when names the interface(s) under test). Optional `## Invariants` section for async/stateful items (`invariants.md`): before `## Definition of Done` for `pbi`, before the agent-ready block for `task` |
+| `items[].title` | Summary without level prefix: capability for `feature`, `feat: …` / `fix: …` / `refactor: …` for `pbi`; the caller adds `[Feature] ` or `[PBI] ` by `level` |
+| `items[].body` | Issue body; the first line is `Parent Epic: #N` / `Parent Feature: #N` (for `feature` and `pbi` from a feature: `parent_issue`; for a split of a pbi or bug: the planned issue's parent Feature, none when it has no parent) followed by the sections of the matching issue template (see the `github-issue` skill). Optional `## Invariants` section for async/stateful items (`invariants.md`), placed in the PBI body before `## Definition of Done` |
 | `items[].size` | `S`, `M`, `L` (see `slicing.md`) |
 | `items[].tier` | `fast`, `standard`, `strong`, chosen per the tier table below; the item body states `Tier: <tier> — <reason>`. Migration: a legacy `model` maps `haiku` to `fast`, `sonnet` to `standard`, `inherit` to `strong`; readers apply the same mapping to existing plans, new plans carry only `tier` |
 | `items[].blocked_by` | Plan ids or existing issue numbers (integers); acyclic; `[]` when free |

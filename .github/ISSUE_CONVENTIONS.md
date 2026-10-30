@@ -8,16 +8,14 @@ This document defines how issues are structured, titled, labeled, and linked in 
 Epic
 └── Feature
     └── PBI (Product Backlog Item)
-        └── Task (optional)
 
 Bug
-└── Task (optional)
 ```
 
 - An **Epic** groups related Features toward one larger outcome.
 - A **Feature** groups the PBIs that deliver one user-facing capability.
 - A **PBI** is a shippable increment: one PR-sized (or few-PR-sized) unit of value.
-- A **Task** is a concrete technical step; use tasks only when a PBI or Bug needs to be split.
+- There is no Task level: a PBI or Bug too big for one session is split into sibling PBIs. `[Task]` issues of older plans are read and closed with their PBI, never created.
 - A **Bug** lives outside the epic hierarchy but may reference an Epic/Feature in its Background.
 
 ## Titles & labels
@@ -27,7 +25,6 @@ Bug
 | Epic    | `epic`    | `Epic: <name>`                                                    |
 | Feature | `feature` | `Feature: <name>`                                                 |
 | PBI     | `pbi`     | Conventional commit: `feat: …`, `refactor: …`, `docs: …`, `test: …` |
-| Task    | `task`    | Conventional commit: `chore: …`, `feat: …`, `test: …`, …          |
 | Bug     | `bug`     | `fix: <symptom>`                                                  |
 
 Additional area labels (`library`, `demo`, `form`, `navigation`, `design-system`, …) may be added on top of the type label.
@@ -54,7 +51,7 @@ Every issue that has sub-issues must link them **both** ways:
    - [ ] #347 — feat: queue depth on /healthz
    ```
 
-Each child references its parent with a `Part of #NNN` line in its **Parent** section. Closing PRs reference the PBI/Task/Bug they resolve with `Closes #NNN`.
+Each child references its parent with a `Part of #NNN` line in its **Parent** section. Closing PRs reference the PBI/Bug they resolve with `Closes #NNN`.
 
 ## Fields per issue type
 
@@ -89,17 +86,7 @@ Each child references its parent with a `Part of #NNN` line in its **Parent** se
 | Parent              | `Part of #NNN` (feature)                                  |
 | Acceptance Criteria | Testable Given/When/Then or bullet criteria               |
 | Technical Notes     | Implementation hints, affected files/packages (optional)  |
-| Sub-Issues          | Checklist of Tasks (optional)                             |
 | Definition of Done  | Code + tests + docs criteria                              |
-
-### Task
-
-| Section              | Content                            |
-| -------------------- | ---------------------------------- |
-| Overview             | The concrete technical step        |
-| Parent               | `Part of #NNN` (PBI or bug)        |
-| Implementation Notes | How/where (optional)               |
-| Definition of Done   | What "done" means for this task    |
 
 ### Bug
 
@@ -111,7 +98,6 @@ Each child references its parent with a `Part of #NNN` line in its **Parent** se
 | Actual Behavior    | What happens instead                             |
 | Environment        | Versions, browser, OS                            |
 | Screenshots        | Optional                                         |
-| Sub-Issues         | Checklist of Tasks (only if the fix is split up) |
 | Definition of Done | Fix + regression test criteria                   |
 
 ## Creating issues with `gh`

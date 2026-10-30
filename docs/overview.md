@@ -16,7 +16,7 @@ A package is a domain bundle of skills. Installing it copies the skills into you
 | :------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `shared`      | `implementation` (tests per change), `detect-techstack`, `code-review` (blocking findings and notes), `diagnose` (bug diagnosis)                       |
 | `delivery`    | `planner`, `retro`, `apm-install`                                                                                                                      |
-| `github`      | `github-issue` (Epic → Feature → PBI → Task hierarchy with native sub-issues), `github-pull-request`, `github-release`                                 |
+| `github`      | `github-issue` (Epic → Feature → PBI hierarchy with native sub-issues), `github-pull-request`, `github-release`                                 |
 | `dotnet`      | `dotnet-implementation`, `dotnet-test`, `dotnet-create-solution`, `dotnet-mcp-server-generator`                                                        |
 | `ts`          | `ts-implementation`, `ts-test`, `ts-create-project`, `ts-mcp-server-generator`, `ts-pnpm-workflow`, `setup-biome-husky`, `setup-prettier-eslint-husky` |
 | `py`          | `py-implementation`, `py-test`, `py-create-project`                                                                                                    |

@@ -26,8 +26,6 @@ Parent Feature: #NNN
 
 <!-- Optional: implementation hints, affected files/packages. -->
 
-<!-- Optional: add Task children via GitHub's native sub-issues panel — not a checklist. -->
-
 ## Definition of Done
 
 - Implementation merged with tests
