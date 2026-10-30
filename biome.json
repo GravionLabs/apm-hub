@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.4/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -12,11 +12,25 @@
       "scripts/**",
       "site/**",
       "*.json",
+      "**/*.md",
+      "**/*.yml",
+      "**/*.yaml",
       "!**/dist",
       "!**/node_modules",
       "!**/coverage",
       "!**/test-results",
       "!pnpm-lock.yaml",
+      "!.worktrees",
+      "!.work",
+      "!apm_modules",
+      "!docs/skill-list.md",
+      "!docs/template-list.md",
+      "!docs/instruction-list.md",
+      "!README.md",
+      "!docs/overview.md",
+      "!apm.yml",
+      "!packages/*/apm.yml",
+      "!CHANGELOG.md",
       "!site/.vitepress/cache",
       "!site/.vitepress/dist"
     ]
@@ -34,6 +48,13 @@
       "semicolons": "always",
       "trailingCommas": "all"
     }
+  },
+  "markdown": {
+    "parser": { "frontmatter": true },
+    "formatter": { "proseWrap": "preserve", "lineWidth": 100 }
+  },
+  "yaml": {
+    "formatter": { "quoteStyle": "single", "lineWidth": 100 }
   },
   "assist": {
     "actions": {
