@@ -73,6 +73,10 @@ if (-not $Language -and -not $Extensions -and -not $Command) {
   $langOf['.py'] = 'py'
   foreach ($e in '.cs', '.csproj', '.sln', '.slnx') { $langOf[$e] = 'dotnet' }
   $langOf['.rs'] = 'rust'; $langOf['.go'] = 'go'
+  # Markdown and YAML only in a Biome project (Biome >= 2.6 formats them)
+  if ((Test-Path -LiteralPath (Join-Path $root 'biome.json') -PathType Leaf) -or (Test-Path -LiteralPath (Join-Path $root 'biome.jsonc') -PathType Leaf)) {
+    foreach ($e in '.md', '.yml', '.yaml') { $langOf[$e] = 'ts' }
+  }
   $present = @(Get-ChangedFiles | ForEach-Object { $langOf[[IO.Path]::GetExtension($_).ToLowerInvariant()] } | Where-Object { $_ })
   $detected = @('ts', 'py', 'dotnet', 'rust', 'go' | Where-Object { $present -contains $_ })
   $all = @()
@@ -169,10 +173,10 @@ $defaults = @{
 }
 $defaults.ng = @($defaults.ts[0].Clone(), $defaults.ts[1])
 $defaults.ng[0].Ext = $exts5 + @('.json', '.html', '.scss', '.css')
-# a Biome project (biome.json[c] at the toplevel) replaces prettier + eslint with one biome step on the prettier extensions
+# a Biome project (biome.json[c] at the toplevel) replaces prettier + eslint with one biome step on the prettier extensions plus Markdown and YAML
 if ((Test-Path -LiteralPath (Join-Path $root 'biome.json') -PathType Leaf) -or (Test-Path -LiteralPath (Join-Path $root 'biome.jsonc') -PathType Leaf)) {
   foreach ($lang in 'ts', 'ng') {
-    $defaults[$lang] = @(@{ Tool = 'biome'; Ext = $defaults[$lang][0].Ext; Requires = 'npx --no-install biome --version'; Format = @('npx biome check --write {files}'); Check = @('npx biome check {files}') })
+    $defaults[$lang] = @(@{ Tool = 'biome'; Ext = $defaults[$lang][0].Ext + @('.md', '.yml', '.yaml'); Requires = 'npx --no-install biome --version'; Format = @('npx biome check --write --no-errors-on-unmatched {files}'); Check = @('npx biome check --no-errors-on-unmatched {files}') })
   }
 }
 
