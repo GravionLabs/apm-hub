@@ -16,7 +16,7 @@ Install the skills first (`apm install` in the directory you run from) so `claud
 
 ## Cost caveat
 
-Every prompt runs `-Runs` times (default 3) as a real model session: with the current set that is 228 calls. The runner uses `-Model sonnet`, `-MaxTurns 4` and runs `-ThrottleLimit 8` sessions in parallel; the model, runs and date are stored under `meta` in the result. Run it on demand, never in CI, and use `-Skill` or `-Runs 1` while iterating.
+Every prompt runs `-Runs` times (default 3) as a real model session: with the current set that is 231 calls. The runner uses `-Model sonnet`, `-MaxTurns 4` and runs `-ThrottleLimit 8` sessions in parallel; the model, runs and date are stored under `meta` in the result. Run it on demand, never in CI, and use `-Skill` or `-Runs 1` while iterating.
 
 ## Result schema
 
