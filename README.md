@@ -1,5 +1,8 @@
 # apm-hub
 
+> [!IMPORTANT]
+> **apm-hub is archived. Its successor is [GravionLabs/skills](https://github.com/GravionLabs/skills).** The skills are installed with `npx skills` instead of apm (`npx skills add GravionLabs/skills --skill <name>`, or `/skills-install` for the stack-based installer). The unreleased `release/next` of apm-hub is not released as 3.4.0; its content ships in GravionLabs/skills v1.0.0. Migration steps: [after-install.md](https://github.com/GravionLabs/skills/blob/main/skills/delivery/skills-install/references/after-install.md). apm-hub 3.3.0 stays installable with apm.
+
 A curated hub of cross-platform **agent skills** — distributed as APM packages, usable with GitHub Copilot, Claude Code, and OpenCode.
 
 Documentation site: **[gravionlabs.github.io/apm-hub](https://gravionlabs.github.io/apm-hub/)**

@@ -5,7 +5,7 @@ editLink: false
 hero:
   name: apm-hub
   text: Cross-platform agent skills
-  tagline: A curated hub of skills, distributed as APM packages, that load unchanged on GitHub Copilot, Claude Code and OpenCode.
+  tagline: Archived — successor GravionLabs/skills. A curated hub of skills, distributed as APM packages, that load unchanged on GitHub Copilot, Claude Code and OpenCode.
   actions:
     - theme: brand
       text: Read the overview
@@ -26,3 +26,7 @@ features:
   - title: Delivery as a workflow
     details: /deliver runs the implementation and review skills in subagents on Claude Code, OpenCode and Copilot CLI; a GitHub ruleset gates the merge.
 ---
+
+::: warning apm-hub is archived
+Its successor is [GravionLabs/skills](https://github.com/GravionLabs/skills): skills are installed with `npx skills` instead of apm (`npx skills add GravionLabs/skills --skill <name>`, or `/skills-install`). The unreleased `release/next` of apm-hub is not released as 3.4.0; its content ships in GravionLabs/skills v1.0.0. Migration steps: [after-install.md](https://github.com/GravionLabs/skills/blob/main/skills/delivery/skills-install/references/after-install.md). apm-hub 3.3.0 stays installable with apm. Documentation of the successor: [gravionlabs.github.io/skills](https://gravionlabs.github.io/skills/).
+:::
